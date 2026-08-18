@@ -1,0 +1,106 @@
+{
+  "version": "0.5.5",
+  "classes": {
+    "ranger": {
+      "headshot": "ranger.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (1).png"
+    },
+    "sorcerer": {
+      "headshot": "ChatGPT Image 16 aug. 2026 12_59_45 (1).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (2).png"
+    },
+    "fighter": {
+      "headshot": "fighter.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (3).png"
+    },
+    "monk": {
+      "headshot": "ChatGPT Image 16 aug. 2026 12_59_45 (2).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (4).png"
+    },
+    "clown": {
+      "headshot": "clown.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (5).png"
+    },
+    "rouge": {
+      "headshot": "rouge.png",
+      "battle": "rouge.png"
+    },
+    "berserker": {
+      "headshot": "berserker.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_28 (7).png"
+    },
+    "turtle": {
+      "headshot": "turtle.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_28 (8).png"
+    },
+    "frog": {
+      "headshot": "ChatGPT Image 16 aug. 2026 12_59_45 (3).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_28 (9).png"
+    },
+    "d20": {
+      "headshot": "ChatGPT Image 16 aug. 2026 03_17_21 (10).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_28 (10).png"
+    },
+    "slime": {
+      "headshot": "slime.png",
+      "battle": "slime2.png"
+    },
+    "vampire": {
+      "headshot": "vampire.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_41_29 (4).png"
+    },
+    "ninja": {
+      "headshot": "ninja.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_41_29 (5).png"
+    },
+    "ceo": {
+      "headshot": "ChatGPT Image 16 aug. 2026 03_26_47 (10).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_59_45 (5).png"
+    },
+    "merchant": {
+      "headshot": "ChatGPT Image 16 aug. 2026 12_59_45 (6).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_41_30 (7).png"
+    },
+    "cleric": {
+      "headshot": "DERIVED FROM paladin2.png",
+      "battle": "paladin2.png"
+    },
+    "paladin": {
+      "headshot": "paladin.png",
+      "battle": "paladin2.png"
+    },
+    "beastmaster": {
+      "headshot": "beastmaster.png",
+      "battle": "beastmaster2.png"
+    },
+    "rogue": {
+      "headshot": "rogue.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (6).png"
+    },
+    "bloodmage": {
+      "headshot": "DERIVED FROM vampire2.png",
+      "battle": "vampire2.png"
+    },
+    "summoner": {
+      "headshot": "ChatGPT Image 16 aug. 2026 03_32_18 (1).png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_47_27 (2).png"
+    },
+    "pokemontrainer": {
+      "headshot": "pokemon trainer.png",
+      "battle": "pokemon trainer2.png"
+    },
+    "alchemist": {
+      "headshot": "alchemist.png",
+      "battle": "ChatGPT Image 16 aug. 2026 12_59_45 (4).png"
+    },
+    "ouroboros": {
+      "headshot": "ChatGPT Image 16 aug. 2026 03_32_19 (4).png",
+      "battle": "ChatGPT Image 16 aug. 2026 03_32_19 (4).png"
+    },
+    "slimerouge": {
+      "headshot": "slime rouge.png",
+      "battle": "slime rouge2.png"
+    }
+  },
+  "note": "All 61 uploaded source images are preserved under art-source/ClassesArt_0_5_4 in the full source package. Curated runtime versions live in assets/ui/class-art/headshots and battle."
+}
