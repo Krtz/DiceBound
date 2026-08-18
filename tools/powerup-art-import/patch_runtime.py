@@ -186,3 +186,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# Touch marker: retrigger the one-shot importer after the workflow landed on main.
