@@ -46,6 +46,12 @@ The recovered build audit reports **32 / 32 checks passed**. It includes validat
 
 The audit explicitly does **not** claim a successful headless visual/browser runtime test because Chromium in the build sandbox was enterprise-policy blocked from local/file/loopback pages.
 
+## Git recovery completed
+
+The complete recovered source package contained **160 files**: 149 under `runtime/`, 10 under `wrapper-source/`, plus the source-status note. The source was imported through 12 browser commits after GitHub Actions proved unavailable on the account during recovery.
+
+The repository now contains the authoritative `runtime/` and `wrapper-source/` trees. Runtime metadata reports build ID `dicebound-0.6-49974c0d6ca04ded`, save schema 2 and content hash `49974c0d6ca04ded9671e5992bdf85851b84ad8612803f8b506a8a4cc84df3c6`.
+
 ## Source-of-truth rule
 
-Once the full recovered source tree is imported to this repository, Git `main` supersedes the handoff ZIPs as the authoritative development baseline. Release artifacts should thereafter be reproducibly generated from a specific Git commit/tag rather than treated as the source.
+**Git `main` now supersedes the handoff ZIPs as the authoritative development baseline.** Future release artifacts should be generated from and tied to a specific Git commit/tag. Chat transcripts and recovery ZIPs are supporting historical context, not source control.
