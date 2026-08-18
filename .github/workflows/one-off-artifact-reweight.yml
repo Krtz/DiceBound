@@ -1,0 +1,86 @@
+name: One-off Artifact Reweight
+
+on:
+  push:
+    branches:
+      - agent/artifact-weapon-rarest
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/artifact-weapon-rarest
+
+      - name: Reweight Artifact table and update current docs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          js_path = Path('runtime/js/dicebound.js')
+          s = js_path.read_text()
+          old = """  const DB060_ARTIFACT_TABLE=Object.freeze([\n    Object.freeze({slot:'weapon',weight:30,label:'Impossible Road class weapon',make:()=>generateMythicalWeapon()}),\n    Object.freeze({slot:'boots',weight:20,label:'Titanstep, Boots of the Astral Road',make:()=>generateMythicalBoots()}),\n    Object.freeze({slot:'legs',weight:16,label:'Paradox Weave, Legguards Outside Time',make:()=>generateMythicalPants()}),\n    Object.freeze({slot:'ring',weight:14,label:'Ouroboros Halo, Ring of the Fifth Road',make:()=>generateMythicalRing()}),\n    Object.freeze({slot:'hat',weight:9,label:'Crown of the Road That Should Not Exist',make:()=>generateMythicalHat()}),\n    Object.freeze({slot:'amulet',weight:7,label:\"The Devourer's Last Eye\",make:()=>generateMythicalAmulet()}),\n    Object.freeze({slot:'offhand',weight:4,label:'Event Horizon Ward, Offhand Beyond the Sixth Road',make:()=>generateMythicalOffhand()})\n  ]);"""
+          new = """  const DB060_ARTIFACT_TABLE=Object.freeze([\n    // Keep the class weapon deliberately rare so elemental-weapon progression/talents\n    // still have room to matter before the Impossible Road weapon replaces them.\n    Object.freeze({slot:'boots',weight:30,label:'Titanstep, Boots of the Astral Road',make:()=>generateMythicalBoots()}),\n    Object.freeze({slot:'legs',weight:20,label:'Paradox Weave, Legguards Outside Time',make:()=>generateMythicalPants()}),\n    Object.freeze({slot:'ring',weight:16,label:'Ouroboros Halo, Ring of the Fifth Road',make:()=>generateMythicalRing()}),\n    Object.freeze({slot:'hat',weight:14,label:'Crown of the Road That Should Not Exist',make:()=>generateMythicalHat()}),\n    Object.freeze({slot:'amulet',weight:9,label:\"The Devourer's Last Eye\",make:()=>generateMythicalAmulet()}),\n    Object.freeze({slot:'offhand',weight:7,label:'Event Horizon Ward, Offhand Beyond the Sixth Road',make:()=>generateMythicalOffhand()}),\n    Object.freeze({slot:'weapon',weight:4,label:'Impossible Road class weapon',make:()=>generateMythicalWeapon()})\n  ]);"""
+          if old not in s:
+              raise SystemExit('Expected Beta 0.6 Artifact table block not found; refusing an unsafe fuzzy patch.')
+          js_path.write_text(s.replace(old, new, 1))
+
+          notes = Path('runtime/PATCH_NOTES.md')
+          n = notes.read_text()
+          marker = "## Unreleased — Artifact weapon rarity follow-up\n"
+          if marker not in n:
+              n = marker + "- Artifact class weapons are now deliberately the rarest result on the Artifact table so elemental-weapon progression/talents remain useful before an Impossible Road weapon drops.\n- New Artifact weights: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7%, Weapon 4%. Artifact-table access rates themselves are unchanged.\n\n" + n
+              notes.write_text(n)
+
+          readme = Path('README.md')
+          r = readme.read_text()
+          dev_marker = "## Development after Beta 0.6\n"
+          if dev_marker not in r:
+              anchor = "## Beta 0.6 highlights\n"
+              block = "## Development after Beta 0.6\n\n- Artifact slot weights have been rebalanced for ongoing development: **30% boots / 20% legs / 16% ring / 14% hat / 9% amulet / 7% offhand / 4% class weapon**. The weapon is intentionally rare so elemental-weapon progression and talents keep value before an Impossible Road weapon drops.\n- The archived Beta 0.6 release audit below/under `docs/releases/beta-0.6/` remains historical and is not rewritten.\n\n"
+              if anchor not in r:
+                  raise SystemExit('README anchor not found')
+              readme.write_text(r.replace(anchor, block + anchor, 1))
+
+          changelog = Path('CHANGELOG.md')
+          c = changelog.read_text()
+          unreleased = "## Unreleased\n\n- Reweighted the Artifact slot table so the Impossible Road class weapon is the rarest result: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7%, Weapon 4%. This preserves the value of elemental-weapon progression/talents before the Artifact weapon appears. Artifact-table access rates are unchanged.\n\n"
+          if "## Unreleased\n" not in c:
+              anchor = "## Beta 0.6 — Gear & Guardian Loot Rebuild\n"
+              if anchor not in c:
+                  raise SystemExit('CHANGELOG anchor not found')
+              changelog.write_text(c.replace(anchor, unreleased + anchor, 1))
+          PY
+
+      - name: Validate JavaScript syntax
+        run: node --check runtime/js/dicebound.js
+
+      - name: Validate Artifact weights
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          s = Path('runtime/js/dicebound.js').read_text()
+          block = re.search(r"const DB060_ARTIFACT_TABLE=Object\.freeze\(\[(.*?)\n  \]\);", s, re.S)
+          if not block:
+              raise SystemExit('Artifact table not found after patch')
+          rows = [(slot, int(weight)) for slot, weight in re.findall(r"slot:'([^']+)',weight:(\d+)", block.group(1))]
+          expected = [('boots',30),('legs',20),('ring',16),('hat',14),('amulet',9),('offhand',7),('weapon',4)]
+          print(rows)
+          assert rows == expected, (rows, expected)
+          assert sum(weight for _, weight in rows) == 100
+          assert dict(rows)['weapon'] == min(weight for _, weight in rows)
+          PY
+
+      - name: Commit patched source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add runtime/js/dicebound.js runtime/PATCH_NOTES.md README.md CHANGELOG.md
+          git commit -m "Make Artifact class weapon the rarest table result"
+          git push origin HEAD:agent/artifact-weapon-rarest
