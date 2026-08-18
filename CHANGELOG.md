@@ -1,0 +1,74 @@
+# DiceBound Changelog
+
+This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release being established as the repository baseline.
+
+## Beta 0.6 — Gear & Guardian Loot Rebuild
+
+- Replaced independent Artifact slot rolls with one weighted Artifact loot-table roll per guardian; at most one Artifact can drop per kill.
+- Artifact weights: Weapon 30%, Boots 20%, Legs 16%, Ring 14%, Hat 9%, Amulet 7%, Offhand 4%.
+- Artifact-table access now follows the agreed Board 1–6 Normal / Nightmare / Hell matrix, scaling from 0.5% to 10% on Normal, 1% to 18% on Nightmare and 2% to 28% on Hell depending on guardian depth/type.
+- Moved Axel's Coffee Mug, Kratz Headphones and The Jean Jacket Lost at Kelly's from Legendary to Mythical. Their unique behaviour is preserved; Prestige crafting is deferred.
+- Added generated Legendary gear: 151–210 item points plus one of 20 build-changing Legendary Effects.
+- Generated equipment point pools are now Poor 11–25, Common 26–45, Uncommon 46–70, Rare 71–105, Epic 106–150, Legendary 151–210.
+- Memory Cache now guarantees generated Legendary equipment on Board 4+: 1/450 Normal, 1/300 Nightmare, 1/200 Hell, preferring an undiscovered Legendary Effect.
+- Miniboss ordinary-equipment chance is now 85% Normal / 92% Nightmare / 100% Hell. Final bosses continue to guarantee an ordinary item.
+- Fixed Abyssal Custodian / Board 6 miniboss cookie reward to 10.
+- Final Price and Philosopher's Stone signature drop chance is now 5% Normal / 10% Nightmare / 15% Hell.
+- Re-integrated boss/miniboss art bindings and the Random-class campsite placeholder into the authoritative runtime path.
+- Fixed the old Memory Cache wrapper path so it cannot bypass the new cache implementation.
+- Fixed Echo Chamber so Crit conversion occurs early enough in the attack pipeline to actually increase Echo count.
+- Validated the recovered release with 32/32 static/build checks passing. The original sandbox could not honestly claim a headless visual browser test because enterprise policy blocked local/loopback Chromium execution.
+
+## Beta 0.5.14 — Powerup Cleanup & Balance
+
+- Audited all powerups against the six-tier rarity philosophy.
+- Expanded the pool from 188 to exactly 200 powerups.
+- New rarity distribution: 17 Poor / 35 Common / 64 Uncommon / 31 Rare / 34 Epic / 19 Legendary.
+- Rebalanced lower-rarity values and repaired authoritative achievement gating.
+- Kept 5 generally available Epics and 7 generally available Legendaries ungated for early high-rarity variety.
+
+## Beta 0.5.13 — Boss & Miniboss Art
+
+- Added supplied boss/miniboss portrait art to encounters.
+- Refined Start Run/Nightmare campsite placement and added the Random-class camp placeholder.
+
+## Beta 0.5.12 — Achievement Powerup Progression
+
+- Expanded achievement-gated Epic/Legendary progression using existing milestones.
+- Added Board 2 class-mastery Epic tiers and Board 5 Legendary mastery tiers where eligible.
+- Updated achievement cards to list newly unlocked powerups.
+
+## Beta 0.5.11 — Combat Screen & Elemental Parity
+
+- Reworked desktop combat into a full-window game state.
+- Mirrored player elemental identities for enemy elemental activations, including Ice Freeze.
+- Fixed outside-combat Alchemist potion tracking.
+- Restored Glass Needle artwork.
+- Arcane Lance now converts half of Echo Strike chance into bonus spell damage.
+- Frog unlock threshold increased to 150% Echo Strike during a run.
+
+## Beta 0.5.10 — Companion Art & Campsite Tuning
+
+- Added dedicated art for all 13 companions.
+- Added full-body Ouroboros battle art.
+- Continued Campsite spatial tuning.
+
+## Beta 0.5.8 — Campsite Art Replacement
+
+- Added dedicated Prestige moon, Trophy and Options art.
+- Added separate Nightmare OFF/ON scene artwork.
+- Updated several full-body class battle portraits.
+
+## Beta 0.5.7 / 0.5.6 / 0.5.5 — Campsite & Runtime Foundation
+
+- Added the full-screen Campsite environment and environmental interaction art.
+- Added separate class board-marker artwork.
+- Added talent-tree wheel zoom and hidden scrollbars.
+- Added runtime-cache self-repair while preserving saves.
+- Added build-specific frontend/WebView2 caches and frontend-ready startup handshake/logging.
+- Added Alchemist potion-healing progression.
+
+## Beta 0.4.1 — World Background Hotfix
+
+- Replaced the fragile pseudo-element world background with explicit scene/atmosphere layers.
+- Began durable repository-style patch-note/TODO tracking.
