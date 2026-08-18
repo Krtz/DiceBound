@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in DiceBound is broken or behaves incorrectly
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the broken behavior clearly.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Start a run as ...
+        2. Reach ...
+        3. Use ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / build
+      placeholder: "Beta 0.6 / build ID if known"
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - Normal
+        - Nightmare
+        - Hell
+        - Camp / outside run
+        - Not applicable
+  - type: textarea
+    id: context
+    attributes:
+      label: Run context
+      description: Class, board, gear/powerups, save age, native EXE vs browser, and anything else that matters.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Screenshots, logs, save/export information, or exact error text if available.
+  - type: checkboxes
+    id: severity
+    attributes:
+      label: Impact
+      options:
+        - label: Blocks continuing the run
+        - label: Risks save/progression loss
+        - label: Reproduces consistently
