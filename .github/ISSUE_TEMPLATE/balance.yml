@@ -1,0 +1,44 @@
+name: Balance / playtest finding
+description: Record real-career or simulation evidence that may require tuning
+title: "[Balance] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: observation
+    attributes:
+      label: Observation
+      description: What felt too strong, weak, fast, slow, generous, punishing or otherwise off?
+    validations:
+      required: true
+  - type: dropdown
+    id: evidence_type
+    attributes:
+      label: Evidence type
+      options:
+        - Real player career
+        - Repeated real-player careers
+        - Deterministic harness / simulation
+        - Code/table audit only
+        - Mixed evidence
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Class, mode, board, Legacy/prestige state, relevant gear/powerups and approximate run progression.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current values / behavior
+      description: Record the actual baseline before proposing changes.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Possible tuning direction
+      description: Optional. Evidence can be recorded before deciding on a fix.
+  - type: markdown
+    attributes:
+      value: "**Project rule:** real-player pacing evidence takes priority over harness estimates when they conflict; keep both kinds of evidence visible rather than silently substituting one for the other."
