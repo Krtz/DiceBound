@@ -1,0 +1,47 @@
+name: Feature or improvement
+description: Propose a new system, QoL improvement, content addition or UI change
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Player/developer problem
+      description: What problem or opportunity does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: direction
+    attributes:
+      label: Desired direction
+      description: Describe the intended outcome without over-specifying implementation unless implementation is important.
+    validations:
+      required: true
+  - type: textarea
+    id: interactions
+    attributes:
+      label: Systems/interactions to consider
+      description: Classes, gear, powerups, Legacy, saves, native wrapper, UI, achievements, secrets, etc.
+  - type: textarea
+    id: done
+    attributes:
+      label: What would count as done?
+      description: Acceptance criteria or the player-visible result.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Combat
+        - Classes
+        - Companions
+        - Gear / Loot
+        - Powerups
+        - Boards / Enemies
+        - Legacy / Prestige
+        - Campsite / UI
+        - Save System
+        - Native Wrapper
+        - Release / CI
+        - Art / Assets
+        - Other
