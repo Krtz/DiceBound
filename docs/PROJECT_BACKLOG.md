@@ -7,7 +7,7 @@ GitHub issues are the actionable backlog. This file is a lightweight index for h
 - Prestige crafting for discovered named Mythicals (#1)
 - Playtest/tune generated Legendary Effects (#2)
 - Guardian loot rarity playtest/tuning (#3)
-- Board 4–6 real-career balance pass (tracked as a dedicated balance issue)
+- Real-playtest Boards 4–6 difficulty and mode scaling (#12)
 
 Do not automatically put all of these into one release. Choose a small scope when the next version is named.
 
@@ -15,34 +15,32 @@ Do not automatically put all of these into one release. Choose a small scope whe
 
 - Generated Legendary Effects (#2)
 - Guardian loot rarity (#3)
+- Boards 4–6 difficulty and mode scaling (#12)
 - Current 200-powerup rarity balance after Beta 0.5.14
-- Boards 4–6 difficulty and mode scaling
 - Very-late class unlock tail
 - Haste / elemental-proc turn economy
 
 ## Systems / Features
 
 - Prestige crafting (#1)
-- Real Prestige Points system
-- Run/build history and summary
+- Real Prestige Points system (#7)
+- Run/build history and summary (#8)
 - Artifact chest decision (#4)
-- Export Debug Bundle
+- Export Debug Bundle / save health (#9)
 - Updater / installer later in Beta
 
 ## Art / UI
 
 - Complete 200-powerup artwork (#5)
-- Remaining placeholder offhand/equipment art
-- Remaining duplicate/fallback class portraits
+- Remaining placeholder / duplicate art (#13)
 - Legendary Effect badge language after powerup art
 - Campsite hover/discoverability polish
-- Accessibility / UI scale / reduced motion
+- Accessibility / UI scale / reduced motion (#10)
 
 ## Release Engineering
 
 - CI release builds and deterministic smoke tests (#6)
-- Official signed x64 WebView2Loader in production builds
-- Windows code signing before wider distribution
+- Production WebView2 loader / Windows signing (#11)
 - Build provenance in Options
 
 ## Suggested Project fields
