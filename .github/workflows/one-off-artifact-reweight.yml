@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/artifact-weapon-rarest
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -42,7 +45,7 @@ jobs:
           dev_marker = "## Development after Beta 0.6\n"
           if dev_marker not in r:
               anchor = "## Beta 0.6 highlights\n"
-              block = "## Development after Beta 0.6\n\n- Artifact slot weights have been rebalanced for ongoing development: **30% boots / 20% legs / 16% ring / 14% hat / 9% amulet / 7% offhand / 4% class weapon**. The weapon is intentionally rare so elemental-weapon progression and talents keep value before an Impossible Road weapon drops.\n- The archived Beta 0.6 release audit below/under `docs/releases/beta-0.6/` remains historical and is not rewritten.\n\n"
+              block = "## Development after Beta 0.6\n\n- Artifact slot weights have been rebalanced for ongoing development: **30% boots / 20% legs / 16% ring / 14% hat / 9% amulet / 7% offhand / 4% class weapon**. The weapon is intentionally rare so elemental-weapon progression and talents keep value before an Impossible Road weapon drops.\n- The archived Beta 0.6 release audit under `docs/releases/beta-0.6/` remains historical and is not rewritten.\n\n"
               if anchor not in r:
                   raise SystemExit('README anchor not found')
               readme.write_text(r.replace(anchor, block + anchor, 1))
