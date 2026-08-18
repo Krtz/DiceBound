@@ -1,0 +1,148 @@
+{
+  "version": "0.6",
+  "checks": {
+    "node_syntax_checked_elsewhere": {
+      "pass": true
+    },
+    "beta_06_runtime_marker": {
+      "pass": true
+    },
+    "memory_cache_bypasses_old_v24_wrapper": {
+      "pass": true
+    },
+    "memory_cache_odds": {
+      "pass": true
+    },
+    "board6_miniboss_10_cookies": {
+      "pass": true
+    },
+    "named_mythical_migration": {
+      "pass": true
+    },
+    "legendary_budget_ranges": {
+      "pass": true
+    },
+    "artifact_single_roll": {
+      "pass": true
+    },
+    "artifact_table_7_entries": {
+      "pass": true
+    },
+    "artifact_weights_total_100": {
+      "pass": true,
+      "detail": {
+        "weights": [
+          30,
+          20,
+          16,
+          14,
+          9,
+          7,
+          4
+        ],
+        "sum": 100
+      }
+    },
+    "artifact_rate_matrix_exact": {
+      "pass": true
+    },
+    "miniboss_ordinary_chance": {
+      "pass": true
+    },
+    "final_price_philosopher_hell_15": {
+      "pass": true
+    },
+    "legendary_effect_count_20": {
+      "pass": true,
+      "detail": {
+        "count": 20,
+        "ids": [
+          "twin_surge",
+          "sword_and_shield",
+          "perfect_specimen",
+          "echo_chamber",
+          "critical_feedback",
+          "blood_price",
+          "glass_fortress",
+          "second_barrel",
+          "elemental_roulette",
+          "prismatic_weapon",
+          "loaded_sixes",
+          "last_stand",
+          "vampires_bargain",
+          "iron_echo",
+          "recursive_poison",
+          "perfect_guard",
+          "hoarders_arsenal",
+          "unstable_ultimate",
+          "pet_mirror",
+          "reverse_engineering"
+        ]
+      }
+    },
+    "echo_chamber_pre_attack_roll_fix": {
+      "pass": true
+    },
+    "generated_legendary_has_effect": {
+      "pass": true
+    },
+    "random_class_camp_placeholder": {
+      "pass": true
+    },
+    "boss_art_binding": {
+      "pass": true
+    },
+    "index_version_06": {
+      "pass": true
+    },
+    "runtime/js/native-http-host.js_version_06": {
+      "pass": true
+    },
+    "runtime/js/platform.js_version_06": {
+      "pass": true
+    },
+    "runtime/js/save-system.js_version_06": {
+      "pass": true
+    },
+    "runtime/js/wrapper-contract.js_version_06": {
+      "pass": true
+    },
+    "wrapper_config_version_06": {
+      "pass": true
+    },
+    "exe_exists": {
+      "pass": true,
+      "detail": {
+        "bytes": 166598656
+      }
+    },
+    "exe_pe": {
+      "pass": true
+    },
+    "exe_versioninfo_06": {
+      "pass": true
+    },
+    "exe_native_webview2_marker": {
+      "pass": true
+    },
+    "exe_sha256": {
+      "pass": true,
+      "detail": "85764d2de61b19a2ff0d4bb983d3456f3c77784a608cd8bd27ee0fc995f13a0e"
+    },
+    "manifest_version_06": {
+      "pass": true
+    },
+    "manifest_build_id_06": {
+      "pass": true,
+      "detail": "dicebound-0.6-49974c0d6ca04ded"
+    },
+    "manifest_hashes_match": {
+      "pass": true,
+      "detail": []
+    }
+  },
+  "passed": 32,
+  "total": 32,
+  "allPassed": true,
+  "browserRuntimeNote": "Chromium in this sandbox is enterprise-policy blocked from local/file URLs, so no headless visual/browser runtime claim is made. Static JS parse, content audit, deterministic packaging and native wrapper metadata were validated."
+}
