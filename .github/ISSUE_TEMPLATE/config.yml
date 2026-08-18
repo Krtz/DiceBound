@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: DiceBound roadmap
+    url: https://github.com/Krtz/DiceBound/blob/main/docs/ROADMAP.md
+    about: Check the broader roadmap before opening a duplicate long-term idea.
