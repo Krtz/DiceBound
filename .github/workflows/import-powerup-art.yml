@@ -1,0 +1,66 @@
+name: Integrate powerup art
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/powerup-art-import/powerup-art-48.zip'
+      - 'tools/powerup-art-import/patch_runtime.py'
+      - '.github/workflows/import-powerup-art.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Integrate assets and mappings
+        run: python tools/powerup-art-import/patch_runtime.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check runtime/js/assets.js
+          node --check runtime/js/dicebound.js
+
+      - name: Validate mapped asset paths
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          assets = Path('runtime/js/assets.js').read_text()
+          paths = re.findall(r'`\$\{paths\.uiPowerups\}/([^`]+\.png)`', assets)
+          missing = [p for p in paths if not (Path('runtime/assets/ui/powerups') / p).is_file()]
+          if missing:
+              raise SystemExit(f'Missing mapped assets: {missing}')
+          if len(set(paths)) < 20:
+              raise SystemExit(f'Expected at least 20 mapped powerup assets, found {len(set(paths))}')
+          print(f'Validated {len(set(paths))} mapped powerup assets')
+          PY
+
+      - name: Commit integrated runtime and remove one-shot importer
+        run: |
+          rm -f tools/powerup-art-import/powerup-art-48.zip
+          rm -f tools/powerup-art-import/patch_runtime.py
+          rm -f .github/workflows/import-powerup-art.yml
+          rmdir tools/powerup-art-import 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A runtime/assets/ui/powerups runtime/js/assets.js runtime/js/dicebound.js tools/powerup-art-import .github/workflows/import-powerup-art.yml
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git commit -m "Wire generated powerup artwork"
+          git push
