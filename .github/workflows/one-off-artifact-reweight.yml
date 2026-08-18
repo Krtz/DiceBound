@@ -1,9 +1,6 @@
 name: One-off Artifact Reweight
 
 on:
-  push:
-    branches:
-      - agent/artifact-weapon-rarest
   pull_request:
     branches:
       - main
@@ -16,9 +13,14 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/artifact-weapon-rarest
+      - name: Checkout feature branch without external actions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git init .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 origin agent/artifact-weapon-rarest
+          git checkout -B agent/artifact-weapon-rarest FETCH_HEAD
 
       - name: Reweight Artifact table and update current docs
         run: |
@@ -37,41 +39,34 @@ jobs:
           n = notes.read_text()
           marker = "## Unreleased — Artifact weapon rarity follow-up\n"
           if marker not in n:
-              n = marker + "- Artifact class weapons are now deliberately the rarest result on the Artifact table so elemental-weapon progression/talents remain useful before an Impossible Road weapon drops.\n- New Artifact weights: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7%, Weapon 4%. Artifact-table access rates themselves are unchanged.\n\n" + n
-              notes.write_text(n)
+              notes.write_text(marker + "- Artifact class weapons are now deliberately the rarest result on the Artifact table so elemental-weapon progression/talents remain useful before an Impossible Road weapon drops.\n- New Artifact weights: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7%, Weapon 4%. Artifact-table access rates themselves are unchanged.\n\n" + n)
 
           readme = Path('README.md')
           r = readme.read_text()
-          dev_marker = "## Development after Beta 0.6\n"
-          if dev_marker not in r:
+          if "## Development after Beta 0.6\n" not in r:
               anchor = "## Beta 0.6 highlights\n"
               block = "## Development after Beta 0.6\n\n- Artifact slot weights have been rebalanced for ongoing development: **30% boots / 20% legs / 16% ring / 14% hat / 9% amulet / 7% offhand / 4% class weapon**. The weapon is intentionally rare so elemental-weapon progression and talents keep value before an Impossible Road weapon drops.\n- The archived Beta 0.6 release audit under `docs/releases/beta-0.6/` remains historical and is not rewritten.\n\n"
-              if anchor not in r:
-                  raise SystemExit('README anchor not found')
+              if anchor not in r: raise SystemExit('README anchor not found')
               readme.write_text(r.replace(anchor, block + anchor, 1))
 
           changelog = Path('CHANGELOG.md')
           c = changelog.read_text()
-          unreleased = "## Unreleased\n\n- Reweighted the Artifact slot table so the Impossible Road class weapon is the rarest result: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7%, Weapon 4%. This preserves the value of elemental-weapon progression/talents before the Artifact weapon appears. Artifact-table access rates are unchanged.\n\n"
           if "## Unreleased\n" not in c:
               anchor = "## Beta 0.6 — Gear & Guardian Loot Rebuild\n"
-              if anchor not in c:
-                  raise SystemExit('CHANGELOG anchor not found')
-              changelog.write_text(c.replace(anchor, unreleased + anchor, 1))
+              block = "## Unreleased\n\n- Reweighted the Artifact slot table so the Impossible Road class weapon is the rarest result: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7%, Weapon 4%. This preserves the value of elemental-weapon progression/talents before the Artifact weapon appears. Artifact-table access rates are unchanged.\n\n"
+              if anchor not in c: raise SystemExit('CHANGELOG anchor not found')
+              changelog.write_text(c.replace(anchor, block + anchor, 1))
           PY
 
-      - name: Validate JavaScript syntax
-        run: node --check runtime/js/dicebound.js
-
-      - name: Validate Artifact weights
+      - name: Validate JavaScript syntax and Artifact weights
         run: |
+          node --check runtime/js/dicebound.js
           python - <<'PY'
           import re
           from pathlib import Path
           s = Path('runtime/js/dicebound.js').read_text()
           block = re.search(r"const DB060_ARTIFACT_TABLE=Object\.freeze\(\[(.*?)\n  \]\);", s, re.S)
-          if not block:
-              raise SystemExit('Artifact table not found after patch')
+          assert block, 'Artifact table not found after patch'
           rows = [(slot, int(weight)) for slot, weight in re.findall(r"slot:'([^']+)',weight:(\d+)", block.group(1))]
           expected = [('boots',30),('legs',20),('ring',16),('hat',14),('amulet',9),('offhand',7),('weapon',4)]
           print(rows)
