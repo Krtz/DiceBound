@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Dicebound: Beta v0.6</title>
+<link rel="stylesheet" href="css/dicebound.css">
+</head>
+<body>
+<div class="world-scene-layer" id="worldSceneLayer" aria-hidden="true"></div>
+<div class="world-atmosphere-layer" id="worldAtmosphereLayer" aria-hidden="true"></div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🎲</div>
+      <div>
+        <h1>Dicebound: Beta v0.6</h1>
+        <p>Beta v0.6 · explicit Artifact table, generated Legendary effects, new gear budgets and guardian loot cleanup.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="small-btn" id="infoBtn">ℹ️ Info</button>
+      <button class="small-btn" id="saveFolderBtn" hidden>📂 Open Save Folder</button>
+      <button class="small-btn" id="achievementBtn">🏆 Achievements</button>
+      <button class="small-btn" id="talentBtn">🌳 Talents · <span id="talentPointTop">0</span></button>
+      <button class="small-btn" id="muteBtn" aria-label="Toggle sound">🔊</button>
+      <button class="small-btn" id="restartBtn">⛺ Back to camp</button>
+    </div>
+  </header>
+
+  <main class="game-panel">
+    <div class="board-wrap" id="boardWrap">
+      <img class="board-scene-bg" id="boardSceneBg" alt="" aria-hidden="true" draggable="false">
+      <div class="board-bg-rune">⚔</div>
+      <div class="board" id="board"></div>
+      <div class="pawn" id="pawn">🛡️</div>
+    </div>
+    <section class="card dice-card road-controls">
+      <h2>Travel</h2>
+      <div class="dice" id="dice">⚀</div>
+      <div class="travel-actions">
+        <button class="main-btn" id="rollBtn">Roll the dice</button>
+        <div class="road-status"><div class="stat"><span>Road</span><strong id="floorText">Board 1 · 1 / 100</strong></div><div class="stat"><span>Next guardian</span><strong id="guardianText">Miniboss · tile 50</strong></div></div>
+        <p class="hint" id="rollHint">High rolls grant Fast Travel XP. The Roadwarden intercepts any roll that crosses tile 50.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside class="sidebar">
+    <section class="card">
+      <h2>Adventurer</h2>
+      <div class="hero-line">
+        <div class="hero-avatar" id="heroAvatar">🏹</div>
+        <div>
+          <div class="hero-name" id="heroName">Ranger</div>
+          <div class="hero-level" id="levelText">Level 1</div>
+        </div>
+      </div>
+      <div class="bar-label"><span>HP</span><span id="hpText">30 / 30</span></div>
+      <div class="bar hpbar"><i id="hpFill"></i></div>
+      <div class="bar-label"><span>XP</span><span id="xpText">0 / 20</span></div>
+      <div class="bar xpbar"><i id="xpFill"></i></div>
+      <div class="stats-grid">
+        <div class="stat"><span>Attack</span><strong id="attackText">5</strong></div>
+        <div class="stat"><span>Defense</span><strong id="defenseText">1</strong></div>
+        <div class="stat"><span>Gold</span><strong id="goldText">0</strong></div>
+        <div class="stat"><span>Potions</span><strong id="potionText">1</strong></div>
+        <div class="stat"><span>Crit</span><strong id="critText">5%</strong></div>
+        <div class="stat"><span>Dodge</span><strong id="dodgeText">0%</strong></div>
+        <div class="stat"><span>Lifesteal</span><strong id="lifeStealText">0%</strong></div>
+        <div class="stat"><span>Luck</span><strong id="luckText">0</strong></div>
+        <div class="stat"><span>Echo Strike</span><strong id="echoText">0%</strong></div>
+        <div class="stat"><span>Boss Damage</span><strong id="bossDamageText">0%</strong></div>
+      </div>
+      <button class="small-btn outside-potion" id="outsidePotionBtn">🧪 Drink potion outside combat</button>
+      <button class="small-btn run-buff-btn" id="runBuffBtn">📜 View current run buffs</button>
+    </section>
+
+    <section class="card equipment-card">
+      <h2>Equipment</h2>
+      <div class="equipment-grid" id="equipmentGrid"></div>
+      <div class="mythic-set-box" id="mythicSetStatus" hidden><strong>🌈 Impossible Road set</strong><br>0/4 pieces equipped.</div>
+    </section>
+
+    <section class="card pet-card">
+      <h2>Legacy Companion</h2>
+      <div class="pet-line">
+        <div class="pet-avatar" id="petAvatar">🎲</div>
+        <div class="pet-info"><div class="pet-name" id="petName">DiBo</div><div class="pet-stats" id="petStats">Level 1 · 2 neutral damage · 0 / 2 bond</div></div>
+      </div>
+      <div class="pet-actions"><button class="small-btn pet-feed" id="feedPetBtn">🍪 Feed one · <span class="cookie-count" id="petCookies">0</span></button><button class="small-btn pet-feed" id="feedAllPetBtn">🍪 Feed all</button></div>
+      <button class="small-btn pet-feed" id="petCollectionBtn">🐾 Choose companion</button>
+    </section>
+
+    <section class="card log-card">
+      <h2>Adventure l<span class="debug-trigger" id="debugTrigger" title="Nothing suspicious here">o</span>g</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </aside>
+</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="modal wide start-modal">
+    <div class="start-art">🎲⚔️🌈🐉</div>
+    <h2>Dicebound</h2>
+    <p class="subtitle">Welcome to <b>Alpha v1</b>. Begin as the Ranger, unlock an increasingly unreasonable roster through permanent feats, conquer six escalating roads, and return in Nightmare Mode when you are feeling irresponsibly confident.</p>
+    <div class="legacy-strip"><span>Legacy level <strong id="startLegacyLevel">1</strong> · <strong id="startLegacyXp">0 / 20 XP</strong></span><button class="small-btn" id="startTalentBtn">Open talent tree</button></div>
+    <div class="rules" style="display:none">
+      <div class="rule"><b>🏹 Unlock classes</b><br>Ranger starts unlocked. Guardians unlock Sorcerer, Fighter, Monk and Clown. Prestige unlocks Rouge; total damage unlocks Berserker; extreme Defense and Echo unlock Turtle and Frog. DiBo hides one final geometric surprise at level 30.</div>
+      <div class="rule"><b>🎲 Roll with momentum</b><br>Every crossed tile grants run XP. Rolls of 4–6 also earn Fast Travel XP, so high rolls are valuable.</div>
+      <div class="rule"><b>👹 Enemy packs</b><br>Before the first miniboss, every fight is one-on-one. Packs begin after tile 50 and become more common on later roads.</div>
+      <div class="rule"><b>⬆️ Level up</b><br>Choose rarity-based upgrades for this run.</div>
+      <div class="rule"><b>🧔 Merchants</b><br>A shop appears every 12 tiles and compares gear against your equipped item.</div>
+      <div class="rule"><b>✨ Divine blessing</b><br>Exactly one appears on every board and grants a ridiculous reward.</div>
+      <div class="rule"><b>🧰 Equipment</b><br>Fill eight gear slots with loot from monsters, chests and merchants.</div>
+      <div class="rule"><b>🌳 Legacy talents</b><br>Every tile traveled becomes fast permanent XP for a larger six-branch tree with strict prerequisites.</div>
+      <div class="rule"><b>🔥 Fixed camps</b><br>Campfires always appear at known positions instead of being randomly generated.</div>
+      <div class="rule"><b>🎁 Power shrines</b><br>Land on one to choose a free rarity-based powerup without leveling.</div>
+      <div class="rule"><b>🎡 Fortune wheels</b><br>A separate wheel event grants visible random rewards.</div>
+      <div class="rule"><b>👑 Halfway miniboss</b><br>Tile 50 guarantees one pet cookie and a Legendary powerup choice. Boss damage also works against minibosses.</div>
+      <div class="rule"><b>🎲 Elemental menagerie</b><br>DiBo rolls a random Fire, Ice, Electric, Nature, Light or Void attack. Deal or heal 500 elemental points to unlock each permanent pet.</div>
+      <div class="rule"><b>🔮 Mystic & Blessing talents</b><br>Trade HP for forbidden power, and unlock talents that add a second Mystic and Blessing.</div>
+      <div class="rule"><b>🌈 Elemental weapons</b><br>Weapons can carry ten strange elements. Some procs strike one target, others hit entire enemy packs, and each element unlocks its own pet.</div>
+      <div class="rule"><b>🐉 Five board levels</b><br>Defeating each final guardian opens a harder road. Boards 4 and 5 are shorter, denser endgame roads.</div>
+      <div class="rule"><b>🌈 Impossible Road Artifact set</b><br>Seven chase pieces each have a unique effect. Later roads add more pieces and stronger set thresholds.</div>
+      <div class="rule"><b>♻️ Prestige & Nightmare</b><br>Prestige grants permanent random stats. At 20 Prestige you gain one extra heirloom slot, and at 60 Prestige you gain another. Defeat Board 3 to unlock Nightmare Mode.</div>
+    </div>
+    <div class="heirloom-line" id="startHeirloom">No heirlooms are currently bound.</div>
+    <div class="nightmare-toggle locked" id="nightmareBox"><div><strong>🌑 Nightmare Mode</strong><span id="nightmareText">Defeat the Board 3 boss to unlock: enemies gain double HP, attack and defense; rewards are halved; Legacy XP is multiplied by five.</span></div><button class="small-btn" id="nightmareToggle">Locked</button></div>
+    <div class="class-grid" id="classGrid"></div>
+    <button class="main-btn" id="startBtn">Begin as Ranger</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="combatOverlay">
+  <div class="modal">
+    <h2 id="combatTitle">Battle!</h2>
+    <p class="subtitle" id="combatSubtitle">A creature blocks the road.</p>
+    <div class="combat-head">
+      <div class="fighter">
+        <div class="fighter-icon" id="combatPlayerIcon">🛡️</div>
+        <div class="fighter-name" id="combatPlayerName">Fighter</div>
+        <div class="combat-pet" id="combatPet">🎲</div>
+        <div class="bar-label"><span>HP</span><span id="combatPlayerHp">30 / 30</span></div>
+        <div class="bar hpbar"><i id="combatPlayerFill"></i></div><div class="status-dots" id="playerStatusDots"></div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="fighter">
+        <div class="fighter-icon" id="enemyIcon">👹</div>
+        <div class="fighter-name" id="enemyName">Goblin</div>
+        <div class="enemy-weakness" id="enemyWeakness">Weakness: 🔥 Fire</div>
+        <div class="bar-label"><span>HP</span><span id="enemyHpText">12 / 12</span></div>
+        <div class="bar enemy-bar"><i id="enemyHpFill"></i></div><div class="status-dots" id="enemyStatusDots"></div>
+      </div>
+      <div class="attack-fx" id="attackFx"></div>
+    </div>
+    <div class="enemy-party" id="enemyParty"></div>
+    <div class="boss-special hidden" id="bossSpecialIndicator">⚠️ Special attack in 5 turns</div>
+    <div class="combat-text" id="combatText">Choose your action.</div>
+    <div class="battle-victory hidden" id="battleVictory" aria-live="polite">
+      <div class="battle-victory-kicker">BATTLE COMPLETE</div>
+      <div class="battle-victory-title" id="battleVictoryTitle">🏆 Victory!</div>
+      <div class="battle-victory-defeated" id="battleVictoryDefeated">The road is clear.</div>
+      <div class="battle-victory-rewards">
+        <div class="battle-victory-reward"><span>✨ XP</span><strong id="battleVictoryXp">+0</strong></div>
+        <div class="battle-victory-reward"><span>🪙 Gold</span><strong id="battleVictoryGold">+0</strong></div>
+        <div class="battle-victory-reward" id="battleVictoryCookieBox"><span>🍪 Cookies</span><strong id="battleVictoryCookies">+0</strong></div>
+      </div>
+      <div class="battle-victory-hint">The complete battle log remains below if you want to inspect what happened.</div>
+      <button class="main-btn battle-victory-continue" id="battleVictoryContinue">Continue</button>
+    </div>
+    <div class="combat-history" id="combatHistory" aria-label="Battle history"></div>
+    <div class="ultimate-wrap">
+      <div class="ultimate-label"><span id="ultimateName">Ultimate</span><span id="ultimateText">0 / 100</span></div>
+      <div class="ultimate-bar"><i id="ultimateFill"></i></div>
+    </div>
+    <div class="combat-actions">
+      <button class="combat-btn primary action-tooltip" id="attackBtn" data-tip="Attack the selected enemy. Each Echo Strike rolls its own damage, critical hit and elemental activation.">⚔️ Attack</button>
+      <button class="combat-btn guard action-tooltip" id="guardBtn" data-tip="Reduce ordinary enemy damage and gain more ultimate charge. Guardian specials ignore Dodge and barriers, but Guard still reduces their damage.">🛡️ Guard</button>
+      <button class="combat-btn potion action-tooltip" id="potionBtn" data-tip="Consume one potion to restore HP. The amount scales with level and Potion Mastery.">🧪 Potion</button>
+      <button class="combat-btn ultimate action-tooltip" id="ultimateBtn" data-tip="Spend 100 ultimate charge to use your class ultimate.">💥 Ultimate</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="levelOverlay">
+  <div class="modal wide">
+    <h2>Level up!</h2>
+    <p class="subtitle" id="levelSubtitle">Choose one powerup for this run.</p>
+    <div class="choice-grid" id="choiceGrid"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="eventOverlay">
+  <div class="modal">
+    <h2>Mystic Slot Machine</h2>
+    <p class="subtitle">Match symbols for stronger rewards. Three skulls are, technically speaking, not ideal.</p>
+    <div class="slot-machine">
+      <div class="reel" id="reel1">❔</div>
+      <div class="reel" id="reel2">❔</div>
+      <div class="reel" id="reel3">❔</div>
+    </div>
+    <div class="slot-result" id="slotResult">The machine waits...</div>
+    <button class="main-btn" id="spinBtn">Spin</button>
+    <button class="small-btn" id="eventContinueBtn" style="width:100%;margin-top:9px;display:none">Continue</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="wheelOverlay">
+  <div class="modal">
+    <h2>Wheel of Fortune</h2>
+    <p class="subtitle">One spin. Eight outcomes. The wheel is completely fair, according to the wheel.</p>
+    <div class="fortune-wheel-wrap">
+      <div class="wheel-pointer">▼</div>
+      <div class="fortune-wheel" id="fortuneWheel">
+        <span style="--i:0">🪙</span><span style="--i:1">❤️</span><span style="--i:2">🍪</span><span style="--i:3">⚔️</span>
+        <span style="--i:4">🎁</span><span style="--i:5">🧪</span><span style="--i:6">⭐</span><span style="--i:7">💀</span>
+      </div>
+    </div>
+    <div class="wheel-result" id="wheelResult">The wheel waits for a victim.</div>
+    <button class="main-btn" id="wheelSpinBtn">Spin the wheel</button>
+    <button class="small-btn" id="wheelContinueBtn" style="width:100%;margin-top:9px;display:none">Continue</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="powerupOverlay">
+  <div class="modal wide">
+    <div class="start-art" style="font-size:58px">🎁✨</div>
+    <h2 id="powerupTitle">Free Powerup</h2>
+    <p class="subtitle" id="powerupSubtitle">Choose one gift. No level required.</p>
+    <div class="choice-grid" id="powerupGrid"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="merchantOverlay">
+  <div class="modal wide">
+    <div class="start-art" style="font-size:58px">🧔‍♂️🛒</div>
+    <h2 id="merchantTitle">Roadside Merchant</h2>
+    <p class="subtitle" id="merchantSubtitle">A suspiciously well-positioned trader appears every twelve tiles.</p>
+    <div class="shop-gold">Your purse: <span id="merchantGold">0</span> gold</div>
+    <div class="merchant-notice" id="merchantNotice"></div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <button class="small-btn" id="merchantContinueBtn" style="width:100%">Leave merchant</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="blessingOverlay">
+  <div class="modal wide">
+    <div class="start-art" style="font-size:62px">✨👁️✨</div>
+    <h2>Blessing from God</h2>
+    <p class="subtitle">The heavens briefly notice you. Choose one outrageously powerful blessing.</p>
+    <div class="blessing-grid" id="blessingGrid"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="mysticOverlay">
+  <div class="modal">
+    <div class="start-art" style="font-size:62px">🔮🫀</div>
+    <h2>The Mystic</h2>
+    <p class="subtitle">The Mystic offers forbidden power. Lose 10 maximum HP for the rest of this run and receive the Legendary gift below.</p>
+    <div class="loot-card legendary" id="mysticOffer"></div>
+    <div class="loot-actions">
+      <button class="main-btn" id="acceptMysticBtn">Accept the bargain</button>
+      <button class="small-btn" id="declineMysticBtn">Refuse</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="lootOverlay">
+  <div class="modal">
+    <div class="start-art" style="font-size:58px">🎁</div>
+    <h2 id="lootTitle">Equipment found</h2>
+    <p class="subtitle" id="lootSubtitle">Equip it now or sell it. Only equipped items can be chosen as an heirloom after the run.</p>
+    <div class="loot-card" id="lootCard"></div>
+    <div class="loot-actions">
+      <button class="main-btn" id="equipLootBtn">Equip item</button>
+      <button class="small-btn" id="sellLootBtn">Sell item</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="buffOverlay">
+  <div class="modal wide">
+    <h2>Current Run Buffs</h2>
+    <p class="subtitle">Everything affecting this adventurer right now: class traits, selected powerups, equipment and derived combat modifiers.</p>
+    <div class="buff-grid" id="buffGrid"></div>
+    <button class="small-btn" id="buffCloseBtn" style="width:100%;margin-top:10px">Return to the road</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="talentOverlay">
+  <div class="modal wide talent-modal">
+    <h2>✦ Legacy Constellation</h2>
+    <p class="subtitle">Chart a path through the Legacy Constellation. <b>Talent points bought during a run are queued and activate when the next run begins.</b></p>
+    <div class="talent-summary">
+      <div class="stat"><span>Legacy level</span><strong id="metaLevel">1</strong></div>
+      <div class="stat"><span>Legacy XP</span><strong id="metaXp">0 / 20</strong></div>
+      <div class="stat"><span>Points</span><strong id="metaPoints">0</strong></div>
+      <div class="stat"><span>Runs</span><strong id="metaRuns">0</strong></div>
+      <div class="stat"><span>Pet</span><strong id="metaPet">Lv 1</strong></div>
+      <div class="stat"><span>Heirlooms</span><strong id="metaHeirlooms">0 / 1</strong></div>
+      <div class="stat"><span>Prestige</span><strong id="metaPrestige">0</strong></div>
+    </div>
+    <div class="talent-tools"><button class="small-btn" id="talentZoomOut">➖</button><span id="talentZoomLabel">75%</span><button class="small-btn" id="talentZoomIn">➕</button><button class="small-btn" id="talentZoomReset">Center</button></div>
+    <div class="talent-viewport" id="talentViewport"><div class="talent-canvas" id="talentGrid"></div></div>
+    <div class="prestige-box"><strong>Prestige the tree</strong><br>Every 9 total talent points becomes one permanent random stat point. Prestige resets the tree and Legacy level to 1. Prestige ends the current run and returns to class selection. Choose one surviving heirloom, or two after reaching 20 Prestige points.<div class="prestige-stats" id="prestigeStats">No permanent Prestige stats yet.</div></div>
+    <button class="main-btn" id="prestigeBtn">♻️ Prestige talent tree</button>
+    <p class="talent-note"><b>New talent ranks activate on your next run.</b> Progress is stored locally in this browser. Moving or renaming the HTML file may create a separate save in some browsers.</p>
+    <button class="small-btn" id="talentCloseBtn" style="width:100%;margin-top:10px">Close talent tree</button>
+    <button class="linklike" id="resetMetaBtn" style="display:block;margin:12px auto 0">Reset permanent progress</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="prestigeHeirloomOverlay">
+  <div class="modal">
+    <div class="start-art" style="font-size:56px">♻️🧰</div>
+    <h2>Choose surviving heirlooms</h2>
+    <p class="subtitle">Prestige removes talent-based heirloom slots. Keep one permanent heirloom—or two after reaching 20 Prestige points.</p>
+    <div class="prestige-keep-grid" id="prestigeHeirloomGrid"></div>
+    <button class="main-btn" id="prestigeKeepConfirmBtn" style="width:100%;margin-bottom:8px">Confirm surviving heirlooms</button>
+    <button class="small-btn" id="prestigeCancelBtn" style="width:100%">Cancel Prestige</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endOverlay">
+  <div class="modal">
+    <div class="start-art" id="endArt">🏆</div>
+    <h2 id="endTitle" class="victory-title">Victory!</h2>
+    <p class="subtitle" id="endText">You conquered the road.</p>
+    <div class="reward-line">
+      <div class="reward-pill">Level <span id="endLevel">1</span></div>
+      <div class="reward-pill"><span id="endGold">0</span> gold</div>
+      <div class="reward-pill"><span id="endTurns">0</span> rolls</div>
+      <div class="reward-pill">+<span id="endLegacyXp">0</span> Legacy XP</div>
+      <div class="reward-pill">Gold tribute +<span id="endGoldLegacyXp">0</span> XP</div>
+    </div>
+    <div class="heirloom-line" id="endHeirloomStatus">Choose equipped items to bind permanently.</div>
+    <div class="gear-keep-grid" id="endGearGrid"></div>
+    <button class="main-btn" id="endRestartBtn">Return to camp</button>
+    <button class="small-btn" id="endTalentBtn" style="width:100%;margin-top:9px">Open talent tree</button>
+  </div>
+</div>
+
+
+<div class="overlay hidden" id="petCollectionOverlay">
+  <div class="modal wide">
+    <h2>Elemental companions</h2>
+    <p class="subtitle">Choose one unlocked pet. Each attacks after every player action with its own element. Progress is permanent.</p>
+    <div class="pet-collection-grid" id="petCollectionGrid"></div>
+    <button class="small-btn" id="petCollectionClose" style="width:100%;margin-top:12px">Close companions</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="diceChoiceOverlay">
+  <div class="modal">
+    <h2>Choose fate</h2>
+    <p class="subtitle">The board remains visible. Choose the die result.</p>
+    <div class="dice-choice-grid" id="diceChoiceGrid"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="debugOverlay">
+  <div class="modal wide">
+    <h2>🧪 Secret Testing Menu</h2>
+    <p class="subtitle">Developer conveniences. These buttons intentionally ruin balance.</p>
+    <div class="debug-grid" id="debugGrid">
+      <button class="small-btn" data-debug="runxp">+250 run XP</button>
+      <button class="small-btn" data-debug="level">+5 run levels</button>
+      <button class="small-btn" data-debug="legacy">+5 Legacy levels</button>
+      <button class="small-btn" data-debug="talents">+25 talent points</button>
+      <button class="small-btn" data-debug="gold">+5,000 gold</button>
+      <button class="small-btn" data-debug="cookies">+25 cookies</button>
+      <button class="small-btn" data-debug="heal">Full heal + ultimate</button>
+      <button class="small-btn" data-debug="unlock">Unlock all classes/pets</button>
+      <button class="small-btn" data-debug="mythic">Equip full Artifact set</button><button class="small-btn" data-debug="dibo50">Set DiBo to level 30</button><button class="small-btn" data-debug="nightmare">Unlock Nightmare</button><button class="small-btn" data-debug="unlock_hell">🔥 Unlock Hell Mode</button>
+      <button class="small-btn" data-debug="board2">Jump to Board 2</button>
+      <button class="small-btn" data-debug="board3">Jump to Board 3</button><button class="small-btn" data-debug="board4">Jump to Board 4</button>
+      <button class="small-btn" data-debug="boss">Jump to final boss</button>
+    </div>
+    <button class="main-btn" id="debugCloseBtn" style="width:100%;margin-top:12px">Close testing menu</button>
+  </div>
+</div>
+
+
+<div class="overlay hidden" id="infoOverlay">
+  <div class="modal wide">
+    <h2>ℹ️ Roadkeeper's Guide</h2>
+    <p class="subtitle">Rules, class scaling, progression, equipment and portable saves. Expand only the categories you care about.</p>
+    <div class="info-tabs" id="infoTabs">
+      <button class="small-btn active" data-info-tab="guide">📖 Guide</button>
+      <button class="small-btn" data-info-tab="stats">📊 Stats</button>
+      <button class="small-btn" data-info-tab="elements">🌈 Elements</button>
+      <button class="small-btn" data-info-tab="save">💾 Save</button>
+    </div>
+    <div class="info-tab-panel active" data-info-panel="guide"><div class="info-sections" id="infoSections"></div></div>
+    <div class="info-tab-panel" data-info-panel="stats"><div class="lifetime-stats" id="lifetimeStats"></div></div>
+    <div class="info-tab-panel" data-info-panel="elements"><div class="element-guide" id="elementGuide"></div></div>
+    <div class="info-tab-panel" data-info-panel="save">
+      <h3 style="margin:4px 0 8px">Transfer save</h3>
+      <textarea class="save-textarea" id="saveTransferText" placeholder="Exported save data appears here. Paste save data here to import."></textarea>
+      <div class="save-tools"><button class="small-btn" id="exportSaveBtn">Export save</button><button class="small-btn" id="importSaveBtn">Import save</button></div>
+    </div>
+    <button class="main-btn" id="infoCloseBtn" style="margin-top:12px">Close guide</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="achievementOverlay">
+  <div class="modal wide">
+    <h2>🏆 Achievements</h2><p class="subtitle">Milestones are tracked by the current transferable save.</p>
+    <div class="achievement-grid" id="achievementGrid"></div>
+    <button class="main-btn" id="achievementCloseBtn" style="margin-top:12px">Close achievements</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="bloodwellOverlay">
+  <div class="modal wide">
+    <div class="start-art" style="font-size:58px">🩸⛲</div><h2>The Bloodwell</h2>
+    <p class="subtitle">Sacrifice one resource. The well increases a different random stat for this run.</p>
+    <div class="bloodwell-stats" id="bloodwellStats"></div>
+    <div class="sacrifice-grid" id="bloodwellGrid"></div>
+    <button class="small-btn" id="bloodwellLeaveBtn" style="width:100%;margin-top:10px">Leave the well untouched</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="gamblerOverlay">
+  <div class="modal">
+    <div class="start-art" style="font-size:58px">🪙🎲</div><h2>The Gambler</h2>
+    <p class="subtitle">Bet a portion of your current gold on a fair coinflip. Win doubles the wager; loss removes it.</p>
+    <div class="gamble-grid" id="gambleGrid"></div>
+    <div class="wheel-result" id="gambleResult">Choose a wager.</div>
+    <button class="small-btn" id="gamblerLeaveBtn" style="width:100%;margin-top:10px">Leave</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<div class="overlay hidden app-dialog-overlay" id="appConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">
+  <div class="modal app-dialog">
+    <h2 id="appConfirmTitle">Confirm</h2>
+    <div class="app-dialog-message" id="appConfirmMessage"></div>
+    <div class="app-dialog-actions">
+      <button class="small-btn" id="appConfirmCancel">Cancel</button>
+      <button class="main-btn" id="appConfirmAccept">Confirm</button>
+    </div>
+  </div>
+</div>
+<div class="touch-tip-popover hidden" id="touchTipPopover" role="status" aria-live="polite"></div>
+<script src="js/assets.js"></script>
+<script src="js/rng.js"></script>
+<script src="js/native-http-host.js"></script>
+<script src="js/wrapper-contract.js"></script>
+<script src="js/platform.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/save-system.js"></script>
+<script src="js/dicebound.js"></script>
+</body>
+</html>
