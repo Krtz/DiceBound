@@ -1,0 +1,38 @@
+# DiceBound generated release artifacts
+*.exe
+*.zip
+*.7z
+*.msi
+
+# Local build output
+wrapper-source/dist/
+wrapper-source/build/
+build/
+dist/
+
+# Runtime / user data
+runtime-cache/
+saves/
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Go
+*.test
+*.out
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*~
