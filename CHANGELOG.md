@@ -14,6 +14,8 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Added deterministic boundary and immutability tests for the extracted weighted-selection module.
 - Extracted guardian Artifact-access rates, ordinary guardian drop gates, rarity tables/promotions and secret-signature rates into `runtime/js/items/loot.js` without changing outcomes or RNG order.
 - Added deterministic equivalence tests across every Board, guardian type and difficulty-mode combination for the new loot-policy owner.
+- Moved the complete 25-class content registry into `runtime/js/classes/registry.js`, while preserving the recovered runtime's read-only compatibility view and all class data exactly.
+- Added deterministic registry snapshot, isolation and ownership tests so future class mechanics and live descriptions can evolve behind an explicit module boundary.
 
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 
