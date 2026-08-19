@@ -17,10 +17,11 @@ platform.js
 storage.js
 save-system.js
 items/artifacts.js
+items/loot.js
 dicebound.js
 ```
 
-The platform/storage/save/RNG files are useful seams outside the recovered monolith. Phase 1 also extracts Artifact slot metadata and weighted selection into `items/artifacts.js`; `dicebound.js` remains the compatibility owner for the Artifact item factories and most gameplay, rendering and progression logic.
+The platform/storage/save/RNG files are useful seams outside the recovered monolith. The item layer now owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains concrete item factories and loot presentation/orchestration.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -99,7 +100,7 @@ Prefer pure/data-heavy regions first:
 3. other pure helpers currently embedded in the monolith;
 4. registries that do not directly own DOM or combat state.
 
-The first Phase 1 extraction moves the existing Artifact slot metadata, weight table and weighted selection into `items/artifacts.js`. The monolith temporarily retains a slot-to-item-factory adapter until equipment generation moves into its own domain. The extraction preserves the Beta 0.6.1 weights and guardian access rates exactly; issue #22 remains a separate balance change.
+The first Phase 1 extraction moved Artifact slot metadata, its weight table and weighted selection into `items/artifacts.js`. The next extraction moves guardian Artifact-access rates, ordinary guardian drop gates, rarity tables/promotions and secret-signature rates into `items/loot.js`. Concrete item factories and the callback-driven presentation chain remain temporarily in the monolith. These policy modules are independent and have no circular dependency.
 
 ### Phase 2 — self-contained gameplay domains
 
@@ -171,6 +172,7 @@ python tools/validate_runtime_architecture.py
 python tools/validate_asset_architecture.py
 python tools/refresh_runtime_manifest.py
 node tools/test_artifacts_module.js
+node tools/test_loot_module.js
 ```
 
 `validate_runtime_architecture.py` intentionally has two classes of findings:
@@ -183,7 +185,8 @@ Future extraction PRs should add focused tests for pure logic as soon as it beco
 ## Coordination with other issues
 
 - #33/#35 save/resume should consume the modular state/save boundaries rather than create another parallel persistence path.
-- #22 Artifact weighting now has one isolated table to change, but remains separate from the behavior-preserving architecture work.
+- #22 Artifact weighting was completed as a separate isolated balance PR after Artifact ownership moved out of the monolith.
+- #3 guardian-loot tuning now has isolated policy tables/helpers in `items/loot.js`; future tuning must remain separate from the behavior-preserving extraction.
 - #28 Gloves and #25 character panel become easier once equipment ownership is explicit.
 - #38 pack identity becomes easier once board model and board rendering have a clean boundary.
 - #31 compatibility-mirror removal belongs near the end of this migration, not at the beginning.
