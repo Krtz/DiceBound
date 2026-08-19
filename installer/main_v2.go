@@ -339,9 +339,21 @@ func installSelf(dir string) error {
 	return os.Rename(tmp, dst)
 }
 func shortcuts(c Config, game string) error {
+	destinations := `$d=Join-Path ([Environment]::GetFolderPath('Desktop')) 'DiceBound.lnk';$s=Join-Path (Join-Path ([Environment]::GetFolderPath('StartMenu')) 'Programs') 'DiceBound.lnk'`
+	return updateShortcuts(c, game, destinations)
+}
+func updateShortcuts(c Config, game, destinations string) error {
 	launcher := filepath.Join(c.InstallDir, launcherName)
-	script := fmt.Sprintf(`$ErrorActionPreference='Stop';$w=New-Object -ComObject WScript.Shell;$d=Join-Path ([Environment]::GetFolderPath('Desktop')) 'DiceBound.lnk';$s=Join-Path (Join-Path ([Environment]::GetFolderPath('StartMenu')) 'Programs') 'DiceBound.lnk';function L($p){$x=$w.CreateShortcut($p);$x.TargetPath='%s';$x.WorkingDirectory='%s';$x.IconLocation='%s,0';$x.Save()};if(%s){L $d}else{Remove-Item $d -Force -ErrorAction SilentlyContinue};if(%s){L $s}else{Remove-Item $s -Force -ErrorAction SilentlyContinue}`, psq(launcher), psq(c.InstallDir), psq(game), psbool(c.Desktop), psbool(c.StartMenu))
-	return ps("-Command", script).Run()
+	script := fmt.Sprintf(`$ErrorActionPreference='Stop';$w=New-Object -ComObject WScript.Shell;$target='%s';$workingDirectory='%s';$icon='%s,0';%s;function Set-Link($p){$parent=Split-Path -Parent $p;if(-not (Test-Path -LiteralPath $parent -PathType Container)){New-Item -ItemType Directory -Path $parent -Force|Out-Null};$x=$w.CreateShortcut($p);$x.TargetPath=$target;$x.WorkingDirectory=$workingDirectory;$x.IconLocation=$icon;$x.Save();$check=$w.CreateShortcut($p);if($check.TargetPath -ne $target){throw "Shortcut target verification failed for $p. Expected '$target', got '$($check.TargetPath)'."}};function Remove-Link($p){if(Test-Path -LiteralPath $p -PathType Leaf){Remove-Item -LiteralPath $p -Force;if(Test-Path -LiteralPath $p){throw "Could not remove shortcut '$p'."}}};if(%s){Set-Link $d}else{Remove-Link $d};if(%s){Set-Link $s}else{Remove-Link $s}`, psq(launcher), psq(c.InstallDir), psq(game), destinations, psbool(c.Desktop), psbool(c.StartMenu))
+	output, err := ps("-Command", script).CombinedOutput()
+	if err == nil {
+		return nil
+	}
+	detail := strings.TrimSpace(string(output))
+	if detail == "" {
+		return fmt.Errorf("could not update shortcuts: %w", err)
+	}
+	return fmt.Errorf("could not update shortcuts: %s (%w)", detail, err)
 }
 func launch(p string) {
 	c := exec.Command(p)
