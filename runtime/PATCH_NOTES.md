@@ -12,6 +12,8 @@
 - Preserved every current loot value, outcome and RNG draw/order, backed by exhaustive deterministic policy-equivalence tests.
 - Moved all 25 canonical class definitions into `js/classes/registry.js` without changing stats, unlocks, descriptions, passives or ultimate metadata.
 - Preserved the compatibility monolith's read-only class view while making the class registry an independently testable owner.
+- Moved the 45-node Legacy talent tree into `js/progression/talents.js` without changing costs, ranks, descriptions, branches or prerequisites.
+- Added deterministic tree validation for registry integrity and prerequisite cycles.
 
 ---
 
