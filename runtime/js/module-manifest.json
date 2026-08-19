@@ -10,6 +10,7 @@
     "platform",
     "storage",
     "save-system",
+    "classes-registry",
     "artifacts",
     "loot",
     "dicebound-monolith"
@@ -73,6 +74,14 @@
       "provides": ["DiceboundSave"]
     },
     {
+      "id": "classes-registry",
+      "path": "js/classes/registry.js",
+      "domain": "classes/registry",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundClasses"]
+    },
+    {
       "id": "artifacts",
       "path": "js/items/artifacts.js",
       "domain": "items/artifacts",
@@ -93,7 +102,7 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "artifacts", "loot"],
+      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "artifacts", "loot"],
       "provides": []
     }
   ],
@@ -102,7 +111,6 @@
     "core/constants",
     "board",
     "combat",
-    "classes",
     "items/equipment",
     "items/consumables",
     "powerups",

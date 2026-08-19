@@ -10,6 +10,8 @@
 - Added deterministic tests for the extracted module so later balance changes such as #22 remain isolated and directly verifiable.
 - Moved guardian Artifact-access policy, ordinary guardian gear gates/rarity promotion and secret-signature rates into `js/items/loot.js` while keeping concrete equipment factories in the compatibility monolith.
 - Preserved every current loot value, outcome and RNG draw/order, backed by exhaustive deterministic policy-equivalence tests.
+- Moved all 25 canonical class definitions into `js/classes/registry.js` without changing stats, unlocks, descriptions, passives or ultimate metadata.
+- Preserved the compatibility monolith's read-only class view while making the class registry an independently testable owner.
 
 ---
 

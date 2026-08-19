@@ -16,12 +16,13 @@ wrapper-contract.js
 platform.js
 storage.js
 save-system.js
+classes/registry.js
 items/artifacts.js
 items/loot.js
 dicebound.js
 ```
 
-The platform/storage/save/RNG files are useful seams outside the recovered monolith. The item layer now owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains concrete item factories and loot presentation/orchestration.
+The platform/storage/save/RNG files are useful seams outside the recovered monolith. `classes/registry.js` owns the complete canonical 25-class data registry behind an isolated clone API. The item layer owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains class mechanics, concrete item factories and loot presentation/orchestration.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -63,6 +64,7 @@ runtime/js/
 ├─ board/
 ├─ combat/
 ├─ classes/
+│  └─ registry.js
 ├─ items/
 │  ├─ equipment.js
 │  ├─ loot.js
@@ -100,7 +102,7 @@ Prefer pure/data-heavy regions first:
 3. other pure helpers currently embedded in the monolith;
 4. registries that do not directly own DOM or combat state.
 
-The first Phase 1 extraction moved Artifact slot metadata, its weight table and weighted selection into `items/artifacts.js`. The next extraction moves guardian Artifact-access rates, ordinary guardian drop gates, rarity tables/promotions and secret-signature rates into `items/loot.js`. Concrete item factories and the callback-driven presentation chain remain temporarily in the monolith. These policy modules are independent and have no circular dependency.
+The first Phase 1 extraction moved Artifact slot metadata, its weight table and weighted selection into `items/artifacts.js`. The next extraction moved guardian Artifact-access rates, ordinary guardian drop gates, rarity tables/promotions and secret-signature rates into `items/loot.js`. The class-registry extraction then moved all 25 canonical class definitions into `classes/registry.js`. Its clone API intentionally feeds the monolith's existing read-only compatibility proxy, preserving harmless patch-era mutation attempts without exposing mutable authoritative module state. Concrete class mechanics, item factories and the callback-driven presentation chain remain temporarily in the monolith. These modules are independent and have no circular dependency.
 
 ### Phase 2 — self-contained gameplay domains
 
@@ -173,6 +175,7 @@ python tools/validate_asset_architecture.py
 python tools/refresh_runtime_manifest.py
 node tools/test_artifacts_module.js
 node tools/test_loot_module.js
+node tools/test_class_registry.js
 ```
 
 `validate_runtime_architecture.py` intentionally has two classes of findings:
