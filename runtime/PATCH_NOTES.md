@@ -1,9 +1,13 @@
 # Unreleased — post-Beta 0.6.1 Git development
 
+## Artifact balance (#22)
+- Changed the Artifact table to Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7% and class Weapon 4%.
+- The class Weapon is now the unique rarest table result; guardian Board/mode access rates and one-random-draw selection are unchanged.
+
 ## Runtime architecture (#40)
 - Moved Artifact slot metadata, the existing 30/20/16/14/9/7/4 weights and weighted selection into `js/items/artifacts.js`.
 - Kept guardian access rates, item generation, loot outcomes and save behavior unchanged.
-- Added deterministic tests for the extracted module; issue #22 remains a separate balance proposal.
+- Added deterministic tests for the extracted module so later balance changes such as #22 remain isolated and directly verifiable.
 
 ---
 

@@ -19,53 +19,61 @@ assert.ok(Object.isFrozen(artifacts.entries));
 assert.ok(artifacts.entries.every(Object.isFrozen));
 
 const expectedEntries = [
-  { slot: "weapon", weight: 30, label: "Impossible Road class weapon" },
-  { slot: "boots", weight: 20, label: "Titanstep, Boots of the Astral Road" },
-  { slot: "legs", weight: 16, label: "Paradox Weave, Legguards Outside Time" },
-  { slot: "ring", weight: 14, label: "Ouroboros Halo, Ring of the Fifth Road" },
-  { slot: "hat", weight: 9, label: "Crown of the Road That Should Not Exist" },
-  { slot: "amulet", weight: 7, label: "The Devourer's Last Eye" },
-  { slot: "offhand", weight: 4, label: "Event Horizon Ward, Offhand Beyond the Sixth Road" },
+  { slot: "boots", weight: 30, label: "Titanstep, Boots of the Astral Road" },
+  { slot: "legs", weight: 20, label: "Paradox Weave, Legguards Outside Time" },
+  { slot: "ring", weight: 16, label: "Ouroboros Halo, Ring of the Fifth Road" },
+  { slot: "hat", weight: 14, label: "Crown of the Road That Should Not Exist" },
+  { slot: "amulet", weight: 9, label: "The Devourer's Last Eye" },
+  { slot: "offhand", weight: 7, label: "Event Horizon Ward, Offhand Beyond the Sixth Road" },
+  { slot: "weapon", weight: 4, label: "Impossible Road class weapon" },
 ];
 assert.deepEqual(JSON.parse(JSON.stringify(artifacts.entries)), expectedEntries);
+const minimumWeight = Math.min(...artifacts.entries.map((entry) => entry.weight));
+const minimumSlots = artifacts.entries
+  .filter((entry) => entry.weight === minimumWeight)
+  .map((entry) => entry.slot);
+assert.equal(minimumSlots.length, 1, "Artifact table must have exactly one minimum-weight slot");
+assert.equal(minimumSlots[0], "weapon", "weapon must be the unique minimum-weight Artifact");
 
 const boundaryCases = [
-  [0, "weapon"],
-  [0.3, "weapon"],
-  [0.300001, "boots"],
-  [0.5, "boots"],
-  [0.500001, "legs"],
-  [0.66, "legs"],
-  [0.660001, "ring"],
-  [0.8, "ring"],
-  [0.800001, "hat"],
-  [0.89, "hat"],
-  [0.890001, "amulet"],
-  [0.96, "amulet"],
-  [0.960001, "offhand"],
-  [1, "offhand"],
+  [0, "boots"],
+  [0.3, "boots"],
+  [0.300001, "legs"],
+  [0.5, "legs"],
+  [0.500001, "ring"],
+  [0.66, "ring"],
+  [0.660001, "hat"],
+  [0.8, "hat"],
+  [0.800001, "amulet"],
+  [0.89, "amulet"],
+  [0.890001, "offhand"],
+  [0.96, "offhand"],
+  [0.960001, "weapon"],
+  [1, "weapon"],
 ];
 for (const [roll, expectedSlot] of boundaryCases) {
   assert.equal(artifacts.pick(() => roll).slot, expectedSlot, `unexpected slot at roll ${roll}`);
 }
 assert.throws(() => artifacts.pick(null), /requires a random function/);
 
-function legacyPick(randomValue) {
-  let roll = randomValue * expectedEntries.reduce((sum, entry) => sum + entry.weight, 0);
-  for (const entry of expectedEntries) {
-    roll -= entry.weight;
-    if (roll <= 0) return entry;
-  }
-  return expectedEntries[expectedEntries.length - 1];
+let randomCalls = 0;
+assert.equal(artifacts.pick(() => { randomCalls += 1; return 0.5; }).slot, "legs");
+assert.equal(randomCalls, 1, "Artifact slot selection must use exactly one random draw");
+
+const deterministicCounts = Object.fromEntries(expectedEntries.map((entry) => [entry.slot, 0]));
+for (let i = 0; i < 10000; i += 1) {
+  const slot = artifacts.pick(() => (i + 0.5) / 10000).slot;
+  deterministicCounts[slot] += 1;
 }
-for (let i = 0; i <= 10000; i += 1) {
-  const roll = i / 10000;
-  assert.equal(
-    artifacts.pick(() => roll).slot,
-    legacyPick(roll).slot,
-    `extracted picker differs from the legacy algorithm at roll ${roll}`,
-  );
-}
+assert.deepEqual(deterministicCounts, {
+  boots: 3000,
+  legs: 2000,
+  ring: 1600,
+  hat: 1400,
+  amulet: 900,
+  offhand: 700,
+  weapon: 400,
+});
 
 const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js");
 const monolith = fs.readFileSync(monolithPath, "utf8");
@@ -74,6 +82,6 @@ assert.match(monolith, /window\.DiceboundArtifacts\.pick\(random\)/);
 const factoryBlock = monolith.match(/const DB060_ARTIFACT_FACTORIES=Object\.freeze\(\{([\s\S]*?)\n\s*\}\);/);
 assert.ok(factoryBlock, "Artifact factory adapter is missing");
 const factorySlots = [...factoryBlock[1].matchAll(/^\s*([a-z]+):\(\)=>/gm)].map((match) => match[1]);
-assert.deepEqual(factorySlots, expectedEntries.map((entry) => entry.slot));
+assert.deepEqual(factorySlots.sort(), expectedEntries.map((entry) => entry.slot).sort());
 
-console.log("Artifact module behavior preserved: weights, 10,001 legacy-equivalence rolls and factory coverage pass");
+console.log("Artifact weights validated: exact table, unique weapon minimum, boundaries, one-draw selection and deterministic distribution pass");
