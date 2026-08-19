@@ -101,19 +101,17 @@
     if(fromSrc){const entry=resolveGuardianArt(fromSrc);if(entry)return Object.freeze({key:fromSrc,src:entry.boardMarker,alt:img?.alt||fromSrc});}
     return resolveMarkerByName(img?.alt||'');
   }
-  function decorateBoardMarkerNode(node){
-    if(node.matches?.('.stage-enemy')){
-      const sprite=node.querySelector('.stage-sprite');if(!sprite)return;
-      const entry=resolveMarkerByName(node.getAttribute('title')||'');if(!entry||sprite.dataset.roadMarker===entry.key)return;
-      sprite.dataset.roadMarker=entry.key;sprite.replaceChildren(markerImage(entry,entry.alt,'db-road-stage-marker db-road-marker'));
-      return;
-    }
+  function decorateBoardTile(node){
     if(!node.matches?.('.tile'))return;
     const icon=node.querySelector('.tile-icon');if(!icon)return;
     let entry=null,count=1;
     if(node.classList.contains('enemy')){
-      const label=node.querySelector('.tile-label')?.textContent||'';entry=resolveEnemyMarker(label);if(!entry)return;
-      count=Number(icon.querySelector('b')?.textContent?.replace(/\D/g,''))||Number(label.match(/(\d+)\s+enemies/i)?.[1])||Number(label.match(/×\s*(\d+)/)?.[1])||1;
+      const label=node.querySelector('.tile-label')?.textContent||'';
+      entry=resolveEnemyMarker(label);
+      // Current Beta 0.6 mixed packs expose only "Enemy pack · N" in the DOM,
+      // so leave their generic pack glyph intact instead of showing the wrong creature.
+      if(!entry)return;
+      count=Number(icon.querySelector('b')?.textContent?.replace(/\D/g,''))||Number(label.match(/(\d+)\s+enemies/i)?.[1])||Number(label.match(/×\s*(\d+)/)?.[1])||Number(label.match(/pack\s*·\s*(\d+)/i)?.[1])||1;
     }else if(node.classList.contains('miniboss')||node.classList.contains('boss'))entry=markerEntryForGuardianTile(node);
     else if(node.classList.contains('devilboss'))entry={key:'pale-devil',src:manifest.secretBosses['pale-devil'].boardMarker,alt:'Pale Devil'};
     if(!entry||icon.dataset.roadMarker===entry.key)return;
@@ -121,17 +119,25 @@
     if(count>1){const wrap=document.createElement('span');wrap.className='db-enemy-pack-art';wrap.append(markerImage(entry,entry.alt));const badge=document.createElement('b');badge.textContent=`×${count}`;wrap.append(badge);icon.replaceChildren(wrap);}
     else icon.replaceChildren(markerImage(entry,entry.alt,((node.classList.contains('miniboss')||node.classList.contains('boss')||node.classList.contains('devilboss'))?'db060-guardian-tile-art ':'')+'db-road-marker'));
   }
+  function decorateCombatTarget(chip){
+    if(!chip.matches?.('.enemy-chip'))return;
+    const entry=resolveMarkerByName(chip.getAttribute('title')||chip.textContent||'');if(!entry)return;
+    let img=chip.querySelector('img.db-road-target-image');
+    if(img?.dataset.roadMarker===entry.key)return;
+    if(!img){img=markerImage(entry,entry.alt,'db-road-target-image');chip.prepend(img);}
+    else{img.src=entry.src;img.alt=entry.alt||entry.key;img.dataset.roadMarker=entry.key;}
+  }
   function decorateRoadMarkers(root=document){
     const nodes=[];
-    if(root?.matches?.('.tile,.stage-enemy'))nodes.push(root);
-    root?.querySelectorAll?.('.tile,.stage-enemy').forEach(n=>nodes.push(n));
-    nodes.forEach(decorateBoardMarkerNode);
+    if(root?.matches?.('.tile,.enemy-chip'))nodes.push(root);
+    root?.querySelectorAll?.('.tile,.enemy-chip').forEach(n=>nodes.push(n));
+    nodes.forEach(n=>n.matches('.enemy-chip')?decorateCombatTarget(n):decorateBoardTile(n));
   }
   function installRuntimeArtObserver(){
     if(!document.body||document.body.dataset.diceboundRuntimeArtObserver==='1')return false;
     document.body.dataset.diceboundRuntimeArtObserver='1';
-    if(!document.getElementById('dicebound-road-marker-style')){const style=document.createElement('style');style.id='dicebound-road-marker-style';style.textContent='.db-road-marker{display:block;object-fit:contain;max-width:100%;max-height:100%;margin:auto}.tile-icon>.db-road-marker,.db-enemy-pack-art .db-road-marker{width:42px;height:42px}.stage-sprite>.db-road-stage-marker{width:52px;height:52px}';document.head?.appendChild(style);}
-    const observer=new MutationObserver(records=>records.forEach(r=>{const host=r.target?.closest?.('.tile,.stage-enemy');if(host)decorateBoardMarkerNode(host);r.addedNodes.forEach(n=>{if(n.nodeType===1){decoratePowerupChoices(n);decorateRoadMarkers(n);}});}));
+    if(!document.getElementById('dicebound-road-marker-style')){const style=document.createElement('style');style.id='dicebound-road-marker-style';style.textContent='.db-road-marker{display:block;object-fit:contain;max-width:100%;max-height:100%;margin:auto}.tile-icon>.db-road-marker,.db-enemy-pack-art .db-road-marker{width:42px;height:42px}#combatOverlay .enemy-chip img.db-road-target-image{display:block!important;width:28px;height:28px;object-fit:contain;margin:0 auto 3px}';document.head?.appendChild(style);}
+    const observer=new MutationObserver(records=>records.forEach(r=>{const tile=r.target?.closest?.('.tile');if(tile)decorateBoardTile(tile);const chip=r.target?.closest?.('.enemy-chip');if(chip)decorateCombatTarget(chip);r.addedNodes.forEach(n=>{if(n.nodeType===1){decoratePowerupChoices(n);decorateRoadMarkers(n);}});}));
     observer.observe(document.body,{subtree:true,childList:true});
     setTimeout(()=>{decoratePowerupChoices(document);decorateRoadMarkers(document);},0);
     return true;
@@ -140,5 +146,5 @@
     if(!installRuntimeArtObserver())document.addEventListener('DOMContentLoaded',installRuntimeArtObserver,{once:true});
   }
   window.DiceboundPowerupArt=Object.freeze({version:1,nameKeys:POWERUP_NAME_KEYS,refresh:()=>decoratePowerupChoices(document)});
-  window.DiceboundRoadMarkerArt=Object.freeze({version:1,refresh:()=>decorateRoadMarkers(document),resolveMarkerByName});
+  window.DiceboundRoadMarkerArt=Object.freeze({version:2,refresh:()=>decorateRoadMarkers(document),resolveMarkerByName});
 })();
