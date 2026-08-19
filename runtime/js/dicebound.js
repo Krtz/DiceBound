@@ -3092,35 +3092,17 @@
   let nightmareMode = false;
   let pendingPrestigeKeepIds = new Set();
 
-  const legacyXpForLevel = level => Math.max(1,Math.ceil(level<=10?8+level*2:level<=25?28+(level-10)*4:level<=50?88+(level-25)*5:level<=100?213+(level-50)*8:613+(level-100)*11));
-  const defaultPrestige = () => ({count:0,maxHp:0,attack:0,defense:0,crit:0,dodge:0,luck:0,lifeSteal:0});
-  const defaultPetState=(unlocked=false)=>({level:1,xp:0,xpNext:2,unlocked,progress:0});
-  const defaultPets=()=>Object.fromEntries(Object.keys(PETS).map(id=>[id,defaultPetState(id==="neutral")]));
-  const defaultSettings = () => ({masterVolume:.70,soundPack:'synth'});
-  const defaultMeta = () => ({level:1,xp:0,xpNext:legacyXpForLevel(1),points:0,runs:0,bestTiles:0,purchased:{},heirlooms:[],pets:defaultPets(),activePet:"neutral",petCookies:0,elementProgress:Object.fromEntries(ELEMENT_KEYS.map(k=>[k,0])),damageTaken:0,prestige:defaultPrestige(),nightmareUnlocked:false,settings:defaultSettings(),unlocks:Object.fromEntries(Object.keys(CLASSES).map(id=>[id,id==="ranger"]))});
-  function normalizePurchased(raw={}){const out={...raw};if(Object.keys(out).length&&!out.roadborn)out.roadborn=1;return out;}
-  function normalizeSavedItem(item){return item?JSON.parse(JSON.stringify(item)):item;}
-  function normalizeMetaCore(parsed={}){
-    const base=defaultMeta(),pets=defaultPets();
-    Object.entries(parsed?.pets||{}).forEach(([id,state])=>{if(pets[id])pets[id]={...pets[id],...state};});
-    const elementProgress={...base.elementProgress,...(parsed?.elementProgress||{})};
-    ELEMENT_KEYS.forEach(k=>{if(elementProgress[k]>=PET_UNLOCK_REQUIREMENT)pets[k].unlocked=true;});
-    const prestige={...defaultPrestige(),...(parsed?.prestige||{})};
-    const unlocks={...base.unlocks,...(parsed?.unlocks||{})};
-    const settings={...defaultSettings(),...(parsed?.settings||{})};
-    settings.masterVolume=clamp(Number(settings.masterVolume),0,1);
-    settings.soundPack=settings.soundPack==='custom'?'custom':'synth';
-    return {...base,...parsed,xpNext:legacyXpForLevel(parsed?.level||1),purchased:normalizePurchased(parsed?.purchased||{}),heirlooms:(parsed?.heirlooms||[]).map(normalizeSavedItem),pets,elementProgress,prestige,unlocks,settings};
-  }
+  const DB_CORE_META=window.DiceboundCoreState?.createMetaService?.({classIds:Object.keys(CLASSES),petIds:Object.keys(PETS),elementIds:ELEMENT_KEYS,petUnlockRequirement:PET_UNLOCK_REQUIREMENT,saveService:window.DiceboundSave});
+  if(!DB_CORE_META)throw new Error("DiceboundCoreState must load before dicebound.js");
+  const {legacyXpForLevel,defaultPrestige,defaultPetState,defaultPets,defaultSettings,defaultMeta,normalizePurchased,normalizeSavedItem}=DB_CORE_META;
+  const normalizeMetaCore=DB_CORE_META.normalizeMeta;
   function loadMeta(){
-    const svc=window.DiceboundSave;
-    if(!svc)return normalizeMetaCore(defaultMeta());
-    const result=svc.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});
+    const result=DB_CORE_META.load();
     window.__DiceboundSaveLoadResult=result;
     return result.meta;
   }
   let meta=loadMeta();
-  function saveMeta(){try{return window.DiceboundSave?.saveMeta(meta)??false;}catch(e){console.error("Dicebound save failed",e);return false;}}
+  function saveMeta(){return DB_CORE_META.save(meta);}
   function baseClassUnlocked(id){
     if(id==="ranger")return true;
     if(meta.unlocks?.[id])return true;
@@ -3152,7 +3134,7 @@
      Mutating domain helpers return result objects; render adapters consume
      those results. This is intentionally small and framework-free.
      ======================================================================== */
-  const DiceboundStateEvents=(()=>{const listeners=new Map();return Object.freeze({on(type,fn){if(!listeners.has(type))listeners.set(type,new Set());listeners.get(type).add(fn);return()=>listeners.get(type)?.delete(fn);},emit(type,result){for(const fn of listeners.get(type)||[])try{fn(result);}catch(err){console.error(`Dicebound state listener failed: ${type}`,err);}return result;}});})();
+  const DiceboundStateEvents=window.DiceboundCoreState.createEventBus();
 
   const SlimeRougeRuntime={pendingIdentity:null,pendingUltimate:null,forcedIdentity:null,forcedUltimate:null};
   function classIdentityId(){

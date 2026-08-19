@@ -24,6 +24,8 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Moved board definitions, the special-enemy/guardian registry, equipment metadata and the achievement catalog into explicit domain owners.
 - Extended the class owner with canonical passives, tag vocabulary, unlock requirements, mechanic tags and ultimate-support metadata.
 - Preserved every extracted byte of content and the compatibility monolith's patch-era no-op behavior, with exact snapshots and nested clone-isolation tests.
+- Extracted career defaults, Legacy XP thresholds, meta normalization/save coordination and the state-domain event bus into `runtime/js/core/state.js`.
+- Added deterministic normalization/recovery and event-isolation tests, establishing the state boundary that active-run resume work can extend.
 
 ### Release identity
 - Added `runtime/js/version.js` as the single current Version/Channel owner for browser-runtime consumers; wrapper contract, platform, native host, save envelopes and the monolith now consume its frozen API.

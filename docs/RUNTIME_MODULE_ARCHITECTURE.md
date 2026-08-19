@@ -17,6 +17,7 @@ wrapper-contract.js
 platform.js
 storage.js
 save-system.js
+core/state.js
 classes/registry.js
 pets/registry.js
 board/registry.js
@@ -30,7 +31,7 @@ items/loot.js
 dicebound.js
 ```
 
-`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. The platform/storage/save/RNG files are useful seams outside the recovered monolith. Explicit static owners now cover classes and their support tables, pets, boards, ordinary and special enemies, rarity/equipment metadata, achievements and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains the stateful mechanics, concrete item factories and presentation/orchestration.
+`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `core/state.js` now owns career defaults, normalization, save/load coordination and the domain event bus; the monolith consumes a configured state service rather than maintaining another migration path. Explicit static owners cover classes and their support tables, pets, boards, ordinary and special enemies, rarity/equipment metadata, achievements and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains active-run state, stateful mechanics, concrete item factories and presentation/orchestration.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -69,7 +70,7 @@ runtime/js/
 ├─ version.js                 authoritative browser Version/Channel identity
 ├─ assets.js
 ├─ core/
-│  ├─ state.js
+│  ├─ state.js                 career defaults/normalization and event bus
 │  ├─ constants.js
 │  └─ ...
 ├─ board/
@@ -196,6 +197,7 @@ node tools/test_class_registry.js
 node tools/test_talent_registry.js
 node tools/test_static_registries.js
 node tools/test_content_registries.js
+node tools/test_core_state.js
 node tools/test_version_identity.js
 python tools/validate_version_identity.py --version 0.6.1 --channel Beta
 python tools/test_version_identity_validator.py
@@ -210,7 +212,7 @@ Future extraction PRs should add focused tests for pure logic as soon as it beco
 
 ## Coordination with other issues
 
-- #33/#35 save/resume should consume the modular state/save boundaries rather than create another parallel persistence path.
+- #33/#35 save/resume should extend the tested `core/state.js` and save-service boundaries with a versioned active-run checkpoint rather than create another parallel persistence path.
 - #22 Artifact weighting was completed as a separate isolated balance PR after Artifact ownership moved out of the monolith.
 - #3 guardian-loot tuning now has isolated policy tables/helpers in `items/loot.js`; future tuning must remain separate from the behavior-preserving extraction.
 - #28 Gloves and #25 character panel become easier once equipment ownership is explicit.
