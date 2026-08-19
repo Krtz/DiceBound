@@ -14869,6 +14869,8 @@ function buildDiceboundHumanHarness235(){
   // weighted set piece from this table; independent slot rolls are retired.
   const DB060_ARTIFACT_TABLE=window.DiceboundArtifacts?.entries;
   if(!DB060_ARTIFACT_TABLE)throw new Error('DiceboundArtifacts must load before dicebound.js');
+  const DB060_LOOT=window.DiceboundLoot;
+  if(!DB060_LOOT)throw new Error('DiceboundLoot must load before dicebound.js');
   const DB060_ARTIFACT_FACTORIES=Object.freeze({
     weapon:()=>generateMythicalWeapon(),
     boots:()=>generateMythicalBoots(),
@@ -14878,56 +14880,25 @@ function buildDiceboundHumanHarness235(){
     amulet:()=>generateMythicalAmulet(),
     offhand:()=>generateMythicalOffhand()
   });
-  const DB060_ARTIFACT_RATES=Object.freeze({
-    normal:Object.freeze({1:{mini:.005,boss:.01},2:{mini:.01,boss:.02},3:{mini:.02,boss:.03},4:{mini:.03,boss:.05},5:{mini:.05,boss:.07},6:{mini:.07,boss:.10}}),
-    nightmare:Object.freeze({1:{mini:.01,boss:.02},2:{mini:.025,boss:.04},3:{mini:.04,boss:.06},4:{mini:.06,boss:.09},5:{mini:.09,boss:.13},6:{mini:.13,boss:.18}}),
-    hell:Object.freeze({1:{mini:.02,boss:.04},2:{mini:.05,boss:.07},3:{mini:.07,boss:.10},4:{mini:.10,boss:.14},5:{mini:.14,boss:.20},6:{mini:.20,boss:.28}})
-  });
-  function db060ModeKey(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
-  function db060ArtifactChance(defeated){if(!defeated?.miniBoss&&!defeated?.finalBoss)return 0;return DB060_ARTIFACT_RATES[db060ModeKey()]?.[boardLevel]?.[defeated.miniBoss?'mini':'boss']||0;}
   function db060RollArtifact(){const entry=window.DiceboundArtifacts.pick(random),make=DB060_ARTIFACT_FACTORIES[entry.slot];if(typeof make!=='function')throw new Error(`No Artifact item factory registered for ${entry.slot}`);const item=make();item.artifactTableSlot=entry.slot;return item;}
 
   // Guardian ordinary item tables. Miniboss ordinary gear is no longer a
   // 100% automatic reward on Normal: 85% Normal, 92% Nightmare, 100% Hell.
-  const DB060_MINI_GEAR_TABLES=Object.freeze({
-    1:[['common',55],['uncommon',35],['rare',10]],
-    2:[['common',40],['uncommon',45],['rare',15]],
-    3:[['common',18],['uncommon',50],['rare',29],['epic',3]],
-    4:[['uncommon',50],['rare',42],['epic',7],['legendary',1]],
-    5:[['uncommon',32],['rare',52],['epic',14],['legendary',2]],
-    6:[['uncommon',20],['rare',60],['epic',18],['legendary',2]]
-  });
-  const DB060_BOSS_GEAR_TABLES=Object.freeze({
-    1:[['uncommon',50],['rare',45],['epic',5]],
-    2:[['uncommon',35],['rare',52],['epic',13]],
-    3:[['uncommon',20],['rare',55],['epic',23],['legendary',2]],
-    4:[['uncommon',10],['rare',55],['epic',31],['legendary',4]],
-    5:[['rare',48],['epic',47],['legendary',5]],
-    6:[['rare',45],['epic',50],['legendary',5]]
-  });
-  const DB060_GEAR_LADDER=['poor','common','uncommon','rare','epic','legendary'];
-  function db060WeightedRarity(rows){let r=random()*rows.reduce((s,x)=>s+x[1],0),rarity=rows[rows.length-1][0];for(const x of rows){r-=x[1];if(r<=0){rarity=x[0];break;}}return rarity;}
-  function db060PromoteRarity(rarity){const i=DB060_GEAR_LADDER.indexOf(rarity);return i>=0?DB060_GEAR_LADDER[Math.min(DB060_GEAR_LADDER.length-1,i+1)]:rarity;}
-  function db060GuardianRarity(defeated){
-    const rows=(defeated?.miniBoss?DB060_MINI_GEAR_TABLES:DB060_BOSS_GEAR_TABLES)[boardLevel]||DB060_BOSS_GEAR_TABLES[6];let rarity=db060WeightedRarity(rows);
-    if(nightmareMode&&random()<.25)rarity=db060PromoteRarity(rarity);if(hellMode&&random()<.25)rarity=db060PromoteRarity(rarity);return rarity;
-  }
   function db060GuardianOrdinary(defeated,done){
-    if(defeated?.miniBoss){const chance=hellMode?1:nightmareMode?.92:.85;if(random()>=chance)return done();return openLoot(generateEquipment(db060GuardianRarity(defeated)),done);}
-    if(defeated?.finalBoss)return openLoot(generateEquipment(db060GuardianRarity(defeated)),done);
+    const drop=DB060_LOOT.ordinaryGuardianDrop({defeated,board:boardLevel,nightmare:nightmareMode,hell:hellMode,randomFn:random});
+    if(!drop)return done();
     // Secret bosses keep one ordinary loot roll in addition to their signature item.
-    if(defeated?.boss)return openLoot(generateEquipment(),done);return done();
+    return openLoot(drop.rarity?generateEquipment(drop.rarity):generateEquipment(),done);
   }
 
   // Secret signature item rates: 5% Normal, 10% Nightmare, 15% Hell for
   // The Final Price and Philosopher's Stone. Pale Devil Horns remain 5%.
-  function db060SecretSignatureRate(){return hellMode?.15:nightmareMode?.10:.05;}
   openCombatLootChain=function(defeated,done){
     const specials=[];
-    if(defeated?.devilBoss){if(random()<.05){specials.push(generateDevilsHorns());meta.devilHornsFound=(meta.devilHornsFound||0)+1;saveMeta();}}
-    else if(defeated?.merchantBoss){if(random()<db060SecretSignatureRate()){specials.push(generateMerchantWeapon());meta.merchantOmegaDrops=(meta.merchantOmegaDrops||0)+1;saveMeta();}}
-    else if(defeated?.bloodmageBoss){if(random()<db060SecretSignatureRate()){specials.push(generatePhilosophersStone());meta.bloodmageOmegaDrops=(meta.bloodmageOmegaDrops||0)+1;saveMeta();}}
-    else if((defeated?.miniBoss||defeated?.finalBoss)&&random()<db060ArtifactChance(defeated)){specials.push(db060RollArtifact());}
+    if(defeated?.devilBoss){if(random()<DB060_LOOT.secretSignatureRate({kind:'devil',nightmare:nightmareMode,hell:hellMode})){specials.push(generateDevilsHorns());meta.devilHornsFound=(meta.devilHornsFound||0)+1;saveMeta();}}
+    else if(defeated?.merchantBoss){if(random()<DB060_LOOT.secretSignatureRate({kind:'merchant',nightmare:nightmareMode,hell:hellMode})){specials.push(generateMerchantWeapon());meta.merchantOmegaDrops=(meta.merchantOmegaDrops||0)+1;saveMeta();}}
+    else if(defeated?.bloodmageBoss){if(random()<DB060_LOOT.secretSignatureRate({kind:'bloodmage',nightmare:nightmareMode,hell:hellMode})){specials.push(generatePhilosophersStone());meta.bloodmageOmegaDrops=(meta.bloodmageOmegaDrops||0)+1;saveMeta();}}
+    else if((defeated?.miniBoss||defeated?.finalBoss)&&random()<DB060_LOOT.artifactChance({defeated,board:boardLevel,nightmare:nightmareMode,hell:hellMode})){specials.push(db060RollArtifact());}
     const next=()=>{if(!specials.length)return db060GuardianOrdinary(defeated,done);const item=specials.shift();addLog(`<b>${(rarityInfo[item.rarity]?.label||item.rarity).toUpperCase()} ITEM!</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
   };
 
@@ -15054,9 +15025,9 @@ function buildDiceboundHumanHarness235(){
     generatedLegendary:()=>{const x=db060GenerateLegendary(null,false);return {name:x.name,slot:x.slot,rarity:x.rarity,itemPower:x.itemPower,effect:x.legendaryEffectName,seed:x.seedCode};},
     memoryCacheOdds:()=>({normal:1/450,nightmare:1/300,hell:1/200}),
     artifactTable:()=>DB060_ARTIFACT_TABLE.map(x=>({slot:x.slot,weight:x.weight,label:x.label})),
-    artifactRates:()=>JSON.parse(JSON.stringify(DB060_ARTIFACT_RATES)),
-    minibossGearChance:()=>({normal:.85,nightmare:.92,hell:1}),
-    secretSignatureRates:()=>({normal:.05,nightmare:.10,hell:.15}),
+    artifactRates:()=>JSON.parse(JSON.stringify(DB060_LOOT.artifactRates)),
+    minibossGearChance:()=>JSON.parse(JSON.stringify(DB060_LOOT.minibossGearChances)),
+    secretSignatureRates:()=>JSON.parse(JSON.stringify(DB060_LOOT.secretSignatureRates)),
     namedMythicals:()=>[generateAxelsCoffeeMug(),generateKratzHeadphones(),generateKellysJeanJacket()].map(x=>({name:x.name,rarity:x.rarity,slot:x.slot})),
     artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=window.DiceboundArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });

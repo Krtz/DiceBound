@@ -8,6 +8,8 @@
 - Moved Artifact slot metadata, the existing 30/20/16/14/9/7/4 weights and weighted selection into `js/items/artifacts.js`.
 - Kept guardian access rates, item generation, loot outcomes and save behavior unchanged.
 - Added deterministic tests for the extracted module so later balance changes such as #22 remain isolated and directly verifiable.
+- Moved guardian Artifact-access policy, ordinary guardian gear gates/rarity promotion and secret-signature rates into `js/items/loot.js` while keeping concrete equipment factories in the compatibility monolith.
+- Preserved every current loot value, outcome and RNG draw/order, backed by exhaustive deterministic policy-equivalence tests.
 
 ---
 

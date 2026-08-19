@@ -12,6 +12,8 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Continued #40 with the first behavior-preserving gameplay extraction: Artifact slot metadata, weights and weighted selection now live in `runtime/js/items/artifacts.js`.
 - The Phase 1 extraction preserved the Beta 0.6.1 Artifact weights, guardian access rates, item factories and save behavior before the separate #22 balance change.
 - Added deterministic boundary and immutability tests for the extracted weighted-selection module.
+- Extracted guardian Artifact-access rates, ordinary guardian drop gates, rarity tables/promotions and secret-signature rates into `runtime/js/items/loot.js` without changing outcomes or RNG order.
+- Added deterministic equivalence tests across every Board, guardian type and difficulty-mode combination for the new loot-policy owner.
 
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 
