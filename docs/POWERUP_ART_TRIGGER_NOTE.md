@@ -1,1 +1,0 @@
-Temporary note: the initial generated powerup-art batch is staged in Git and is integrated by the issue-triggered GitHub Actions workflow. This note can be removed after the integration commit is verified on `main`.
