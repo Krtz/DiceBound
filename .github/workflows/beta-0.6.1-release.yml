@@ -1,0 +1,168 @@
+name: Beta 0.6.1 release
+
+on:
+  push:
+    branches:
+      - release/beta-0.6.1
+      - main
+    paths:
+      - ".release/beta-0.6.1.json"
+      - ".github/workflows/beta-0.6.1-release.yml"
+      - "Build-DiceBoundRelease.ps1"
+      - "tools/set_project_version.py"
+      - "tools/refresh_runtime_manifest.py"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.7"
+
+      - name: Stage official WebView2 loader
+        shell: pwsh
+        run: |
+          $probe = Join-Path $env:RUNNER_TEMP "dicebound-webview2-sdk"
+          dotnet new classlib -n LoaderProbe -o $probe --force | Out-Host
+          dotnet add (Join-Path $probe "LoaderProbe.csproj") package Microsoft.Web.WebView2 | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "Could not restore Microsoft.Web.WebView2." }
+
+          $packageRoot = Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2"
+          $package = Get-ChildItem $packageRoot -Directory |
+            Sort-Object Name -Descending |
+            Select-Object -First 1
+          if ($null -eq $package) { throw "Microsoft.Web.WebView2 package directory was not found." }
+
+          $loader = Join-Path $package.FullName "build\native\x64\WebView2Loader.dll"
+          if (-not (Test-Path $loader)) { throw "Official x64 WebView2Loader.dll was not found at $loader" }
+
+          $sig = Get-AuthenticodeSignature $loader
+          if ($sig.Status -ne "Valid") {
+            throw "WebView2Loader.dll Authenticode signature is not valid: $($sig.Status)"
+          }
+
+          "WEBVIEW2_LOADER_DLL=$loader" >> $env:GITHUB_ENV
+          "WEBVIEW2_SDK_VERSION=$($package.Name)" >> $env:GITHUB_ENV
+          Write-Host "Using Microsoft.Web.WebView2 $($package.Name)"
+          Write-Host "Signer: $($sig.SignerCertificate.Subject)"
+
+      - name: Stamp Beta 0.6.1 source identity
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.1 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/refresh_runtime_manifest.py --version 0.6.1 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md runtime/index.html runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go
+
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "release: stamp DiceBound Beta 0.6.1"
+            git push origin "HEAD:${{ github.ref_name }}"
+          }
+
+          "RELEASE_SOURCE_SHA=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
+
+      - name: Build and validate native release
+        shell: pwsh
+        run: |
+          .\Build-DiceBoundRelease.ps1 -Version 0.6.1 -Channel Beta -SkipSourceStamp -RequireSignedLoader
+
+      - name: Show release metadata
+        shell: pwsh
+        run: |
+          Get-Content .\wrapper-source\release\release-metadata.json
+
+      - name: Upload validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiceBound-Beta-0.6.1
+          path: |
+            wrapper-source/release/DiceBound.exe
+            wrapper-source/release/release-metadata.json
+            wrapper-source/dist/browser/build-info.json
+            wrapper-source/dist/browser/build-manifest.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish Beta 0.6.1 prerelease
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "beta-0.6.1"
+          $asset = ".\wrapper-source\release\DiceBound.exe"
+          $notes = ".\.release\beta-0.6.1.md"
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit $tag --title "DiceBound Beta 0.6.1" --notes-file $notes --prerelease
+            gh release upload $tag $asset --clobber
+          } else {
+            gh release create $tag $asset `
+              --target "$env:RELEASE_SOURCE_SHA" `
+              --title "DiceBound Beta 0.6.1" `
+              --notes-file $notes `
+              --prerelease
+          }
+
+          $meta = Get-Content .\wrapper-source\release\release-metadata.json -Raw | ConvertFrom-Json
+          $release = gh release view $tag --json assets | ConvertFrom-Json
+          $published = $release.assets | Where-Object { $_.name -eq "DiceBound.exe" } | Select-Object -First 1
+          if ($null -eq $published) { throw "Published release does not contain DiceBound.exe." }
+          if ([int64]$published.size -ne [int64]$meta.bytes) {
+            throw "Published release asset size differs from built EXE."
+          }
+
+      - name: Point launcher manifest at Beta 0.6.1
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $meta = Get-Content .\wrapper-source\release\release-metadata.json -Raw | ConvertFrom-Json
+          $latest = [ordered]@{
+            format = 1
+            name = "DiceBound"
+            version = "0.6.1"
+            channel = "Beta"
+            buildId = $meta.buildId
+            url = "https://github.com/Krtz/DiceBound/releases/download/beta-0.6.1/DiceBound.exe"
+            sha256 = $meta.sha256
+            bytes = [int64]$meta.bytes
+            executable = "DiceBound.exe"
+          }
+
+          $json = $latest | ConvertTo-Json -Depth 5
+          [IO.File]::WriteAllText(
+            (Join-Path $PWD "distribution\latest.json"),
+            $json + "`n",
+            [Text.UTF8Encoding]::new($false)
+          )
+
+          git add distribution/latest.json
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "distribution: point launcher at Beta 0.6.1"
+            git push origin "HEAD:main"
+          }
