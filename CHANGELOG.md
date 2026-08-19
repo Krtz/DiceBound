@@ -29,6 +29,11 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Added mutation tests proving stale central/native/module/project/distribution identity fails closed.
 - Added a deterministic launcher-manifest generator so `distribution/latest.json` is derived from the final verified artifact metadata and release tag/URL convention instead of assembled independently.
 
+### Launcher reliability
+- Added persistent launcher diagnostics at `%LOCALAPPDATA%\DiceBoundLauncher\launcher.log`, including splash startup failures, PowerShell stderr, update decisions and game-launch results.
+- Replaced the truncated launcher JPEG with a WPF-validated PNG derived from the approved campsite-road artwork, added a branded decoder fallback and made launcher asset validation fail on malformed PNG chunks/CRCs.
+- Added deterministic Windows coverage for all four shortcut choices, repeated configuration, offline fallback, version/hash/size update decisions, verified replacement, and failed download/hash/size recovery without touching the prior game or saves.
+
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 
 ### Asset architecture
