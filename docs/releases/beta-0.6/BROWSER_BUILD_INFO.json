@@ -1,0 +1,29 @@
+{
+  "assetCount": 135,
+  "browserContentHash": "49974c0d6ca04ded9671e5992bdf85851b84ad8612803f8b506a8a4cc84df3c6",
+  "buildId": "dicebound-0.6-49974c0d6ca04ded",
+  "channel": "Beta",
+  "contentFileCount": 148,
+  "entrypoint": "index.html",
+  "format": 1,
+  "gameBundle": "js/dicebound.js",
+  "name": "Dicebound",
+  "notes": "Explicit Artifact table, generated Legendary effects, new gear budgets and guardian loot cleanup.",
+  "reproducible": true,
+  "runtimeScripts": [
+    "js/assets.js",
+    "js/rng.js",
+    "js/native-http-host.js",
+    "js/wrapper-contract.js",
+    "js/platform.js",
+    "js/storage.js",
+    "js/save-system.js",
+    "js/dicebound.js"
+  ],
+  "saveSchemaVersion": 2,
+  "sourceHash": "49974c0d6ca04ded9671e5992bdf85851b84ad8612803f8b506a8a4cc84df3c6",
+  "timestampPolicy": "none; build identity is content-derived",
+  "version": "0.6",
+  "wrapperContractVersion": 1,
+  "wrapperPayload": "dist/browser"
+}
