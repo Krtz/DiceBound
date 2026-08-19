@@ -18,6 +18,9 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Added deterministic registry snapshot, isolation and ownership tests so future class mechanics and live descriptions can evolve behind an explicit module boundary.
 - Extracted the canonical 45-node Legacy talent tree into `runtime/js/progression/talents.js` with every cost, rank, branch and prerequisite preserved.
 - Added an exact talent snapshot plus structural validation for duplicate IDs, missing/invalid prerequisites and dependency cycles.
+- Extracted the 13-pet registry, 11-enemy ordinary encounter pool and nine-tier rarity metadata into explicit pet/combat/item modules without changing content or selection behavior.
+- Removed the monolith's byte-for-byte duplicate class-tag table; the compatibility view is now derived from the canonical class registry.
+- Added deterministic snapshots, structural checks and clone-isolation coverage for the newly owned static registries.
 
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 

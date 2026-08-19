@@ -17,13 +17,16 @@ platform.js
 storage.js
 save-system.js
 classes/registry.js
+pets/registry.js
+combat/enemies.js
+items/rarities.js
 progression/talents.js
 items/artifacts.js
 items/loot.js
 dicebound.js
 ```
 
-The platform/storage/save/RNG files are useful seams outside the recovered monolith. `classes/registry.js` owns the complete canonical 25-class data registry behind an isolated clone API, and `progression/talents.js` owns the 45-node Legacy talent tree. The item layer owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains class/talent mechanics, concrete item factories and loot presentation/orchestration.
+The platform/storage/save/RNG files are useful seams outside the recovered monolith. Explicit static owners now cover classes, pets, the ordinary-enemy pool, rarity metadata and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains the stateful mechanics, special-enemy definitions, concrete item factories and presentation/orchestration.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -64,15 +67,18 @@ runtime/js/
 │  └─ ...
 ├─ board/
 ├─ combat/
+│  └─ enemies.js
 ├─ classes/
 │  └─ registry.js
 ├─ items/
 │  ├─ equipment.js
 │  ├─ loot.js
 │  ├─ artifacts.js
+│  ├─ rarities.js
 │  └─ consumables.js
 ├─ powerups/
 ├─ pets/
+│  └─ registry.js
 ├─ progression/
 │  └─ talents.js
 ├─ modes/
@@ -104,7 +110,7 @@ Prefer pure/data-heavy regions first:
 3. other pure helpers currently embedded in the monolith;
 4. registries that do not directly own DOM or combat state.
 
-The first Phase 1 extraction moved Artifact slot metadata, its weight table and weighted selection into `items/artifacts.js`. The next extraction moved guardian Artifact-access rates, ordinary guardian drop gates, rarity tables/promotions and secret-signature rates into `items/loot.js`. The class-registry extraction then moved all 25 canonical class definitions into `classes/registry.js`; the talent-registry extraction moved the complete 45-node Legacy tree into `progression/talents.js`. Their clone APIs intentionally feed the monolith's existing read-only compatibility proxies, preserving harmless patch-era mutation attempts without exposing mutable authoritative module state. Concrete class/talent mechanics, item factories and the callback-driven presentation chain remain temporarily in the monolith. These modules are independent and have no circular dependency.
+The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent registry checkpoints moved canonical classes and talents, then pets, the ordinary-enemy pool and rarity metadata into domain owners. Byte-identical class tags are now derived from canonical class data instead of maintained twice. Clone APIs intentionally feed the monolith's existing read-only compatibility proxies, preserving harmless patch-era mutation attempts without exposing mutable authoritative module state. Concrete stateful mechanics, special-enemy definitions, item factories and presentation chains remain temporarily in the monolith. These modules are independent and have no circular dependency.
 
 ### Phase 2 — self-contained gameplay domains
 
@@ -179,6 +185,7 @@ node tools/test_artifacts_module.js
 node tools/test_loot_module.js
 node tools/test_class_registry.js
 node tools/test_talent_registry.js
+node tools/test_static_registries.js
 ```
 
 `validate_runtime_architecture.py` intentionally has two classes of findings:
