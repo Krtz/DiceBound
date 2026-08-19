@@ -16,6 +16,8 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Added deterministic equivalence tests across every Board, guardian type and difficulty-mode combination for the new loot-policy owner.
 - Moved the complete 25-class content registry into `runtime/js/classes/registry.js`, while preserving the recovered runtime's read-only compatibility view and all class data exactly.
 - Added deterministic registry snapshot, isolation and ownership tests so future class mechanics and live descriptions can evolve behind an explicit module boundary.
+- Extracted the canonical 45-node Legacy talent tree into `runtime/js/progression/talents.js` with every cost, rank, branch and prerequisite preserved.
+- Added an exact talent snapshot plus structural validation for duplicate IDs, missing/invalid prerequisites and dependency cycles.
 
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 

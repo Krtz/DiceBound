@@ -11,6 +11,7 @@
     "storage",
     "save-system",
     "classes-registry",
+    "progression-talents",
     "artifacts",
     "loot",
     "dicebound-monolith"
@@ -82,6 +83,14 @@
       "provides": ["DiceboundClasses"]
     },
     {
+      "id": "progression-talents",
+      "path": "js/progression/talents.js",
+      "domain": "progression/talents",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundTalents"]
+    },
+    {
       "id": "artifacts",
       "path": "js/items/artifacts.js",
       "domain": "items/artifacts",
@@ -102,7 +111,7 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "artifacts", "loot"],
+      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "progression-talents", "artifacts", "loot"],
       "provides": []
     }
   ],
