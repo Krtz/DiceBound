@@ -21,6 +21,11 @@
 - Added one central browser-runtime Version/Channel owner used by the wrapper contract, platform diagnostics, native host handshake, save envelopes and final visible game identity.
 - Added deterministic build validation that rejects stale native/runtime/project/release identity and verifies launcher distribution metadata against a final built artifact.
 
+## Launcher reliability (#23)
+- Added a persistent launcher log with splash, PowerShell, update-decision and launch diagnostics.
+- Replaced the truncated launcher splash with a WPF-validated night-road PNG and added a branded fallback if a future image cannot be decoded.
+- Added Windows regression coverage for shortcut/configuration idempotency, offline fallback, verified updates and safe hash/size/download failures that preserve the current game and saves.
+
 ---
 
 # Beta 0.6.1 — Runtime Packaging & Asset Architecture

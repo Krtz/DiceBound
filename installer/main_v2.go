@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -22,7 +24,7 @@ import (
 const manifestURL = "https://raw.githubusercontent.com/Krtz/DiceBound/main/distribution/latest.json"
 const launcherName = "DiceBoundLauncher.exe"
 
-//go:embed assets/dicebound-launcher-splash.jpg
+//go:embed assets/dicebound-launcher-splash-v2.png
 var splash []byte
 
 //go:embed hints.json
@@ -55,21 +57,30 @@ type Splash struct {
 }
 
 var client = &http.Client{Timeout: 30 * time.Second}
+var launcherLogger = log.New(io.Discard, "", log.Ldate|log.Ltime|log.Lmicroseconds)
 
 func main() {
-	s, _ := startSplash()
+	localRoot := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
+	if localRoot == "" {
+		must(nil, errors.New("LOCALAPPDATA is not set"))
+	}
+	logFile, logPath, logErr := openLauncherLog(localRoot)
+	if logErr != nil {
+		warn("DiceBound Launcher", "The launcher could not open its diagnostic log:\n\n"+logErr.Error())
+	} else {
+		defer logFile.Close()
+		launcherLogger.Printf("launcher started executable=%q args=%q log=%q", executablePath(), os.Args[1:], logPath)
+	}
+	s := startSplashWithDiagnostics(startSplash)
 	if s != nil {
 		defer s.close()
 		s.set("Preparing the road...", "")
-	}
-	localRoot := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
-	if localRoot == "" {
-		must(s, errors.New("LOCALAPPDATA is not set"))
 	}
 	cfgPath := filepath.Join(localRoot, "DiceBoundLauncher", "launcher-config.json")
 	_ = os.MkdirAll(filepath.Dir(cfgPath), 0755)
 	cfg, err := readConfig(cfgPath)
 	if err != nil || cfg.InstallDir == "" || hasArg("--configure") {
+		launcherLogger.Printf("configuration required path=%q reason=%v configureArg=%t", cfgPath, err, hasArg("--configure"))
 		d := filepath.Join(localRoot, "DiceBound")
 		if cfg.InstallDir != "" {
 			d = cfg.InstallDir
@@ -80,6 +91,7 @@ func main() {
 		}
 		must(s, err)
 		must(s, writeJSON(cfgPath, cfg))
+		launcherLogger.Printf("configuration saved installDir=%q desktop=%t startMenu=%t", cfg.InstallDir, cfg.Desktop, cfg.StartMenu)
 	}
 	cfg.InstallDir = filepath.Clean(cfg.InstallDir)
 	must(s, os.MkdirAll(cfg.InstallDir, 0755))
@@ -88,32 +100,34 @@ func main() {
 	local, _ := readManifest(statePath)
 	game := filepath.Join(cfg.InstallDir, "DiceBound.exe")
 	exists := fileExists(game)
+	launcherLogger.Printf("local state installDir=%q game=%q exists=%t version=%q channel=%q buildId=%q", cfg.InstallDir, game, exists, local.Version, local.Channel, local.BuildID)
 	if s != nil {
 		s.set("Checking for updates...", label(local, exists))
 	}
 	remote, err := fetchManifest()
 	if err != nil {
+		launcherLogger.Printf("manifest fetch failed: %v", err)
 		if exists {
 			if s != nil {
 				s.set("GitHub is unavailable — starting the installed version.", label(local, true))
 				time.Sleep(800 * time.Millisecond)
 				s.close()
 			}
-			launch(game)
+			_, fallbackErr := offlineFallback(game, true, err, launch)
+			must(nil, fallbackErr)
 			return
 		}
-		must(s, fmt.Errorf("GitHub is unavailable and DiceBound is not installed yet: %w", err))
+		_, fallbackErr := offlineFallback(game, false, err, launch)
+		must(s, fallbackErr)
 	}
 	if remote.Executable == "" {
 		remote.Executable = "DiceBound.exe"
 	}
+	launcherLogger.Printf("remote state version=%q channel=%q buildId=%q bytes=%d executable=%q", remote.Version, remote.Channel, remote.BuildID, remote.Bytes, remote.Executable)
 	game = filepath.Join(cfg.InstallDir, remote.Executable)
 	exists = fileExists(game)
-	need := !exists || local.BuildID != remote.BuildID || !strings.EqualFold(local.SHA256, remote.SHA256)
-	if !need && remote.Bytes > 0 {
-		st, e := os.Stat(game)
-		need = e != nil || st.Size() != remote.Bytes
-	}
+	need := updateNeeded(local, remote, game)
+	launcherLogger.Printf("update decision needed=%t localExists=%t", need, exists)
 	if need {
 		verb := "Installing"
 		if exists {
@@ -122,12 +136,14 @@ func main() {
 		if s != nil {
 			s.set(fmt.Sprintf("%s DiceBound %s %s...", verb, remote.Channel, remote.Version), "Available: "+remote.Channel+" "+remote.Version+" · "+short(remote.BuildID))
 		}
+		launcherLogger.Printf("download starting url=%q expectedBytes=%d expectedSHA256=%s", remote.URL, remote.Bytes, strings.ToLower(remote.SHA256))
 		err = download(remote, game, func(p int) {
 			if s != nil {
 				s.set(fmt.Sprintf("%s DiceBound %s %s... %d%%", verb, remote.Channel, remote.Version, p), "")
 			}
 		})
 		if err != nil {
+			launcherLogger.Printf("%s failed safely: %v", strings.ToLower(verb), err)
 			if exists && fileExists(game) {
 				warn("DiceBound update", "Update failed safely. The previous installed version will be started.\n\n"+err.Error())
 				if s != nil {
@@ -135,26 +151,31 @@ func main() {
 					time.Sleep(700 * time.Millisecond)
 					s.close()
 				}
-				launch(game)
+				must(nil, launch(game))
 				return
 			}
 			must(s, err)
 		}
+		launcherLogger.Printf("download verified and activated path=%q", game)
 		must(s, writeJSON(statePath, remote))
+		launcherLogger.Printf("installed state written path=%q buildId=%q", statePath, remote.BuildID)
 		local = remote
 	}
 	if s != nil {
 		s.set("DiceBound is up to date.", label(local, true))
 	}
 	if err := shortcuts(cfg, game); err != nil {
+		launcherLogger.Printf("shortcut update failed: %v", err)
 		warn("DiceBound shortcuts", err.Error())
+	} else {
+		launcherLogger.Printf("shortcuts refreshed desktop=%t startMenu=%t", cfg.Desktop, cfg.StartMenu)
 	}
 	if s != nil {
 		s.set("Launching DiceBound...", label(local, true))
 		time.Sleep(500 * time.Millisecond)
 		s.close()
 	}
-	launch(game)
+	must(nil, launch(game))
 }
 
 var errCancel = errors.New("cancelled")
@@ -193,25 +214,65 @@ func writeJSON(p string, v any) error {
 	}
 	return os.WriteFile(p, append(b, '\n'), 0644)
 }
+func executablePath() string {
+	p, err := os.Executable()
+	if err != nil {
+		return "<unknown>"
+	}
+	return p
+}
+func openLauncherLog(localRoot string) (*os.File, string, error) {
+	dir := filepath.Join(localRoot, "DiceBoundLauncher")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, "", err
+	}
+	path := filepath.Join(dir, "launcher.log")
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, path, err
+	}
+	launcherLogger.SetOutput(f)
+	return f, path, nil
+}
 func configure(def string, old Config) (Config, error) {
 	desk, start := old.Desktop, old.StartMenu
 	if old.Format == 0 {
 		desk, start = true, true
 	}
-	p := tempScript("config.ps1", configPS)
+	p, err := tempScript("config.ps1", configPS)
+	if err != nil {
+		return Config{}, fmt.Errorf("could not stage configuration UI: %w", err)
+	}
 	defer os.Remove(p)
 	cmd := ps("-File", p, "-DefaultDir", def, "-Desktop", fmt.Sprint(desk), "-StartMenu", fmt.Sprint(start))
-	out, e := cmd.Output()
+	out, stderr, e := runPowerShellCapture(cmd, "configuration UI")
 	if e != nil {
 		var x *exec.ExitError
 		if errors.As(e, &x) && x.ExitCode() == 2 {
 			return Config{}, errCancel
 		}
-		return Config{}, e
+		detail := strings.TrimSpace(string(stderr))
+		if detail == "" {
+			return Config{}, fmt.Errorf("configuration UI failed: %w", e)
+		}
+		return Config{}, fmt.Errorf("configuration UI failed: %s (%w)", detail, e)
 	}
 	var c Config
 	e = json.Unmarshal(out, &c)
 	return c, e
+}
+func runPowerShellCapture(cmd *exec.Cmd, scope string) ([]byte, []byte, error) {
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if detail := strings.TrimSpace(stderr.String()); detail != "" {
+		launcherLogger.Printf("%s stderr: %s", scope, detail)
+	}
+	if err != nil {
+		launcherLogger.Printf("%s failed: %v", scope, err)
+	}
+	return stdout.Bytes(), stderr.Bytes(), err
 }
 func fetchManifest() (Manifest, error) {
 	var m Manifest
@@ -281,11 +342,12 @@ func download(m Manifest, dst string, progress func(int)) error {
 	}
 	if m.Bytes > 0 && n != m.Bytes {
 		os.Remove(tmp)
-		return fmt.Errorf("size mismatch")
+		return fmt.Errorf("size mismatch: expected %d bytes, got %d", m.Bytes, n)
 	}
-	if !strings.EqualFold(hex.EncodeToString(h.Sum(nil)), m.SHA256) {
+	actualSHA := hex.EncodeToString(h.Sum(nil))
+	if !strings.EqualFold(actualSHA, m.SHA256) {
 		os.Remove(tmp)
-		return fmt.Errorf("SHA-256 mismatch")
+		return fmt.Errorf("SHA-256 mismatch: expected %s, got %s", strings.ToLower(m.SHA256), actualSHA)
 	}
 	bak := dst + ".old"
 	os.Remove(bak)
@@ -304,6 +366,25 @@ func download(m Manifest, dst string, progress func(int)) error {
 	}
 	os.Remove(bak)
 	return nil
+}
+func updateNeeded(local, remote Manifest, game string) bool {
+	if !fileExists(game) || local.BuildID != remote.BuildID || !strings.EqualFold(local.SHA256, remote.SHA256) {
+		return true
+	}
+	if remote.Bytes <= 0 {
+		return false
+	}
+	st, err := os.Stat(game)
+	return err != nil || st.Size() != remote.Bytes
+}
+func offlineFallback(game string, installed bool, manifestErr error, start func(string) error) (bool, error) {
+	if manifestErr == nil {
+		return false, nil
+	}
+	if !installed {
+		return false, fmt.Errorf("GitHub is unavailable and DiceBound is not installed yet: %w", manifestErr)
+	}
+	return true, start(game)
 }
 func installSelf(dir string) error {
 	src, e := os.Executable()
@@ -355,12 +436,15 @@ func updateShortcuts(c Config, game, destinations string) error {
 	}
 	return fmt.Errorf("could not update shortcuts: %s (%w)", detail, err)
 }
-func launch(p string) {
+func launch(p string) error {
 	c := exec.Command(p)
 	c.Dir = filepath.Dir(p)
 	if e := c.Start(); e != nil {
-		must(nil, e)
+		launcherLogger.Printf("game launch failed path=%q: %v", p, e)
+		return e
 	}
+	launcherLogger.Printf("game launched path=%q pid=%d", p, c.Process.Pid)
+	return nil
 }
 func fileExists(p string) bool { s, e := os.Stat(p); return e == nil && !s.IsDir() }
 func short(s string) string {
@@ -389,11 +473,16 @@ func must(s *Splash, e error) {
 	if s != nil {
 		s.close()
 	}
+	launcherLogger.Printf("fatal launcher error: %v", e)
 	warn("DiceBound Launcher", e.Error())
 	os.Exit(1)
 }
 func warn(t, m string) {
-	_ = ps("-Command", fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms;[Windows.Forms.MessageBox]::Show('%s','%s','OK','Warning')|Out-Null", psq(m), psq(t))).Run()
+	cmd := ps("-Command", fmt.Sprintf("Add-Type -AssemblyName System.Windows.Forms;[Windows.Forms.MessageBox]::Show('%s','%s','OK','Warning')|Out-Null", psq(m), psq(t)))
+	_, stderr, err := runPowerShellCapture(cmd, "warning dialog")
+	if err != nil {
+		launcherLogger.Printf("warning dialog could not be shown title=%q stderr=%q", t, strings.TrimSpace(string(stderr)))
+	}
 }
 func psbool(v bool) string {
 	if v {
@@ -407,52 +496,89 @@ func ps(args ...string) *exec.Cmd {
 	c.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 	return c
 }
-func tempScript(name string, b []byte) string {
+func tempScript(name string, b []byte) (string, error) {
 	d := os.TempDir()
 	p := filepath.Join(d, "DiceBound-"+name)
-	_ = os.WriteFile(p, b, 0644)
-	return p
+	if err := os.WriteFile(p, b, 0644); err != nil {
+		return "", err
+	}
+	return p, nil
 }
 func startSplash() (*Splash, error) {
 	d, e := os.MkdirTemp("", "DiceBoundLauncher-")
 	if e != nil {
 		return nil, e
 	}
-	img := filepath.Join(d, "splash.jpg")
+	img := filepath.Join(d, "splash.png")
 	hs := filepath.Join(d, "hints.txt")
 	st := filepath.Join(d, "status.txt")
 	ve := filepath.Join(d, "version.txt")
 	done := filepath.Join(d, "done")
-	os.WriteFile(img, splash, 0644)
+	write := func(path string, value []byte) error {
+		if err := os.WriteFile(path, value, 0644); err != nil {
+			os.RemoveAll(d)
+			return err
+		}
+		return nil
+	}
+	if e = write(img, splash); e != nil {
+		return nil, e
+	}
 	var h HintFile
-	_ = json.Unmarshal(hints, &h)
-	os.WriteFile(hs, []byte(strings.Join(h.Hints, "\r\n")), 0644)
-	os.WriteFile(st, []byte("Starting DiceBound Launcher..."), 0644)
+	if e = json.Unmarshal(hints, &h); e != nil {
+		os.RemoveAll(d)
+		return nil, fmt.Errorf("invalid embedded launcher hints: %w", e)
+	}
+	if e = write(hs, []byte(strings.Join(h.Hints, "\r\n"))); e != nil {
+		return nil, e
+	}
+	if e = write(st, []byte("Starting DiceBound Launcher...")); e != nil {
+		return nil, e
+	}
 	p := filepath.Join(d, "splash.ps1")
-	os.WriteFile(p, splashPS, 0644)
+	if e = write(p, splashPS); e != nil {
+		return nil, e
+	}
 	c := ps("-STA", "-File", p, "-SplashPath", img, "-HintsPath", hs, "-StatusPath", st, "-VersionPath", ve, "-DonePath", done)
+	c.Stdout = launcherLogger.Writer()
+	c.Stderr = launcherLogger.Writer()
 	if e = c.Start(); e != nil {
 		os.RemoveAll(d)
 		return nil, e
 	}
+	launcherLogger.Printf("splash started pid=%d workspace=%q", c.Process.Pid, d)
 	return &Splash{d, st, ve, done, c}, nil
+}
+func startSplashWithDiagnostics(start func() (*Splash, error)) *Splash {
+	s, err := start()
+	if err != nil {
+		launcherLogger.Printf("splash startup failed: %v", err)
+		return nil
+	}
+	return s
 }
 func (s *Splash) set(a, b string) {
 	if s == nil || s.dir == "" {
 		return
 	}
 	if a != "" {
-		os.WriteFile(s.status, []byte(a), 0644)
+		if err := os.WriteFile(s.status, []byte(a), 0644); err != nil {
+			launcherLogger.Printf("splash status write failed: %v", err)
+		}
 	}
 	if b != "" {
-		os.WriteFile(s.version, []byte(b), 0644)
+		if err := os.WriteFile(s.version, []byte(b), 0644); err != nil {
+			launcherLogger.Printf("splash version write failed: %v", err)
+		}
 	}
 }
 func (s *Splash) close() {
 	if s == nil || s.dir == "" {
 		return
 	}
-	os.WriteFile(s.done, []byte("done"), 0644)
+	if err := os.WriteFile(s.done, []byte("done"), 0644); err != nil {
+		launcherLogger.Printf("splash close signal failed: %v", err)
+	}
 	time.Sleep(350 * time.Millisecond)
 	if s.cmd != nil && s.cmd.Process != nil {
 		_ = s.cmd.Process.Kill()

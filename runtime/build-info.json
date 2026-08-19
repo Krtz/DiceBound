@@ -1,7 +1,7 @@
 {
   "assetCount": 301,
-  "browserContentHash": "975bbf036e31ce3f3292581c5eff154c7bd81557222447d4e0998704e77dd591",
-  "buildId": "dicebound-0.6.1-dev-975bbf036e31ce3f",
+  "browserContentHash": "aeb1c3df6af4c0d8ac56490ed115c29f554bd2fb62037a0b76e42b2ad8cf47e0",
+  "buildId": "dicebound-0.6.1-dev-aeb1c3df6af4c0d8",
   "channel": "Beta",
   "contentFileCount": 320,
   "developmentState": "Unreleased",
@@ -9,7 +9,7 @@
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Issue #45: centralized deterministic version identity",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.1; includes issue #29 granular runtime asset architecture.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -30,7 +30,7 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "975bbf036e31ce3f3292581c5eff154c7bd81557222447d4e0998704e77dd591",
+  "sourceHash": "aeb1c3df6af4c0d8ac56490ed115c29f554bd2fb62037a0b76e42b2ad8cf47e0",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads",
   "version": "0.6.1",
   "wrapperContractVersion": 1,

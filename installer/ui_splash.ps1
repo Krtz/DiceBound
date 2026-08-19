@@ -17,10 +17,25 @@ $window.ResizeMode = 'NoResize'
 $window.Background = [System.Windows.Media.Brushes]::Black
 $grid = New-Object System.Windows.Controls.Grid
 $window.Content = $grid
-$image = New-Object System.Windows.Controls.Image
-$bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
-$bitmap.BeginInit(); $bitmap.CacheOption = 'OnLoad'; $bitmap.UriSource = New-Object System.Uri($SplashPath); $bitmap.EndInit()
-$image.Source = $bitmap; $image.Stretch = 'UniformToFill'; $grid.Children.Add($image) | Out-Null
+try {
+  $image = New-Object System.Windows.Controls.Image
+  $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+  $bitmap.BeginInit(); $bitmap.CacheOption = 'OnLoad'; $bitmap.UriSource = New-Object System.Uri($SplashPath); $bitmap.EndInit()
+  $image.Source = $bitmap; $image.Stretch = 'UniformToFill'; $grid.Children.Add($image) | Out-Null
+} catch {
+  [Console]::Error.WriteLine('DiceBound splash image fallback: '+$_.Exception.Message)
+  $fallback = New-Object System.Windows.Controls.Border
+  $gradient = New-Object System.Windows.Media.LinearGradientBrush
+  $gradient.StartPoint = '0,0'; $gradient.EndPoint = '1,1'
+  $gradient.GradientStops.Add((New-Object System.Windows.Media.GradientStop('#071426',0)))
+  $gradient.GradientStops.Add((New-Object System.Windows.Media.GradientStop('#30184E',0.55)))
+  $gradient.GradientStops.Add((New-Object System.Windows.Media.GradientStop('#08101C',1)))
+  $fallback.Background = $gradient
+  $fallbackTitle = New-Object System.Windows.Controls.TextBlock
+  $fallbackTitle.Text = 'DICEBOUND'; $fallbackTitle.FontFamily = 'Georgia'; $fallbackTitle.FontWeight = 'Bold'; $fallbackTitle.FontSize = 58
+  $fallbackTitle.Foreground = '#EEC97E'; $fallbackTitle.HorizontalAlignment = 'Center'; $fallbackTitle.VerticalAlignment = 'Center'
+  $fallback.Child = $fallbackTitle; $grid.Children.Add($fallback) | Out-Null
+}
 $overlay = New-Object System.Windows.Controls.Border
 $overlay.Background = New-Object System.Windows.Media.SolidColorBrush([System.Windows.Media.Color]::FromArgb(220,8,11,18))
 $overlay.VerticalAlignment = 'Bottom'; $overlay.Padding = '28,15,28,18'; $grid.Children.Add($overlay) | Out-Null

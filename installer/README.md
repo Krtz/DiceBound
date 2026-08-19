@@ -7,6 +7,7 @@
 The launcher now builds on the lightweight #14 bootstrap with a real first-install and recurring-launch experience:
 
 - Dedicated DiceBound splash art with live install/update status.
+- Persistent diagnostics at `%LOCALAPPDATA%\DiceBoundLauncher\launcher.log`, including splash and PowerShell stderr.
 - Rotating spoiler-light hints loaded from editable `installer/hints.json`.
 - First install lets the player choose an install folder; `%LOCALAPPDATA%\DiceBound` remains the default.
 - Desktop and Start Menu shortcuts are independent opt-in choices.
@@ -22,9 +23,9 @@ The launcher now builds on the lightweight #14 bootstrap with a real first-insta
 
 The canonical source-controlled artwork lives at:
 
-`runtime/assets/installer/splash/dicebound-launcher-splash.jpg`
+`runtime/assets/installer/splash/dicebound-launcher-splash-v2.png`
 
-The identical file under `installer/assets/` is the build-package mirror embedded into the launcher by `go:embed`. Do not independently edit the mirror; replace the canonical art and copy it into the installer package when updating launcher presentation.
+The identical PNG under `installer/assets/` is the build-package mirror embedded into the launcher by `go:embed`. Do not independently edit the mirror; replace the canonical art and copy it into the installer package when updating launcher presentation. Validation checks the complete PNG structure/CRC, dimensions, and exact mirror hash. The WPF UI also has a branded fallback so a future decoder problem is logged instead of silently killing the splash process.
 
 ## Distribution model
 
@@ -45,6 +46,7 @@ $env:GOOS = 'windows'
 $env:GOARCH = 'amd64'
 $env:CGO_ENABLED = '0'
 go vet .\installer\main_v2.go .\installer\http_policy.go
+go test -v .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
 go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go .\installer\http_policy.go
 ```
 
