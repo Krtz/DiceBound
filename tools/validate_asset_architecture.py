@@ -27,6 +27,21 @@ def source_hash(runtime):
 def check_js(path):
     p=subprocess.run(["node","--check",str(path)],text=True,capture_output=True)
     if p.returncode: fail(f"JavaScript syntax error in {path}:\n{p.stderr or p.stdout}")
+def runtime_scripts(runtime):
+    manifest_path=runtime/"js/module-manifest.json"
+    if not manifest_path.is_file(): fail(f"runtime module manifest missing: {manifest_path}")
+    manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
+    modules={str(module.get("id")):module for module in manifest.get("modules",[])}
+    scripts=[]
+    for module_id in manifest.get("loadOrder",[]):
+        module=modules.get(str(module_id))
+        if not module: fail(f"runtime load order references unknown module: {module_id}")
+        rel=str(module.get("path") or "")
+        if not rel.startswith("js/") or not rel.endswith(".js"): fail(f"runtime module {module_id} has invalid script path: {rel!r}")
+        if not (runtime/rel).is_file(): fail(f"runtime module {module_id} points to missing script: {rel}")
+        scripts.append(rel)
+    if not scripts: fail("runtime module manifest has an empty load order")
+    return scripts
 def load_registry(runtime):
     node='global.window={};global.document=undefined;require(process.argv[1]);const A=window.DiceboundAssets,P=window.DiceboundPowerupArt;console.log(JSON.stringify({files:A.files,manifest:A.manifest,powerupNames:P?.nameKeys||{}}));'
     p=subprocess.run(["node","-e",node,str(runtime/"js/assets.js")],text=True,capture_output=True)
@@ -45,7 +60,8 @@ def collect_live_pointers(runtime):
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--root",type=Path,default=Path(__file__).resolve().parents[1]); ns=ap.parse_args()
     root=ns.root.resolve(); runtime=root/"runtime" if (root/"runtime").is_dir() else root
-    check_js(runtime/"js/assets.js"); check_js(runtime/"js/dicebound.js")
+    scripts=runtime_scripts(runtime)
+    for rel in scripts: check_js(runtime/rel)
     reg=load_registry(runtime); m=reg["manifest"]
     counts={"classes":len(m["classes"]),"pets":len(m["pets"]),"normal_enemies":len(m["enemies"]),"minibosses":len(m["minibosses"]),"bosses":len(m["bosses"]),"secret_bosses":len(m["secretBosses"]),"board_backgrounds":len(m["board"]["backgrounds"]),"powerup_assets":len(m["powerups"]),"powerup_name_mappings":len(reg["powerupNames"]),"registry_files":len(reg["files"])}
     if not isinstance(m.get("version"),int) or m["version"]<1: fail(f"invalid asset registry version: {m.get('version')}")
@@ -90,6 +106,9 @@ def main():
         if not (runtime/rel).is_file(): fail(f"future art home missing: {rel}")
     info=json.loads((runtime/"build-info.json").read_text()); bm=json.loads((runtime/"build-manifest.json").read_text())
     if bm.get("assetRegistryVersion")!=m["version"]: fail(f"build manifest asset registry version {bm.get('assetRegistryVersion')} does not match live registry {m['version']}")
+    if info.get("runtimeScripts")!=scripts: fail(f"build-info runtimeScripts is stale; expected {scripts}, got {info.get('runtimeScripts')}")
+    missing_core=[rel for rel in scripts if rel not in bm.get("files",{})]
+    if missing_core: fail("build manifest is missing runtime script hashes: "+", ".join(missing_core))
     if info.get("developmentState")!="Unreleased": fail("runtime build metadata is not marked Unreleased")
     mode="git-unreleased"
     if info.get("browserContentHash") is None:

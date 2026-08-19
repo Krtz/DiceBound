@@ -1,3 +1,12 @@
+# Unreleased — post-Beta 0.6.1 Git development
+
+## Runtime architecture (#40)
+- Moved Artifact slot metadata, the existing 30/20/16/14/9/7/4 weights and weighted selection into `js/items/artifacts.js`.
+- Kept guardian access rates, item generation, loot outcomes and save behavior unchanged.
+- Added deterministic tests for the extracted module; issue #22 remains a separate balance proposal.
+
+---
+
 # Beta 0.6.1 — Runtime Packaging & Asset Architecture
 
 ## Release and launcher reliability

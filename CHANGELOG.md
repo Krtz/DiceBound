@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Unreleased — post-Beta 0.6.1 Git development
+
+### Runtime architecture
+- Continued #40 with the first behavior-preserving gameplay extraction: Artifact slot metadata, weights and weighted selection now live in `runtime/js/items/artifacts.js`.
+- Preserved the Beta 0.6.1 Artifact weights, guardian access rates, item factories and save behavior exactly; the separate #22 balance proposal is not included.
+- Added deterministic boundary and immutability tests for the extracted weighted-selection module.
+
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 
 ### Asset architecture

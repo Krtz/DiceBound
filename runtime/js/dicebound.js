@@ -14867,15 +14867,17 @@ function buildDiceboundHumanHarness235(){
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
   // weighted set piece from this table; independent slot rolls are retired.
-  const DB060_ARTIFACT_TABLE=Object.freeze([
-    Object.freeze({slot:'weapon',weight:30,label:'Impossible Road class weapon',make:()=>generateMythicalWeapon()}),
-    Object.freeze({slot:'boots',weight:20,label:'Titanstep, Boots of the Astral Road',make:()=>generateMythicalBoots()}),
-    Object.freeze({slot:'legs',weight:16,label:'Paradox Weave, Legguards Outside Time',make:()=>generateMythicalPants()}),
-    Object.freeze({slot:'ring',weight:14,label:'Ouroboros Halo, Ring of the Fifth Road',make:()=>generateMythicalRing()}),
-    Object.freeze({slot:'hat',weight:9,label:'Crown of the Road That Should Not Exist',make:()=>generateMythicalHat()}),
-    Object.freeze({slot:'amulet',weight:7,label:"The Devourer's Last Eye",make:()=>generateMythicalAmulet()}),
-    Object.freeze({slot:'offhand',weight:4,label:'Event Horizon Ward, Offhand Beyond the Sixth Road',make:()=>generateMythicalOffhand()})
-  ]);
+  const DB060_ARTIFACT_TABLE=window.DiceboundArtifacts?.entries;
+  if(!DB060_ARTIFACT_TABLE)throw new Error('DiceboundArtifacts must load before dicebound.js');
+  const DB060_ARTIFACT_FACTORIES=Object.freeze({
+    weapon:()=>generateMythicalWeapon(),
+    boots:()=>generateMythicalBoots(),
+    legs:()=>generateMythicalPants(),
+    ring:()=>generateMythicalRing(),
+    hat:()=>generateMythicalHat(),
+    amulet:()=>generateMythicalAmulet(),
+    offhand:()=>generateMythicalOffhand()
+  });
   const DB060_ARTIFACT_RATES=Object.freeze({
     normal:Object.freeze({1:{mini:.005,boss:.01},2:{mini:.01,boss:.02},3:{mini:.02,boss:.03},4:{mini:.03,boss:.05},5:{mini:.05,boss:.07},6:{mini:.07,boss:.10}}),
     nightmare:Object.freeze({1:{mini:.01,boss:.02},2:{mini:.025,boss:.04},3:{mini:.04,boss:.06},4:{mini:.06,boss:.09},5:{mini:.09,boss:.13},6:{mini:.13,boss:.18}}),
@@ -14883,8 +14885,7 @@ function buildDiceboundHumanHarness235(){
   });
   function db060ModeKey(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function db060ArtifactChance(defeated){if(!defeated?.miniBoss&&!defeated?.finalBoss)return 0;return DB060_ARTIFACT_RATES[db060ModeKey()]?.[boardLevel]?.[defeated.miniBoss?'mini':'boss']||0;}
-  function db060WeightedPick(table){const total=table.reduce((s,x)=>s+x.weight,0);let r=random()*total;for(const x of table){r-=x.weight;if(r<=0)return x;}return table[table.length-1];}
-  function db060RollArtifact(){const entry=db060WeightedPick(DB060_ARTIFACT_TABLE),item=entry.make();item.artifactTableSlot=entry.slot;return item;}
+  function db060RollArtifact(){const entry=window.DiceboundArtifacts.pick(random),make=DB060_ARTIFACT_FACTORIES[entry.slot];if(typeof make!=='function')throw new Error(`No Artifact item factory registered for ${entry.slot}`);const item=make();item.artifactTableSlot=entry.slot;return item;}
 
   // Guardian ordinary item tables. Miniboss ordinary gear is no longer a
   // 100% automatic reward on Normal: 85% Normal, 92% Nightmare, 100% Hell.
@@ -15057,7 +15058,7 @@ function buildDiceboundHumanHarness235(){
     minibossGearChance:()=>({normal:.85,nightmare:.92,hell:1}),
     secretSignatureRates:()=>({normal:.05,nightmare:.10,hell:.15}),
     namedMythicals:()=>[generateAxelsCoffeeMug(),generateKratzHeadphones(),generateKellysJeanJacket()].map(x=>({name:x.name,rarity:x.rarity,slot:x.slot})),
-    artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=db060WeightedPick(DB060_ARTIFACT_TABLE);out[x.slot]=(out[x.slot]||0)+1;}return out;}
+    artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=window.DiceboundArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });
 
   window.DiceboundInfrastructure=Object.freeze({version:'0.6.1',platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});

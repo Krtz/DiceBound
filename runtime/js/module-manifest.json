@@ -10,6 +10,7 @@
     "platform",
     "storage",
     "save-system",
+    "artifacts",
     "dicebound-monolith"
   ],
   "modules": [
@@ -71,11 +72,19 @@
       "provides": ["DiceboundSave"]
     },
     {
+      "id": "artifacts",
+      "path": "js/items/artifacts.js",
+      "domain": "items/artifacts",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundArtifacts"]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system"],
+      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "artifacts"],
       "provides": []
     }
   ],
@@ -87,7 +96,6 @@
     "classes",
     "items/equipment",
     "items/loot",
-    "items/artifacts",
     "items/consumables",
     "powerups",
     "pets",
