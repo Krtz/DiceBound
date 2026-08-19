@@ -14,6 +14,8 @@
 - Preserved the compatibility monolith's read-only class view while making the class registry an independently testable owner.
 - Moved the 45-node Legacy talent tree into `js/progression/talents.js` without changing costs, ranks, descriptions, branches or prerequisites.
 - Added deterministic tree validation for registry integrity and prerequisite cycles.
+- Moved pet definitions, the ordinary-enemy pool and rarity labels/weights/values into dedicated domain modules with exact snapshot coverage.
+- Removed the duplicate class-tag table and now derive it from canonical class definitions; tags and behavior are unchanged.
 
 ---
 

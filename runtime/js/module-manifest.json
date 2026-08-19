@@ -11,6 +11,9 @@
     "storage",
     "save-system",
     "classes-registry",
+    "pets-registry",
+    "combat-enemies",
+    "item-rarities",
     "progression-talents",
     "artifacts",
     "loot",
@@ -83,6 +86,30 @@
       "provides": ["DiceboundClasses"]
     },
     {
+      "id": "pets-registry",
+      "path": "js/pets/registry.js",
+      "domain": "pets/registry",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundPets"]
+    },
+    {
+      "id": "combat-enemies",
+      "path": "js/combat/enemies.js",
+      "domain": "combat/enemies",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundEnemies"]
+    },
+    {
+      "id": "item-rarities",
+      "path": "js/items/rarities.js",
+      "domain": "items/rarities",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundRarities"]
+    },
+    {
       "id": "progression-talents",
       "path": "js/progression/talents.js",
       "domain": "progression/talents",
@@ -111,7 +138,7 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "progression-talents", "artifacts", "loot"],
+      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "pets-registry", "combat-enemies", "item-rarities", "progression-talents", "artifacts", "loot"],
       "provides": []
     }
   ],
