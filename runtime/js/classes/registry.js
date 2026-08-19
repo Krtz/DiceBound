@@ -944,15 +944,180 @@
     }
   };
 
+  const CLASS_PASSIVE_DATA={
+    "ranger": {
+      "name": "Marked Quarry",
+      "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
+    },
+    "sorcerer": {
+      "name": "Arcane Reservoir",
+      "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal."
+    },
+    "fighter": {
+      "name": "Counterstance",
+      "desc": "Guarding primes the Fighter's next basic attack for a heavy counterblow."
+    },
+    "monk": {
+      "name": "Flowing Combo",
+      "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+    },
+    "clown": {
+      "name": "Opening Gag",
+      "desc": "Every battle begins with a random comedy gimmick: shoes, pies, barriers, applause or chickens."
+    },
+    "rouge": {
+      "name": "Painted Hexcraft",
+      "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+    },
+    "berserker": {
+      "name": "Blood Rage",
+      "desc": "Every 1% missing HP grants +1% damage as Rage. The bar fills as your HP falls."
+    },
+    "turtle": {
+      "name": "Shell Discipline",
+      "desc": "Guarding primes a crushing shell counter on the next basic attack. Starts with an extra Barrier and +1 Defense."
+    },
+    "frog": {
+      "name": "Predatory Bounce",
+      "desc": "Echo-heavy attacks become especially vicious against enemies below half HP."
+    },
+    "d20": {
+      "name": "Probability Leak",
+      "desc": "Nearly every combat action rolls a visible d20. The class intentionally pauses so you can witness fate making mistakes."
+    },
+    "slime": {
+      "name": "Borrowed Shapes",
+      "desc": "Has no privileged mechanic of its own. Instead it can learn many non-Ultimate class powers from other non-secret classes."
+    },
+    "vampire": {
+      "name": "Night Hunger",
+      "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
+    },
+    "ninja": {
+      "name": "Smoke Counter",
+      "desc": "Critical hits build Smoke. At 3 Smoke, the next basic attack becomes a defense-piercing execution strike."
+    },
+    "ceo": {
+      "name": "Executive Compensation",
+      "desc": "All gold gained is increased by +200%. Secret classes are allowed to be financially irresponsible."
+    },
+    "merchant": {
+      "name": "Occult Accounting",
+      "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
+    },
+    "cleric": {
+      "name": "Faith",
+      "desc": "Healing builds Faith. At full Faith, the Cleric can cast a free Consecration during combat."
+    },
+    "paladin": {
+      "name": "Oathplate",
+      "desc": "Defense contributes 35% of its value to ordinary attack damage. The class remains deliberately stable and dependable."
+    },
+    "beastmaster": {
+      "name": "Pack Orders",
+      "desc": "Can switch its companion between Aggressive, Defensive and Support stances during battle."
+    },
+    "rogue": {
+      "name": "Sticky Fingers",
+      "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
+    },
+    "bloodmage": {
+      "name": "Blood Is Mana",
+      "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
+    },
+    "summoner": {
+      "name": "Spirit Circle",
+      "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
+    },
+    "pokemontrainer": {
+      "name": "Six-Creature Draft",
+      "desc": "At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."
+    },
+    "alchemist": {
+      "name": "Combat Distillery",
+      "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+    }
+  };
+
+  const CLASS_TAG_VOCABULARY=["ranged","precision","evasive","occult","elemental","mana","melee","armored","guardian","combo","disciplined","weird","chaotic","burst","artful","vampiric","reckless","slow","dodgy","echo","poison","lucky","sticky","durable","sustain","wealth","holy","pet","pack","blood-fuel","strong","alchemy","secret","flex"];
+
+  const CLASS_UNLOCK_DATA={
+    ranger:{type:"always"},
+    sorcerer:{type:"guardianDefeat",board:1,guardian:"miniboss"},
+    fighter:{type:"guardianDefeat",board:1,guardian:"boss"},
+    monk:{type:"guardianDefeat",board:2,guardian:"miniboss"},
+    clown:{type:"guardianDefeat",board:2,guardian:"boss"},
+    rouge:{type:"prestige",count:10},
+    berserker:{type:"lifetimeStat",stat:"damageTaken",minimum:1000},
+    turtle:{type:"runStat",stat:"defense",greaterThan:40},
+    frog:{type:"runStat",stat:"doubleStrike",greaterThan:1.499999},
+    d20:{type:"petLevel",pet:"neutral",minimum:30},
+    slime:{type:"allNonSecretClasses"},
+    vampire:{type:"runStat",stat:"lifeSteal",greaterThan:1},
+    ninja:{type:"runStat",stat:"crit",greaterThan:1},
+    ceo:{type:"runStat",stat:"bossDamage",minimum:3},
+    merchant:{type:"secretBossKills",boss:"road-merchant",minimum:5},
+    cleric:{type:"lifetimeStat",stat:"healingDone",minimum:1000},
+    paladin:{type:"boardClears",requirements:[{classId:"fighter",board:3},{classId:"cleric",board:3}]},
+    beastmaster:{type:"allPetsUnlocked"},
+    rogue:{type:"lifetimeStat",stat:"highestGold",minimum:4000},
+    bloodmage:{type:"secretBossKills",boss:"bloodmage-boss",minimum:1},
+    summoner:{type:"petsAtLevel",count:3,level:10},
+    pokemontrainer:{type:"compound",requirements:[{type:"allPetsAtLevel",level:10},{type:"boardClear",classId:"beastmaster",board:5,difficulty:"nightmare"}]},
+    alchemist:{type:"lifetimeStat",stat:"potionsUsed",minimum:25},
+    ouroboros:{type:"runStat",stat:"doubleStrike",minimum:4},
+    slimerouge:{type:"compound",requirements:[{type:"classUnlocked",classId:"slime"},{type:"randomRunBoardClear",board:6}]}
+  };
+
+  const CLASS_MECHANICS_DATA={
+    ranger:["marks","crit","evasion","ranged"],
+    sorcerer:["mana","occult-spell","elemental","ranged","arcane-surge"],
+    fighter:["counter","guard","barrier","melee"],
+    monk:["combo","echo","evasion","melee"],
+    clown:["chaos-gimmick","luck","burst"],
+    rouge:["mana","occult-spell","crit","lifesteal"],
+    berserker:["rage","low-hp","lifesteal","melee"],
+    turtle:["guard-chain","guard","barrier","defense"],
+    frog:["echo","poison","evasion","cascade"],
+    d20:["d20-chaos","luck","echo"],
+    slime:["flex","poison","generic-borrowing"],
+    vampire:["mana","occult-spell","lifesteal","sustain"],
+    ninja:["smoke","crit","evasion","poison"],
+    ceo:["wealth","barrier","boss-damage"],
+    merchant:["mana","occult-spell","wealth","shop"],
+    cleric:["faith","healing","barrier","holy","blessed-attack"],
+    paladin:["faith","healing","guard","holy","defense"],
+    beastmaster:["pet","pet-switch","pack","stances"],
+    rogue:["steal","wealth","evasion"],
+    bloodmage:["blood-fuel","lifesteal","occult-spell"],
+    summoner:["mana","pet","pack","spirits","conjure"],
+    pokemontrainer:["pet","pack","roster","trainer-assist"],
+    alchemist:["alchemy","flasks","potions","sustain"],
+    ouroboros:["echo","poison","elemental","ouroboros-conversion"],
+    slimerouge:["randomizer","flex","poison","generic-borrowing"]
+  };
+
+  const ULTIMATE_SUPPORT_DATA={
+    ranger:["marks"],summoner:["spirits","pet","mana"],pokemontrainer:["roster","pet"],alchemist:["alchemy","potions"],cleric:["faith","healing"],paladin:["faith","healing"],ninja:["smoke","crit"],frog:["echo","cascade"],ouroboros:["echo","poison","ouroboros-conversion"],d20:["d20-chaos"]
+  };
+
   const CLASS_IDS=Object.freeze(Object.keys(CLASS_DATA));
 
-  function createRegistry(){
-    return JSON.parse(JSON.stringify(CLASS_DATA));
-  }
+  const clone=value=>JSON.parse(JSON.stringify(value));
+  function createRegistry(){return clone(CLASS_DATA);}
+  function createPassiveRegistry(){return clone(CLASS_PASSIVE_DATA);}
+  function createUnlockRegistry(){return clone(CLASS_UNLOCK_DATA);}
+  function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
+  function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
   window.DiceboundClasses=Object.freeze({
-    apiVersion:1,
+    apiVersion:2,
     ids:CLASS_IDS,
+    tagVocabulary:Object.freeze([...CLASS_TAG_VOCABULARY]),
     createRegistry,
+    createPassiveRegistry,
+    createUnlockRegistry,
+    createMechanicsRegistry,
+    createUltimateSupportRegistry,
   });
 })();

@@ -20,9 +20,12 @@
     "js/save-system.js",
     "js/classes/registry.js",
     "js/pets/registry.js",
+    "js/board/registry.js",
     "js/combat/enemies.js",
     "js/items/rarities.js",
+    "js/items/equipment.js",
     "js/progression/talents.js",
+    "js/progression/achievements.js",
     "js/items/artifacts.js",
     "js/items/loot.js",
     "js/dicebound.js"

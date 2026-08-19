@@ -19,15 +19,18 @@ storage.js
 save-system.js
 classes/registry.js
 pets/registry.js
+board/registry.js
 combat/enemies.js
 items/rarities.js
+items/equipment.js
 progression/talents.js
+progression/achievements.js
 items/artifacts.js
 items/loot.js
 dicebound.js
 ```
 
-`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. The platform/storage/save/RNG files are useful seams outside the recovered monolith. Explicit static owners now cover classes, pets, the ordinary-enemy pool, rarity metadata and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains the stateful mechanics, special-enemy definitions, concrete item factories and presentation/orchestration.
+`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. The platform/storage/save/RNG files are useful seams outside the recovered monolith. Explicit static owners now cover classes and their support tables, pets, boards, ordinary and special enemies, rarity/equipment metadata, achievements and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains the stateful mechanics, concrete item factories and presentation/orchestration.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -70,6 +73,7 @@ runtime/js/
 │  ├─ constants.js
 │  └─ ...
 ├─ board/
+│  └─ registry.js
 ├─ combat/
 │  └─ enemies.js
 ├─ classes/
@@ -84,7 +88,8 @@ runtime/js/
 ├─ pets/
 │  └─ registry.js
 ├─ progression/
-│  └─ talents.js
+│  ├─ talents.js
+│  └─ achievements.js
 ├─ modes/
 ├─ save/
 └─ ui/
@@ -114,7 +119,7 @@ Prefer pure/data-heavy regions first:
 3. other pure helpers currently embedded in the monolith;
 4. registries that do not directly own DOM or combat state.
 
-The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent registry checkpoints moved canonical classes and talents, then pets, the ordinary-enemy pool and rarity metadata into domain owners. Byte-identical class tags are now derived from canonical class data instead of maintained twice. Clone APIs intentionally feed the monolith's existing read-only compatibility proxies, preserving harmless patch-era mutation attempts without exposing mutable authoritative module state. Concrete stateful mechanics, special-enemy definitions, item factories and presentation chains remain temporarily in the monolith. These modules are independent and have no circular dependency.
+The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent registry checkpoints moved canonical classes and talents; pets, the ordinary-enemy pool and rarity metadata; then boards, equipment metadata, achievements, special enemies and the remaining pure class support tables into domain owners. Byte-identical class tags are now derived from canonical class data instead of maintained twice. Clone APIs intentionally feed the monolith's existing read-only compatibility proxies, preserving harmless patch-era mutation attempts without exposing mutable authoritative module state. Concrete stateful mechanics, item factories and presentation chains remain temporarily in the monolith. These modules have explicit load-order dependencies and no circular dependency.
 
 ### Phase 2 — self-contained gameplay domains
 
@@ -190,6 +195,7 @@ node tools/test_loot_module.js
 node tools/test_class_registry.js
 node tools/test_talent_registry.js
 node tools/test_static_registries.js
+node tools/test_content_registries.js
 node tools/test_version_identity.js
 python tools/validate_version_identity.py --version 0.6.1 --channel Beta
 python tools/test_version_identity_validator.py

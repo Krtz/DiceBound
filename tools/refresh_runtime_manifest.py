@@ -103,7 +103,7 @@ def main():
     build_id=f'dicebound-{version}-{suffix}'
 
     notes=ns.notes or (
-        f'Materialized Unreleased Git development for {channel} {version}; includes issue #29 granular runtime asset architecture.'
+        f'Materialized Unreleased Git development for {channel} {version}.'
         if ns.development_state=='Unreleased'
         else f'DiceBound {channel} {version} packaged release payload.'
     )

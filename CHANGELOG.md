@@ -21,6 +21,9 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Extracted the 13-pet registry, 11-enemy ordinary encounter pool and nine-tier rarity metadata into explicit pet/combat/item modules without changing content or selection behavior.
 - Removed the monolith's byte-for-byte duplicate class-tag table; the compatibility view is now derived from the canonical class registry.
 - Added deterministic snapshots, structural checks and clone-isolation coverage for the newly owned static registries.
+- Moved board definitions, the special-enemy/guardian registry, equipment metadata and the achievement catalog into explicit domain owners.
+- Extended the class owner with canonical passives, tag vocabulary, unlock requirements, mechanic tags and ultimate-support metadata.
+- Preserved every extracted byte of content and the compatibility monolith's patch-era no-op behavior, with exact snapshots and nested clone-isolation tests.
 
 ### Release identity
 - Added `runtime/js/version.js` as the single current Version/Channel owner for browser-runtime consumers; wrapper contract, platform, native host, save envelopes and the monolith now consume its frozen API.
