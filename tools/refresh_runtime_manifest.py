@@ -9,7 +9,6 @@ import re
 from pathlib import Path
 
 EXTENSIONS={'.html','.css','.js','.png','.ico','.jpg','.jpeg','.webp','.ogg','.mp3','.wav','.webm'}
-SCRIPTS=['js/assets.js','js/rng.js','js/native-http-host.js','js/wrapper-contract.js','js/platform.js','js/storage.js','js/save-system.js','js/dicebound.js']
 
 
 def sha(path: Path) -> str:
@@ -40,6 +39,28 @@ def asset_registry_version(runtime: Path) -> int:
     return int(match.group(1))
 
 
+def runtime_scripts(runtime: Path) -> list[str]:
+    manifest_path=runtime/'js'/'module-manifest.json'
+    if not manifest_path.is_file():
+        raise SystemExit(f'Could not find runtime module manifest: {manifest_path}')
+    manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+    modules={str(module.get('id')):module for module in manifest.get('modules',[])}
+    scripts=[]
+    for module_id in manifest.get('loadOrder',[]):
+        module=modules.get(str(module_id))
+        if not module:
+            raise SystemExit(f'Runtime load order references unknown module: {module_id}')
+        rel=str(module.get('path') or '')
+        if not rel.startswith('js/') or not rel.endswith('.js'):
+            raise SystemExit(f'Runtime module {module_id} has invalid script path: {rel!r}')
+        if not (runtime/rel).is_file():
+            raise SystemExit(f'Runtime module {module_id} points to missing script: {rel}')
+        scripts.append(rel)
+    if not scripts:
+        raise SystemExit('Runtime module manifest has an empty load order')
+    return scripts
+
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[1])
@@ -55,6 +76,8 @@ def main():
     manifest_path=runtime/'build-manifest.json'
     if not (runtime/'index.html').is_file():
         raise SystemExit(f'Could not find runtime index.html under {runtime}')
+
+    scripts=runtime_scripts(runtime)
 
     default_version,default_channel=default_version_channel(root,runtime)
     version=(ns.version or default_version or '').strip()
@@ -97,7 +120,7 @@ def main():
       'name':'Dicebound',
       'notes':notes,
       'reproducible':True,
-      'runtimeScripts':SCRIPTS,
+      'runtimeScripts':scripts,
       'saveSchemaVersion':2,
       'sourceHash':digest,
       'timestampPolicy':'none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads',
@@ -107,7 +130,7 @@ def main():
     }
     info_path.write_text(json.dumps(info,indent=2)+'\n',encoding='utf-8')
 
-    core=['build-info.json','index.html','css/dicebound.css',*SCRIPTS]
+    core=['build-info.json','index.html','css/dicebound.css',*scripts]
     manifest={
       'format':3,
       'version':version,
