@@ -1,30 +1,36 @@
 # Powerup Art Mapping
 
-This document records the first generated powerup-art batch introduced after the Beta 0.6 recovery.
+This document records the first repository-owned powerup-art batch introduced after the Beta 0.6 recovery and its canonical post-#29 locations.
 
-The runtime files live in `runtime/assets/ui/powerups/`. `runtime/js/assets.js` owns the asset paths and preloading; `runtime/js/dicebound.js` maps powerup names to the corresponding asset keys.
+`runtime/js/assets.js` owns the current paths and rendered-choice mapping. Powerup art now lives under `runtime/assets/powerups/` by rarity/role rather than in generic UI folders.
 
-| Powerup(s) | Asset |
+| Powerup(s) | Canonical asset |
 |---|---|
-| Second Wind | `powerup-second-wind.png` |
-| Field Alchemy | `powerup-field-alchemy.png` |
-| Sharper Blade / Sharpened Steel | `powerup-sharper-blade.png` |
-| Strong Brew / Quick Brew | `powerup-strong-brew.png` |
-| Tempered Guard / Runic Ward | `powerup-tempered-guard.png` |
-| Stout Heart | `powerup-stout-heart.png` |
-| Spiked Armor | `powerup-spiked-armor.png` |
-| Barbed Armor | `powerup-barbed-armor.png` |
-| Faint Echo | `powerup-faint-echo.png` |
-| Monster Notes | `powerup-monster-notes.png` |
-| Lucky Pebble | `powerup-lucky-pebble.png` |
-| Heavy Purse | `powerup-heavy-purse-worn.png` |
-| Field Surgeon | `powerup-field-surgeon.png` |
-| Executioner | `powerup-executioner.png` |
-| Walking Fortress | `powerup-walking-fortress.png` |
-| Worldheart | `powerup-worldheart.png` |
-| Phoenix Feather | `powerup-phoenix-feather.png` |
-| Fortune Broker | `powerup-fortune-broker.png` |
-| Treasure Sense+ / Treasure Sense++ | `powerup-treasure-sense.png` |
-| Scholar's Sigil / + / ++ | `powerup-scholars-sigil.png` |
+| Second Wind | `powerups/poor/second-wind.png` |
+| Field Alchemy | `powerups/poor/field-alchemy.png` |
+| Sharper Blade / Sharpened Steel | `powerups/poor/sharper-blade.png` |
+| Faint Echo | `powerups/poor/faint-echo.png` |
+| Monster Notes | `powerups/poor/monster-notes.png` |
+| Lucky Pebble | `powerups/poor/lucky-pebble.png` |
+| Heavy Purse | `powerups/poor/heavy-purse.png` |
+| Spiked Armor | `powerups/poor/spiked-armor.png` |
+| Quickdraw | `powerups/common/quickdraw.png` |
+| Strong Brew / Quick Brew | `powerups/common/strong-brew.png` |
+| Tempered Guard / Runic Ward | `powerups/common/tempered-guard.png` |
+| Stout Heart | `powerups/common/stout-heart.png` |
+| Barbed Armor | `powerups/common/barbed-armor.png` |
+| Field Surgeon | `powerups/uncommon/field-surgeon.png` |
+| Fortune Broker | `powerups/uncommon/fortune-broker.png` |
+| Glass Needle | `powerups/rare/glass-needle.png` |
+| Walking Fortress | `powerups/rare/walking-fortress.png` |
+| Executioner | `powerups/epic/executioner.png` |
+| Phoenix Feather | `powerups/epic/phoenix-feather.png` |
+| Worldheart | `powerups/legendary/worldheart.png` |
+| Treasure Sense+ / Treasure Sense++ | `powerups/shared/treasure-sense.png` |
+| Scholar's Sigil / + / ++ | `powerups/shared/scholars-sigil.png` |
 
-The integration workflow validates that every registered `uiPowerups` path resolves to a real file and runs `node --check` against both modified JavaScript files before committing the runtime changes.
+The earlier Beta-era Heavy Purse artwork is retained under `powerups/_legacy/` for provenance but is not returned by a live resolver.
+
+Powerups without repository-owned artwork still use the runtime's emoji/text fallback. Their future home is documented in `runtime/assets/powerups/placeholders/README.md`; class-only art belongs in `powerups/class-specific/`.
+
+Run `python tools/validate_asset_architecture.py` to verify that every canonical registry target and every rendered-name mapping resolves.

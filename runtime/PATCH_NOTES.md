@@ -1,3 +1,18 @@
+# Unreleased — post-Beta 0.6 Git development
+
+## Asset architecture (#29)
+- Reorganized runtime art into semantic folders for characters, enemy roles, equipment slots, powerup rarities, camp, board, combat, UI, installer and audio.
+- Added explicit future/placeholder homes for Random Class, Hell demon states, Gloves, guardian board markers, combat statuses, installer splash art and other still-emoji/shared visuals.
+- `runtime/js/assets.js` is now the authoritative current asset registry; current class/pet/enemy/camp/board/equipment/powerup mappings point to the granular hierarchy.
+- Added 22 canonical powerup art entries covering 28 rendered powerup names/tiers, including the current Glass Needle art.
+- Added `runtime/assets/ASSET_INVENTORY.json` and `tools/validate_asset_architecture.py` to audit every registry target and all known historical runtime asset pointers.
+- Historical Beta 0.6 monolith fallback paths remain as documented read-only compatibility mirrors so existing pointers do not break. New art must not be added to those mirrors.
+- Archived the exact Beta 0.6 browser build metadata under `docs/releases/beta-0.6/`; current Git development is explicitly Unreleased until `tools/refresh_runtime_manifest.py` materializes a new content-derived build identity.
+- No gameplay/balance behavior is intentionally changed by this migration.
+- Static/reference validation is authoritative for this migration; no headless visual smoke pass is claimed from the sandbox environment.
+
+---
+
 ## Beta 0.5.14 — Powerup Cleanup & Balance
 - Audited all existing powerups against a six-tier rarity philosophy: Poor = small single-axis bumps, Common = solid simple upgrades, Uncommon = specialized/two-axis synergies, Rare = strong build accelerators, Epic = build-defining, Legendary = run-defining.
 - Expanded the pool from **188 to exactly 200 powerups**.
@@ -16,7 +31,6 @@
 ## Beta 0.5.13 — Boss & Miniboss Art
 - Added the supplied boss/miniboss portrait art to the game package and encounter presentation.
 - Tightened Start Run placement/label spacing, moved Nightmare slightly lower, and added a dice/question-mark camp placeholder for Random Class.
-
 
 ## Beta 0.5.12 — Achievement Powerup Progression
 - Moved the Heirloom Chest up and left, closer to the bonfire.
@@ -113,10 +127,8 @@
 - Startup logging now records runtime-cache/game/WebView2 paths and repair state.
 - Keeps the working Beta 0.5.1 camp, fullscreen talent tree, close buttons, Tyrant's Legendary Contract and save tools.
 
-
 ## Beta 0.4.1 — World Background Hotfix
 - Replaced the fragile pseudo-element world background with explicit scene/atmosphere layers and introduced durable repository patch notes/TODO tracking.
-
 
 # Beta 0.6 — Gear & Guardian Loot Rebuild
 

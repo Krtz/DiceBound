@@ -4,11 +4,11 @@ A weird little game I make for fun that turned into a much bigger project.
 
 DiceBound is a single-player RPG/board-game hybrid built around dice movement, escalating road guardians, classes, companions, gear, powerups, Legacy progression, Nightmare/Hell modes, and increasingly ridiculous build combinations.
 
-## Current baseline
+## Release baseline and current development
 
-**Beta 0.6 — Gear & Guardian Loot Rebuild**
+**Last validated release baseline: Beta 0.6 — Gear & Guardian Loot Rebuild**
 
-Beta 0.6 is the first complete Git-tracked baseline of the recovered project. The authoritative recovered source is now committed to this repository.
+Beta 0.6 is the first complete Git-tracked baseline of the recovered project. Its exact historical release records, hashes and audits live under `docs/releases/beta-0.6/` and are not rewritten when current development changes the source tree.
 
 Validated Beta 0.6 identity:
 
@@ -20,21 +20,45 @@ Validated Beta 0.6 identity:
 - Original EXE SHA-256: `85764d2de61b19a2ff0d4bb983d3456f3c77784a608cd8bd27ee0fc995f13a0e`
 - Recovered release audit: **32 / 32 checks passed**
 
+`main` development after that release is explicitly **Unreleased** until a new package is materialized and validated. Run `tools/refresh_runtime_manifest.py` from a complete checkout before packaging to calculate current content-derived hashes/counts.
+
 ## Repository layout
 
 ```text
-runtime/                 Authoritative shipped browser/game runtime
+runtime/                 Current authoritative browser/game runtime
+  assets/                Granular semantic art/audio architecture (see assets/README.md)
 wrapper-source/          Native Windows WebView2 wrapper/build source
+installer/               Lightweight GitHub-backed installer/launcher source
+tools/                   Repository/runtime validation and build helpers
 docs/                    Architecture, development, roadmap and release records
 .github/                  Issue and pull-request templates
 ```
 
-The game runtime reports 135 assets / 148 content files in its content-derived Beta 0.6 build metadata.
+### Runtime asset source of truth
+
+Current artwork belongs under semantic folders such as:
+
+```text
+runtime/assets/characters/
+runtime/assets/enemies/
+runtime/assets/equipment/
+runtime/assets/powerups/
+runtime/assets/camp/
+runtime/assets/board/
+runtime/assets/combat/
+runtime/assets/ui/
+runtime/assets/installer/
+runtime/assets/audio/
+```
+
+`runtime/js/assets.js` owns current runtime asset mappings. `runtime/assets/ASSET_INVENTORY.json` records implemented art, placeholder homes and temporary compatibility mirrors. Empty/future categories are deliberately tracked with README files so new art always has an obvious destination.
+
+Because the recovered Beta 0.6 gameplay bundle still contains some historical fallback path literals, a small number of old folders remain as **read-only compatibility mirrors**. They exist solely so every old pointer still resolves; do not add new artwork to them. See `runtime/assets/README.md` and `docs/ASSET_ARCHITECTURE_MIGRATION.md`.
 
 ## Beta 0.6 highlights
 
 - Rebuilt guardian loot around one weighted Artifact-table roll, allowing at most one Artifact per guardian.
-- Artifact weights: 30% weapon / 20% boots / 16% legs / 14% ring / 9% hat / 7% amulet / 4% offhand.
+- Original Beta 0.6 Artifact weights were 30% weapon / 20% boots / 16% legs / 14% ring / 9% hat / 7% amulet / 4% offhand. Current-development balance changes are tracked separately and do not rewrite the historical release record.
 - Moved Axel's Coffee Mug, Kratz Headphones and The Jean Jacket Lost at Kelly's from Legendary to Mythical.
 - Added generated Legendary gear at 151–210 item points plus one of 20 build-changing Legendary Effects.
 - Memory Cache odds: 1/450 Normal, 1/300 Nightmare, 1/200 Hell.
@@ -44,7 +68,13 @@ The game runtime reports 135 assets / 148 content files in its content-derived B
 
 ## Building
 
-The exact `runtime/` payload is the Beta 0.6 source of truth.
+For a development checkout, first validate the runtime and materialize build metadata:
+
+```text
+python tools/validate_asset_architecture.py
+python tools/refresh_runtime_manifest.py
+python tools/validate_asset_architecture.py
+```
 
 For the native Windows wrapper, copy `runtime/` to:
 
@@ -62,25 +92,25 @@ The recovered Beta 0.6 source package does not vendor Microsoft's signed x64 `We
 
 ## Development rules
 
-- `main` is the known-good baseline.
+- `main` is the known-good development baseline; tagged/release records preserve immutable shipped identities.
 - Use short-lived branches / pull requests for non-trivial changes.
-- Git commits/tags are the source identity; EXEs and release ZIPs are derived artifacts.
+- Git commits/tags are source identity; EXEs and release ZIPs are derived artifacts.
 - Do not commit saves, runtime caches, local logs or generated release packages.
 - Preserve save compatibility unless a change explicitly includes a migration.
 - Real-player balance evidence takes priority over harness estimates when the two disagree.
 - Every release should preserve patch notes, validation evidence, checksums and enough provenance to rebuild it.
+- New art goes into the semantic asset hierarchy, never into a legacy compatibility mirror.
 
 ## Project docs
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Asset architecture migration](docs/ASSET_ARCHITECTURE_MIGRATION.md)
 - [Development guide](docs/DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
 - [GitHub Project layout](docs/GITHUB_PROJECT_SETUP.md)
 - [Release process](docs/RELEASE_PROCESS.md)
 - [Beta 0.6 recovery baseline](docs/RECOVERY_BASELINE.md)
-- [Beta 0.6 gear & loot audit](docs/releases/beta-0.6/GEAR_LOOT_AUDIT.md)
-- [Beta 0.6 build audit](docs/releases/beta-0.6/BUILD_AUDIT.md)
-- [Beta 0.6 checksums](docs/releases/beta-0.6/CHECKSUMS.txt)
+- [Beta 0.6 release record](docs/releases/beta-0.6/README.md)
 - [Changelog](CHANGELOG.md)
 
 GitHub issues are the actionable backlog. Broad future direction lives in the roadmap until it becomes concrete enough to implement or playtest.
