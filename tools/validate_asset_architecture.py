@@ -4,10 +4,10 @@ from __future__ import annotations
 import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
-EXPECTED={"classes":25,"pets":13,"normal_enemies":3,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":151}
+EXPECTED={"classes":25,"pets":13,"normal_enemies":3,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":169}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
-RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".ogg",".mp3",".wav",".webm"}
+RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".jpg",".jpeg",".webp",".ogg",".mp3",".wav",".webm"}
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
 POINTER_RX=re.compile(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)")
 
@@ -48,14 +48,18 @@ def main():
     check_js(runtime/"js/assets.js"); check_js(runtime/"js/dicebound.js")
     reg=load_registry(runtime); m=reg["manifest"]
     counts={"classes":len(m["classes"]),"pets":len(m["pets"]),"normal_enemies":len(m["enemies"]),"minibosses":len(m["minibosses"]),"bosses":len(m["bosses"]),"secret_bosses":len(m["secretBosses"]),"board_backgrounds":len(m["board"]["backgrounds"]),"powerup_assets":len(m["powerups"]),"powerup_name_mappings":len(reg["powerupNames"]),"registry_files":len(reg["files"])}
-    if m.get("version")!=8: fail(f"expected registry v8, got {m.get('version')}")
+    if not isinstance(m.get("version"),int) or m["version"]<1: fail(f"invalid asset registry version: {m.get('version')}")
     for k,v in EXPECTED.items():
         if counts[k]!=v: fail(f"{k}: expected {v}, got {counts[k]}")
     for rel in reg["files"]:
         p=runtime/rel
         if not p.is_file() or p.stat().st_size==0: fail(f"registry/preload target missing or empty: {rel}")
     for ctx in ("campsite","battle","markers"): count(runtime/f"assets/characters/classes/{ctx}",25)
-    count(runtime/"assets/characters/pets/portraits",13); count(runtime/"assets/enemies/normal/battle",3); count(runtime/"assets/enemies/minibosses/battle",6); count(runtime/"assets/enemies/bosses/battle",6); count(runtime/"assets/enemies/secret-bosses/battle",3); count(runtime/"assets/board/backgrounds",6)
+    count(runtime/"assets/characters/pets/portraits",13)
+    for role,expected in (("normal",3),("minibosses",6),("bosses",6),("secret-bosses",3)):
+        count(runtime/f"assets/enemies/{role}/battle",expected)
+        count(runtime/f"assets/enemies/{role}/board-markers",expected)
+    count(runtime/"assets/board/backgrounds",6)
     inv=json.loads((runtime/"assets/ASSET_INVENTORY.json").read_text())
     for rel in inv.get("implemented",[]):
         if not (runtime/"assets"/rel).is_file(): fail(f"inventory implemented asset missing: {rel}")
@@ -85,6 +89,7 @@ def main():
     for rel in required:
         if not (runtime/rel).is_file(): fail(f"future art home missing: {rel}")
     info=json.loads((runtime/"build-info.json").read_text()); bm=json.loads((runtime/"build-manifest.json").read_text())
+    if bm.get("assetRegistryVersion")!=m["version"]: fail(f"build manifest asset registry version {bm.get('assetRegistryVersion')} does not match live registry {m['version']}")
     if info.get("developmentState")!="Unreleased": fail("runtime build metadata is not marked Unreleased")
     mode="git-unreleased"
     if info.get("browserContentHash") is None:

@@ -392,7 +392,7 @@ func psbool(v bool) string {
 func psq(s string) string { return strings.ReplaceAll(s, "'", "''") }
 func ps(args ...string) *exec.Cmd {
 	c := exec.Command("powershell.exe", append([]string{"-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass"}, args...)...)
-	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	c.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000} // CREATE_NO_WINDOW
 	return c
 }
 func tempScript(name string, b []byte) string {

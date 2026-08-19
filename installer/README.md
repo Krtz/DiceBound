@@ -38,16 +38,14 @@ The identical file under `installer/assets/` is the build-package mirror embedde
 
 ## Building
 
-Requires Go. The splash and hints must be present beside the launcher source because they are embedded at compile time.
-
-For the Issue #23 implementation, build `main_v2.go` explicitly while the #14 bootstrap remains in `main.go` as a rollback/reference point:
+Requires Go. The splash and hints must be present beside the launcher source because they are embedded at compile time. Build both Go source files so `http_policy.go` applies the long-download timeout required for release assets larger than 100 MB.
 
 ```powershell
 $env:GOOS = 'windows'
 $env:GOARCH = 'amd64'
 $env:CGO_ENABLED = '0'
-go vet .\installer\main_v2.go
-go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go
+go vet .\installer\main_v2.go .\installer\http_policy.go
+go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go .\installer\http_policy.go
 ```
 
 For release builds, apply the existing DiceBound icon and VERSIONINFO using `wrapper-source/launcher/windows/embed_icon.py` in the same way the native game wrapper is branded.
@@ -68,8 +66,8 @@ Minimum static checks:
 $env:GOOS = 'windows'
 $env:GOARCH = 'amd64'
 $env:CGO_ENABLED = '0'
-go vet .\installer\main_v2.go
-go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go
+go vet .\installer\main_v2.go .\installer\http_policy.go
+go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go .\installer\http_policy.go
 ```
 
 Then perform real Windows smoke tests for fresh install, custom path, each shortcut choice, update, offline launch, bad hash/failed update fallback, and `--configure`.

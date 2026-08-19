@@ -1,23 +1,27 @@
 {
   "format": 3,
-  "version": "0.6",
+  "version": "0.6.1",
+  "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6-dev-git",
-  "browserContentHash": null,
-  "assetRegistryVersion": 8,
-  "requiredCoreFiles": [
-    "build-info.json",
-    "index.html",
-    "css/dicebound.css",
-    "js/assets.js",
-    "js/rng.js",
-    "js/native-http-host.js",
-    "js/wrapper-contract.js",
-    "js/platform.js",
-    "js/storage.js",
-    "js/save-system.js",
-    "js/dicebound.js"
-  ],
+  "buildId": "dicebound-0.6.1-dev-93875d806d311b10",
+  "browserContentHash": "93875d806d311b10024d8f985794206da52c5c9b34c322ea173918ba50b08fd0",
+  "assetRegistryVersion": 9,
+  "payloadFileCount": 311,
+  "assetPayloadCount": 301,
+  "files": {
+    "build-info.json": "77bec3e722724bb1eef038f2884341f34a9eea027a1d3370e57ef6bb666acd69",
+    "index.html": "7c5d318a3bf003807d6ff49462f3fe7292577d0a49c03486cbd39eb6409cec05",
+    "css/dicebound.css": "6136b739020e38fa3887443c5dcfeb39b6f92af9f415ed71744ef9172d0eee3a",
+    "js/assets.js": "cac19580aa7dc938fb263b395f7e692736c067f1d68eefc49cc94ef92131d634",
+    "js/rng.js": "e60173724330993a4e0d510e6a623b9233380c730ca95a7344eb9c60fd207aeb",
+    "js/native-http-host.js": "e2389fc4e2e4037af8e5123476c99d55b0e05bc34cb44c10323eea05f1147ca9",
+    "js/wrapper-contract.js": "843732c59953a594c7a9a0aa89169bd07b6feea8e80c528724c07dc9f36de78a",
+    "js/platform.js": "faf97f848ac1fc1eed4da0856f9f46d28a621dde910e29cca529af1b5e076bbf",
+    "js/storage.js": "01a08fa2eb79fe089ec388406cc9693fe50b2631488b425ed240369612a39f9d",
+    "js/save-system.js": "7b17a15f45bc87f0ae5cb51fbe4e40d4a3f0ae7e637729463d63edba5b4b82bf",
+    "js/dicebound.js": "08718bc28784c18f3766b951e16cbe029ab505c1ffe4e0de05ea98937b544da2"
+  },
+  "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
-  "hashPolicy": "This Git development tree is intentionally unhashed. Before packaging/releasing, run tools/refresh_runtime_manifest.py from a complete checked-out tree to calculate content-derived counts, build ID, payload hash and core file hashes. Exact original Beta 0.6 package metadata is archived under docs/releases/beta-0.6/."
+  "hashPolicy": "browserContentHash authenticates every runtime-loadable HTML/CSS/JS/image/audio payload; files carries per-file hashes for build-info and core runtime entrypoints/scripts."
 }

@@ -1,16 +1,16 @@
 {
-  "assetCount": null,
-  "browserContentHash": null,
-  "buildId": "dicebound-0.6-dev-git",
+  "assetCount": 301,
+  "browserContentHash": "93875d806d311b10024d8f985794206da52c5c9b34c322ea173918ba50b08fd0",
+  "buildId": "dicebound-0.6.1-dev-93875d806d311b10",
   "channel": "Beta",
-  "contentFileCount": null,
+  "contentFileCount": 312,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Unreleased Git development after Beta 0.6. Issue #29 reorganizes runtime art into a granular semantic asset architecture while retaining read-only compatibility mirrors for recovered Beta 0.6 monolith fallback paths.",
-  "reproducible": false,
+  "notes": "Materialized Unreleased Git development for Beta 0.6.1; includes issue #29 granular runtime asset architecture.",
+  "reproducible": true,
   "runtimeScripts": [
     "js/assets.js",
     "js/rng.js",
@@ -22,9 +22,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": null,
-  "timestampPolicy": "Unreleased Git workspace metadata is intentionally unhashed. Run tools/refresh_runtime_manifest.py from a checked-out tree before packaging/release to materialize content-derived hashes and counts.",
-  "version": "0.6",
+  "sourceHash": "93875d806d311b10024d8f985794206da52c5c9b34c322ea173918ba50b08fd0",
+  "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads",
+  "version": "0.6.1",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

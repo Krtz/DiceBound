@@ -2,7 +2,7 @@
   "use strict";
   const FORMAT="dicebound-save";
   const SCHEMA_VERSION=2;
-  const GAME_VERSION="0.6";
+  const GAME_VERSION="0.6.1";
   const PRIMARY_KEY="dicebound.save.primary";
   const BACKUP_KEY="dicebound.save.backup";
   const BACKUP_KEYS=[BACKUP_KEY,"dicebound.save.backup.2","dicebound.save.backup.3","dicebound.save.backup.4","dicebound.save.backup.5"];

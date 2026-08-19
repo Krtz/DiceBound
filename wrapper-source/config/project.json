@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6",
+  "version": "0.6.1",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -38,7 +38,7 @@
   "releaseOutput": "release",
   "buildInfo": "build-info.json",
   "buildManifest": "build-manifest.json",
-  "releaseCommand": "tools/release.py or tools/release.ps1",
+  "releaseCommand": "Build-DiceBoundRelease.ps1",
   "wrapperArtifact": "dist/browser",
   "touchUi": "src/ui/83-touch-mobile-and-dialogs.js",
   "mobileTarget": "Touch-capable Edge/Chrome/PWA-style WebView with Pointer Events",

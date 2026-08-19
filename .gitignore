@@ -7,6 +7,7 @@
 # Local build output
 wrapper-source/dist/
 wrapper-source/build/
+wrapper-source/release/
 build/
 dist/
 
