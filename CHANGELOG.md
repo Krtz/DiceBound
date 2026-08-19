@@ -4,9 +4,13 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 
 ## Unreleased — post-Beta 0.6.1 Git development
 
+### Balance
+- Rebalanced the seven-slot Artifact table for #22: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7% and class Weapon 4%.
+- Made the class Weapon the unique rarest Artifact-table result while preserving guardian Board/mode access rates and one-draw slot selection.
+
 ### Runtime architecture
 - Continued #40 with the first behavior-preserving gameplay extraction: Artifact slot metadata, weights and weighted selection now live in `runtime/js/items/artifacts.js`.
-- Preserved the Beta 0.6.1 Artifact weights, guardian access rates, item factories and save behavior exactly; the separate #22 balance proposal is not included.
+- The Phase 1 extraction preserved the Beta 0.6.1 Artifact weights, guardian access rates, item factories and save behavior before the separate #22 balance change.
 - Added deterministic boundary and immutability tests for the extracted weighted-selection module.
 
 ## Beta 0.6.1 — Runtime Packaging & Asset Architecture
