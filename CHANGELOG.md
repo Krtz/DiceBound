@@ -1,6 +1,23 @@
 # DiceBound Changelog
 
-This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release being established as the repository baseline.
+This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
+
+## Unreleased — post-Beta 0.6 Git development
+
+### Asset architecture
+- Reorganized current runtime art into a granular role/context hierarchy for characters, enemies, equipment, powerups, campsite, board, combat, UI, installer and audio assets (#29).
+- Split class art into campsite, battle and marker contexts; split enemies into normal/miniboss/final-boss/secret-boss roles with explicit future board-marker homes.
+- Added slot-specific equipment folders including the future special-only Gloves location from #28.
+- Organized current powerup art by rarity/shared role and made `runtime/js/assets.js` the authoritative current mapping layer.
+- Added tracked README placeholder homes for art that is not implemented yet, including Random Class, Hell demon states, Gloves, combat statuses, guardian board markers, missing equipment/character art and installer splash art.
+- Added a machine-readable `runtime/assets/ASSET_INVENTORY.json` and `tools/validate_asset_architecture.py` so every registry target, placeholder home and known historical runtime pointer can be audited.
+- Retained documented read-only compatibility mirrors for historical paths still referenced by the recovered Beta 0.6 monolith. These mirrors are not valid destinations for new artwork and can be removed after the old fallback literals are extracted.
+- Archived the exact original Beta 0.6 browser build metadata under `docs/releases/beta-0.6/`; current Git development is explicitly marked Unreleased instead of carrying stale release hashes.
+- Added `tools/refresh_runtime_manifest.py` to materialize content-derived development build metadata before packaging.
+
+### Powerup art
+- Integrated the first generated powerup-art batch into the semantic powerup hierarchy while preserving the current supplied Glass Needle image.
+- Added registry-backed rendered-choice mappings for 28 powerup names/tiers covering 22 canonical art assets.
 
 ## Beta 0.6 — Gear & Guardian Loot Rebuild
 
