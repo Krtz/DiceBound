@@ -1,0 +1,98 @@
+{
+  "format": 1,
+  "architectureIssue": 40,
+  "description": "Authoritative load order and ownership map for the modular-runtime migration. dicebound.js remains the compatibility monolith until its domains are extracted incrementally.",
+  "loadOrder": [
+    "assets",
+    "rng",
+    "native-http-host",
+    "wrapper-contract",
+    "platform",
+    "storage",
+    "save-system",
+    "dicebound-monolith"
+  ],
+  "modules": [
+    {
+      "id": "assets",
+      "path": "js/assets.js",
+      "domain": "assets",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundAssets"]
+    },
+    {
+      "id": "rng",
+      "path": "js/rng.js",
+      "domain": "core/rng",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundRng"]
+    },
+    {
+      "id": "native-http-host",
+      "path": "js/native-http-host.js",
+      "domain": "platform/native-adapter",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundHost"],
+      "conditionalProvides": true
+    },
+    {
+      "id": "wrapper-contract",
+      "path": "js/wrapper-contract.js",
+      "domain": "platform/contract",
+      "status": "extracted",
+      "requires": ["native-http-host"],
+      "provides": ["DiceboundWrapperContract", "DiceboundWrapper"]
+    },
+    {
+      "id": "platform",
+      "path": "js/platform.js",
+      "domain": "platform",
+      "status": "extracted",
+      "requires": ["wrapper-contract"],
+      "provides": ["DiceboundPlatform"]
+    },
+    {
+      "id": "storage",
+      "path": "js/storage.js",
+      "domain": "save/storage",
+      "status": "extracted",
+      "requires": ["wrapper-contract"],
+      "provides": ["DiceboundStorage"]
+    },
+    {
+      "id": "save-system",
+      "path": "js/save-system.js",
+      "domain": "save",
+      "status": "extracted",
+      "requires": ["storage", "platform"],
+      "provides": ["DiceboundSave"]
+    },
+    {
+      "id": "dicebound-monolith",
+      "path": "js/dicebound.js",
+      "domain": "compatibility-monolith",
+      "status": "monolith",
+      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system"],
+      "provides": []
+    }
+  ],
+  "plannedDomains": [
+    "core/state",
+    "core/constants",
+    "board",
+    "combat",
+    "classes",
+    "items/equipment",
+    "items/loot",
+    "items/artifacts",
+    "items/consumables",
+    "powerups",
+    "pets",
+    "progression",
+    "modes",
+    "ui"
+  ]
+}
