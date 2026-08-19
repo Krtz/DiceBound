@@ -8,6 +8,8 @@ EXPECTED={"classes":25,"pets":13,"normal_enemies":3,"minibosses":6,"bosses":6,"s
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".ogg",".mp3",".wav",".webm"}
+POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
+POINTER_RX=re.compile(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)")
 
 def fail(msg): raise SystemExit(f"ASSET AUDIT FAILED: {msg}")
 def sha256_file(path):
@@ -33,6 +35,12 @@ def load_registry(runtime):
 def count(root,expected):
     got=len(list(root.glob("*.png")))
     if got!=expected: fail(f"expected {expected} PNGs in {root}, found {got}")
+def collect_live_pointers(runtime):
+    out={}
+    for path in sorted(p for p in runtime.rglob("*") if p.is_file() and p.suffix.lower() in POINTER_SOURCE_EXTENSIONS):
+        refs=sorted(set(POINTER_RX.findall(path.read_text(encoding="utf-8"))))
+        if refs: out[path.relative_to(runtime).as_posix()]=refs
+    return out
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--root",type=Path,default=Path(__file__).resolve().parents[1]); ns=ap.parse_args()
@@ -55,11 +63,21 @@ def main():
         if not (runtime/"assets"/rel).is_file(): fail(f"placeholder home missing: {rel}")
     bad={k for k in reg["powerupNames"].values() if k not in m["powerups"] and k not in m["ui"]["icons"]}
     if bad: fail("unknown powerup art keys: "+", ".join(sorted(bad)))
-    literals=sorted(set(re.findall(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)",(runtime/"js/dicebound.js").read_text())))
-    for lit in literals:
-        if lit.startswith(SEMANTIC_ROOTS): continue
-        if not lit.startswith(LEGACY_PREFIXES): fail(f"unclassified legacy literal: {lit}")
-        if re.search(r"\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)$",lit) and not (runtime/lit).is_file(): fail(f"legacy literal no longer resolves: {lit}")
+
+    # Check EVERY literal asset pointer in live runtime JS/CSS/HTML. Semantic pointers
+    # must exist directly; historical pointers are permitted only under explicit
+    # compatibility roots and every concrete file pointer must still resolve.
+    pointer_sources=collect_live_pointers(runtime); pointers=sorted({x for refs in pointer_sources.values() for x in refs})
+    unknown=[]; missing=[]
+    for lit in pointers:
+        if lit.startswith(SEMANTIC_ROOTS):
+            if re.search(r"\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)$",lit) and not (runtime/lit).is_file(): missing.append(lit)
+            continue
+        if not lit.startswith(LEGACY_PREFIXES): unknown.append(lit); continue
+        if re.search(r"\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)$",lit) and not (runtime/lit).is_file(): missing.append(lit)
+    if unknown: fail("unclassified live runtime asset pointers: "+", ".join(unknown))
+    if missing: fail("live runtime asset pointers no longer resolve: "+", ".join(missing))
+
     compat=["assets/enemies/portraits","assets/camp/backgrounds","assets/camp/objects","assets/pets/portraits","assets/ui/backgrounds","assets/ui/class-art","assets/ui/class-markers","assets/ui/icon","assets/ui/icons","assets/sounds"]
     for rel in compat:
         if not (runtime/rel).is_dir(): fail(f"compatibility mirror missing: {rel}")
@@ -78,6 +96,6 @@ def main():
         for rel,expected in bm.get("files",{}).items():
             p=runtime/rel
             if not p.is_file() or sha256_file(p)!=expected: fail(f"materialized core manifest mismatch: {rel}")
-    print(json.dumps({"status":"pass","assetRegistryVersion":m["version"],"counts":counts,"canonicalRegistryFilesResolved":len(reg["files"]),"legacyLiteralPointersClassified":len(literals),"legacyCompatibilityRoots":compat,"buildMetadataMode":mode,"visualSmoke":"not-run-by-this-static-auditor"},indent=2))
+    print(json.dumps({"status":"pass","assetRegistryVersion":m["version"],"counts":counts,"canonicalRegistryFilesResolved":len(reg["files"]),"liveRuntimePointerSources":pointer_sources,"liveRuntimePointersClassified":len(pointers),"legacyCompatibilityRoots":compat,"buildMetadataMode":mode,"visualSmoke":"not-run-by-this-static-auditor"},indent=2))
     return 0
 if __name__=="__main__": sys.exit(main())
