@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$Version = "0.6.1",
-    [string]$Channel = "Beta",
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Version,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$Channel,
     [string]$PythonExecutable = "python",
     [switch]$SkipSourceStamp,
     [switch]$RequireSignedLoader
@@ -33,6 +33,7 @@ Invoke-Checked $PythonExecutable "tools/refresh_runtime_manifest.py" `
     "--channel" $Channel `
     "--development-state" "Unreleased"
 
+Invoke-Checked $PythonExecutable "tools/validate_version_identity.py" "--version" $Version "--channel" $Channel
 Invoke-Checked $PythonExecutable "tools/validate_asset_architecture.py"
 Invoke-Checked $PythonExecutable "tools/validate_runtime_architecture.py"
 Invoke-Checked $PythonExecutable "tools/validate_launcher_assets.py"
@@ -130,65 +131,7 @@ if (-not (Test-Path $builtExe)) {
 }
 Copy-Item $builtExe $releaseExe -Force
 
-$wrapperSource = Get-Content `
-    (Join-Path $PSScriptRoot "wrapper-source\wrappers\webview2\native-go\main.go") `
-    -Raw
 $expectedTitle = "Dicebound: $Channel v$Version"
-$nativeMarkers = @(
-    "appTitle       = `"$expectedTitle`"",
-    "messageBox(appTitle,",
-    "Frontend ready handshake received for $Channel $Version.",
-    "Starting Dicebound $Channel $Version native WebView2 wrapper.",
-    "index.html?diceboundNative=1&v=$Version&build="
-)
-foreach ($marker in $nativeMarkers) {
-    if (-not $wrapperSource.Contains($marker)) {
-        throw "Native wrapper source is missing release identity marker: $marker"
-    }
-}
-if ($wrapperSource.Contains("0.5.8")) {
-    throw "Native wrapper source still contains stale 0.5.8 identity."
-}
-
-$runtimeIdentity = [ordered]@{
-    "index.html" = @(
-        "<title>$expectedTitle</title>",
-        "<h1>$expectedTitle</h1>",
-        "<p>$Channel v$Version"
-    )
-    "PATCH_NOTES.md" = @(
-        "# $Channel $Version",
-        "Runtime Packaging & Asset Architecture"
-    )
-    "js\wrapper-contract.js" = @("const APP_VERSION = `"$Version`";")
-    "js\save-system.js" = @("const GAME_VERSION=`"$Version`";")
-    "js\platform.js" = @(
-        "appVersion:wrapper?.appVersion||`"$Version`"",
-        "appVersion:`"$Version`",isWrapped:false",
-        "channel:metadata?.channel||`"$Channel`""
-    )
-    "js\native-http-host.js" = @(
-        "wrapperVersion:`"$Version`"",
-        "channel:`"$Channel`"",
-        "appVersion:`"$Version`"",
-        "JSON.stringify({version:`"$Version`""
-    )
-    "js\dicebound.js" = @(
-        "document.title='$expectedTitle';",
-        "db060Brand.textContent='$expectedTitle';",
-        "db060Sub.textContent='$Channel v$Version",
-        "DiceboundInfrastructure=Object.freeze({version:'$Version'"
-    )
-}
-foreach ($entry in $runtimeIdentity.GetEnumerator()) {
-    $runtimePath = Join-Path $dist $entry.Key
-    $runtimeSource = Get-Content $runtimePath -Raw
-    foreach ($marker in $entry.Value) {
-        if (-not $runtimeSource.Contains($marker)) {
-            throw "Staged runtime identity check failed for $($entry.Key): $marker"
-        }
-    }
-}
 
 $sha256 = (Get-FileHash $releaseExe -Algorithm SHA256).Hash.ToLowerInvariant()
 $bytes = (Get-Item $releaseExe).Length
@@ -215,6 +158,12 @@ $metadataJson = $metadata | ConvertTo-Json -Depth 6
     $metadataJson + "`n",
     [Text.UTF8Encoding]::new($false)
 )
+
+Invoke-Checked $PythonExecutable `
+    "tools/validate_version_identity.py" `
+    "--version" $Version `
+    "--channel" $Channel `
+    "--release-metadata" $metadataPath
 
 Write-Host ""
 Write-Host "Release build complete."

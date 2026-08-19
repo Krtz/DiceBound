@@ -9,6 +9,7 @@ This document describes the **incremental migration architecture**. It is delibe
 `runtime/index.html` currently loads the following scripts in order:
 
 ```text
+version.js
 assets.js
 rng.js
 native-http-host.js
@@ -26,7 +27,7 @@ items/loot.js
 dicebound.js
 ```
 
-The platform/storage/save/RNG files are useful seams outside the recovered monolith. Explicit static owners now cover classes, pets, the ordinary-enemy pool, rarity metadata and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains the stateful mechanics, special-enemy definitions, concrete item factories and presentation/orchestration.
+`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. The platform/storage/save/RNG files are useful seams outside the recovered monolith. Explicit static owners now cover classes, pets, the ordinary-enemy pool, rarity metadata and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains the stateful mechanics, special-enemy definitions, concrete item factories and presentation/orchestration.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -35,6 +36,7 @@ The machine-readable source of truth for this order is `runtime/js/module-manife
 Dependencies should point downward through stable services, never form cycles.
 
 ```text
+version ─────────────────────────────────────────────────┐
 assets ───────────────────────────────────────────────┐
 rng ──────────────────────────────────────────────────┤
 native-http-host -> wrapper-contract -> platform ─────┤
@@ -51,6 +53,7 @@ Rules:
 - save/storage modules should serialize authoritative state supplied by gameplay rather than own gameplay rules;
 - cross-domain calls should go through explicit exported APIs rather than ambient globals where practical;
 - one public symbol/system gets one authoritative owner.
+- any runtime module reading `DiceboundVersion` must declare `version` in its manifest dependencies; the version-identity validator enforces this dynamically as code moves.
 
 ## Target ownership domains
 
@@ -60,6 +63,7 @@ The exact file count is intentionally flexible. Boundaries should follow respons
 runtime/js/
 ├─ main.js                    eventual small composition root
 ├─ module-manifest.json       architecture/load-order contract
+├─ version.js                 authoritative browser Version/Channel identity
 ├─ assets.js
 ├─ core/
 │  ├─ state.js
@@ -186,6 +190,9 @@ node tools/test_loot_module.js
 node tools/test_class_registry.js
 node tools/test_talent_registry.js
 node tools/test_static_registries.js
+node tools/test_version_identity.js
+python tools/validate_version_identity.py --version 0.6.1 --channel Beta
+python tools/test_version_identity_validator.py
 ```
 
 `validate_runtime_architecture.py` intentionally has two classes of findings:

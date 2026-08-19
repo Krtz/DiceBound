@@ -17,6 +17,10 @@
 - Moved pet definitions, the ordinary-enemy pool and rarity labels/weights/values into dedicated domain modules with exact snapshot coverage.
 - Removed the duplicate class-tag table and now derive it from canonical class definitions; tags and behavior are unchanged.
 
+## Release identity (#45)
+- Added one central browser-runtime Version/Channel owner used by the wrapper contract, platform diagnostics, native host handshake, save envelopes and final visible game identity.
+- Added deterministic build validation that rejects stale native/runtime/project/release identity and verifies launcher distribution metadata against a final built artifact.
+
 ---
 
 # Beta 0.6.1 — Runtime Packaging & Asset Architecture

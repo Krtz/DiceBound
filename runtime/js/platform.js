@@ -1,6 +1,8 @@
 (() => {
   "use strict";
 
+  const identity=window.DiceboundVersion;
+  if(!identity)throw new Error("DiceboundPlatform requires DiceboundVersion before loading.");
   const wrapper=window.DiceboundWrapper||null;
   const native=wrapper?.host?.platform||null;
   const metadata=wrapper?.host?.metadata||null;
@@ -89,7 +91,7 @@
   function openSaveFolder(){if(native?.openSaveFolder)return native.openSaveFolder();return false;}
   function openAppDataFolder(){if(native?.openAppDataFolder)return native.openAppDataFolder();return false;}
   function repairRuntime(){if(native?.repairRuntime)return native.repairRuntime();return false;}
-  function appInfo(){return Object.freeze({appVersion:wrapper?.appVersion||"0.6.1",contractVersion:wrapper?.contractVersion||1,kind:metadata?.kind||"browser",wrapperVersion:metadata?.wrapperVersion||null,platform:metadata?.platform||null,architecture:metadata?.architecture||null,channel:metadata?.channel||"Beta",isWrapped:!!wrapper?.isWrapped});}
+  function appInfo(){return Object.freeze({appVersion:wrapper?.appVersion||identity.version,contractVersion:wrapper?.contractVersion||1,kind:metadata?.kind||"browser",wrapperVersion:metadata?.wrapperVersion||null,platform:metadata?.platform||null,architecture:metadata?.architecture||null,channel:metadata?.channel||identity.channel,isWrapped:!!wrapper?.isWrapped});}
 
   function runtimeInfo() {
     const info=appInfo();
@@ -130,6 +132,6 @@
     nowIso: () => new Date().toISOString(),
     nowMs: () => Date.now(),
     runtimeInfo,
-    wrapperDiagnostics:()=>wrapper?.diagnostics?.()||Object.freeze({contractVersion:1,appVersion:"0.6.1",isWrapped:false,metadata:null,hasPlatform:false,hasStorage:false,warnings:[]})
+    wrapperDiagnostics:()=>wrapper?.diagnostics?.()||Object.freeze({contractVersion:1,appVersion:identity.version,isWrapped:false,metadata:null,hasPlatform:false,hasStorage:false,warnings:[]})
   });
 })();

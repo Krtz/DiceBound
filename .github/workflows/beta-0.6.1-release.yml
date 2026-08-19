@@ -17,6 +17,11 @@ on:
       - ".github/workflows/beta-0.6.1-release.yml"
       - "Build-DiceBoundRelease.ps1"
       - "tools/set_project_version.py"
+      - "tools/validate_version_identity.py"
+      - "tools/test_version_identity_validator.py"
+      - "tools/test_version_identity.js"
+      - "tools/write_distribution_manifest.py"
+      - "tools/test_distribution_manifest.py"
       - "tools/refresh_runtime_manifest.py"
       - "tools/validate_asset_architecture.py"
       - "runtime/**"
@@ -31,6 +36,11 @@ on:
       - ".github/workflows/beta-0.6.1-release.yml"
       - "Build-DiceBoundRelease.ps1"
       - "tools/set_project_version.py"
+      - "tools/validate_version_identity.py"
+      - "tools/test_version_identity_validator.py"
+      - "tools/test_version_identity.js"
+      - "tools/write_distribution_manifest.py"
+      - "tools/test_distribution_manifest.py"
       - "tools/refresh_runtime_manifest.py"
       - "tools/validate_asset_architecture.py"
       - "runtime/**"
@@ -94,6 +104,18 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           python tools/refresh_runtime_manifest.py --version 0.6.1 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/validate_version_identity.py --version 0.6.1 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/test_version_identity_validator.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          node tools/test_version_identity.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/test_distribution_manifest.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           git diff --quiet
@@ -160,25 +182,18 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
         shell: pwsh
         run: |
-          $meta = Get-Content .\wrapper-source\release\release-metadata.json -Raw | ConvertFrom-Json
-          $latest = [ordered]@{
-            format = 1
-            name = "DiceBound"
-            version = "0.6.1"
-            channel = "Beta"
-            buildId = $meta.buildId
-            url = "https://github.com/Krtz/DiceBound/releases/download/beta-0.6.1/DiceBound.exe"
-            sha256 = $meta.sha256
-            bytes = [int64]$meta.bytes
-            executable = "DiceBound.exe"
-          }
+          python tools/write_distribution_manifest.py `
+            --release-metadata wrapper-source/release/release-metadata.json `
+            --output distribution/latest.json `
+            --repository Krtz/DiceBound
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          $json = $latest | ConvertTo-Json -Depth 5
-          [IO.File]::WriteAllText(
-            (Join-Path $PWD "distribution\latest.json"),
-            $json + "`n",
-            [Text.UTF8Encoding]::new($false)
-          )
+          python tools/validate_version_identity.py `
+            --version 0.6.1 `
+            --channel Beta `
+            --release-metadata wrapper-source/release/release-metadata.json `
+            --distribution distribution/latest.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           git add distribution/latest.json
           git diff --cached --quiet

@@ -10,6 +10,7 @@
   "entrypoint": "index.html",
   "runtimeStyle": "css/dicebound.css",
   "runtimeScripts": [
+    "js/version.js",
     "js/assets.js",
     "js/rng.js",
     "js/native-http-host.js",
@@ -17,6 +18,13 @@
     "js/platform.js",
     "js/storage.js",
     "js/save-system.js",
+    "js/classes/registry.js",
+    "js/pets/registry.js",
+    "js/combat/enemies.js",
+    "js/items/rarities.js",
+    "js/progression/talents.js",
+    "js/items/artifacts.js",
+    "js/items/loot.js",
     "js/dicebound.js"
   ],
   "gameBundle": "js/dicebound.js",
@@ -46,5 +54,7 @@
     "wrappers/tauri",
     "wrappers/webview2/Dicebound.WebView2"
   ],
-  "primaryWrapper": "wrappers/webview2/native-go"
+  "primaryWrapper": "wrappers/webview2/native-go",
+  "versionIdentity": "runtime/js/version.js",
+  "versionValidation": "tools/validate_version_identity.py"
 }
