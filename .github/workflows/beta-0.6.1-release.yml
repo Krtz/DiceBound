@@ -11,6 +11,15 @@ on:
       - "Build-DiceBoundRelease.ps1"
       - "tools/set_project_version.py"
       - "tools/refresh_runtime_manifest.py"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".release/beta-0.6.1.json"
+      - ".github/workflows/beta-0.6.1-release.yml"
+      - "Build-DiceBoundRelease.ps1"
+      - "tools/set_project_version.py"
+      - "tools/refresh_runtime_manifest.py"
 
 permissions:
   contents: write
@@ -72,14 +81,18 @@ jobs:
           python tools/refresh_runtime_manifest.py --version 0.6.1 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md runtime/index.html runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go
+          if ("${{ github.event_name }}" -eq "push") {
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add CHANGELOG.md runtime/index.html runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go
 
-          git diff --cached --quiet
-          if ($LASTEXITCODE -ne 0) {
-            git commit -m "release: stamp DiceBound Beta 0.6.1"
-            git push origin "HEAD:${{ github.ref_name }}"
+            git diff --cached --quiet
+            if ($LASTEXITCODE -ne 0) {
+              git commit -m "release: stamp DiceBound Beta 0.6.1"
+              git push origin "HEAD:${{ github.ref_name }}"
+            }
+          } else {
+            Write-Host "PR validation run: source stamp stays in the runner workspace only."
           }
 
           "RELEASE_SOURCE_SHA=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
