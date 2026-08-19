@@ -1,53 +1,75 @@
-# DiceBound lightweight installer / launcher
+# DiceBound installer / launcher
 
-This folder contains a tiny Windows bootstrapper for players. It deliberately does **not** embed the ~160 MB game runtime.
+`installer/` contains the small permanent Windows launcher for DiceBound. The large game EXE remains a GitHub Release asset; the launcher reads `distribution/latest.json`, verifies the release payload, updates safely, and starts the installed game.
 
-## Player flow
+## Issue #23 launcher flow
+
+The launcher now builds on the lightweight #14 bootstrap with a real first-install and recurring-launch experience:
+
+- Dedicated DiceBound splash art with live install/update status.
+- Rotating spoiler-light hints loaded from editable `installer/hints.json`.
+- First install lets the player choose an install folder; `%LOCALAPPDATA%\DiceBound` remains the default.
+- Desktop and Start Menu shortcuts are independent opt-in choices.
+- Launcher choices persist in `%LOCALAPPDATA%\DiceBoundLauncher\launcher-config.json`.
+- `DiceBoundLauncher.exe --configure` reopens the install/shortcut choices.
+- Installed version/build ID and update status are shown on the splash.
+- If GitHub is unreachable but a valid local game exists, the installed game launches offline.
+- Updates download to a temporary file and are checked against both byte size and SHA-256 before the old build is touched.
+- Failed updates restore/retain the previous runnable game and launch it when possible.
+- The launcher never deletes the DiceBound save/backup directories.
+
+## Splash art ownership
+
+The canonical source-controlled artwork lives at:
+
+`runtime/assets/installer/splash/dicebound-launcher-splash.jpg`
+
+The identical file under `installer/assets/` is the build-package mirror embedded into the launcher by `go:embed`. Do not independently edit the mirror; replace the canonical art and copy it into the installer package when updating launcher presentation.
+
+## Distribution model
 
 1. Player downloads `DiceBoundSetup.exe` once.
-2. The launcher reads `distribution/latest.json` from the public `Krtz/DiceBound` repository.
+2. The launcher reads `distribution/latest.json` from `Krtz/DiceBound`.
 3. It downloads the native game EXE referenced by that manifest from GitHub Releases.
-4. It verifies exact byte size and SHA-256 before installing.
-5. The game is installed under `%LOCALAPPDATA%\DiceBound`, so elevation/admin rights are not required.
-6. Desktop and Start Menu shortcuts point to the installed launcher.
-7. Future launches check `latest.json`; a new `buildId`/hash causes an update before the game starts.
-8. If GitHub cannot be reached but a game is already installed, the launcher starts the installed version offline.
-
-## Why Releases instead of Git history?
-
-The native DiceBound EXE is currently ~159 MiB. Large generated binaries belong in GitHub Releases, while source code and the tiny update manifest belong in Git.
-
-## Current Beta 0.6 payload
-
-The recovered Beta 0.6 EXE is reproducible from the Git-tracked runtime/wrapper source and has:
-
-- Size: `166598656` bytes
-- SHA-256: `85764d2de61b19a2ff0d4bb983d3456f3c77784a608cd8bd27ee0fc995f13a0e`
-- Build ID: `dicebound-0.6-49974c0d6ca04ded`
-
-`distribution/latest.json` currently expects that file as the `Dicebound_Beta_0_6.exe` asset on the `beta-0.6-recovery-source` GitHub Release. This can later point at a cleaner public release tag without changing the launcher itself.
+4. It verifies exact byte size and SHA-256 before activation.
+5. The installed launcher stays at `<chosen install dir>\DiceBoundLauncher.exe`.
+6. Future launches check `latest.json`; a changed build ID/hash triggers an update.
+7. Network failure falls back to the existing installed game when one is present.
 
 ## Building
 
-Requires Go. From the repository root on any machine with Go installed:
+Requires Go. The splash and hints must be present beside the launcher source because they are embedded at compile time.
+
+For the Issue #23 implementation, build `main_v2.go` explicitly while the #14 bootstrap remains in `main.go` as a rollback/reference point:
 
 ```powershell
 $env:GOOS = 'windows'
 $env:GOARCH = 'amd64'
 $env:CGO_ENABLED = '0'
-go build -buildvcs=false -trimpath -ldflags '-s -w -buildid=' -o DiceBoundSetup.exe .\installer\main.go
+go vet .\installer\main_v2.go
+go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go
 ```
 
 For release builds, apply the existing DiceBound icon and VERSIONINFO using `wrapper-source/launcher/windows/embed_icon.py` in the same way the native game wrapper is branded.
 
-## Release process
+## Current Beta 0.6 payload
 
-For each new game release:
+- Size: `166598656` bytes
+- SHA-256: `85764d2de61b19a2ff0d4bb983d3456f3c77784a608cd8bd27ee0fc995f13a0e`
+- Build ID: `dicebound-0.6-49974c0d6ca04ded`
 
-1. Build/test the native DiceBound EXE.
-2. Upload it as a GitHub Release asset.
-3. Calculate its exact byte count and SHA-256.
-4. Update `distribution/latest.json` with the release URL, build ID, byte count and SHA-256.
-5. Test a clean install and an update from the previous release.
+The manifest currently points to the recovered Beta 0.6 release asset. A later release can replace that target without changing normal launcher logic.
 
-The launcher normally does not need to be rebuilt for each game release.
+## Validation before merging #23
+
+Minimum static checks:
+
+```powershell
+$env:GOOS = 'windows'
+$env:GOARCH = 'amd64'
+$env:CGO_ENABLED = '0'
+go vet .\installer\main_v2.go
+go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o DiceBoundSetup.exe .\installer\main_v2.go
+```
+
+Then perform real Windows smoke tests for fresh install, custom path, each shortcut choice, update, offline launch, bad hash/failed update fallback, and `--configure`.
