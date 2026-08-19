@@ -11,6 +11,7 @@
     "platform",
     "storage",
     "save-system",
+    "core-state",
     "classes-registry",
     "pets-registry",
     "board-registry",
@@ -88,6 +89,14 @@
       "status": "extracted",
       "requires": ["version", "storage", "platform"],
       "provides": ["DiceboundSave"]
+    },
+    {
+      "id": "core-state",
+      "path": "js/core/state.js",
+      "domain": "core/state",
+      "status": "extracted",
+      "requires": ["save-system"],
+      "provides": ["DiceboundCoreState"]
     },
     {
       "id": "classes-registry",
@@ -174,12 +183,11 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot"],
+      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "core-state", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot"],
       "provides": []
     }
   ],
   "plannedDomains": [
-    "core/state",
     "core/constants",
     "combat",
     "items/consumables",

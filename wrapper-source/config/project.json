@@ -18,6 +18,7 @@
     "js/platform.js",
     "js/storage.js",
     "js/save-system.js",
+    "js/core/state.js",
     "js/classes/registry.js",
     "js/pets/registry.js",
     "js/board/registry.js",
