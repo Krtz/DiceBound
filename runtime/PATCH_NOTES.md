@@ -16,6 +16,9 @@
 - Added deterministic tree validation for registry integrity and prerequisite cycles.
 - Moved pet definitions, the ordinary-enemy pool and rarity labels/weights/values into dedicated domain modules with exact snapshot coverage.
 - Removed the duplicate class-tag table and now derive it from canonical class definitions; tags and behavior are unchanged.
+- Moved boards, special enemies/guardians, equipment metadata and achievements into dedicated domain registries.
+- Moved class passives, tag vocabulary, unlock rules, mechanic tags and ultimate-support metadata into the class owner.
+- Added exact deterministic snapshots and clone-isolation checks for every newly extracted registry; gameplay, RNG and saves are unchanged.
 
 ## Release identity (#45)
 - Added one central browser-runtime Version/Channel owner used by the wrapper contract, platform diagnostics, native host handshake, save envelopes and final visible game identity.

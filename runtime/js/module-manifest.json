@@ -13,9 +13,12 @@
     "save-system",
     "classes-registry",
     "pets-registry",
+    "board-registry",
     "combat-enemies",
     "item-rarities",
+    "item-equipment",
     "progression-talents",
+    "progression-achievements",
     "artifacts",
     "loot",
     "dicebound-monolith"
@@ -103,6 +106,14 @@
       "provides": ["DiceboundPets"]
     },
     {
+      "id": "board-registry",
+      "path": "js/board/registry.js",
+      "domain": "board/registry",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundBoards"]
+    },
+    {
       "id": "combat-enemies",
       "path": "js/combat/enemies.js",
       "domain": "combat/enemies",
@@ -119,12 +130,28 @@
       "provides": ["DiceboundRarities"]
     },
     {
+      "id": "item-equipment",
+      "path": "js/items/equipment.js",
+      "domain": "items/equipment-registry",
+      "status": "extracted",
+      "requires": ["item-rarities"],
+      "provides": ["DiceboundEquipment"]
+    },
+    {
       "id": "progression-talents",
       "path": "js/progression/talents.js",
       "domain": "progression/talents",
       "status": "extracted",
       "requires": [],
       "provides": ["DiceboundTalents"]
+    },
+    {
+      "id": "progression-achievements",
+      "path": "js/progression/achievements.js",
+      "domain": "progression/achievements-registry",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundAchievements"]
     },
     {
       "id": "artifacts",
@@ -147,20 +174,18 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "pets-registry", "combat-enemies", "item-rarities", "progression-talents", "artifacts", "loot"],
+      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot"],
       "provides": []
     }
   ],
   "plannedDomains": [
     "core/state",
     "core/constants",
-    "board",
     "combat",
-    "items/equipment",
     "items/consumables",
     "powerups",
     "pets",
-    "progression",
+    "progression/state",
     "modes",
     "ui"
   ]
