@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "version": "0.6.1",
+  "channel": "Beta",
+  "tag": "beta-0.6.1",
+  "asset": "DiceBound.exe",
+  "saveSchemaVersion": 2,
+  "purpose": "Launcher/update smoke test from current main after issue #40 Phase 0"
+}
