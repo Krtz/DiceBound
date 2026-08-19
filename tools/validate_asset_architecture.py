@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""Static integrity audit for DiceBound's runtime asset architecture (#29)."""
+from __future__ import annotations
+import argparse, hashlib, json, re, subprocess, sys
+from pathlib import Path
+
+EXPECTED={"classes":25,"pets":13,"normal_enemies":3,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":151}
+LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
+SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
+RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".ogg",".mp3",".wav",".webm"}
+
+def fail(msg): raise SystemExit(f"ASSET AUDIT FAILED: {msg}")
+def sha256_file(path):
+    h=hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
+    return h.hexdigest()
+def source_hash(runtime):
+    info=runtime/"build-info.json"; mf=runtime/"build-manifest.json"
+    paths=sorted((p for p in runtime.rglob("*") if p.is_file() and p not in {info,mf} and p.suffix.lower() in RUNTIME_EXTENSIONS),key=lambda p:p.relative_to(runtime).as_posix())
+    h=hashlib.sha256()
+    for p in paths:
+        h.update(p.relative_to(runtime).as_posix().encode()); h.update(b"\0"); h.update(sha256_file(p).encode()); h.update(b"\n")
+    return h.hexdigest(),len(paths)
+def check_js(path):
+    p=subprocess.run(["node","--check",str(path)],text=True,capture_output=True)
+    if p.returncode: fail(f"JavaScript syntax error in {path}:\n{p.stderr or p.stdout}")
+def load_registry(runtime):
+    node='global.window={};global.document=undefined;require(process.argv[1]);const A=window.DiceboundAssets,P=window.DiceboundPowerupArt;console.log(JSON.stringify({files:A.files,manifest:A.manifest,powerupNames:P?.nameKeys||{}}));'
+    p=subprocess.run(["node","-e",node,str(runtime/"js/assets.js")],text=True,capture_output=True)
+    if p.returncode: fail(f"Could not load asset registry: {p.stderr or p.stdout}")
+    return json.loads(p.stdout)
+def count(root,expected):
+    got=len(list(root.glob("*.png")))
+    if got!=expected: fail(f"expected {expected} PNGs in {root}, found {got}")
+
+def main():
+    ap=argparse.ArgumentParser(); ap.add_argument("--root",type=Path,default=Path(__file__).resolve().parents[1]); ns=ap.parse_args()
+    root=ns.root.resolve(); runtime=root/"runtime" if (root/"runtime").is_dir() else root
+    check_js(runtime/"js/assets.js"); check_js(runtime/"js/dicebound.js")
+    reg=load_registry(runtime); m=reg["manifest"]
+    counts={"classes":len(m["classes"]),"pets":len(m["pets"]),"normal_enemies":len(m["enemies"]),"minibosses":len(m["minibosses"]),"bosses":len(m["bosses"]),"secret_bosses":len(m["secretBosses"]),"board_backgrounds":len(m["board"]["backgrounds"]),"powerup_assets":len(m["powerups"]),"powerup_name_mappings":len(reg["powerupNames"]),"registry_files":len(reg["files"])}
+    if m.get("version")!=8: fail(f"expected registry v8, got {m.get('version')}")
+    for k,v in EXPECTED.items():
+        if counts[k]!=v: fail(f"{k}: expected {v}, got {counts[k]}")
+    for rel in reg["files"]:
+        p=runtime/rel
+        if not p.is_file() or p.stat().st_size==0: fail(f"registry/preload target missing or empty: {rel}")
+    for ctx in ("campsite","battle","markers"): count(runtime/f"assets/characters/classes/{ctx}",25)
+    count(runtime/"assets/characters/pets/portraits",13); count(runtime/"assets/enemies/normal/battle",3); count(runtime/"assets/enemies/minibosses/battle",6); count(runtime/"assets/enemies/bosses/battle",6); count(runtime/"assets/enemies/secret-bosses/battle",3); count(runtime/"assets/board/backgrounds",6)
+    inv=json.loads((runtime/"assets/ASSET_INVENTORY.json").read_text())
+    for rel in inv.get("implemented",[]):
+        if not (runtime/"assets"/rel).is_file(): fail(f"inventory implemented asset missing: {rel}")
+    for rel in inv.get("placeholderDocs",[]):
+        if not (runtime/"assets"/rel).is_file(): fail(f"placeholder home missing: {rel}")
+    bad={k for k in reg["powerupNames"].values() if k not in m["powerups"] and k not in m["ui"]["icons"]}
+    if bad: fail("unknown powerup art keys: "+", ".join(sorted(bad)))
+    literals=sorted(set(re.findall(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)",(runtime/"js/dicebound.js").read_text())))
+    for lit in literals:
+        if lit.startswith(SEMANTIC_ROOTS): continue
+        if not lit.startswith(LEGACY_PREFIXES): fail(f"unclassified legacy literal: {lit}")
+        if re.search(r"\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)$",lit) and not (runtime/lit).is_file(): fail(f"legacy literal no longer resolves: {lit}")
+    compat=["assets/enemies/portraits","assets/camp/backgrounds","assets/camp/objects","assets/pets/portraits","assets/ui/backgrounds","assets/ui/class-art","assets/ui/class-markers","assets/ui/icon","assets/ui/icons","assets/sounds"]
+    for rel in compat:
+        if not (runtime/rel).is_dir(): fail(f"compatibility mirror missing: {rel}")
+    required=["assets/characters/random-class/campsite/README.md","assets/characters/random-class/markers/README.md","assets/camp/mode-toggles/hell/README.md","assets/equipment/gloves/README.md","assets/powerups/placeholders/README.md","assets/enemies/minibosses/board-markers/README.md","assets/enemies/bosses/board-markers/README.md","assets/enemies/secret-bosses/board-markers/README.md","assets/combat/status-icons/README.md","assets/installer/splash/README.md"]
+    for rel in required:
+        if not (runtime/rel).is_file(): fail(f"future art home missing: {rel}")
+    info=json.loads((runtime/"build-info.json").read_text()); bm=json.loads((runtime/"build-manifest.json").read_text())
+    if info.get("developmentState")!="Unreleased": fail("runtime build metadata is not marked Unreleased")
+    mode="git-unreleased"
+    if info.get("browserContentHash") is None:
+        if info.get("reproducible") is not False or bm.get("browserContentHash") is not None: fail("unhashed Git metadata is inconsistent")
+    else:
+        mode="materialized"; digest,payload_count=source_hash(runtime)
+        if info.get("browserContentHash")!=digest or bm.get("browserContentHash")!=digest: fail("materialized content hash is stale")
+        if bm.get("payloadFileCount") not in (None,payload_count): fail("payload file count is stale")
+        for rel,expected in bm.get("files",{}).items():
+            p=runtime/rel
+            if not p.is_file() or sha256_file(p)!=expected: fail(f"materialized core manifest mismatch: {rel}")
+    print(json.dumps({"status":"pass","assetRegistryVersion":m["version"],"counts":counts,"canonicalRegistryFilesResolved":len(reg["files"]),"legacyLiteralPointersClassified":len(literals),"legacyCompatibilityRoots":compat,"buildMetadataMode":mode,"visualSmoke":"not-run-by-this-static-auditor"},indent=2))
+    return 0
+if __name__=="__main__": sys.exit(main())
