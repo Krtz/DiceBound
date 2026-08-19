@@ -3,6 +3,7 @@
   "architectureIssue": 40,
   "description": "Authoritative load order and ownership map for the modular-runtime migration. dicebound.js remains the compatibility monolith until its domains are extracted incrementally.",
   "loadOrder": [
+    "version",
     "assets",
     "rng",
     "native-http-host",
@@ -20,6 +21,14 @@
     "dicebound-monolith"
   ],
   "modules": [
+    {
+      "id": "version",
+      "path": "js/version.js",
+      "domain": "core/version-identity",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundVersion"]
+    },
     {
       "id": "assets",
       "path": "js/assets.js",
@@ -41,7 +50,7 @@
       "path": "js/native-http-host.js",
       "domain": "platform/native-adapter",
       "status": "extracted",
-      "requires": [],
+      "requires": ["version"],
       "provides": ["DiceboundHost"],
       "conditionalProvides": true
     },
@@ -50,7 +59,7 @@
       "path": "js/wrapper-contract.js",
       "domain": "platform/contract",
       "status": "extracted",
-      "requires": ["native-http-host"],
+      "requires": ["version", "native-http-host"],
       "provides": ["DiceboundWrapperContract", "DiceboundWrapper"]
     },
     {
@@ -58,7 +67,7 @@
       "path": "js/platform.js",
       "domain": "platform",
       "status": "extracted",
-      "requires": ["wrapper-contract"],
+      "requires": ["version", "wrapper-contract"],
       "provides": ["DiceboundPlatform"]
     },
     {
@@ -74,7 +83,7 @@
       "path": "js/save-system.js",
       "domain": "save",
       "status": "extracted",
-      "requires": ["storage", "platform"],
+      "requires": ["version", "storage", "platform"],
       "provides": ["DiceboundSave"]
     },
     {
@@ -138,7 +147,7 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "pets-registry", "combat-enemies", "item-rarities", "progression-talents", "artifacts", "loot"],
+      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "classes-registry", "pets-registry", "combat-enemies", "item-rarities", "progression-talents", "artifacts", "loot"],
       "provides": []
     }
   ],

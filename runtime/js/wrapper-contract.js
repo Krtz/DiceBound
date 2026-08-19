@@ -1,8 +1,10 @@
 (() => {
   "use strict";
 
+  const IDENTITY=window.DiceboundVersion;
+  if(!IDENTITY)throw new Error("DiceboundWrapperContract requires DiceboundVersion before loading.");
   const CONTRACT_VERSION = 1;
-  const APP_VERSION = "0.6.1";
+  const APP_VERSION = IDENTITY.version;
   const HOST_GLOBAL = "DiceboundHost";
 
   const platformMethods = Object.freeze({

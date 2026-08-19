@@ -27,19 +27,28 @@ def write_stamped(path: Path, text: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Stamp DiceBound release-facing version metadata.")
     parser.add_argument("--version", required=True)
-    parser.add_argument("--channel", default="Beta")
+    parser.add_argument("--channel", required=True)
     args = parser.parse_args()
 
     version = args.version.strip()
     channel = args.channel.strip()
     if not version or not channel:
         raise SystemExit("version and channel must be non-empty")
+    if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
+        raise SystemExit(f"invalid semantic version: {version!r}")
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,31}", channel):
+        raise SystemExit(f"invalid release channel: {channel!r}")
 
     project_path = ROOT / "wrapper-source" / "config" / "project.json"
     project = json.loads(project_path.read_text(encoding="utf-8"))
     project["version"] = version
     project["channel"] = channel
     project["releaseCommand"] = "Build-DiceBoundRelease.ps1"
+    module_manifest = json.loads((ROOT / "runtime" / "js" / "module-manifest.json").read_text(encoding="utf-8"))
+    modules = {str(module["id"]): module for module in module_manifest.get("modules", [])}
+    project["runtimeScripts"] = [str(modules[module_id]["path"]) for module_id in module_manifest.get("loadOrder", [])]
+    project["versionIdentity"] = "runtime/js/version.js"
+    project["versionValidation"] = "tools/validate_version_identity.py"
     write_json(project_path, project)
 
     index_path = ROOT / "runtime" / "index.html"
@@ -65,103 +74,21 @@ def main() -> None:
     )
     write_stamped(index_path, index)
 
-    wrapper_contract_path = ROOT / "runtime" / "js" / "wrapper-contract.js"
-    wrapper_contract = wrapper_contract_path.read_text(encoding="utf-8")
-    wrapper_contract = replace_exactly_once(
-        wrapper_contract,
-        r'const APP_VERSION = "[^"]+";',
-        f'const APP_VERSION = "{version}";',
-        "wrapper contract app version",
+    runtime_identity_path = ROOT / "runtime" / "js" / "version.js"
+    runtime_identity = runtime_identity_path.read_text(encoding="utf-8")
+    runtime_identity = replace_exactly_once(
+        runtime_identity,
+        r'const VERSION="[^"]+";',
+        f'const VERSION="{version}";',
+        "central runtime version",
     )
-    write_stamped(wrapper_contract_path, wrapper_contract)
-
-    save_system_path = ROOT / "runtime" / "js" / "save-system.js"
-    save_system = save_system_path.read_text(encoding="utf-8")
-    save_system = replace_exactly_once(
-        save_system,
-        r'const GAME_VERSION="[^"]+";',
-        f'const GAME_VERSION="{version}";',
-        "save envelope game version",
+    runtime_identity = replace_exactly_once(
+        runtime_identity,
+        r'const CHANNEL="[^"]+";',
+        f'const CHANNEL="{channel}";',
+        "central runtime channel",
     )
-    write_stamped(save_system_path, save_system)
-
-    platform_path = ROOT / "runtime" / "js" / "platform.js"
-    platform = platform_path.read_text(encoding="utf-8")
-    platform = replace_exactly_once(
-        platform,
-        r'appVersion:wrapper\?\.appVersion\|\|"[^"]+"',
-        f'appVersion:wrapper?.appVersion||"{version}"',
-        "platform app version fallback",
-    )
-    platform = replace_exactly_once(
-        platform,
-        r'channel:metadata\?\.channel\|\|"[^"]+"',
-        f'channel:metadata?.channel||"{channel}"',
-        "platform channel fallback",
-    )
-    platform = replace_exactly_once(
-        platform,
-        r'wrapper\?\.diagnostics\?\.\(\)\|\|Object\.freeze\(\{contractVersion:1,appVersion:"[^"]+"',
-        f'wrapper?.diagnostics?.()||Object.freeze({{contractVersion:1,appVersion:"{version}"',
-        "platform diagnostics app version fallback",
-    )
-    write_stamped(platform_path, platform)
-
-    native_host_path = ROOT / "runtime" / "js" / "native-http-host.js"
-    native_host = native_host_path.read_text(encoding="utf-8")
-    native_host = replace_exactly_once(
-        native_host,
-        r'wrapperVersion:"[^"]+"',
-        f'wrapperVersion:"{version}"',
-        "native host wrapper version",
-    )
-    native_host = replace_exactly_once(
-        native_host,
-        r'channel:"[^"]+"',
-        f'channel:"{channel}"',
-        "native host channel",
-    )
-    native_host = replace_exactly_once(
-        native_host,
-        r'appVersion:"[^"]+"',
-        f'appVersion:"{version}"',
-        "native host app version",
-    )
-    native_host = replace_exactly_once(
-        native_host,
-        r'JSON\.stringify\(\{version:"[^"]+"',
-        f'JSON.stringify({{version:"{version}"',
-        "native host ready version",
-    )
-    write_stamped(native_host_path, native_host)
-
-    game_path = ROOT / "runtime" / "js" / "dicebound.js"
-    game = game_path.read_text(encoding="utf-8")
-    game = replace_exactly_once(
-        game,
-        r"document\.title='Dicebound: [A-Za-z]+ v[^']+';\n  const db060Brand=",
-        f"document.title='{display}';\n  const db060Brand=",
-        "final runtime document title",
-    )
-    game = replace_exactly_once(
-        game,
-        r"const db060Brand=document\.querySelector\('\.brand h1'\);if\(db060Brand\)db060Brand\.textContent='Dicebound: [^']+';",
-        f"const db060Brand=document.querySelector('.brand h1');if(db060Brand)db060Brand.textContent='{display}';",
-        "final runtime heading",
-    )
-    game = replace_exactly_once(
-        game,
-        r"const db060Sub=document\.querySelector\('\.brand p'\);if\(db060Sub\)db060Sub\.textContent='[A-Za-z]+ v[^']+ · explicit Artifact tables, generated Legendary effects, new gear budgets and guardian loot cleanup\.';",
-        f"const db060Sub=document.querySelector('.brand p');if(db060Sub)db060Sub.textContent='{channel} v{version} · explicit Artifact tables, generated Legendary effects, new gear budgets and guardian loot cleanup.';",
-        "final runtime subtitle",
-    )
-    game = replace_exactly_once(
-        game,
-        r"window\.DiceboundInfrastructure=Object\.freeze\(\{version:'[^']+'",
-        f"window.DiceboundInfrastructure=Object.freeze({{version:'{version}'",
-        "runtime infrastructure version",
-    )
-    write_stamped(game_path, game)
+    write_stamped(runtime_identity_path, runtime_identity)
 
     wrapper_path = ROOT / "wrapper-source" / "wrappers" / "webview2" / "native-go" / "main.go"
     wrapper = wrapper_path.read_text(encoding="utf-8")
@@ -197,34 +124,13 @@ def main() -> None:
     )
     write_stamped(wrapper_path, wrapper)
 
-    changelog_path = ROOT / "CHANGELOG.md"
-    changelog = changelog_path.read_text(encoding="utf-8")
-    old_heading = "## Unreleased — post-Beta 0.6 Git development"
-    if old_heading in changelog and version == "0.6.1" and channel == "Beta":
-        changelog = changelog.replace(
-            old_heading,
-            "## Beta 0.6.1 — Runtime Packaging & Asset Architecture",
-            1,
-        )
-        changelog_path.write_text(changelog, encoding="utf-8")
-
-    patch_notes_path = ROOT / "runtime" / "PATCH_NOTES.md"
-    patch_notes = patch_notes_path.read_text(encoding="utf-8")
-    patch_notes_heading = "# Unreleased — post-Beta 0.6 Git development"
-    if patch_notes_heading in patch_notes and version == "0.6.1" and channel == "Beta":
-        patch_notes = patch_notes.replace(
-            patch_notes_heading,
-            "# Beta 0.6.1 — Runtime Packaging & Asset Architecture",
-            1,
-        )
-        write_stamped(patch_notes_path, patch_notes)
-
     print(json.dumps({
         "version": version,
         "channel": channel,
         "displayTitle": display,
         "project": str(project_path.relative_to(ROOT)),
         "runtime": str(index_path.relative_to(ROOT)),
+        "runtimeIdentity": str(runtime_identity_path.relative_to(ROOT)),
         "wrapper": str(wrapper_path.relative_to(ROOT)),
     }, indent=2))
 

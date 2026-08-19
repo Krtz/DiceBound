@@ -1,6 +1,8 @@
 (() => {
   "use strict";
 
+  const APP_IDENTITY=window.DiceboundVersion;
+  if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const ROWS = 10;
   const COLS = 10;
   const TILE_COUNT = ROWS * COLS;
@@ -12634,7 +12636,8 @@ function buildDiceboundHumanHarness235(){
   const db314Brand=document.querySelector('.brand h1');if(db314Brand)db314Brand.textContent='Dicebound: Beta v0.5.12';
   const db0410BrandSub=document.querySelector('.brand p');if(db0410BrandSub)db0410BrandSub.textContent='Beta v0.5.12 · campsite placement and expanded achievement-gated Epic/Legendary progression.';
   window.DiceboundInfrastructure=Object.freeze({
-    version:'0.5.12',
+    version:APP_IDENTITY.version,
+    channel:APP_IDENTITY.channel,
     platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),
     storage:()=>window.DiceboundStorage?.diagnostics?.(),
     save:()=>window.DiceboundSave?.diagnostics?.(),
@@ -12648,9 +12651,9 @@ function buildDiceboundHumanHarness235(){
      ======================================================================== */
 
   // VERSION -----------------------------------------------------------------
-  document.title='Dicebound: Beta v0.6.1';
-  const db060Brand=document.querySelector('.brand h1');if(db060Brand)db060Brand.textContent='Dicebound: Beta v0.6.1';
-  const db060Sub=document.querySelector('.brand p');if(db060Sub)db060Sub.textContent='Beta v0.6.1 · explicit Artifact tables, generated Legendary effects, new gear budgets and guardian loot cleanup.';
+  document.title=APP_IDENTITY.displayTitle;
+  const db060Brand=document.querySelector('.brand h1');if(db060Brand)db060Brand.textContent=APP_IDENTITY.displayTitle;
+  const db060Sub=document.querySelector('.brand p');if(db060Sub)db060Sub.textContent=APP_IDENTITY.subtitle;
 
   // 0.5.13 integration repair ------------------------------------------------
   // The original 0.5.13 handoff appended these bindings outside the runtime
@@ -13003,6 +13006,6 @@ function buildDiceboundHumanHarness235(){
     artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=window.DiceboundArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });
 
-  window.DiceboundInfrastructure=Object.freeze({version:'0.6.1',platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
+  window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
 
 })();
