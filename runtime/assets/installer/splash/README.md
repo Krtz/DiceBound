@@ -1,3 +1,9 @@
 # Installer / launcher splash art
 
-Reserved for dedicated DiceBound installer/launcher splash artwork. This is part of #23. Keep source-controlled presentation art here; build-system copies/resources may live under wrapper/installer source as required.
+Canonical repository-owned presentation art for DiceBound's installer/launcher (#23).
+
+Current asset:
+
+- `dicebound-launcher-splash.jpg` — generated DiceBound night-camp / Impossible Road splash used by the permanent Windows launcher.
+
+The launcher build mirrors this exact file at `installer/assets/dicebound-launcher-splash.jpg` so `go:embed` can package it into the setup executable. The semantic runtime asset here remains the source of truth; do not independently redesign the build mirror.
