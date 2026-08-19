@@ -19,8 +19,8 @@
 The launcher source was tested in the development sandbox with:
 
 ```text
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go vet main_v2.go
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' main_v2.go
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go vet main_v2.go http_policy.go
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' main_v2.go http_policy.go
 ```
 
 The output was a Windows amd64 GUI PE executable. The sandbox cannot perform a real Windows/WPF runtime smoke test, so first-install dialog layout, splash presentation, shortcut creation, network fallback and update replacement still require a real Windows test before #23 should be considered complete.

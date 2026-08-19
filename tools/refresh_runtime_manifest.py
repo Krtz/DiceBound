@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
-EXTENSIONS={'.html','.css','.js','.png','.ico','.ogg','.mp3','.wav','.webm'}
+EXTENSIONS={'.html','.css','.js','.png','.ico','.jpg','.jpeg','.webp','.ogg','.mp3','.wav','.webm'}
 SCRIPTS=['js/assets.js','js/rng.js','js/native-http-host.js','js/wrapper-contract.js','js/platform.js','js/storage.js','js/save-system.js','js/dicebound.js']
 
 
@@ -29,6 +30,14 @@ def default_version_channel(root: Path, runtime: Path) -> tuple[str | None, str 
         value=json.loads(info.read_text(encoding='utf-8'))
         return value.get('version'), value.get('channel')
     return None, None
+
+
+def asset_registry_version(runtime: Path) -> int:
+    source = (runtime/'js'/'assets.js').read_text(encoding='utf-8')
+    match = re.search(r'const\s+manifest\s*=\s*Object\.freeze\(\{version:(\d+),', source)
+    if not match:
+        raise SystemExit('Could not determine asset registry version from runtime/js/assets.js')
+    return int(match.group(1))
 
 
 def main():
@@ -106,7 +115,7 @@ def main():
       'developmentState':ns.development_state,
       'buildId':build_id,
       'browserContentHash':digest,
-      'assetRegistryVersion':8,
+      'assetRegistryVersion':asset_registry_version(runtime),
       'payloadFileCount':len(payload),
       'assetPayloadCount':info['assetCount'],
       'files':{rel:sha(runtime/rel) for rel in core},

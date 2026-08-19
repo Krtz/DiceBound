@@ -2,7 +2,7 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — post-Beta 0.6 Git development
+## Beta 0.6.1 — Runtime Packaging & Asset Architecture
 
 ### Asset architecture
 - Reorganized current runtime art into a granular role/context hierarchy for characters, enemies, equipment, powerups, campsite, board, combat, UI, installer and audio assets (#29).
@@ -12,8 +12,14 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 - Added tracked README placeholder homes for art that is not implemented yet, including Random Class, Hell demon states, Gloves, combat statuses, guardian board markers, missing equipment/character art and installer splash art.
 - Added a machine-readable `runtime/assets/ASSET_INVENTORY.json` and `tools/validate_asset_architecture.py` so every registry target, placeholder home and known historical runtime pointer can be audited.
 - Retained documented read-only compatibility mirrors for historical paths still referenced by the recovered Beta 0.6 monolith. These mirrors are not valid destinations for new artwork and can be removed after the old fallback literals are extracted.
-- Archived the exact original Beta 0.6 browser build metadata under `docs/releases/beta-0.6/`; current Git development is explicitly marked Unreleased instead of carrying stale release hashes.
+- Archived the exact original Beta 0.6 browser build metadata under `docs/releases/beta-0.6/`; Beta 0.6.1 now carries its own content-derived build identity.
 - Added `tools/refresh_runtime_manifest.py` to materialize content-derived development build metadata before packaging.
+
+### Release and launcher reliability
+- Stamped the visible runtime, diagnostics, save envelopes, native title/logging, Windows VERSIONINFO and project metadata consistently as Beta 0.6.1 without changing save schema 2.
+- Packaged the exact runtime and artwork tree, including JPG assets in the authenticated browser-content hash.
+- Embedded Microsoft's signed x64 WebView2 loader and required a valid Authenticode signature for production builds.
+- Fixed the launcher build instructions to include its long-download HTTP policy and prevented helper PowerShell windows from becoming stuck hidden processes.
 
 ### Powerup art
 - Integrated the first generated powerup-art batch into the semantic powerup hierarchy while preserving the current supplied Glass Needle image.

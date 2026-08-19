@@ -2,6 +2,7 @@
 param(
     [string]$Version = "0.6.1",
     [string]$Channel = "Beta",
+    [string]$PythonExecutable = "python",
     [switch]$SkipSourceStamp,
     [switch]$RequireSignedLoader
 )
@@ -24,17 +25,17 @@ function Invoke-Checked {
 Write-Host "== DiceBound $Channel $Version release build =="
 
 if (-not $SkipSourceStamp) {
-    Invoke-Checked python "tools/set_project_version.py" "--version" $Version "--channel" $Channel
+    Invoke-Checked $PythonExecutable "tools/set_project_version.py" "--version" $Version "--channel" $Channel
 }
 
-Invoke-Checked python "tools/refresh_runtime_manifest.py" `
+Invoke-Checked $PythonExecutable "tools/refresh_runtime_manifest.py" `
     "--version" $Version `
     "--channel" $Channel `
     "--development-state" "Unreleased"
 
-Invoke-Checked python "tools/validate_asset_architecture.py"
-Invoke-Checked python "tools/validate_runtime_architecture.py"
-Invoke-Checked python "tools/validate_launcher_assets.py"
+Invoke-Checked $PythonExecutable "tools/validate_asset_architecture.py"
+Invoke-Checked $PythonExecutable "tools/validate_runtime_architecture.py"
+Invoke-Checked $PythonExecutable "tools/validate_launcher_assets.py"
 
 $dist = Join-Path $PSScriptRoot "wrapper-source\dist\browser"
 if (Test-Path $dist) {
@@ -43,7 +44,7 @@ if (Test-Path $dist) {
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
 Copy-Item (Join-Path $PSScriptRoot "runtime\*") $dist -Recurse -Force
 
-Invoke-Checked python "tools/refresh_runtime_manifest.py" `
+Invoke-Checked $PythonExecutable "tools/refresh_runtime_manifest.py" `
     "--root" $dist `
     "--version" $Version `
     "--channel" $Channel `
@@ -111,10 +112,19 @@ if ($RequireSignedLoader) {
     }
 }
 
-Invoke-Checked python "wrapper-source/tools/build_launcher.py"
-
-$builtExe = Join-Path $PSScriptRoot "wrapper-source\release\Dicebound.exe"
+$artifactChannel = $Channel.Replace(" ", "_")
+$artifactVersion = $Version.Replace(".", "_")
+$builtExe = Join-Path $PSScriptRoot "wrapper-source\release\Dicebound_${artifactChannel}_${artifactVersion}.exe"
 $releaseExe = Join-Path $PSScriptRoot "wrapper-source\release\DiceBound.exe"
+$metadataPath = Join-Path $PSScriptRoot "wrapper-source\release\release-metadata.json"
+foreach ($staleArtifact in @($builtExe, $releaseExe, $metadataPath)) {
+    if (Test-Path $staleArtifact) {
+        Remove-Item $staleArtifact -Force
+    }
+}
+
+Invoke-Checked $PythonExecutable "wrapper-source/tools/build_launcher.py"
+
 if (-not (Test-Path $builtExe)) {
     throw "Native wrapper build did not produce $builtExe"
 }
@@ -124,16 +134,60 @@ $wrapperSource = Get-Content `
     (Join-Path $PSScriptRoot "wrapper-source\wrappers\webview2\native-go\main.go") `
     -Raw
 $expectedTitle = "Dicebound: $Channel v$Version"
-if (-not $wrapperSource.Contains($expectedTitle)) {
-    throw "Native wrapper source does not contain expected Windows title: $expectedTitle"
+$nativeMarkers = @(
+    "appTitle       = `"$expectedTitle`"",
+    "messageBox(appTitle,",
+    "Frontend ready handshake received for $Channel $Version.",
+    "Starting Dicebound $Channel $Version native WebView2 wrapper.",
+    "index.html?diceboundNative=1&v=$Version&build="
+)
+foreach ($marker in $nativeMarkers) {
+    if (-not $wrapperSource.Contains($marker)) {
+        throw "Native wrapper source is missing release identity marker: $marker"
+    }
+}
+if ($wrapperSource.Contains("0.5.8")) {
+    throw "Native wrapper source still contains stale 0.5.8 identity."
 }
 
-$runtimeIndex = Get-Content (Join-Path $dist "index.html") -Raw
-if (-not $runtimeIndex.Contains("<title>$expectedTitle</title>")) {
-    throw "Staged runtime title is not $expectedTitle"
+$runtimeIdentity = [ordered]@{
+    "index.html" = @(
+        "<title>$expectedTitle</title>",
+        "<h1>$expectedTitle</h1>",
+        "<p>$Channel v$Version"
+    )
+    "PATCH_NOTES.md" = @(
+        "# $Channel $Version",
+        "Runtime Packaging & Asset Architecture"
+    )
+    "js\wrapper-contract.js" = @("const APP_VERSION = `"$Version`";")
+    "js\save-system.js" = @("const GAME_VERSION=`"$Version`";")
+    "js\platform.js" = @(
+        "appVersion:wrapper?.appVersion||`"$Version`"",
+        "appVersion:`"$Version`",isWrapped:false",
+        "channel:metadata?.channel||`"$Channel`""
+    )
+    "js\native-http-host.js" = @(
+        "wrapperVersion:`"$Version`"",
+        "channel:`"$Channel`"",
+        "appVersion:`"$Version`"",
+        "JSON.stringify({version:`"$Version`""
+    )
+    "js\dicebound.js" = @(
+        "document.title='$expectedTitle';",
+        "db060Brand.textContent='$expectedTitle';",
+        "db060Sub.textContent='$Channel v$Version",
+        "DiceboundInfrastructure=Object.freeze({version:'$Version'"
+    )
 }
-if (-not $runtimeIndex.Contains("<h1>$expectedTitle</h1>")) {
-    throw "Staged runtime heading is not $expectedTitle"
+foreach ($entry in $runtimeIdentity.GetEnumerator()) {
+    $runtimePath = Join-Path $dist $entry.Key
+    $runtimeSource = Get-Content $runtimePath -Raw
+    foreach ($marker in $entry.Value) {
+        if (-not $runtimeSource.Contains($marker)) {
+            throw "Staged runtime identity check failed for $($entry.Key): $marker"
+        }
+    }
 }
 
 $sha256 = (Get-FileHash $releaseExe -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -152,11 +206,15 @@ $metadata = [ordered]@{
     bytes = $bytes
     sourceAssetFiles = $sourceAssets.Count
     pngFiles = $sourcePngCount
-    webView2SdkVersion = $env:WEBVIEW2_SDK_VERSION
+    webView2SdkVersion = [Environment]::GetEnvironmentVariable("WEBVIEW2_SDK_VERSION")
     windowsTitle = $expectedTitle
 }
-$metadataPath = Join-Path $PSScriptRoot "wrapper-source\release\release-metadata.json"
-$metadata | ConvertTo-Json -Depth 6 | Set-Content $metadataPath -Encoding UTF8
+$metadataJson = $metadata | ConvertTo-Json -Depth 6
+[IO.File]::WriteAllText(
+    $metadataPath,
+    $metadataJson + "`n",
+    [Text.UTF8Encoding]::new($false)
+)
 
 Write-Host ""
 Write-Host "Release build complete."

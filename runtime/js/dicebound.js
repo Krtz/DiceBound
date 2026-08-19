@@ -14677,9 +14677,9 @@ function buildDiceboundHumanHarness235(){
      ======================================================================== */
 
   // VERSION -----------------------------------------------------------------
-  document.title='Dicebound: Beta v0.6';
-  const db060Brand=document.querySelector('.brand h1');if(db060Brand)db060Brand.textContent='Dicebound: Beta v0.6';
-  const db060Sub=document.querySelector('.brand p');if(db060Sub)db060Sub.textContent='Beta v0.6 · explicit Artifact tables, generated Legendary effects, new gear budgets and guardian loot cleanup.';
+  document.title='Dicebound: Beta v0.6.1';
+  const db060Brand=document.querySelector('.brand h1');if(db060Brand)db060Brand.textContent='Dicebound: Beta v0.6.1';
+  const db060Sub=document.querySelector('.brand p');if(db060Sub)db060Sub.textContent='Beta v0.6.1 · explicit Artifact tables, generated Legendary effects, new gear budgets and guardian loot cleanup.';
 
   // 0.5.13 integration repair ------------------------------------------------
   // The original 0.5.13 handoff appended these bindings outside the runtime
@@ -15060,6 +15060,6 @@ function buildDiceboundHumanHarness235(){
     artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=db060WeightedPick(DB060_ARTIFACT_TABLE);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });
 
-  window.DiceboundInfrastructure=Object.freeze({version:'0.6',platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
+  window.DiceboundInfrastructure=Object.freeze({version:'0.6.1',platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
 
 })();

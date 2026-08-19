@@ -2,7 +2,7 @@
   "use strict";
 
   const CONTRACT_VERSION = 1;
-  const APP_VERSION = "0.6";
+  const APP_VERSION = "0.6.1";
   const HOST_GLOBAL = "DiceboundHost";
 
   const platformMethods = Object.freeze({

@@ -1,4 +1,10 @@
-# Unreleased — post-Beta 0.6 Git development
+# Beta 0.6.1 — Runtime Packaging & Asset Architecture
+
+## Release and launcher reliability
+- All visible/runtime/native version identities now consistently report Beta 0.6.1; save schema remains version 2.
+- The complete current runtime and artwork tree is staged into the native wrapper, and JPG assets are included in the browser-content hash.
+- The Windows release embeds Microsoft's signed x64 WebView2 loader and uses its public bootstrap path.
+- Launcher source now includes the long-download HTTP policy in documented builds and avoids stuck hidden PowerShell helper processes.
 
 ## Asset architecture (#29)
 - Reorganized runtime art into semantic folders for characters, enemy roles, equipment slots, powerup rarities, camp, board, combat, UI, installer and audio.
@@ -7,9 +13,9 @@
 - Added 22 canonical powerup art entries covering 28 rendered powerup names/tiers, including the current Glass Needle art.
 - Added `runtime/assets/ASSET_INVENTORY.json` and `tools/validate_asset_architecture.py` to audit every registry target and all known historical runtime asset pointers.
 - Historical Beta 0.6 monolith fallback paths remain as documented read-only compatibility mirrors so existing pointers do not break. New art must not be added to those mirrors.
-- Archived the exact Beta 0.6 browser build metadata under `docs/releases/beta-0.6/`; current Git development is explicitly Unreleased until `tools/refresh_runtime_manifest.py` materializes a new content-derived build identity.
+- Archived the exact Beta 0.6 browser build metadata under `docs/releases/beta-0.6/`; Beta 0.6.1 uses a new content-derived build identity.
 - No gameplay/balance behavior is intentionally changed by this migration.
-- Static/reference validation is authoritative for this migration; no headless visual smoke pass is claimed from the sandbox environment.
+- Static/reference validation and a native Windows launch smoke test cover this release packaging pass.
 
 ---
 

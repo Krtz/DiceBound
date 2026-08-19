@@ -29,8 +29,8 @@
     log(payload){try{request("POST","/__dicebound/platform/log",JSON.stringify(payload??{}));}catch(_){}return true;},
     getWindowState(){return {fullscreen:!!document.fullscreenElement,visibility:document.visibilityState||"visible",width:innerWidth||0,height:innerHeight||0,devicePixelRatio:devicePixelRatio||1};}
   };
-  window.DiceboundHost={contractVersion:1,metadata:{kind:"native-webview2",wrapperVersion:"0.6",platform:"windows",architecture:"x64",channel:"Beta",appVersion:"0.6"},platform,storage};
+  window.DiceboundHost={contractVersion:1,metadata:{kind:"native-webview2",wrapperVersion:"0.6.1",platform:"windows",architecture:"x64",channel:"Beta",appVersion:"0.6.1"},platform,storage};
 
-  function ready(){try{request("POST","/__dicebound/platform/ready",JSON.stringify({version:"0.6",href:location.href,userAgent:navigator.userAgent||""}));}catch(_){}}
+  function ready(){try{request("POST","/__dicebound/platform/ready",JSON.stringify({version:"0.6.1",href:location.href,userAgent:navigator.userAgent||""}));}catch(_){}}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ready,{once:true});else ready();
 })();

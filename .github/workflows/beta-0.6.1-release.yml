@@ -1,6 +1,13 @@
 name: Beta 0.6.1 release
 
 on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the prerelease and update latest.json"
+        required: true
+        type: boolean
+        default: false
   push:
     branches:
       - release/beta-0.6.1
@@ -11,6 +18,11 @@ on:
       - "Build-DiceBoundRelease.ps1"
       - "tools/set_project_version.py"
       - "tools/refresh_runtime_manifest.py"
+      - "tools/validate_asset_architecture.py"
+      - "runtime/**"
+      - "wrapper-source/config/project.json"
+      - "wrapper-source/tools/build_launcher.py"
+      - "wrapper-source/wrappers/webview2/native-go/**"
   pull_request:
     branches:
       - main
@@ -20,9 +32,17 @@ on:
       - "Build-DiceBoundRelease.ps1"
       - "tools/set_project_version.py"
       - "tools/refresh_runtime_manifest.py"
+      - "tools/validate_asset_architecture.py"
+      - "runtime/**"
+      - "wrapper-source/config/project.json"
+      - "wrapper-source/tools/build_launcher.py"
+      - "wrapper-source/wrappers/webview2/native-go/**"
 
 permissions:
   contents: write
+
+env:
+  WEBVIEW2_SDK_VERSION: "1.0.4129.50"
 
 jobs:
   build-and-release:
@@ -50,14 +70,10 @@ jobs:
         run: |
           $probe = Join-Path $env:RUNNER_TEMP "dicebound-webview2-sdk"
           dotnet new classlib -n LoaderProbe -o $probe --force | Out-Host
-          dotnet add (Join-Path $probe "LoaderProbe.csproj") package Microsoft.Web.WebView2 | Out-Host
+          dotnet add (Join-Path $probe "LoaderProbe.csproj") package Microsoft.Web.WebView2 --version $env:WEBVIEW2_SDK_VERSION | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "Could not restore Microsoft.Web.WebView2." }
 
-          $packageRoot = Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2"
-          $package = Get-ChildItem $packageRoot -Directory |
-            Sort-Object Name -Descending |
-            Select-Object -First 1
-          if ($null -eq $package) { throw "Microsoft.Web.WebView2 package directory was not found." }
+          $package = Get-Item (Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2\$env:WEBVIEW2_SDK_VERSION")
 
           $loader = Join-Path $package.FullName "build\native\x64\WebView2Loader.dll"
           if (-not (Test-Path $loader)) { throw "Official x64 WebView2Loader.dll was not found at $loader" }
@@ -68,8 +84,7 @@ jobs:
           }
 
           "WEBVIEW2_LOADER_DLL=$loader" >> $env:GITHUB_ENV
-          "WEBVIEW2_SDK_VERSION=$($package.Name)" >> $env:GITHUB_ENV
-          Write-Host "Using Microsoft.Web.WebView2 $($package.Name)"
+          Write-Host "Using Microsoft.Web.WebView2 $env:WEBVIEW2_SDK_VERSION"
           Write-Host "Signer: $($sig.SignerCertificate.Subject)"
 
       - name: Stamp Beta 0.6.1 source identity
@@ -81,18 +96,10 @@ jobs:
           python tools/refresh_runtime_manifest.py --version 0.6.1 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          if ("${{ github.event_name }}" -eq "push") {
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add CHANGELOG.md runtime/index.html runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go
-
-            git diff --cached --quiet
-            if ($LASTEXITCODE -ne 0) {
-              git commit -m "release: stamp DiceBound Beta 0.6.1"
-              git push origin "HEAD:${{ github.ref_name }}"
-            }
-          } else {
-            Write-Host "PR validation run: source stamp stays in the runner workspace only."
+          git diff --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git diff
+            throw "Release identity is not committed. Run the stamp and manifest tools locally, then commit their outputs."
           }
 
           "RELEASE_SOURCE_SHA=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
@@ -120,7 +127,7 @@ jobs:
           retention-days: 14
 
       - name: Publish Beta 0.6.1 prerelease
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -150,7 +157,7 @@ jobs:
           }
 
       - name: Point launcher manifest at Beta 0.6.1
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
         shell: pwsh
         run: |
           $meta = Get-Content .\wrapper-source\release\release-metadata.json -Raw | ConvertFrom-Json

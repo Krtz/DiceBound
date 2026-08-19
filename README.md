@@ -76,7 +76,7 @@ python tools/refresh_runtime_manifest.py
 python tools/validate_asset_architecture.py
 ```
 
-For the native Windows wrapper, copy `runtime/` to:
+For a local development wrapper, copy `runtime/` to:
 
 ```text
 wrapper-source/dist/browser/
@@ -88,7 +88,13 @@ Then run:
 python wrapper-source/tools/build_launcher.py
 ```
 
-The recovered Beta 0.6 source package does not vendor Microsoft's signed x64 `WebView2Loader.dll`; the original sandbox build used the wrapper compatibility fallback. A future production/CI release environment should use the official signed loader.
+For a production release, point `WEBVIEW2_LOADER_DLL` at the signed x64 loader from the pinned `Microsoft.Web.WebView2` SDK, set `WEBVIEW2_SDK_VERSION`, and run the root release command:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.1 -Channel Beta -PythonExecutable python -RequireSignedLoader
+```
+
+The root script stamps and validates release identity, stages the exact runtime tree, requires a valid signed loader, builds the native wrapper, and records the resulting SHA-256, byte size, and build ID. The recovered Beta 0.6 artifact used the isolated compatibility fallback; Beta 0.6.1 uses the official loader path.
 
 ## Development rules
 
