@@ -8,9 +8,11 @@ import json
 import re
 from pathlib import Path
 
+from dicebound_version import VERSION_PATTERN, release_tag, require_supported_version
+
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
-SEMVER = r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?"
+SEMVER = VERSION_PATTERN
 
 
 def read_json(path: Path, errors: list[str], label: str) -> dict:
@@ -45,10 +47,12 @@ def sha256(path: Path) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
-    parser.add_argument("--version", help="expected semantic version; defaults to project.json")
+    parser.add_argument("--version", help="expected DiceBound version; defaults to project.json")
     parser.add_argument("--channel", help="expected release channel; defaults to project.json")
     parser.add_argument("--release-metadata", type=Path, help="optional final build metadata to validate")
     parser.add_argument("--distribution", type=Path, help="optional launcher latest.json to reconcile with final metadata")
+    parser.add_argument("--release-spec", type=Path, help="optional generated release spec to validate")
+    parser.add_argument("--release-notes", type=Path, help="optional generated release notes to validate")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
@@ -59,17 +63,22 @@ def main() -> int:
     project = read_json(project_path, errors, "project config")
     version = (args.version or str(project.get("version") or "")).strip()
     channel = (args.channel or str(project.get("channel") or "")).strip()
-    if not re.fullmatch(SEMVER, version):
-        errors.append(f"expected version is not semantic: {version!r}")
+    valid_version = True
+    try:
+        version = require_supported_version(version)
+    except ValueError as exc:
+        errors.append(str(exc))
+        valid_version = False
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,31}", channel):
         errors.append(f"expected channel is invalid: {channel!r}")
     display_title = f"Dicebound: {channel} v{version}"
     display_version = f"{channel} v{version}"
-    tag = f"{re.sub(r'[^a-z0-9]+', '-', channel.lower()).strip('-')}-{version}"
+    tag = release_tag(channel, version) if valid_version and channel else ""
 
     expect(project.get("version"), version, errors, "project version")
     expect(project.get("channel"), channel, errors, "project channel")
     expect(project.get("releaseCommand"), "Build-DiceBoundRelease.ps1", errors, "project release command")
+    expect(project.get("releaseIdentityGenerator"), "tools/prepare_release.py", errors, "project release identity generator")
     checks.append("project")
 
     runtime = root / "runtime"
@@ -178,25 +187,31 @@ def main() -> int:
     for marker in native_markers:
         if marker not in native:
             errors.append(f"native wrapper is missing identity marker: {marker}")
-    native_versions = set(re.findall(rf"\b({SEMVER})\b", native))
+    native_versions = set(re.findall(rf"(?<![\d.])({SEMVER})(?![\d.])", native))
     native_versions.discard("127.0.0")
+    native_versions.discard("127.0.0.1")
     if native_versions != {version}:
-        errors.append(f"native wrapper semantic versions disagree: {sorted(native_versions)}")
+        errors.append(f"native wrapper DiceBound versions disagree: {sorted(native_versions)}")
     checks.append("native-wrapper")
 
-    release_spec_path = root / ".release" / f"{tag}.json"
-    release_spec = read_json(release_spec_path, errors, "release spec")
-    expect(release_spec.get("version"), version, errors, "release spec version")
-    expect(release_spec.get("channel"), channel, errors, "release spec channel")
-    expect(release_spec.get("tag"), tag, errors, "release spec tag")
-    expect(release_spec.get("asset"), "DiceBound.exe", errors, "release spec asset")
-    notes_path = root / ".release" / f"{tag}.md"
-    try:
-        notes = notes_path.read_text(encoding="utf-8")
-        if f"# DiceBound {channel} {version}" not in notes:
-            errors.append(f"release notes heading does not identify DiceBound {channel} {version}")
-    except OSError as exc:
-        errors.append(f"release notes could not be read: {exc}")
+    if bool(args.release_spec) != bool(args.release_notes):
+        errors.append("--release-spec and --release-notes must be supplied together")
+    if args.release_spec and args.release_notes:
+        release_spec_path = args.release_spec if args.release_spec.is_absolute() else root / args.release_spec
+        release_spec = read_json(release_spec_path, errors, "release spec")
+        expect(release_spec.get("version"), version, errors, "release spec version")
+        expect(release_spec.get("channel"), channel, errors, "release spec channel")
+        expect(release_spec.get("tag"), tag, errors, "release spec tag")
+        expect(release_spec.get("title"), f"DiceBound {channel} {version}", errors, "release spec title")
+        expect(release_spec.get("asset"), "DiceBound.exe", errors, "release spec asset")
+        expect(release_spec.get("artifactLabel"), f"DiceBound-{channel.replace(' ', '-')}-{version}", errors, "release artifact label")
+        notes_path = args.release_notes if args.release_notes.is_absolute() else root / args.release_notes
+        try:
+            notes = notes_path.read_text(encoding="utf-8")
+            if f"# DiceBound {channel} {version}" not in notes:
+                errors.append(f"release notes heading does not identify DiceBound {channel} {version}")
+        except OSError as exc:
+            errors.append(f"release notes could not be read: {exc}")
     for path, label in [(root / "CHANGELOG.md", "changelog"), (runtime / "PATCH_NOTES.md", "runtime patch notes")]:
         try:
             documentation = path.read_text(encoding="utf-8")
@@ -204,7 +219,7 @@ def main() -> int:
                 errors.append(f"{label} does not mention {channel} {version}")
         except OSError as exc:
             errors.append(f"{label} could not be read: {exc}")
-    checks.append("release-spec-and-notes")
+    checks.append("release-identity" if args.release_spec else "release-documentation")
 
     release_metadata: dict = {}
     if args.release_metadata:

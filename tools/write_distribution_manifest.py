@@ -7,8 +7,8 @@ import json
 import re
 from pathlib import Path
 
+from dicebound_version import release_tag, require_supported_version
 
-SEMVER = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
@@ -19,8 +19,7 @@ def build_manifest(metadata: dict, repository: str) -> dict:
     build_id = str(metadata.get("buildId") or "")
     digest = str(metadata.get("sha256") or "")
     size = metadata.get("bytes")
-    if not SEMVER.fullmatch(version):
-        raise ValueError(f"release metadata has invalid version: {version!r}")
+    version = require_supported_version(version)
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,31}", channel):
         raise ValueError(f"release metadata has invalid channel: {channel!r}")
     if artifact != "DiceBound.exe":
@@ -33,7 +32,7 @@ def build_manifest(metadata: dict, repository: str) -> dict:
         raise ValueError("release bytes must be a positive integer")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
         raise ValueError(f"invalid GitHub repository: {repository!r}")
-    tag = f"{re.sub(r'[^a-z0-9]+', '-', channel.lower()).strip('-')}-{version}"
+    tag = release_tag(channel, version)
     return {
         "format": 1,
         "name": "DiceBound",

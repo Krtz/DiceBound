@@ -1,52 +1,16 @@
-name: Beta 0.6.1 release
+name: DiceBound validation and release
 
 on:
-  workflow_dispatch:
-    inputs:
-      publish:
-        description: "Publish the prerelease and update latest.json"
-        required: true
-        type: boolean
-        default: false
-  push:
-    branches:
-      - release/beta-0.6.1
-      - main
-    paths:
-      - ".release/beta-0.6.1.json"
-      - ".github/workflows/beta-0.6.1-release.yml"
-      - "Build-DiceBoundRelease.ps1"
-      - "tools/set_project_version.py"
-      - "tools/validate_version_identity.py"
-      - "tools/test_version_identity_validator.py"
-      - "tools/test_version_identity.js"
-      - "tools/write_distribution_manifest.py"
-      - "tools/test_distribution_manifest.py"
-      - "tools/refresh_runtime_manifest.py"
-      - "tools/validate_asset_architecture.py"
-      - "runtime/**"
-      - "wrapper-source/config/project.json"
-      - "wrapper-source/tools/build_launcher.py"
-      - "wrapper-source/wrappers/webview2/native-go/**"
   pull_request:
     branches:
       - main
-    paths:
-      - ".release/beta-0.6.1.json"
-      - ".github/workflows/beta-0.6.1-release.yml"
-      - "Build-DiceBoundRelease.ps1"
-      - "tools/set_project_version.py"
-      - "tools/validate_version_identity.py"
-      - "tools/test_version_identity_validator.py"
-      - "tools/test_version_identity.js"
-      - "tools/write_distribution_manifest.py"
-      - "tools/test_distribution_manifest.py"
-      - "tools/refresh_runtime_manifest.py"
-      - "tools/validate_asset_architecture.py"
-      - "runtime/**"
-      - "wrapper-source/config/project.json"
-      - "wrapper-source/tools/build_launcher.py"
-      - "wrapper-source/wrappers/webview2/native-go/**"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish this committed Version/Channel as a prerelease and update latest.json"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -75,6 +39,22 @@ jobs:
         with:
           go-version: "1.26.7"
 
+      - name: Resolve authoritative release identity
+        id: release
+        shell: pwsh
+        run: |
+          python tools/prepare_release.py `
+            --output-dir wrapper-source/release/generated `
+            --github-output $env:GITHUB_OUTPUT
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Enforce unique four-component PR version
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: |
+          python tools/validate_pr_version.py --base-ref "origin/${{ github.base_ref }}"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Stage official WebView2 loader
         shell: pwsh
         run: |
@@ -84,101 +64,92 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Could not restore Microsoft.Web.WebView2." }
 
           $package = Get-Item (Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2\$env:WEBVIEW2_SDK_VERSION")
-
           $loader = Join-Path $package.FullName "build\native\x64\WebView2Loader.dll"
           if (-not (Test-Path $loader)) { throw "Official x64 WebView2Loader.dll was not found at $loader" }
-
           $sig = Get-AuthenticodeSignature $loader
-          if ($sig.Status -ne "Valid") {
-            throw "WebView2Loader.dll Authenticode signature is not valid: $($sig.Status)"
-          }
-
+          if ($sig.Status -ne "Valid") { throw "WebView2Loader.dll signature is not valid: $($sig.Status)" }
           "WEBVIEW2_LOADER_DLL=$loader" >> $env:GITHUB_ENV
-          Write-Host "Using Microsoft.Web.WebView2 $env:WEBVIEW2_SDK_VERSION"
-          Write-Host "Signer: $($sig.SignerCertificate.Subject)"
 
-      - name: Stamp Beta 0.6.1 source identity
+      - name: Validate committed identity and source
         shell: pwsh
         run: |
-          python tools/set_project_version.py --version 0.6.1 --channel Beta
+          $version = "${{ steps.release.outputs.version }}"
+          $channel = "${{ steps.release.outputs.channel }}"
+          python tools/set_project_version.py --version $version --channel $channel
+          python tools/refresh_runtime_manifest.py --version $version --channel $channel --development-state Unreleased
+          python tools/validate_version_identity.py `
+            --version $version `
+            --channel $channel `
+            --release-spec "${{ steps.release.outputs.spec_path }}" `
+            --release-notes "${{ steps.release.outputs.notes_path }}"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          python tools/refresh_runtime_manifest.py --version 0.6.1 --channel Beta --development-state Unreleased
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          python tools/validate_version_identity.py --version 0.6.1 --channel Beta
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          python tools/test_version_identity_validator.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          node tools/test_version_identity.js
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          python tools/test_distribution_manifest.py
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -eq 0) { go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           git diff --quiet
           if ($LASTEXITCODE -ne 0) {
             git diff
-            throw "Release identity is not committed. Run the stamp and manifest tools locally, then commit their outputs."
+            throw "Version identity or generated runtime metadata is not committed."
           }
-
           "RELEASE_SOURCE_SHA=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
 
       - name: Build and validate native release
         shell: pwsh
         run: |
-          .\Build-DiceBoundRelease.ps1 -Version 0.6.1 -Channel Beta -SkipSourceStamp -RequireSignedLoader
-
-      - name: Show release metadata
-        shell: pwsh
-        run: |
-          Get-Content .\wrapper-source\release\release-metadata.json
+          .\Build-DiceBoundRelease.ps1 `
+            -Version "${{ steps.release.outputs.version }}" `
+            -Channel "${{ steps.release.outputs.channel }}" `
+            -SkipSourceStamp `
+            -RequireSignedLoader
 
       - name: Upload validation artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DiceBound-Beta-0.6.1
+          name: ${{ steps.release.outputs.artifact_label }}
           path: |
             wrapper-source/release/DiceBound.exe
             wrapper-source/release/release-metadata.json
+            wrapper-source/release/generated/release-spec.json
+            wrapper-source/release/generated/release-notes.md
             wrapper-source/dist/browser/build-info.json
             wrapper-source/dist/browser/build-manifest.json
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish Beta 0.6.1 prerelease
+      - name: Publish derived prerelease
         if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "beta-0.6.1"
+          $tag = "${{ steps.release.outputs.tag }}"
+          $title = "${{ steps.release.outputs.title }}"
+          $notes = "${{ steps.release.outputs.notes_path }}"
           $asset = ".\wrapper-source\release\DiceBound.exe"
-          $notes = ".\.release\beta-0.6.1.md"
 
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release edit $tag --title "DiceBound Beta 0.6.1" --notes-file $notes --prerelease
+            gh release edit $tag --title $title --notes-file $notes --prerelease
             gh release upload $tag $asset --clobber
           } else {
-            gh release create $tag $asset `
-              --target "$env:RELEASE_SOURCE_SHA" `
-              --title "DiceBound Beta 0.6.1" `
-              --notes-file $notes `
-              --prerelease
+            gh release create $tag $asset --target "$env:RELEASE_SOURCE_SHA" --title $title --notes-file $notes --prerelease
           }
 
           $meta = Get-Content .\wrapper-source\release\release-metadata.json -Raw | ConvertFrom-Json
           $release = gh release view $tag --json assets | ConvertFrom-Json
           $published = $release.assets | Where-Object { $_.name -eq "DiceBound.exe" } | Select-Object -First 1
           if ($null -eq $published) { throw "Published release does not contain DiceBound.exe." }
-          if ([int64]$published.size -ne [int64]$meta.bytes) {
-            throw "Published release asset size differs from built EXE."
-          }
+          if ([int64]$published.size -ne [int64]$meta.bytes) { throw "Published release asset size differs from built EXE." }
 
-      - name: Point launcher manifest at Beta 0.6.1
+      - name: Point launcher manifest at verified release
         if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
         shell: pwsh
         run: |
@@ -186,11 +157,11 @@ jobs:
             --release-metadata wrapper-source/release/release-metadata.json `
             --output distribution/latest.json `
             --repository Krtz/DiceBound
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
           python tools/validate_version_identity.py `
-            --version 0.6.1 `
-            --channel Beta `
+            --version "${{ steps.release.outputs.version }}" `
+            --channel "${{ steps.release.outputs.channel }}" `
+            --release-spec "${{ steps.release.outputs.spec_path }}" `
+            --release-notes "${{ steps.release.outputs.notes_path }}" `
             --release-metadata wrapper-source/release/release-metadata.json `
             --distribution distribution/latest.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -198,6 +169,6 @@ jobs:
           git add distribution/latest.json
           git diff --cached --quiet
           if ($LASTEXITCODE -ne 0) {
-            git commit -m "distribution: point launcher at Beta 0.6.1"
+            git commit -m "distribution: point launcher at ${{ steps.release.outputs.version }}"
             git push origin "HEAD:main"
           }

@@ -33,7 +33,21 @@ Invoke-Checked $PythonExecutable "tools/refresh_runtime_manifest.py" `
     "--channel" $Channel `
     "--development-state" "Unreleased"
 
-Invoke-Checked $PythonExecutable "tools/validate_version_identity.py" "--version" $Version "--channel" $Channel
+$releaseIdentityDir = Join-Path $PSScriptRoot "wrapper-source\release\generated"
+Invoke-Checked $PythonExecutable `
+    "tools/prepare_release.py" `
+    "--version" $Version `
+    "--channel" $Channel `
+    "--output-dir" $releaseIdentityDir
+$releaseSpecPath = Join-Path $releaseIdentityDir "release-spec.json"
+$releaseNotesPath = Join-Path $releaseIdentityDir "release-notes.md"
+
+Invoke-Checked $PythonExecutable `
+    "tools/validate_version_identity.py" `
+    "--version" $Version `
+    "--channel" $Channel `
+    "--release-spec" $releaseSpecPath `
+    "--release-notes" $releaseNotesPath
 Invoke-Checked $PythonExecutable "tools/validate_asset_architecture.py"
 Invoke-Checked $PythonExecutable "tools/validate_runtime_architecture.py"
 Invoke-Checked $PythonExecutable "tools/validate_launcher_assets.py"
@@ -163,6 +177,8 @@ Invoke-Checked $PythonExecutable `
     "tools/validate_version_identity.py" `
     "--version" $Version `
     "--channel" $Channel `
+    "--release-spec" $releaseSpecPath `
+    "--release-notes" $releaseNotesPath `
     "--release-metadata" $metadataPath
 
 Write-Host ""

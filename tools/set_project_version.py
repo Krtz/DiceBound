@@ -6,6 +6,8 @@ import json
 import re
 from pathlib import Path
 
+from dicebound_version import require_supported_version
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -34,8 +36,10 @@ def main() -> None:
     channel = args.channel.strip()
     if not version or not channel:
         raise SystemExit("version and channel must be non-empty")
-    if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", version):
-        raise SystemExit(f"invalid semantic version: {version!r}")
+    try:
+        version = require_supported_version(version)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9 -]{0,31}", channel):
         raise SystemExit(f"invalid release channel: {channel!r}")
 
@@ -49,6 +53,8 @@ def main() -> None:
     project["runtimeScripts"] = [str(modules[module_id]["path"]) for module_id in module_manifest.get("loadOrder", [])]
     project["versionIdentity"] = "runtime/js/version.js"
     project["versionValidation"] = "tools/validate_version_identity.py"
+    project["versionPolicy"] = "MAJOR.MINOR.PATCH.REVISION; historical three-component metadata remains readable"
+    project["releaseIdentityGenerator"] = "tools/prepare_release.py"
     write_json(project_path, project)
 
     index_path = ROOT / "runtime" / "index.html"

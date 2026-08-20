@@ -6,7 +6,11 @@ DiceBound is a single-player RPG/board-game hybrid built around dice movement, e
 
 ## Release baseline and current development
 
-**Last validated release baseline: Beta 0.6 — Gear & Guardian Loot Rebuild**
+**Current source identity: Beta 0.6.2.1**
+
+Every PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. The launcher still points at the separately published Beta 0.6.1 prerelease until a newer build is deliberately published and `distribution/latest.json` is updated from its verified artifact metadata.
+
+**Recovered release baseline: Beta 0.6 — Gear & Guardian Loot Rebuild**
 
 Beta 0.6 is the first complete Git-tracked baseline of the recovered project. Its exact historical release records, hashes and audits live under `docs/releases/beta-0.6/` and are not rewritten when current development changes the source tree.
 
@@ -91,7 +95,7 @@ python wrapper-source/tools/build_launcher.py
 For a production release, point `WEBVIEW2_LOADER_DLL` at the signed x64 loader from the pinned `Microsoft.Web.WebView2` SDK, set `WEBVIEW2_SDK_VERSION`, and run the root release command:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.1 -Channel Beta -PythonExecutable python -RequireSignedLoader
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.2.1 -Channel Beta -PythonExecutable python -RequireSignedLoader
 ```
 
 The root script stamps and validates release identity, stages the exact runtime tree, requires a valid signed loader, builds the native wrapper, and records the resulting SHA-256, byte size, and build ID. The recovered Beta 0.6 artifact used the isolated compatibility fallback; Beta 0.6.1 uses the official loader path.
@@ -100,6 +104,7 @@ The root script stamps and validates release identity, stages the exact runtime 
 
 - `main` is the known-good development baseline; tagged/release records preserve immutable shipped identities.
 - Use short-lived branches / pull requests for non-trivial changes.
+- Give every PR one unused four-component DiceBound version and record it in the PR and issue evidence.
 - Git commits/tags are source identity; EXEs and release ZIPs are derived artifacts.
 - Do not commit saves, runtime caches, local logs or generated release packages.
 - Preserve save compatibility unless a change explicitly includes a migration.

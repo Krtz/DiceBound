@@ -5,4 +5,6 @@
 - The GitHub Project layout is documented in `../docs/GITHUB_PROJECT_SETUP.md`.
 - The actionable work map is in `../docs/PROJECT_BACKLOG.md`.
 
-GitHub Actions are intentionally not required for the recovered Beta 0.6 baseline. CI is tracked as future release-engineering work and should only be enabled once the account/environment can actually run it reliably.
+Every PR must stamp one unused four-component DiceBound version before merge. `tools/validate_pr_version.py` enforces the rule against `origin/main`.
+
+`.github/workflows/dicebound-release.yml` is version-agnostic: it derives build/release identity from committed project Version/Channel, validates PRs, and publishes only through an explicit manual dispatch. Local Windows validation remains authoritative while hosted Actions are unavailable for the account.

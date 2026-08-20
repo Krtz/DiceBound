@@ -158,6 +158,27 @@ func TestUpdateDecisionCoversBuildHashAndSize(t *testing.T) {
 	}
 }
 
+func TestManifestVersionCompatibilityAcceptsHistoricalAndFourComponentVersions(t *testing.T) {
+	base := Manifest{
+		Format: 1, Version: "0.6.2.1", Channel: "Beta", BuildID: "dicebound-0.6.2.1-test",
+		URL: "https://example.invalid/DiceBound.exe", SHA256: strings.Repeat("a", 64), Bytes: 1,
+	}
+	for _, version := range []string{"0.6.1", "0.6.1-recovery", "0.6.2.1"} {
+		manifest := base
+		manifest.Version = version
+		if err := validateManifest(manifest); err != nil {
+			t.Fatalf("compatible version %q was rejected: %v", version, err)
+		}
+	}
+	for _, version := range []string{"0.6", "0.6.2.1.5", "v0.6.2.1", "0.6.x.1", ""} {
+		manifest := base
+		manifest.Version = version
+		if err := validateManifest(manifest); err == nil {
+			t.Fatalf("invalid version %q was accepted", version)
+		}
+	}
+}
+
 func TestFailedDownloadsPreserveWorkingGameAndSaves(t *testing.T) {
 	goodPayload := []byte("new verified game payload")
 	serverURL, closeServer := testHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

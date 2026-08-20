@@ -199,7 +199,7 @@ node tools/test_static_registries.js
 node tools/test_content_registries.js
 node tools/test_core_state.js
 node tools/test_version_identity.js
-python tools/validate_version_identity.py --version 0.6.1 --channel Beta
+python tools/validate_version_identity.py --version 0.6.2.1 --channel Beta
 python tools/test_version_identity_validator.py
 ```
 

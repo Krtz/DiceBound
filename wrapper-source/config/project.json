@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.1",
+  "version": "0.6.2.1",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -60,5 +60,7 @@
   ],
   "primaryWrapper": "wrappers/webview2/native-go",
   "versionIdentity": "runtime/js/version.js",
-  "versionValidation": "tools/validate_version_identity.py"
+  "versionValidation": "tools/validate_version_identity.py",
+  "versionPolicy": "MAJOR.MINOR.PATCH.REVISION; historical three-component metadata remains readable",
+  "releaseIdentityGenerator": "tools/prepare_release.py"
 }
