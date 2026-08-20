@@ -11,31 +11,31 @@ from write_distribution_manifest import build_manifest
 
 metadata = {
     "format": 1,
-    "version": "0.6.2",
+    "version": "0.6.2.1",
     "channel": "Beta",
-    "buildId": "dicebound-0.6.2-0123456789abcdef",
+    "buildId": "dicebound-0.6.2.1-0123456789abcdef",
     "browserContentHash": "0" * 64,
     "artifact": "DiceBound.exe",
     "sha256": "a" * 64,
     "bytes": 326955008,
-    "windowsTitle": "Dicebound: Beta v0.6.2",
+    "windowsTitle": "Dicebound: Beta v0.6.2.1",
 }
 expected = {
     "format": 1,
     "name": "DiceBound",
-    "version": "0.6.2",
+    "version": "0.6.2.1",
     "channel": "Beta",
-    "buildId": "dicebound-0.6.2-0123456789abcdef",
-    "url": "https://github.com/Krtz/DiceBound/releases/download/beta-0.6.2/DiceBound.exe",
+    "buildId": "dicebound-0.6.2.1-0123456789abcdef",
+    "url": "https://github.com/Krtz/DiceBound/releases/download/beta-0.6.2.1/DiceBound.exe",
     "sha256": "a" * 64,
     "bytes": 326955008,
     "executable": "DiceBound.exe",
 }
 assert build_manifest(metadata, "Krtz/DiceBound") == expected
-assert build_manifest(metadata, "example/Fork")["url"] == "https://github.com/example/Fork/releases/download/beta-0.6.2/DiceBound.exe"
+assert build_manifest(metadata, "example/Fork")["url"] == "https://github.com/example/Fork/releases/download/beta-0.6.2.1/DiceBound.exe"
 
 for key, invalid in [
-    ("version", "v0.6.2"),
+    ("version", "v0.6.2.1"),
     ("channel", "Beta!"),
     ("artifact", "dicebound.exe"),
     ("buildId", "dicebound-0.6.1-old"),

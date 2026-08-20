@@ -1,4 +1,9 @@
-# Unreleased — post-Beta 0.6.1 Git development
+# Unreleased — Beta 0.6.2.1
+
+## Version and release policy (#64)
+- Every new PR build now carries a unique four-component DiceBound version; historical three-component saves/releases remain readable.
+- The generic release workflow derives its tag, title, artifact label, generated spec/notes and distribution identity from the committed Version/Channel.
+- Four-component identity is validated through browser/runtime/native metadata, launcher manifests, build IDs and Windows VERSIONINFO.
 
 ## Artifact balance (#22)
 - Changed the Artifact table to Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7% and class Weapon 4%.

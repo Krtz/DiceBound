@@ -17,6 +17,7 @@ PROJECT = json.loads((ROOT / "wrapper-source" / "config" / "project.json").read_
 VERSION = str(PROJECT["version"])
 CHANNEL = str(PROJECT["channel"])
 TAG = f"{re.sub(r'[^a-z0-9]+', '-', CHANNEL.lower()).strip('-')}-{VERSION}"
+assert re.fullmatch(r"\d+\.\d+\.\d+\.\d+", VERSION), f"new PR version must have four components: {VERSION}"
 
 
 def make_fixture(parent: Path, name: str) -> Path:
@@ -30,20 +31,31 @@ def make_fixture(parent: Path, name: str) -> Path:
         "runtime/PATCH_NOTES.md",
         "wrapper-source/config/project.json",
         "wrapper-source/wrappers/webview2/native-go/main.go",
-        f".release/{TAG}.json",
-        f".release/{TAG}.md",
         "CHANGELOG.md",
     ]:
         source = ROOT / relative
         target = fixture / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
+    (fixture / "release-spec.json").write_text(json.dumps({
+        "format": 2,
+        "version": VERSION,
+        "channel": CHANNEL,
+        "tag": TAG,
+        "title": f"DiceBound {CHANNEL} {VERSION}",
+        "asset": "DiceBound.exe",
+        "artifactLabel": f"DiceBound-{CHANNEL.replace(' ', '-')}-{VERSION}",
+        "saveSchemaVersion": 2,
+        "prerelease": True,
+    }, indent=2) + "\n", encoding="utf-8")
+    (fixture / "release-notes.md").write_text(f"# DiceBound {CHANNEL} {VERSION}\n\nGenerated test notes.\n", encoding="utf-8")
     return fixture
 
 
 def run(fixture: Path, *extra: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(VALIDATOR), "--root", str(fixture), "--version", VERSION, "--channel", CHANNEL, *extra],
+        [sys.executable, str(VALIDATOR), "--root", str(fixture), "--version", VERSION, "--channel", CHANNEL,
+         "--release-spec", "release-spec.json", "--release-notes", "release-notes.md", *extra],
         text=True,
         encoding="utf-8",
         stdout=subprocess.PIPE,
@@ -74,12 +86,12 @@ with tempfile.TemporaryDirectory(prefix="dicebound-version-validator-") as temp:
 
     central = make_fixture(temp_root, "central-version-drift")
     identity_path = central / "runtime/js/version.js"
-    identity_path.write_text(identity_path.read_text(encoding="utf-8").replace(f'const VERSION="{VERSION}";', 'const VERSION="0.0.0";', 1), encoding="utf-8")
+    identity_path.write_text(identity_path.read_text(encoding="utf-8").replace(f'const VERSION="{VERSION}";', 'const VERSION="0.0.0.0";', 1), encoding="utf-8")
     require_fail(central, "central runtime version")
 
     native = make_fixture(temp_root, "native-drift")
     native_path = native / "wrapper-source/wrappers/webview2/native-go/main.go"
-    native_path.write_text(native_path.read_text(encoding="utf-8").replace(f"Frontend ready handshake received for {CHANNEL} {VERSION}.", "Frontend ready handshake received for Beta 0.0.0.", 1), encoding="utf-8")
+    native_path.write_text(native_path.read_text(encoding="utf-8").replace(f"Frontend ready handshake received for {CHANNEL} {VERSION}.", "Frontend ready handshake received for Beta 0.0.0.0.", 1), encoding="utf-8")
     require_fail(native, "native wrapper")
 
     hardcoded = make_fixture(temp_root, "moved-hardcode")
@@ -101,6 +113,13 @@ with tempfile.TemporaryDirectory(prefix="dicebound-version-validator-") as temp:
     project["runtimeScripts"] = list(reversed(project["runtimeScripts"]))
     project_path.write_text(json.dumps(project, indent=2) + "\n", encoding="utf-8")
     require_fail(project_order, "project runtimeScripts")
+
+    release_spec = make_fixture(temp_root, "release-spec-drift")
+    release_spec_path = release_spec / "release-spec.json"
+    spec = json.loads(release_spec_path.read_text(encoding="utf-8"))
+    spec["version"] = "0.0.0.0"
+    release_spec_path.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+    require_fail(release_spec, "release spec version")
 
     distribution = make_fixture(temp_root, "distribution")
     build_info = json.loads((distribution / "runtime/build-info.json").read_text(encoding="utf-8"))
@@ -136,4 +155,4 @@ with tempfile.TemporaryDirectory(prefix="dicebound-version-validator-") as temp:
     latest_path.write_text(json.dumps(latest, indent=2) + "\n", encoding="utf-8")
     require_fail(distribution, "distribution bytes", "--release-metadata", "release-metadata.json", "--distribution", "distribution/latest.json")
 
-print("Version identity validator mutation suite PASS: central/runtime/native/module/distribution drift all fail closed")
+print("Version identity validator mutation suite PASS: four-component central/runtime/native/module/release/distribution drift all fail closed")

@@ -2,7 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — post-Beta 0.6.1 Git development
+## Unreleased — Beta 0.6.2.1
+
+### Version and release policy (#64)
+- Adopted `MAJOR.MINOR.PATCH.REVISION` for all new PR builds while retaining historical three-component metadata compatibility.
+- Added shared version parsing, per-PR uniqueness enforcement and four-component Windows VERSIONINFO coverage.
+- Replaced the Beta-0.6.1-specific workflow with an explicit, version-agnostic validation/release workflow derived from committed project Version/Channel.
+- Release specs and notes are now generated from authoritative project/runtime inputs; the immutable Beta 0.6.1 evidence remains archived under `.release/`.
 
 ### Balance
 - Rebalanced the seven-slot Artifact table for #22: Boots 30%, Legs 20%, Ring 16%, Hat 14%, Amulet 9%, Offhand 7% and class Weapon 4%.

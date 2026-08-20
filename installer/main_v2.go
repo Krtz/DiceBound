@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -58,6 +59,7 @@ type Splash struct {
 
 var client = &http.Client{Timeout: 30 * time.Second}
 var launcherLogger = log.New(io.Discard, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+var diceboundVersionPattern = regexp.MustCompile(`^\d+\.\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?$`)
 
 func main() {
 	localRoot := strings.TrimSpace(os.Getenv("LOCALAPPDATA"))
@@ -205,7 +207,20 @@ func readManifest(p string) (Manifest, error) {
 	if e == nil {
 		e = json.Unmarshal(b, &m)
 	}
+	if e == nil {
+		e = validateManifest(m)
+	}
 	return m, e
+}
+
+func validateManifest(m Manifest) error {
+	if m.Format != 1 || m.URL == "" || len(m.SHA256) != 64 || m.BuildID == "" {
+		return errors.New("invalid release manifest")
+	}
+	if !diceboundVersionPattern.MatchString(m.Version) {
+		return fmt.Errorf("invalid DiceBound release version %q", m.Version)
+	}
+	return nil
 }
 func writeJSON(p string, v any) error {
 	b, e := json.MarshalIndent(v, "", "  ")
@@ -285,8 +300,8 @@ func fetchManifest() (Manifest, error) {
 		return m, fmt.Errorf("manifest HTTP %d", r.StatusCode)
 	}
 	e = json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&m)
-	if e == nil && (m.Format != 1 || m.URL == "" || len(m.SHA256) != 64 || m.BuildID == "") {
-		e = errors.New("invalid release manifest")
+	if e == nil {
+		e = validateManifest(m)
 	}
 	return m, e
 }

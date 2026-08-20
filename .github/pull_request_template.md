@@ -1,3 +1,10 @@
+## DiceBound version
+
+Version: `MAJOR.MINOR.PATCH.REVISION`
+
+- [ ] Version has four numeric components, differs from `main`, and has not appeared in earlier PR history
+- [ ] Version identity/build metadata was stamped and validated
+
 ## What changed
 
 Describe the player/developer-visible change and the relevant implementation area.

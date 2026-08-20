@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import hashlib,json,os,shutil,subprocess,sys,zipfile
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tools'))
+from dicebound_version import windows_file_version
 ROOT=Path(__file__).resolve().parents[1]
 CFG=json.loads((ROOT/'config/project.json').read_text(encoding='utf-8'))
 DIST=ROOT/CFG['browserOutput']
@@ -21,12 +23,7 @@ def make_payload(path):
             zi=zipfile.ZipInfo(rel,date_time=(1980,1,1,0,0,0));zi.compress_type=zipfile.ZIP_DEFLATED;zi.create_system=3;zi.external_attr=(0o644&0xffff)<<16
             z.writestr(zi,src.read_bytes(),compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)
 
-def version4(v):
-    parts=[]
-    for x in str(v).split('.'):
-        try: parts.append(str(max(0,min(65535,int(x)))))
-        except ValueError: parts.append('0')
-    return '.'.join((parts+['0','0','0','0'])[:4])
+def version4(v): return windows_file_version(v)
 
 def verify_metadata(exe):
     b=Path(exe).read_bytes()

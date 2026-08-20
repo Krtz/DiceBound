@@ -8,17 +8,19 @@ Move the concrete release issues into the current Target Version / Next Patch sc
 
 ## 2. Stamp and validate version identity
 
-Version and channel are explicit release inputs. Do not edit scattered runtime/native strings by hand:
+Every PR first selects an unused four-component DiceBound version (`MAJOR.MINOR.PATCH.REVISION`). Historical three-component releases remain readable, but new work must not reuse an earlier version. Version and channel are explicit inputs; do not edit scattered runtime/native strings by hand:
 
 ```text
-python tools/set_project_version.py --version 0.6.1 --channel Beta
-python tools/refresh_runtime_manifest.py --version 0.6.1 --channel Beta --development-state Unreleased
-python tools/validate_version_identity.py --version 0.6.1 --channel Beta
+python tools/set_project_version.py --version 0.6.2.1 --channel Beta
+python tools/refresh_runtime_manifest.py --version 0.6.2.1 --channel Beta --development-state Unreleased
+python tools/validate_pr_version.py --base-ref origin/main
+python tools/prepare_release.py
+python tools/validate_version_identity.py --version 0.6.2.1 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
 ```
 
 The stamper updates the project identity, central `runtime/js/version.js`, static HTML fallback identity and native Go wrapper identity. Browser runtime consumers read `window.DiceboundVersion`; adding a new consumer requires declaring `version` in `runtime/js/module-manifest.json`.
 
-The validator reconciles project config, runtime module ownership/load order, visible HTML identity, content-derived build metadata, native title/log/URL markers and the matching `.release/<tag>` spec/notes. Its mutation suite proves stale central/native/module/distribution values fail closed:
+The validator reconciles project config, runtime module ownership/load order, visible HTML identity, content-derived build metadata, native title/log/URL markers and the generated release identity. `tools/prepare_release.py` derives the tag, title, artifact label, spec and notes from the committed Version/Channel; new releases do not require checked-in version-specific duplicate files. Historical `.release/beta-0.6.1.*` evidence remains immutable. Mutation tests prove stale central/native/module/release/distribution values fail closed:
 
 ```text
 python tools/test_version_identity_validator.py
@@ -26,6 +28,8 @@ node tools/test_version_identity.js
 ```
 
 Player-facing changelog and patch-note prose remains authored content, but must mention the release identity represented by the release spec.
+
+The version-agnostic `.github/workflows/dicebound-release.yml` validates pull requests. Publication is a separate explicit `workflow_dispatch` choice; a PR version bump alone never republishes `distribution/latest.json`.
 
 ## 3. Validate source
 
@@ -101,7 +105,7 @@ After publishing:
 
 ```text
 python tools/write_distribution_manifest.py --release-metadata wrapper-source/release/release-metadata.json --output distribution/latest.json --repository Krtz/DiceBound
-python tools/validate_version_identity.py --version 0.6.1 --channel Beta --release-metadata wrapper-source/release/release-metadata.json --distribution distribution/latest.json
+python tools/validate_version_identity.py --version 0.6.2.1 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md --release-metadata wrapper-source/release/release-metadata.json --distribution distribution/latest.json
 ```
 
 - update `CHANGELOG.md`

@@ -8,6 +8,8 @@ import json
 import re
 from pathlib import Path
 
+from dicebound_version import require_supported_version
+
 EXTENSIONS={'.html','.css','.js','.png','.ico','.jpg','.jpeg','.webp','.ogg','.mp3','.wav','.webm'}
 
 
@@ -84,6 +86,10 @@ def main():
     channel=(ns.channel or default_channel or '').strip()
     if not version or not channel:
         raise SystemExit('Could not determine version/channel; pass --version and --channel.')
+    try:
+        version=require_supported_version(version)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     payload=sorted(
         (p for p in runtime.rglob('*')
