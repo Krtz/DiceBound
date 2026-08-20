@@ -1,0 +1,54 @@
+# DiceBound equipment-base design catalogue
+
+This folder is the working design source for issue #83.
+
+Every `## Item Name` entry is a proposed **equipment base identity**. The values here are design candidates until Axel reviews that specific item, especially before art is commissioned or runtime implementation begins.
+
+Axel's reviewed/edited entry always wins over an older first-pass suggestion.
+
+## Fields
+
+### `family`
+Broad form/category shared with related equipment, using lowercase hyphenated names where useful.
+
+Examples: `full-plate`, `t-shirt`, `longbow`, `shield`, `bloodbound`.
+
+### `material`
+Physical/magical construction where useful. Empty is allowed.
+
+### `weight`
+`light`, `medium`, `heavy`, `very-heavy`, or empty where the concept does not need a weight classification.
+
+### `tags`
+Additional lowercase semantic/theme tags. Multiword tags use hyphens.
+
+### `eligibility`
+Minimum ordinary rarity or other entry condition. `rare+` means Rare and higher ordinary rarity.
+
+Special Artifact/Omega/set generation is conceptually separate from the base and may use a broader base pool; see `docs/GAMEPLAY_VOCABULARY.md`.
+
+### `intrinsic`
+Guaranteed mechanics belonging to this base identity, outside the ordinary rolled-affix/stat point budget.
+
+Use the numeric conventions in `docs/GAMEPLAY_VOCABULARY.md`:
+- `+5 Attack` = flat Attack;
+- `+5% Attack` = percentage Attack;
+- `+2% Dodge`, `+1% Crit`, `+3% Echo` = percentage-point chance additions;
+- `+1% Metal proc chance` = percentage-point elemental proc chance;
+- `+2 Thorns` = two flat retaliatory damage;
+- `+100 Cool` = real currently-unused Cool stat.
+
+## Design rules
+
+- All classes can equip all otherwise-valid gear. Gear does not need to be useful to every class.
+- Mana on a non-Mana class simply does nothing.
+- Different art identities may have identical Intrinsics.
+- Some visual families deliberately share mechanics; studded/barbed/spiked equipment is a natural place for Thorns.
+- Bases are intentionally **not equally strong**. This creates a late-game chase for better bases under the same desirable Artifact/set effect and rolled affixes.
+- Do not normalize every base into the same hidden point budget.
+- These first-pass values are allowed to be uneven. Review and real playtesting happen later.
+- Empty metadata fields are fine if no useful value exists.
+
+## Art workflow
+
+Before requesting art for a specific item, review/update that item's entry here. The current entry at art-request time becomes the intended design direction for that equipment identity.
