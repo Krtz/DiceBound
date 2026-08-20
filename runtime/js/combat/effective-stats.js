@@ -49,6 +49,31 @@
     return number(damage) * berserkerRageMultiplier(run);
   }
 
+  function goldMultiplier(run, { nightmare = false } = {}) {
+    return (1 + number(run?.goldBonus)) * (nightmare ? 0.5 : 1);
+  }
+
+  function scaleGold(baseGold, run, options = {}) {
+    return Math.max(1, Math.round(number(baseGold) * goldMultiplier(run, options)));
+  }
+
+  function goldSnapshot(run, { nightmare = false } = {}) {
+    const bonusMultiplier = 1 + number(run?.goldBonus);
+    const difficultyMultiplier = nightmare ? 0.5 : 1;
+    const effectiveMultiplier = bonusMultiplier * difficultyMultiplier;
+    const effectivePercent = percent(effectiveMultiplier);
+    return Object.freeze({
+      baselinePercent: 100,
+      bonusPercent: percent(number(run?.goldBonus)),
+      bonusMultiplierPercent: percent(bonusMultiplier),
+      difficultyMultiplierPercent: percent(difficultyMultiplier),
+      effectiveMultiplier,
+      effectivePercent,
+      label: `${effectivePercent}%`,
+      description: `Gold gain is ${effectivePercent}% of base rewards. 100% is baseline; Gold bonuses currently multiply that to ${percent(bonusMultiplier)}%, then ${nightmare ? "Nightmare/Hell" : "Normal"} difficulty applies ${percent(difficultyMultiplier)}%.`,
+    });
+  }
+
   function berserkerUltimateSnapshot(run, { setDamageBonus = 0, rageActive = true } = {}) {
     const baseMultiplier = ultimateBaseMultiplier("berserker");
     const commonMultiplier = commonUltimateMultiplier(run, { setDamageBonus });
@@ -91,5 +116,8 @@
     scaleBerserkerRageDamage,
     berserkerUltimateSnapshot,
     describeUltimate,
+    goldMultiplier,
+    scaleGold,
+    goldSnapshot,
   });
 })();

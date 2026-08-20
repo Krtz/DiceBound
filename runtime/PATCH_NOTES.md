@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.2.3
+# Unreleased — Beta 0.6.2.4
+
+## Effective Gold gain stat (#52)
+- Current Run Buffs and the Info screen's Stats tab now always show your effective Gold gain percentage.
+- Hover or tap the stat for an exact baseline, Gold-bonus and difficulty-multiplier explanation.
+- The display and actual gold rewards now share one calculation, so Gold powerups update the value immediately.
+
+---
+
+# Beta 0.6.2.3 — Development checkpoint
 
 ## Live computed combat descriptions (#40, #51)
 - Ragequake now displays its current effective Attack scaling and exact pre-defense damage range from the authoritative combat calculation.

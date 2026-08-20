@@ -78,7 +78,7 @@ Issue #65's inventory found six capabilities in the canonical 200-entry registry
 
 ## Effective-stat and description ownership
 
-`DiceboundEffectiveStats` is a DOM-free calculation/descriptor owner. Combat calls it for Berserker's 280% base Ultimate formula, multiplicative class-Ultimate/Ultimate-damage/all-damage modifiers and Rage scaling; the tooltip and active-run trait panel call the same API for current values. The descriptor therefore reports the current effective Attack percentage and exact current pre-defense damage range without duplicating combat constants. Other mutable descriptions should migrate through equivalent authoritative queries as their mechanic domains are extracted.
+`DiceboundEffectiveStats` is a DOM-free calculation/descriptor owner. Combat calls it for Berserker's 280% base Ultimate formula, multiplicative class-Ultimate/Ultimate-damage/all-damage modifiers and Rage scaling; the tooltip and active-run trait panel call the same API for current values. Gold rewards, Current Run Buffs and Info → Stats likewise share its Gold multiplier/snapshot API, including Nightmare/Hell's reward reduction. These descriptors therefore report live values without duplicating mechanic constants. Other mutable descriptions should migrate through equivalent authoritative queries as their mechanic domains are extracted.
 
 ## Target ownership domains
 
