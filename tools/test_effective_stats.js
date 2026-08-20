@@ -52,10 +52,33 @@ assert.match(description, /all damage \+30%/);
 assert.equal(stats.describeUltimate("ranger", { ultimate: { desc: "Static base explanation." } }, run), "Static base explanation.");
 assert.throws(() => stats.ultimateBaseDamage("unknown", run), /computed Ultimate profile/);
 
+run.goldBonus = 0;
+assert.equal(stats.goldMultiplier(run), 1);
+assert.equal(stats.scaleGold(17, run), 17);
+assert.equal(stats.goldSnapshot(run).label, "100%");
+assert.match(stats.goldSnapshot(run).description, /100% is baseline/);
+
+run.goldBonus = 0.5;
+assert.equal(stats.goldMultiplier(run), 1.5);
+assert.equal(stats.scaleGold(17, run), 26);
+let gold = stats.goldSnapshot(run);
+assert.equal(gold.bonusPercent, 50);
+assert.equal(gold.effectivePercent, 150);
+assert.match(gold.description, /Gold bonuses currently multiply that to 150%/);
+
+assert.equal(stats.goldMultiplier(run, { nightmare: true }), 0.75);
+assert.equal(stats.scaleGold(17, run, { nightmare: true }), 13);
+gold = stats.goldSnapshot(run, { nightmare: true });
+assert.equal(gold.difficultyMultiplierPercent, 50);
+assert.equal(gold.effectivePercent, 75);
+assert.match(gold.description, /Nightmare\/Hell difficulty applies 50%/);
+
 const monolith = fs.readFileSync(path.join(__dirname, "..", "runtime", "js", "dicebound.js"), "utf8");
 assert.match(monolith, /DB_EFFECTIVE_STATS\.ultimateBaseDamage\("berserker"/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.scaleUltimateDamage/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.scaleBerserkerRageDamage/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.describeUltimate/);
+assert.match(monolith, /function modifiedGold\(base\)\{return DB_EFFECTIVE_STATS\.scaleGold\(base,player,\{nightmare:nightmareMode\}\);\}/);
+assert.match(monolith, /data-effective-gold/);
 
-console.log("Effective stats PASS: authoritative Berserker base/common/Rage scaling and live Ultimate descriptions agree");
+console.log("Effective stats PASS: authoritative Berserker scaling, Gold rewards and live UI snapshots agree");

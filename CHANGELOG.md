@@ -2,7 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.2.3
+## Unreleased — Beta 0.6.2.4
+
+### Effective Gold gain stat (#52)
+- Current Run Buffs and Info → Stats now show effective Gold gain, with 100% defined as the baseline.
+- The visible percentage, hover explanation and every scaled gold reward now use the same authoritative calculation, including Nightmare/Hell's 50% reward multiplier.
+- Existing Gold reward behavior is unchanged; focused tests cover normal and difficulty-adjusted rounding.
+
+## Beta 0.6.2.3 — Development checkpoint
 
 ### Live computed combat descriptions (#40, #51)
 - Added a pure effective-stat owner for shared Ultimate modifiers and Berserker Rage scaling.
