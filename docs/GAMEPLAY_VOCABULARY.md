@@ -2,7 +2,7 @@
 
 Working shared vocabulary for design notes, issues, `geartodo`, implementation and player-facing terminology.
 
-The purpose of this file is to make shorthand unambiguous. If a design sheet says `+2 Thorns`, `Powerup`, `proc chance`, `Rare+`, etc., everyone working on DiceBound should interpret it the same way.
+The purpose of this file is to make shorthand unambiguous. If a design sheet says `+2 Thorns`, `Powerup`, `+5% Attack`, `Rare+`, etc., everyone working on DiceBound should interpret it the same way.
 
 This is a living document. Add terms when new systems need shared language.
 
@@ -37,8 +37,8 @@ A persistent recorded accomplishment. Achievements can unlock content or act as 
 
 ## Equipment terms
 
-### Equipment identity
-The authored underlying type of equipment represented by a distinct piece of art and a stable identity.
+### Equipment identity / base
+The authored underlying type of equipment represented by a distinct piece of art and stable identity.
 
 Examples:
 - Gold Full Plate
@@ -46,61 +46,113 @@ Examples:
 - Jean Jacket
 - Lily Pad
 
-Under #83, different artwork should normally mean a different equipment identity rather than merely a cosmetic variant.
+In gear-design discussion, **base** is shorthand for this equipment identity and its guaranteed Intrinsics, independent of the item's rolled affixes and special rarity/set effects.
+
+Different artwork should normally mean a different equipment identity rather than merely a cosmetic variant.
+
+### Base strength is intentionally uneven
+Equipment identities are **not required to have equal-strength Intrinsics**.
+
+Two items with identical rarity and identical rolled affixes can be differently strong because their bases are different. This is intentional and creates a long-term optimization chase.
+
+Example design goal:
+1. the player is initially delighted to obtain an Artifact/set piece because its special effect or set bonus matters, even if its underlying base is weak;
+2. once the set is assembled, the player can keep farming for the same special piece on a stronger base;
+3. a late-game perfect item therefore combines the desired special effect/set identity, a strong base identity and strong rolled affixes.
+
+Do **not** automatically normalize every Intrinsic to the same point value. Base quality is part of loot progression.
+
+### Special rarity/set effect vs base
+Artifact, Omega, set and similar special item identities/effects are conceptually separate from the underlying equipment base.
+
+A special item may therefore use a base whose ordinary minimum-rarity eligibility would be much lower than the special item's final rarity. The base keeps its own Intrinsics; the special item contributes its separate special effect/set behavior.
+
+Exact generation policy remains implementation work, but design data must keep these axes separable.
 
 ### Family
-One or more descriptive classification tags attached to an equipment identity.
+A broad form/category shared by visually or conceptually related equipment.
+
+Examples:
+- `full-plate`
+- `t-shirt`
+- `longbow`
+- `bloodbound`
+- `shield`
+
+Family does not automatically grant mechanics unless a future system explicitly uses it mechanically.
+
+### Material
+Physical or magical construction material where useful.
 
 Examples:
 - `cloth`
 - `leather`
-- `plate`
+- `iron`
+- `steel`
+- `shell`
+- `gel`
+- `spectral`
+
+Material may be blank for objects where it is irrelevant or unknown.
+
+### Weight
+Broad physical/equipment weight classification where useful:
 - `light`
+- `medium`
 - `heavy`
-- `robe`
+- `very-heavy`
+
+Weight may be blank where it does not make sense.
+
+### Tags
+Additional semantic/vibe/mechanical-design labels that do not fit family/material/weight.
+
+Examples:
 - `weird`
+- `cool`
+- `holy`
+- `vampiric`
+- `wealth`
+- `probability`
+- `pet`
 
-Families are primarily organizational/semantic metadata. A family tag does **not** automatically grant mechanics unless a future system explicitly uses that family mechanically.
+Use lowercase tags. Multiword tags use hyphens, for example `very-heavy`, `road-warden`, `pet-focused`.
 
-Use lowercase family tags in design sheets where practical for consistency.
+Empty metadata fields are allowed. Do not invent meaningless metadata just to fill every field.
 
 ### Eligibility
-The conditions under which an equipment identity is allowed to enter the generation pool.
+The ordinary conditions under which an equipment identity is allowed to enter the base-generation pool.
 
 Examples may include:
-- minimum rarity;
+- minimum ordinary rarity;
 - exact rarity;
 - Board requirement;
 - mode requirement;
 - achievement requirement;
 - other future conditions.
 
+Special Artifact/Omega/set generation may deliberately use a broader base pool as described above.
+
 ### `Rarity+` notation
-When a design sheet says something like:
+When a design sheet says:
 
 `eligibility: rare+`
 
-it means **Rare rarity or any higher rarity**.
+it means **Rare rarity or any higher ordinary rarity that is allowed to use the normal base pool**.
 
 Likewise `poor+`, `common+`, etc. mean that rarity or above.
 
-Use the canonical in-game rarity names when writing final definitions. Do not invent alternate spellings for the same rarity.
+Canonical runtime rarity labels currently include Poor, Common, Uncommon, Rare, Epic, Legendary, Mythical, Omega and Artifact.
 
 ### Intrinsic
-A property inherent to the **equipment identity itself**.
+A property inherent to the **equipment base itself**.
 
-Every generated instance of that equipment identity receives its Intrinsic effect(s).
+Every generated instance using that base receives its Intrinsic effect(s).
 
-Under #83, Intrinsics are outside the normal rarity/stat point budget unless that design is deliberately changed later.
-
-Example:
-
-`Gold Full Plate`
-
-may always have an authored Gold-related Intrinsic while still rolling different ordinary stats/affixes on different generated copies.
+Intrinsics are outside the normal rarity/stat point budget unless that design is deliberately changed later.
 
 ### Rolled stat
-A normal generated stat/effect on a specific item instance rather than something guaranteed by the equipment identity.
+A normal generated stat/effect on a specific item instance rather than something guaranteed by the equipment base.
 
 ### Affix
 A generated prefix/suffix/effect from the ordinary equipment generation system.
@@ -111,53 +163,96 @@ Affixes are distinct from authored Intrinsics.
 
 ## Combat stat shorthand
 
-For design files, prefer the full canonical word where convenient. Short forms such as `DEF` are fine for compact tables, but do not freely alternate between different spellings when they mean the same thing.
-
 ### HP
 Hit Points.
 
-`+5 HP` means five additional HP according to the normal effective-stat rules.
+`+5 HP` means five additional HP.
+
+`+5% HP` means a five-percent increase to HP, not five flat HP.
 
 ### Attack
 The ordinary Attack stat unless a more specific damage modifier is named.
 
+- `+5 Attack` = five flat Attack.
+- `+5% Attack` = five percent more Attack.
+
+Flat and percentage Attack are deliberately different effects and must not be implemented interchangeably.
+
+Unless an effect explicitly defines multiplicative stacking with other percentage modifiers, multiple additive `% Attack` bonuses should add their percentage values before the authoritative effective-stat calculation applies them.
+
 ### Defense
 The ordinary Defense stat.
 
-Prefer **Defense** consistently in project design text rather than mixing `def`, `defence` and `defense` in final definitions.
+- `+5 Defense` = five flat Defense.
+- `+5% Defense` = five percent more Defense.
+
+Prefer **Defense** consistently rather than mixing `def`, `defence` and `defense` in final definitions.
 
 ### Mana
-The ordinary Mana resource/capacity where the current class actually uses Mana.
+The ordinary Mana resource/capacity on classes that use Mana.
 
-If an item grants Mana, implementation must define sensible behavior for classes without a Mana system rather than relying on ambiguous design shorthand.
+**Mana bonuses intentionally do nothing on a class with no Mana system.**
+
+All classes being allowed to equip all otherwise-valid gear does **not** mean every base must be useful or optimal for every class.
 
 ### Dodge
 Chance to avoid an incoming qualifying attack.
 
-In compact gear notes, a whole-number value such as `+2 Dodge` should normally be read as **+2 percentage points of Dodge chance**, unless the entry explicitly says otherwise.
+`+2% Dodge` means **+2 percentage points of Dodge chance**.
 
 ### Crit
 Critical-hit chance.
 
-In compact gear notes, `+1 Crit` normally means **+1 percentage point of Crit chance** unless explicitly defined otherwise.
+`+1% Crit` means **+1 percentage point of Crit chance**.
 
 ### Echo / Echo Strike
 Chance for the relevant action to produce an Echo Strike/follow-up according to the authoritative Echo system.
 
-In compact gear notes, `+2 Echo` normally means **+2 percentage points of Echo chance**, unless explicitly stated otherwise.
+`+2% Echo` means **+2 percentage points of Echo chance**.
+
+### Luck
+The ordinary Luck stat used by DiceBound's authoritative Luck mechanics.
+
+Unless `% Luck` is explicitly written, `+N Luck` is a flat Luck-stat addition.
+
+### Lifesteal
+Healing gained from qualifying damage according to the authoritative Lifesteal rules.
+
+`+2% Lifesteal` means +2 percentage points of Lifesteal.
+
+### Gold Gain
+A modifier to qualifying Gold rewards.
+
+`+5% Gold Gain` means five percent more qualifying Gold using the authoritative Gold-gain calculation.
+
+### Boss Damage
+A percentage modifier to qualifying damage against bosses/guardians.
+
+`+5% Boss Damage` means five percent more qualifying boss damage.
+
+### Potion Healing
+A modifier to healing produced by potions.
+
+`+10% Potion Healing` means potions heal ten percent more under the authoritative potion-healing calculation.
+
+### Pet Damage
+A modifier to damage produced by the player's active pet/companion where applicable.
+
+`+10% Pet Damage` means ten percent more qualifying pet damage. It can be useless on a build with no active damaging pet; that is acceptable.
+
+### Cool
+A **real design stat with no current gameplay effect**.
+
+Do not relabel Cool as flavour or discard it during implementation. `+100 Cool` should persist as an actual stat/value even while nothing currently consumes it.
+
+This ambiguity is intentional. A future mechanic may decide that Cool matters.
 
 ### Thorns
 Retaliatory damage dealt to an attacker when that attacker lands a qualifying attack on the unit with Thorns.
 
-**Numeric convention:** `+N Thorns` means the qualifying attacker takes **N Thorns damage**.
+`+N Thorns` means the qualifying attacker takes **N flat Thorns damage** whenever the authoritative Thorns trigger conditions are met.
 
-Example:
-
-`+3 Thorns`
-
-means an attacker takes 3 retaliatory Thorns damage whenever the authoritative Thorns trigger conditions are met.
-
-Do not interpret the number as a percentage unless the effect explicitly says `% Thorns` or otherwise defines percentage scaling.
+Thorns is especially appropriate on visibly spiked, studded, barbed or retaliatory equipment, but it is not restricted to those families.
 
 ---
 
@@ -166,30 +261,19 @@ Do not interpret the number as a percentage unless the effect explicitly says `%
 ### Proc
 Short for a triggered secondary effect becoming active after its qualifying condition occurs.
 
-Examples:
-- an elemental proc on attack;
-- a chance to trigger an additional effect;
-- an effect triggered by Guard, Crit, Echo or another event.
-
 Use `proc` for the **activation/event**, not as a synonym for the underlying stat itself.
 
 ### Proc chance
-The chance for a qualifying proc to occur.
+Chance for a qualifying proc to occur.
 
-When a design sheet modifies proc chance, write the percentage explicitly whenever possible:
+`+1% Metal proc chance` means **+1 percentage point** to the chance of triggering the existing Metal elemental proc on a qualifying action.
 
-`+1% Metal proc chance`
-
-is clearer than:
-
-`+1 Metal proc chance`
-
-Unless a mechanic explicitly uses multiplicative probability, additions to proc chance should be treated as **percentage-point additions**.
+Unless explicitly defined otherwise, additions to proc chance are percentage-point additions.
 
 ### Elemental proc
 A proc belonging to the DiceBound elemental system.
 
-The actual resulting damage/status/animation must come from the authoritative elemental mechanic rather than being redefined independently by equipment text.
+The actual resulting damage/status/animation comes from the authoritative elemental mechanic rather than being redefined independently by equipment text.
 
 ### Barrier
 A defensive combat layer/state that blocks or absorbs damage according to the authoritative Barrier rules.
@@ -197,7 +281,7 @@ A defensive combat layer/state that blocks or absorbs damage according to the au
 Do not use `Barrier` interchangeably with Energy Shield unless the runtime intentionally treats them as the same mechanic.
 
 ### Energy Shield
-The existing Energy Shield mechanic. Keep it distinct from Barrier in design notes unless a future redesign explicitly merges the two systems.
+The existing Energy Shield mechanic. Keep it distinct from Barrier unless a future redesign explicitly merges the two systems.
 
 ---
 
@@ -205,35 +289,15 @@ The existing Energy Shield mechanic. Keep it distinct from Barrier in design not
 
 To reduce ambiguity in `geartodo` and issue notes:
 
-- Flat stat: `+5 HP`, `+3 Attack`, `+2 Defense`
+- Flat stat: `+5 HP`, `+3 Attack`, `+2 Defense`, `+5 Mana`, `+100 Cool`
+- Percentage stat modifier: `+5% Attack`, `+10% Potion Healing`, `+8% Pet Damage`
 - Percentage-point chance: `+2% Crit`, `+3% Dodge`, `+4% Echo`
 - Proc chance: `+1% Metal proc chance`
 - Flat retaliation: `+2 Thorns`
-- Negative modifier: `-2% Dodge`
+- Negative flat stat: `-2 Defense`
+- Negative percentage/chance: `-2% Dodge`, `-5% Attack`
 
-When the current runtime/UI convention eventually chooses a different display format, implementation can translate these design values. The important thing is that the source design meaning remains unambiguous.
-
----
-
-## Terms that must be explicitly marked if they are jokes/flavour
-
-DiceBound deliberately contains nonsense. That is good, but design sheets should distinguish a real mechanic from a joke value.
-
-Example:
-
-`+100 Cool`
-
-is ambiguous unless **Cool** becomes an actual game stat.
-
-If it is flavour only, write something like:
-
-`flavour: +100 Cool`
-
-or:
-
-`intrinsic: +5 Defense, +5% Dodge, +5% Crit, +5% Echo; flavour: +100 Cool`
-
-If Cool later becomes a real mechanic, add it to this vocabulary with an authoritative definition.
+A number without `%` must never silently become a percentage during implementation, and a number with `%` must never silently become a flat stat.
 
 ---
 
@@ -244,24 +308,31 @@ A future implementer should be able to read an entry without asking what its num
 Good:
 
 ```text
-family: cloth, t-shirt, weird
+family: t-shirt
+material: cloth
+weight: light
+tags: weird, music
 eligibility: rare+
 intrinsic: +4% Dodge, +1 Thorns, +2% Echo, +1% Metal proc chance
 ```
 
-Ambiguous:
+Also valid when a field is irrelevant:
 
 ```text
-intrinsic: dodge 4, thorn, echo +2, metal 1
+family: probability-table
+material:
+weight:
+tags: probability, weird
+eligibility: uncommon+
+intrinsic: +2 Luck, +2% Echo
 ```
-
-Clarity in the design sheet does not mean the final player-facing tooltip needs to use the same terse wording.
 
 ---
 
 ## Related design sources
 
-- `geartodo/` — working equipment identity definitions
+- `geartodo/` — working equipment-base definitions
+- `geartodo/README.md` — catalogue workflow and field conventions
 - issue #83 — authored equipment identities, Intrinsics and modular artwork
 - issue #51 — authoritative live/computed player-facing descriptions
 - issue #40 — runtime ownership/module architecture
