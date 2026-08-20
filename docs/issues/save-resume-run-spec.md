@@ -44,18 +44,26 @@ At minimum, persist enough information to reconstruct the run deterministically 
 - Invalid or incompatible active-run data must fail gracefully without corrupting Legacy/meta progression.
 - Do not allow reloads to duplicate rewards from an already completed tile/event.
 
+## Implemented architecture (Beta 0.6.3.0)
+
+- `runtime/js/save-system.js` owns independent career and active-run envelopes. Active runs use one primary plus three rotating backups and never share keys with Legacy/meta progression.
+- `runtime/js/core/run-checkpoint.js` rejects non-JSON/cyclic state, records its own checkpoint schema and captures/restores the shared seeded RNG cursor.
+- The final runtime composition adapter checkpoints only while the road is unlocked, combat is idle, no encounter/reward overlay is active and no level choice is pending.
+- Every checkpoint includes the matching normalized career snapshot. Resuming a previous safe boundary therefore rolls back any permanent-looking reward mutation performed during an interrupted transient resolution.
+- Campsite controls expose Continue Run and explicit abandonment; corrupt checkpoint data can be discarded without touching the career save.
+
 ## Acceptance criteria
 
-- [ ] A checkpoint is written after every completed tile/event resolution.
-- [ ] Run seed is persisted.
-- [ ] RNG progression/state is persisted sufficiently to avoid obvious save-scumming/rerolling of already resolved outcomes.
-- [ ] Board/tile position and all material run-build state are restored.
-- [ ] Relaunching DiceBound presents a Continue Run option when appropriate.
+- [x] A checkpoint is written after every completed tile/event resolution.
+- [x] Run seed is persisted.
+- [x] RNG progression/state is persisted sufficiently to avoid obvious save-scumming/rerolling of already resolved outcomes.
+- [x] Board/tile position and all material run-build state are restored.
+- [x] Relaunching DiceBound presents a Continue Run option when appropriate.
 - [ ] Closing on the road between events resumes correctly.
 - [ ] Closing immediately after a completed combat/event resumes from the completed state without duplicating rewards.
 - [ ] Closing during a transient/unsafe state falls back to the previous stable checkpoint.
-- [ ] Victory, death, prestige/reset, or explicit run abandonment clears the active-run checkpoint.
-- [ ] Existing Beta save data still loads.
+- [x] Victory, death, prestige/reset, or explicit run abandonment clears the active-run checkpoint.
+- [x] Existing Beta save data still loads.
 - [ ] Native wrapper and direct browser runtime behave consistently where supported.
-- [ ] Automated/static checks cover serialization, migration/versioning and reward-duplication guards.
+- [x] Automated/static checks cover serialization, migration/versioning and reward-duplication guards.
 - [ ] Real Windows smoke test verifies quit/relaunch/continue behavior.

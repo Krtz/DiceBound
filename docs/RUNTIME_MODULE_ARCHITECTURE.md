@@ -17,6 +17,7 @@ wrapper-contract.js
 platform.js
 storage.js
 save-system.js
+core/run-checkpoint.js
 core/state.js
 core/runtime-services.js
 combat/effective-stats.js
@@ -34,7 +35,7 @@ powerups/registry.js
 dicebound.js
 ```
 
-`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `core/state.js` owns career defaults, normalization, save/load coordination and the domain event bus. `core/runtime-services.js` creates explicit capability contracts without owning or copying live run data. `combat/effective-stats.js` owns extracted pure modifier calculations and live descriptors, beginning with the complete Berserker Ultimate/Rage path. `powerups/registry.js` consumes the runtime-service contract and authoritatively owns all 200 canonical Powerup definitions/effects. Explicit owners also cover classes and support tables, pets, boards, enemies, rarity/equipment metadata, achievements, the Legacy talent tree, Artifact selection and guardian/ordinary loot policy. `dicebound.js` temporarily retains active-run state, service composition wiring, Powerup choice/application orchestration, concrete item factories and presentation.
+`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `save-system.js` owns independent career and active-run envelopes plus their backup rotation. `core/run-checkpoint.js` owns JSON-safe active-run validation, RNG capture and storage coordination; the monolith currently composes its live state into that API at completed-tile boundaries. `core/state.js` owns career defaults, normalization, save/load coordination and the domain event bus. `core/runtime-services.js` creates explicit capability contracts without owning or copying live run data. `combat/effective-stats.js` owns extracted pure modifier calculations and live descriptors, beginning with the complete Berserker Ultimate/Rage path. `powerups/registry.js` consumes the runtime-service contract and authoritatively owns all 200 canonical Powerup definitions/effects. Explicit owners also cover classes and support tables, pets, boards, enemies, rarity/equipment metadata, achievements, the Legacy talent tree, Artifact selection and guardian/ordinary loot policy. `dicebound.js` temporarily retains active-run state, checkpoint composition wiring, Powerup choice/application orchestration, concrete item factories and presentation.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -92,6 +93,7 @@ runtime/js/
 ├─ assets.js
 ├─ core/
 │  ├─ state.js                 career defaults/normalization and event bus
+│  ├─ run-checkpoint.js        active-run validation/RNG/storage service
 │  ├─ constants.js
 │  └─ ...
 ├─ board/
@@ -219,8 +221,12 @@ node tools/test_talent_registry.js
 node tools/test_static_registries.js
 node tools/test_content_registries.js
 node tools/test_core_state.js
+node tools/test_run_checkpoint.js
 node tools/test_version_identity.js
-python tools/validate_version_identity.py --version 0.6.2.1 --channel Beta
+node tools/smoke_run_resume_browser.js
+# After building wrapper-source/release/DiceBound.exe:
+node tools/smoke_run_resume_native.js
+python tools/validate_version_identity.py --version 0.6.3.0 --channel Beta
 python tools/test_version_identity_validator.py
 ```
 
@@ -233,7 +239,7 @@ Future extraction PRs should add focused tests for pure logic as soon as it beco
 
 ## Coordination with other issues
 
-- #33/#35 save/resume should extend the tested `core/state.js` and save-service boundaries with a versioned active-run checkpoint rather than create another parallel persistence path.
+- #35 now extends the existing save-service boundary with `core/run-checkpoint.js`, a separate versioned active-run envelope and stable-state composition. Future extraction should move the remaining snapshot adapter fields out of the monolith as board/player/run state gain authoritative owners.
 - #22 Artifact weighting was completed as a separate isolated balance PR after Artifact ownership moved out of the monolith.
 - #3 guardian-loot tuning now has isolated policy tables/helpers in `items/loot.js`; future tuning must remain separate from the behavior-preserving extraction.
 - #28 Gloves and #25 character panel become easier once equipment ownership is explicit.

@@ -3,10 +3,10 @@
 
   // These are the only release-version literals in the browser runtime.
   // tools/set_project_version.py stamps them from its explicit Version/Channel input.
-  const VERSION="0.6.2.4";
+  const VERSION="0.6.3.0";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="explicit Artifact tables, generated Legendary effects, new gear budgets and guardian loot cleanup.";
+  const RELEASE_SUMMARY="resumable active runs with deterministic safe-state checkpoints and backup recovery.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
