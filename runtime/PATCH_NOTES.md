@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.2.2
+# Unreleased — Beta 0.6.2.3
+
+## Live computed combat descriptions (#40, #51)
+- Ragequake now displays its current effective Attack scaling and exact pre-defense damage range from the authoritative combat calculation.
+- Ultimate damage, class-Ultimate, all-damage, set and current Rage modifiers immediately recompute that description.
+- Release version stamping now preserves each PR's custom subtitle and cannot leave a partially stamped tree after a strict-match failure.
+
+---
+
+# Beta 0.6.2.2 — Development checkpoint
 
 ## Runtime services and Powerups (#40, #65, #51)
 - Powerup mechanics now use one explicit six-capability runtime contract rather than arbitrary ambient state.

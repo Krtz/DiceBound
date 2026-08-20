@@ -2,7 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.2.2
+## Unreleased — Beta 0.6.2.3
+
+### Live computed combat descriptions (#40, #51)
+- Added a pure effective-stat owner for shared Ultimate modifiers and Berserker Rage scaling.
+- Ragequake's combat tooltip and active-run traits now show its recomputed effective Attack scaling and pre-defense damage range from the same functions used by combat.
+- Changing Ultimate, class-Ultimate, all-damage, set or Rage modifiers updates the displayed values immediately.
+- Fixed release stamping so arbitrary per-PR subtitles are preserved and all strict replacements succeed before any source file is written.
+
+## Beta 0.6.2.2 — Development checkpoint
 
 ### Runtime services and Powerups (#40, #65, #51)
 - Added an explicit Powerup runtime-service contract for live player state, economy, healing, rules, element IDs and class-signature behavior.
