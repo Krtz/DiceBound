@@ -11,6 +11,7 @@
     "platform",
     "storage",
     "save-system",
+    "run-checkpoint",
     "core-state",
     "runtime-services",
     "combat-effective-stats",
@@ -100,6 +101,14 @@
       "status": "extracted",
       "requires": ["save-system"],
       "provides": ["DiceboundCoreState"]
+    },
+    {
+      "id": "run-checkpoint",
+      "path": "js/core/run-checkpoint.js",
+      "domain": "core/active-run-checkpoint",
+      "status": "extracted",
+      "requires": ["version", "rng", "save-system"],
+      "provides": ["DiceboundRunCheckpoint"]
     },
     {
       "id": "runtime-services",
@@ -210,7 +219,7 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "core-state", "runtime-services", "combat-effective-stats", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot", "powerup-registry"],
+      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "run-checkpoint", "core-state", "runtime-services", "combat-effective-stats", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot", "powerup-registry"],
       "provides": []
     }
   ],

@@ -1,4 +1,15 @@
-# Unreleased — Beta 0.6.2.4
+# Unreleased — Beta 0.6.3.0
+
+## Continue active runs (#35)
+- DiceBound now checkpoints each completed road state and offers **Continue Run** at camp after a restart.
+- Your exact board, build, gear, resources, cleared outcomes and seeded random sequence return together.
+- Closing during combat or an unresolved reward safely returns to the previous completed checkpoint instead of saving a half-finished interaction.
+- Active runs have independent rotating backups; corrupt run data can be discarded without harming career progress.
+- Fixed a stale Pet Mirror function name that prevented fresh source builds from completing runtime startup.
+
+---
+
+# Beta 0.6.2.4 — Development checkpoint
 
 ## Effective Gold gain stat (#52)
 - Current Run Buffs and the Info screen's Stats tab now always show your effective Gold gain percentage.

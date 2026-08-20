@@ -8,6 +8,10 @@
   const PRIMARY_KEY="dicebound.save.primary";
   const BACKUP_KEY="dicebound.save.backup";
   const BACKUP_KEYS=[BACKUP_KEY,"dicebound.save.backup.2","dicebound.save.backup.3","dicebound.save.backup.4","dicebound.save.backup.5"];
+  const RUN_FORMAT="dicebound-active-run";
+  const RUN_SCHEMA_VERSION=1;
+  const RUN_PRIMARY_KEY="dicebound.run.primary";
+  const RUN_BACKUP_KEYS=["dicebound.run.backup","dicebound.run.backup.2","dicebound.run.backup.3"];
   const EXPORT_PREFIX="DICEBOUND_SAVE_V2:";
   const LEGACY_KEYS=["dicebound_transferable_v15","dicebound_transferable_v14","dicebound_transferable_v13","dicebound_v12_fresh_save","dicebound_rpg_v11_save"];
   const storage=window.DiceboundStorage;
@@ -60,6 +64,41 @@
   }
   function saveMeta(meta){return writeEnvelope(createEnvelope(meta));}
 
+  function asRunEnvelope(value){
+    if(!value||typeof value!=="object")throw new Error("Active-run checkpoint is not an object");
+    if(value.format!==RUN_FORMAT)throw new Error(`Active-run checkpoint format ${value.format||"missing"} is unsupported`);
+    if(Number(value.schemaVersion)!==RUN_SCHEMA_VERSION)throw new Error(`Active-run checkpoint schema ${value.schemaVersion} is unsupported`);
+    if(!value.payload?.checkpoint||typeof value.payload.checkpoint!=="object")throw new Error("Active-run checkpoint payload is missing");
+    const env=clone(value);env.gameVersion=GAME_VERSION;return env;
+  }
+  function createRunEnvelope(checkpoint){return {format:RUN_FORMAT,schemaVersion:RUN_SCHEMA_VERSION,gameVersion:GAME_VERSION,savedAt:now(),payload:{checkpoint:clone(checkpoint)}};}
+  function parseRunStored(raw){if(!raw)return null;return asRunEnvelope(JSON.parse(raw));}
+  function rotateRunBackups(previous){
+    if(!previous)return;
+    for(let i=RUN_BACKUP_KEYS.length-1;i>=1;i--){const older=storage.getString(RUN_BACKUP_KEYS[i-1]);if(older)storage.setString(RUN_BACKUP_KEYS[i],older);else storage.remove(RUN_BACKUP_KEYS[i]);}
+    storage.setString(RUN_BACKUP_KEYS[0],previous);
+  }
+  function writeRunEnvelope(env,{backup=true}={}){
+    const previous=storage.getString(RUN_PRIMARY_KEY);
+    if(backup&&previous)rotateRunBackups(previous);
+    storage.setString(RUN_PRIMARY_KEY,JSON.stringify(asRunEnvelope(env)));
+    return true;
+  }
+  function saveRunCheckpoint(checkpoint){return writeRunEnvelope(createRunEnvelope(checkpoint));}
+  function loadRunCheckpoint(){
+    let source="none",env=null,error=null;
+    const candidates=[[RUN_PRIMARY_KEY,"primary"],...RUN_BACKUP_KEYS.map((key,i)=>[key,`backup-${i+1}`])];
+    for(const [key,label] of candidates){
+      try{const raw=storage.getString(key);if(!raw)continue;env=parseRunStored(raw);source=label;break;}catch(e){error=e;}
+    }
+    if(!env)return {checkpoint:null,source:"none",recovered:false,error:error?.message||null};
+    const checkpoint=clone(env.payload.checkpoint),recovered=source.startsWith("backup-");
+    if(recovered)writeRunEnvelope(createRunEnvelope(checkpoint),{backup:false});
+    return {checkpoint,source,recovered,error:error?.message||null};
+  }
+  function clearRunCheckpoint(){storage.remove(RUN_PRIMARY_KEY);RUN_BACKUP_KEYS.forEach(key=>storage.remove(key));return true;}
+  function hasRunCheckpoint(){return storage.has(RUN_PRIMARY_KEY)||RUN_BACKUP_KEYS.some(key=>storage.has(key));}
+
   function loadMeta({defaultFactory,normalize}={}){
     const makeDefault=()=>typeof defaultFactory==="function"?defaultFactory():{};
     const norm=value=>typeof normalize==="function"?normalize(value):value;
@@ -88,14 +127,16 @@
     if(!meta||typeof meta!=="object")meta=typeof defaultFactory==="function"?defaultFactory():{};
     saveMeta(meta); return meta;
   }
-  function reset(){storage.remove(PRIMARY_KEY);BACKUP_KEYS.forEach(key=>storage.remove(key));return true;}
+  function reset(){storage.remove(PRIMARY_KEY);BACKUP_KEYS.forEach(key=>storage.remove(key));clearRunCheckpoint();return true;}
   function hasSave(){return storage.has(PRIMARY_KEY)||BACKUP_KEYS.some(key=>storage.has(key));}
   function legacySaveKeysPresent(){return LEGACY_KEYS.filter(k=>storage.has(k));}
   function diagnostics(){
     let primaryValid=false;try{primaryValid=!!parseStored(storage.getString(PRIMARY_KEY));}catch(_){}
     const backups=BACKUP_KEYS.map((key,i)=>{let valid=false;try{valid=!!parseStored(storage.getString(key));}catch(_){}return Object.freeze({slot:i+1,key,present:storage.has(key),valid});});
-    return Object.freeze({apiVersion:1,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:[...BACKUP_KEYS],backupSlots:BACKUP_KEYS.length,hasPrimary:storage.has(PRIMARY_KEY),hasBackup:backups.some(x=>x.present),primaryValid,backupValid:backups.some(x=>x.valid),backups,legacyKeys:legacySaveKeysPresent(),storage:storage.diagnostics()});
+    let runPrimaryValid=false;try{runPrimaryValid=!!parseRunStored(storage.getString(RUN_PRIMARY_KEY));}catch(_){}
+    const runBackups=RUN_BACKUP_KEYS.map((key,i)=>{let valid=false;try{valid=!!parseRunStored(storage.getString(key));}catch(_){}return Object.freeze({slot:i+1,key,present:storage.has(key),valid});});
+    return Object.freeze({apiVersion:2,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:[...BACKUP_KEYS],backupSlots:BACKUP_KEYS.length,hasPrimary:storage.has(PRIMARY_KEY),hasBackup:backups.some(x=>x.present),primaryValid,backupValid:backups.some(x=>x.valid),backups,activeRun:Object.freeze({format:RUN_FORMAT,schemaVersion:RUN_SCHEMA_VERSION,primaryKey:RUN_PRIMARY_KEY,backupKeys:[...RUN_BACKUP_KEYS],hasPrimary:storage.has(RUN_PRIMARY_KEY),hasBackup:runBackups.some(x=>x.present),primaryValid:runPrimaryValid,backupValid:runBackups.some(x=>x.valid),backups:runBackups}),legacyKeys:legacySaveKeysPresent(),storage:storage.diagnostics()});
   }
 
-  window.DiceboundSave=Object.freeze({apiVersion:1,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:Object.freeze([...BACKUP_KEYS]),loadMeta,saveMeta,exportText,importText,reset,hasSave,diagnostics,migrate});
+  window.DiceboundSave=Object.freeze({apiVersion:2,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:Object.freeze([...BACKUP_KEYS]),runFormat:RUN_FORMAT,runSchemaVersion:RUN_SCHEMA_VERSION,runPrimaryKey:RUN_PRIMARY_KEY,runBackupKeys:Object.freeze([...RUN_BACKUP_KEYS]),loadMeta,saveMeta,saveRunCheckpoint,loadRunCheckpoint,clearRunCheckpoint,hasRunCheckpoint,exportText,importText,reset,hasSave,diagnostics,migrate});
 })();

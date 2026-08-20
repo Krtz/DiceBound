@@ -9458,8 +9458,8 @@ function buildDiceboundHumanHarness235(){
   updateCombatUI=function(){const r=db060UpdateCombatUIBase();if(db060HasEffect('unstable_ultimate')){const b=$('ultimateBtn');if(b){b.disabled=combatBusy||!currentEnemy||player.ultimateCharge<70;b.dataset.tip=`Unstable Ultimate: usable at 70 charge for 75% normal damage. Current charge: ${Math.round(player.ultimateCharge)}.`;}}return r;};
 
   // Pet Mirror.
-  const db060PetAttackBase=petAttack;
-  petAttack=async function(...args){const r=await db060PetAttackBase(...args);if(db060HasEffect('pet_mirror')&&player._db060LastElement&&livingEnemies().length&&random()<.25){const old=player.elementDamageBonus||0;try{player.elementDamageBonus=(1+old)*.65-1;triggerElementEffect(player._db060LastElement,livingEnemies()[0],{forced:true,source:'Pet Mirror'});addCombatHistory(`🐾🪞 Pet Mirror repeats ${ELEMENTS[player._db060LastElement]?.name||player._db060LastElement}.`);}finally{player.elementDamageBonus=old;}}return r;};
+  const db060PetTurnBase=petTurn;
+  petTurn=async function(...args){const r=await db060PetTurnBase(...args);if(db060HasEffect('pet_mirror')&&player._db060LastElement&&livingEnemies().length&&random()<.25){const old=player.elementDamageBonus||0;try{player.elementDamageBonus=(1+old)*.65-1;triggerElementEffect(player._db060LastElement,livingEnemies()[0],{forced:true,source:'Pet Mirror'});addCombatHistory(`🐾🪞 Pet Mirror repeats ${ELEMENTS[player._db060LastElement]?.name||player._db060LastElement}.`);}finally{player.elementDamageBonus=old;}}return r;};
 
   // Battle-lifetime Legendary state cleanup + Last Stand.
   function db060ClearBattleLegendaryTemps(){if(player._db060IronEchoDefense){player.defense=Math.max(0,player.defense-player._db060IronEchoDefense);player._db060IronEchoDefense=0;}if(player._db060BloodPriceStacks){player.damageBonus=Math.max(0,(player.damageBonus||0)-player._db060BloodPriceStacks*.08);player._db060BloodPriceStacks=0;}player._db060LastStandUsed=false;}
@@ -9494,6 +9494,101 @@ function buildDiceboundHumanHarness235(){
     artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=window.DiceboundArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });
 
-  window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
+  /* ACTIVE-RUN CHECKPOINT COMPOSITION -------------------------------------
+     The extracted checkpoint service owns validation/storage. This adapter
+     owns the final live monolith variables until those state domains move. */
+  const DB_RUN_CHECKPOINT=window.DiceboundRunCheckpoint;
+  if(!DB_RUN_CHECKPOINT)throw new Error('DiceboundRunCheckpoint must load before dicebound.js');
+  const DB_RUN_BLOCKING_OVERLAYS=['combatOverlay','levelOverlay','eventOverlay','wheelOverlay','powerupOverlay','merchantOverlay','blessingOverlay','mysticOverlay','lootOverlay','bloodwellOverlay','gamblerOverlay','diceChoiceOverlay','endOverlay','prestigeHeirloomOverlay'];
+  let dbRunCheckpointEpoch=0,dbRunCheckpointTimer=null,dbRunCheckpointRestoring=false,dbRunOwnedSeed=null,dbRunLastResult=DB_RUN_CHECKPOINT.load();
+  const dbRunClone=value=>JSON.parse(JSON.stringify(value));
+  function dbRunHasBlockingOverlay(){return DB_RUN_BLOCKING_OVERLAYS.some(id=>{const el=$(id);return el&&!el.classList.contains('hidden');})||!$('battleVictory')?.classList.contains('hidden');}
+  function dbRunIsStable(){return gameStarted&&!runFinalized&&!rollLocked&&!combatBusy&&!currentEnemy&&pendingLevelUps===0&&!dbRunHasBlockingOverlay();}
+  function dbRunSummary(){return {classId:player.classId,className:CLASSES[player.classId]?.name||player.classId,board:boardLevel,tile:Number(player.position||0)+1,level:player.level,gold:player.gold,difficulty:hellMode?'Hell':nightmareMode?'Nightmare':'Normal'};}
+  function dbRunSnapshot(){
+    return DB_RUN_CHECKPOINT.create({
+      summary:dbRunSummary(),
+      meta,
+      run:{
+        player,tiles,boardLevel,selectedClassId,nightmareMode,hellMode,rolls,tilesMovedThisRun,runTalentSnapshot,statsLastHp,statsLastGold,
+        merchant:{faceClicks:[...merchantFaceClicks],faceTotal:merchantFaceTotal,bossPrimed:merchantBossPrimed,bossDefeatedThisBoard:merchantBossDefeatedThisBoard},
+        logHtml:$('log')?.innerHTML||''
+      }
+    });
+  }
+  function dbRunWriteCheckpoint(){
+    if(dbRunCheckpointRestoring||!dbRunIsStable())return false;
+    try{dbRunLastResult={checkpoint:DB_RUN_CHECKPOINT.store(dbRunSnapshot()),source:'primary',recovered:false,error:null};dbRunRefreshControls();return true;}
+    catch(error){console.error('DiceBound active-run checkpoint failed',error);dbRunLastResult={checkpoint:null,source:'error',recovered:false,error:error.message};dbRunRefreshControls();return false;}
+  }
+  function dbRunScheduleCheckpoint(){
+    if(dbRunCheckpointRestoring)return;
+    const epoch=dbRunCheckpointEpoch;
+    clearTimeout(dbRunCheckpointTimer);
+    dbRunCheckpointTimer=setTimeout(()=>{if(epoch===dbRunCheckpointEpoch)dbRunWriteCheckpoint();},80);
+  }
+  function dbRunClearCheckpoint(){
+    dbRunCheckpointEpoch++;clearTimeout(dbRunCheckpointTimer);DB_RUN_CHECKPOINT.clear();dbRunLastResult={checkpoint:null,source:'none',recovered:false,error:null};dbRunRefreshControls();return true;
+  }
+  function dbRunSeedNewRun(){
+    const existing=window.DiceboundRng.snapshot();
+    if(existing.mode==='seeded'&&existing.seed!==dbRunOwnedSeed){dbRunOwnedSeed=existing.seed;return existing;}
+    const generated=window.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}-${performance?.now?.()||0}`;
+    const seeded=window.DiceboundRng.seed(`run-${generated}`);dbRunOwnedSeed=seeded.seed;return seeded;
+  }
+  function dbRunCloseOverlays(){
+    ['startOverlay',...DB_RUN_BLOCKING_OVERLAYS,'talentOverlay','buffOverlay','petCollectionOverlay','debugOverlay','achievementOverlay','infoOverlay'].forEach(id=>$(id)?.classList.add('hidden'));
+    BattleVictoryUI.reset();document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));
+  }
+  function dbRunRestore(checkpoint=dbRunLastResult?.checkpoint){
+    checkpoint=DB_RUN_CHECKPOINT.validate(checkpoint);dbRunCheckpointRestoring=true;dbRunCheckpointEpoch++;clearTimeout(dbRunCheckpointTimer);
+    try{
+      const currentSettings=dbRunClone(meta.settings||{}),run=checkpoint.run;
+      meta=normalizeMetaCore(checkpoint.meta);meta.settings={...meta.settings,...currentSettings};
+      Object.keys(player).forEach(key=>delete player[key]);Object.assign(player,dbRunClone(run.player));
+      tiles=dbRunClone(run.tiles);boardLevel=Number(run.boardLevel)||1;selectedClassId=String(run.selectedClassId||player.classId||'ranger');nightmareMode=!!run.nightmareMode;hellMode=!!run.hellMode;
+      rolls=Math.max(0,Number(run.rolls)||0);tilesMovedThisRun=Math.max(0,Number(run.tilesMovedThisRun)||0);runTalentSnapshot=dbRunClone(run.runTalentSnapshot);statsLastHp=run.statsLastHp??null;statsLastGold=run.statsLastGold??null;
+      merchantFaceClicks=new Set(run.merchant?.faceClicks||[]);merchantFaceTotal=Math.max(0,Number(run.merchant?.faceTotal)||0);merchantBossPrimed=!!run.merchant?.bossPrimed;merchantBossDefeatedThisBoard=!!run.merchant?.bossDefeatedThisBoard;merchantBossBattle=false;
+      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMysticBuff=null;currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;wheelBusy=false;combatBusy=false;runFinalized=false;v16CombatKind=null;v16FifthRoadCompleting=false;v19CompletingSixth=false;
+      window.DiceboundRng.restore(checkpoint.rng);dbRunOwnedSeed=checkpoint.rng.seed;
+      gameStarted=true;rollLocked=false;dbRunCloseOverlays();applyRunTheme();buildBoard();
+      if($('log'))$('log').innerHTML=String(run.logHtml||'');
+      saveMeta();renderEquipment();renderTalents();renderPetCollection();renderClassChoices();updateMetaUI();updateHUD();refreshBoardHighlights();setTimeout(()=>placePawn(false),30);
+      showToast(`▶ Continued ${checkpoint.summary?.className||'saved'} run · Board ${boardLevel}, tile ${player.position+1}`,3200,true);
+      dbRunLastResult={checkpoint,source:dbRunLastResult?.source||'primary',recovered:!!dbRunLastResult?.recovered,error:dbRunLastResult?.error||null};return true;
+    } finally {dbRunCheckpointRestoring=false;dbRunRefreshControls();}
+  }
+  function dbRunPanelText(result){
+    if(result?.checkpoint){const s=result.checkpoint.summary||{};return `${s.className||s.classId||'Adventurer'} · ${s.difficulty||'Normal'} · Board ${s.board||'?'} · Tile ${s.tile||'?'} · Level ${s.level||'?'} · ${s.gold||0} gold${result.recovered?' · recovered backup':''}`;}
+    return result?.error?`Saved run could not be read: ${result.error}`:'No active expedition is saved.';
+  }
+  function dbRunEnsureControls(){
+    const scene=$('campScene');if(!scene)return null;
+    let panel=$('runResumePanel');if(panel)return panel;
+    const style=document.createElement('style');style.id='runResumeStyle';style.textContent=`.run-resume-panel{margin:0 0 14px;padding:12px 14px;border:1px solid rgba(125,211,252,.35);border-radius:14px;background:rgba(5,15,30,.72);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.run-resume-copy{min-width:220px;flex:1}.run-resume-copy strong{display:block;color:#dff6ff;margin-bottom:4px}.run-resume-copy span{color:var(--muted);font-size:11px}.run-resume-actions{display:flex;gap:8px;flex-wrap:wrap}.run-resume-actions button{min-height:42px}`;document.head.appendChild(style);
+    panel=document.createElement('div');panel.id='runResumePanel';panel.className='run-resume-panel';panel.innerHTML='<div class="run-resume-copy"><strong id="runResumeTitle">Continue expedition</strong><span id="runResumeSummary"></span></div><div class="run-resume-actions"><button class="small-btn" id="runResumeBtn">▶ Continue Run</button><button class="small-btn danger" id="runAbandonBtn">Abandon saved run</button></div>';
+    scene.insertBefore(panel,scene.firstElementChild);
+    $('runResumeBtn').addEventListener('click',()=>{dbRunLastResult=DB_RUN_CHECKPOINT.load();if(dbRunLastResult.checkpoint)dbRunRestore(dbRunLastResult.checkpoint);else{showToast('Saved run is unavailable');dbRunRefreshControls();}});
+    $('runAbandonBtn').addEventListener('click',async()=>{if(await diceboundConfirm('Abandon the saved expedition? Your career progress and settings remain safe.',{title:'Abandon saved run?',confirmLabel:'Abandon run',danger:true})){dbRunClearCheckpoint();showToast('Saved expedition abandoned');}});
+    return panel;
+  }
+  function dbRunRefreshControls(){
+    const panel=dbRunEnsureControls();if(!panel)return;
+    dbRunLastResult=DB_RUN_CHECKPOINT.load();const valid=!!dbRunLastResult.checkpoint,present=DB_RUN_CHECKPOINT.has();panel.classList.toggle('hidden',!present);
+    const title=$('runResumeTitle'),summary=$('runResumeSummary'),resume=$('runResumeBtn'),abandon=$('runAbandonBtn');if(title)title.textContent=valid?'Continue expedition':'Saved expedition needs attention';if(summary)summary.textContent=dbRunPanelText(dbRunLastResult);if(resume)resume.disabled=!valid;if(abandon)abandon.textContent=valid?'Abandon saved run':'Discard unreadable run';
+  }
+
+  const dbRunUpdateHudBase=updateHUD;updateHUD=function(...args){const result=dbRunUpdateHudBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
+  const dbRunStartBase=startNewGame;startNewGame=function(...args){dbRunClearCheckpoint();dbRunSeedNewRun();const result=dbRunStartBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
+  const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
+  const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
+  const dbRunCompleteFifthBase=completeFifthRoadV16;completeFifthRoadV16=function(...args){dbRunClearCheckpoint();return dbRunCompleteFifthBase.apply(this,args);};
+  const dbRunCompleteSixthBase=completeSixthRoadV19;completeSixthRoadV19=function(...args){dbRunClearCheckpoint();return dbRunCompleteSixthBase.apply(this,args);};
+  const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
+  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRunClearCheckpoint();dbRunSeedNewRun();$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));dbRunStartBase();}})();},true);
+  window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
+  setTimeout(dbRunRefreshControls,0);
+
+  window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),runCheckpoint:()=>DB_RUN_CHECKPOINT.diagnostics(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
 
 })();

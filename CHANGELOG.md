@@ -2,7 +2,17 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.2.4
+## Unreleased — Beta 0.6.3.0
+
+### Active-run save and resume (#35)
+- Added a separate versioned active-run checkpoint schema with a primary slot, three rotating backups and corrupt-primary recovery; existing career saves remain schema 2 and independently recoverable.
+- Seeded each real expedition through the shared RNG service and persist its exact state/call cursor with the board, player/build, run counters, cleared outcomes and matching career snapshot.
+- Added a campsite Continue Run panel plus explicit abandonment flow. Victory, death, Prestige, reset and starting a replacement run clear the checkpoint.
+- Autosaves occur only at completed road states. Quitting during combat, a reward, merchant, level-up or other transient interaction resumes the previous completed checkpoint, preventing partial-state and duplicate-reward saves.
+- Added deterministic coverage for serialization safety, backup recovery, exact RNG continuation, career isolation and runtime composition guards.
+- Fixed the current-source Pet Mirror wrapper to extend the live `petTurn` pipeline instead of referencing nonexistent `petAttack`, which had prevented a fresh browser payload from completing startup.
+
+## Beta 0.6.2.4 — Development checkpoint
 
 ### Effective Gold gain stat (#52)
 - Current Run Buffs and Info → Stats now show effective Gold gain, with 100% defined as the baseline.
