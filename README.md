@@ -6,7 +6,7 @@ DiceBound is a single-player RPG/board-game hybrid built around dice movement, e
 
 ## Release baseline and current development
 
-**Current source identity: Beta 0.6.2.1**
+**Current source identity:** see `wrapper-source/config/project.json`; every merged PR advances it to a unique four-component version.
 
 Every PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. The launcher still points at the separately published Beta 0.6.1 prerelease until a newer build is deliberately published and `distribution/latest.json` is updated from its verified artifact metadata.
 

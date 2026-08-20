@@ -12,6 +12,7 @@
     "storage",
     "save-system",
     "core-state",
+    "runtime-services",
     "classes-registry",
     "pets-registry",
     "board-registry",
@@ -22,6 +23,7 @@
     "progression-achievements",
     "artifacts",
     "loot",
+    "powerup-registry",
     "dicebound-monolith"
   ],
   "modules": [
@@ -97,6 +99,14 @@
       "status": "extracted",
       "requires": ["save-system"],
       "provides": ["DiceboundCoreState"]
+    },
+    {
+      "id": "runtime-services",
+      "path": "js/core/runtime-services.js",
+      "domain": "core/runtime-services",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundRuntimeServices"]
     },
     {
       "id": "classes-registry",
@@ -179,11 +189,19 @@
       "provides": ["DiceboundLoot"]
     },
     {
+      "id": "powerup-registry",
+      "path": "js/powerups/registry.js",
+      "domain": "powerups/registry-and-effects",
+      "status": "extracted",
+      "requires": ["runtime-services"],
+      "provides": ["DiceboundPowerupRegistry"]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "core-state", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot"],
+      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "core-state", "runtime-services", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot", "powerup-registry"],
       "provides": []
     }
   ],

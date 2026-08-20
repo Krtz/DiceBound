@@ -18,6 +18,7 @@ platform.js
 storage.js
 save-system.js
 core/state.js
+core/runtime-services.js
 classes/registry.js
 pets/registry.js
 board/registry.js
@@ -28,10 +29,11 @@ progression/talents.js
 progression/achievements.js
 items/artifacts.js
 items/loot.js
+powerups/registry.js
 dicebound.js
 ```
 
-`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `core/state.js` now owns career defaults, normalization, save/load coordination and the domain event bus; the monolith consumes a configured state service rather than maintaining another migration path. Explicit static owners cover classes and their support tables, pets, boards, ordinary and special enemies, rarity/equipment metadata, achievements and the Legacy talent tree behind isolated clone APIs. Class tags are derived from the canonical class owner rather than duplicated. The item layer also owns Artifact slot selection in `items/artifacts.js` and guardian/ordinary loot policy in `items/loot.js`; `dicebound.js` temporarily retains active-run state, stateful mechanics, concrete item factories and presentation/orchestration.
+`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `core/state.js` owns career defaults, normalization, save/load coordination and the domain event bus. `core/runtime-services.js` creates explicit capability contracts without owning or copying live run data. `powerups/registry.js` consumes that contract and authoritatively owns all 200 canonical Powerup definitions/effects. Explicit owners also cover classes and support tables, pets, boards, enemies, rarity/equipment metadata, achievements, the Legacy talent tree, Artifact selection and guardian/ordinary loot policy. `dicebound.js` temporarily retains active-run state, service composition wiring, Powerup choice/application orchestration, concrete item factories and presentation.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -58,6 +60,20 @@ Rules:
 - cross-domain calls should go through explicit exported APIs rather than ambient globals where practical;
 - one public symbol/system gets one authoritative owner.
 - any runtime module reading `DiceboundVersion` must declare `version` in its manifest dependencies; the version-identity validator enforces this dynamically as code moves.
+- runtime-service objects are composition-only capabilities: they are never copied into run state or serialized into saves.
+
+## Powerup runtime-service contract
+
+Issue #65's inventory found six capabilities in the canonical 200-entry registry:
+
+- a reset-safe live player-state port;
+- authoritative gold reward calculation plus Nightmare-state query;
+- the established healing pipeline;
+- pure clamp rules;
+- the canonical element-ID vocabulary;
+- current-class Perfected Signature application/description.
+
+`DiceboundRuntimeServices.createPowerupServices()` validates and freezes those ports. Its player proxy resolves the current player object on every access, so a reset/replaced run cannot leave Powerup closures attached to stale state. `DiceboundPowerupRegistry.createRegistry(services)` owns the definitions/effects, while `describe(powerup, services)` is the first live descriptor query. The registry has no RNG, board, DOM, UI-layout or save-service dependency. UI choice/application orchestration remains in the monolith for a later presentation extraction.
 
 ## Target ownership domains
 
@@ -120,7 +136,7 @@ Prefer pure/data-heavy regions first:
 3. other pure helpers currently embedded in the monolith;
 4. registries that do not directly own DOM or combat state.
 
-The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent registry checkpoints moved canonical classes and talents; pets, the ordinary-enemy pool and rarity metadata; then boards, equipment metadata, achievements, special enemies and the remaining pure class support tables into domain owners. Byte-identical class tags are now derived from canonical class data instead of maintained twice. Clone APIs intentionally feed the monolith's existing read-only compatibility proxies, preserving harmless patch-era mutation attempts without exposing mutable authoritative module state. Concrete stateful mechanics, item factories and presentation chains remain temporarily in the monolith. These modules have explicit load-order dependencies and no circular dependency.
+The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent checkpoints moved canonical classes, talents, pets, enemies, rarities, boards, equipment metadata, achievements and class support tables. The next checkpoint established the explicit runtime-service boundary and moved all 200 canonical Powerup definitions/effects through it. Concrete item factories and presentation chains remain temporarily in the monolith. These modules have explicit load-order dependencies and no circular dependency.
 
 ### Phase 2 — self-contained gameplay domains
 

@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.2.1
+# Unreleased — Beta 0.6.2.2
+
+## Runtime services and Powerups (#40, #65, #51)
+- Powerup mechanics now use one explicit six-capability runtime contract rather than arbitrary ambient state.
+- All 200 canonical Powerup definitions/effects moved to `js/powerups/registry.js`, while the existing choice/apply pipeline remains compatible.
+- Live player access follows reset/replacement state, and Perfected Signature descriptions resolve through the same injected service used by its mechanic.
+
+---
+
+# Beta 0.6.2.1 — Development checkpoint
 
 ## Version and release policy (#64)
 - Every new PR build now carries a unique four-component DiceBound version; historical three-component saves/releases remain readable.
