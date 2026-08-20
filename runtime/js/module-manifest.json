@@ -13,6 +13,7 @@
     "save-system",
     "core-state",
     "runtime-services",
+    "combat-effective-stats",
     "classes-registry",
     "pets-registry",
     "board-registry",
@@ -109,6 +110,14 @@
       "provides": ["DiceboundRuntimeServices"]
     },
     {
+      "id": "combat-effective-stats",
+      "path": "js/combat/effective-stats.js",
+      "domain": "combat/effective-stats-and-descriptions",
+      "status": "extracted",
+      "requires": [],
+      "provides": ["DiceboundEffectiveStats"]
+    },
+    {
       "id": "classes-registry",
       "path": "js/classes/registry.js",
       "domain": "classes/registry",
@@ -201,7 +210,7 @@
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "core-state", "runtime-services", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot", "powerup-registry"],
+      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "core-state", "runtime-services", "combat-effective-stats", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot", "powerup-registry"],
       "provides": []
     }
   ],

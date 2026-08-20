@@ -26,6 +26,28 @@ def write_stamped(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def stamp_runtime_index(index: str, version: str, channel: str) -> str:
+    display = f"Dicebound: {channel} v{version}"
+    index = replace_exactly_once(
+        index,
+        r"<title>Dicebound: [^<]+</title>",
+        f"<title>{display}</title>",
+        "runtime <title>",
+    )
+    index = replace_exactly_once(
+        index,
+        r"<h1>Dicebound: [^<]+</h1>",
+        f"<h1>{display}</h1>",
+        "runtime <h1>",
+    )
+    return replace_exactly_once(
+        index,
+        r"<p>[A-Za-z][A-Za-z0-9 -]{0,31} v\d+(?:\.\d+){2,3}(?=\s*·)",
+        f"<p>{channel} v{version}",
+        "runtime subtitle",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Stamp DiceBound release-facing version metadata.")
     parser.add_argument("--version", required=True)
@@ -55,30 +77,10 @@ def main() -> None:
     project["versionValidation"] = "tools/validate_version_identity.py"
     project["versionPolicy"] = "MAJOR.MINOR.PATCH.REVISION; historical three-component metadata remains readable"
     project["releaseIdentityGenerator"] = "tools/prepare_release.py"
-    write_json(project_path, project)
-
     index_path = ROOT / "runtime" / "index.html"
     index = index_path.read_text(encoding="utf-8")
     display = f"Dicebound: {channel} v{version}"
-    index = replace_exactly_once(
-        index,
-        r"<title>Dicebound: [^<]+</title>",
-        f"<title>{display}</title>",
-        "runtime <title>",
-    )
-    index = replace_exactly_once(
-        index,
-        r"<h1>Dicebound: [^<]+</h1>",
-        f"<h1>{display}</h1>",
-        "runtime <h1>",
-    )
-    index = replace_exactly_once(
-        index,
-        r"<p>[A-Za-z]+ v[^<]+ · explicit Artifact table, generated Legendary effects, new gear budgets and guardian loot cleanup\.</p>",
-        f"<p>{channel} v{version} · explicit Artifact table, generated Legendary effects, new gear budgets and guardian loot cleanup.</p>",
-        "runtime subtitle",
-    )
-    write_stamped(index_path, index)
+    index = stamp_runtime_index(index, version, channel)
 
     runtime_identity_path = ROOT / "runtime" / "js" / "version.js"
     runtime_identity = runtime_identity_path.read_text(encoding="utf-8")
@@ -94,8 +96,6 @@ def main() -> None:
         f'const CHANNEL="{channel}";',
         "central runtime channel",
     )
-    write_stamped(runtime_identity_path, runtime_identity)
-
     wrapper_path = ROOT / "wrapper-source" / "wrappers" / "webview2" / "native-go" / "main.go"
     wrapper = wrapper_path.read_text(encoding="utf-8")
     wrapper = replace_exactly_once(
@@ -128,6 +128,11 @@ def main() -> None:
         f'index.html?diceboundNative=1&v={version}&build=',
         "native runtime URL version",
     )
+    # Materialize only after every strict replacement has succeeded. A failed
+    # stamp must never leave a partially updated project/runtime/native tree.
+    write_json(project_path, project)
+    write_stamped(index_path, index)
+    write_stamped(runtime_identity_path, runtime_identity)
     write_stamped(wrapper_path, wrapper)
 
     print(json.dumps({

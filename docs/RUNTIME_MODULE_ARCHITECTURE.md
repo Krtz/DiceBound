@@ -19,6 +19,7 @@ storage.js
 save-system.js
 core/state.js
 core/runtime-services.js
+combat/effective-stats.js
 classes/registry.js
 pets/registry.js
 board/registry.js
@@ -33,7 +34,7 @@ powerups/registry.js
 dicebound.js
 ```
 
-`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `core/state.js` owns career defaults, normalization, save/load coordination and the domain event bus. `core/runtime-services.js` creates explicit capability contracts without owning or copying live run data. `powerups/registry.js` consumes that contract and authoritatively owns all 200 canonical Powerup definitions/effects. Explicit owners also cover classes and support tables, pets, boards, enemies, rarity/equipment metadata, achievements, the Legacy talent tree, Artifact selection and guardian/ordinary loot policy. `dicebound.js` temporarily retains active-run state, service composition wiring, Powerup choice/application orchestration, concrete item factories and presentation.
+`version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `core/state.js` owns career defaults, normalization, save/load coordination and the domain event bus. `core/runtime-services.js` creates explicit capability contracts without owning or copying live run data. `combat/effective-stats.js` owns extracted pure modifier calculations and live descriptors, beginning with the complete Berserker Ultimate/Rage path. `powerups/registry.js` consumes the runtime-service contract and authoritatively owns all 200 canonical Powerup definitions/effects. Explicit owners also cover classes and support tables, pets, boards, enemies, rarity/equipment metadata, achievements, the Legacy talent tree, Artifact selection and guardian/ordinary loot policy. `dicebound.js` temporarily retains active-run state, service composition wiring, Powerup choice/application orchestration, concrete item factories and presentation.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -74,6 +75,10 @@ Issue #65's inventory found six capabilities in the canonical 200-entry registry
 - current-class Perfected Signature application/description.
 
 `DiceboundRuntimeServices.createPowerupServices()` validates and freezes those ports. Its player proxy resolves the current player object on every access, so a reset/replaced run cannot leave Powerup closures attached to stale state. `DiceboundPowerupRegistry.createRegistry(services)` owns the definitions/effects, while `describe(powerup, services)` is the first live descriptor query. The registry has no RNG, board, DOM, UI-layout or save-service dependency. UI choice/application orchestration remains in the monolith for a later presentation extraction.
+
+## Effective-stat and description ownership
+
+`DiceboundEffectiveStats` is a DOM-free calculation/descriptor owner. Combat calls it for Berserker's 280% base Ultimate formula, multiplicative class-Ultimate/Ultimate-damage/all-damage modifiers and Rage scaling; the tooltip and active-run trait panel call the same API for current values. The descriptor therefore reports the current effective Attack percentage and exact current pre-defense damage range without duplicating combat constants. Other mutable descriptions should migrate through equivalent authoritative queries as their mechanic domains are extracted.
 
 ## Target ownership domains
 
