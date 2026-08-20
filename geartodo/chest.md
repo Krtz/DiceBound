@@ -26,57 +26,57 @@ intrinsic:
 
 ## Cloth Robe
 
-family:
+family: Cloth, Robe, light
 
-eligibility:
+eligibility: poor+
 
-intrinsic:
+intrinsic: +5 mana
 
 ---
 
 ## Leather Harness
 
-family:
+family: leather, light, weird
 
-eligibility:
+eligibility: poor+
 
-intrinsic:
+intrinsic: +1 dodge
 
 ---
 
 ## Chain Mail
 
-family:
+family: chain, mail, medium
 
-eligibility:
+eligibility: common+
 
-intrinsic:
+intrinsic: +1 def, +1 dodge
 
 ---
 
 ## Plate Mail
 
-family:
+family: plate, mail, medium
 
-eligibility:
+eligibility: uncommon+
 
-intrinsic:
+intrinsic: +3 def
 
 ---
 
 ## Plate Body
 
-family:
+family: plate, body, heavy
 
-eligibility:
+eligibility: rare+
 
-intrinsic:
+intrinsic: +4 def, +5hp
 
 ---
 
 ## Plate Breastplate
 
-family:
+family: 
 
 eligibility:
 
@@ -86,31 +86,31 @@ intrinsic:
 
 ## Quilted Armour
 
-family:
+family: cloth, light
 
-eligibility:
+eligibility: poor+
 
-intrinsic:
+intrinsic: +1 dodge
 
 ---
 
 ## Leather Armour
 
-family:
+family: leather, light
 
-eligibility:
+eligibility: common+
 
-intrinsic:
+intrinsic: +1 dodge, +1 crit
 
 ---
 
 ## Hard Leather Armour
 
-family:
+family: leather, light
 
-eligibility:
+eligibility: uncommon+
 
-intrinsic:
+intrinsic: +1 dodge, +1 crit, +1 def
 
 ---
 
@@ -136,31 +136,31 @@ intrinsic:
 
 ## Studded Leather Armour
 
-family:
+family: leather, light, studded
 
-eligibility:
+eligibility: uncommon+
 
-intrinsic:
+intrinsic: +1 attack, +1 dodge, +1 crit, +1 thorns
 
 ---
 
 ## Hard Studded Leather Armour
 
-family:
+family: leather, light, studded
 
-eligibility:
+eligibility: rare+
 
-intrinsic:
+intrinsic: +1 attack, +1 dodge, +1 def, +1 dodge, +1 thorns
 
 ---
 
 ## Field Plate
 
-family:
+family: very heavy, plate
 
-eligibility:
+eligibility: rare+
 
-intrinsic:
+intrinsic: +5hp, +4 def, +1 thorns, +2 attack, -2 dodge
 
 ---
 
@@ -206,14 +206,33 @@ intrinsic:
 
 ## T-Shirt
 
-family:
+family: cloth, t-shirt, weird
 
-eligibility:
+eligibility: common+
 
-intrinsic:
+intrinsic: +2 dodge
 
 ---
 
+## Second Hand T-Shirt
+
+family: cloth, t-shirt, weird
+
+eligibility: poor+
+
+intrinsic: 1+ dodge
+
+---
+
+## Band T-Shirt
+
+family: cloth, t-shirt, weird
+
+eligibility: rare+
+
+intrinsic: +4 dodge, +1 thorns, +2 echo, +1 heavy metal proc chance
+
+---
 ## Cardigan
 
 family:
@@ -226,11 +245,11 @@ intrinsic:
 
 ## Jean Jacket
 
-family:
+family: Special, Jeans, Cool, Weird
 
-eligibility:
+eligibility: Mythic
 
-intrinsic:
+intrinsic: +5 defence, +5 dodge, +5 crit, +5 echo, +100 cool
 
 ---
 
