@@ -150,7 +150,7 @@ family: leather, light, studded
 
 eligibility: rare+
 
-intrinsic: +1 attack, +1 dodge, +1 def, +1 dodge, +1 thorns
+intrinsic: +1 attack, +1 dodge, +1 def, +1 thorns, +1 crit
 
 ---
 
@@ -220,7 +220,7 @@ family: cloth, t-shirt, weird
 
 eligibility: poor+
 
-intrinsic: 1+ dodge
+intrinsic: +1 dodge
 
 ---
 
