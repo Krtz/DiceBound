@@ -2,7 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.2.1
+## Unreleased — Beta 0.6.2.2
+
+### Runtime services and Powerups (#40, #65, #51)
+- Added an explicit Powerup runtime-service contract for live player state, economy, healing, rules, element IDs and class-signature behavior.
+- Moved all 200 canonical Powerup definitions/effects into `runtime/js/powerups/registry.js`; their closures now consume injected capabilities instead of ambient game globals.
+- Added a reset-safe live player port, injected fake-service contract tests, an exact 200-entry registry snapshot and live Perfected Signature descriptions.
+- Removed the authoritative 2,886-line Powerup registry block from `dicebound.js` without changing Powerup values, eligibility, RNG order or save data.
+
+## Beta 0.6.2.1 — Development checkpoint
 
 ### Version and release policy (#64)
 - Adopted `MAJOR.MINOR.PATCH.REVISION` for all new PR builds while retaining historical three-component metadata compatibility.
