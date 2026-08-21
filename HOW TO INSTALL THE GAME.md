@@ -6,6 +6,13 @@ DiceBound is currently a **Windows Beta**. It is not yet distributed like a norm
 
 You do **not** need to understand programming to do this. You need to install two tools, download the repository, paste one block into PowerShell, and then double-click the EXE it creates.
 
+OOOOR!!!
+YOU CAN RUN IT IN A BROWSER VERY EASILY
+1. Download and extract the repository ZIP.
+2. Open the `runtime` folder.
+3. Open `index.html` in Microsoft Edge or Chrome.
+
+   
 ---
 
 # Recommended: build the newest DiceBound from this GitHub
