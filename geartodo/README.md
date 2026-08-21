@@ -6,6 +6,14 @@ Every `## Item Name` entry is a proposed **equipment base identity**. The values
 
 Axel's reviewed/edited entry always wins over an older first-pass suggestion.
 
+## Catalogue structure
+
+The normal slot files (`weapon.md`, `offhand.md`, `chest.md`, `boots.md`, `legs.md`, `hat.md`, `ring.md`, `amulet.md`) contain the main first-pass equipment-base catalogue.
+
+`source-inspired-loot-expansion.md` is an additional **large candidate pool** inspired by recognizable RuneScape material/equipment progression and Diablo II's dense mundane base-item vocabulary. Entries there count as geartodo candidates, but are deliberately easier to browse as a separate expansion list instead of making every slot file enormous. When one is selected for art/runtime work, review its exact identity first and copy/refine it into the normal slot file if useful.
+
+Some source-inspired names are prototype/reference language. Generic historical/fantasy terms can remain where appropriate; anything that feels too specifically tied to another IP should be renamed/originalized under #93 before a public/commercial release.
+
 ## Fields
 
 ### `family`
