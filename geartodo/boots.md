@@ -74,7 +74,7 @@ material: rubber
 weight: light
 tags: clown, weird
 eligibility: poor+
-intrinsic: +1% Dodge, +30 Cool
+intrinsic: +1% Dodge
 ---
 ## Impossible Stilts
 family: stilts
@@ -82,7 +82,7 @@ material: wood, metal
 weight: medium
 tags: clown, weird, agile
 eligibility: rare+
-intrinsic: +5% Dodge, +2 Attack, -1 Defense, +50 Cool
+intrinsic: +5% Dodge, +2 Attack, -1 Defense
 ---
 ## Velvet Boots
 family: boots
@@ -170,7 +170,7 @@ material: leather
 weight: medium
 tags: corporate, wealth, cool
 eligibility: rare+
-intrinsic: +3 Defense, +5% Gold Gain, +50 Cool
+intrinsic: +3 Defense, +5% Gold Gain
 ---
 ## Gilded Boots
 family: gilded

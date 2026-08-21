@@ -74,7 +74,7 @@ material: cloth
 weight: light
 tags: clown, weird
 eligibility: poor+
-intrinsic: +1% Dodge, +20 Cool
+intrinsic: +1% Dodge
 ---
 ## Suspiciously Large Trousers
 family: trousers
@@ -82,7 +82,7 @@ material: cloth
 weight: heavy
 tags: clown, weird
 eligibility: rare+
-intrinsic: +10 HP, +2 Thorns, -2% Dodge, +50 Cool
+intrinsic: +10 HP, +2 Thorns, -2% Dodge
 ---
 ## Crimson Breeches
 family: breeches
@@ -170,7 +170,7 @@ material: cloth
 weight: medium
 tags: corporate, wealth, cool
 eligibility: rare+
-intrinsic: +3 Defense, +5% Gold Gain, +50 Cool
+intrinsic: +3 Defense, +5% Gold Gain
 ---
 ## Gilded Legs
 family: gilded

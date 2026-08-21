@@ -74,7 +74,7 @@ material: cloth, metal
 weight: light
 tags: clown, weird, royalty
 eligibility: uncommon+
-intrinsic: +2 Luck, +30 Cool
+intrinsic: +2 Luck
 ---
 ## Tiny Hat
 family: tiny-hat
@@ -82,7 +82,7 @@ material: cloth
 weight: light
 tags: clown, weird, cool
 eligibility: poor+
-intrinsic: +1 Luck, +50 Cool
+intrinsic: +1 Luck
 ---
 ## Rose Beret
 family: beret
@@ -90,7 +90,7 @@ material: cloth
 weight: light
 tags: artist, rose, cool
 eligibility: common+
-intrinsic: +1% Crit, +20 Cool
+intrinsic: +1% Crit
 ---
 ## Crimson Veil
 family: veil
@@ -122,7 +122,7 @@ material: shell
 weight: light
 tags: guardian, shell, weird
 eligibility: common+
-intrinsic: +3 Defense, +5 HP, +20 Cool
+intrinsic: +3 Defense, +5 HP
 ---
 ## Royal Flycatcher
 family: flycatcher
@@ -146,7 +146,7 @@ material: metal
 weight: medium
 tags: slime, weird
 eligibility: poor+
-intrinsic: +2 Defense, -1% Dodge, +20 Cool
+intrinsic: +2 Defense, -1% Dodge
 ---
 ## Bloodbound Hat
 family: bloodbound
@@ -170,7 +170,7 @@ material: cloth
 weight: light
 tags: corporate, wealth, cool
 eligibility: rare+
-intrinsic: +5% Gold Gain, +2 Luck, +50 Cool
+intrinsic: +5% Gold Gain, +2 Luck
 ---
 ## Gilded Hat
 family: gilded

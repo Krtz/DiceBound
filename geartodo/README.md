@@ -22,6 +22,8 @@ Physical/magical construction where useful. Empty is allowed.
 ### `tags`
 Additional lowercase semantic/theme tags. Multiword tags use hyphens.
 
+A `cool` tag is only a semantic/theme tag. It does **not** grant the Cool stat.
+
 ### `eligibility`
 Minimum ordinary rarity or other entry condition. `rare+` means Rare and higher ordinary rarity.
 
@@ -36,7 +38,7 @@ Use the numeric conventions in `docs/GAMEPLAY_VOCABULARY.md`:
 - `+2% Dodge`, `+1% Crit`, `+3% Echo` = percentage-point chance additions;
 - `+1% Metal proc chance` = percentage-point elemental proc chance;
 - `+2 Thorns` = two flat retaliatory damage;
-- `+100 Cool` = real currently-unused Cool stat.
+- `+100 Cool` = the special Cool stat, reserved for explicitly special gear rather than ordinary equipment bases.
 
 ## Design rules
 
@@ -44,6 +46,7 @@ Use the numeric conventions in `docs/GAMEPLAY_VOCABULARY.md`:
 - Mana on a non-Mana class simply does nothing.
 - Different art identities may have identical Intrinsics.
 - Some visual families deliberately share mechanics; studded/barbed/spiked equipment is a natural place for Thorns.
+- **Cool is a very special stat. Do not grant Cool to normal gear. Jean Jacket is currently the only equipment base allowed to have a Cool intrinsic.**
 - Bases are intentionally **not equally strong**. This creates a late-game chase for better bases under the same desirable Artifact/set effect and rolled affixes.
 - Do not normalize every base into the same hidden point budget.
 - These first-pass values are allowed to be uneven. Review and real playtesting happen later.

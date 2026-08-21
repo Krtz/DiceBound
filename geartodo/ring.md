@@ -74,7 +74,7 @@ material: metal, glass
 weight: light
 tags: clown, weird
 eligibility: poor+
-intrinsic: +1 Luck, +25 Cool
+intrinsic: +1 Luck
 ---
 ## Ring-Pop of Power
 family: ring-pop
@@ -82,7 +82,7 @@ material: candy
 weight: light
 tags: clown, weird, food
 eligibility: rare+
-intrinsic: +2 Attack, +2% Echo, +50 Cool
+intrinsic: +2 Attack, +2% Echo
 ---
 ## Garnet Ring
 family: ring
@@ -170,7 +170,7 @@ material: gold
 weight: light
 tags: corporate, wealth, cool
 eligibility: rare+
-intrinsic: +8% Gold Gain, +2 Luck, +50 Cool
+intrinsic: +8% Gold Gain, +2 Luck
 ---
 ## Gilded Ring
 family: gilded

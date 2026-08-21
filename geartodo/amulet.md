@@ -74,7 +74,7 @@ material: brass
 weight: light
 tags: clown, weird, music
 eligibility: uncommon+
-intrinsic: +2 Luck, +40 Cool
+intrinsic: +2 Luck
 ---
 ## Golden Ticket
 family: ticket
@@ -82,7 +82,7 @@ material: paper, gold
 weight: light
 tags: clown, wealth, weird
 eligibility: rare+
-intrinsic: +8% Gold Gain, +2 Luck, +50 Cool
+intrinsic: +8% Gold Gain, +2 Luck
 ---
 ## Ruby Choker
 family: choker
@@ -170,7 +170,7 @@ material: gold
 weight: light
 tags: corporate, wealth, cool
 eligibility: rare+
-intrinsic: +8% Gold Gain, +2 Luck, +50 Cool
+intrinsic: +8% Gold Gain, +2 Luck
 ---
 ## Gilded Amulet
 family: gilded

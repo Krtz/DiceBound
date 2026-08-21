@@ -138,7 +138,7 @@ material: rubber
 weight: light
 tags: weird, clown
 eligibility: poor+
-intrinsic: +1 Attack, +25 Cool
+intrinsic: +1 Attack
 ---
 ## Juggling Sabre
 family: sabre
@@ -378,7 +378,7 @@ material: metal
 weight: light
 tags: executive, wealth, weird
 eligibility: poor+
-intrinsic: +1 Attack, +2% Gold Gain, +25 Cool
+intrinsic: +1 Attack, +2% Gold Gain
 ---
 ## Hostile Takeover Briefcase
 family: briefcase
@@ -386,7 +386,7 @@ material: leather, metal
 weight: heavy
 tags: executive, wealth, weird
 eligibility: rare+
-intrinsic: +5 Attack, +5% Gold Gain, -1% Dodge, +50 Cool
+intrinsic: +5 Attack, +5% Gold Gain, -1% Dodge
 ---
 ## Quarterly Cleaver
 family: cleaver

@@ -138,7 +138,7 @@ material: cloth
 weight: light
 tags: clown, weird
 eligibility: poor+
-intrinsic: +1 Luck, +20 Cool
+intrinsic: +1 Luck
 ---
 ## Emergency Pie
 family: pie
@@ -146,7 +146,7 @@ material:
 weight: light
 tags: clown, weird, food
 eligibility: common+
-intrinsic: +5% Potion Healing, +25 Cool
+intrinsic: +5% Potion Healing
 ---
 ## Comedy Mask
 family: mask
@@ -154,7 +154,7 @@ material: wood
 weight: light
 tags: clown, weird
 eligibility: uncommon+
-intrinsic: +2% Dodge, +1% Echo, +40 Cool
+intrinsic: +2% Dodge, +1% Echo
 ---
 ## Pocket Horn
 family: horn
@@ -162,7 +162,7 @@ material: brass
 weight: light
 tags: clown, weird, music
 eligibility: rare+
-intrinsic: +3% Echo, +1 Luck, +50 Cool
+intrinsic: +3% Echo, +1 Luck
 ---
 ## Rouge Palette
 family: palette
@@ -330,7 +330,7 @@ material: paper, leather
 weight: light
 tags: executive, wealth
 eligibility: common+
-intrinsic: +5% Gold Gain, +25 Cool
+intrinsic: +5% Gold Gain
 ---
 ## Golden Parachute
 family: parachute
@@ -338,7 +338,7 @@ material: silk, gold
 weight: medium
 tags: executive, wealth, weird
 eligibility: rare+
-intrinsic: +4% Dodge, +8% Gold Gain, +50 Cool
+intrinsic: +4% Dodge, +8% Gold Gain
 ---
 ## Bottomless Purse
 family: purse

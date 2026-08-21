@@ -194,7 +194,7 @@ material: wool
 weight: light
 tags: casual, cozy, weird
 eligibility: common+
-intrinsic: +5 HP, +1 Defense, +20 Cool
+intrinsic: +5 HP, +1 Defense
 ---
 ## Jean Jacket
 family: jean-jacket
@@ -274,7 +274,7 @@ material: cloth
 weight: light
 tags: clown, showman, weird
 eligibility: uncommon+
-intrinsic: +2% Dodge, +2% Echo, +40 Cool
+intrinsic: +2% Dodge, +2% Echo
 ---
 ## Patchwork Tuxedo
 family: tuxedo
@@ -282,7 +282,7 @@ material: cloth
 weight: light
 tags: clown, weird, formal
 eligibility: rare+
-intrinsic: +3% Dodge, +2% Crit, +2% Echo, +50 Cool
+intrinsic: +3% Dodge, +2% Crit, +2% Echo
 ---
 ## Vermilion Coat
 family: coat
@@ -370,7 +370,7 @@ material: cloth
 weight: medium
 tags: wealth, corporate, cool
 eligibility: rare+
-intrinsic: +4 Defense, +5% Gold Gain, +50 Cool
+intrinsic: +4 Defense, +5% Gold Gain
 ---
 ## Gilded Chest
 family: gilded
