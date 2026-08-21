@@ -14,6 +14,8 @@ The normal slot files (`weapon.md`, `offhand.md`, `chest.md`, `boots.md`, `legs.
 
 `runescape-weapon-expansion.md` is the **expanded RuneScape weapon catalogue**. It adds the weapon breadth missing from the first pass: full melee weapon forms, shortbow/shieldbow/composite-bow ladders, crossbow and 2H-crossbow ladders, thrown weapons, elemental/battle/mystic/limitless staves, wands, magic books/orbs, Necromancy siphon/conduit ideas, and an iconic high-tier reference pool.
 
+`runescape-quest-fun-oddity-weapons.md` is deliberately **uncurated**. Quest weapons, joke weapons, holiday rewards, props, toys, obsolete/discontinued weapons, weird wieldable tools, banners, trophies and other nonsense all belong there even if we never implement most of them. It is an inspiration museum, not a shipping list.
+
 Some source-inspired names are prototype/reference language. Generic historical/fantasy terms can remain where appropriate; anything that feels too specifically tied to another IP should be renamed/originalized under #93 before a public/commercial release.
 
 ## Fields
