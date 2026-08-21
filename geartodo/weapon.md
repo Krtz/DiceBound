@@ -254,7 +254,7 @@ intrinsic: +4 Attack, +2 Defense, +1% Echo
 ---
 ## Tongue Lash
 family: whip
-material:
+material: flesh
 weight: light
 tags: frog, weird
 eligibility: poor+
