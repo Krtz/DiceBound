@@ -37,7 +37,7 @@
     if(!checkpoint.run.player||typeof checkpoint.run.player!=="object")throw new Error("Checkpoint player state is missing");
     return checkpoint;
   }
-  function create({run,meta,summary={}}={()){
+  function create({run,meta,summary={}}={}){
     return validate({checkpointVersion:CHECKPOINT_VERSION,gameVersion:identity.version,channel:identity.channel,createdAt:new Date().toISOString(),summary,run,meta,rng:rng.snapshot()});
   }
   function store(input){const checkpoint=validate(input);save.saveRunCheckpoint(checkpoint);return cloneJson(checkpoint);}
