@@ -29,12 +29,12 @@ eligibility: uncommon+
 intrinsic: +2% Crit, +1% Dodge
 ---
 ## Wolf Fang
-family: fang-charm
+family: tooth-charm
 material: tooth
 weight: light
-tags: ranger, wolf
+tags: ranger, wolf, beastmaster
 eligibility: common+
-intrinsic: +2 Attack, +1% Crit
+intrinsic: +1 Attack, +2% Crit
 ---
 ## Moon Amulet
 family: amulet
