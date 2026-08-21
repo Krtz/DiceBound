@@ -5,6 +5,7 @@
   if(!rng)throw new Error("DiceboundRunCheckpoint requires DiceboundRng before loading.");
   if(!identity)throw new Error("DiceboundRunCheckpoint requires DiceboundVersion before loading.");
   const CHECKPOINT_VERSION=1;
+  const CAMP_RESUME_UI_FIX="browser-camp-resume-v2";
 
   function cloneJson(value,path="checkpoint",seen=new Set()){
     if(value===null||typeof value==="string"||typeof value==="boolean")return value;
@@ -36,7 +37,7 @@
     if(!checkpoint.run.player||typeof checkpoint.run.player!=="object")throw new Error("Checkpoint player state is missing");
     return checkpoint;
   }
-  function create({run,meta,summary={}}={}){
+  function create({run,meta,summary={}}={()){
     return validate({checkpointVersion:CHECKPOINT_VERSION,gameVersion:identity.version,channel:identity.channel,createdAt:new Date().toISOString(),summary,run,meta,rng:rng.snapshot()});
   }
   function store(input){const checkpoint=validate(input);save.saveRunCheckpoint(checkpoint);return cloneJson(checkpoint);}
@@ -52,7 +53,67 @@
   // campsite. Raw storage bytes are not enough: old, corrupt or incompatible
   // checkpoint keys must not hide the normal camp when no run can be resumed.
   function has(){return !!load().checkpoint;}
-  function diagnostics(){const loaded=load();return Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,gameVersion:identity.version,present:save.hasRunCheckpoint(),resumable:!!loaded.checkpoint,valid:!!loaded.checkpoint,source:loaded.source,recovered:loaded.recovered,error:loaded.error||null,summary:loaded.checkpoint?.summary||null});}
+  function diagnostics(){const loaded=load();return Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,gameVersion:identity.version,present:save.hasRunCheckpoint(),resumable:!!loaded.checkpoint,valid:!!loaded.checkpoint,source:loaded.source,recovered:loaded.recovered,error:loaded.error||null,summary:loaded.checkpoint?.summary||null,uiFix:CAMP_RESUME_UI_FIX});}
 
-  window.DiceboundRunCheckpoint=Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,create,validate,store,capture,load,clear,has,diagnostics});
+  /* The modern campsite is a spatial grid. The 0.6.3.0 resume adapter inserts
+     its panel as campScene's first child; in normal flow that becomes a new
+     grid item and can displace most of the actual camp off-screen. Keep the
+     panel absolutely positioned instead, and remove any unrecoverable run
+     bytes/panel without touching the independent career save. */
+  function installCampResumeUiGuard(){
+    if(typeof document==="undefined")return;
+    const style=document.createElement("style");
+    style.id="dicebound-camp-resume-layout-fix";
+    style.textContent=`
+      #startOverlay.camp-fullscreen #runResumePanel.run-resume-panel{
+        position:absolute!important;
+        top:max(8px,env(safe-area-inset-top))!important;
+        left:50%!important;
+        transform:translateX(-50%)!important;
+        z-index:40!important;
+        width:min(720px,calc(100vw - 28px))!important;
+        max-width:720px!important;
+        margin:0!important;
+        padding:9px 12px!important;
+        box-shadow:0 14px 38px rgba(0,0,0,.38)!important;
+        backdrop-filter:blur(10px)!important;
+      }
+      #startOverlay.camp-fullscreen #runResumePanel .run-resume-copy{min-width:180px!important}
+      #startOverlay.camp-fullscreen #runResumePanel .run-resume-actions button{min-height:36px!important;padding:8px 10px!important}
+      @media(max-width:760px){
+        #startOverlay.camp-fullscreen #runResumePanel.run-resume-panel{top:6px!important;width:calc(100vw - 16px)!important;padding:7px 8px!important;gap:6px!important}
+      }
+    `;
+    (document.head||document.documentElement).appendChild(style);
+
+    let scheduled=false;
+    const repair=()=>{
+      scheduled=false;
+      const panel=document.getElementById("runResumePanel");
+      const loaded=load();
+      if(!loaded.checkpoint){
+        // An unreadable active run has no recoverable player value. Remove
+        // only dicebound.run.* data; career/Legacy state lives elsewhere.
+        if(save.hasRunCheckpoint())save.clearRunCheckpoint();
+        if(panel)panel.remove();
+        return;
+      }
+      if(panel){
+        panel.classList.remove("hidden");
+        if(panel.dataset.resumeUiFix!==CAMP_RESUME_UI_FIX)panel.dataset.resumeUiFix=CAMP_RESUME_UI_FIX;
+      }
+    };
+    const schedule=()=>{if(scheduled)return;scheduled=true;setTimeout(repair,0);};
+    if(typeof MutationObserver==="function"){
+      const observer=new MutationObserver(schedule);
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+    }
+    document.addEventListener("click",schedule,true);
+    window.addEventListener?.("pageshow",schedule);
+    schedule();
+    setTimeout(repair,120);
+  }
+
+  window.DiceboundRunCheckpoint=Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,uiFix:CAMP_RESUME_UI_FIX,create,validate,store,capture,load,clear,has,diagnostics});
+  installCampResumeUiGuard();
 })();
