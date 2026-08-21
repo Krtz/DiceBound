@@ -10,6 +10,8 @@ Axel's reviewed/edited entry always wins over an older first-pass suggestion.
 
 The normal slot files (`weapon.md`, `offhand.md`, `chest.md`, `boots.md`, `legs.md`, `hat.md`, `ring.md`, `amulet.md`) contain the main first-pass equipment-base catalogue.
 
+`created-gear.md` contains gear whose first modular art asset has already been created. Once art exists, move the item out of the pending/raw candidate list and preserve/refine its design metadata in `created-gear.md` together with the intended runtime asset path. This keeps "things we might make" separate from "things we have actually drawn".
+
 `source-inspired-loot-expansion.md` is an additional **large candidate pool** inspired by recognizable RuneScape material/equipment progression and Diablo II's dense mundane base-item vocabulary. Entries there count as geartodo candidates, but are deliberately easier to browse as a separate expansion list instead of making every slot file enormous. When one is selected for art/runtime work, review its exact identity first and copy/refine it into the normal slot file if useful.
 
 `runescape-weapon-expansion.md` is the **expanded RuneScape weapon catalogue**. It adds the weapon breadth missing from the first pass: full melee weapon forms, shortbow/shieldbow/composite-bow ladders, crossbow and 2H-crossbow ladders, thrown weapons, elemental/battle/mystic/limitless staves, wands, magic books/orbs, Necromancy siphon/conduit ideas, and an iconic high-tier reference pool.
@@ -67,3 +69,5 @@ Use the numeric conventions in `docs/GAMEPLAY_VOCABULARY.md`:
 ## Art workflow
 
 Before requesting art for a specific item, review/update that item's entry here. The current entry at art-request time becomes the intended design direction for that equipment identity.
+
+After art is created and accepted, move the entry into `created-gear.md` and record the intended runtime asset path so it is no longer mixed with pending candidates.
