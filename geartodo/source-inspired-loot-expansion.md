@@ -50,7 +50,6 @@ These bases are intentionally **not equal-strength**. The material itself is par
 
 | Item | family | material | weight | tags | eligibility | first-pass intrinsic |
 | --- | --- | --- | --- | --- | --- | --- |
-| Bronze Longsword | sword | bronze | medium | martial, material-tier | poor+ | +1 Attack |
 | Iron Longsword | sword | iron | medium | martial, material-tier | poor+ | +2 Attack |
 | Steel Longsword | sword | steel | medium | martial, material-tier | common+ | +3 Attack |
 | Black Longsword | sword | black-metal | medium | martial, dark, material-tier | common+ | +3 Attack, +1% Crit |
@@ -68,7 +67,6 @@ These bases are intentionally **not equal-strength**. The material itself is par
 
 | Item | material | weight | eligibility | first-pass intrinsic |
 | --- | --- | --- | --- | --- |
-| Bronze Full Helm | bronze | medium | poor+ | +1 Defense |
 | Iron Full Helm | iron | medium | poor+ | +2 Defense |
 | Steel Full Helm | steel | medium | common+ | +3 Defense |
 | Black Full Helm | black-metal | medium | common+ | +2 Defense, +1% Crit |
@@ -90,7 +88,6 @@ All helm entries above use `family: full-helm` and tags `martial, plate, materia
 
 | Item | material | weight | eligibility | first-pass intrinsic |
 | --- | --- | --- | --- | --- |
-| Bronze Platebody | bronze | heavy | poor+ | +2 Defense |
 | Iron Platebody | iron | heavy | poor+ | +3 Defense |
 | Steel Platebody | steel | heavy | common+ | +4 Defense, +3 HP |
 | Black Platebody | black-metal | medium | common+ | +3 Defense, +1 Attack, +1% Crit |
@@ -112,7 +109,6 @@ All platebody entries above use `family: platebody` and tags `martial, plate, ma
 
 | Item | material | weight | eligibility | first-pass intrinsic |
 | --- | --- | --- | --- | --- |
-| Bronze Platelegs | bronze | medium | poor+ | +1 Defense |
 | Iron Platelegs | iron | medium | poor+ | +2 Defense |
 | Steel Platelegs | steel | heavy | common+ | +3 Defense |
 | Black Platelegs | black-metal | medium | common+ | +2 Defense, +1% Crit |
@@ -134,7 +130,6 @@ All plateleg entries above use `family: platelegs` and tags `martial, plate, mat
 
 | Item | material | weight | eligibility | first-pass intrinsic |
 | --- | --- | --- | --- | --- |
-| Bronze Armoured Boots | bronze | medium | poor+ | +1 Defense |
 | Iron Armoured Boots | iron | medium | poor+ | +1 Defense, +1 HP |
 | Steel Armoured Boots | steel | heavy | common+ | +2 Defense |
 | Black Armoured Boots | black-metal | medium | common+ | +1 Defense, +1% Crit |
@@ -156,7 +151,6 @@ All boot entries above use `family: armoured-boots` and tags `martial, plate, ma
 
 | Item | material | weight | eligibility | first-pass intrinsic |
 | --- | --- | --- | --- | --- |
-| Bronze Round Shield | bronze | medium | poor+ | +1 Defense |
 | Iron Round Shield | iron | medium | poor+ | +2 Defense |
 | Steel Kiteshield | steel | heavy | common+ | +3 Defense, +1 Thorns |
 | Black Kiteshield | black-metal | medium | common+ | +2 Defense, +1% Crit, +1% Dodge |
