@@ -101,7 +101,6 @@ RuneScape separates bows into **shortbows**, **shieldbows**, composite bows and 
 
 Candidate bases:
 
-- Shortbow
 - Oak Shortbow
 - Willow Shortbow
 - Maple Shortbow
@@ -115,7 +114,6 @@ Suggested identity:
 
 | item | eligibility | first-pass intrinsic direction |
 | --- | --- | --- |
-| Shortbow | poor+ | +1 Attack, +1% Crit |
 | Oak Shortbow | poor+ | +2 Attack, +1% Crit |
 | Willow Shortbow | common+ | +2 Attack, +2% Crit |
 | Maple Shortbow | common+ | +3 Attack, +2% Crit |
