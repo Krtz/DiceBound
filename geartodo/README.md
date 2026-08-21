@@ -12,6 +12,8 @@ The normal slot files (`weapon.md`, `offhand.md`, `chest.md`, `boots.md`, `legs.
 
 `source-inspired-loot-expansion.md` is an additional **large candidate pool** inspired by recognizable RuneScape material/equipment progression and Diablo II's dense mundane base-item vocabulary. Entries there count as geartodo candidates, but are deliberately easier to browse as a separate expansion list instead of making every slot file enormous. When one is selected for art/runtime work, review its exact identity first and copy/refine it into the normal slot file if useful.
 
+`runescape-weapon-expansion.md` is the **expanded RuneScape weapon catalogue**. It adds the weapon breadth missing from the first pass: full melee weapon forms, shortbow/shieldbow/composite-bow ladders, crossbow and 2H-crossbow ladders, thrown weapons, elemental/battle/mystic/limitless staves, wands, magic books/orbs, Necromancy siphon/conduit ideas, and an iconic high-tier reference pool.
+
 Some source-inspired names are prototype/reference language. Generic historical/fantasy terms can remain where appropriate; anything that feels too specifically tied to another IP should be renamed/originalized under #93 before a public/commercial release.
 
 ## Fields
