@@ -4,6 +4,12 @@ A weird little game I make for fun that turned into a much bigger project.
 
 DiceBound is a single-player RPG/board-game hybrid built around dice movement, escalating road guardians, classes, companions, gear, powerups, Legacy progression, Nightmare/Hell modes, and increasingly ridiculous build combinations.
 
+## Start here
+
+**Want to play/build the game on Windows?** Read [HOW TO INSTALL THE GAME.md](HOW%20TO%20INSTALL%20THE%20GAME.md). It is written for friends/testers who just have the GitHub link and want to build the current game without understanding the development setup.
+
+**Fresh ChatGPT/Codex/project handover?** Start with [issue #84 — DiceBound project handover and new-chat catch-up protocol](https://github.com/Krtz/DiceBound/issues/84), then verify everything against current `main`, recent commits/PRs, and current open issues. GitHub is the source of truth.
+
 ## Release baseline and current development
 
 **Current source identity:** see `wrapper-source/config/project.json`; every merged PR advances it to a unique four-component version.
@@ -72,6 +78,8 @@ Because the recovered Beta 0.6 gameplay bundle still contains some historical fa
 
 ## Building
 
+For a friend/tester self-build, use [HOW TO INSTALL THE GAME.md](HOW%20TO%20INSTALL%20THE%20GAME.md).
+
 For a development checkout, first validate the runtime and materialize build metadata:
 
 ```text
@@ -107,13 +115,14 @@ The root script stamps and validates release identity, stages the exact runtime 
 - Give every PR one unused four-component DiceBound version and record it in the PR and issue evidence.
 - Git commits/tags are source identity; EXEs and release ZIPs are derived artifacts.
 - Do not commit saves, runtime caches, local logs or generated release packages.
-- Preserve save compatibility unless a change explicitly includes a migration.
+- While DiceBound is in Beta, old saves may be broken deliberately unless a particular change explicitly requires compatibility/migration.
 - Real-player balance evidence takes priority over harness estimates when the two disagree.
 - Every release should preserve patch notes, validation evidence, checksums and enough provenance to rebuild it.
 - New art goes into the semantic asset hierarchy, never into a legacy compatibility mirror.
 
 ## Project docs
 
+- [How to install/build the game](HOW%20TO%20INSTALL%20THE%20GAME.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Asset architecture migration](docs/ASSET_ARCHITECTURE_MIGRATION.md)
 - [Development guide](docs/DEVELOPMENT.md)
@@ -123,5 +132,6 @@ The root script stamps and validates release identity, stages the exact runtime 
 - [Beta 0.6 recovery baseline](docs/RECOVERY_BASELINE.md)
 - [Beta 0.6 release record](docs/releases/beta-0.6/README.md)
 - [Changelog](CHANGELOG.md)
+- [Durable AI/new-chat handover — issue #84](https://github.com/Krtz/DiceBound/issues/84)
 
 GitHub issues are the actionable backlog. Broad future direction lives in the roadmap until it becomes concrete enough to implement or playtest.
