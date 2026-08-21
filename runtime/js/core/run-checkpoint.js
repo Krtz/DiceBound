@@ -48,7 +48,11 @@
     catch(error){return {...result,checkpoint:null,error:error.message};}
   }
   function clear(){return save.clearRunCheckpoint();}
-  function diagnostics(){const loaded=load();return Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,gameVersion:identity.version,present:save.hasRunCheckpoint(),valid:!!loaded.checkpoint,source:loaded.source,recovered:loaded.recovered,error:loaded.error||null,summary:loaded.checkpoint?.summary||null});}
+  // UI callers use has() to decide whether an expedition should take over the
+  // campsite. Raw storage bytes are not enough: old, corrupt or incompatible
+  // checkpoint keys must not hide the normal camp when no run can be resumed.
+  function has(){return !!load().checkpoint;}
+  function diagnostics(){const loaded=load();return Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,gameVersion:identity.version,present:save.hasRunCheckpoint(),resumable:!!loaded.checkpoint,valid:!!loaded.checkpoint,source:loaded.source,recovered:loaded.recovered,error:loaded.error||null,summary:loaded.checkpoint?.summary||null});}
 
-  window.DiceboundRunCheckpoint=Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,create,validate,store,capture,load,clear,has:()=>save.hasRunCheckpoint(),diagnostics});
+  window.DiceboundRunCheckpoint=Object.freeze({apiVersion:1,checkpointVersion:CHECKPOINT_VERSION,create,validate,store,capture,load,clear,has,diagnostics});
 })();

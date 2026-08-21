@@ -58,6 +58,17 @@ assert.equal(checkpoints.load().checkpoint.run.player.gold,123,"loaded checkpoin
 assert.throws(()=>vm.runInContext("window.DiceboundRunCheckpoint.create({summary:{},meta:{},run:{player:{bad:()=>1},tiles:[{}]}})",context),/unsupported function data/);
 assert.throws(()=>vm.runInContext("window.DiceboundRunCheckpoint.validate({checkpointVersion:99,gameVersion:'0.6.3.0',meta:{},run:{player:{},tiles:[{}]},rng:{mode:'seeded'}})",context),/unsupported/);
 
+// A stale/corrupt browser key is raw stored data, not a resumable expedition.
+// The camp must therefore stay in its normal start state instead of showing the
+// unreadable-run takeover panel that previously displaced the camp layout.
+checkpoints.clear();
+values.set(save.runPrimaryKey,"{broken json");
+assert.equal(save.hasRunCheckpoint(),true,"fixture should contain raw active-run bytes");
+assert.equal(checkpoints.has(),false,"unreadable active-run bytes must not count as a resumable expedition");
+const unreadable=checkpoints.diagnostics();
+assert.equal(unreadable.present,true);assert.equal(unreadable.resumable,false);assert.equal(unreadable.valid,false);
+assert.match(unreadable.error,/JSON|position|property|Expected/i);
+
 checkpoints.clear();
 assert.equal(checkpoints.has(),false);assert.equal(values.get(save.primaryKey),careerBefore,"clearing an active run changed the career save");
 checkpoints.store(first);save.reset();
@@ -77,4 +88,4 @@ assert.match(monolith,/const db060PetTurnBase=petTurn;\s*petTurn=async function/
 const native=fs.readFileSync(path.join(__dirname,"..","wrapper-source","wrappers","webview2","native-go","main.go"),"utf8");
 for(const key of ["dicebound.run.primary","dicebound.run.backup","dicebound.run.backup.2","dicebound.run.backup.3"]){assert.ok(native.includes(`\"${key}\"`),`native storage does not enumerate ${key}`);}
 
-console.log("Active-run checkpoints pass: isolated schema/backups, corrupt-primary recovery, RNG continuation, clone safety, career isolation and runtime composition guards");
+console.log("Active-run checkpoints pass: isolated schema/backups, corrupt-primary recovery, unreadable-key camp guard, RNG continuation, clone safety, career isolation and runtime composition guards");
