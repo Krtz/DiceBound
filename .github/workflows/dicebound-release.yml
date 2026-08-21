@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - distribution/latest.json
   workflow_dispatch:
     inputs:
       publish:
@@ -125,7 +130,7 @@ jobs:
           retention-days: 14
 
       - name: Publish derived prerelease
-        if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -150,7 +155,7 @@ jobs:
           if ([int64]$published.size -ne [int64]$meta.bytes) { throw "Published release asset size differs from built EXE." }
 
       - name: Point launcher manifest at verified release
-        if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
         shell: pwsh
         run: |
           python tools/write_distribution_manifest.py `
