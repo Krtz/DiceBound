@@ -88,7 +88,6 @@ The explicit RuneScape fun-weapon family belongs here wholesale:
 - Flowers
 - Mixed Flowers
 - coloured flower variants
-- Rubber Chicken
 - Off-hand Rubber Chicken
 - Rubber Turkey
 - Off-hand Rubber Turkey
@@ -117,7 +116,6 @@ Reference pool:
 - Hook-a-duck Flail
 - Egg on a Fork
 - Chick-Axe
-- Rubber Chicken
 - Rubber Turkey
 - Yo-yo
 - Marionette variants
@@ -163,7 +161,6 @@ OSRS gets its own reference pass because it has accumulated a magnificent pile o
 - Prop Sword
 - '24-carat' Sword
 - Carrot Sword
-- Rubber Chicken
 - Mouse Toy
 - Flowers / Assorted Flowers / colour variants
 - Candy Cane
@@ -281,7 +278,6 @@ DiceBound should embrace the same principle.
 
 Possible mechanical translations:
 
-- Rubber Chicken -> weak Attack, strange Crit/Echo/Donut interaction
 - Undead Chicken -> Lifesteal / Void / summon weirdness
 - Flowers -> Nature proc + Dodge, tiny Attack
 - Easter Carrot / Carrot Sword -> Nature + HP / Potion Healing
