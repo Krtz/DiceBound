@@ -1,0 +1,31 @@
+name: One-shot 0.6.3.1 stamp
+
+on:
+  push:
+    branches:
+      - chore/0.6.3.1-stamp-browser-hotfix
+
+permissions:
+  contents: write
+
+jobs:
+  stamp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Stamp version
+        run: python tools/set_project_version.py --version 0.6.3.1 --channel Beta
+      - name: Validate version identity
+        run: python tools/validate_version_identity.py
+      - name: Commit completed stamp and remove one-shot workflow
+        shell: bash
+        run: |
+          rm .github/workflows/one-shot-stamp-0631.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: complete 0.6.3.1 release stamp"
+          git push origin HEAD:chore/0.6.3.1-stamp-browser-hotfix
