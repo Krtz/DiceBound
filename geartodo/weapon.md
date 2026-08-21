@@ -132,14 +132,6 @@ tags: martial, temple
 eligibility: uncommon+
 intrinsic: +2 Attack, +1 Defense, +1% Echo
 ---
-## Rubber Chicken
-family: improvised
-material: rubber
-weight: light
-tags: weird, clown
-eligibility: poor+
-intrinsic: +1 Attack
----
 ## Juggling Sabre
 family: sabre
 material: steel
@@ -163,14 +155,6 @@ weight: medium
 tags: clown, weird, ranged
 eligibility: rare+
 intrinsic: +3 Attack, +2% Echo, +1% Donut proc chance
----
-## Crimson Brush
-family: brush
-material: wood
-weight: light
-tags: artist, crimson, weird
-eligibility: poor+
-intrinsic: +1 Attack, +1% Fire proc chance
 ---
 ## Vermilion Rapier
 family: rapier
@@ -251,14 +235,6 @@ weight: medium
 tags: tide, weird, ancient
 eligibility: rare+
 intrinsic: +4 Attack, +2 Defense, +1% Echo
----
-## Tongue Lash
-family: whip
-material: flesh
-weight: light
-tags: frog, weird
-eligibility: poor+
-intrinsic: +1 Attack, +2% Echo
 ---
 ## Croakstaff
 family: staff
