@@ -22,6 +22,7 @@ run("rng.js");run("save-system.js");run(path.join("core","run-checkpoint.js"));
 
 const save=window.DiceboundSave,checkpoints=window.DiceboundRunCheckpoint,rng=window.DiceboundRng;
 assert.equal(save.apiVersion,2);assert.equal(checkpoints.apiVersion,1);assert.ok(Object.isFrozen(checkpoints));
+assert.equal(checkpoints.uiFix,"browser-camp-resume-v2");
 save.saveMeta({level:7,settings:{masterVolume:.4}});
 const careerBefore=values.get(save.primaryKey);
 
@@ -74,6 +75,10 @@ assert.equal(checkpoints.has(),false);assert.equal(values.get(save.primaryKey),c
 checkpoints.store(first);save.reset();
 assert.equal(save.hasSave(),false);assert.equal(checkpoints.has(),false,"full reset left an active-run checkpoint behind");
 
+const checkpointSource=fs.readFileSync(path.join(runtime,"core","run-checkpoint.js"),"utf8");
+assert.match(checkpointSource,/position:absolute!important/,"resume panel must be removed from camp grid flow");
+assert.match(checkpointSource,/save\.hasRunCheckpoint\(\).*save\.clearRunCheckpoint\(\)/s,"unrecoverable run bytes must be discarded without touching career save");
+
 const monolith=fs.readFileSync(path.join(runtime,"dicebound.js"),"utf8");
 assert.match(monolith,/function dbRunIsStable\(\).*gameStarted.*!rollLocked.*!combatBusy.*!currentEnemy.*pendingLevelUps===0/s);
 assert.match(monolith,/meta=normalizeMetaCore\(checkpoint\.meta\)/);
@@ -88,4 +93,4 @@ assert.match(monolith,/const db060PetTurnBase=petTurn;\s*petTurn=async function/
 const native=fs.readFileSync(path.join(__dirname,"..","wrapper-source","wrappers","webview2","native-go","main.go"),"utf8");
 for(const key of ["dicebound.run.primary","dicebound.run.backup","dicebound.run.backup.2","dicebound.run.backup.3"]){assert.ok(native.includes(`\"${key}\"`),`native storage does not enumerate ${key}`);}
 
-console.log("Active-run checkpoints pass: isolated schema/backups, corrupt-primary recovery, unreadable-key camp guard, RNG continuation, clone safety, career isolation and runtime composition guards");
+console.log("Active-run checkpoints pass: isolated schema/backups, corrupt-primary recovery, unreadable-key guard, out-of-flow camp resume UI, RNG continuation, clone safety, career isolation and runtime composition guards");
