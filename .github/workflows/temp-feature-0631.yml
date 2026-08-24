@@ -1,0 +1,52 @@
+name: Temporary 0.6.3.1 feature patch
+
+on:
+  push:
+    branches:
+      - feat/0.6.3.1-progression-slime-gear-browser
+    paths:
+      - .github/workflows/temp-feature-0631.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: windows-2022
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/0.6.3.1-progression-slime-gear-browser
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply focused feature patch
+        run: python tools/patch_0631_progression_slime_gear.py
+
+      - name: Validate syntax and focused behavior
+        shell: pwsh
+        run: |
+          git diff --check
+          node --check runtime/js/progression/class-unlock-rules.js
+          node --check runtime/js/powerups/borrowing.js
+          node --check runtime/js/items/equipment.js
+          node --check runtime/js/dicebound.js
+          node tools/test_0631_progression_slime_gear.js
+          node tools/test_class_registry.js
+          python tools/validate_version_identity.py
+          python tools/validate_runtime_architecture.py
+
+      - name: Commit real source changes
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add runtime wrapper-source tools/test_0631_progression_slime_gear.js
+          git status --short
+          git commit -m "feat: revise class progression Slime borrowing and ordinary gear"
+          git push origin HEAD:feat/0.6.3.1-progression-slime-gear-browser
