@@ -39,6 +39,8 @@ jobs:
           "=== PATCH ===" | Add-Content -Path $diag
           python tools/patch_0631_progression_slime_gear.py *>> $diag
           $patchExit = $LASTEXITCODE
+          if ($patchExit -eq 0) { python tools/patch_0631_metadata.py *>> $diag; $patchExit = $LASTEXITCODE }
+          if ($patchExit -eq 0) { node tools/refresh_0631_snapshots.js *>> $diag; $patchExit = $LASTEXITCODE }
           "PATCH_EXIT=$patchExit" | Add-Content -Path $diag
           if ($patchExit -eq 0) {
             "=== VALIDATION ===" | Add-Content -Path $diag
@@ -47,9 +49,12 @@ jobs:
               'node --check runtime/js/progression/class-unlock-rules.js',
               'node --check runtime/js/powerups/borrowing.js',
               'node --check runtime/js/items/equipment.js',
+              'node --check runtime/js/core/state.js',
+              'node --check runtime/js/classes/registry.js',
               'node --check runtime/js/dicebound.js',
               'node tools/test_0631_progression_slime_gear.js',
               'node tools/test_class_registry.js',
+              'node tools/test_core_state.js',
               'python tools/validate_version_identity.py',
               'python tools/validate_runtime_architecture.py'
             )
@@ -91,5 +96,6 @@ jobs:
             wrapper-source/wrappers/webview2/native-go/main.go
             tools/test_0631_progression_slime_gear.js
             tools/test_class_registry.js
+            tools/test_core_state.js
           if-no-files-found: warn
           retention-days: 2
