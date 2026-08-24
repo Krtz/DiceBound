@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.3.1
+# Unreleased — Beta 0.6.3.2
+
+## Release pipeline reliability (#118)
+- Release publication can now advance the launcher's verified `latest.json` pointer without weakening protected `main`.
+- The elevated release credential is restricted to the final post-validation manifest commit and is never used by pull-request validation.
+- The release workflow fails early if that credential is missing instead of publishing a release that the permanent launcher cannot discover.
+
+---
+
+# Beta 0.6.3.1 — Development checkpoint
 
 ## Class progression, Slime borrowing and ordinary gear (#96, #104, #87)
 - Revised Pokémon Trainer, Rogue, Merchant, Slime and Vampire unlock progression with persistent independent career prerequisites.
