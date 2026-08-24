@@ -47,7 +47,10 @@ def _maybe_materialize_geartodo() -> None:
     subprocess.run(["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"], cwd=ROOT, check=True)
     subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
     subprocess.run(["git", "commit", "-m", "docs: consolidate geartodo into slot catalogues"], cwd=ROOT, check=True)
-    subprocess.run(["git", "push", "origin", f"HEAD:{branch}"], cwd=ROOT, check=True)
+    tag = "tmp-geartodo-consolidated"
+    subprocess.run(["git", "tag", "-f", tag], cwd=ROOT, check=True)
+    subprocess.run(["git", "push", "--force", "origin", f"refs/tags/{tag}"], cwd=ROOT, check=True)
+    print(f"Published clean generated catalogue as temporary tag {tag}.")
     raise SystemExit(0)
 
 
