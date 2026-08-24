@@ -16,7 +16,7 @@ def replace_once(rel, old, new):
     text = read(rel)
     count = text.count(old)
     if count != 1:
-        raise SystemExit(f"METADATA PATCH FAILED: {rel}: expected 1 match, found {count}: {old[:120]!r}")
+        raise SystemExit(f"METADATA PATCH FAILED: {rel}: expected 1 match, found {count}: {old[:140]!r}")
     write(rel, text.replace(old, new, 1))
 
 
@@ -32,28 +32,39 @@ replace_once(
     '      const settings={...defaultSettings(),...(parsed?.settings||{})};\n      const classUnlockFacts={...defaultClassUnlockFacts(),...(parsed?.classUnlockFacts||{})};\n      settings.masterVolume=clamp(Number(settings.masterVolume),0,1);\n      settings.soundPack=settings.soundPack==="custom"?"custom":"synth";\n      return {...base,...parsed,xpNext:legacyXpForLevel(parsed?.level||1),purchased:normalizePurchased(parsed?.purchased||{}),heirlooms:(parsed?.heirlooms||[]).map(normalizeSavedItem),pets,elementProgress,prestige,unlocks,settings,classUnlockFacts};',
 )
 
-# Keep the class registry's declarative unlock metadata aligned with the new authoritative predicates.
+# Route the compatibility runtime to that top-level career owner rather than nesting facts in legacy lifetime stats.
+replace_once(
+    "runtime/js/dicebound.js",
+    '  function db0631Facts(){\n    const stats=ensureAlphaMeta();stats.classUnlockFacts=db0631Rules.normalizeFacts(stats.classUnlockFacts||{});return stats.classUnlockFacts;\n  }',
+    '  function db0631Facts(){\n    meta.classUnlockFacts=db0631Rules.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;\n  }',
+)
+replace_once(
+    "runtime/js/dicebound.js",
+    "    const defeated=currentEncounterLead||currentEnemy,board=boardLevel,classId=player.classId,isFinal=!!defeated?.finalBoss||v16CombatKind==='final'||tiles[currentEnemyTile]?.type==='boss',stats=ensureAlphaMeta();\n    stats.classUnlockFacts=db0631Rules.recordCombatFacts(db0631Facts(),{board,classId,miniBoss:!!defeated?.miniBoss,finalBoss:isFinal,merchantBoss:!!defeated?.merchantBoss,mode:hellMode?'hell':nightmareMode?'nightmare':'normal'});saveMeta();",
+    "    const defeated=currentEncounterLead||currentEnemy,board=boardLevel,classId=player.classId,isFinal=!!defeated?.finalBoss||v16CombatKind==='final'||tiles[currentEnemyTile]?.type==='boss';\n    meta.classUnlockFacts=db0631Rules.recordCombatFacts(db0631Facts(),{board,classId,miniBoss:!!defeated?.miniBoss,finalBoss:isFinal,merchantBoss:!!defeated?.merchantBoss,mode:hellMode?'hell':nightmareMode?'nightmare':'normal'});saveMeta();",
+)
+replace_once(
+    "runtime/js/dicebound.js",
+    '  occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent){const stats=ensureAlphaMeta();stats.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};',
+    '  occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent){meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};',
+)
+
+# Keep declarative class-unlock metadata aligned with the authoritative 0.6.3.1 rules.
 for old, new in [
     ('    slime:{type:"allNonSecretClasses"},', '    slime:{type:"unlockedClassCount",minimum:10},'),
-    ('    vampire:{type:"runStat",stat:"lifeSteal",greaterThan:1},', '    vampire:{type:"compound",requirements:[{type:"careerStat",stat:"maxLifesteal",greaterThan:1},{type:"guardianDefeat",board:3,guardian:"boss"}]} ,'.replace(']} ,', ']} ,').replace(']} ,', ']} ,')),
+    ('    vampire:{type:"runStat",stat:"lifeSteal",greaterThan:1},', '    vampire:{type:"compound",requirements:[{type:"careerStat",stat:"maxLifesteal",greaterThan:1},{type:"guardianDefeat",board:3,guardian:"boss"}]},'),
     ('    merchant:{type:"secretBossKills",boss:"road-merchant",minimum:5},', '    merchant:{type:"secretBossKills",boss:"road-merchant",minimum:1},'),
     ('    rogue:{type:"lifetimeStat",stat:"highestGold",minimum:4000},', '    rogue:{type:"compound",requirements:[{type:"lifetimeStat",stat:"highestGold",minimum:5000},{type:"guardianDefeat",board:3,guardian:"miniboss"}]},'),
     ('    pokemontrainer:{type:"compound",requirements:[{type:"allPetsAtLevel",level:10},{type:"boardClear",classId:"beastmaster",board:5,difficulty:"nightmare"}]},', '    pokemontrainer:{type:"compound",requirements:[{type:"allPetsAtLevel",level:10},{type:"boardClear",classId:"beastmaster",board:5}]},'),
 ]:
     replace_once("runtime/js/classes/registry.js", old, new)
 
-# Fix the one deliberately formatted vampire line produced above if needed.
-text = read("runtime/js/classes/registry.js")
-text = text.replace('    vampire:{type:"compound",requirements:[{type:"careerStat",stat:"maxLifesteal",greaterThan:1},{type:"guardianDefeat",board:3,guardian:"boss"}]} ,', '    vampire:{type:"compound",requirements:[{type:"careerStat",stat:"maxLifesteal",greaterThan:1},{type:"guardianDefeat",board:3,guardian:"boss"}]},')
-write("runtime/js/classes/registry.js", text)
-
-# Add semantic assertions so future snapshot refreshes cannot silently bless stale unlock metadata.
+# Semantic assertions prevent snapshot refreshes from silently blessing stale metadata/state ownership.
 replace_once(
     "tools/test_class_registry.js",
     'assert.equal(unlocks.sorcerer.guardian, "miniboss");\nassert.equal(unlocks.slimerouge.requirements[1].board, 6);',
     'assert.equal(unlocks.sorcerer.guardian, "miniboss");\nassert.equal(unlocks.slimerouge.requirements[1].board, 6);\nassert.deepEqual(unlocks.slime,{type:"unlockedClassCount",minimum:10});\nassert.equal(unlocks.merchant.minimum,1);\nassert.equal(unlocks.rogue.requirements[0].minimum,5000);\nassert.equal(unlocks.rogue.requirements[1].board,3);\nassert.equal(unlocks.vampire.requirements[0].stat,"maxLifesteal");\nassert.equal(unlocks.vampire.requirements[0].greaterThan,1);\nassert.equal(unlocks.vampire.requirements[1].board,3);\nassert.equal(unlocks.pokemontrainer.requirements[1].board,5);\nassert.equal(Object.hasOwn(unlocks.pokemontrainer.requirements[1],"difficulty"),false);',
 )
-
 replace_once(
     "tools/test_core_state.js",
     '  settings:{masterVolume:2,soundPack:"custom"},\n};',
@@ -68,6 +79,11 @@ replace_once(
     "tools/test_core_state.js",
     'assert.equal(meta.settings.soundPack,"custom");',
     'assert.equal(meta.settings.soundPack,"custom");\nassert.equal(meta.classUnlockFacts.board3BossDefeated,true);\nassert.equal(meta.classUnlockFacts.board3MinibossDefeated,false);\nassert.equal(meta.classUnlockFacts.manaSpenderCasts,12);\nassert.equal(meta.classUnlockFacts.maxLifesteal,0);',
+)
+replace_once(
+    "tools/test_0631_progression_slime_gear.js",
+    'assert(mono.includes("db0631RecordObservedProgress"),"0.6.3.1 progression wiring missing");',
+    'assert(mono.includes("db0631RecordObservedProgress"),"0.6.3.1 progression wiring missing");assert(mono.includes("meta.classUnlockFacts=db0631Rules.recordCombatFacts"),"combat facts are not persisted by core career owner");assert(!mono.includes("stats.classUnlockFacts"),"class unlock facts leaked into legacy lifetime stats");const state=fs.readFileSync(path.join(root,"runtime/js/core/state.js"),"utf8");assert(state.includes("classUnlockFacts:defaultClassUnlockFacts()"),"core state does not own class unlock fact defaults");',
 )
 
 print("PATCH 0.6.3.1 metadata/state READY")
