@@ -24,6 +24,7 @@ for marker in [
     "GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}",
     "gh api --method PUT",
     "contents/$manifestPath",
+    "Published distribution/latest.json differs from the verified local manifest.",
 ]:
     assert marker in source, f"generic release workflow is missing {marker!r}"
 
@@ -36,4 +37,4 @@ assert "git push origin" not in source, "protected main must not be updated with
 assert "release/beta-" not in source
 assert ".release/beta-" not in source
 
-print("Generic release workflow source PASS: Version/Channel-derived PR validation, protected-main publication credential, release asset verification and Contents-API distribution update")
+print("Generic release workflow source PASS: Version/Channel-derived PR validation, protected-main publication credential, release asset verification and Contents-API distribution update with remote reconciliation")
