@@ -8,17 +8,19 @@ Axel's reviewed/edited entry always wins over an older first-pass suggestion.
 
 ## Catalogue structure
 
-The normal slot files (`weapon.md`, `offhand.md`, `chest.md`, `boots.md`, `legs.md`, `hat.md`, `ring.md`, `amulet.md`) contain the main first-pass equipment-base catalogue.
+The slot files are now the **single pending-candidate source of truth**:
 
-`created-gear.md` contains gear whose first modular art asset has already been created. Once art exists, move the item out of the pending/raw candidate list and preserve/refine its design metadata in `created-gear.md` together with the intended runtime asset path. This keeps "things we might make" separate from "things we have actually drawn".
+- `weapon.md` — every pending Weapon reference/candidate in one editable list;
+- `offhand.md` — every pending Offhand reference/candidate;
+- `chest.md`, `boots.md`, `legs.md`, `hat.md`, `ring.md`, `amulet.md` — the corresponding pending slot catalogues;
+- `gloves.md` and `belt.md` — preserved future-slot/backburner candidates only; these files do **not** mean those runtime slots are approved;
+- `created-gear.md` — gear whose first modular art asset already exists.
 
-`source-inspired-loot-expansion.md` is an additional **large candidate pool** inspired by recognizable RuneScape material/equipment progression and Diablo II's dense mundane base-item vocabulary. Entries there count as geartodo candidates, but are deliberately easier to browse as a separate expansion list instead of making every slot file enormous. When one is selected for art/runtime work, review its exact identity first and copy/refine it into the normal slot file if useful.
+The former `source-inspired-loot-expansion.md`, `runescape-weapon-expansion.md`, and `runescape-quest-fun-oddity-weapons.md` pools were consolidated into the appropriate slot files. There should no longer be a second hidden reference catalogue to check before choosing art.
 
-`runescape-weapon-expansion.md` is the **expanded RuneScape weapon catalogue**. It adds the weapon breadth missing from the first pass: full melee weapon forms, shortbow/shieldbow/composite-bow ladders, crossbow and 2H-crossbow ladders, thrown weapons, elemental/battle/mystic/limitless staves, wands, magic books/orbs, Necromancy siphon/conduit ideas, and an iconic high-tier reference pool.
+When art is created and accepted for a pending item, move that item **out of its slot file** and into `created-gear.md`, preserving/refining its metadata and recording the intended runtime asset path.
 
-`runescape-quest-fun-oddity-weapons.md` is deliberately **uncurated**. Quest weapons, joke weapons, holiday rewards, props, toys, obsolete/discontinued weapons, weird wieldable tools, banners, trophies and other nonsense all belong there even if we never implement most of them. It is an inspiration museum, not a shipping list.
-
-Some source-inspired names are prototype/reference language. Generic historical/fantasy terms can remain where appropriate; anything that feels too specifically tied to another IP should be renamed/originalized under #93 before a public/commercial release.
+`runescape-reference-policy.md` still records the deliberately broad inspiration policy. Source-specific names remain prototype/reference language and should be renamed/originalized under #93 before a public/commercial release where appropriate.
 
 ## Fields
 
