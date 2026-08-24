@@ -14,9 +14,11 @@ DiceBound is a single-player RPG/board-game hybrid built around dice movement, e
 
 **Current source identity:** see `wrapper-source/config/project.json`; every merged PR advances it to a unique four-component version.
 
-Every PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. The launcher still points at the separately published Beta 0.6.1 prerelease until a newer build is deliberately published and `distribution/latest.json` is updated from its verified artifact metadata.
+**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-08-24 it points at the verified **Beta 0.6.3.2** prerelease (`beta-0.6.3.2`). Treat the manifest itself as authoritative if this paragraph later ages.
 
-**Recovered release baseline: Beta 0.6 — Gear & Guardian Loot Rebuild**
+Every PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. A source PR may advance development beyond the currently published launcher build; `distribution/latest.json` only advances after the exact release artifact has been built, verified and published.
+
+**Recovered historical release baseline: Beta 0.6 — Gear & Guardian Loot Rebuild**
 
 Beta 0.6 is the first complete Git-tracked baseline of the recovered project. Its exact historical release records, hashes and audits live under `docs/releases/beta-0.6/` and are not rewritten when current development changes the source tree.
 
@@ -30,7 +32,7 @@ Validated Beta 0.6 identity:
 - Original EXE SHA-256: `85764d2de61b19a2ff0d4bb983d3456f3c77784a608cd8bd27ee0fc995f13a0e`
 - Recovered release audit: **32 / 32 checks passed**
 
-`main` development after that release is explicitly **Unreleased** until a new package is materialized and validated. Run `tools/refresh_runtime_manifest.py` from a complete checkout before packaging to calculate current content-derived hashes/counts.
+Current `main` may contain development/documentation work newer than the published launcher build. Run `tools/refresh_runtime_manifest.py` from a complete checkout before packaging to calculate current content-derived hashes/counts; never infer a published release solely from a source commit.
 
 ## Repository layout
 
@@ -100,13 +102,13 @@ Then run:
 python wrapper-source/tools/build_launcher.py
 ```
 
-For a production release, point `WEBVIEW2_LOADER_DLL` at the signed x64 loader from the pinned `Microsoft.Web.WebView2` SDK, set `WEBVIEW2_SDK_VERSION`, and run the root release command:
+For a production release, point `WEBVIEW2_LOADER_DLL` at the signed x64 loader from the pinned `Microsoft.Web.WebView2` SDK, set `WEBVIEW2_SDK_VERSION`, and run the root release command with the intended version/channel, for example:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.2.1 -Channel Beta -PythonExecutable python -RequireSignedLoader
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.3.2 -Channel Beta -PythonExecutable python -RequireSignedLoader
 ```
 
-The root script stamps and validates release identity, stages the exact runtime tree, requires a valid signed loader, builds the native wrapper, and records the resulting SHA-256, byte size, and build ID. The recovered Beta 0.6 artifact used the isolated compatibility fallback; Beta 0.6.1 uses the official loader path.
+The root script stamps and validates release identity, stages the exact runtime tree, requires a valid Microsoft-signed loader, builds the native wrapper, and records the resulting SHA-256, byte size, and build ID. Current production/release validation uses the official loader path; future public Authenticode signing is tracked separately in issue #11.
 
 ## Development rules
 
