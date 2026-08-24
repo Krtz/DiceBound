@@ -195,3 +195,11 @@ jobs:
           } | ConvertTo-Json -Compress
           $payload | gh api --method PUT "repos/Krtz/DiceBound/contents/$manifestPath" --input - *> $null
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $remote = gh api "repos/Krtz/DiceBound/contents/$manifestPath?ref=main" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $remoteText = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($remote.content -replace '\s', '')))
+          $localText = Get-Content $manifestPath -Raw
+          if ($remoteText -ne $localText) {
+            throw "Published distribution/latest.json differs from the verified local manifest."
+          }
