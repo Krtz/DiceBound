@@ -2,7 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.1
+## Unreleased — Beta 0.6.3.2
+
+### Release pipeline reliability (#118)
+- Protected `main` remains protected while successful release publication can advance the permanent launcher manifest through a narrowly scoped maintainer credential.
+- Pull-request validation never uses the protected-main credential; ordinary GitHub Release creation continues to use the workflow token.
+- The final launcher-manifest update now uses the GitHub Contents API instead of a bot `git push` that repository rules reject.
+- Publish runs fail early when the protected-main credential is missing, and manifest-only commits remain excluded from recursive release runs.
+
+## Beta 0.6.3.1 — Development checkpoint
 
 ### Class progression, Slime borrowing and ordinary gear (#96, #104, #87)
 - Pokémon Trainer now requires every pet at level 10 plus a Board 5 clear with Beastmaster on any difficulty; the two career conditions may be completed in separate runs.
