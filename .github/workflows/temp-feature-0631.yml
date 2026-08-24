@@ -1,9 +1,6 @@
-name: Temporary 0.6.3.1 feature patch diagnostic
+name: Temporary 0.6.3.1 feature source commit
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - feat/0.6.3.1-progression-slime-gear-browser
@@ -14,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose-patch:
+  commit-source:
     runs-on: windows-2022
     steps:
       - name: Check out feature branch
@@ -28,81 +25,59 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Apply patch and capture diagnostics
-        id: diagnose
+      - name: Materialize verified 0.6.3.1 source
         shell: pwsh
-        continue-on-error: true
         run: |
-          $diag = Join-Path $env:RUNNER_TEMP '0631-action.log'
-          "DiceBound 0.6.3.1 patch diagnostic" | Set-Content -Path $diag -Encoding utf8
-          "Commit: $env:GITHUB_SHA" | Add-Content -Path $diag
-          "=== PATCH ===" | Add-Content -Path $diag
-          python tools/patch_0631_progression_slime_gear.py *>> $diag
-          $patchExit = $LASTEXITCODE
-          if ($patchExit -eq 0) { python tools/patch_0631_metadata.py *>> $diag; $patchExit = $LASTEXITCODE }
-          if ($patchExit -eq 0) { python tools/patch_0631_changelog.py *>> $diag; $patchExit = $LASTEXITCODE }
-          if ($patchExit -eq 0) { node tools/refresh_0631_snapshots.js *>> $diag; $patchExit = $LASTEXITCODE }
-          if ($patchExit -eq 0) { python tools/refresh_runtime_manifest.py --version 0.6.3.1 --channel Beta --development-state Unreleased *>> $diag; $patchExit = $LASTEXITCODE }
-          "PATCH_EXIT=$patchExit" | Add-Content -Path $diag
-          if ($patchExit -eq 0) {
-            "=== VALIDATION ===" | Add-Content -Path $diag
-            $commands = @(
-              'git diff --check',
-              'node --check runtime/js/progression/class-unlock-rules.js',
-              'node --check runtime/js/powerups/borrowing.js',
-              'node --check runtime/js/items/equipment.js',
-              'node --check runtime/js/core/state.js',
-              'node --check runtime/js/classes/registry.js',
-              'node --check runtime/js/dicebound.js',
-              'node tools/test_0631_progression_slime_gear.js',
-              'node tools/test_class_registry.js',
-              'node tools/test_core_state.js',
-              'python tools/validate_version_identity.py',
-              'python tools/validate_runtime_architecture.py'
-            )
-            foreach ($cmd in $commands) {
-              "> $cmd" | Add-Content -Path $diag
-              cmd /c $cmd *>> $diag
-              "EXIT=$LASTEXITCODE" | Add-Content -Path $diag
-              if ($LASTEXITCODE -ne 0) { break }
-            }
-          }
-          "=== STATUS ===" | Add-Content -Path $diag
-          git status --short *>> $diag
-          Copy-Item $diag "$env:GITHUB_WORKSPACE\0631-action.log"
+          python tools/patch_0631_progression_slime_gear.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/patch_0631_metadata.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/patch_0631_changelog.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/refresh_0631_snapshots.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.3.1 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload diagnostic log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dicebound-0631-patch-diagnostic
-          path: 0631-action.log
-          if-no-files-found: error
-          retention-days: 2
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_0631_progression_slime_gear.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_class_registry.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_core_state.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload patched source preview
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dicebound-0631-patched-preview
-          path: |
-            CHANGELOG.md
-            runtime/build-info.json
-            runtime/build-manifest.json
-            runtime/js/dicebound.js
-            runtime/js/classes/registry.js
-            runtime/js/core/state.js
-            runtime/js/items/equipment.js
-            runtime/js/progression/class-unlock-rules.js
-            runtime/js/powerups/borrowing.js
-            runtime/js/module-manifest.json
-            runtime/js/version.js
-            runtime/index.html
-            runtime/PATCH_NOTES.md
-            wrapper-source/config/project.json
+      - name: Commit only real feature source and tests
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- `
+            CHANGELOG.md `
+            runtime/PATCH_NOTES.md `
+            runtime/build-info.json `
+            runtime/build-manifest.json `
+            runtime/index.html `
+            runtime/js/classes/registry.js `
+            runtime/js/core/state.js `
+            runtime/js/dicebound.js `
+            runtime/js/items/equipment.js `
+            runtime/js/module-manifest.json `
+            runtime/js/version.js `
+            runtime/js/powerups/borrowing.js `
+            runtime/js/progression/class-unlock-rules.js `
+            tools/test_0631_progression_slime_gear.js `
+            tools/test_class_registry.js `
+            tools/test_core_state.js `
+            wrapper-source/config/project.json `
             wrapper-source/wrappers/webview2/native-go/main.go
-            tools/test_0631_progression_slime_gear.js
-            tools/test_class_registry.js
-            tools/test_core_state.js
-          if-no-files-found: warn
-          retention-days: 2
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git commit -m "feat: implement 0.6.3.1 progression slime and gear rules"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:feat/0.6.3.1-progression-slime-gear-browser
