@@ -99,5 +99,8 @@
   }};
 
   function createRegistry(){return JSON.parse(JSON.stringify(EQUIPMENT_DATA));}
-  window.DiceboundEquipment=Object.freeze({apiVersion:1,createRegistry});
+  function ordinaryBaseName(slot){return EQUIPMENT_DATA.labels[slot]||String(slot||"Equipment");}
+  function eligibleOrdinaryAffixes(pool,slot){return (pool||[]).filter(affix=>Array.isArray(affix?.slots)&&affix.slots.includes(slot));}
+  function pickOrdinaryAffix(random,pool,slot){const eligible=eligibleOrdinaryAffixes(pool,slot);if(!eligible.length)return null;const roll=Math.max(0,Math.min(.999999999,Number(random?.())||0));return eligible[Math.floor(roll*eligible.length)];}
+  window.DiceboundEquipment=Object.freeze({apiVersion:1,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix});
 })();

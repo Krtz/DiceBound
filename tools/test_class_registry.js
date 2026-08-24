@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 25804, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 25853, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "aa5c6fb4a9f1e457f219293a74e3d6f57802d92a73e4493f7e661d1bb2f091c0",
+  "126347bd57778940a13b2fb167244a329e799b3f608e8d0134c5be3276e2f337",
   "canonical class registry data drifted",
 );
 
@@ -67,12 +67,22 @@ assert.deepEqual(Object.keys(unlocks), expectedIds);
 assert.deepEqual(Object.keys(mechanics), expectedIds);
 assert.equal(unlocks.sorcerer.guardian, "miniboss");
 assert.equal(unlocks.slimerouge.requirements[1].board, 6);
+assert.equal(unlocks.slime.type,"unlockedClassCount");
+assert.equal(unlocks.slime.minimum,10);
+assert.equal(unlocks.merchant.minimum,1);
+assert.equal(unlocks.rogue.requirements[0].minimum,5000);
+assert.equal(unlocks.rogue.requirements[1].board,3);
+assert.equal(unlocks.vampire.requirements[0].stat,"maxLifesteal");
+assert.equal(unlocks.vampire.requirements[0].greaterThan,1);
+assert.equal(unlocks.vampire.requirements[1].board,3);
+assert.equal(unlocks.pokemontrainer.requirements[1].board,5);
+assert.equal(Object.hasOwn(unlocks.pokemontrainer.requirements[1],"difficulty"),false);
 assert.deepEqual(Array.from(mechanics.ranger), ["marks", "crit", "evasion", "ranged"]);
 assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
 snapshot(passives, 3630, "f7242b22f9ae8a85c7e8d7f428c7b3de21d2f5f4672afbe80b1b53bd5f8b5419", "class passive registry");
 snapshot(Array.from(classes.tagVocabulary), 313, "c2ca5574c84743aec2e8a25632dde27cb8cb2dc7bfb7c4fa63e2fd472c065a4b", "class tag vocabulary");
-snapshot(unlocks, 1739, "5bc622765899acd073d758ac19a909e5ad8f66a63686c56841c7bf609f5988e5", "class unlock registry");
+snapshot(unlocks, 1918, "a94413edf14977874b93ff79144fb74426af5880d4ce38dbffb0a7c6a7947af6", "class unlock registry");
 snapshot(mechanics, 1273, "d3d4a386c6a7108fe7ec2924a1b5e6c9caa0e9aa6013a8d74f16d6316f956299", "class mechanics registry");
 snapshot(ultimateSupport, 307, "3d6a941f90c1609e96473d6de9f454e2e8fe99b9915620728ef7243946d425e2", "ultimate support registry");
 

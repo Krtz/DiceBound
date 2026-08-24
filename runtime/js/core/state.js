@@ -12,7 +12,8 @@
     const defaultPetState=(unlocked=false)=>({level:1,xp:0,xpNext:2,unlocked,progress:0});
     const defaultPets=()=>Object.fromEntries(petIds.map(id=>[id,defaultPetState(id==="neutral")]));
     const defaultSettings=()=>({masterVolume:.70,soundPack:"synth"});
-    const defaultMeta=()=>({level:1,xp:0,xpNext:legacyXpForLevel(1),points:0,runs:0,bestTiles:0,purchased:{},heirlooms:[],pets:defaultPets(),activePet:"neutral",petCookies:0,elementProgress:Object.fromEntries(elementIds.map(id=>[id,0])),damageTaken:0,prestige:defaultPrestige(),nightmareUnlocked:false,settings:defaultSettings(),unlocks:Object.fromEntries(classIds.map(id=>[id,id==="ranger"]))});
+    const defaultClassUnlockFacts=()=>({board3MinibossDefeated:false,board3BossDefeated:false,board4MinibossDefeated:false,beastmasterBoard5Cleared:false,roadMerchantSecretBossDefeated:false,maxLifesteal:0,manaSpenderCasts:0});
+    const defaultMeta=()=>({level:1,xp:0,xpNext:legacyXpForLevel(1),points:0,runs:0,bestTiles:0,purchased:{},heirlooms:[],pets:defaultPets(),activePet:"neutral",petCookies:0,elementProgress:Object.fromEntries(elementIds.map(id=>[id,0])),damageTaken:0,prestige:defaultPrestige(),nightmareUnlocked:false,settings:defaultSettings(),classUnlockFacts:defaultClassUnlockFacts(),unlocks:Object.fromEntries(classIds.map(id=>[id,id==="ranger"]))});
     function normalizePurchased(raw={}){const out={...raw};if(Object.keys(out).length&&!out.roadborn)out.roadborn=1;return out;}
     function normalizeSavedItem(item){return item?JSON.parse(JSON.stringify(item)):item;}
     function normalizeMeta(parsed={}){
@@ -23,9 +24,10 @@
       const prestige={...defaultPrestige(),...(parsed?.prestige||{})};
       const unlocks={...base.unlocks,...(parsed?.unlocks||{})};
       const settings={...defaultSettings(),...(parsed?.settings||{})};
+      const classUnlockFacts={...defaultClassUnlockFacts(),...(parsed?.classUnlockFacts||{})};
       settings.masterVolume=clamp(Number(settings.masterVolume),0,1);
       settings.soundPack=settings.soundPack==="custom"?"custom":"synth";
-      return {...base,...parsed,xpNext:legacyXpForLevel(parsed?.level||1),purchased:normalizePurchased(parsed?.purchased||{}),heirlooms:(parsed?.heirlooms||[]).map(normalizeSavedItem),pets,elementProgress,prestige,unlocks,settings};
+      return {...base,...parsed,xpNext:legacyXpForLevel(parsed?.level||1),purchased:normalizePurchased(parsed?.purchased||{}),heirlooms:(parsed?.heirlooms||[]).map(normalizeSavedItem),pets,elementProgress,prestige,unlocks,settings,classUnlockFacts};
     }
     function load(){
       if(!saveService)return {meta:normalizeMeta(defaultMeta()),source:"new",recovered:false,error:null};

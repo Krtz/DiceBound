@@ -1,4 +1,11 @@
-# Unreleased — Beta 0.6.3.0
+# Unreleased — Beta 0.6.3.1
+
+## Class progression, Slime borrowing and ordinary gear (#96, #104, #87)
+- Revised Pokémon Trainer, Rogue, Merchant, Slime and Vampire unlock progression with persistent independent career prerequisites.
+- Added future career hooks for 100 qualifying Mana-spender casts (Invoker) and the Board 4 miniboss (Dragoon).
+- Slime and Slime Rouge may borrow class-owned Powerups only from classes the career has actually unlocked; Slime Rouge still enforces its mechanical compatibility rules.
+- Ordinary generated gear now uses neutral slot names and equal-weight slot-eligible affixes instead of class-biased names/prefixes.
+
 
 ## Continue active runs (#35)
 - DiceBound now checkpoints each completed road state and offers **Continue Run** at camp after a restart.
