@@ -70,3 +70,26 @@ jobs:
           path: 0631-action.log
           if-no-files-found: error
           retention-days: 2
+
+      - name: Upload patched source preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dicebound-0631-patched-preview
+          path: |
+            runtime/js/dicebound.js
+            runtime/js/classes/registry.js
+            runtime/js/core/state.js
+            runtime/js/items/equipment.js
+            runtime/js/progression/class-unlock-rules.js
+            runtime/js/powerups/borrowing.js
+            runtime/js/module-manifest.json
+            runtime/js/version.js
+            runtime/index.html
+            runtime/PATCH_NOTES.md
+            wrapper-source/config/project.json
+            wrapper-source/wrappers/webview2/native-go/main.go
+            tools/test_0631_progression_slime_gear.js
+            tools/test_class_registry.js
+          if-no-files-found: warn
+          retention-days: 2
