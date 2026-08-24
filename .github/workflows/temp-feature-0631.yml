@@ -67,7 +67,7 @@ jobs:
           python tools/validate_runtime_architecture.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Commit only real feature source and tests
+      - name: Commit verified source to staging branch
         if: steps.materialized.outputs.needed == 'true'
         shell: pwsh
         run: |
@@ -96,4 +96,4 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git commit -m "feat: implement 0.6.3.1 progression slime and gear rules"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git push origin HEAD:feat/0.6.3.1-progression-slime-gear-browser
+          git push --force-with-lease origin HEAD:refs/heads/materialized-0631-progression-slime-gear
