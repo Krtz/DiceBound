@@ -1,0 +1,44 @@
+name: Temporary geartodo consolidation
+
+on:
+  push:
+    branches:
+      - docs/geartodo-consolidation
+
+permissions:
+  contents: write
+
+jobs:
+  consolidate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/geartodo-consolidation
+          fetch-depth: 0
+      - name: Consolidate source pools into slot lists
+        run: python tools/tmp_consolidate_geartodo.py
+      - name: Remove temporary tooling
+        run: |
+          rm tools/tmp_consolidate_geartodo.py
+          rm .github/workflows/tmp-geartodo-consolidation.yml
+      - name: Validate consolidated catalogue
+        run: |
+          test ! -e geartodo/source-inspired-loot-expansion.md
+          test ! -e geartodo/runescape-weapon-expansion.md
+          test ! -e geartodo/runescape-quest-fun-oddity-weapons.md
+          grep -q '^## ' geartodo/weapon.md
+          grep -q '^## ' geartodo/offhand.md
+          grep -q '^## ' geartodo/gloves.md
+          grep -q '^## ' geartodo/belt.md
+          ! grep -R 'source-inspired-loot-expansion.md is an additional' geartodo/README.md
+      - name: Commit consolidated catalogue
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A geartodo tools/tmp_consolidate_geartodo.py .github/workflows/tmp-geartodo-consolidation.yml
+          git status --short
+          git commit -m 'docs: consolidate geartodo into slot catalogues'
+          git push origin HEAD:docs/geartodo-consolidation
