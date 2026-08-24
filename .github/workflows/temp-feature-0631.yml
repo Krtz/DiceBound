@@ -1,6 +1,9 @@
 name: Temporary 0.6.3.1 feature source commit
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - feat/0.6.3.1-progression-slime-gear-browser
@@ -20,12 +23,25 @@ jobs:
           ref: feat/0.6.3.1-progression-slime-gear-browser
           fetch-depth: 0
 
+      - name: Detect whether source is already materialized
+        id: materialized
+        shell: pwsh
+        run: |
+          if (Test-Path 'runtime/js/progression/class-unlock-rules.js') {
+            "needed=false" >> $env:GITHUB_OUTPUT
+            Write-Host "0.6.3.1 source is already materialized; temporary committer will skip."
+          } else {
+            "needed=true" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Set up Python
+        if: steps.materialized.outputs.needed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Materialize verified 0.6.3.1 source
+        if: steps.materialized.outputs.needed == 'true'
         shell: pwsh
         run: |
           python tools/patch_0631_progression_slime_gear.py
@@ -38,7 +54,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.3.1 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_0631_progression_slime_gear.js
@@ -53,6 +68,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Commit only real feature source and tests
+        if: steps.materialized.outputs.needed == 'true'
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
