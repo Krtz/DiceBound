@@ -20,14 +20,20 @@ for marker in [
     "steps.release.outputs.notes_path",
     "github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))",
     "tools/write_distribution_manifest.py",
+    "DICEBOUND_RELEASE_TOKEN",
+    "GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}",
+    "gh api --method PUT",
+    "contents/$manifestPath",
 ]:
     assert marker in source, f"generic release workflow is missing {marker!r}"
 
 assert source.count("workflow_dispatch:") == 1
 assert source.count("pull_request:") == 1
-assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 2
+assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 3
+assert source.count("secrets.DICEBOUND_RELEASE_TOKEN") == 2
 assert "paths-ignore:" in source and "distribution/latest.json" in source
+assert "git push origin" not in source, "protected main must not be updated with the default checkout token"
 assert "release/beta-" not in source
 assert ".release/beta-" not in source
 
-print("Generic release workflow source PASS: Version/Channel-derived PR validation, main-push publication, manual fallback and distribution path")
+print("Generic release workflow source PASS: Version/Channel-derived PR validation, protected-main publication credential, release asset verification and Contents-API distribution update")
