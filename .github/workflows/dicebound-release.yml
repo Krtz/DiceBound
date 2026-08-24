@@ -53,6 +53,16 @@ jobs:
             --github-output $env:GITHUB_OUTPUT
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Require protected-main release credential
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+        shell: pwsh
+        env:
+          DICEBOUND_RELEASE_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:DICEBOUND_RELEASE_TOKEN)) {
+            throw "DICEBOUND_RELEASE_TOKEN is required to advance distribution/latest.json on protected main."
+          }
+
       - name: Enforce unique four-component PR version
         if: github.event_name == 'pull_request'
         shell: pwsh
@@ -157,6 +167,8 @@ jobs:
       - name: Point launcher manifest at verified release
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}
         run: |
           python tools/write_distribution_manifest.py `
             --release-metadata wrapper-source/release/release-metadata.json `
@@ -171,9 +183,15 @@ jobs:
             --distribution distribution/latest.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          git add distribution/latest.json
-          git diff --cached --quiet
-          if ($LASTEXITCODE -ne 0) {
-            git commit -m "distribution: point launcher at ${{ steps.release.outputs.version }}"
-            git push origin "HEAD:main"
-          }
+          $manifestPath = "distribution/latest.json"
+          $current = gh api "repos/Krtz/DiceBound/contents/$manifestPath?ref=main" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $encoded = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path $manifestPath)))
+          $payload = @{
+            message = "distribution: point launcher at ${{ steps.release.outputs.version }}"
+            content = $encoded
+            sha = $current.sha
+            branch = "main"
+          } | ConvertTo-Json -Compress
+          $payload | gh api --method PUT "repos/Krtz/DiceBound/contents/$manifestPath" --input - *> $null
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
