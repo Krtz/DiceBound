@@ -2567,7 +2567,7 @@
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};
     return (spec.requires||[]).every(req=>!req.startsWith("ultimate:")&&caps.has(req));
   }
-  eligibleUpgrades=function(filter=()=>true){return upgrades.filter(u=>{let classOk=(!u.classId&&!u.classIds)||u.classId===player.classId||(u.classIds||[]).includes(player.classId);if(classIdentityActive("slime")&&!classOk){const owners=[u.classId,...(u.classIds||[])].filter(Boolean),secretOwner=owners.some(id=>CLASSES[id]?.secret),tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));if(owners.length&&!secretOwner&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps))classOk=true;}return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});};
+  eligibleUpgrades=function(filter=()=>true){return upgrades.filter(u=>{let classOk=(!u.classId&&!u.classIds)||u.classId===player.classId||(u.classIds||[]).includes(player.classId);if(classIdentityActive("slime")&&!classOk){const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));if(window.DiceboundPowerupBorrowing.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps))classOk=true;}return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});};
 
   // ---- core class identity hooks --------------------------------------------
   const effectiveDodgeChanceV13=effectiveDodgeChance;
@@ -3027,11 +3027,11 @@
   weightedUpgrade=function(pool){const weighted=pool.map(up=>{let weight=rarityInfo[up.rarity].weight,rawLuck=Math.max(0,player.luck||0),luck=1-Math.exp(-rawLuck*.72),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1);if(up.rarity==="common")weight*=Math.max(.38,1-luck*.22-depth*.025);if(up.rarity==="uncommon")weight*=1+luck*.18+depth*.035;if(up.rarity==="rare")weight=(weight+Math.min(1.4,player.level*.045)+depth*.20)*(1+luck*.72);if(up.rarity==="epic")weight=(weight+Math.min(.35,player.level*.010)+depth*.055)*(1+luck*1.05);if(up.rarity==="legendary")weight=(weight+Math.min(.035,player.level*.0008)+depth*.006)*(1+luck*1.40);return {up,weight};});const total=weighted.reduce((a,b)=>a+b.weight,0);let roll=random()*total;for(const entry of weighted){roll-=entry.weight;if(roll<=0)return entry.up;}return weighted[weighted.length-1].up;};
 
   function v15SafeClassId(id){return CLASSES[id]?id:"ranger";}
-  function v15AffixForClass(R,pool,slot,classId){const tags=new Set(CLASSES[v15SafeClassId(classId)]?.tags||[]),eligible=pool.filter(a=>a.slots.includes(slot)),weighted=[];eligible.forEach(a=>{let n=3;if((a.tags||[]).some(t=>tags.has(t)))n+=2;for(let i=0;i<n;i++)weighted.push(a);});return v14SPick(R,weighted.length?weighted:eligible);}
-  function v15BaseNameForClass(slot,R,classId){const source=gearNames[slot],names=(source&&source[classId])||source;return Array.isArray(names)&&names.length?v14SPick(R,names):SLOT_LABELS[slot];}
+  function v15AffixForClass(R,pool,slot){return window.DiceboundEquipment.pickOrdinaryAffix(R,pool,slot);}
+  function v15BaseNameForClass(slot){return window.DiceboundEquipment.ordinaryBaseName(slot);}
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
   function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
-  function v15GenerateEquipmentFromSeedCode(code){const parsed=v15ParseSeedCode(code);if(!parsed)return null;const {rarity,slot,classId,qualityBoost,core}=parsed,R=v14SeedRng(code),range=V14_RARITY_BUDGETS[rarity],budget=v14SInt(R,range[0],range[1])+qualityBoost,maxTier=V14_RARITY_AFFIX_TIER[rarity],bonuses={};let spent=0,elementReserve=0,element=null;if(slot==="weapon"&&R()<elementChanceForRarity(rarity)){elementReserve=rarity==="common"?4:5;element=v14SPick(R,ELEMENT_KEYS);}const available=Math.max(4,budget-elementReserve),prefix=v15AffixForClass(R,V14_PREFIXES,slot,classId),prefixTier=Math.max(1,Math.min(maxTier,v14SInt(R,Math.max(1,maxTier-1),maxTier)));if(prefix&&prefix.cost(prefixTier)<=available){prefix.apply(bonuses,prefixTier);spent+=prefix.cost(prefixTier);}let suffix=null,suffixTier=0;const suffixChance={common:.40,uncommon:.68,rare:.94,epic:1,legendary:1}[rarity];if(R()<suffixChance){suffix=v15AffixForClass(R,V14_SUFFIXES,slot,classId);suffixTier=Math.max(1,Math.min(maxTier,v14SInt(R,Math.max(1,maxTier-1),maxTier)));while(suffixTier>1&&suffix&&spent+suffix.cost(suffixTier)>available-4)suffixTier--;if(suffix&&spent+suffix.cost(suffixTier)<=available){suffix.apply(bonuses,suffixTier);spent+=suffix.cost(suffixTier);}else suffix=null;}const item={id:`gear_${v14HashSeed(code).toString(36)}_${core}`,seed:code,seedCode:code,itemPower:budget,slot,rarity,icon:gearIcon(slot),name:"",bonuses,prefix:prefix?prefix.names[prefixTier-1]:null,suffix:suffix?suffix.names[suffixTier-1]:null,affixTier:prefixTier,suffixTier,elementPowerCost:elementReserve};spent+=v14SpendBase(item,R,Math.max(0,available-spent));if(element){item.element=element;spent+=elementReserve;}item.spentPower=Math.min(budget,spent);const base=v15BaseNameForClass(slot,R,classId);item.name=`${item.prefix?item.prefix+" ":""}${base}${item.suffix?" "+item.suffix:""}`;return item;}
+  function v15GenerateEquipmentFromSeedCode(code){const parsed=v15ParseSeedCode(code);if(!parsed)return null;const {rarity,slot,classId,qualityBoost,core}=parsed,R=v14SeedRng(code),range=V14_RARITY_BUDGETS[rarity],budget=v14SInt(R,range[0],range[1])+qualityBoost,maxTier=V14_RARITY_AFFIX_TIER[rarity],bonuses={};let spent=0,elementReserve=0,element=null;if(slot==="weapon"&&R()<elementChanceForRarity(rarity)){elementReserve=rarity==="common"?4:5;element=v14SPick(R,ELEMENT_KEYS);}const available=Math.max(4,budget-elementReserve),prefix=v15AffixForClass(R,V14_PREFIXES,slot),prefixTier=Math.max(1,Math.min(maxTier,v14SInt(R,Math.max(1,maxTier-1),maxTier)));if(prefix&&prefix.cost(prefixTier)<=available){prefix.apply(bonuses,prefixTier);spent+=prefix.cost(prefixTier);}let suffix=null,suffixTier=0;const suffixChance={common:.40,uncommon:.68,rare:.94,epic:1,legendary:1}[rarity];if(R()<suffixChance){suffix=v15AffixForClass(R,V14_SUFFIXES,slot);suffixTier=Math.max(1,Math.min(maxTier,v14SInt(R,Math.max(1,maxTier-1),maxTier)));while(suffixTier>1&&suffix&&spent+suffix.cost(suffixTier)>available-4)suffixTier--;if(suffix&&spent+suffix.cost(suffixTier)<=available){suffix.apply(bonuses,suffixTier);spent+=suffix.cost(suffixTier);}else suffix=null;}const item={id:`gear_${v14HashSeed(code).toString(36)}_${core}`,seed:code,seedCode:code,itemPower:budget,slot,rarity,icon:gearIcon(slot),name:"",bonuses,prefix:prefix?prefix.names[prefixTier-1]:null,suffix:suffix?suffix.names[suffixTier-1]:null,affixTier:prefixTier,suffixTier,elementPowerCost:elementReserve};spent+=v14SpendBase(item,R,Math.max(0,available-spent));if(element){item.element=element;spent+=elementReserve;}item.spentPower=Math.min(budget,spent);const base=v15BaseNameForClass(slot);item.name=`${item.prefix?item.prefix+" ":""}${base}${item.suffix?" "+item.suffix:""}`;return item;}
   generateEquipment=function(forceRarity=null,forcedSlot=null){const rarity=forceRarity||rollGearRarity(0);if(!V14_RARITY_BUDGETS[rarity])return generateEquipmentV13(forceRarity,forcedSlot);const slot=forcedSlot||pick(EQUIPMENT_SLOTS),classId=player.classId,qualityBoost=Math.min(8,Math.floor((boardLevel-1)*1.5+player.position/32)),core=`${Math.floor(random()*0xffffffff).toString(36)}${Math.floor(random()*0xffffffff).toString(36)}`,code=v15SeedCode(rarity,slot,classId,qualityBoost,core);return v15GenerateEquipmentFromSeedCode(code);};
 
   const gearPowerScoreV15Visible=gearPowerScorePreV14;
@@ -6314,7 +6314,8 @@ function buildDiceboundHumanHarness235(){
   /* SLIME ROUGE 3.1.8 — real random identity + real borrowed ultimate ------- */
   function v318SlimeRougeDonorPool(){return Object.values(CLASSES).filter(c=>c.id!=='slime'&&c.id!=='slimerouge'&&isClassUnlocked(c.id));}
   function v318SlimeRougePowerCompatible(u){
-    if(!u)return false;const owners=[u.classId,...(u.classIds||[])].filter(Boolean);
+    if(!u)return false;const owners=[u.classId,...(u.classIds||[])].filter(Boolean),unlocked=['slimerouge',...Object.keys(CLASSES).filter(id=>id!=='slimerouge'&&isClassUnlocked(id))];
+    if(!window.DiceboundPowerupBorrowing.ownershipAllowed(u,'slimerouge',unlocked))return false;
     if(!owners.length||owners.includes('slimerouge'))return true;
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};const caps=slimeRougeCapabilities();
     return (spec.requires||[]).every(req=>req.startsWith('ultimate:')?player.slimeRougeUltimateClass===req.slice(9):caps.has(req));
@@ -9590,5 +9591,56 @@ function buildDiceboundHumanHarness235(){
   setTimeout(dbRunRefreshControls,0);
 
   window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),runCheckpoint:()=>DB_RUN_CHECKPOINT.diagnostics(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
+
+
+
+  /* BETA 0.6.3.1 — class progression, Slime ownership, neutral ordinary gear */
+  const db0631Rules=window.DiceboundClassUnlockRules;
+  if(!db0631Rules||!window.DiceboundPowerupBorrowing||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Beta 0.6.3.1 rule modules must load before dicebound.js');
+  const db0631TargetIds=new Set(db0631Rules.targetIds);
+  function db0631Facts(){
+    meta.classUnlockFacts=db0631Rules.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;
+  }
+  const db0631IsClassUnlockedBase=isClassUnlocked;
+  function db0631Context(includeUnlocked=false){
+    const stats=ensureAlphaMeta(),facts=db0631Facts(),petIds=Object.keys(PETS),petLevels={};petIds.forEach(id=>petLevels[id]=meta.pets?.[id]?.level||1);
+    const ctx={facts,petIds,petLevels,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(player.gold)||0):0),unlockedClassIds:[]};
+    if(includeUnlocked)ctx.unlockedClassIds=Object.keys(CLASSES).filter(id=>id!=='slime'&&db0631EligibleWithoutSlime(id));
+    return ctx;
+  }
+  function db0631EligibleWithoutSlime(id){
+    if(meta.unlocks?.[id])return true;if(!CLASSES[id])return false;
+    if(db0631TargetIds.has(id)&&id!=='slime'){const result=db0631Rules.isEligible(id,db0631Context(false));if(result!==null)return result;}
+    return db0631IsClassUnlockedBase(id);
+  }
+  function db0631RuleEligible(id){
+    if(meta.unlocks?.[id])return true;if(!CLASSES[id])return false;
+    const result=db0631Rules.isEligible(id,db0631Context(id==='slime'));return result===null?db0631IsClassUnlockedBase(id):result;
+  }
+  const db0631BaseClassUnlockedBase=baseClassUnlocked;
+  baseClassUnlocked=function(id){if(db0631TargetIds.has(id)&&CLASSES[id])return db0631RuleEligible(id);return db0631BaseClassUnlockedBase(id);};
+  isClassUnlocked=function(id){if(db0631TargetIds.has(id)&&CLASSES[id])return db0631RuleEligible(id);return db0631IsClassUnlockedBase(id);};
+  const db0631UnlockClassBase=unlockClass;
+  unlockClass=function(id){if(db0631TargetIds.has(id)&&CLASSES[id]&&!db0631RuleEligible(id))return false;return db0631UnlockClassBase(id);};
+  function db0631RecordObservedProgress(){
+    if(!gameStarted)return false;const stats=ensureAlphaMeta(),facts=db0631Facts(),gold=Math.max(Number(stats.highestGold)||0,Number(player.gold)||0),life=Math.max(Number(facts.maxLifesteal)||0,Number(player.lifeSteal)||0);let changed=false;
+    if(gold!==(Number(stats.highestGold)||0)){stats.highestGold=gold;changed=true;}if(life!==(Number(facts.maxLifesteal)||0)){facts.maxLifesteal=life;changed=true;}return changed;
+  }
+  const db0631CheckDynamicBase=checkDynamicClassUnlocks;
+  checkDynamicClassUnlocks=function(...args){const changed=db0631RecordObservedProgress(),result=db0631CheckDynamicBase.apply(this,args);['pokemontrainer','rogue','merchant','slime','vampire','invoker','dragoon'].forEach(id=>{if(CLASSES[id]&&db0631RuleEligible(id))unlockClass(id);});if(changed)saveMeta();return result;};
+  const db0631WinCombatBase=winCombat;
+  winCombat=async function(...args){
+    const defeated=currentEncounterLead||currentEnemy,board=boardLevel,classId=player.classId,isFinal=!!defeated?.finalBoss||v16CombatKind==='final'||tiles[currentEnemyTile]?.type==='boss';
+    meta.classUnlockFacts=db0631Rules.recordCombatFacts(db0631Facts(),{board,classId,miniBoss:!!defeated?.miniBoss,finalBoss:isFinal,merchantBoss:!!defeated?.merchantBoss,mode:hellMode?'hell':nightmareMode?'nightmare':'normal'});saveMeta();
+    const result=await db0631WinCombatBase.apply(this,args);checkDynamicClassUnlocks();saveMeta();return result;
+  };
+  const db0631OccultSpellAttackBase=occultSpellAttack;
+  occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent){meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};
+  if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
+  if(CLASSES.rogue)CLASSES.rogue.unlock='Hold 5,000 gold at one time and defeat the Board 3 miniboss';
+  if(CLASSES.merchant)CLASSES.merchant.unlock='Defeat the Road Merchant secret boss once';
+  if(CLASSES.slime)CLASSES.slime.unlock='Unlock 10 classes in total';
+  if(CLASSES.vampire)CLASSES.vampire.unlock='Exceed 100% Lifesteal and defeat the Board 3 final boss';
+  checkDynamicClassUnlocks();
 
 })();

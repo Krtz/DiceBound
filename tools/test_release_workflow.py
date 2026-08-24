@@ -18,14 +18,16 @@ for marker in [
     "steps.release.outputs.artifact_label",
     "steps.release.outputs.spec_path",
     "steps.release.outputs.notes_path",
-    "inputs.publish && github.ref == 'refs/heads/main'",
+    "github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))",
     "tools/write_distribution_manifest.py",
 ]:
     assert marker in source, f"generic release workflow is missing {marker!r}"
 
 assert source.count("workflow_dispatch:") == 1
 assert source.count("pull_request:") == 1
+assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 2
+assert "paths-ignore:" in source and "distribution/latest.json" in source
 assert "release/beta-" not in source
 assert ".release/beta-" not in source
 
-print("Generic release workflow source PASS: Version/Channel-derived build, artifact, tag, notes and distribution path")
+print("Generic release workflow source PASS: Version/Channel-derived PR validation, main-push publication, manual fallback and distribution path")

@@ -16,6 +16,7 @@
     "runtime-services",
     "combat-effective-stats",
     "classes-registry",
+    "progression-class-unlock-rules",
     "pets-registry",
     "board-registry",
     "combat-enemies",
@@ -26,6 +27,7 @@
     "artifacts",
     "loot",
     "powerup-registry",
+    "powerup-borrowing",
     "dicebound-monolith"
   ],
   "modules": [
@@ -35,7 +37,9 @@
       "domain": "core/version-identity",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundVersion"]
+      "provides": [
+        "DiceboundVersion"
+      ]
     },
     {
       "id": "assets",
@@ -43,7 +47,9 @@
       "domain": "assets",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundAssets"]
+      "provides": [
+        "DiceboundAssets"
+      ]
     },
     {
       "id": "rng",
@@ -51,15 +57,21 @@
       "domain": "core/rng",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundRng"]
+      "provides": [
+        "DiceboundRng"
+      ]
     },
     {
       "id": "native-http-host",
       "path": "js/native-http-host.js",
       "domain": "platform/native-adapter",
       "status": "extracted",
-      "requires": ["version"],
-      "provides": ["DiceboundHost"],
+      "requires": [
+        "version"
+      ],
+      "provides": [
+        "DiceboundHost"
+      ],
       "conditionalProvides": true
     },
     {
@@ -67,48 +79,79 @@
       "path": "js/wrapper-contract.js",
       "domain": "platform/contract",
       "status": "extracted",
-      "requires": ["version", "native-http-host"],
-      "provides": ["DiceboundWrapperContract", "DiceboundWrapper"]
+      "requires": [
+        "version",
+        "native-http-host"
+      ],
+      "provides": [
+        "DiceboundWrapperContract",
+        "DiceboundWrapper"
+      ]
     },
     {
       "id": "platform",
       "path": "js/platform.js",
       "domain": "platform",
       "status": "extracted",
-      "requires": ["version", "wrapper-contract"],
-      "provides": ["DiceboundPlatform"]
+      "requires": [
+        "version",
+        "wrapper-contract"
+      ],
+      "provides": [
+        "DiceboundPlatform"
+      ]
     },
     {
       "id": "storage",
       "path": "js/storage.js",
       "domain": "save/storage",
       "status": "extracted",
-      "requires": ["wrapper-contract"],
-      "provides": ["DiceboundStorage"]
+      "requires": [
+        "wrapper-contract"
+      ],
+      "provides": [
+        "DiceboundStorage"
+      ]
     },
     {
       "id": "save-system",
       "path": "js/save-system.js",
       "domain": "save",
       "status": "extracted",
-      "requires": ["version", "storage", "platform"],
-      "provides": ["DiceboundSave"]
+      "requires": [
+        "version",
+        "storage",
+        "platform"
+      ],
+      "provides": [
+        "DiceboundSave"
+      ]
     },
     {
       "id": "core-state",
       "path": "js/core/state.js",
       "domain": "core/state",
       "status": "extracted",
-      "requires": ["save-system"],
-      "provides": ["DiceboundCoreState"]
+      "requires": [
+        "save-system"
+      ],
+      "provides": [
+        "DiceboundCoreState"
+      ]
     },
     {
       "id": "run-checkpoint",
       "path": "js/core/run-checkpoint.js",
       "domain": "core/active-run-checkpoint",
       "status": "extracted",
-      "requires": ["version", "rng", "save-system"],
-      "provides": ["DiceboundRunCheckpoint"]
+      "requires": [
+        "version",
+        "rng",
+        "save-system"
+      ],
+      "provides": [
+        "DiceboundRunCheckpoint"
+      ]
     },
     {
       "id": "runtime-services",
@@ -116,7 +159,9 @@
       "domain": "core/runtime-services",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundRuntimeServices"]
+      "provides": [
+        "DiceboundRuntimeServices"
+      ]
     },
     {
       "id": "combat-effective-stats",
@@ -124,7 +169,9 @@
       "domain": "combat/effective-stats-and-descriptions",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundEffectiveStats"]
+      "provides": [
+        "DiceboundEffectiveStats"
+      ]
     },
     {
       "id": "classes-registry",
@@ -132,7 +179,9 @@
       "domain": "classes/registry",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundClasses"]
+      "provides": [
+        "DiceboundClasses"
+      ]
     },
     {
       "id": "pets-registry",
@@ -140,7 +189,9 @@
       "domain": "pets/registry",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundPets"]
+      "provides": [
+        "DiceboundPets"
+      ]
     },
     {
       "id": "board-registry",
@@ -148,7 +199,9 @@
       "domain": "board/registry",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundBoards"]
+      "provides": [
+        "DiceboundBoards"
+      ]
     },
     {
       "id": "combat-enemies",
@@ -156,7 +209,9 @@
       "domain": "combat/enemies",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundEnemies"]
+      "provides": [
+        "DiceboundEnemies"
+      ]
     },
     {
       "id": "item-rarities",
@@ -164,15 +219,21 @@
       "domain": "items/rarities",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundRarities"]
+      "provides": [
+        "DiceboundRarities"
+      ]
     },
     {
       "id": "item-equipment",
       "path": "js/items/equipment.js",
       "domain": "items/equipment-registry",
       "status": "extracted",
-      "requires": ["item-rarities"],
-      "provides": ["DiceboundEquipment"]
+      "requires": [
+        "item-rarities"
+      ],
+      "provides": [
+        "DiceboundEquipment"
+      ]
     },
     {
       "id": "progression-talents",
@@ -180,7 +241,9 @@
       "domain": "progression/talents",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundTalents"]
+      "provides": [
+        "DiceboundTalents"
+      ]
     },
     {
       "id": "progression-achievements",
@@ -188,7 +251,9 @@
       "domain": "progression/achievements-registry",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundAchievements"]
+      "provides": [
+        "DiceboundAchievements"
+      ]
     },
     {
       "id": "artifacts",
@@ -196,7 +261,9 @@
       "domain": "items/artifacts",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundArtifacts"]
+      "provides": [
+        "DiceboundArtifacts"
+      ]
     },
     {
       "id": "loot",
@@ -204,22 +271,73 @@
       "domain": "items/loot",
       "status": "extracted",
       "requires": [],
-      "provides": ["DiceboundLoot"]
+      "provides": [
+        "DiceboundLoot"
+      ]
     },
     {
       "id": "powerup-registry",
       "path": "js/powerups/registry.js",
       "domain": "powerups/registry-and-effects",
       "status": "extracted",
-      "requires": ["runtime-services"],
-      "provides": ["DiceboundPowerupRegistry"]
+      "requires": [
+        "runtime-services"
+      ],
+      "provides": [
+        "DiceboundPowerupRegistry"
+      ]
+    },
+    {
+      "id": "progression-class-unlock-rules",
+      "path": "js/progression/class-unlock-rules.js",
+      "domain": "progression/class-unlock-rules",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundClassUnlockRules"
+      ]
+    },
+    {
+      "id": "powerup-borrowing",
+      "path": "js/powerups/borrowing.js",
+      "domain": "powerups/borrowing-eligibility",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundPowerupBorrowing"
+      ]
     },
     {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
       "status": "monolith",
-      "requires": ["version", "assets", "rng", "wrapper-contract", "platform", "storage", "save-system", "run-checkpoint", "core-state", "runtime-services", "combat-effective-stats", "classes-registry", "pets-registry", "board-registry", "combat-enemies", "item-rarities", "item-equipment", "progression-talents", "progression-achievements", "artifacts", "loot", "powerup-registry"],
+      "requires": [
+        "version",
+        "assets",
+        "rng",
+        "wrapper-contract",
+        "platform",
+        "storage",
+        "save-system",
+        "run-checkpoint",
+        "core-state",
+        "runtime-services",
+        "combat-effective-stats",
+        "classes-registry",
+        "pets-registry",
+        "board-registry",
+        "combat-enemies",
+        "item-rarities",
+        "item-equipment",
+        "progression-talents",
+        "progression-achievements",
+        "artifacts",
+        "loot",
+        "powerup-registry",
+        "progression-class-unlock-rules",
+        "powerup-borrowing"
+      ],
       "provides": []
     }
   ],

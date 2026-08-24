@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.3.0",
+  "version": "0.6.3.1",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -23,6 +23,7 @@
     "js/core/runtime-services.js",
     "js/combat/effective-stats.js",
     "js/classes/registry.js",
+    "js/progression/class-unlock-rules.js",
     "js/pets/registry.js",
     "js/board/registry.js",
     "js/combat/enemies.js",
@@ -33,6 +34,7 @@
     "js/items/artifacts.js",
     "js/items/loot.js",
     "js/powerups/registry.js",
+    "js/powerups/borrowing.js",
     "js/dicebound.js"
   ],
   "gameBundle": "js/dicebound.js",

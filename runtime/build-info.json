@@ -1,15 +1,15 @@
 {
   "assetCount": 301,
-  "browserContentHash": "ddb39477f9aaf86ad038c88885267455164c362e9a5a451ec46011ba500e895f",
-  "buildId": "dicebound-0.6.3.0-dev-ddb39477f9aaf86a",
+  "browserContentHash": "e46046522cd3aa6499ae5be7b42a9c4eeebfe19dbdea08487aa4a61c1d1696dc",
+  "buildId": "dicebound-0.6.3.1-dev-e46046522cd3aa64",
   "channel": "Beta",
-  "contentFileCount": 328,
+  "contentFileCount": 330,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.3.0.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.3.1.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -25,6 +25,7 @@
     "js/core/runtime-services.js",
     "js/combat/effective-stats.js",
     "js/classes/registry.js",
+    "js/progression/class-unlock-rules.js",
     "js/pets/registry.js",
     "js/board/registry.js",
     "js/combat/enemies.js",
@@ -35,12 +36,13 @@
     "js/items/artifacts.js",
     "js/items/loot.js",
     "js/powerups/registry.js",
+    "js/powerups/borrowing.js",
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "ddb39477f9aaf86ad038c88885267455164c362e9a5a451ec46011ba500e895f",
+  "sourceHash": "e46046522cd3aa6499ae5be7b42a9c4eeebfe19dbdea08487aa4a61c1d1696dc",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads",
-  "version": "0.6.3.0",
+  "version": "0.6.3.1",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
