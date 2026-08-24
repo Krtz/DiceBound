@@ -40,7 +40,9 @@ jobs:
           python tools/patch_0631_progression_slime_gear.py *>> $diag
           $patchExit = $LASTEXITCODE
           if ($patchExit -eq 0) { python tools/patch_0631_metadata.py *>> $diag; $patchExit = $LASTEXITCODE }
+          if ($patchExit -eq 0) { python tools/patch_0631_changelog.py *>> $diag; $patchExit = $LASTEXITCODE }
           if ($patchExit -eq 0) { node tools/refresh_0631_snapshots.js *>> $diag; $patchExit = $LASTEXITCODE }
+          if ($patchExit -eq 0) { python tools/refresh_runtime_manifest.py --version 0.6.3.1 --channel Beta --development-state Unreleased *>> $diag; $patchExit = $LASTEXITCODE }
           "PATCH_EXIT=$patchExit" | Add-Content -Path $diag
           if ($patchExit -eq 0) {
             "=== VALIDATION ===" | Add-Content -Path $diag
@@ -65,6 +67,8 @@ jobs:
               if ($LASTEXITCODE -ne 0) { break }
             }
           }
+          "=== STATUS ===" | Add-Content -Path $diag
+          git status --short *>> $diag
           Copy-Item $diag "$env:GITHUB_WORKSPACE\0631-action.log"
 
       - name: Upload diagnostic log
@@ -82,6 +86,9 @@ jobs:
         with:
           name: dicebound-0631-patched-preview
           path: |
+            CHANGELOG.md
+            runtime/build-info.json
+            runtime/build-manifest.json
             runtime/js/dicebound.js
             runtime/js/classes/registry.js
             runtime/js/core/state.js
