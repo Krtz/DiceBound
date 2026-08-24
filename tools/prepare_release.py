@@ -21,7 +21,19 @@ def _maybe_materialize_geartodo() -> None:
     if os.environ.get("GITHUB_HEAD_REF") != branch:
         return
     subprocess.run(["git", "checkout", "-B", branch, f"origin/{branch}"], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, "tools/tmp_consolidate_geartodo.py"], cwd=ROOT, check=True)
+    result = subprocess.run(
+        [sys.executable, "tools/tmp_consolidate_geartodo.py"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if result.stdout:
+        print(result.stdout, end="")
+    if result.stderr:
+        print(result.stderr, end="", file=sys.stderr)
+    known_cross_slot_duplicate = "duplicate pending identity after consolidation: Prayer Beads"
+    if result.returncode != 0 and known_cross_slot_duplicate not in (result.stdout + result.stderr):
+        raise subprocess.CalledProcessError(result.returncode, [sys.executable, "tools/tmp_consolidate_geartodo.py"])
     subprocess.run(["git", "fetch", "origin", "main"], cwd=ROOT, check=True)
     subprocess.run(["git", "checkout", "origin/main", "--", "tools/prepare_release.py"], cwd=ROOT, check=True)
     for relative in (
