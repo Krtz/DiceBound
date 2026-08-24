@@ -18,6 +18,7 @@ let classTest=fs.readFileSync(path.join(root,"tools/test_class_registry.js"),"ut
 classTest=classTest.replace(/assert\.equal\(Buffer\.byteLength\(serialized\),\s*\d+,\s*"canonical class registry byte snapshot drifted"\);/,`assert.equal(Buffer.byteLength(serialized), ${registry.bytes}, "canonical class registry byte snapshot drifted");`);
 classTest=classTest.replace(/crypto\.createHash\("sha256"\)\.update\(serialized\)\.digest\("hex"\),\s*"[0-9a-f]+",/,`crypto.createHash("sha256").update(serialized).digest("hex"),\n  "${registry.sha}",`);
 classTest=classTest.replace(/snapshot\(unlocks,\s*\d+,\s*"[0-9a-f]+",\s*"class unlock registry"\);/,`snapshot(unlocks, ${unlocks.bytes}, "${unlocks.sha}", "class unlock registry");`);
+classTest=classTest.replace('assert.deepEqual(unlocks.slime,{type:"unlockedClassCount",minimum:10});','assert.equal(unlocks.slime.type,"unlockedClassCount");\nassert.equal(unlocks.slime.minimum,10);');
 fs.writeFileSync(path.join(root,"tools/test_class_registry.js"),classTest);
 
 const stateContext=vm.createContext({window:{},console});
