@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/0.6.3.2-release-manifest-publish
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
