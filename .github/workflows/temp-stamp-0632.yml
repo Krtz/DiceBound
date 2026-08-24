@@ -1,0 +1,94 @@
+name: TEMP materialize Beta 0.6.3.2
+
+on:
+  push:
+    branches:
+      - fix/0.6.3.2-release-manifest-publish
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Stamp release notes and version
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          old = "## Unreleased — Beta 0.6.3.1\n"
+          new = """## Unreleased — Beta 0.6.3.2\n\n### Release pipeline reliability (#118)\n- Protected `main` remains protected while successful release publication can advance the permanent launcher manifest through a narrowly scoped maintainer credential.\n- Pull-request validation never uses the protected-main credential; ordinary GitHub Release creation continues to use the workflow token.\n- The final launcher-manifest update now uses the GitHub Contents API instead of a bot `git push` that repository rules reject.\n- Publish runs fail early when the protected-main credential is missing, and manifest-only commits remain excluded from recursive release runs.\n\n## Beta 0.6.3.1 — Development checkpoint\n"""
+          if old not in text:
+              raise SystemExit("CHANGELOG 0.6.3.1 heading not found")
+          changelog.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          notes = Path("runtime/PATCH_NOTES.md")
+          text = notes.read_text(encoding="utf-8")
+          old = "# Unreleased — Beta 0.6.3.1\n"
+          new = """# Unreleased — Beta 0.6.3.2\n\n## Release pipeline reliability (#118)\n- Release publication can now advance the launcher's verified `latest.json` pointer without weakening protected `main`.\n- The elevated release credential is restricted to the final post-validation manifest commit and is never used by pull-request validation.\n- The release workflow fails early if that credential is missing instead of publishing a release that the permanent launcher cannot discover.\n\n---\n\n# Beta 0.6.3.1 — Development checkpoint\n"""
+          if old not in text:
+              raise SystemExit("PATCH_NOTES 0.6.3.1 heading not found")
+          notes.write_text(text.replace(old, new, 1), encoding="utf-8")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/set_project_version.py --version 0.6.3.2 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.3.2 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/prepare_release.py --output-dir wrapper-source/release/generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.3.2 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_release_workflow.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_pr_version.py --base-ref origin/main
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --name-only
+
+      - name: Stage generated source files
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "dicebound-0632-source"
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          $files = @(
+            "CHANGELOG.md",
+            "runtime/PATCH_NOTES.md",
+            "runtime/build-info.json",
+            "runtime/build-manifest.json",
+            "runtime/index.html",
+            "runtime/js/version.js",
+            "wrapper-source/config/project.json",
+            "wrapper-source/wrappers/webview2/native-go/main.go"
+          )
+          foreach ($file in $files) {
+            $dest = Join-Path $out $file
+            New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null
+            Copy-Item $file $dest -Force
+          }
+          git diff --name-only | Set-Content (Join-Path $out "STAMPED_FILES.txt")
+
+      - name: Upload materialized source
+        uses: actions/upload-artifact@v4
+        with:
+          name: dicebound-0632-materialized-source
+          path: ${{ runner.temp }}/dicebound-0632-source
+          if-no-files-found: error
+          retention-days: 2
