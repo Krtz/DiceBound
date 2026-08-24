@@ -29,7 +29,22 @@ node tools/test_version_identity.js
 
 Player-facing changelog and patch-note prose remains authored content, but must mention the release identity represented by the release spec.
 
-The version-agnostic `.github/workflows/dicebound-release.yml` validates pull requests. Publication is a separate explicit `workflow_dispatch` choice; a PR version bump alone never republishes `distribution/latest.json`.
+The version-agnostic `.github/workflows/dicebound-release.yml` validates pull requests. A successful push to protected `main` automatically validates/builds and publishes the committed Version/Channel as a prerelease. `workflow_dispatch` remains available as a manual fallback and publishes only when its `publish` input is enabled.
+
+### Protected-main launcher-manifest credential
+
+The permanent launcher reads `https://raw.githubusercontent.com/Krtz/DiceBound/main/distribution/latest.json`, so release publication must keep that compatibility endpoint current without weakening `main` protection.
+
+Configure one repository Actions secret named `DICEBOUND_RELEASE_TOKEN`:
+
+- use a narrowly scoped token owned by a repository-admin/bypass-capable DiceBound maintainer;
+- grant repository access only to `Krtz/DiceBound` where possible;
+- grant only the repository Contents read/write permission needed for the manifest commit;
+- do not use this credential for pull-request validation or ordinary release creation.
+
+The workflow checks for this credential only on publish runs after code is already on `main`. Ordinary PR validation never receives/uses it. GitHub Release creation continues to use the workflow's normal `GITHUB_TOKEN`; the elevated credential is used only by the final Contents-API update of `distribution/latest.json` after the release asset has been built, published and verified.
+
+The manifest-only commit is excluded from the workflow's `push` trigger via `paths-ignore`, so advancing the launcher channel does not recursively publish the same release again.
 
 ## 3. Validate source
 
@@ -101,7 +116,7 @@ Do not commit generated release binaries to `main`.
 
 After publishing:
 
-- generate `distribution/latest.json` from `wrapper-source/release/release-metadata.json`, then reconcile both before committing:
+- generate `distribution/latest.json` from `wrapper-source/release/release-metadata.json`, then reconcile both before the workflow commits the manifest through the protected-main Contents API:
 
 ```text
 python tools/write_distribution_manifest.py --release-metadata wrapper-source/release/release-metadata.json --output distribution/latest.json --repository Krtz/DiceBound
