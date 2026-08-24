@@ -1,4 +1,4 @@
-name: Temporary 0.6.3.1 feature patch
+name: Temporary 0.6.3.1 feature patch diagnostic
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  patch-and-test:
+  diagnose-patch:
     runs-on: windows-2022
     steps:
       - name: Check out feature branch
@@ -25,28 +25,48 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Apply focused feature patch
-        run: python tools/patch_0631_progression_slime_gear.py
-
-      - name: Validate syntax and focused behavior
+      - name: Apply patch and capture diagnostics
+        id: diagnose
         shell: pwsh
+        continue-on-error: true
         run: |
-          git diff --check
-          node --check runtime/js/progression/class-unlock-rules.js
-          node --check runtime/js/powerups/borrowing.js
-          node --check runtime/js/items/equipment.js
-          node --check runtime/js/dicebound.js
-          node tools/test_0631_progression_slime_gear.js
-          node tools/test_class_registry.js
-          python tools/validate_version_identity.py
-          python tools/validate_runtime_architecture.py
+          $diag = Join-Path $env:RUNNER_TEMP '0631-action.log'
+          "DiceBound 0.6.3.1 patch diagnostic" | Set-Content -Path $diag -Encoding utf8
+          "Commit: $env:GITHUB_SHA" | Add-Content -Path $diag
+          "=== PATCH ===" | Add-Content -Path $diag
+          python tools/patch_0631_progression_slime_gear.py *>> $diag
+          $patchExit = $LASTEXITCODE
+          "PATCH_EXIT=$patchExit" | Add-Content -Path $diag
+          if ($patchExit -eq 0) {
+            "=== VALIDATION ===" | Add-Content -Path $diag
+            $commands = @(
+              'git diff --check',
+              'node --check runtime/js/progression/class-unlock-rules.js',
+              'node --check runtime/js/powerups/borrowing.js',
+              'node --check runtime/js/items/equipment.js',
+              'node --check runtime/js/dicebound.js',
+              'node tools/test_0631_progression_slime_gear.js',
+              'node tools/test_class_registry.js',
+              'python tools/validate_version_identity.py',
+              'python tools/validate_runtime_architecture.py'
+            )
+            foreach ($cmd in $commands) {
+              "> $cmd" | Add-Content -Path $diag
+              cmd /c $cmd *>> $diag
+              "EXIT=$LASTEXITCODE" | Add-Content -Path $diag
+              if ($LASTEXITCODE -ne 0) { break }
+            }
+          }
+          git reset --hard HEAD
+          git clean -fd
+          New-Item -ItemType Directory -Force -Path tools/diagnostics | Out-Null
+          Copy-Item $diag tools/diagnostics/0631-action.log
 
-      - name: Commit real source changes
+      - name: Commit diagnostic log
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add runtime wrapper-source tools/test_0631_progression_slime_gear.js
-          git status --short
-          git commit -m "feat: revise class progression Slime borrowing and ordinary gear"
+          git add tools/diagnostics/0631-action.log
+          git commit -m "chore: capture 0.6.3.1 patch diagnostics"
           git push origin HEAD:feat/0.6.3.1-progression-slime-gear-browser
