@@ -236,14 +236,6 @@ tags: rage, spiked
 eligibility: uncommon+
 intrinsic: +3 Attack, +2 Defense, +1 Thorns, -1% Dodge
 ---
-## Hunter Hood
-family: hood
-material: cloth, leather
-weight: light
-tags: ranger, hunting
-eligibility: uncommon+
-intrinsic: +2% Dodge, +1% Crit
----
 ## Iron Full Helm
 family: full-helm
 material: iron

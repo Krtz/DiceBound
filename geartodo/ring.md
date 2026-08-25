@@ -116,14 +116,6 @@ tags: lion, knight
 eligibility: common+
 intrinsic: +1 Defense, +1 Attack
 ---
-## Mood Ring
-family: ring
-material: metal, glass
-weight: light
-tags: clown, weird
-eligibility: poor+
-intrinsic: +1 Luck
----
 ## Moonstone Loop
 family: loop
 material: moonstone, silver

@@ -244,14 +244,6 @@ tags: rage, brutal
 eligibility: rare+
 intrinsic: +3 Attack, +3 Defense, +1 Thorns, -1% Dodge
 ---
-## Ranger Trousers
-family: trousers
-material: cloth, leather
-weight: light
-tags: ranger, agile
-eligibility: poor+
-intrinsic: +1% Dodge
----
 ## Recursive Legs
 family: recursive
 material: scale, cloth

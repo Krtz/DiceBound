@@ -92,14 +92,6 @@ tags: rogue, wealth, agile
 eligibility: rare+
 intrinsic: +3% Crit, +2% Dodge, +5% Gold Gain
 ---
-## Hawkeye Charm
-family: charm
-material: bone, metal
-weight: light
-tags: ranger, precision
-eligibility: uncommon+
-intrinsic: +2% Crit, +1% Dodge
----
 ## Heart of Carmine
 family: heart-charm
 material: crystal

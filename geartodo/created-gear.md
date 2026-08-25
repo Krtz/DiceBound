@@ -4,7 +4,7 @@ Working design sheet for equipment identities that already have approved/generat
 
 These entries have moved out of the raw `geartodo` candidate/reference lists because their first modular art asset now exists. The metadata here remains the design source until runtime implementation/refinement under #83/#110.
 
-The PNGs are currently delivered through the #110 art-inbox pack. `asset` records the intended stable runtime filename/path once imported.
+The PNGs are delivered through approved art-inbox packs such as #110 and #142. `asset` records the intended stable runtime filename/path once imported.
 
 ## Weapon
 
@@ -27,7 +27,18 @@ tags: ranged, starter
 eligibility: poor+
 intrinsic: +1 Attack, +1% Crit
 asset: `runtime/assets/gear/weapon/shortbow.png`
-art: worn, poor-quality simple wooden shortbow
+art: approved #142 refresh; simple hand-finished wooden shortbow with leather grip and visible wear
+---
+
+### Bronze Battleaxe
+family: battleaxe
+material: bronze
+weight: heavy
+tags: martial, material-tier, battleaxe
+eligibility: poor+
+intrinsic: +3 Attack, -1% Dodge
+asset: `runtime/assets/gear/weapon/bronze-battleaxe.png`
+art: approved #142 battered starter battleaxe; rough wooden haft and worn low-tier metal head
 ---
 
 ### Rubber Chicken
@@ -76,6 +87,17 @@ asset: `runtime/assets/gear/hat/bronze-full-helm.png`
 art: worn, poor-quality bronze full helm with dents, scratches and tarnish
 ---
 
+### Hunter Hood
+family: hood
+material: cloth, leather
+weight: light
+tags: ranger, hunting
+eligibility: poor+
+intrinsic: +2% Dodge, +1% Crit
+asset: `runtime/assets/gear/hat/hunter-hood.png`
+art: approved #142 weathered olive-green hunter hood with worn leather edging; authored review lowers the older uncommon+ suggestion to poor+
+---
+
 ## Chest
 
 ### Bronze Platebody
@@ -87,6 +109,17 @@ eligibility: poor+
 intrinsic: +2 Defense
 asset: `runtime/assets/gear/chest/bronze-platebody.png`
 art: worn, poor-quality bronze platebody with rough low-tier construction
+---
+
+### Leather Harness
+family: harness
+material: leather
+weight: light
+tags: weird
+eligibility: poor+
+intrinsic: +1% Dodge
+asset: `runtime/assets/gear/chest/leather-harness.png`
+art: approved #142 rugged stitched leather starter vest/harness with straps and patched reinforcement
 ---
 
 ## Legs
@@ -102,6 +135,17 @@ asset: `runtime/assets/gear/legs/bronze-platelegs.png`
 art: worn, poor-quality bronze platelegs
 ---
 
+### Ranger Trousers
+family: trousers
+material: cloth, leather
+weight: light
+tags: ranger, agile
+eligibility: poor+
+intrinsic: +1% Dodge
+asset: `runtime/assets/gear/legs/ranger-trousers.png`
+art: approved #142 patchwork ranger trousers with mismatched cloth, leather straps, pouches and worn knee protection
+---
+
 ## Boots
 
 ### Bronze Armoured Boots
@@ -113,6 +157,17 @@ eligibility: poor+
 intrinsic: +1 Defense
 asset: `runtime/assets/gear/boots/bronze-armoured-boots.png`
 art: worn, poor-quality bronze armoured boots over simple leather underlayers
+---
+
+### Trail Boots
+family: boots
+material: leather
+weight: light
+tags: ranger, trail
+eligibility: poor+
+intrinsic: +1% Dodge
+asset: `runtime/assets/gear/boots/trail-boots.png`
+art: approved #142 scuffed brown leather travel boots with heavy lacing, straps and trail wear
 ---
 
 ## Offhand
@@ -128,6 +183,54 @@ asset: `runtime/assets/gear/offhand/bronze-round-shield.png`
 art: battered wooden round shield with worn bronze rim and boss
 ---
 
+### Iron Round Shield
+family: round-shield
+material: iron
+weight: medium
+tags: martial, guardian, material-tier
+eligibility: poor+
+intrinsic: +2 Defense
+asset: `runtime/assets/gear/offhand/iron-round-shield.png`
+art: approved #142 battered wooden round shield with scratched iron rim, rivets and central boss
+---
+
+### Spellbook
+family: spellbook
+material: paper, leather
+weight: light
+tags: arcane, caster
+eligibility: poor+
+intrinsic: +5 Mana
+asset: `runtime/assets/gear/offhand/spellbook.png`
+art: approved #142 worn starter spellbook with battered binding, simple arcane sigil and faint magical page glow
+---
+
+## Ring
+
+### Mood Ring
+family: ring
+material: metal, glass
+weight: light
+tags: clown, weird
+eligibility: poor+
+intrinsic: +1 Luck
+asset: `runtime/assets/gear/ring/mood-ring.png`
+art: approved #142 hammered copper ring with patina and a small teal glass mood stone
+---
+
+## Amulet
+
+### Hawkeye Charm
+family: charm
+material: bone, metal
+weight: light
+tags: ranger, precision
+eligibility: poor+
+intrinsic: +2% Crit, +1% Dodge
+asset: `runtime/assets/gear/amulet/hawkeye-charm.png`
+art: approved #142 rough bone-and-turquoise hunting charm with leather cord, carved tokens and feather; authored review lowers the older uncommon+ suggestion to poor+
+---
+
 ## Workflow
 
 When more gear art is approved/generated:
@@ -137,4 +240,4 @@ When more gear art is approved/generated:
 4. keep the PNG in the art-inbox handoff until Codex/runtime integration imports it;
 5. once runtime implementation exists, this file may also record the authoritative `equipmentId`.
 
-Related: #83 #110
+Related: #83 #110 #142

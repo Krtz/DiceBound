@@ -380,14 +380,6 @@ tags: tide, guardian
 eligibility: rare+
 intrinsic: +4 Defense, +1% Ice proc chance, -1% Dodge
 ---
-## Trail Boots
-family: boots
-material: leather
-weight: light
-tags: ranger, trail
-eligibility: poor+
-intrinsic: +1% Dodge
----
 ## Trimmed Masterwork Boots
 family: armoured-boots
 material: trimmed-masterwork
