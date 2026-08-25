@@ -143,7 +143,7 @@ Prefer pure/data-heavy regions first:
 3. other pure helpers currently embedded in the monolith;
 4. registries that do not directly own DOM or combat state.
 
-The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent checkpoints moved canonical classes, talents, pets, enemies, rarities, boards, equipment metadata, achievements and class support tables. The next checkpoint established the explicit runtime-service boundary and moved all 200 canonical Powerup definitions/effects through it. Concrete item factories and presentation chains remain temporarily in the monolith. These modules have explicit load-order dependencies and no circular dependency.
+The first Phase 1 extraction moved Artifact and guardian-loot policy into item modules. Subsequent checkpoints moved canonical classes, talents, pets, enemies, rarities, boards, equipment metadata, achievements and class support tables. The equipment owner now also owns deterministic ordinary-item construction and normalization; the monolith supplies its current compatibility tables and runtime RNG/identity inputs through an explicit injected contract. The next checkpoint established the explicit runtime-service boundary and moved all 200 canonical Powerup definitions/effects through it. Concrete special-item factories and presentation chains remain temporarily in the monolith. These modules have explicit load-order dependencies and no circular dependency.
 
 ### Phase 2 — self-contained gameplay domains
 

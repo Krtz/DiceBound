@@ -1,4 +1,11 @@
-# Unreleased — Beta 0.6.3.7
+# Unreleased — Beta 0.6.3.9
+
+## Ordinary equipment generation architecture (#127)
+- Ordinary generated-item construction and post-generation normalization now have one equipment-domain owner outside the compatibility monolith.
+- Current point budgets, affix tables, seed/RNG services and runtime identity are injected without changing ordinary item outcomes, save shape or balance.
+- Deterministic coverage now locks all current rarity/slot fixtures and the forced/unforced-slot RNG-call boundary.
+
+---
 
 ## Wolf battle progression (#91)
 - Wolf now uses its approved full-body Board 1--6 artwork in battle, including the authored Board 5/6 two-Direwolf base forms.
