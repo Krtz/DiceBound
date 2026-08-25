@@ -355,3 +355,222 @@ weight: medium
 tags: rage, brutal
 eligibility: uncommon+
 intrinsic: +8 HP, +2 Attack
+---
+
+# RuneScape armour reference expansion
+
+## Ahrim's Robeskirt
+family: barrows-robe-bottom
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, barrows, caster
+eligibility: epic+
+intrinsic: +12 Mana, +2% Echo, +1% Void proc chance
+---
+## Ancestral Robe Bottom
+family: caster-robe-bottom
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, ancient
+eligibility: legendary+
+intrinsic: +15 Mana, +3% Echo, +2% Crit
+---
+## Armadyl Chainskirt
+family: ranged-skirt
+material: aviansie-metal, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, god-wars
+eligibility: epic+
+intrinsic: +3 Attack, +3% Crit, +3% Dodge
+---
+## Bandos Tassets
+family: tassets
+material: war-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, god-wars
+eligibility: epic+
+intrinsic: +5 Attack, +4 Defense, +1 Thorns
+---
+## Blood Moon Tassets
+family: moon-tassets
+material: blood-metal, hide
+weight: heavy
+tags: source-inspired, prototype-reference, perilous-moons, martial, blood
+eligibility: epic+
+intrinsic: +4 Attack, +4 Defense, +2% Lifesteal
+---
+## Blue Moon Tassets
+family: moon-robe-bottom
+material: enchanted-cloth, metal
+weight: light
+tags: source-inspired, prototype-reference, perilous-moons, caster, ice
+eligibility: epic+
+intrinsic: +13 Mana, +2% Echo, +1% Ice proc chance
+---
+## Crystal Legs
+family: crystal-legguards
+material: crystal
+weight: light
+tags: source-inspired, prototype-reference, ranged, crystal
+eligibility: epic+
+intrinsic: +3 Attack, +3% Crit, +3% Dodge
+---
+## Dharok's Platelegs
+family: barrows-platelegs
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, martial
+eligibility: epic+
+intrinsic: +5 Defense, +4 Attack, +8 HP
+---
+## Dracolich Chaps
+family: ranged-chaps
+material: dragon-bone, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, dracolich
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +2% Echo
+---
+## Eclipse Moon Tassets
+family: moon-tassets
+material: hide, obsidian
+weight: medium
+tags: source-inspired, prototype-reference, perilous-moons, ranged, fire
+eligibility: epic+
+intrinsic: +4 Attack, +3% Crit, +1% Fire proc chance
+---
+## Guthan's Chainskirt
+family: barrows-chainskirt
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, sustain
+eligibility: epic+
+intrinsic: +5 Defense, +10 HP, +2% Lifesteal
+---
+## Inquisitor's Plateskirt
+family: plateskirt
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, inquisitor
+eligibility: legendary+
+intrinsic: +4 Attack, +5 Defense, +2% Boss Damage
+---
+## Justiciar Legguards
+family: legguards
+material: sacred-metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, guardian, tank
+eligibility: legendary+
+intrinsic: +7 Defense, +12 HP, +1 Thorns
+---
+## Karil's Leatherskirt
+family: barrows-leatherskirt
+material: leather, barrows-cloth
+weight: light
+tags: source-inspired, prototype-reference, barrows, ranged
+eligibility: epic+
+intrinsic: +3 Attack, +3% Crit, +4% Dodge
+---
+## Malevolent Greaves
+family: power-greaves
+material: malevolent-energy, metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, high-tier
+eligibility: legendary+
+intrinsic: +5 Attack, +5 Defense, +1% Crit
+---
+## Masori Chaps
+family: ranged-chaps
+material: cloth, hide
+weight: light
+tags: source-inspired, prototype-reference, ranged, desert
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +4% Dodge
+---
+## Obsidian Platelegs
+family: obsidian-platelegs
+material: obsidian
+weight: heavy
+tags: source-inspired, prototype-reference, martial, volcanic
+eligibility: rare+
+intrinsic: +4 Attack, +4 Defense, +1% Fire proc chance
+---
+## Pernix Chaps
+family: ranged-chaps
+material: ancient-leather, metal
+weight: light
+tags: source-inspired, prototype-reference, ranged, nex
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +4% Dodge
+---
+## Proselyte Tasset
+family: holy-tassets
+material: steel, silver
+weight: medium
+tags: source-inspired, prototype-reference, holy, martial
+eligibility: uncommon+
+intrinsic: +3 Defense, +1% Light proc chance, +1 Luck
+---
+## Robe Bottom of the First Necromancer
+family: necromancy-robe-bottom
+material: ritual-cloth, bone
+weight: light
+tags: source-inspired, prototype-reference, necromancy, high-tier
+eligibility: legendary+
+intrinsic: +14 Mana, +3% Echo, +2% Lifesteal, +1% Void proc chance
+---
+## Sirenic Chaps
+family: ranged-chaps
+material: sirenic-scale
+weight: light
+tags: source-inspired, prototype-reference, ranged, high-tier
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +3% Dodge
+---
+## Tectonic Robe Bottom
+family: caster-robe-bottom
+material: tectonic-energy, cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, high-tier
+eligibility: legendary+
+intrinsic: +16 Mana, +3% Echo, +2% Crit
+---
+## Torag's Platelegs
+family: barrows-platelegs
+material: barrows-metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, barrows, guardian
+eligibility: epic+
+intrinsic: +7 Defense, +10 HP, +1 Thorns
+---
+## Torva Platelegs
+family: ancient-platelegs
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, nex
+eligibility: legendary+
+intrinsic: +5 Attack, +7 Defense, +10 HP
+---
+## Verac's Plateskirt
+family: barrows-plateskirt
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, holy
+eligibility: epic+
+intrinsic: +5 Defense, +3 Attack, +1% Light proc chance
+---
+## Virtus Robe Legs
+family: caster-robe-bottom
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, nex
+eligibility: legendary+
+intrinsic: +15 Mana, +3% Echo, +1% Void proc chance
+---
+## Void Knight Robe
+family: void-robe
+material: void-cloth, metal
+weight: light
+tags: source-inspired, prototype-reference, void-knight, hybrid
+eligibility: rare+
+intrinsic: +2 Attack, +2 Defense, +2% Echo, +2% Dodge
