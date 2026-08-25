@@ -63,9 +63,11 @@ async function closeEdge(edge){try{await Promise.race([edge.send("Browser.close"
       const automaticSaved=!!window.DiceboundRunCheckpoint.load().checkpoint;
       const checkpoint=window.DiceboundRunResumeTest.snapshot();checkpoint.run.player.gold=321;checkpoint.run.player.position=Math.min(2,checkpoint.run.tiles.length-1);checkpoint.summary.gold=321;checkpoint.summary.tile=checkpoint.run.player.position+1;
       window.DiceboundRunCheckpoint.store(checkpoint);const expected=[window.DiceboundRng.random(),window.DiceboundRng.random(),window.DiceboundRng.random()];
-      return {title:document.title,expectedTitle:'Dicebound: '+window.DiceboundVersion.channel+' v'+window.DiceboundVersion.version,checkpoint,expected,stable:window.DiceboundRunResumeTest.isStable(),automaticSaved};
+      const markerSources=[...document.querySelectorAll('.tile.enemy img.db-road-marker')].map(image=>image.getAttribute('src'));
+      return {title:document.title,expectedTitle:'Dicebound: '+window.DiceboundVersion.channel+' v'+window.DiceboundVersion.version,checkpoint,expected,stable:window.DiceboundRunResumeTest.isStable(),automaticSaved,markerSources};
     })()`);
     assert.equal(created.title,created.expectedTitle);assert.equal(created.stable,true);assert.equal(created.automaticSaved,true,"starting a stable run did not autosave");assert.equal(created.checkpoint.run.player.gold,321);
+    assert.ok(created.markerSources.length>0,"board did not render any semantic ordinary-enemy markers");assert.ok(created.markerSources.every(src=>/assets\/enemies\/normal\/board-markers\/[a-z-]+\.png$/.test(src||'')),"board used a non-semantic ordinary-enemy marker source");
     await closeEdge(first);first=null;console.log("Edge pass 1 closed; relaunching the same profile");
 
     second=await launch(profile,url);console.log("Edge pass 2 loaded; continuing saved run");

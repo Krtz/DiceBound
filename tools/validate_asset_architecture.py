@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
-EXPECTED={"classes":25,"pets":13,"normal_enemies":3,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":169}
+EXPECTED={"classes":25,"pets":13,"normal_enemies":11,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":177}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".jpg",".jpeg",".webp",".ogg",".mp3",".wav",".webm"}
@@ -74,6 +74,7 @@ def main():
     count(runtime/"assets/characters/pets/portraits",13)
     for role,expected in (("normal",3),("minibosses",6),("bosses",6),("secret-bosses",3)):
         count(runtime/f"assets/enemies/{role}/battle",expected)
+    for role,expected in (("normal",11),("minibosses",6),("bosses",6),("secret-bosses",3)):
         count(runtime/f"assets/enemies/{role}/board-markers",expected)
     count(runtime/"assets/board/backgrounds",6)
     inv=json.loads((runtime/"assets/ASSET_INVENTORY.json").read_text())

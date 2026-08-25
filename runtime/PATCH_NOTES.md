@@ -1,4 +1,12 @@
-# Unreleased — Beta 0.6.3.3
+# Unreleased — Beta 0.6.3.4
+
+## Static ordinary-enemy board markers (#82)
+- Added approved transparent static board markers for Slime, Goblin, Skeleton, Orc, Cultist, Wraith, Demon and Lich.
+- Markers now resolve semantically for all ordinary enemies, remain unchanged across Boards and Normal/Nightmare/Hell, and do not become battle art.
+
+---
+
+# Beta 0.6.3.3 — Development checkpoint
 
 ## Camp grows with your career (#109)
 - A fresh Camp now begins without the Trophy, Talent Star or Prestige Moon.
