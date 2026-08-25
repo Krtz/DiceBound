@@ -23,6 +23,12 @@
     "enemies/normal/battle/slime-board-4.png",
     "enemies/normal/battle/slime-board-5.png",
     "enemies/normal/battle/slime-board-6.png",
+    "enemies/normal/battle/wolf-board-1.png",
+    "enemies/normal/battle/wolf-board-2.png",
+    "enemies/normal/battle/wolf-board-3.png",
+    "enemies/normal/battle/wolf-board-4.png",
+    "enemies/normal/battle/wolf-board-5.png",
+    "enemies/normal/battle/wolf-board-6.png",
     "enemies/minibosses/battle/ogre-roadwarden.png",
     "enemies/minibosses/battle/titan-guard.png",
     "enemies/minibosses/battle/paradox-warden.png",
@@ -262,8 +268,8 @@
     }
   ],
   "counts": {
-    "canonicalRegistryFiles": 171,
-    "implementedCurrent": 170,
+    "canonicalRegistryFiles": 177,
+    "implementedCurrent": 176,
     "retiredSourceAssets": 1,
     "powerupArtKeys": 22,
     "powerupRenderedNameMappings": 28,

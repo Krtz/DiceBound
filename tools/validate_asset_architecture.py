@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
-EXPECTED={"classes":25,"pets":13,"normal_enemies":11,"normal_enemy_battle_assets":9,"normal_enemy_board_markers":11,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"combat_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":189}
+EXPECTED={"classes":25,"pets":13,"normal_enemies":11,"normal_enemy_battle_assets":15,"normal_enemy_board_markers":11,"minibosses":6,"bosses":6,"secret_bosses":3,"board_backgrounds":6,"combat_backgrounds":6,"powerup_assets":22,"powerup_name_mappings":28,"registry_files":195}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".jpg",".jpeg",".webp",".ogg",".mp3",".wav",".webm"}

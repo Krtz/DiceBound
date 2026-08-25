@@ -33,13 +33,13 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:10,
+  const manifest=Object.freeze({version:11,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
       slime:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/slime-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/slime.png`,alt:"Slime"}),
       goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
-      wolf:normalEnemy("wolf","Wolf",`${paths.normalEnemyBattle}/wolf.png`),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
+      wolf:Object.freeze({portrait:`${paths.normalEnemyBattle}/wolf.png`,battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/wolf-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/wolf.png`,alt:"Wolf"}),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
       orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:normalEnemy("wraith","Wraith"),
       troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),demon:normalEnemy("demon","Demon"),lich:normalEnemy("lich","Lich")
     }),
