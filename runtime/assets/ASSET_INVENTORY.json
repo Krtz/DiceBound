@@ -17,6 +17,12 @@
     "enemies/normal/board-markers/troll.png",
     "enemies/normal/board-markers/demon.png",
     "enemies/normal/board-markers/lich.png",
+    "enemies/normal/battle/slime-board-1.png",
+    "enemies/normal/battle/slime-board-2.png",
+    "enemies/normal/battle/slime-board-3.png",
+    "enemies/normal/battle/slime-board-4.png",
+    "enemies/normal/battle/slime-board-5.png",
+    "enemies/normal/battle/slime-board-6.png",
     "enemies/minibosses/battle/ogre-roadwarden.png",
     "enemies/minibosses/battle/titan-guard.png",
     "enemies/minibosses/battle/paradox-warden.png",
@@ -256,8 +262,8 @@
     }
   ],
   "counts": {
-    "canonicalRegistryFiles": 151,
-    "implementedCurrent": 150,
+    "canonicalRegistryFiles": 171,
+    "implementedCurrent": 170,
     "retiredSourceAssets": 1,
     "powerupArtKeys": 22,
     "powerupRenderedNameMappings": 28,
