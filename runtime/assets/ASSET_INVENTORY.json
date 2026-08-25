@@ -181,7 +181,15 @@
     "equipment/hat/helmet.png",
     "ui/currencies/coins.png",
     "installer/icons/dicebound-launcher.ico",
-    "installer/icons/dicebound-launcher.png"
+    "installer/icons/dicebound-launcher.png",
+    "combat/effects/nature-poison-vines-01.png",
+    "combat/effects/nature-poison-vines-02.png",
+    "combat/effects/nature-poison-vines-03.png",
+    "combat/effects/nature-poison-vines-04.png",
+    "combat/effects/nature-poison-vines-05.png",
+    "combat/effects/nature-poison-vines-06.png",
+    "combat/effects/nature-poison-vines-07.png",
+    "combat/effects/nature-poison-vines-08.png"
   ],
   "retired": [
     "powerups/_legacy/heavy-purse-beta-0.6.png"
@@ -268,8 +276,8 @@
     }
   ],
   "counts": {
-    "canonicalRegistryFiles": 177,
-    "implementedCurrent": 176,
+    "canonicalRegistryFiles": 185,
+    "implementedCurrent": 184,
     "retiredSourceAssets": 1,
     "powerupArtKeys": 22,
     "powerupRenderedNameMappings": 28,

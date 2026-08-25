@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.3.10
+# Unreleased — Beta 0.6.3.11
+
+## Nature Poison Vines VFX (#80)
+- Nature procs now show thorny poison vines erupting, lashing their actual living target, then receding.
+- Player Nature procs animate each surviving affected enemy; enemy Nature procs animate the player.
+- The sequence is visual-only, non-blocking, and skipped for defeated targets.
+
+---
+
+# Beta 0.6.3.10
 
 ## Camp layout hotfix
 - Moved the Info books a little left in the desktop Camp composition.

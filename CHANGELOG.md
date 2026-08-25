@@ -2,7 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.10
+## Unreleased — Beta 0.6.3.11
+
+### Nature Poison Vines proc VFX (#80, #71)
+- Added the approved eight-frame transparent thorny-vines effect to the canonical combat-effects tree and registered it as a reusable elemental-proc animation.
+- Nature procs play on actual living targets without changing RNG, damage, targeting, turns or saves.
+
+## Beta 0.6.3.10
 
 ### Camp layout hotfix
 - Shifted the Info books modestly left on desktop Camp layouts.
