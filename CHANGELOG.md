@@ -2,7 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.11
+## Unreleased — Beta 0.6.3.12
+
+### Startup bootstrap cleanup (#138)
+- Prevented the historical start/class-selection scaffold and underlying run UI from painting before the current full-screen Camp finishes synchronous construction.
+- Removed the unreferenced hidden Alpha rules block from the bootstrap DOM while preserving compatibility IDs still used by the current Camp runtime.
+
+## Beta 0.6.3.11
 
 ### Nature Poison Vines proc VFX (#80, #71)
 - Added the approved eight-frame transparent thorny-vines effect to the canonical combat-effects tree and registered it as a reusable elemental-proc animation.
