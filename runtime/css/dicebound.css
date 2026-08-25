@@ -1169,3 +1169,14 @@ body[data-hud-flow="stacked"] .sidebar>.log-card{grid-column:1/-1}
 .camp-pet-feed-beta021 .small-btn{flex:1 1 150px}
 .sovereign-choice-modal{width:min(920px,calc(100vw - 28px))}
 .sovereign-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px;margin-top:14px}
+
+
+/* Beta 0.6.3.10 — Camp layout hotfix */
+@media (min-width:1000px) and (min-height:650px){
+  html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important}
+  html body #startOverlay.camp-fullscreen #campGoBtn{right:-5vw!important}
+}
+@media (min-width:1000px) and (max-width:1350px) and (min-height:650px){
+  html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important}
+  html body #startOverlay.camp-fullscreen #campGoBtn{right:-6vw!important}
+}
