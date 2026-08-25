@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.3.9
+# Unreleased — Beta 0.6.3.10
+
+## Camp layout hotfix
+- Moved the Info books a little left in the desktop Camp composition.
+- Moved the Start Run caravan much farther right in the desktop Camp composition; mobile positioning is unchanged.
+
 
 ## Ordinary equipment generation architecture (#127)
 - Ordinary generated-item construction and post-generation normalization now have one equipment-domain owner outside the compatibility monolith.

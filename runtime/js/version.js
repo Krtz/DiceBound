@@ -3,7 +3,7 @@
 
   // These are the only release-version literals in the browser runtime.
   // tools/set_project_version.py stamps them from its explicit Version/Channel input.
-  const VERSION="0.6.3.9";
+  const VERSION="0.6.3.10";
   const CHANNEL="Beta";
   const NAME="Dicebound";
   const RELEASE_SUMMARY="resumable active runs with deterministic safe-state checkpoints and backup recovery.";
