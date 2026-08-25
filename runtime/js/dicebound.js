@@ -9756,4 +9756,29 @@ function buildDiceboundHumanHarness235(){
   });
   setTimeout(()=>db0633RefreshCampProgression(),0);
 
+  /* BETA 0.6.3.5 — #115 Normal-mode combat backgrounds.
+     Board environment resolves independently from combatants and difficulty
+     presentation. The supplied artwork is Normal-only; mode variants remain
+     an explicit future #88 asset decision rather than a generated filter. */
+  const db0635CombatBackgroundStyle=document.createElement('style');
+  db0635CombatBackgroundStyle.id='dicebound-normal-combat-background-style';
+  db0635CombatBackgroundStyle.textContent=`
+    #combatOverlay[data-combat-background]{isolation:isolate;overflow:hidden;background:#07101c!important}
+    #combatOverlay[data-combat-background]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--db0635-combat-background-image);background-size:cover;background-position:center;transform:scale(1.01)}
+    #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.34),rgba(4,9,19,.64))}
+    #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.72),rgba(7,14,28,.86))!important}
+  `;
+  document.head.appendChild(db0635CombatBackgroundStyle);
+  function db0635CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+  function db0635ApplyCombatBackground(){
+    const overlay=$('combatOverlay'),mode=db0635CombatMode(),entry=window.DiceboundAssets?.resolveCombatBackground?.(boardLevel,mode)||null;
+    if(!overlay)return entry;
+    if(entry?.image){overlay.dataset.combatBackground=`board-${boardLevel}-normal`;overlay.style.setProperty('--db0635-combat-background-image',`url("${entry.image}")`);}
+    else {delete overlay.dataset.combatBackground;overlay.style.removeProperty('--db0635-combat-background-image');}
+    return entry;
+  }
+  const db0635StartCombatBase=startCombat;
+  startCombat=function(...args){const result=db0635StartCombatBase.apply(this,args);db0635ApplyCombatBackground();return result;};
+  window.DiceboundCombatBackgrounds=Object.freeze({mode:db0635CombatMode,resolve:(board,mode='normal')=>window.DiceboundAssets?.resolveCombatBackground?.(board,mode)||null,active:db0635ApplyCombatBackground});
+
 })();

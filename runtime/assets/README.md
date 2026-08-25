@@ -21,7 +21,7 @@ This directory is organized by **gameplay role and rendering context**, not by f
 - `powerups/` — powerup art by rarity, shared tier families and class-specific art.
 - `camp/` — campsite background, interactions, mode toggles and decorations.
 - `board/` — road backgrounds, tile/event/location art and board effects.
-- `combat/` — combat-only effects, statuses and UI.
+- `combat/` — Board/difficulty battle backgrounds, combat-only effects, statuses and UI.
 - `ui/` — genuinely cross-system application UI only.
 - `installer/` — launcher/installer icons, splash art and future presentation assets.
 - `audio/` — music, packaged SFX and optional custom overrides.

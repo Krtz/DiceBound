@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.3.4
+# Unreleased — Beta 0.6.3.5
+
+## Normal combat backgrounds (#115)
+- Added one supplied Normal-mode battle backdrop for every Board, from the Board 1 woodland through the Board 6 gothic citadel.
+- Normal background selection is Board-specific and separate from combatants; Nightmare and Hell do not fabricate variants and retain their existing presentation.
 
 ## Static ordinary-enemy board markers (#82)
 - Added approved transparent static board markers for Slime, Goblin, Skeleton, Orc, Cultist, Wraith, Demon and Lich.
