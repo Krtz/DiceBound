@@ -9815,4 +9815,52 @@ function buildDiceboundHumanHarness235(){
     active:()=>[...document.querySelectorAll('.db0636-tiered-enemy-art')].map(node=>({key:node.dataset.enemyBattleArt,board:Number(node.dataset.enemyBattleBoard),mode:node.dataset.enemyBattleMode}))
   });
 
+
+  /* Nature Poison Vines combat VFX (#80, #71).
+     Presentation observes completed proc outcomes only: combat damage, targeting,
+     RNG and turns remain owned by the live combat pipeline. */
+  const DB_NATURE_EFFECT_KEY='naturePoisonVines';
+  function dbNatureEffect(){return window.DiceboundAssets?.resolveCombatEffect?.(DB_NATURE_EFFECT_KEY)||null;}
+  function dbLivingNatureTargets(enemies=[]){return (enemies||[]).filter(enemy=>enemy&&enemy.hp>0);}
+  function dbNatureHostForEnemy(enemy){
+    const index=currentEnemies.indexOf(enemy);
+    return index<0?null:document.querySelector(`#enemyIcon .stage-enemy[data-enemy-index="${index}"]`);
+  }
+  function dbPlayNatureVfx(host,target){
+    const effect=dbNatureEffect();if(!host||!effect?.frames?.length)return false;
+    const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const active=host.querySelector('.db-nature-vines-vfx');active?.remove();
+    const node=document.createElement('span'),image=document.createElement('img');
+    node.className='db-nature-vines-vfx';node.dataset.natureVfxTarget=target;image.alt='';image.draggable=false;node.append(image);host.append(node);
+    const frames=effect.frames,duration=Math.max(40,Math.floor(Number(effect.frameDurationMs)||75));let frame=0;
+    const present=()=>{image.src=frames[frame];node.dataset.natureVfxFrame=String(frame+1);if(reduced||frame>=frames.length-1){setTimeout(()=>node.remove(),reduced?180:duration);return;}frame++;setTimeout(present,duration);};
+    present();return true;
+  }
+  function dbPlayNatureOnEnemy(enemy){return enemy?.hp>0&&dbPlayNatureVfx(dbNatureHostForEnemy(enemy),'enemy');}
+  function dbPlayNatureOnPlayer(){return player.hp>0&&dbPlayNatureVfx($('combatPlayerIcon'),'player');}
+  const dbTriggerElementBase=triggerElementEffect;
+  triggerElementEffect=function(key,target=currentEnemy,opts={}){
+    const candidates=key==='nature'?[...livingEnemies()]:[],result=dbTriggerElementBase(key,target,opts);
+    if(key==='nature'&&result)dbLivingNatureTargets(candidates).forEach(dbPlayNatureOnEnemy);
+    return result;
+  };
+  const dbEnemyElementProcBase=enemyElementProc;
+  enemyElementProc=function(enemy){const result=dbEnemyElementProcBase(enemy);if(enemy?.affinity==='nature'&&result&&player.hp>0)dbPlayNatureOnPlayer();return result;};
+  if(!document.getElementById('dicebound-nature-vfx-style')){
+    const style=document.createElement('style');style.id='dicebound-nature-vfx-style';style.textContent=`
+      .db-nature-vines-vfx{position:absolute;z-index:30;left:50%;bottom:-10%;width:clamp(112px,150%,260px);pointer-events:none;transform:translateX(-50%);overflow:visible;filter:drop-shadow(0 8px 10px rgba(20,0,30,.45))}
+      .db-nature-vines-vfx img{display:block;width:100%;height:auto;max-width:none!important;max-height:none!important;object-fit:contain}
+      #combatPlayerIcon,.stage-enemy{position:relative;isolation:isolate}
+      @media(max-width:760px){.db-nature-vines-vfx{width:clamp(96px,135%,185px);bottom:-8%}}
+      @media(prefers-reduced-motion:reduce){.db-nature-vines-vfx{filter:none}}
+    `;document.head.appendChild(style);
+  }
+  setTimeout(()=>{const effect=dbNatureEffect();effect?.frames?.forEach(src=>{const image=new Image();image.src=src;});},0);
+  window.DiceboundNatureVfxTest=Object.freeze({
+    effect:dbNatureEffect,
+    livingTargets:enemies=>dbLivingNatureTargets(enemies).map(enemy=>enemy.name||''),
+    previewPlayer:dbPlayNatureOnPlayer,
+    active:()=>[...document.querySelectorAll('.db-nature-vines-vfx')].map(node=>({target:node.dataset.natureVfxTarget,frame:Number(node.dataset.natureVfxFrame)}))
+  });
+
 })();
