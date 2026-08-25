@@ -1,4 +1,11 @@
-# Unreleased — Beta 0.6.3.6
+# Unreleased — Beta 0.6.3.7
+
+## Wolf battle progression (#91)
+- Wolf now uses its approved full-body Board 1--6 artwork in battle, including the authored Board 5/6 two-Direwolf base forms.
+- The artwork does not alter pack size, enemy turns or damage; its separately approved Echo Strike balance policy remains intentionally outside this art-only PR.
+- The existing road marker remains one static Wolf marker on every Board and difficulty.
+
+---
 
 ## Slime battle progression (#81)
 - Slime now uses its approved full-body Board 1--6 artwork in battle.

@@ -2,7 +2,11 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.6
+## Unreleased — Beta 0.6.3.7
+
+### Wolf Board battle-art progression (#91)
+- Added the approved transparent Wolf base forms for Boards 1--6 to the canonical ordinary-enemy battle-art tree, reusing the Slime PR's identity-plus-Board resolver and separate difficulty aura presentation.
+- Wolf road-marker ownership stays static and unchanged. Board 5/6 two-Direwolf artwork does not independently change pack size, turn count or damage; the separately approved Echo Strike policy remains a follow-up mechanic task.
 
 ### Slime Board battle-art progression (#81)
 - Added the approved transparent Slime base forms for Boards 1--6 to the canonical ordinary-enemy battle-art tree.

@@ -1,15 +1,15 @@
 {
-  "assetCount": 307,
-  "browserContentHash": "f6319b39e70dee4e439ccc3f75203abff1ce227cc877722b25ae7cbb4a728f02",
-  "buildId": "dicebound-0.6.3.6-dev-f6319b39e70dee4e",
+  "assetCount": 313,
+  "browserContentHash": "10b25d6cd19424aac8aa4bc533ec3f05a7926c3afcb2b56ae1f9b68de1583e1c",
+  "buildId": "dicebound-0.6.3.7-dev-10b25d6cd19424aa",
   "channel": "Beta",
-  "contentFileCount": 336,
+  "contentFileCount": 342,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.3.6.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.3.7.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -40,9 +40,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "f6319b39e70dee4e439ccc3f75203abff1ce227cc877722b25ae7cbb4a728f02",
+  "sourceHash": "10b25d6cd19424aac8aa4bc533ec3f05a7926c3afcb2b56ae1f9b68de1583e1c",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads",
-  "version": "0.6.3.6",
+  "version": "0.6.3.7",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

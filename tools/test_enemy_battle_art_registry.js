@@ -15,15 +15,17 @@ for(let board=1;board<=6;board++){
   const art=assets.resolveEnemyBattleArt("Nightmare Slime",board);
   assert.deepEqual(JSON.parse(JSON.stringify(art)),{key:"slime",src:`assets/enemies/normal/battle/slime-board-${board}.png`,alt:"Slime",board});
   assert.equal(assets.resolveEnemyBattleArt("Slime",board).src,`assets/enemies/normal/battle/slime-board-${board}.png`);
+  const wolf=assets.resolveEnemyBattleArt("Ascended Wolf",board);
+  assert.deepEqual(JSON.parse(JSON.stringify(wolf)),{key:"wolf",src:`assets/enemies/normal/battle/wolf-board-${board}.png`,alt:"Wolf",board});
 }
 assert.equal(assets.resolveEnemyBattleArt("Slime",0).board,1,"invalid low boards must safely select Board 1");
 assert.equal(assets.resolveEnemyBattleArt("Slime",99).board,6,"invalid high boards must safely select Board 6");
-assert.equal(assets.resolveEnemyBattleArt("Wolf",1),null,"existing static portraits are not silently reclassified as tiered battle art");
-assert.equal(assets.resolveEnemyMarker("Slime"),null,"battle art must not become a board marker");
+assert.equal(assets.resolveEnemyMarker("Slime"),null,"Slime battle art must not become a board marker");
+assert.equal(assets.resolveEnemyMarker("Wolf").src,"assets/enemies/normal/board-markers/wolf.png","Wolf keeps its independent static board marker");
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("normal"))),{id:"normal",className:""});
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("Nightmare"))),{id:"nightmare",className:"db-enemy-mode-nightmare"});
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("HELL"))),{id:"hell",className:"db-enemy-mode-hell"});
 assert.equal(assets.resolveEnemyModeAura("unexpected").id,"normal");
-for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",`slime-board-${board}.png`)));
+for(const identity of ["slime","wolf"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",`${identity}-board-${board}.png`)));
 
-console.log("Slime Board battle-art registry: identity/Board resolution, independent marker ownership and mode-presentation separation pass");
+console.log("Ordinary Board battle-art registry: identity/Board resolution, independent marker ownership and mode-presentation separation pass");
