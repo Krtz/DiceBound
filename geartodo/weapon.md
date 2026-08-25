@@ -732,14 +732,6 @@ tags: martial, material-tier, two-handed-sword
 eligibility: poor+
 intrinsic: +4 Attack, -1% Dodge
 ---
-## Bronze Battleaxe
-family: battleaxe
-material: bronze
-weight: heavy
-tags: martial, material-tier, battleaxe
-eligibility: poor+
-intrinsic: +3 Attack, -1% Dodge
----
 ## Bronze Claws
 family: claws
 material: bronze
