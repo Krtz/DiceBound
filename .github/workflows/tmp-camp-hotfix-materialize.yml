@@ -1,0 +1,72 @@
+name: TEMP materialize camp hotfix
+
+on:
+  push:
+    branches:
+      - tmp/hotfix-camp-layout-materialize
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply camp layout hotfix and stamp 0.6.3.10
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          css_path = Path('runtime/css/dicebound.css')
+          css = css_path.read_text(encoding='utf-8')
+          marker = '/* Beta 0.6.3.10 — Camp layout hotfix */'
+          if marker in css:
+              raise SystemExit('hotfix marker already present')
+          css += '''\n\n/* Beta 0.6.3.10 — Camp layout hotfix */\n@media (min-width:1000px) and (min-height:650px){\n  html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important}\n  html body #startOverlay.camp-fullscreen #campGoBtn{right:-5vw!important}\n}\n@media (min-width:1000px) and (max-width:1350px) and (min-height:650px){\n  html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important}\n  html body #startOverlay.camp-fullscreen #campGoBtn{right:-6vw!important}\n}\n'''
+          css_path.write_text(css, encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          text = changelog.read_text(encoding='utf-8')
+          old = '## Unreleased — Beta 0.6.3.9'
+          new = '''## Unreleased — Beta 0.6.3.10\n\n### Camp layout hotfix\n- Shifted the Info books modestly left on desktop Camp layouts.\n- Shifted the Start Run caravan substantially farther right while leaving mobile Camp positioning unchanged.\n\n## Beta 0.6.3.9'''
+          if old not in text:
+              raise SystemExit('expected 0.6.3.9 changelog heading not found')
+          changelog.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          notes = Path('runtime/PATCH_NOTES.md')
+          text = notes.read_text(encoding='utf-8')
+          old = '# Unreleased — Beta 0.6.3.9'
+          new = '''# Unreleased — Beta 0.6.3.10\n\n## Camp layout hotfix\n- Moved the Info books a little left in the desktop Camp composition.\n- Moved the Start Run caravan much farther right in the desktop Camp composition; mobile positioning is unchanged.\n'''
+          if old not in text:
+              raise SystemExit('expected 0.6.3.9 patch-notes heading not found')
+          notes.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          python tools/set_project_version.py --version 0.6.3.10 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.3.10 --channel Beta --development-state Unreleased
+
+      - name: Package exact changed files
+        shell: bash
+        run: |
+          mkdir -p hotfix-output
+          git diff --name-only --diff-filter=ACMRT > hotfix-output/changed-files.txt
+          while IFS= read -r file; do
+            mkdir -p "hotfix-output/$(dirname "$file")"
+            cp "$file" "hotfix-output/$file"
+          done < hotfix-output/changed-files.txt
+          echo "Changed files:"
+          cat hotfix-output/changed-files.txt
+
+      - name: Upload materialized hotfix
+        uses: actions/upload-artifact@v4
+        with:
+          name: camp-hotfix-0.6.3.10-materialized
+          path: hotfix-output
+          if-no-files-found: error
+          retention-days: 1
