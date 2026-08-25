@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="db-booting">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.3.11</title>
+<title>Dicebound: Beta v0.6.3.12</title>
 <link rel="stylesheet" href="css/dicebound.css">
+<style id="db-boot-gate">
+  html.db-booting body{background:#050912}
+  html.db-booting .app,
+  html.db-booting #startOverlay{visibility:hidden!important}
+</style>
 </head>
 <body>
 <div class="world-scene-layer" id="worldSceneLayer" aria-hidden="true"></div>
@@ -14,8 +19,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.3.11</h1>
-        <p>Beta v0.6.3.11 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
+        <h1>Dicebound: Beta v0.6.3.12</h1>
+        <p>Beta v0.6.3.12 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -105,26 +110,6 @@
     <h2>Dicebound</h2>
     <p class="subtitle">Welcome to <b>Alpha v1</b>. Begin as the Ranger, unlock an increasingly unreasonable roster through permanent feats, conquer six escalating roads, and return in Nightmare Mode when you are feeling irresponsibly confident.</p>
     <div class="legacy-strip"><span>Legacy level <strong id="startLegacyLevel">1</strong> · <strong id="startLegacyXp">0 / 20 XP</strong></span><button class="small-btn" id="startTalentBtn">Open talent tree</button></div>
-    <div class="rules" style="display:none">
-      <div class="rule"><b>🏹 Unlock classes</b><br>Ranger starts unlocked. Guardians unlock Sorcerer, Fighter, Monk and Clown. Prestige unlocks Rouge; total damage unlocks Berserker; extreme Defense and Echo unlock Turtle and Frog. DiBo hides one final geometric surprise at level 30.</div>
-      <div class="rule"><b>🎲 Roll with momentum</b><br>Every crossed tile grants run XP. Rolls of 4–6 also earn Fast Travel XP, so high rolls are valuable.</div>
-      <div class="rule"><b>👹 Enemy packs</b><br>Before the first miniboss, every fight is one-on-one. Packs begin after tile 50 and become more common on later roads.</div>
-      <div class="rule"><b>⬆️ Level up</b><br>Choose rarity-based upgrades for this run.</div>
-      <div class="rule"><b>🧔 Merchants</b><br>A shop appears every 12 tiles and compares gear against your equipped item.</div>
-      <div class="rule"><b>✨ Divine blessing</b><br>Exactly one appears on every board and grants a ridiculous reward.</div>
-      <div class="rule"><b>🧰 Equipment</b><br>Fill eight gear slots with loot from monsters, chests and merchants.</div>
-      <div class="rule"><b>🌳 Legacy talents</b><br>Every tile traveled becomes fast permanent XP for a larger six-branch tree with strict prerequisites.</div>
-      <div class="rule"><b>🔥 Fixed camps</b><br>Campfires always appear at known positions instead of being randomly generated.</div>
-      <div class="rule"><b>🎁 Power shrines</b><br>Land on one to choose a free rarity-based powerup without leveling.</div>
-      <div class="rule"><b>🎡 Fortune wheels</b><br>A separate wheel event grants visible random rewards.</div>
-      <div class="rule"><b>👑 Halfway miniboss</b><br>Tile 50 guarantees one pet cookie and a Legendary powerup choice. Boss damage also works against minibosses.</div>
-      <div class="rule"><b>🎲 Elemental menagerie</b><br>DiBo rolls a random Fire, Ice, Electric, Nature, Light or Void attack. Deal or heal 500 elemental points to unlock each permanent pet.</div>
-      <div class="rule"><b>🔮 Mystic & Blessing talents</b><br>Trade HP for forbidden power, and unlock talents that add a second Mystic and Blessing.</div>
-      <div class="rule"><b>🌈 Elemental weapons</b><br>Weapons can carry ten strange elements. Some procs strike one target, others hit entire enemy packs, and each element unlocks its own pet.</div>
-      <div class="rule"><b>🐉 Five board levels</b><br>Defeating each final guardian opens a harder road. Boards 4 and 5 are shorter, denser endgame roads.</div>
-      <div class="rule"><b>🌈 Impossible Road Artifact set</b><br>Seven chase pieces each have a unique effect. Later roads add more pieces and stronger set thresholds.</div>
-      <div class="rule"><b>♻️ Prestige & Nightmare</b><br>Prestige grants permanent random stats. At 20 Prestige you gain one extra heirloom slot, and at 60 Prestige you gain another. Defeat Board 3 to unlock Nightmare Mode.</div>
-    </div>
     <div class="heirloom-line" id="startHeirloom">No heirlooms are currently bound.</div>
     <div class="nightmare-toggle locked" id="nightmareBox"><div><strong>🌑 Nightmare Mode</strong><span id="nightmareText">Defeat the Board 3 boss to unlock: enemies gain double HP, attack and defense; rewards are halved; Legacy XP is multiplied by five.</span></div><button class="small-btn" id="nightmareToggle">Locked</button></div>
     <div class="class-grid" id="classGrid"></div>
@@ -472,5 +457,6 @@
 <script src="js/powerups/registry.js"></script>
 <script src="js/powerups/borrowing.js"></script>
 <script src="js/dicebound.js"></script>
+<script id="db-boot-reveal">document.documentElement.classList.remove("db-booting");</script>
 </body>
 </html>
