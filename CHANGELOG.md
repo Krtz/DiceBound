@@ -2,7 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.3
+## Unreleased — Beta 0.6.3.6
+
+### Slime Board battle-art progression (#81)
+- Added the approved transparent Slime base forms for Boards 1--6 to the canonical ordinary-enemy battle-art tree.
+- Battle presentation now resolves dedicated enemy art from semantic identity plus Board. Normal, Nightmare and Hell reuse the same Board base image; the latter two render only a separate faint runtime aura.
+- Slime battle art is explicitly distinct from road-marker ownership. The static Slime marker remains the #82 asset/context and no Board or mode marker variants were created.
 
 ### Progressive Camp reveals (#109)
 - Fresh careers now begin with no Achievement Trophy, Talent Star or Prestige Moon in Camp. Each is a permanent career reveal rather than an invisible disabled control.

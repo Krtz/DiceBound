@@ -66,6 +66,10 @@ async function closeEdge(edge){try{await Promise.race([edge.send("Browser.close"
       return {title:document.title,expectedTitle:'Dicebound: '+window.DiceboundVersion.channel+' v'+window.DiceboundVersion.version,checkpoint,expected,stable:window.DiceboundRunResumeTest.isStable(),automaticSaved};
     })()`);
     assert.equal(created.title,created.expectedTitle);assert.equal(created.stable,true);assert.equal(created.automaticSaved,true,"starting a stable run did not autosave");assert.equal(created.checkpoint.run.player.gold,321);
+    const slimeArt=await first.evaluate(`(async()=>{const assets=window.DiceboundAssets,battle=window.DiceboundEnemyBattleArt,load=src=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve({width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>reject(new Error('Could not load '+src));image.src=src;});const forms=await Promise.all([1,2,3,4,5,6].map(async board=>{const art=battle.resolve('Nightmare Slime',board),size=await load(art.src);return {board,src:art.src,resolvedBoard:art.board,size};}));return {forms,modes:['normal','nightmare','hell'].map(mode=>assets.resolveEnemyModeAura(mode)),style:!!document.getElementById('dicebound-0636-slime-battle-art-style')};})()`);
+    assert.equal(slimeArt.style,true,"tiered Slime battle-art presentation stylesheet is missing");
+    assert.deepEqual(slimeArt.forms.map(x=>x.resolvedBoard),[1,2,3,4,5,6]);assert.deepEqual(slimeArt.forms.map(x=>x.src),[1,2,3,4,5,6].map(board=>`assets/enemies/normal/battle/slime-board-${board}.png`));for(const form of slimeArt.forms)assert.deepEqual(form.size,{width:1086,height:1448});
+    assert.deepEqual(slimeArt.modes,[{id:'normal',className:''},{id:'nightmare',className:'db-enemy-mode-nightmare'},{id:'hell',className:'db-enemy-mode-hell'}]);
     await closeEdge(first);first=null;console.log("Edge pass 1 closed; relaunching the same profile");
 
     second=await launch(profile,url);console.log("Edge pass 2 loaded; continuing saved run");

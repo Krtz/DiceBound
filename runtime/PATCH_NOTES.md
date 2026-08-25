@@ -1,4 +1,11 @@
-# Unreleased — Beta 0.6.3.3
+# Unreleased — Beta 0.6.3.6
+
+## Slime battle progression (#81)
+- Slime now uses its approved full-body Board 1--6 artwork in battle.
+- Difficulty no longer needs alternate art: Normal uses the base form, while Nightmare and Hell add separate faint runtime auras.
+- Road markers remain a separate static context and are never replaced by the battle form.
+
+---
 
 ## Camp grows with your career (#109)
 - A fresh Camp now begins without the Trophy, Talent Star or Prestige Moon.

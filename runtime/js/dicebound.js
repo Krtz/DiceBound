@@ -9756,4 +9756,43 @@ function buildDiceboundHumanHarness235(){
   });
   setTimeout(()=>db0633RefreshCampProgression(),0);
 
+  /* BETA 0.6.3.6 — #81 Slime Board battle progression.
+     The assets owner resolves transparent Board base art. This integration
+     deliberately knows only the current visual mode, so difficulty aura never
+     leaks into the physical Board-progression files or board-marker resolver. */
+  function db0636CurrentCombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+  function db0636TieredEnemyMarkup(enemy){
+    const art=window.DiceboundAssets?.resolveEnemyBattleArt?.(enemy?.name||'',boardLevel);
+    if(!art)return null;
+    const aura=window.DiceboundAssets.resolveEnemyModeAura(db0636CurrentCombatMode());
+    return `<span class="db0636-tiered-enemy-art ${aura.className}" data-enemy-battle-art="${art.key}" data-enemy-battle-board="${art.board}" data-enemy-battle-mode="${aura.id}"><img class="enemy-art-frame enemy-art-image db0636-tiered-enemy-image" src="${art.src}" alt="${art.alt} · Board ${art.board}" draggable="false"></span>`;
+  }
+  const db0636EnemyPortraitBase=enemyPortraitSVG;
+  enemyPortraitSVG=function(enemy){return db0636TieredEnemyMarkup(enemy)||db0636EnemyPortraitBase(enemy);};
+  const db0636RenderEnemyPartyBase=renderEnemyParty;
+  renderEnemyParty=function(...args){
+    const result=db0636RenderEnemyPartyBase.apply(this,args),stage=$('enemyIcon');
+    stage?.classList.toggle('db0636-tiered-enemy-stage',!!stage.querySelector('.db0636-tiered-enemy-art'));
+    return result;
+  };
+  if(!document.getElementById('dicebound-0636-slime-battle-art-style')){
+    const style=document.createElement('style');style.id='dicebound-0636-slime-battle-art-style';style.textContent=`
+      #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(246px,38vh,470px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:clamp(104px,19vw,270px)!important;min-height:clamp(225px,35vh,440px)!important;justify-content:flex-end!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-sprite{display:block!important;width:min(24vw,280px)!important;height:clamp(220px,34vh,425px)!important;line-height:0!important;overflow:visible!important}
+      .db0636-tiered-enemy-art{position:relative;display:block;width:100%;height:100%;isolation:isolate;overflow:visible}
+      .db0636-tiered-enemy-image{position:relative;z-index:1;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center bottom!important;overflow:visible!important;border-radius:0!important;filter:drop-shadow(0 14px 13px rgba(0,0,0,.56))}
+      .db0636-tiered-enemy-art::before{content:"";position:absolute;z-index:0;inset:13% 12% 8%;border-radius:50%;opacity:0;filter:blur(18px);pointer-events:none}
+      .db0636-tiered-enemy-art.db-enemy-mode-nightmare::before{opacity:.52;background:radial-gradient(ellipse,rgba(129,69,179,.64),rgba(41,17,71,.38) 48%,transparent 74%)}
+      .db0636-tiered-enemy-art.db-enemy-mode-hell::before{opacity:.56;background:radial-gradient(ellipse,rgba(230,84,43,.68),rgba(135,25,24,.42) 50%,transparent 75%)}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy.selected .db0636-tiered-enemy-image{filter:drop-shadow(0 0 15px rgba(245,200,91,.34)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
+      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(185px,34vh,290px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(165px,30vh,260px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(160px,29vh,250px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
+    `;document.head.appendChild(style);
+  }
+  window.DiceboundEnemyBattleArt=Object.freeze({
+    mode:db0636CurrentCombatMode,
+    resolve:(name,board=boardLevel)=>window.DiceboundAssets?.resolveEnemyBattleArt?.(name,board)||null,
+    active:()=>[...document.querySelectorAll('.db0636-tiered-enemy-art')].map(node=>({key:node.dataset.enemyBattleArt,board:Number(node.dataset.enemyBattleBoard),mode:node.dataset.enemyBattleMode}))
+  });
+
 })();
