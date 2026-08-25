@@ -6207,8 +6207,8 @@ function buildDiceboundHumanHarness235(){
   const startNewGameV27Base=startNewGame;startNewGame=function(){v27RandomLastClass=null;if(v27RandomClassMode){const pool=v27UnlockedClassPool();if(pool.length){const chosen=pick(pool);selectedClassId=chosen.id;v27RandomLastClass=chosen.id;}}const r=startNewGameV27Base();if(v27RandomLastClass)addLog(`🎲 Random class selected <b>${CLASSES[v27RandomLastClass].icon} ${CLASSES[v27RandomLastClass].name}</b> for this run.`);return r;};
 
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
-  function v27CompletePrestigeNoChoice(total){const rewards=Math.floor(total/9),remainder=total%9,keys=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}meta.prestige.count=(meta.prestige.count||0)+rewards;meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$('prestigeHeirloomOverlay')?.classList.add('hidden');if(v24StorageUnlocked?.()){v24SyncStorage?.();const cap=getHeirloomSlots();meta.heirlooms=(meta.heirlooms||[]).slice(0,cap).map(normalizeSavedItem);}else meta.heirlooms=(meta.heirlooms||[]).slice(0,getHeirloomSlots()).map(normalizeSavedItem);saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?'':'s'}`);renderTalents();updateMetaUI();openStartScreen();}
-  prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=Math.floor(total/9),remainder=total%9;if(rewards<1)return;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 permanent Prestige point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return;v27CompletePrestigeNoChoice(total);};
+  function v27CompletePrestigeNoChoice(total){const rewards=db0633PrestigeOfferPoints(total),remainder=total%9,keys=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}meta.prestige.count=(meta.prestige.count||0)+rewards;meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$('prestigeHeirloomOverlay')?.classList.add('hidden');if(v24StorageUnlocked?.()){v24SyncStorage?.();const cap=getHeirloomSlots();meta.heirlooms=(meta.heirlooms||[]).slice(0,cap).map(normalizeSavedItem);}else meta.heirlooms=(meta.heirlooms||[]).slice(0,getHeirloomSlots()).map(normalizeSavedItem);saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?'':'s'}`);renderTalents();updateMetaUI();openStartScreen();}
+  prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 permanent Prestige point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return;v27CompletePrestigeNoChoice(total);};
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
   const renderInfoV27Base=renderInfo;renderInfo=function(){const r=renderInfoV27Base();const sections=$('infoSections');if(!sections)return r;sections.querySelectorAll('details').forEach(x=>{const title=x.querySelector('summary')?.textContent||'';if(title.includes('Legacy, Talents & Prestige'))x.innerHTML='<summary>🌳 Legacy, Talents & Prestige</summary><div class="info-body"><p>Run distance and banked gold become Legacy XP. Legacy levels grant talent points. Talents purchased during a run activate on the <b>next</b> run.</p><p>Prestige converts every 9 total talent points into permanent random stats, then resets Legacy level and the talent tree. <b>Heirloom Storage and everything stored inside it survive automatically; Prestige no longer asks you to choose survivor heirlooms.</b> Your active heirloom-slot limit still determines what enters the next run.</p></div>';if(title.includes('Nightmare & Hell'))x.innerHTML='<summary>🌑 Nightmare & Hell</summary><div class="info-body"><p>Nightmare dramatically strengthens enemies. Nightmare guardians begin with a Barrier and enemies gain a small amount of Dodge.</p><p>Hell is harsher again: from Board 2 onward every enemy begins with at least one Barrier, enemy Dodge is slightly higher, and later combat patterns become increasingly hostile.</p><p>The Campsite may react differently as progression systems unlock. Not every unusual interaction is explained in this guide.</p></div>';});sections.querySelector('#v27RarityGuide')?.remove();const d=document.createElement('details');d.id='v27RarityGuide';d.className='info-section';const tiers=[['poor','Poor','#c4c8cf','light grey','lowest ordinary tier'],['common','Common','#ffffff','white','reliable ordinary rewards'],['uncommon','Uncommon','#a9dbff','light blue','stronger ordinary rewards'],['rare','Rare','#438bd8','blue','high ordinary tier'],['epic','Epic','#f5e9a8','pale yellow','top ordinary generated gear and powerful powers'],['legendary','Legendary','#ffd45f','gold','very rare powers and handcrafted equipment'],['artifact','Artifact','#ff9c38','orange','Impossible Road chase set'],['mythical','Mythical','#bd83ff','purple','extreme handcrafted chase tier'],['omega','Omega','#ffffff','white/purple','highest secret equipment tier']];d.innerHTML=`<summary>🌈 Rarity tiers & colours</summary><div class="info-body"><p>Equipment and powerups use the same rarity language. Ordinary generated equipment stops at <b>Epic</b>; Legendary and above are special/chase tiers.</p><div class="rarity-guide-grid">${tiers.map(([id,name,color,label,note])=>`<div class="rarity-guide-row"><span class="rarity-swatch" style="background:${color};${id==='omega'?'box-shadow:0 0 8px #b56cff':''}"></span><b style="color:${color}">${name}</b><span>${label} · ${note}</span></div>`).join('')}</div><p><b>Unique</b> is separate from rarity. A Unique power changes a rule or cannot safely stack; most ordinary Legendary stat powers can appear more than once.</p></div>`;sections.prepend(d);return r;};
@@ -9642,5 +9642,118 @@ function buildDiceboundHumanHarness235(){
   if(CLASSES.slime)CLASSES.slime.unlock='Unlock 10 classes in total';
   if(CLASSES.vampire)CLASSES.vampire.unlock='Exceed 100% Lifesteal and defeat the Board 3 final boss';
   checkDynamicClassUnlocks();
+
+  /* BETA 0.6.3.3 — #109 progressive Camp reveals.
+     This intentionally stays in the existing Camp owner. The persisted facts
+     are one-way, while the achievement/Legacy/Prestige inputs remain the
+     authoritative progression systems that already existed before this UI. */
+  const DB0633_CAMP_TROPHY_TIERS=Object.freeze([
+    Object.freeze({id:'current-trophy',minimumAchievementCount:2})
+  ]);
+  const DB0633_CAMP_OBJECT_IDS=Object.freeze(['campAchievementBtn','campTalentBtn','campMoonBtn']);
+  function db0633TrophyTierForAchievementCount(count){
+    const earned=Math.max(0,Math.floor(Number(count)||0));
+    let tier=null;
+    for(const candidate of DB0633_CAMP_TROPHY_TIERS)if(earned>=candidate.minimumAchievementCount)tier=candidate;
+    return tier;
+  }
+  function db0633PrestigeOfferPoints(total=allocatedTalentPoints()+(meta.points||0)){
+    return Math.max(0,Math.floor(Math.max(0,Number(total)||0)/9));
+  }
+  function db0633ReconcileCampRevealState(current={},facts={}){
+    const prior={achievementTrophy:!!current.achievementTrophy,talentStar:!!current.talentStar,prestigeMoon:!!current.prestigeMoon};
+    const achievementCount=Math.max(0,Math.floor(Number(facts.achievementCount)||0));
+    const legacyLevel=Math.max(1,Math.floor(Number(facts.legacyLevel)||1));
+    const prestigeCount=Math.max(0,Math.floor(Number(facts.prestigeCount)||0));
+    const prestigeOfferPoints=Math.max(0,Math.floor(Number(facts.prestigeOfferPoints)||0));
+    return {
+      achievementTrophy:prior.achievementTrophy||!!db0633TrophyTierForAchievementCount(achievementCount),
+      talentStar:prior.talentStar||!!facts.legacyLevelGained||legacyLevel>1||prestigeCount>0,
+      prestigeMoon:prior.prestigeMoon||prestigeOfferPoints>=1||prestigeCount>0
+    };
+  }
+  function db0633CurrentCampRevealState(){
+    const state=meta.campReveals;
+    return {achievementTrophy:!!state?.achievementTrophy,talentStar:!!state?.talentStar,prestigeMoon:!!state?.prestigeMoon};
+  }
+  function db0633AchievementCount(){
+    return ACHIEVEMENT_REGISTRY.reduce((count,achievement)=>count+(db317AchievementDone(achievement)?1:0),0);
+  }
+  function db0633ReconcileCampReveals(options={}){
+    const current=db0633CurrentCampRevealState();
+    const next=db0633ReconcileCampRevealState(current,{
+      achievementCount:db0633AchievementCount(),
+      legacyLevel:meta.level,
+      legacyLevelGained:!!options.legacyLevelGained,
+      prestigeCount:meta.prestige?.count,
+      prestigeOfferPoints:db0633PrestigeOfferPoints()
+    });
+    let changed=false;
+    for(const key of ['achievementTrophy','talentStar','prestigeMoon']){
+      if(next[key]&&!current[key]){
+        if(!meta.campReveals||typeof meta.campReveals!=='object')meta.campReveals={};
+        meta.campReveals[key]=true;changed=true;
+      }
+    }
+    return {changed,state:db0633CurrentCampRevealState()};
+  }
+  function db0633CampObjectMarkup(id){
+    if(id==='campAchievementBtn')return '<div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div>';
+    if(id==='campTalentBtn')return `<div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${window.DiceboundAssets?.resolveCampObject?.('talentStar')?.image||'assets/camp/objects/talent-star.png'}" alt="${window.DiceboundAssets?.resolveCampObject?.('talentStar')?.alt||'Northern star of talents'}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div>`;
+    if(id==='campMoonBtn')return '<div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige & reset</div>';
+    return '';
+  }
+  function db0633BindCampObject(button){
+    if(!button||button.dataset.db0633Bound)return;
+    button.dataset.db0633Bound='true';
+    if(button.id==='campAchievementBtn')button.addEventListener('click',()=>{renderAchievements();$('achievementOverlay')?.classList.remove('hidden');});
+    if(button.id==='campTalentBtn')button.addEventListener('click',()=>openTalentTree('startOverlay'));
+    if(button.id==='campMoonBtn')button.addEventListener('click',()=>{document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));$('campMoonPanel')?.classList.add('active');});
+  }
+  function db0633AttachCampObject(id){
+    const existing=$(id);if(existing)return existing;
+    const scene=$('campScene');if(!scene)return null;
+    const button=document.createElement('button');button.type='button';button.id=id;button.className=id==='campTalentBtn'?'camp-spot camp-art-button talent-art-button':'camp-spot';button.innerHTML=db0633CampObjectMarkup(id);
+    if(id==='campAchievementBtn')scene.querySelector('.camp-ground')?.appendChild(button);
+    else {
+      const stars=scene.querySelector('.camp-sky .camp-stars'),info=$('campInfoBtn');
+      if(id==='campTalentBtn')stars?.insertBefore(button,info||null);
+      if(id==='campMoonBtn'){
+        if(info?.parentElement)info.after(button);else stars?.appendChild(button);
+      }
+    }
+    if(!button.parentElement)return null;
+    db0633BindCampObject(button);return button;
+  }
+  function db0633SyncCampObjects(){
+    if(!$('campScene'))return db0633CurrentCampRevealState();
+    const state=db0633CurrentCampRevealState();
+    const visibility={campAchievementBtn:state.achievementTrophy,campTalentBtn:state.talentStar,campMoonBtn:state.prestigeMoon};
+    for(const id of DB0633_CAMP_OBJECT_IDS){
+      if(visibility[id])db0633AttachCampObject(id);else $(id)?.remove();
+    }
+    return state;
+  }
+  function db0633RefreshCampProgression(options={}){
+    const result=db0633ReconcileCampReveals(options);if(result.changed)saveMeta();db0633SyncCampObjects();return result;
+  }
+  const db0633GrantLegacyXpBase=grantLegacyXp;
+  grantLegacyXp=function(...args){
+    const before=Math.max(1,Math.floor(Number(meta.level)||1)),result=db0633GrantLegacyXpBase.apply(this,args);
+    db0633RefreshCampProgression({legacyLevelGained:Math.max(1,Math.floor(Number(meta.level)||1))>before});return result;
+  };
+  const db0633OpenStartScreenBase=openStartScreen;
+  openStartScreen=function(...args){const result=db0633OpenStartScreenBase.apply(this,args);db0633SyncCampObjects();return result;};
+  const db0633UpdateMetaUIBase=updateMetaUI;
+  updateMetaUI=function(...args){const result=db0633UpdateMetaUIBase.apply(this,args);db0633RefreshCampProgression();return result;};
+  window.DiceboundCampProgressionTest=Object.freeze({
+    trophyTiers:()=>DB0633_CAMP_TROPHY_TIERS.map(tier=>({...tier})),
+    trophyTierForAchievementCount:db0633TrophyTierForAchievementCount,
+    prestigeOfferPoints:db0633PrestigeOfferPoints,
+    reconcile:(current,facts)=>db0633ReconcileCampRevealState(current,facts),
+    current:db0633CurrentCampRevealState,
+    campObjectIds:()=>DB0633_CAMP_OBJECT_IDS.filter(id=>!!$(id))
+  });
+  setTimeout(()=>db0633RefreshCampProgression(),0);
 
 })();

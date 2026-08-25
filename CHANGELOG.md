@@ -2,7 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.2
+## Unreleased — Beta 0.6.3.3
+
+### Progressive Camp reveals (#109)
+- Fresh careers now begin with no Achievement Trophy, Talent Star or Prestige Moon in Camp. Each is a permanent career reveal rather than an invisible disabled control.
+- The existing Trophy appears after the second earned achievement through a count-based tier helper, leaving a stable seam for later Trophy-art upgrades.
+- The Talent Star appears after the first earned Legacy level, and the Prestige Moon appears when the existing nine-total-Talent-Points calculation first offers at least one Prestige Point.
+- Advanced careers reconcile from authoritative achievement, Legacy and Prestige facts without revealing objects for a genuinely fresh level-one career.
+
+## Beta 0.6.3.2 — Development checkpoint
 
 ### Release pipeline reliability (#118)
 - Protected `main` remains protected while successful release publication can advance the permanent launcher manifest through a narrowly scoped maintainer credential.

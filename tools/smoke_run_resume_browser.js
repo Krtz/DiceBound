@@ -54,16 +54,18 @@ async function closeEdge(edge){try{await Promise.race([edge.send("Browser.close"
   const profile=fs.mkdtempSync(path.join(os.tmpdir(),"dicebound-run-resume-edge-"));
   const {server,url}=await serveRuntime();let first=null,second=null;
   try{
-    first=await launch(profile,url);console.log("Edge pass 1 loaded; writing deterministic checkpoint");
+    first=await launch(profile,url);console.log("Edge pass 1 loaded; checking fresh Camp then writing deterministic checkpoint");
+    const freshCamp=await first.evaluate(`(()=>{const ids=['campAchievementBtn','campTalentBtn','campMoonBtn'];return {objects:window.DiceboundCampProgressionTest?.campObjectIds?.()||null,absent:ids.every(id=>!document.getElementById(id))};})()`);
+    assert.deepEqual(freshCamp.objects,[],"a fresh career must not render Camp progression objects");assert.equal(freshCamp.absent,true,"fresh Camp objects must be absent rather than invisible controls");
     const created=await first.evaluate(`(async()=>{
       window.DiceboundRng.seed('edge-resume-seed');document.getElementById('campGoBtn').click();
       await new Promise(resolve=>setTimeout(resolve,240));
       const automaticSaved=!!window.DiceboundRunCheckpoint.load().checkpoint;
       const checkpoint=window.DiceboundRunResumeTest.snapshot();checkpoint.run.player.gold=321;checkpoint.run.player.position=Math.min(2,checkpoint.run.tiles.length-1);checkpoint.summary.gold=321;checkpoint.summary.tile=checkpoint.run.player.position+1;
       window.DiceboundRunCheckpoint.store(checkpoint);const expected=[window.DiceboundRng.random(),window.DiceboundRng.random(),window.DiceboundRng.random()];
-      return {title:document.title,checkpoint,expected,stable:window.DiceboundRunResumeTest.isStable(),automaticSaved};
+      return {title:document.title,expectedTitle:'Dicebound: '+window.DiceboundVersion.channel+' v'+window.DiceboundVersion.version,checkpoint,expected,stable:window.DiceboundRunResumeTest.isStable(),automaticSaved};
     })()`);
-    assert.equal(created.title,"Dicebound: Beta v0.6.3.0");assert.equal(created.stable,true);assert.equal(created.automaticSaved,true,"starting a stable run did not autosave");assert.equal(created.checkpoint.run.player.gold,321);
+    assert.equal(created.title,created.expectedTitle);assert.equal(created.stable,true);assert.equal(created.automaticSaved,true,"starting a stable run did not autosave");assert.equal(created.checkpoint.run.player.gold,321);
     await closeEdge(first);first=null;console.log("Edge pass 1 closed; relaunching the same profile");
 
     second=await launch(profile,url);console.log("Edge pass 2 loaded; continuing saved run");

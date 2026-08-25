@@ -1,4 +1,14 @@
-# Unreleased — Beta 0.6.3.2
+# Unreleased — Beta 0.6.3.3
+
+## Camp grows with your career (#109)
+- A fresh Camp now begins without the Trophy, Talent Star or Prestige Moon.
+- Earn a second achievement to reveal the Trophy permanently; its count-based tier logic is ready for future art upgrades.
+- Gain your first Legacy level to reveal the Talent Star, and reach a one-point Prestige offer to reveal the Moon.
+- Your Camp keeps each earned object after a Prestige reset, while hidden objects are absent rather than invisible buttons.
+
+---
+
+# Beta 0.6.3.2 — Development checkpoint
 
 ## Release pipeline reliability (#118)
 - Release publication can now advance the launcher's verified `latest.json` pointer without weakening protected `main`.

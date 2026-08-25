@@ -1,18 +1,18 @@
 {
   "format": 3,
-  "version": "0.6.3.2",
+  "version": "0.6.3.3",
   "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6.3.2-dev-0752f38afa6e7e81",
-  "browserContentHash": "0752f38afa6e7e81b5721324dd9d4dc5177db0cfb71d84e3ee4407bbf6524852",
+  "buildId": "dicebound-0.6.3.3-dev-cb029c9636874952",
+  "browserContentHash": "cb029c96368749527bdc04f2ee73daf1cf94917655ae34cf34463b5fff1d1511",
   "assetRegistryVersion": 9,
   "payloadFileCount": 329,
   "assetPayloadCount": 301,
   "files": {
-    "build-info.json": "291b34876867b29db317413985c2ff47b2ac0fa5c6c5064e195a32e8df3b698c",
-    "index.html": "f98b0e7eb72e9db98e42486b8ebfe8993ec45ec4c8fe34eff4be3ab861a29379",
+    "build-info.json": "fab95ce6efd377a3d58ed0884e471322c6be1d4fd190f42a86420be509038392",
+    "index.html": "821acb859b44884508ac94cac91d2cb7e0dd605db49ea71be468b9d7d1c8ca6f",
     "css/dicebound.css": "19c9aa46a2c82a6420414f171ff60a0d13ae77cec854942a119ed0beaaa953c3",
-    "js/version.js": "489dd95e417e696d203e2bf315000c094216e1f175ab1528d7e0291944185c70",
+    "js/version.js": "532382f7381b169fcb2aa9cb6ac25d639a4dc9cfca6de9eaa4e1755716f1f79d",
     "js/assets.js": "cac19580aa7dc938fb263b395f7e692736c067f1d68eefc49cc94ef92131d634",
     "js/rng.js": "e60173724330993a4e0d510e6a623b9233380c730ca95a7344eb9c60fd207aeb",
     "js/native-http-host.js": "dc2439019ce5fe2d4885402993b59c4730f4305142c65980fcfb733b2a814932",
@@ -37,7 +37,7 @@
     "js/items/loot.js": "0327df098418fa8f69a44d17fd1544609cb4dcfcf8ea44c96f0016894644623f",
     "js/powerups/registry.js": "cda93b45aee2f4618adf0c21a2639eac3709097c49e96ca6521c3c6ebee9210c",
     "js/powerups/borrowing.js": "a1e88b6c9e9414dbac8251fcb8c869749bf90e7c74fb96a53b09971e01666151",
-    "js/dicebound.js": "91462425a364ad0bc3894d26fb11f10fb008c9b606ba5dcf5a558affba9a2c5b"
+    "js/dicebound.js": "92e3f6629d4f26dcd294b96a74f84b6a499810bc7e3aab48d3e3a9a0a7314095"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
