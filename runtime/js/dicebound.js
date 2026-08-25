@@ -2536,7 +2536,7 @@
 
   renderEnemyParty=function(){
     const strip=$("enemyParty"),stage=$("enemyIcon");if(!strip||!stage)return;strip.innerHTML="";stage.className="fighter-icon enemy-stage-icons";
-    stage.innerHTML=currentEnemies.map((e,i)=>`<span class="stage-enemy${i===currentEnemyIndex&&e.hp>0?" selected":""}${e.hp<=0?" defeated":""}${e.guardian?" guardian":""}" data-enemy-index="${i}" title="${e.name} · ${Math.max(0,e.hp)}/${e.maxHp} HP · ${e.defense||0} DEF${e.affinity?` · ${ELEMENTS[e.affinity].name} affinity`:""}"><span class="stage-sprite">${enemyPortraitSVG(e)}</span><span class="stage-affinity">${e.affinity?ELEMENTS[e.affinity].icon:""}</span>${e.rangerMarks?`<span class="stage-mark">🏹 ×${e.rangerMarks}</span>`:""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier||0,e.poisonStacks||0)}</span></span>`).join("");
+    stage.innerHTML=currentEnemies.map((e,i)=>`<span class="stage-enemy${i===currentEnemyIndex&&e.hp>0?" selected":""}${e.hp<=0?" defeated":""}${e.guardian?" guardian":""}${e.miniBoss?" miniboss":""}${e.finalBoss?" final-boss":""}" data-enemy-index="${i}" title="${e.name} · ${Math.max(0,e.hp)}/${e.maxHp} HP · ${e.defense||0} DEF${e.affinity?` · ${ELEMENTS[e.affinity].name} affinity`:""}"><span class="stage-sprite">${enemyPortraitSVG(e)}</span><span class="stage-affinity">${e.affinity?ELEMENTS[e.affinity].icon:""}</span>${e.rangerMarks?`<span class="stage-mark">🏹 ×${e.rangerMarks}</span>`:""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier||0,e.poisonStacks||0)}</span></span>`).join("");
     currentEnemies.forEach((e,i)=>{const b=document.createElement("button");b.className=`enemy-chip${i===currentEnemyIndex&&e.hp>0?" active":""}${e.hp<=0?" dead":""}`;b.disabled=e.hp<=0;b.title=`${e.name} · ${Math.max(0,e.hp)}/${e.maxHp} HP · ${e.defense||0} DEF`;b.innerHTML=`<strong class="target-number">${i+1}</strong>`;b.addEventListener("click",()=>setCurrentEnemy(i));strip.appendChild(b);});
   };
 
@@ -9797,16 +9797,16 @@ function buildDiceboundHumanHarness235(){
   };
   if(!document.getElementById('dicebound-0636-slime-battle-art-style')){
     const style=document.createElement('style');style.id='dicebound-0636-slime-battle-art-style';style.textContent=`
-      #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(246px,38vh,470px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
-      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:clamp(104px,19vw,270px)!important;min-height:clamp(225px,35vh,440px)!important;justify-content:flex-end!important;overflow:visible!important}
-      #enemyIcon.db0636-tiered-enemy-stage .stage-sprite{display:block!important;width:min(24vw,280px)!important;height:clamp(220px,34vh,425px)!important;line-height:0!important;overflow:visible!important}
+      #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(224px,35vh,430px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:clamp(100px,18vw,250px)!important;min-height:clamp(205px,32vh,400px)!important;justify-content:flex-end!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-sprite{display:block!important;width:min(22vw,260px)!important;height:clamp(200px,31vh,390px)!important;line-height:0!important;overflow:visible!important}
       .db0636-tiered-enemy-art{position:relative;display:block;width:100%;height:100%;isolation:isolate;overflow:visible}
       .db0636-tiered-enemy-image{position:relative;z-index:1;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center bottom!important;overflow:visible!important;border-radius:0!important;filter:drop-shadow(0 14px 13px rgba(0,0,0,.56))}
       .db0636-tiered-enemy-art::before{content:"";position:absolute;z-index:0;inset:13% 12% 8%;border-radius:50%;opacity:0;filter:blur(18px);pointer-events:none}
       .db0636-tiered-enemy-art.db-enemy-mode-nightmare::before{opacity:.52;background:radial-gradient(ellipse,rgba(129,69,179,.64),rgba(41,17,71,.38) 48%,transparent 74%)}
       .db0636-tiered-enemy-art.db-enemy-mode-hell::before{opacity:.56;background:radial-gradient(ellipse,rgba(230,84,43,.68),rgba(135,25,24,.42) 50%,transparent 75%)}
       #enemyIcon.db0636-tiered-enemy-stage .stage-enemy.selected .db0636-tiered-enemy-image{filter:drop-shadow(0 0 15px rgba(245,200,91,.34)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
-      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(185px,34vh,290px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(165px,30vh,260px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(160px,29vh,250px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
+      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(172px,32vh,270px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(150px,28vh,235px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(146px,27vh,225px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
     `;document.head.appendChild(style);
   }
   window.DiceboundEnemyBattleArt=Object.freeze({
@@ -9822,6 +9822,7 @@ function buildDiceboundHumanHarness235(){
   const DB_NATURE_EFFECT_KEY='naturePoisonVines';
   function dbNatureEffect(){return window.DiceboundAssets?.resolveCombatEffect?.(DB_NATURE_EFFECT_KEY)||null;}
   function dbLivingNatureTargets(enemies=[]){return (enemies||[]).filter(enemy=>enemy&&enemy.hp>0);}
+  function dbNatureVfxEntries(){return [...document.querySelectorAll('.db-nature-vines-vfx')].map(node=>{const host=node.closest('.stage-enemy');return {target:node.dataset.natureVfxTarget,frame:Number(node.dataset.natureVfxFrame),enemyIndex:host?Number(host.dataset.enemyIndex):null};});}
   function dbNatureHostForEnemy(enemy){
     const index=currentEnemies.indexOf(enemy);
     return index<0?null:document.querySelector(`#enemyIcon .stage-enemy[data-enemy-index="${index}"]`);
@@ -9856,11 +9857,38 @@ function buildDiceboundHumanHarness235(){
     `;document.head.appendChild(style);
   }
   setTimeout(()=>{const effect=dbNatureEffect();effect?.frames?.forEach(src=>{const image=new Image();image.src=src;});},0);
+  function dbNatureProcRegressionExercise(key='nature'){
+    document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
+    resetPlayer('ranger');
+    Object.assign(player,{attack:10,elementDamageBonus:0,naturePoisonStacks:1,combatAttackCount:0});
+    player.equipment.weapon={...(player.equipment.weapon||{}),element:key,rarity:'common'};
+    const targets=[
+      {name:'Nature VFX Defeated Target',icon:'👹',hp:3,maxHp:3,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0},
+      {name:'Nature VFX Living Target A',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0},
+      {name:'Nature VFX Living Target B',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0}
+    ];
+    currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
+    const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
+    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbNatureVfxEntries()};
+  }
+  function dbCombatPresentationExercise(kind='final'){
+    document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
+    const tiered=kind==='slime'||kind==='wolf';
+    const enemy={name:tiered?(kind==='slime'?'Slime':'Wolf'):(kind==='miniboss'?'Ogre Roadwarden':'Ancient Road Dragon'),icon:'👹',hp:100,maxHp:100,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,guardian:!tiered,miniBoss:kind==='miniboss',finalBoss:kind==='final'};
+    currentEnemies=[enemy];currentEnemyIndex=-1;currentEnemy=enemy;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
+    const stage=$('enemyIcon'),host=stage?.querySelector('.stage-enemy'),sprite=host?.querySelector('.stage-sprite'),art=host?.querySelector('.enemy-art-frame'),player=$('combatPlayerIcon');
+    const rect=node=>{const box=node?.getBoundingClientRect();return box?{width:Math.round(box.width),height:Math.round(box.height)}:null;};
+    return {kind,narrow:window.matchMedia('(max-width:760px)').matches,viewportHeight:window.innerHeight,stageClasses:stage?.className||'',hostClasses:host?.className||'',sprite:rect(sprite),art:rect(art),player:rect(player)};
+  }
   window.DiceboundNatureVfxTest=Object.freeze({
     effect:dbNatureEffect,
     livingTargets:enemies=>dbLivingNatureTargets(enemies).map(enemy=>enemy.name||''),
     previewPlayer:dbPlayNatureOnPlayer,
-    active:()=>[...document.querySelectorAll('.db-nature-vines-vfx')].map(node=>({target:node.dataset.natureVfxTarget,frame:Number(node.dataset.natureVfxFrame)}))
+    exerciseProc:dbNatureProcRegressionExercise,
+    exercisePresentation:dbCombatPresentationExercise,
+    active:dbNatureVfxEntries
   });
 
 })();

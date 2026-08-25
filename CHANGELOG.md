@@ -2,7 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.12
+## Unreleased — Beta 0.6.3.13
+
+### Combat presentation and Nature-proc regression coverage (#53, #80)
+- Made miniboss and final-boss battle portraits explicitly larger than ordinary enemies; final bosses now render larger than the player portrait at the tested narrow layout.
+- Reduced the dedicated Slime/Wolf Board-progression battle-art stage modestly at desktop and narrow widths without affecting their art resolver, modes, combat stats or turns.
+- Extended the real browser/native combat smoke to exercise a Nature pack proc through the live pipeline: the killed target is excluded while both surviving affected enemies receive Poison and the VFX; a forced Fire proc confirms that ordinary non-Nature combat does not create a vines overlay.
+
+## Beta 0.6.3.12
 
 ### Startup bootstrap cleanup (#138)
 - Prevented the historical start/class-selection scaffold and underlying run UI from painting before the current full-screen Camp finishes synchronous construction.
