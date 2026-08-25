@@ -819,3 +819,294 @@ weight: light
 tags: source-inspired, martial
 eligibility: uncommon+
 intrinsic: +2 Defense, +2% Dodge, +5 HP
+---
+
+# RuneScape armour reference expansion
+
+## Ahrim's Robetop
+family: barrows-robe-top
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, barrows, caster
+eligibility: epic+
+intrinsic: +15 Mana, +3% Echo, +1% Void proc chance
+---
+## Ancestral Robe Top
+family: caster-robe-top
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, ancient
+eligibility: legendary+
+intrinsic: +18 Mana, +4% Echo, +2% Crit
+---
+## Anima Core Body of Seren
+family: anima-core-body
+material: divine-metal, crystal
+weight: light
+tags: source-inspired, prototype-reference, caster, god-wars
+eligibility: legendary+
+intrinsic: +16 Mana, +3% Echo, +1% Light proc chance
+---
+## Anima Core Body of Sliske
+family: anima-core-body
+material: divine-metal, shadow
+weight: medium
+tags: source-inspired, prototype-reference, hybrid, god-wars
+eligibility: legendary+
+intrinsic: +4 Defense, +2% Crit, +2% Echo, +2% Dodge
+---
+## Anima Core Body of Zamorak
+family: anima-core-body
+material: divine-metal, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, god-wars
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +3% Dodge
+---
+## Anima Core Body of Zaros
+family: anima-core-body
+material: divine-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, god-wars
+eligibility: legendary+
+intrinsic: +6 Attack, +6 Defense, +10 HP
+---
+## Armadyl Chestplate
+family: ranged-chestplate
+material: aviansie-metal, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, god-wars
+eligibility: epic+
+intrinsic: +4 Attack, +4% Crit, +3% Dodge
+---
+## Bandos Chestplate
+family: war-chestplate
+material: war-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, god-wars
+eligibility: epic+
+intrinsic: +6 Attack, +5 Defense, +1 Thorns
+---
+## Blood Moon Chestplate
+family: moon-chestplate
+material: blood-metal, hide
+weight: heavy
+tags: source-inspired, prototype-reference, perilous-moons, martial, blood
+eligibility: epic+
+intrinsic: +5 Attack, +5 Defense, +3% Lifesteal
+---
+## Blue Moon Chestplate
+family: moon-robe-top
+material: enchanted-cloth, metal
+weight: light
+tags: source-inspired, prototype-reference, perilous-moons, caster, ice
+eligibility: epic+
+intrinsic: +15 Mana, +3% Echo, +1% Ice proc chance
+---
+## Cryptbloom Top
+family: caster-armour-top
+material: fungal-cloth
+weight: medium
+tags: source-inspired, prototype-reference, caster, nature, tank
+eligibility: legendary+
+intrinsic: +7 Defense, +15 HP, +2% Nature proc chance
+---
+## Crystal Body
+family: crystal-body
+material: crystal
+weight: light
+tags: source-inspired, prototype-reference, ranged, crystal
+eligibility: epic+
+intrinsic: +4 Attack, +4% Crit, +4% Dodge
+---
+## Deathdealer Robe Top
+family: necromancy-robe-top
+material: ritual-cloth, bone
+weight: light
+tags: source-inspired, prototype-reference, necromancy, offensive
+eligibility: epic+
+intrinsic: +5 Attack, +3% Crit, +2% Echo, +1% Void proc chance
+---
+## Deathwarden Robe Top
+family: necromancy-robe-top
+material: ritual-cloth, bone
+weight: medium
+tags: source-inspired, prototype-reference, necromancy, defensive
+eligibility: epic+
+intrinsic: +7 Defense, +15 HP, +1% Void proc chance
+---
+## Dharok's Platebody
+family: barrows-platebody
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, martial
+eligibility: epic+
+intrinsic: +7 Defense, +6 Attack, +12 HP
+---
+## Dracolich Hauberk
+family: ranged-hauberk
+material: dragon-bone, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, dracolich
+eligibility: legendary+
+intrinsic: +5 Attack, +5% Crit, +3% Echo
+---
+## Eclipse Moon Chestplate
+family: moon-chestplate
+material: hide, obsidian
+weight: medium
+tags: source-inspired, prototype-reference, perilous-moons, ranged, fire
+eligibility: epic+
+intrinsic: +5 Attack, +4% Crit, +2% Fire proc chance
+---
+## Ganodermic Poncho
+family: fungal-poncho
+material: fungal-fibre
+weight: medium
+tags: source-inspired, prototype-reference, caster, nature, tank
+eligibility: epic+
+intrinsic: +6 Defense, +12 Mana, +1% Nature proc chance
+---
+## Guthan's Platebody
+family: barrows-platebody
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, sustain
+eligibility: epic+
+intrinsic: +7 Defense, +15 HP, +3% Lifesteal
+---
+## Inquisitor's Hauberk
+family: hauberk
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, inquisitor
+eligibility: legendary+
+intrinsic: +6 Attack, +6 Defense, +3% Boss Damage
+---
+## Justiciar Chestguard
+family: chestguard
+material: sacred-metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, guardian, tank
+eligibility: legendary+
+intrinsic: +10 Defense, +20 HP, +2 Thorns, -2% Dodge
+---
+## Karil's Leathertop
+family: barrows-leathertop
+material: leather, barrows-cloth
+weight: light
+tags: source-inspired, prototype-reference, barrows, ranged
+eligibility: epic+
+intrinsic: +4 Attack, +4% Crit, +5% Dodge
+---
+## Malevolent Cuirass
+family: power-cuirass
+material: malevolent-energy, metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, high-tier
+eligibility: legendary+
+intrinsic: +7 Attack, +7 Defense, +2% Crit
+---
+## Masori Body
+family: ranged-body
+material: cloth, hide
+weight: light
+tags: source-inspired, prototype-reference, ranged, desert
+eligibility: legendary+
+intrinsic: +6 Attack, +5% Crit, +5% Dodge
+---
+## Obsidian Platebody
+family: obsidian-platebody
+material: obsidian
+weight: heavy
+tags: source-inspired, prototype-reference, martial, volcanic
+eligibility: rare+
+intrinsic: +5 Attack, +6 Defense, +2% Fire proc chance
+---
+## Pernix Body
+family: ranged-body
+material: ancient-leather, metal
+weight: light
+tags: source-inspired, prototype-reference, ranged, nex
+eligibility: legendary+
+intrinsic: +5 Attack, +5% Crit, +5% Dodge
+---
+## Proselyte Hauberk
+family: holy-hauberk
+material: steel, silver
+weight: medium
+tags: source-inspired, prototype-reference, holy, martial
+eligibility: uncommon+
+intrinsic: +4 Defense, +1% Light proc chance, +1 Luck
+---
+## Robe Top of the First Necromancer
+family: necromancy-robe-top
+material: ritual-cloth, bone
+weight: light
+tags: source-inspired, prototype-reference, necromancy, high-tier
+eligibility: legendary+
+intrinsic: +18 Mana, +4% Echo, +3% Lifesteal, +2% Void proc chance
+---
+## Robe Top of Subjugation
+family: caster-robe-top
+material: demonic-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, zamorak
+eligibility: epic+
+intrinsic: +14 Mana, +3% Echo, +1% Fire proc chance
+---
+## Sirenic Hauberk
+family: ranged-hauberk
+material: sirenic-scale
+weight: light
+tags: source-inspired, prototype-reference, ranged, high-tier
+eligibility: legendary+
+intrinsic: +6 Attack, +5% Crit, +4% Dodge
+---
+## Tectonic Robe Top
+family: caster-robe-top
+material: tectonic-energy, cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, high-tier
+eligibility: legendary+
+intrinsic: +20 Mana, +4% Echo, +3% Crit
+---
+## Torag's Platebody
+family: barrows-platebody
+material: barrows-metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, barrows, guardian
+eligibility: epic+
+intrinsic: +9 Defense, +15 HP, +2 Thorns
+---
+## Torva Platebody
+family: ancient-platebody
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, nex
+eligibility: legendary+
+intrinsic: +7 Attack, +9 Defense, +15 HP
+---
+## Verac's Brassard
+family: barrows-brassard
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, holy
+eligibility: epic+
+intrinsic: +6 Defense, +4 Attack, +2% Light proc chance
+---
+## Virtus Robe Top
+family: caster-robe-top
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, nex
+eligibility: legendary+
+intrinsic: +18 Mana, +4% Echo, +2% Void proc chance
+---
+## Void Knight Top
+family: void-top
+material: void-metal, cloth
+weight: medium
+tags: source-inspired, prototype-reference, void-knight, hybrid
+eligibility: rare+
+intrinsic: +3 Attack, +4 Defense, +3% Echo, +2% Dodge
