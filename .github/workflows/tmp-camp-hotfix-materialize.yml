@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   materialize:
-    if: github.event.head_commit.message == 'tmp: materialize camp hotfix'
+    if: "github.event.head_commit.message == 'tmp: materialize camp hotfix'"
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
