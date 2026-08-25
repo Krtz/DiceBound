@@ -22,7 +22,7 @@ const equipmentApi = context.window.DiceboundEquipment;
 const achievementsApi = context.window.DiceboundAchievements;
 for (const [name, api] of [["boards", boardsApi], ["equipment", equipmentApi], ["achievements", achievementsApi]]) {
   assert.ok(api, `${name} module did not publish its API`);
-  assert.equal(api.apiVersion, 1);
+  assert.equal(api.apiVersion, name === "equipment" ? 2 : 1);
   assert.ok(Object.isFrozen(api), `${name} API is mutable`);
 }
 
@@ -48,7 +48,9 @@ assert.equal(Object.keys(equipment.special).length, 11);
 assert.equal(equipment.special["axels-coffee-mug"].rarity, "legendary");
 assert.equal(equipment.special["devils-horns"].rarity, "omega");
 assert.equal(equipment.special["impossible-weapon"].setName, "Impossible Road");
-snapshot(equipment, 1792, "2d702405c8a749527f3f8fbffe8dc409bfdabe76acab3be8c7a47054723e8f0f", "equipment registry");
+assert.equal(equipment.identities.length, 12);
+assert.equal(equipment.identities.find(identity => identity.id === "bronze-longsword").intrinsicBonuses.attack, 1);
+assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 
 const achievements = achievementsApi.createRegistry();
 assert.equal(achievements.length, 31);

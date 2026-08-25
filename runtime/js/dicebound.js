@@ -3028,7 +3028,7 @@
 
   function v15SafeClassId(id){return CLASSES[id]?id:"ranger";}
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
-  function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
+  function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(poor|common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
   function v15GenerateEquipmentFromSeedCode(code){return window.DiceboundEquipment.generateOrdinaryFromSeedCode(code,{parseSeedCode:v15ParseSeedCode,seedRng:v14SeedRng,seedInt:v14SInt,seedPick:v14SPick,hashSeed:v14HashSeed,rarityBudgets:V14_RARITY_BUDGETS,affixTiers:V14_RARITY_AFFIX_TIER,prefixes:V14_PREFIXES,suffixes:V14_SUFFIXES,elementKeys:ELEMENT_KEYS,elementChanceForRarity,pickAffix:window.DiceboundEquipment.pickOrdinaryAffix,spendBase:v14SpendBase,gearIcon,baseName:window.DiceboundEquipment.ordinaryBaseName});}
   generateEquipment=function(forceRarity=null,forcedSlot=null){const rarity=forceRarity||rollGearRarity(0);if(!V14_RARITY_BUDGETS[rarity])return generateEquipmentV13(forceRarity,forcedSlot);const slot=forcedSlot||pick(EQUIPMENT_SLOTS),classId=player.classId,qualityBoost=Math.min(8,Math.floor((boardLevel-1)*1.5+player.position/32)),core=`${Math.floor(random()*0xffffffff).toString(36)}${Math.floor(random()*0xffffffff).toString(36)}`,code=v15SeedCode(rarity,slot,classId,qualityBoost,core);return v15GenerateEquipmentFromSeedCode(code);};
 
@@ -9902,6 +9902,80 @@ function buildDiceboundHumanHarness235(){
     exerciseProc:dbNatureProcRegressionExercise,
     exercisePresentation:dbCombatPresentationExercise,
     active:dbNatureVfxEntries
+  });
+
+  /* BETA 0.6.3.14 — #128/#83 authored equipment identities.
+     The extracted equipment domain selects and owns stable base IDs, intrinsic
+     stats and visual metadata. This adapter deliberately keeps live combat,
+     saves and the ordinary rolled-point budget in their existing owners. */
+  const db06314Equipment=window.DiceboundEquipment;
+  if(!db06314Equipment?.identityForItem||!db06314Equipment?.allBonusesForItem)throw new Error('Beta 0.6.3.14 requires the equipment identity domain.');
+  function db06314Identity(item){return db06314Equipment.identityForItem(item);}
+  function db06314IntrinsicParts(item){
+    const identity=db06314Identity(item),bonuses=db06314Equipment.intrinsicBonusesForItem(item);
+    const values=Object.entries(bonuses).map(([key,value])=>bonusLabel(key,value));
+    return identity&&values.length?{identity,values}:null;
+  }
+  function db06314EquipmentArtMarkup(item,klass='db06314-equipment-art'){
+    const entry=window.DiceboundAssets?.resolveEquipmentArt?.(item);
+    if(!entry?.image)return '';
+    const alt=String(entry.alt||item?.name||'Equipment').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    return `<img class="${klass}" src="${entry.image}" alt="${alt}" draggable="false">`;
+  }
+  const db06314ApplyItemStatsBase=applyItemStats;
+  applyItemStats=function(item,sign){
+    if(!db06314Identity(item))return db06314ApplyItemStatsBase(item,sign);
+    const oldMax=player.maxHp;
+    Object.entries(db06314Equipment.allBonusesForItem(item)).forEach(([key,value])=>{if(typeof player[key]==='number')player[key]+=value*sign;});
+    player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
+    if(player.maxHp<1)player.maxHp=1;
+    if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
+    player.hp=clamp(player.hp,1,player.maxHp);
+  };
+  const db06314FormatBonusesBase=formatBonuses;
+  formatBonuses=function(item){
+    const base=db06314FormatBonusesBase(item),intrinsic=db06314IntrinsicParts(item);
+    return intrinsic?`${base} · INTRINSIC (${intrinsic.identity.displayName}): ${intrinsic.values.join(' · ')}`:base;
+  };
+  const db06314GearScoreBase=gearPowerScore;
+  gearPowerScore=function(item){
+    const weights={attack:7,defense:8,maxHp:.55,crit:45,dodge:38,lifeSteal:45,luck:18,goldBonus:20,potionPower:15,bossDamage:34,doubleStrike:42,classBurst:30,extraStepChance:18,damageBonus:50,flatReduction:11,elementProcBonus:45};
+    return db06314GearScoreBase(item)+Object.entries(db06314Equipment.intrinsicBonusesForItem(item)).reduce((score,[key,value])=>score+Math.abs(value)*(weights[key]||2),0);
+  };
+  formatGearComparison=function(item,current){
+    if(!current)return '<b>Empty slot.</b> Equipping this item will not replace anything.';
+    const score=gearPowerScore(item)-gearPowerScore(current),incoming=db06314Equipment.allBonusesForItem(item),equipped=db06314Equipment.allBonusesForItem(current),deltas=[];
+    const keys=new Set([...Object.keys(equipped),...Object.keys(incoming)]);
+    keys.forEach(key=>{const delta=(incoming[key]||0)-(equipped[key]||0);if(Math.abs(delta)>.0001)deltas.push(`${STAT_LABELS[key]||key} ${formatBonusValue(key,delta)}`);});
+    const quality=score>12?'<span class="better">Overall quality: stronger</span>':score<-12?'<span class="worse">Overall quality: weaker</span>':'<span class="same">Overall quality: similar</span>';
+    return `${quality}<br>${deltas.length?deltas.join(' · '):'<span class="same">No numerical stat change</span>'}`;
+  };
+  const db06314RenderEquipmentBase=renderEquipment;
+  renderEquipment=function(...args){
+    const result=db06314RenderEquipmentBase.apply(this,args);
+    document.querySelectorAll('#equipmentGrid .equipment-slot').forEach(slotNode=>{
+      const slot=EQUIPMENT_SLOTS.find(candidate=>slotNode.querySelector('.slot-label')?.textContent===SLOT_LABELS[candidate]),item=slot&&player.equipment?.[slot],target=slotNode.querySelector('.slot-item');
+      if(item&&target){const art=db06314EquipmentArtMarkup(item,'db06314-equipment-art db06314-slot-art');if(art)target.innerHTML=`${art}<span>${item.name}</span>`;}
+    });
+    return result;
+  };
+  const db06314OpenLootBase=openLoot;
+  openLoot=function(item,callback){
+    const result=db06314OpenLootBase(item,callback),icon=$('lootCard')?.querySelector('.loot-icon'),art=db06314EquipmentArtMarkup(item,'db06314-equipment-art db06314-loot-art');
+    if(icon&&art)icon.innerHTML=art;
+    return result;
+  };
+  if(!document.getElementById('dicebound-06314-equipment-identity-style')){
+    const style=document.createElement('style');style.id='dicebound-06314-equipment-identity-style';style.textContent=`
+      .db06314-equipment-art{display:block;object-fit:contain}.slot-item:has(.db06314-slot-art){display:flex;align-items:center;gap:4px}.db06314-slot-art{width:20px;height:20px;flex:0 0 20px}.loot-icon:has(.db06314-loot-art){width:58px;height:58px}.db06314-loot-art{width:58px;height:58px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42))}
+    `;document.head.appendChild(style);
+  }
+  window.DiceboundEquipmentIdentityTest=Object.freeze({
+    identity:id=>db06314Equipment.equipmentIdentity(id),
+    art:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item)||null,
+    intrinsic:item=>db06314Equipment.intrinsicBonusesForItem(item),
+    total:item=>db06314Equipment.allBonusesForItem(item),
+    generate:(rarity='common',slot='weapon')=>generateEquipment(rarity,slot)
   });
 
 })();

@@ -5,6 +5,13 @@
 - Nature mechanics, damage, Poison, targets, RNG, turns and saves are unchanged; ordinary Poison cues remain unchanged.
 - Fire retains its generic elemental presentation. Browser and native smoke both assert that a real Nature proc creates vines but no legacy Nature placeholder.
 
+## Authored equipment identity foundation (#128, #83, #110)
+- Imported the ten approved transparent modular equipment assets into their canonical slot-based runtime folders; the raw art handoff remains outside Git.
+- Ordinary generated equipment now persists a stable `equipmentId` selected by one extracted equipment-domain registry with slot, family, material, eligibility, visual rig/anchor, canonical art and roll-weight metadata.
+- Base Intrinsics are authoritative and separate from the ordinary generated point budget: the first pack adds its approved Attack, Defense, Crit, elemental-proc and Echo values.
+- Class preferences are relative roll weights only. Every class can still equip every valid item and stored equipment remains cross-class usable.
+- The Equipment panel and loot card resolve the identity-owned artwork and label Intrinsics explicitly. Existing untagged Beta gear is not rerolled or migrated.
+
 ---
 
 # Beta 0.6.3.13

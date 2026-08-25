@@ -33,7 +33,7 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:12,
+  const manifest=Object.freeze({version:13,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
@@ -53,6 +53,10 @@
     audio:Object.freeze({sfx:Object.freeze(Object.fromEntries(["roll","step","hit","crit","coin","heal","lose","level","win","holy"].map(x=>[x,{customBase:x,alt:x}])) )})
   });
   const files=[]; const add=x=>{if(x&&!files.includes(x))files.push(x)}; const walk=x=>{if(!x)return;if(typeof x==="string"&&x.startsWith("assets/")&&/\.(png|ico)$/i.test(x))add(x);else if(Array.isArray(x))x.forEach(walk);else if(typeof x==="object")Object.values(x).forEach(walk)}; walk(manifest);
+  // Equipment identities own their gameplay metadata and art references in
+  // items/equipment.js. This is only the runtime preload inventory, kept here
+  // so the asset validator can prove every approved binary is packaged.
+  ["assets/equipment/weapon/bronze-longsword.png","assets/equipment/weapon/shortbow.png","assets/equipment/weapon/rubber-chicken.png","assets/equipment/weapon/crimson-brush.png","assets/equipment/weapon/tongue-lash.png","assets/equipment/hat/bronze-full-helm.png","assets/equipment/chest/bronze-platebody.png","assets/equipment/legs/bronze-platelegs.png","assets/equipment/boots/bronze-armoured-boots.png","assets/equipment/offhand/bronze-round-shield.png"].forEach(add);
   // Retired source art remains inventoried but is never returned by a resolver.
   add(`${ROOT}/powerups/_legacy/heavy-purse-beta-0.6.png`); add(`${paths.installerIcons}/dicebound-launcher.ico`); add(`${paths.installerIcons}/dicebound-launcher.png`);
   const SOUND_EXTENSIONS=Object.freeze(["ogg","mp3","wav","webm"]); const buildSoundCandidates=base=>SOUND_EXTENSIONS.map(ext=>`${paths.audioCustom}/${base}.${ext}`);
@@ -80,8 +84,13 @@
   const resolveBoardBackground=level=>manifest.board.backgrounds[String(Number(level)||1)]||manifest.board.backgrounds["1"];
   const resolveCombatBackground=(level,mode="normal")=>String(mode||"normal").toLowerCase()!=="normal"?null:manifest.combat.backgrounds.normal[String(Number(level)||1)]||manifest.combat.backgrounds.normal["1"];
   const resolveCombatEffect=key=>manifest.combat.effects[key]||null;
+  const resolveEquipmentArt=itemOrId=>{
+    const equipment=window.DiceboundEquipment;
+    const identity=typeof itemOrId==="string"?equipment?.equipmentIdentity?.(itemOrId):equipment?.identityForItem?.(itemOrId);
+    return identity?.art?Object.freeze({key:identity.id,image:identity.art.image,alt:identity.art.alt||identity.displayName,visual:identity.visual||null}):null;
+  };
   const resolveSoundEffect=(name,pack="custom")=>{const e=manifest.audio.sfx[name];return !e||pack!=="custom"?null:Object.freeze({key:name,pack,candidates:buildSoundCandidates(e.customBase),alt:e.alt||String(name)})};
-  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveCombatEffect,resolveSoundEffect});
+  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveCombatEffect,resolveEquipmentArt,resolveSoundEffect});
 
   // Art bridge for the recovered monolith's closure-owned powerup objects.
   // It decorates rendered powerup choices from the authoritative registry,
