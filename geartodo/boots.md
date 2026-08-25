@@ -419,3 +419,174 @@ weight: light
 tags: ranger, agile, wind
 eligibility: rare+
 intrinsic: +3% Dodge, +1% Crit
+---
+
+# RuneScape armour reference expansion
+
+## Bandos Boots
+family: armoured-boots
+material: war-metal, leather
+weight: heavy
+tags: source-inspired, prototype-reference, martial, god-wars
+eligibility: rare+
+intrinsic: +4 Defense, +2 Attack, +1 Thorns
+---
+## Boots of Brimstone
+family: hybrid-boots
+material: leather, volcanic-stone
+weight: medium
+tags: source-inspired, prototype-reference, hybrid, fire
+eligibility: epic+
+intrinsic: +2 Attack, +2 Defense, +1% Fire proc chance
+---
+## Cryptbloom Boots
+family: caster-boots
+material: fungal-cloth
+weight: medium
+tags: source-inspired, prototype-reference, caster, nature, tank
+eligibility: legendary+
+intrinsic: +4 Defense, +8 HP, +1% Nature proc chance
+---
+## Devout Boots
+family: holy-boots
+material: leather, silver
+weight: light
+tags: source-inspired, prototype-reference, holy, caster
+eligibility: rare+
+intrinsic: +2 Defense, +8 Mana, +1% Light proc chance
+---
+## Dragon Boots
+family: armoured-boots
+material: dragon-metal
+weight: medium
+tags: source-inspired, prototype-reference, martial, iconic
+eligibility: rare+
+intrinsic: +3 Defense, +3 Attack
+---
+## Echo Boots
+family: plated-boots
+material: dragon-metal, crystal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, echo
+eligibility: legendary+
+intrinsic: +4 Defense, +3% Echo, +1 Thorns
+---
+## Eternal Boots
+family: caster-boots
+material: leather, crystal
+weight: light
+tags: source-inspired, prototype-reference, caster, magic
+eligibility: epic+
+intrinsic: +12 Mana, +3% Echo
+---
+## Fremennik Sea Boots
+family: travel-boots
+material: leather, fur
+weight: medium
+tags: source-inspired, prototype-reference, fremennik, utility
+eligibility: uncommon+
+intrinsic: +2 Defense, +2% Dodge, +1 Luck
+---
+## Granite Boots
+family: armoured-boots
+material: granite
+weight: heavy
+tags: source-inspired, prototype-reference, martial, tank
+eligibility: uncommon+
+intrinsic: +4 Defense, +1 Thorns, -1% Dodge
+---
+## Guardian Boots
+family: armoured-boots
+material: granite, metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, guardian, tank
+eligibility: epic+
+intrinsic: +6 Defense, +8 HP, +2 Thorns, -1% Dodge
+---
+## Infinity Boots
+family: caster-boots
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, magic
+eligibility: rare+
+intrinsic: +10 Mana, +2% Echo, +1 Luck
+---
+## Mystic Boots
+family: caster-boots
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, magic
+eligibility: uncommon+
+intrinsic: +7 Mana, +1% Echo
+---
+## Pegasian Boots
+family: ranged-boots
+material: leather, crystal
+weight: light
+tags: source-inspired, prototype-reference, ranged, agile
+eligibility: epic+
+intrinsic: +3 Attack, +4% Dodge, +2% Crit
+---
+## Pernix Boots
+family: ranged-boots
+material: leather, ancient-metal
+weight: light
+tags: source-inspired, prototype-reference, ranged, nex
+eligibility: legendary+
+intrinsic: +3 Attack, +3% Crit, +3% Dodge
+---
+## Primordial Boots
+family: armoured-boots
+material: dragon-metal, crystal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, high-tier
+eligibility: epic+
+intrinsic: +4 Attack, +3 Defense, +1% Crit
+---
+## Ranger Boots
+family: ranged-boots
+material: leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, iconic
+eligibility: rare+
+intrinsic: +3% Dodge, +2% Crit
+---
+## Rune Boots
+family: armoured-boots
+material: rune-metal
+weight: medium
+tags: source-inspired, prototype-reference, martial, material-tier
+eligibility: uncommon+
+intrinsic: +3 Defense, +1 Attack
+---
+## Snakeskin Boots
+family: ranged-boots
+material: snakeskin
+weight: light
+tags: source-inspired, prototype-reference, ranged, agile
+eligibility: common+
+intrinsic: +2% Dodge, +1% Crit
+---
+## Spiked Manacles
+family: combat-boots
+material: leather, metal
+weight: medium
+tags: source-inspired, prototype-reference, martial, spiked
+eligibility: rare+
+intrinsic: +3 Attack, +1 Thorns
+---
+## Torva Boots
+family: armoured-boots
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, nex
+eligibility: legendary+
+intrinsic: +5 Defense, +3 Attack, +5 HP
+---
+## Virtus Boots
+family: caster-boots
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, nex
+eligibility: legendary+
+intrinsic: +14 Mana, +3% Echo, +1% Void proc chance
