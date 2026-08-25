@@ -396,14 +396,6 @@ tags: agile
 eligibility: common+
 intrinsic: +1% Dodge, +1% Crit
 ---
-## Leather Harness
-family: harness
-material: leather
-weight: light
-tags: weird
-eligibility: poor+
-intrinsic: +1% Dodge
----
 ## Leather Jerkin
 family: jerkin
 material: leather
