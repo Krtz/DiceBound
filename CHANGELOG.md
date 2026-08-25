@@ -2,7 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.7
+## Unreleased — Beta 0.6.3.9
+
+### Ordinary equipment generation architecture (#127)
+- Moved the authoritative deterministic construction and normalization of ordinary equipment into `runtime/js/items/equipment.js`.
+- The compatibility monolith now supplies its current mutable balance tables and runtime identity/RNG services through a narrow injected contract, while special handcrafted gear and presentation chains remain in their existing owners.
+- Added seeded equivalence fixtures spanning every slot and current ordinary-generation rarity, including generated object shape and outer RNG-call-count boundaries.
 
 ### Wolf Board battle-art progression (#91)
 - Added the approved transparent Wolf base forms for Boards 1--6 to the canonical ordinary-enemy battle-art tree, reusing the Slime PR's identity-plus-Board resolver and separate difficulty aura presentation.

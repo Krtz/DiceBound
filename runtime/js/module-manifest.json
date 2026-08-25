@@ -226,7 +226,7 @@
     {
       "id": "item-equipment",
       "path": "js/items/equipment.js",
-      "domain": "items/equipment-registry",
+      "domain": "items/equipment-registry-and-ordinary-generation",
       "status": "extracted",
       "requires": [
         "item-rarities"
