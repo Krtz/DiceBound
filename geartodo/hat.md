@@ -491,3 +491,254 @@ weight: heavy
 tags: source-inspired, martial, guardian
 eligibility: common+
 intrinsic: +2 Defense, +2% Dodge
+---
+
+# RuneScape armour reference expansion
+
+## Ahrim's Hood
+family: barrows-hood
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, barrows, caster
+eligibility: epic+
+intrinsic: +12 Mana, +2% Echo, +1% Void proc chance
+---
+## Ancestral Hat
+family: caster-hat
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, ancient
+eligibility: legendary+
+intrinsic: +15 Mana, +3% Echo, +2% Crit
+---
+## Armadyl Helmet
+family: ranged-helm
+material: aviansie-metal, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, god-wars
+eligibility: epic+
+intrinsic: +2 Attack, +3% Crit, +2% Dodge
+---
+## Berserker Helm
+family: fremennik-helm
+material: metal, horn
+weight: medium
+tags: source-inspired, prototype-reference, fremennik, martial
+eligibility: rare+
+intrinsic: +3 Attack, +2 Defense, +1% Crit
+---
+## Blood Moon Helm
+family: moon-helm
+material: blood-metal, hide
+weight: heavy
+tags: source-inspired, prototype-reference, perilous-moons, martial, blood
+eligibility: epic+
+intrinsic: +4 Attack, +3 Defense, +2% Lifesteal
+---
+## Blue Moon Helm
+family: moon-helm
+material: enchanted-cloth, metal
+weight: light
+tags: source-inspired, prototype-reference, perilous-moons, caster, ice
+eligibility: epic+
+intrinsic: +12 Mana, +2% Echo, +1% Ice proc chance
+---
+## Crystal Helm
+family: crystal-helm
+material: crystal
+weight: light
+tags: source-inspired, prototype-reference, ranged, crystal
+eligibility: epic+
+intrinsic: +2 Attack, +3% Crit, +2% Dodge
+---
+## Dharok's Helm
+family: barrows-helm
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, martial
+eligibility: epic+
+intrinsic: +4 Defense, +3 Attack, +5 HP
+---
+## Dracolich Coif
+family: ranged-coif
+material: dragon-bone, leather
+weight: light
+tags: source-inspired, prototype-reference, ranged, dracolich
+eligibility: legendary+
+intrinsic: +3 Attack, +4% Crit, +1% Echo
+---
+## Eclipse Moon Helm
+family: moon-helm
+material: hide, obsidian
+weight: medium
+tags: source-inspired, prototype-reference, perilous-moons, ranged, fire
+eligibility: epic+
+intrinsic: +3 Attack, +3% Crit, +1% Fire proc chance
+---
+## Farseer Helm
+family: fremennik-helm
+material: metal, cloth
+weight: light
+tags: source-inspired, prototype-reference, fremennik, caster
+eligibility: rare+
+intrinsic: +10 Mana, +2% Echo
+---
+## Guthan's Helm
+family: barrows-helm
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, sustain
+eligibility: epic+
+intrinsic: +4 Defense, +8 HP, +2% Lifesteal
+---
+## Inquisitor's Great Helm
+family: great-helm
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, inquisitor
+eligibility: legendary+
+intrinsic: +4 Attack, +5 Defense, +2% Boss Damage
+---
+## Justiciar Faceguard
+family: faceguard
+material: sacred-metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, guardian, tank
+eligibility: legendary+
+intrinsic: +7 Defense, +10 HP, +1 Thorns
+---
+## Karil's Coif
+family: barrows-coif
+material: leather, barrows-cloth
+weight: light
+tags: source-inspired, prototype-reference, barrows, ranged
+eligibility: epic+
+intrinsic: +2 Attack, +3% Crit, +3% Dodge
+---
+## Malevolent Helm
+family: power-helm
+material: malevolent-energy, metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, high-tier
+eligibility: legendary+
+intrinsic: +5 Attack, +5 Defense, +1% Crit
+---
+## Masori Mask
+family: ranged-mask
+material: cloth, hide
+weight: light
+tags: source-inspired, prototype-reference, ranged, desert
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +3% Dodge
+---
+## Neitiznot Faceguard
+family: fremennik-faceguard
+material: metal, jawbone
+weight: medium
+tags: source-inspired, prototype-reference, fremennik, martial
+eligibility: epic+
+intrinsic: +3 Attack, +4 Defense, +1% Crit
+---
+## Obsidian Helmet
+family: obsidian-helm
+material: obsidian
+weight: heavy
+tags: source-inspired, prototype-reference, martial, volcanic
+eligibility: rare+
+intrinsic: +3 Attack, +4 Defense, +1% Fire proc chance
+---
+## Pernix Cowl
+family: ranged-cowl
+material: ancient-leather, metal
+weight: light
+tags: source-inspired, prototype-reference, ranged, nex
+eligibility: legendary+
+intrinsic: +3 Attack, +4% Crit, +3% Dodge
+---
+## Robes of the First Necromancer Hood
+family: necromancy-hood
+material: ritual-cloth, bone
+weight: light
+tags: source-inspired, prototype-reference, necromancy, high-tier
+eligibility: legendary+
+intrinsic: +14 Mana, +3% Echo, +2% Lifesteal, +1% Void proc chance
+---
+## Sirenic Mask
+family: ranged-mask
+material: sirenic-scale
+weight: light
+tags: source-inspired, prototype-reference, ranged, high-tier
+eligibility: legendary+
+intrinsic: +4 Attack, +4% Crit, +2% Dodge
+---
+## Slayer Helmet
+family: slayer-helm
+material: bone, metal, leather
+weight: medium
+tags: source-inspired, prototype-reference, slayer, utility
+eligibility: epic+
+intrinsic: +3 Attack, +3 Defense, +3% Boss Damage
+---
+## Tectonic Mask
+family: caster-mask
+material: tectonic-energy, cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, high-tier
+eligibility: legendary+
+intrinsic: +16 Mana, +3% Echo, +2% Crit
+---
+## Torag's Helm
+family: barrows-helm
+material: barrows-metal
+weight: very-heavy
+tags: source-inspired, prototype-reference, barrows, guardian
+eligibility: epic+
+intrinsic: +6 Defense, +8 HP, +1 Thorns
+---
+## Torva Full Helm
+family: ancient-full-helm
+material: ancient-metal
+weight: heavy
+tags: source-inspired, prototype-reference, martial, nex
+eligibility: legendary+
+intrinsic: +5 Attack, +6 Defense, +8 HP
+---
+## Verac's Helm
+family: barrows-helm
+material: barrows-metal
+weight: heavy
+tags: source-inspired, prototype-reference, barrows, holy
+eligibility: epic+
+intrinsic: +4 Defense, +2 Attack, +1% Light proc chance
+---
+## Virtus Mask
+family: caster-mask
+material: enchanted-cloth
+weight: light
+tags: source-inspired, prototype-reference, caster, nex
+eligibility: legendary+
+intrinsic: +15 Mana, +3% Echo, +1% Void proc chance
+---
+## Void Knight Mage Helm
+family: void-helm
+material: void-metal, cloth
+weight: light
+tags: source-inspired, prototype-reference, void-knight, caster
+eligibility: rare+
+intrinsic: +10 Mana, +2% Echo, +1% Void proc chance
+---
+## Void Knight Melee Helm
+family: void-helm
+material: void-metal
+weight: medium
+tags: source-inspired, prototype-reference, void-knight, martial
+eligibility: rare+
+intrinsic: +3 Attack, +3 Defense, +1% Crit
+---
+## Void Knight Ranger Helm
+family: void-helm
+material: void-metal, leather
+weight: light
+tags: source-inspired, prototype-reference, void-knight, ranged
+eligibility: rare+
+intrinsic: +2 Attack, +3% Crit, +2% Dodge
