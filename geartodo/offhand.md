@@ -364,14 +364,6 @@ tags: rage, brutal
 eligibility: epic+
 intrinsic: +5 Attack, +2 Defense, +2 Thorns
 ---
-## Iron Round Shield
-family: round-shield
-material: iron
-weight: medium
-tags: martial, guardian, material-tier
-eligibility: poor+
-intrinsic: +2 Defense
----
 ## Kite Shield
 family: shield
 material: wood, iron
@@ -763,14 +755,6 @@ weight: light
 tags: rogue, smoke
 eligibility: uncommon+
 intrinsic: +3% Dodge, +1% Crit
----
-## Spellbook
-family: spellbook
-material: paper, leather
-weight: light
-tags: arcane, caster
-eligibility: poor+
-intrinsic: +5 Mana
 ---
 ## Spider Orb
 family: orb
