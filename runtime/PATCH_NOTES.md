@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.3.11
+# Unreleased — Beta 0.6.3.12
+
+## Startup cleanup (#138)
+- The obsolete Alpha-era class-selection screen no longer flashes for a moment while the modern Camp is being constructed.
+- DiceBound now keeps the bootstrap UI invisible through first paint and reveals it immediately after runtime initialization, with no artificial loading delay.
+- Removed an unused hidden block of old Alpha rules text from the startup DOM.
+
+---
+
+# Beta 0.6.3.11
 
 ## Nature Poison Vines VFX (#80)
 - Nature procs now show thorny poison vines erupting, lashing their actual living target, then receding.
