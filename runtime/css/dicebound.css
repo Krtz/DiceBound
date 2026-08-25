@@ -752,6 +752,10 @@
     width:72px!important;height:72px!important;
     filter:drop-shadow(0 0 14px rgba(245,200,91,.18)) drop-shadow(0 10px 10px rgba(0,0,0,.5));
   }
+  .stage-enemy.guardian.miniboss{min-width:108px;min-height:116px}
+  .stage-enemy.guardian.miniboss .enemy-art-frame{width:96px!important;height:96px!important}
+  .stage-enemy.guardian.final-boss{min-width:230px;min-height:236px}
+  .stage-enemy.guardian.final-boss .enemy-art-frame{width:216px!important;height:216px!important;filter:drop-shadow(0 0 20px rgba(245,200,91,.28)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
   .stage-enemy.selected .enemy-art-frame{
     filter:drop-shadow(0 0 12px rgba(245,200,91,.32)) drop-shadow(0 9px 8px rgba(0,0,0,.5));
   }
@@ -761,6 +765,10 @@
   @media(max-width:760px){
     .enemy-art-frame{width:50px!important;height:50px!important}
     .stage-enemy.guardian .enemy-art-frame{width:58px!important;height:58px!important}
+    .stage-enemy.guardian.miniboss{min-width:90px;min-height:96px}
+    .stage-enemy.guardian.miniboss .enemy-art-frame{width:80px!important;height:80px!important}
+    .stage-enemy.guardian.final-boss{min-width:164px;min-height:172px}
+    .stage-enemy.guardian.final-boss .enemy-art-frame{width:152px!important;height:152px!important}
     #enemyIcon.enemy-stage-icons{min-height:68px!important}
   }
 

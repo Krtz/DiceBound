@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.3.12
+# Unreleased — Beta 0.6.3.13
+
+## Combat presentation and Nature regression coverage (#53, #80)
+- Minibosses and final bosses now have a stronger on-screen presence in battle; final bosses are larger than the player portrait in the supported narrow layout check.
+- Slime and Wolf full-body Board-progression artwork is a little smaller, keeping its Board-based resolver and difficulty aura separate from combat mechanics.
+- Nature Poison Vines now has live combat regression coverage for a multi-enemy proc: defeated targets do not receive the visual, and all surviving affected enemies do.
+
+---
+
+# Beta 0.6.3.12
 
 ## Startup cleanup (#138)
 - The obsolete Alpha-era class-selection screen no longer flashes for a moment while the modern Camp is being constructed.
