@@ -2,7 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.4
+## Unreleased — Beta 0.6.3.5
+
+### Normal combat backgrounds (#115)
+- Added the six supplied Board 1–6 Normal-mode battle environment plates under the canonical combat-background hierarchy.
+- Combat now resolves the environment from Board and difficulty context: authored Normal plates apply independently of combatant art, while Nightmare and Hell deliberately retain their existing presentation until authored #88 variants exist.
+- Added deterministic registry/asset coverage and browser/native runtime smoke assertions for the combat-background contract.
 
 ### Static ordinary-enemy board markers (#82)
 - Added the approved transparent Slime, Goblin, Skeleton, Orc, Cultist, Wraith, Demon and Lich board markers under the canonical normal-enemy marker hierarchy.
