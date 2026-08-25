@@ -12,6 +12,7 @@ const EDGE=process.env.DICEBOUND_EDGE||"C:\\Program Files (x86)\\Microsoft\\Edge
 const DEBUG_PORT=Number(process.env.DICEBOUND_EDGE_DEBUG_PORT||19357);
 const MIME={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json; charset=utf-8",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".webp":"image/webp",".wav":"audio/wav"};
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function fetchWithTimeout(url,timeout=1500){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);try{return await fetch(url,{signal:controller.signal});}finally{clearTimeout(timer);}}
 
 function serveRuntime(){
   return new Promise((resolve,reject)=>{
@@ -26,7 +27,7 @@ function serveRuntime(){
 }
 async function waitForJson(url,timeout=15000){
   const deadline=Date.now()+timeout;let last;
-  while(Date.now()<deadline){try{const response=await fetch(url);if(response.ok)return response.json();last=new Error(`${response.status} ${response.statusText}`);}catch(error){last=error;}await sleep(100);}
+  while(Date.now()<deadline){try{const response=await fetchWithTimeout(url);if(response.ok)return response.json();last=new Error(`${response.status} ${response.statusText}`);}catch(error){last=error;}await sleep(100);}
   throw last||new Error(`Timed out waiting for ${url}`);
 }
 async function connectPage(expectedUrl){
@@ -35,13 +36,13 @@ async function connectPage(expectedUrl){
   if(!target)throw new Error("Edge did not expose a page target");
   const socket=new WebSocket(target.webSocketDebuggerUrl),pending=new Map();let id=0;
   await new Promise((resolve,reject)=>{socket.addEventListener("open",resolve,{once:true});socket.addEventListener("error",reject,{once:true});});
-  socket.addEventListener("message",event=>{const message=JSON.parse(String(event.data)),request=pending.get(message.id);if(!request)return;pending.delete(message.id);message.error?request.reject(new Error(message.error.message)):request.resolve(message.result);});
-  function send(method,params={}){return new Promise((resolve,reject)=>{const requestId=++id;pending.set(requestId,{resolve,reject});socket.send(JSON.stringify({id:requestId,method,params}));});}
+  socket.addEventListener("message",event=>{const message=JSON.parse(String(event.data)),request=pending.get(message.id);if(!request)return;pending.delete(message.id);clearTimeout(request.timer);message.error?request.reject(new Error(message.error.message)):request.resolve(message.result);});
+  function send(method,params={}){return new Promise((resolve,reject)=>{const requestId=++id,timer=setTimeout(()=>{if(pending.delete(requestId))reject(new Error(`DevTools request timed out: ${method}`));},20000);pending.set(requestId,{resolve,reject,timer});socket.send(JSON.stringify({id:requestId,method,params}));});}
   async function evaluate(expression){const result=await send("Runtime.evaluate",{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value;}
   return {socket,send,evaluate};
 }
 async function launch(profile,url){
-  const child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-first-run","--no-default-browser-check",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
+  const child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
   const page=await connectPage(url);
   const deadline=Date.now()+20000;
   while(Date.now()<deadline){if(await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest"))return {child,...page};await sleep(100);}
@@ -72,8 +73,8 @@ async function closeEdge(edge){try{await Promise.race([edge.send("Browser.close"
     const vines=await first.evaluate(`(async()=>{const api=window.DiceboundNatureVfxTest,effect=api.effect(),load=src=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve({width:image.naturalWidth,height:image.naturalHeight});image.onerror=()=>reject(new Error('Could not load '+src));image.src=src;}),frames=await Promise.all(effect.frames.map(load)),targets=api.livingTargets([{name:'defeated',hp:0},{name:'living',hp:4},{name:'missing'}]),preview=api.previewPlayer();await new Promise(resolve=>setTimeout(resolve,110));const active=api.active();await new Promise(resolve=>setTimeout(resolve,620));return {frames,targets,preview,active,after:api.active(),style:!!document.getElementById('dicebound-nature-vfx-style')};})()`);
     assert.equal(vines.style,true,"Nature VFX stylesheet is missing");assert.equal(vines.preview,true);assert.deepEqual(vines.targets,['living']);assert.equal(vines.frames.length,8);for(const frame of vines.frames)assert.deepEqual(frame,{width:272,height:724});assert.equal(vines.active.length,1);assert.equal(vines.active[0].target,'player');assert.deepEqual(vines.after,[]);
     const natureProc=await first.evaluate(`(async()=>{const api=window.DiceboundNatureVfxTest,nature=api.exerciseProc('nature');await new Promise(resolve=>setTimeout(resolve,110));const active=api.active();const ordinary=api.exerciseProc('fire');return {nature,active,ordinary,afterOrdinary:api.active()};})()`);
-    assert.equal(natureProc.nature.activated,true,"forced Nature proc did not activate");assert.deepEqual(natureProc.nature.enemies.map(enemy=>enemy.hp),[0,8,8]);assert.deepEqual(natureProc.nature.enemies.map(enemy=>enemy.poisonStacks),[0,1,1]);assert.deepEqual(natureProc.active.map(effect=>effect.enemyIndex),[1,2],"Nature VFX must follow living targets actually affected by the pack proc");assert.ok(natureProc.active.every(effect=>effect.target==='enemy'));
-    assert.equal(natureProc.ordinary.activated,true,"ordinary forced proc did not activate");assert.deepEqual(natureProc.afterOrdinary,[],"ordinary non-Nature proc created a Nature VFX overlay");
+    assert.equal(natureProc.nature.activated,true,"forced Nature proc did not activate");assert.deepEqual(natureProc.nature.enemies.map(enemy=>enemy.hp),[0,8,8]);assert.deepEqual(natureProc.nature.enemies.map(enemy=>enemy.poisonStacks),[0,1,1]);assert.deepEqual(natureProc.active.map(effect=>effect.enemyIndex),[1,2],"Nature VFX must follow living targets actually affected by the pack proc");assert.ok(natureProc.active.every(effect=>effect.target==='enemy'));assert.equal(natureProc.nature.legacyPresentation.nature,0,"authored Nature vines must replace the legacy generic Nature effect");
+    assert.equal(natureProc.ordinary.activated,true,"ordinary forced proc did not activate");assert.deepEqual(natureProc.afterOrdinary,[],"ordinary non-Nature proc created a Nature VFX overlay");assert.ok(natureProc.ordinary.legacyPresentation.fire>0,"ordinary Fire proc lost its generic elemental presentation");assert.equal(natureProc.ordinary.legacyPresentation.nature,0,"Fire proc created a legacy Nature presentation");
     const presentation=await first.evaluate(`(()=>['miniboss','final','slime','wolf'].map(kind=>window.DiceboundNatureVfxTest.exercisePresentation(kind)))()`);
     const byKind=Object.fromEntries(presentation.map(entry=>[entry.kind,entry]));const narrow=byKind.final.narrow,miniSize=narrow?80:96,finalSize=narrow?152:216,tieredHeight=narrow?Math.min(225,Math.max(146,Math.round(byKind.slime.viewportHeight*.27))):Math.min(390,Math.max(200,Math.round(byKind.slime.viewportHeight*.31)));assert.match(byKind.miniboss.hostClasses,/miniboss/);assert.match(byKind.final.hostClasses,/final-boss/);assert.deepEqual(byKind.miniboss.art,{width:miniSize,height:miniSize});assert.deepEqual(byKind.final.art,{width:finalSize,height:finalSize});assert.ok(byKind.final.art.width>byKind.final.player.width,`final boss portrait must be larger than the player portrait: ${JSON.stringify(byKind.final)}`);assert.match(byKind.slime.stageClasses,/db0636-tiered-enemy-stage/);assert.match(byKind.wolf.stageClasses,/db0636-tiered-enemy-stage/);assert.equal(byKind.slime.sprite.height,tieredHeight);assert.equal(byKind.wolf.sprite.height,tieredHeight);
     assert.ok(created.markerSources.length>0,"board did not render any semantic ordinary-enemy markers");assert.ok(created.markerSources.every(src=>/assets\/enemies\/normal\/board-markers\/[a-z-]+\.png$/.test(src||'')),"board used a non-semantic ordinary-enemy marker source");

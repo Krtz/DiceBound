@@ -9839,14 +9839,27 @@ function buildDiceboundHumanHarness235(){
   }
   function dbPlayNatureOnEnemy(enemy){return enemy?.hp>0&&dbPlayNatureVfx(dbNatureHostForEnemy(enemy),'enemy');}
   function dbPlayNatureOnPlayer(){return player.hp>0&&dbPlayNatureVfx($('combatPlayerIcon'),'player');}
+  let dbNatureReplacesLegacyPresentation=0;
+  const dbNatureLegacyAnimationBase=playElementAnimation;
+  playElementAnimation=function(key,target=currentEnemy,enemySource=false){
+    // The authored vine sequence replaces (rather than stacks on) the old
+    // Nature emoji burst for a real Nature elemental proc. Other uses of the
+    // generic Nature cue, such as a normal poison tick, are intentionally
+    // untouched, as are all other elements.
+    if(key==='nature'&&dbNatureReplacesLegacyPresentation>0)return false;
+    return dbNatureLegacyAnimationBase(key,target,enemySource);
+  };
+  function dbNatureHasAuthoredPresentation(){return !!dbNatureEffect()?.frames?.length;}
   const dbTriggerElementBase=triggerElementEffect;
   triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const candidates=key==='nature'?[...livingEnemies()]:[],result=dbTriggerElementBase(key,target,opts);
+    const candidates=key==='nature'?[...livingEnemies()]:[],replacesLegacy=key==='nature'&&dbNatureHasAuthoredPresentation();
+    let result=null;if(replacesLegacy)dbNatureReplacesLegacyPresentation++;
+    try{result=dbTriggerElementBase(key,target,opts);}finally{if(replacesLegacy)dbNatureReplacesLegacyPresentation--;}
     if(key==='nature'&&result)dbLivingNatureTargets(candidates).forEach(dbPlayNatureOnEnemy);
     return result;
   };
   const dbEnemyElementProcBase=enemyElementProc;
-  enemyElementProc=function(enemy){const result=dbEnemyElementProcBase(enemy);if(enemy?.affinity==='nature'&&result&&player.hp>0)dbPlayNatureOnPlayer();return result;};
+  enemyElementProc=function(enemy){const replacesLegacy=enemy?.affinity==='nature'&&dbNatureHasAuthoredPresentation();let result='';if(replacesLegacy)dbNatureReplacesLegacyPresentation++;try{result=dbEnemyElementProcBase(enemy);}finally{if(replacesLegacy)dbNatureReplacesLegacyPresentation--;}if(enemy?.affinity==='nature'&&result&&player.hp>0)dbPlayNatureOnPlayer();return result;};
   if(!document.getElementById('dicebound-nature-vfx-style')){
     const style=document.createElement('style');style.id='dicebound-nature-vfx-style';style.textContent=`
       .db-nature-vines-vfx{position:absolute;z-index:30;left:50%;bottom:-10%;width:clamp(112px,150%,260px);pointer-events:none;transform:translateX(-50%);overflow:visible;filter:drop-shadow(0 8px 10px rgba(20,0,30,.45))}
@@ -9858,7 +9871,7 @@ function buildDiceboundHumanHarness235(){
   }
   setTimeout(()=>{const effect=dbNatureEffect();effect?.frames?.forEach(src=>{const image=new Image();image.src=src;});},0);
   function dbNatureProcRegressionExercise(key='nature'){
-    document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
+    document.querySelectorAll('.db-nature-vines-vfx,.element-proc-fx,.enemy-proc-fx').forEach(node=>node.remove());
     resetPlayer('ranger');
     Object.assign(player,{attack:10,elementDamageBonus:0,naturePoisonStacks:1,combatAttackCount:0});
     player.equipment.weapon={...(player.equipment.weapon||{}),element:key,rarity:'common'};
@@ -9870,7 +9883,7 @@ function buildDiceboundHumanHarness235(){
     currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
     $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
     const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
-    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbNatureVfxEntries()};
+    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbNatureVfxEntries(),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
   }
   function dbCombatPresentationExercise(kind='final'){
     document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());

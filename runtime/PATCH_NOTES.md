@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.3.13
+# Unreleased — Beta 0.6.3.14
+
+## Nature Poison Vines presentation hotfix (#80)
+- A real Nature elemental proc now replaces the retired generic Nature burst with the authored Poison Vines sequence instead of showing both effects.
+- Nature mechanics, damage, Poison, targets, RNG, turns and saves are unchanged; ordinary Poison cues remain unchanged.
+- Fire retains its generic elemental presentation. Browser and native smoke both assert that a real Nature proc creates vines but no legacy Nature placeholder.
+
+---
+
+# Beta 0.6.3.13
 
 ## Combat presentation and Nature regression coverage (#53, #80)
 - Minibosses and final bosses now have a stronger on-screen presence in battle; final bosses are larger than the player portrait in the supported narrow layout check.
