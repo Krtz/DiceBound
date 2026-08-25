@@ -19,6 +19,7 @@
   const classes=Object.fromEntries(CLASSES.map(id=>[id,Object.freeze({campsite:`${paths.classCampsite}/${id}.png`,headshot:`${paths.classCampsite}/${id}.png`,battle:`${paths.classBattle}/${id}.png`,marker:`${paths.classMarkers}/${id}.png`,alt:id})]));
   const pets=Object.fromEntries(PETS.map(id=>[id,Object.freeze({portrait:`${paths.petPortraits}/${id}.png`,alt:id})]));
   const guardians=(ids,battleBase,markerBase)=>Object.fromEntries(ids.map(id=>[id,Object.freeze({battle:`${battleBase}/${id}.png`,boardMarker:`${markerBase}/${id}.png`,dedicatedBoardMarker:true,alt:id})]));
+  const normalEnemy=(id,alt,portrait=null)=>Object.freeze({portrait,boardMarker:`${paths.normalEnemyMarkers}/${id}.png`,alt});
   const powerups=Object.freeze({
     secondWind:{image:`${paths.powerupPoor}/second-wind.png`,alt:"Second Wind"},fieldAlchemy:{image:`${paths.powerupPoor}/field-alchemy.png`,alt:"Field Alchemy"},
     sharperBlade:{image:`${paths.powerupPoor}/sharper-blade.png`,alt:"Sharper Blade"},faintEcho:{image:`${paths.powerupPoor}/faint-echo.png`,alt:"Faint Echo"},
@@ -32,11 +33,12 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:9,
+  const manifest=Object.freeze({version:10,
     enemies:Object.freeze({
-      wolf:{portrait:`${paths.normalEnemyBattle}/wolf.png`,boardMarker:`${paths.normalEnemyMarkers}/wolf.png`,alt:"Wolf"},
-      bandit:{portrait:`${paths.normalEnemyBattle}/bandit.png`,boardMarker:`${paths.normalEnemyMarkers}/bandit.png`,alt:"Bandit"},
-      troll:{portrait:`${paths.normalEnemyBattle}/troll.png`,boardMarker:`${paths.normalEnemyMarkers}/troll.png`,alt:"Troll"}
+      slime:normalEnemy("slime","Slime"),goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
+      wolf:normalEnemy("wolf","Wolf",`${paths.normalEnemyBattle}/wolf.png`),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
+      orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:normalEnemy("wraith","Wraith"),
+      troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),demon:normalEnemy("demon","Demon"),lich:normalEnemy("lich","Lich")
     }),
     minibosses:Object.freeze(guardians(MINI,paths.minibossBattle,paths.minibossMarkers)),bosses:Object.freeze(guardians(BOSS,paths.bossBattle,paths.bossMarkers)),secretBosses:Object.freeze(guardians(SECRET,paths.secretBossBattle,paths.secretBossMarkers)),
     classes:Object.freeze(classes),pets:Object.freeze(pets),powerups,
@@ -50,7 +52,7 @@
   // Retired source art remains inventoried but is never returned by a resolver.
   add(`${ROOT}/powerups/_legacy/heavy-purse-beta-0.6.png`); add(`${paths.installerIcons}/dicebound-launcher.ico`); add(`${paths.installerIcons}/dicebound-launcher.png`);
   const SOUND_EXTENSIONS=Object.freeze(["ogg","mp3","wav","webm"]); const buildSoundCandidates=base=>SOUND_EXTENSIONS.map(ext=>`${paths.audioCustom}/${base}.${ext}`);
-  const matchers=[{key:"wolf",test:/\bwolf\b/i},{key:"bandit",test:/\bbandit\b/i},{key:"troll",test:/\btroll\b/i}];
+  const matchers=[{key:"slime",test:/\bslime\b/i},{key:"goblin",test:/\bgoblin\b/i},{key:"skeleton",test:/\bskeleton\b/i},{key:"wolf",test:/\bwolf\b/i},{key:"bandit",test:/\bbandit\b/i},{key:"orc",test:/\borc\b/i},{key:"cultist",test:/\bcultist\b/i},{key:"wraith",test:/\bwraith\b/i},{key:"troll",test:/\btroll\b/i},{key:"demon",test:/\bdemon\b/i},{key:"lich",test:/\blich\b/i}];
   const GUARDIAN_MARKER_MATCHERS=Object.freeze([
     {key:"ogre-roadwarden",test:/ogre\s+roadwarden/i},{key:"titan-guard",test:/titan\s+guard/i},{key:"paradox-warden",test:/paradox\s+warden/i},
     {key:"crownless-auditor",test:/crownless\s+auditor/i},{key:"ringbound-chancellor",test:/ringbound\s+chancellor/i},{key:"abyssal-custodian",test:/abyssal\s+custodian/i},
@@ -58,7 +60,7 @@
     {key:"crown-eater",test:/crown[-\s]?eater/i},{key:"ring-tyrant",test:/ring\s+tyrant/i},{key:"last-equation",test:/last\s+equation/i},
     {key:"road-merchant",test:/road\s+merchant/i},{key:"bloodmage-boss",test:/\bbloodmage\b/i},{key:"pale-devil",test:/pale\s+devil/i}
   ]);
-  const resolveEnemyPortrait=name=>{const m=matchers.find(x=>x.test.test(String(name)));if(!m)return null;const e=manifest.enemies[m.key];return Object.freeze({key:m.key,src:e.portrait,alt:e.alt||String(name)})};
+  const resolveEnemyPortrait=name=>{const m=matchers.find(x=>x.test.test(String(name)));if(!m)return null;const e=manifest.enemies[m.key];return !e?.portrait?null:Object.freeze({key:m.key,src:e.portrait,alt:e.alt||String(name)})};
   const resolveEnemyMarker=name=>{const m=matchers.find(x=>x.test.test(String(name)));if(!m)return null;const e=manifest.enemies[m.key];return Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)})};
   const resolveGuardianArt=id=>manifest.minibosses[String(id)]||manifest.bosses[String(id)]||manifest.secretBosses[String(id)]||null;
   const resolveMarkerByName=name=>{const normal=resolveEnemyMarker(name);if(normal)return normal;const m=GUARDIAN_MARKER_MATCHERS.find(x=>x.test.test(String(name)));if(!m)return null;const e=resolveGuardianArt(m.key);return e?Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)}):null};

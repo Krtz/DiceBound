@@ -2,7 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.3
+## Unreleased — Beta 0.6.3.4
+
+### Static ordinary-enemy board markers (#82)
+- Added the approved transparent Slime, Goblin, Skeleton, Orc, Cultist, Wraith, Demon and Lich board markers under the canonical normal-enemy marker hierarchy.
+- The semantic marker resolver now covers all eleven ordinary enemy identities while keeping marker-only assets out of the full-body battle-art resolver.
+- Board-marker selection remains invariant across Boards and difficulties; the new assets do not imply battle art, tier variants or mode auras.
+
+## Beta 0.6.3.3 — Development checkpoint
 
 ### Progressive Camp reveals (#109)
 - Fresh careers now begin with no Achievement Trophy, Talent Star or Prestige Moon in Camp. Each is a permanent career reveal rather than an invisible disabled control.
