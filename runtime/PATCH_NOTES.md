@@ -1,4 +1,4 @@
-# Unreleased — Beta 0.6.3.5
+# Unreleased — Beta 0.6.3.6
 
 ## Normal combat backgrounds (#115)
 - Added one supplied Normal-mode battle backdrop for every Board, from the Board 1 woodland through the Board 6 gothic citadel.
@@ -7,6 +7,11 @@
 ## Static ordinary-enemy board markers (#82)
 - Added approved transparent static board markers for Slime, Goblin, Skeleton, Orc, Cultist, Wraith, Demon and Lich.
 - Markers now resolve semantically for all ordinary enemies, remain unchanged across Boards and Normal/Nightmare/Hell, and do not become battle art.
+
+## Slime battle progression (#81)
+- Slime now uses its approved full-body Board 1--6 artwork in battle.
+- Difficulty no longer needs alternate art: Normal uses the base form, while Nightmare and Hell add separate faint runtime auras.
+- Road markers remain a separate static context and are never replaced by the battle form.
 
 ---
 

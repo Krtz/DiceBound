@@ -35,7 +35,10 @@
   });
   const manifest=Object.freeze({version:10,
     enemies:Object.freeze({
-      slime:normalEnemy("slime","Slime"),goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
+      // Battle base art evolves by Board, while board-marker identity and
+      // Nightmare/Hell presentation deliberately stay separate concerns.
+      slime:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/slime-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/slime.png`,alt:"Slime"}),
+      goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
       wolf:normalEnemy("wolf","Wolf",`${paths.normalEnemyBattle}/wolf.png`),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
       orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:normalEnemy("wraith","Wraith"),
       troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),demon:normalEnemy("demon","Demon"),lich:normalEnemy("lich","Lich")
@@ -61,8 +64,14 @@
     {key:"crown-eater",test:/crown[-\s]?eater/i},{key:"ring-tyrant",test:/ring\s+tyrant/i},{key:"last-equation",test:/last\s+equation/i},
     {key:"road-merchant",test:/road\s+merchant/i},{key:"bloodmage-boss",test:/\bbloodmage\b/i},{key:"pale-devil",test:/pale\s+devil/i}
   ]);
-  const resolveEnemyPortrait=name=>{const m=matchers.find(x=>x.test.test(String(name)));if(!m)return null;const e=manifest.enemies[m.key];return !e?.portrait?null:Object.freeze({key:m.key,src:e.portrait,alt:e.alt||String(name)})};
-  const resolveEnemyMarker=name=>{const m=matchers.find(x=>x.test.test(String(name)));if(!m)return null;const e=manifest.enemies[m.key];return Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)})};
+  const matchEnemy=name=>matchers.find(x=>x.test.test(String(name)));
+  const normalizeBattleBoard=level=>Math.min(6,Math.max(1,Math.floor(Number(level)||1)));
+  const ENEMY_MODE_AURAS=Object.freeze({normal:Object.freeze({id:"normal",className:""}),nightmare:Object.freeze({id:"nightmare",className:"db-enemy-mode-nightmare"}),hell:Object.freeze({id:"hell",className:"db-enemy-mode-hell"})});
+  const normalizeEnemyMode=mode=>String(mode||"normal").toLowerCase()==="hell"?"hell":String(mode||"normal").toLowerCase()==="nightmare"?"nightmare":"normal";
+  const resolveEnemyPortrait=name=>{const m=matchEnemy(name);if(!m)return null;const e=manifest.enemies[m.key];return e.portrait?Object.freeze({key:m.key,src:e.portrait,alt:e.alt||String(name)}):null};
+  const resolveEnemyBattleArt=(name,level=1)=>{const m=matchEnemy(name);if(!m)return null;const e=manifest.enemies[m.key],board=normalizeBattleBoard(level),src=e.battleByBoard?.[String(board)]||null;return src?Object.freeze({key:m.key,src,alt:e.alt||String(name),board}):null};
+  const resolveEnemyMarker=name=>{const m=matchEnemy(name);if(!m)return null;const e=manifest.enemies[m.key];return e.boardMarker?Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)}):null};
+  const resolveEnemyModeAura=mode=>ENEMY_MODE_AURAS[normalizeEnemyMode(mode)];
   const resolveGuardianArt=id=>manifest.minibosses[String(id)]||manifest.bosses[String(id)]||manifest.secretBosses[String(id)]||null;
   const resolveMarkerByName=name=>{const normal=resolveEnemyMarker(name);if(normal)return normal;const m=GUARDIAN_MARKER_MATCHERS.find(x=>x.test.test(String(name)));if(!m)return null;const e=resolveGuardianArt(m.key);return e?Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)}):null};
   const resolveClassArt=id=>manifest.classes[String(id)]||manifest.classes.ranger; const resolvePetArt=id=>manifest.pets[String(id)]||manifest.pets.neutral;
@@ -71,7 +80,7 @@
   const resolveBoardBackground=level=>manifest.board.backgrounds[String(Number(level)||1)]||manifest.board.backgrounds["1"];
   const resolveCombatBackground=(level,mode="normal")=>String(mode||"normal").toLowerCase()!=="normal"?null:manifest.combat.backgrounds.normal[String(Number(level)||1)]||manifest.combat.backgrounds.normal["1"];
   const resolveSoundEffect=(name,pack="custom")=>{const e=manifest.audio.sfx[name];return !e||pack!=="custom"?null:Object.freeze({key:name,pack,candidates:buildSoundCandidates(e.customBase),alt:e.alt||String(name)})};
-  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyMarker,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveSoundEffect});
+  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveSoundEffect});
 
   // Art bridge for the recovered monolith's closure-owned powerup objects.
   // It decorates rendered powerup choices from the authoritative registry,
