@@ -2,7 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.13
+## Unreleased — Beta 0.6.3.14
+
+### Nature Poison Vines presentation hotfix (#80)
+- Authored Nature Poison Vines now replaces the legacy generic Nature burst for a real elemental proc instead of layering over it.
+- Nature mechanics, target selection, RNG order, turns and saves are unchanged. Generic Poison cues remain intact, and Fire retains its generic elemental presentation.
+- Browser and native combat smoke explicitly verify the real Nature VFX without the generic Nature placeholder, alongside the Fire negative control.
+
+## Beta 0.6.3.13
 
 ### Combat presentation and Nature-proc regression coverage (#53, #80)
 - Made miniboss and final-boss battle portraits explicitly larger than ordinary enemies; final bosses now render larger than the player portrait at the tested narrow layout.
