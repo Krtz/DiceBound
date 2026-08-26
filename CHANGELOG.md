@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.6
+
+### Merchant reward transaction reliability (#160)
+- Added one authoritative Merchant-visit transaction owner for offer reservations, consumed stock and the exclusive Sovereign/Legendary Contract choice.
+- A pending Legendary choice now freezes the current Merchant visit: delayed rerenders or re-entry cannot rebuild stock, re-enable a sold offer or begin a second choice.
+- An exhausted Legendary pool still refunds the price, but the current visit's offer remains consumed so the flow cannot loop or softlock.
+- Added deterministic transaction coverage and real Edge/WebView2 smoke coverage for the delayed Sovereign selection path.
+
 ## Beta 0.6.4.5
 
 ### Class unlock feedback (#116)

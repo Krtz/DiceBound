@@ -36,6 +36,7 @@ items/equipment.js
 progression/talents.js
 progression/achievements.js
 events/reward-policy.js
+events/merchant-transaction.js
 items/artifacts.js
 items/loot.js
 powerups/registry.js
@@ -46,6 +47,8 @@ dicebound.js
 `version.js` is the first runtime module and the only browser-runtime owner of current Version/Channel literals. Infrastructure, save and the compatibility monolith consume its frozen identity API. `save-system.js` owns independent career and active-run envelopes plus their backup rotation. `core/run-checkpoint.js` owns JSON-safe active-run validation, RNG capture and storage coordination; the monolith currently composes its live state into that API at completed-tile boundaries. `core/state.js` owns career defaults, normalization, save/load coordination and the domain event bus. `core/runtime-services.js` creates explicit capability contracts without owning or copying live run data. `combat/effective-stats.js` owns extracted pure modifier calculations and live descriptors, beginning with the complete Berserker Ultimate/Rage path. `powerups/registry.js` consumes the runtime-service contract and authoritatively owns all 200 canonical Powerup definitions/effects. Explicit owners also cover classes and support tables, pets, boards, enemies, rarity/equipment metadata, achievements, the Legacy talent tree, Artifact selection and guardian/ordinary loot policy. `dicebound.js` temporarily retains active-run state, checkpoint composition wiring, Powerup choice/application orchestration, concrete item factories and presentation.
 
 `progression/class-unlock-rules.js` owns observed unlock facts and dynamic eligibility. `progression/class-unlock-feedback.js` is the single player-facing feedback owner: it derives copy from the canonical class registry, accepts only successful canonical unlock events, persists the Camp-reveal queue, and does not infer unlocks by parsing UI text.
+
+`events/merchant-transaction.js` owns the current Merchant visit's offer reservations, consumed-offer state and exclusive reward-choice transaction. Merchant rendering remains in the compatibility runtime for now, but it cannot rebuild stock or enter another Sovereign/Contract choice while that transaction owns input.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 

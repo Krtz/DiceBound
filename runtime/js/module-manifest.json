@@ -30,6 +30,7 @@
     "progression-talents",
     "progression-achievements",
     "event-rewards",
+    "merchant-transactions",
     "artifacts",
     "loot",
     "powerup-registry",
@@ -315,6 +316,16 @@
       "requires": [],
       "provides": [
         "DiceboundEventRewards"
+      ]
+    },
+    {
+      "id": "merchant-transactions",
+      "path": "js/events/merchant-transaction.js",
+      "domain": "events/merchant-visit-transactions",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundMerchantTransaction"
       ]
     },
     {

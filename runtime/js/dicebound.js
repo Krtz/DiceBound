@@ -7258,6 +7258,20 @@ function buildDiceboundHumanHarness235(){
   };
 
   // ----- Sovereign / Contract hardening -----------------------------------
+  const db0646MerchantTransaction=window.DiceboundMerchantTransaction;
+  if(!db0646MerchantTransaction)throw new Error('DiceboundMerchantTransaction must load before dicebound.js');
+  let db0646MerchantVisit=null;
+  function db0646MerchantVisitForCurrentStock(){
+    if(!db0646MerchantVisit||(!db0646MerchantTransaction.hasActiveChoice(db0646MerchantVisit)&&!db0646MerchantTransaction.ownsOffers(db0646MerchantVisit,currentMerchantItems))){db0646MerchantVisit=db0646MerchantTransaction.createVisit(currentMerchantItems);}
+    return db0646MerchantVisit;
+  }
+  const db0646OpenMerchantBase=openMerchant;
+  openMerchant=function(){
+    if(db0646MerchantTransaction.hasActiveChoice(db0646MerchantVisit))return false;
+    const result=db0646OpenMerchantBase.apply(this,arguments);
+    db0646MerchantVisit=db0646MerchantTransaction.beginVisit(null,currentMerchantItems);
+    return result;
+  };
   function db0410LegendaryChoices(){const pool=[...eligibleUpgrades(u=>u.rarity==='legendary')],out=[];while(pool.length&&out.length<3){const i=rand(0,pool.length-1);out.push(pool.splice(i,1)[0]);}return out;}
   function db0410EnsureSovereignOverlay(){
     let overlay=$('sovereignChoiceOverlay');if(overlay)return overlay;
@@ -7293,6 +7307,44 @@ function buildDiceboundHumanHarness235(){
       });grid.appendChild(btn);
     });
   };
+
+  // Final Merchant renderer: transaction ownership lives in
+  // DiceboundMerchantTransaction, not in transient buttons or delayed UI.
+  renderMerchant=function(){
+    const visit=db0646MerchantVisitForCurrentStock();
+    $('merchantGold').textContent=player.gold;const notice=$('merchantNotice');notice.classList.toggle('show',!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$('shopGrid');grid.innerHTML='';
+    currentMerchantItems.forEach((item,index)=>{const key=db0646MerchantTransaction.offerKey(item,index),price=merchantPrice(item.base),sold=item.sold||!db0646MerchantTransaction.canPurchase(visit,key),btn=document.createElement('button');btn.className=`shop-item${sold?' sold':''}`;btn.disabled=sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:'';btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${sold?'SOLD':price+'g'}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;
+      btn.addEventListener('click',async()=>{
+        if(item.sold||player.gold<price)return;
+        const reservation=db0646MerchantTransaction.reservePurchase(visit,key);if(!reservation.ok)return;
+        if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!(await diceboundConfirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}))){db0646MerchantTransaction.cancelReservation(visit,reservation.token);renderMerchant();return;}}
+        if(player.gold<price){db0646MerchantTransaction.cancelReservation(visit,reservation.token);renderMerchant();return;}
+        const chooser=item.alphaChooseLegendary||/Sovereign Relic|Legendary Contract/i.test(item.name||''),purchase=chooser?db0646MerchantTransaction.beginChoice(visit,reservation.token):db0646MerchantTransaction.commitPurchase(visit,reservation.token);if(!purchase.ok){db0646MerchantTransaction.cancelReservation(visit,reservation.token);return;}
+        player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);
+        if(chooser){
+          currentMerchantNotice=`<b>${item.name} purchased.</b> Choose one Legendary power.`;renderMerchant();$('merchantOverlay').classList.add('hidden');
+          setTimeout(()=>{if(!db0646MerchantTransaction.hasActiveChoice(visit))return;db0410OpenSovereignChoice(item.name||'Legendary Contract',chosen=>{
+            if(!db0646MerchantTransaction.settleChoice(visit,purchase.token).ok)return;
+            if(!chosen){player.gold+=price;currentMerchantNotice=`No eligible Legendary powers remain; ${price} gold was refunded. This Merchant offer remains sold.`;}
+            else currentMerchantNotice=`<b>${item.name} claimed:</b> ${chosen.name}.`;
+            $('merchantOverlay').classList.remove('hidden');showToast(chosen?`Legendary: ${chosen.name}`:'Relic refunded');updateHUD();renderMerchant();
+          });},0);
+          return;
+        }
+        const result=item.buy?.();if(item.id==='relic'&&result)currentMerchantNotice=`<b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(['attack','armor','charm'].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant');showToast(item.id==='relic'&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();
+      });grid.appendChild(btn);
+    });
+  };
+
+  window.DiceboundMerchantTransactionTest=Object.freeze({
+    prepareSovereign:()=>{
+      player.gold=99999;currentMerchantNotice='';currentMerchantItems=[{id:'merchant-transaction-sovereign',icon:'C',name:'Sovereign Relic',desc:'Choose one Legendary power.',base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];db0646MerchantVisit=db0646MerchantTransaction.createVisit(currentMerchantItems);$('merchantOverlay').classList.remove('hidden');renderMerchant();return window.DiceboundMerchantTransactionTest.state();
+    },
+    attemptDelayedReopen:()=>{
+      const stock=currentMerchantItems,result=openMerchant();return {result,sameStock:stock===currentMerchantItems,state:window.DiceboundMerchantTransactionTest.state()};
+    },
+    state:()=>({visit:db0646MerchantTransaction.snapshot(db0646MerchantVisit),merchantHidden:$('merchantOverlay').classList.contains('hidden'),choiceVisible:!$('sovereignChoiceOverlay')?.classList.contains('hidden'),items:currentMerchantItems.map(item=>({id:item.id,sold:!!item.sold}))})
+  });
 
   // ----- Simple diagnostics for the harness/tooling layer -----------------
   window.DiceboundBeta045Debug=Object.freeze({
