@@ -2,7 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.4.1
+## Unreleased — Beta 0.6.4.2
+
+### Combat presentation ownership (#40)
+
+- Extracted authored Nature Poison Vines and Donut Rain DOM presentation into `runtime/js/combat/vfx.js`.
+- The existing combat pipeline retains its exact mechanics, targets, turns and RNG; the monolith now supplies only its local-state adapters to the presentation owner.
+- Added deterministic coverage for VFX ownership, scoped Nature legacy-suppression, live-target filtering and the established Nature/Donut asset contracts.
 
 ### Memory diagnostics (#124)
 

@@ -69,6 +69,10 @@ python tools/validate_asset_architecture.py
 
 The audit syntax-checks the core JavaScript, loads/evaluates the asset registry, checks expected class/pet/enemy/powerup families, verifies every registry/preload target exists, validates placeholder homes, classifies historical monolith literals, and confirms compatibility mirrors keep those literals resolvable.
 
+### Combat presentation ownership
+
+`runtime/js/combat/vfx.js` is the authoritative owner for authored combat-effect DOM presentation. It resolves the canonical Nature Poison Vines frame sequence and Donut Rain overlay, manages their bounded DOM lifetime, and scopes suppression of Nature's retired generic burst to the real authored Nature proc. The compatibility monolith supplies only live combat-local accessors and installs the existing post-resolution hooks; combat mechanics retain targets, damage, turns and RNG ownership.
+
 ## Build identity
 
 The exact shipped Beta 0.6 build identity is preserved under `docs/releases/beta-0.6/`.

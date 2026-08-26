@@ -1,4 +1,10 @@
-# Unreleased — Beta 0.6.4.1
+# Unreleased — Beta 0.6.4.2
+
+## Combat presentation ownership (#40)
+
+- `runtime/js/combat/vfx.js` now owns the authored Nature Poison Vines and Donut Rain presentation lifecycle.
+- Combat mechanics still own damage, targets, turns and RNG. The remaining monolith adapters only supply live combat-local state and hook the presentation after real resolved procs.
+- Nature continues to replace only its legacy generic elemental burst for a real authored Nature proc; generic Poison cues and non-Nature effects are unchanged.
 
 ## Memory Diagnostics (#124)
 
