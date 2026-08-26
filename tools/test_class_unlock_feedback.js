@@ -4,11 +4,12 @@ const path=require("path");
 const root=path.resolve(__dirname,"..");
 function load(rel,window={}){const code=fs.readFileSync(path.join(root,rel),"utf8");vm.runInNewContext(code,{window,console});return window;}
 function assert(value,message){if(!value)throw new Error(message);}
-const w={};
+const stored=new Map();
+const w={DiceboundStorage:{getString:key=>stored.get(String(key))??null,setString:(key,value)=>{stored.set(String(key),String(value));return true;}}};
 load("runtime/js/classes/registry.js",w);
 load("runtime/js/assets.js",w);
-load("runtime/js/progression/class-unlock-feedback.js",w);
-const F=w.DiceboundClassUnlockFeedback;
+load("runtime/js/progression/class-unlock-rules.js",w);
+const F=w.DiceboundClassUnlockRules.feedback;
 assert(F,"unlock feedback owner missing");
 assert(F.toastFor("cleric")==="You healed 1,000 total HP: Cleric unlocked!","Cleric toast should explain healing trigger");
 assert(F.toastFor("rogue")==="You held at least 5,000 Gold at once and defeated the Board 3 miniboss: Rogue unlocked!","Rogue compound toast drifted");
@@ -23,5 +24,13 @@ assert(cleric.identity&&cleric.identity.length>20,"Cleric identity copy missing"
 assert(cleric.howItPlays&&cleric.howItPlays.length>20,"Cleric gameplay copy missing");
 const secret=F.revealFor("bloodmage");
 assert(secret.secret===true,"secret marker should be preserved after unlock");
-assert(!F.reasonFor("bloodmage").toLowerCase().includes("secret:"),"post-unlock reason should be natural player-facing copy");
-console.log("Class unlock feedback PASS: reasons, compound triggers, canonical art and reveal copy");
+assert(F.reasonFor("bloodmage").startsWith("You defeated"),"secret condition should only become player-facing through the post-unlock feedback path");
+assert(F.enqueue("cleric")===true,"first reveal should queue");
+assert(F.enqueue("cleric")===false,"duplicate reveal should not queue");
+assert(F.state().pending.join(",")==="cleric","pending queue drifted");
+F.acknowledge("cleric");
+assert(F.state().pending.length===0&&F.state().acknowledged.includes("cleric"),"acknowledged reveal should persist and leave queue");
+assert(F.enqueue("cleric")===false,"acknowledged reveal should not repeat");
+const persisted=JSON.parse(stored.get("dicebound.class-unlock-reveals.v1"));
+assert(persisted.acknowledged.includes("cleric"),"reveal acknowledgement was not persisted");
+console.log("Class unlock feedback PASS: reasons, compound triggers, canonical art, queue and acknowledgement persistence");
