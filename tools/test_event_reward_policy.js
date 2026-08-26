@@ -9,6 +9,8 @@ assert.equal(policy.baseGold(1), 70);
 assert.equal(policy.baseGold(5), 150);
 assert.equal(policy.baseGold(10), 250);
 assert.equal(policy.baseGold(25), 550);
+assert.equal(policy.goldBaseFor("heavyPurse", 1), 49);
+assert.equal(policy.goldBaseFor("heavyPurse", 10), 175);
 assert.equal(policy.goldBaseFor("slotPair", 5), 150);
 assert.equal(policy.goldBaseFor("slotPity", 5), 38);
 assert.equal(policy.goldBaseFor("talentRank", 1, 4), 98);
