@@ -952,10 +952,10 @@
   function strikeBaseDamage(echo=false,chaos=null,{canCrit=true}={}){let attack=player.attack+(player.goldAttackScale?Math.floor(player.gold*player.goldAttackScale):0),damage=Math.max(1,Math.round(attack+player.defense*player.defenseAttackScale)+rand(-1,2)),burst="";if(classIdentityActive("sorcerer")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Arcane Surge! ";}if(classIdentityActive("monk")&&random()<player.classBurst){damage=Math.round(damage*1.35);player.ultimateCharge=clamp(player.ultimateCharge+6,0,100);burst="Flowing Combo! ";}if(classIdentityActive("clown")&&random()<player.classBurst){damage=Math.round(damage*(.9+random()*1.1));burst="Unlicensed Comedy! ";}if(classIdentityActive("rouge")&&random()<player.classBurst){damage=Math.round(damage*1.45);burst="Crimson Stroke! ";}if(classIdentityActive("berserker")&&random()<player.classBurst){damage=Math.round(damage*1.55);burst="Blood Frenzy! ";}if(classIdentityActive("frog")&&random()<player.classBurst){damage=Math.round(damage*1.35);burst="Resonant Croak! ";}if(classIdentityActive("vampire")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Blood Frenzy! ";}if(classIdentityActive("ninja")&&random()<player.classBurst){damage=Math.round(damage*1.6);burst="Perfect Ambush! ";}if(classIdentityActive("ceo")&&random()<player.classBurst){damage=Math.round(damage*1.55);player.gold+=5;burst="Quarterly Growth! ";}if(classIdentityActive("merchant")&&random()<player.classBurst){damage=Math.round(damage*1.6);player.gold+=10;burst="Excellent Margin! ";}if(player.combatAttackCount===0&&player.firstAttackBonus>0)damage=Math.round(damage*(1+player.firstAttackBonus));if(player.hp/player.maxHp<.5)damage=Math.round(damage*(1+player.berserk));if(echo)damage=Math.max(1,Math.round(damage*(player.echoDamageScale||.70)*(canCrit&&player.criticalEchoBonus?1+player.criticalEchoBonus:1)));const weapon=player.equipment?.weapon;if(weapon?.merchantWeapon)damage+=Math.floor(player.gold*(weapon.merchantWeaponScale||1));if(livingEnemies().length>=2&&player.packDamageBonus)damage=Math.round(damage*(1+player.packDamageBonus));damage=Math.round(damage*(chaos?.mult||1)*(1+player.damageBonus+(v19SetDamageBonus())));return {damage,burst};}
   async function performStrike(target,{echo=false,index=0,chaos=null,canCrit=true}={}){
     if(!target||target.hp<=0)target=livingEnemies()[0];if(!target)return {domain:"combat",type:"strike",dealt:0,crit:0,critTiers:0,elementDamage:0};
-    const critTiers=window.DiceboundStrikePolicy.resolveCriticalTiers(rollTieredProc,{canCrit,critChance:player.crit,bonusCrit:chaos?.bonusCrit}),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos,{canCrit});let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}
+    const critTiers=window.DiceboundStrikePolicy.resolveCriticalTiers(rollTieredProc,{canCrit,critChance:player.crit,bonusCrit:chaos?.bonusCrit}),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos,{canCrit});let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}if(target.hp<=0)db0648ReconcileDefeatedTarget(target,"strike");
     let poisonApplied=0;if(target.hp>0&&player.poisonOnHitChance&&random()<clamp(player.poisonOnHitChance,0,.95)){target.poisonStacks=(target.poisonStacks||0)+1;poisonApplied=1;playElementAnimation("nature",target,false);addCombatHistory(`${echo?`Echo ${index}`:"Attack"} applies 1 Poison stack to ${target.name}.`);}
     player.combatAttackCount++;const element=triggerStrikeElements(target,chaos),drainDamage=dealt+(element.totalDamage||0),heal=player.lifeSteal>0&&drainDamage>0?healPlayer(Math.max(1,Math.floor(drainDamage*player.lifeSteal))):0,label=echo?`Echo ${index}`:"Attack";
-    const result={domain:"combat",type:"strike",label,echo,index,canCrit,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
+    const result={domain:"combat",type:"strike",label,echo,index,canCrit,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp,presentationTarget:db0648PresentationTargetSnapshot()};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
   }
 
   async function playerAttack(){
@@ -10334,5 +10334,64 @@ function buildDiceboundHumanHarness235(){
       position:player?.position,
     };
   }});
+
+  /* #73: one live target-selection adapter over the extracted pure resolver.
+     A lethal hit switches every selected-target surface before strike events,
+     floating-number listeners, VFX, or later chained hits observe state. */
+  const db0648Targeting=window.DiceboundCombatTargeting;
+  if(!db0648Targeting)throw new Error('DiceBound requires the combat targeting domain.');
+  function db0648ClearTargetPresentation(){
+    renderEnemyParty();
+    const name=$('enemyName'),weakness=$('enemyWeakness'),hp=$('enemyHpText'),fill=$('enemyHpFill'),status=$('enemyStatusDots');
+    if(name)name.textContent='No living targets';
+    if(weakness)weakness.textContent='All enemies defeated';
+    if(hp)hp.textContent='0 / 0 HP';
+    if(fill)fill.style.width='0%';
+    if(status)status.replaceChildren();
+  }
+  function db0648ApplyPresentationTarget(requestedIndex=currentEnemyIndex){
+    const resolved=db0648Targeting.resolveLivingTarget(currentEnemies,requestedIndex);
+    currentEnemyIndex=resolved.index;currentEnemy=resolved.enemy;
+    if(currentEnemy)updateCombatUI();else db0648ClearTargetPresentation();
+    return resolved;
+  }
+  function db0648ReconcileDefeatedTarget(target,reason='defeated-target'){
+    const defeatedIndex=currentEnemies.indexOf(target);
+    if(defeatedIndex<0||target?.hp>0)return false;
+    const resolved=db0648ApplyPresentationTarget(defeatedIndex+1);
+    DiceboundStateEvents.emit('combat:target-advanced',{domain:'combat',type:'target-advanced',reason,defeatedIndex,targetIndex:resolved.index,targetName:resolved.enemy?.name||null});
+    return true;
+  }
+  function db0648PresentationTargetSnapshot(){
+    return Object.freeze({index:currentEnemyIndex,name:currentEnemy?.name||null,alive:!!currentEnemy&&currentEnemy.hp>0});
+  }
+  setCurrentEnemy=function(index){return db0648ApplyPresentationTarget(index);};
+  const db0648TriggerElementBase=triggerElementEffect;
+  triggerElementEffect=function(key,target=currentEnemy,opts={}){
+    const result=db0648TriggerElementBase(key,target,opts);
+    if(target?.hp<=0)db0648ReconcileDefeatedTarget(target,`element:${key}`);
+    return result;
+  };
+  function db0648SelectedTargetSurfaces(){
+    const stage=$('enemyIcon'),selected=stage?.querySelector('.stage-enemy.selected'),chips=[...($('enemyParty')?.querySelectorAll('.enemy-chip.active')||[])];
+    return {currentIndex:currentEnemyIndex,currentName:currentEnemy?.name||null,stageIndex:selected?Number(selected.dataset.enemyIndex):null,activeChipCount:chips.length,enemyName:$('enemyName')?.textContent||'',enemyHp:$('enemyHpText')?.textContent||'',hostIndex:selected?Number(selected.dataset.enemyIndex):null};
+  }
+  async function db0648ChainedTargetPresentationExercise(){
+    resetPlayer('fighter');
+    Object.assign(player,{attack:100,crit:0,doubleStrike:2,criticalEchoBonus:0,combatAttackCount:0,poisonOnHitChance:0,execute:0,classElementProcs:{},omniElementChance:0,equipment:{}});
+    const enemies=['A','B','C','D'].map((name,index)=>{const hp=1+index;return {name:`Target ${name}`,icon:'🎯',hp,maxHp:hp,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,rangerMarks:0,gold:0,xp:0};});
+    currentEnemies=enemies;currentEnemyIndex=0;currentEnemy=enemies[0];currentEncounterLead=enemies[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+    $('combatOverlay')?.classList.remove('hidden');updateCombatUI();
+    const captures=[],events=[],baseAnimate=animateClassAttack,baseResponse=resolveEnemyResponse,stop=DiceboundStateEvents.on('combat:strike',result=>events.push({targetName:result.targetName,targetHp:result.targetHp,presentationTarget:result.presentationTarget,surfaces:db0648SelectedTargetSurfaces()}));
+    animateClassAttack=async mode=>{captures.push({mode,surfaces:db0648SelectedTargetSurfaces()});await delay(35);};
+    resolveEnemyResponse=async()=>{combatBusy=false;};
+    try{await playerAttack();return {captures,events,afterDelay:db0648SelectedTargetSurfaces(),living:livingEnemies().map(enemy=>enemy.name)};}
+    finally{stop();animateClassAttack=baseAnimate;resolveEnemyResponse=baseResponse;combatBusy=false;}
+  }
+  window.DiceboundTargetPresentationTest=Object.freeze({
+    resolver:()=>({apiVersion:db0648Targeting.apiVersion}),
+    surfaces:db0648SelectedTargetSurfaces,
+    chainedKills:db0648ChainedTargetPresentationExercise
+  });
 
 })();

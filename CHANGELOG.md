@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.8
+
+### Chained combat target presentation (#73, #40)
+- Added `combat/targeting.js`, the tested pure resolver for the next living enemy in a combat pack.
+- A lethal strike now advances the selected target before combat events, floating-number/VFX consumers and any Echo or other follow-up presentation runs.
+- The target HUD, selected stage host/glow and target selector now share that one live target; strike events expose the resulting presentation target for consumers and regression tests.
+
 ## Beta 0.6.4.7
 
 ### Final guardian identity correctness (#161)

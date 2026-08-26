@@ -18,6 +18,7 @@
     "combat-effective-stats",
     "combat-strike-policy",
     "combat-enemy-policy",
+    "combat-targeting",
     "combat-vfx",
     "classes-registry",
     "progression-class-unlock-rules",
@@ -213,6 +214,16 @@
       "requires": [],
       "provides": [
         "DiceboundEnemyPolicy"
+      ]
+    },
+    {
+      "id": "combat-targeting",
+      "path": "js/combat/targeting.js",
+      "domain": "combat/living-target-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatTargeting"
       ]
     },
     {
@@ -429,6 +440,7 @@
         "combat-effective-stats",
         "combat-strike-policy",
         "combat-enemy-policy",
+        "combat-targeting",
         "combat-vfx",
         "classes-registry",
         "pets-registry",

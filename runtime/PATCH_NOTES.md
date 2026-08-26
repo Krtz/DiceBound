@@ -1,3 +1,12 @@
+# Beta 0.6.4.8
+
+## Chained combat target presentation (#73, #40)
+- When a strike defeats the selected enemy, target selection now advances to the next living enemy before combat events, VFX/floating-number consumers and the next Echo or follow-up animation.
+- The target HUD, selected battle host/glow and target-selector button stay synchronized with the actual living target through repeated chained kills.
+- Added a deterministic target resolver plus browser/native combat-smoke coverage for a delayed multi-kill Echo chain.
+
+---
+
 # Beta 0.6.4.7
 
 ## Final guardian identity correctness (#161)
