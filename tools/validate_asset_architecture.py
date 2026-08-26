@@ -3,20 +3,16 @@
 from __future__ import annotations
 import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
+from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
 EXPECTED={'classes': 25, 'pets': 13, 'normal_enemies': 11, 'normal_enemy_battle_assets': 21, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 6, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 230, 'combat_effect_assets': 9, 'equipment_assets': 21}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
-RUNTIME_EXTENSIONS={".html",".css",".js",".png",".ico",".jpg",".jpeg",".webp",".ogg",".mp3",".wav",".webm"}
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
 POINTER_RX=re.compile(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)")
 
 def fail(msg): raise SystemExit(f"ASSET AUDIT FAILED: {msg}")
-def sha256_file(path):
-    h=hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
-    return h.hexdigest()
+def sha256_file(path): return sha256_runtime_file(path)
 def source_hash(runtime):
     info=runtime/"build-info.json"; mf=runtime/"build-manifest.json"
     paths=sorted((p for p in runtime.rglob("*") if p.is_file() and p not in {info,mf} and p.suffix.lower() in RUNTIME_EXTENSIONS),key=lambda p:p.relative_to(runtime).as_posix())
