@@ -1,0 +1,51 @@
+name: Temporary class unlock inspection
+
+on:
+  push:
+    branches:
+      - feat/0.6.4.5-class-unlock-reveals
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract relevant monolith snippets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('runtime/js/dicebound.js').read_text(encoding='utf-8')
+          lines = source.splitlines()
+          needles = [
+              'Class unlocked', 'unlockedClasses', 'unlockClass', 'checkUnlock',
+              'classUnlock', 'returnToCamp', 'backToCamp', 'showCamp', 'endRun',
+              'finishRun', 'resetRun', 'saveGame', 'toast', 'showToast'
+          ]
+          hits=[]
+          for i,line in enumerate(lines):
+              low=line.lower()
+              if any(n.lower() in low for n in needles):
+                  hits.append(i)
+          merged=[]
+          for i in hits:
+              a=max(0,i-18); b=min(len(lines),i+19)
+              if merged and a<=merged[-1][1]+1:
+                  merged[-1]=(merged[-1][0],max(merged[-1][1],b))
+              else:
+                  merged.append((a,b))
+          out=[]
+          for a,b in merged:
+              out.append(f'\n===== lines {a+1}-{b} =====\n')
+              out.extend(f'{j+1:05d}: {lines[j]}' for j in range(a,b))
+          Path('unlock-snippets.txt').write_text('\n'.join(out),encoding='utf-8')
+          print(f'extracted {len(hits)} hits across {len(merged)} ranges')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unlock-snippets
+          path: unlock-snippets.txt
+          retention-days: 1
