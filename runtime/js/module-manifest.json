@@ -14,6 +14,7 @@
     "run-checkpoint",
     "core-state",
     "runtime-services",
+    "memory-diagnostics",
     "combat-effective-stats",
     "combat-strike-policy",
     "combat-enemy-policy",
@@ -164,6 +165,20 @@
       "requires": [],
       "provides": [
         "DiceboundRuntimeServices"
+      ]
+    },
+    {
+      "id": "memory-diagnostics",
+      "path": "js/core/memory-diagnostics.js",
+      "domain": "core/memory-diagnostics",
+      "status": "extracted",
+      "requires": [
+        "version",
+        "assets",
+        "platform"
+      ],
+      "provides": [
+        "DiceboundMemoryDiagnostics"
       ]
     },
     {

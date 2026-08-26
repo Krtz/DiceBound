@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.4.0",
+  "version": "0.6.4.1",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -21,6 +21,7 @@
     "js/core/run-checkpoint.js",
     "js/core/state.js",
     "js/core/runtime-services.js",
+    "js/core/memory-diagnostics.js",
     "js/combat/effective-stats.js",
     "js/combat/strike-policy.js",
     "js/combat/enemy-policy.js",

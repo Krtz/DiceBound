@@ -2,7 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.4.0
+## Unreleased — Beta 0.6.4.1
+
+### Memory diagnostics (#124)
+
+- Added the off-by-default **Debug → Memory Diagnostics** time-series recorder with manual snapshots, bounded retention and lifecycle/periodic recording.
+- Samples distinguish available Chromium heap/DOM/overlay/asset-registry context from unsupported timer, listener and native-process metrics instead of reporting invented zeroes.
+- Added direct Edge and native WebView2 smoke coverage for Camp, Board and major-overlay diagnostic samples.
+
+## Beta 0.6.4.0
 
 ### Friends patch
 
