@@ -202,6 +202,36 @@
     }
   ];
 
-  function createRegistry(){return JSON.parse(JSON.stringify(ACHIEVEMENT_DATA));}
-  window.DiceboundAchievements=Object.freeze({apiVersion:1,createRegistry});
+  /* A card's location is data, never an inference from player-facing text.
+     Hero mastery milestones live beside the class-specific talent unlocks
+     that the runtime derives from the authoritative powerup gates. */
+  const GROUPS=Object.freeze([
+    Object.freeze({id:"roads",label:"🛣️ Roads & modes"}),
+    Object.freeze({id:"builds",label:"⚔️ Builds & feats"}),
+    Object.freeze({id:"legacy",label:"🏆 Legacy & collection"}),
+    Object.freeze({id:"secrets",label:"❔ Secrets"}),
+    Object.freeze({id:"hero-mastery",label:"✨ Hero Mastery"})
+  ]);
+  const CATEGORY_GROUP=Object.freeze({roads:"roads",builds:"builds",collection:"legacy",secrets:"secrets"});
+  const HERO_MILESTONES=Object.freeze({
+    "ranger-b1":"ranger",
+    "sorcerer-b2":"sorcerer",
+    "fighter-b3":"fighter",
+    "cleric-b3":"cleric",
+    "slime-l5":"slime"
+  });
+
+  function locationFor(achievement){
+    const heroId=HERO_MILESTONES[achievement.id]||null;
+    return {
+      group:heroId?"hero-mastery":(CATEGORY_GROUP[achievement.category]||"legacy"),
+      subgroup:heroId?"hero-milestones":null,
+      heroId
+    };
+  }
+
+  function createRegistry(){
+    return JSON.parse(JSON.stringify(ACHIEVEMENT_DATA)).map(achievement=>({...achievement,hierarchy:locationFor(achievement)}));
+  }
+  window.DiceboundAchievements=Object.freeze({apiVersion:2,createRegistry,groups:GROUPS,locationFor});
 })();

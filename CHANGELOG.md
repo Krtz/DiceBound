@@ -2,7 +2,16 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.15
+## Unreleased — Beta 0.6.4.0
+
+### Friends patch
+
+- Enlarged mini-boss and final-boss battle art while scaling Slime and Wolf progression art down for clearer combat framing.
+- Made slot tiles materially rarer, improved their match odds/rewards, and introduced one level-scaled Gold policy for the Fortune talent, slots and Lucky Wheel.
+- Replaced detached Camp interaction rectangles with painted-object-sized semantic button targets.
+- Added collapsible achievement groups and per-hero mastery subgroups driven by authoritative metadata.
+
+## Beta 0.6.3.15
 
 ### Authored equipment identity foundation (#128, #83, #110)
 - Imported the first ten approved modular equipment assets and introduced stable, persisted equipment identities with canonical slot, family, art, visual and relative class-weight metadata.

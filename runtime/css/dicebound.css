@@ -762,10 +762,10 @@
     width:72px!important;height:72px!important;
     filter:drop-shadow(0 0 14px rgba(245,200,91,.18)) drop-shadow(0 10px 10px rgba(0,0,0,.5));
   }
-  .stage-enemy.guardian.miniboss{min-width:108px;min-height:116px}
-  .stage-enemy.guardian.miniboss .enemy-art-frame{width:96px!important;height:96px!important}
-  .stage-enemy.guardian.final-boss{min-width:230px;min-height:236px}
-  .stage-enemy.guardian.final-boss .enemy-art-frame{width:216px!important;height:216px!important;filter:drop-shadow(0 0 20px rgba(245,200,91,.28)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
+  .stage-enemy.guardian.miniboss{min-width:132px;min-height:140px}
+  .stage-enemy.guardian.miniboss .enemy-art-frame{width:120px!important;height:120px!important}
+  .stage-enemy.guardian.final-boss{min-width:286px;min-height:292px}
+  .stage-enemy.guardian.final-boss .enemy-art-frame{width:270px!important;height:270px!important;filter:drop-shadow(0 0 20px rgba(245,200,91,.28)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
   .stage-enemy.selected .enemy-art-frame{
     filter:drop-shadow(0 0 12px rgba(245,200,91,.32)) drop-shadow(0 9px 8px rgba(0,0,0,.5));
   }
@@ -775,10 +775,10 @@
   @media(max-width:760px){
     .enemy-art-frame{width:50px!important;height:50px!important}
     .stage-enemy.guardian .enemy-art-frame{width:58px!important;height:58px!important}
-    .stage-enemy.guardian.miniboss{min-width:90px;min-height:96px}
-    .stage-enemy.guardian.miniboss .enemy-art-frame{width:80px!important;height:80px!important}
-    .stage-enemy.guardian.final-boss{min-width:164px;min-height:172px}
-    .stage-enemy.guardian.final-boss .enemy-art-frame{width:152px!important;height:152px!important}
+    .stage-enemy.guardian.miniboss{min-width:108px;min-height:114px}
+    .stage-enemy.guardian.miniboss .enemy-art-frame{width:96px!important;height:96px!important}
+    .stage-enemy.guardian.final-boss{min-width:202px;min-height:210px}
+    .stage-enemy.guardian.final-boss .enemy-art-frame{width:190px!important;height:190px!important}
     #enemyIcon.enemy-stage-icons{min-height:68px!important}
   }
 
@@ -1200,3 +1200,12 @@ body[data-hud-flow="stacked"] .sidebar>.log-card{grid-column:1/-1}
   html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important}
   html body #startOverlay.camp-fullscreen #campGoBtn{right:-6vw!important}
 }
+
+/* Beta 0.6.4.0 — semantic, keyboard-native achievement hierarchy. */
+.achievement-group{grid-column:1/-1;border:1px solid rgba(181,140,255,.28);border-radius:12px;background:rgba(20,29,51,.56);overflow:hidden}
+.achievement-group>summary,.achievement-subgroup>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:11px 13px;font-weight:900;letter-spacing:.04em;list-style:none}
+.achievement-group>summary::-webkit-details-marker,.achievement-subgroup>summary::-webkit-details-marker{display:none}
+.achievement-group>summary::before,.achievement-subgroup>summary::before{content:'▸';transition:transform .14s ease}.achievement-group[open]>summary::before,.achievement-subgroup[open]>summary::before{transform:rotate(90deg)}
+.achievement-group-count{margin-left:auto;color:#f6d881;font-size:11px;font-variant-numeric:tabular-nums}.achievement-group-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:0 10px 10px}
+.achievement-subgroup{grid-column:1/-1;border:1px solid rgba(255,255,255,.11);border-radius:9px;background:rgba(7,12,25,.34)}.achievement-subgroup>.achievement-group-body{grid-template-columns:repeat(auto-fit,minmax(205px,1fr));padding:0 8px 8px}.achievement-subgroup.secret-locked>summary{color:var(--muted)}
+.achievement-group:focus-within,.achievement-subgroup:focus-within{border-color:rgba(245,200,91,.55)}

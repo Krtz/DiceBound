@@ -22,7 +22,7 @@ const equipmentApi = context.window.DiceboundEquipment;
 const achievementsApi = context.window.DiceboundAchievements;
 for (const [name, api] of [["boards", boardsApi], ["equipment", equipmentApi], ["achievements", achievementsApi]]) {
   assert.ok(api, `${name} module did not publish its API`);
-  assert.equal(api.apiVersion, name === "equipment" ? 2 : 1);
+  assert.equal(api.apiVersion, name === "equipment" || name === "achievements" ? 2 : 1);
   assert.ok(Object.isFrozen(api), `${name} API is mutable`);
 }
 
@@ -64,7 +64,8 @@ for (const achievement of achievements) {
   assert.equal(typeof achievement.name, "string");
   assert.equal(typeof achievement.condition, "string");
 }
-snapshot(achievements, 3327, "0ac574cd73141a7d0ac2f8d98790c9da145480777a565347d8819584d3d4af03", "achievement registry");
+assert.ok(achievements.every(entry => entry.hierarchy && typeof entry.hierarchy.group === "string"), "achievement hierarchy metadata is missing");
+snapshot(achievements, 5334, "4ca38848118f7f1bf34c1551738d2cb581670be13a1860c696e9ea5630209a46", "achievement registry");
 
 boards["6"].balance.threePackChance = -1;
 equipment.special["devils-horns"].rarity = "poor";
