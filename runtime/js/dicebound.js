@@ -9820,57 +9820,27 @@ function buildDiceboundHumanHarness235(){
   /* Nature Poison Vines combat VFX (#80, #71).
      Presentation observes completed proc outcomes only: combat damage, targeting,
      RNG and turns remain owned by the live combat pipeline. */
-  const DB_NATURE_EFFECT_KEY='naturePoisonVines';
-  function dbNatureEffect(){return window.DiceboundAssets?.resolveCombatEffect?.(DB_NATURE_EFFECT_KEY)||null;}
-  function dbLivingNatureTargets(enemies=[]){return (enemies||[]).filter(enemy=>enemy&&enemy.hp>0);}
-  function dbNatureVfxEntries(){return [...document.querySelectorAll('.db-nature-vines-vfx')].map(node=>{const host=node.closest('.stage-enemy');return {target:node.dataset.natureVfxTarget,frame:Number(node.dataset.natureVfxFrame),enemyIndex:host?Number(host.dataset.enemyIndex):null};});}
-  function dbNatureHostForEnemy(enemy){
-    const index=currentEnemies.indexOf(enemy);
-    return index<0?null:document.querySelector(`#enemyIcon .stage-enemy[data-enemy-index="${index}"]`);
-  }
-  function dbPlayNatureVfx(host,target){
-    const effect=dbNatureEffect();if(!host||!effect?.frames?.length)return false;
-    const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    const active=host.querySelector('.db-nature-vines-vfx');active?.remove();
-    const node=document.createElement('span'),image=document.createElement('img');
-    node.className='db-nature-vines-vfx';node.dataset.natureVfxTarget=target;image.alt='';image.draggable=false;node.append(image);host.append(node);
-    const frames=effect.frames,duration=Math.max(40,Math.floor(Number(effect.frameDurationMs)||75));let frame=0;
-    const present=()=>{image.src=frames[frame];node.dataset.natureVfxFrame=String(frame+1);if(reduced||frame>=frames.length-1){setTimeout(()=>node.remove(),reduced?180:duration);return;}frame++;setTimeout(present,duration);};
-    present();return true;
-  }
-  function dbPlayNatureOnEnemy(enemy){return enemy?.hp>0&&dbPlayNatureVfx(dbNatureHostForEnemy(enemy),'enemy');}
-  function dbPlayNatureOnPlayer(){return player.hp>0&&dbPlayNatureVfx($('combatPlayerIcon'),'player');}
-  let dbNatureReplacesLegacyPresentation=0;
+  const dbCombatVfx=window.DiceboundCombatVfx?.create({getEnemies:()=>currentEnemies,getPlayer:()=>player});
+  if(!dbCombatVfx)throw new Error('DiceBound requires the combat VFX module.');
+  dbCombatVfx.prepareNature();
   const dbNatureLegacyAnimationBase=playElementAnimation;
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){
     // The authored vine sequence replaces (rather than stacks on) the old
     // Nature emoji burst for a real Nature elemental proc. Other uses of the
     // generic Nature cue, such as a normal poison tick, are intentionally
     // untouched, as are all other elements.
-    if(key==='nature'&&dbNatureReplacesLegacyPresentation>0)return false;
+    if(dbCombatVfx.suppressLegacyElementAnimation(key))return false;
     return dbNatureLegacyAnimationBase(key,target,enemySource);
   };
-  function dbNatureHasAuthoredPresentation(){return !!dbNatureEffect()?.frames?.length;}
   const dbTriggerElementBase=triggerElementEffect;
   triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const candidates=key==='nature'?[...livingEnemies()]:[],replacesLegacy=key==='nature'&&dbNatureHasAuthoredPresentation();
-    let result=null;if(replacesLegacy)dbNatureReplacesLegacyPresentation++;
-    try{result=dbTriggerElementBase(key,target,opts);}finally{if(replacesLegacy)dbNatureReplacesLegacyPresentation--;}
-    if(key==='nature'&&result)dbLivingNatureTargets(candidates).forEach(dbPlayNatureOnEnemy);
+    const candidates=key==='nature'?dbCombatVfx.livingNatureTargets(livingEnemies()):[];
+    const result=dbCombatVfx.withNatureLegacyPresentation(key,()=>dbTriggerElementBase(key,target,opts));
+    if(key==='nature'&&result)candidates.forEach(enemy=>dbCombatVfx.playNatureOnEnemy(enemy));
     return result;
   };
   const dbEnemyElementProcBase=enemyElementProc;
-  enemyElementProc=function(enemy){const replacesLegacy=enemy?.affinity==='nature'&&dbNatureHasAuthoredPresentation();let result='';if(replacesLegacy)dbNatureReplacesLegacyPresentation++;try{result=dbEnemyElementProcBase(enemy);}finally{if(replacesLegacy)dbNatureReplacesLegacyPresentation--;}if(enemy?.affinity==='nature'&&result&&player.hp>0)dbPlayNatureOnPlayer();return result;};
-  if(!document.getElementById('dicebound-nature-vfx-style')){
-    const style=document.createElement('style');style.id='dicebound-nature-vfx-style';style.textContent=`
-      .db-nature-vines-vfx{position:absolute;z-index:30;left:50%;bottom:-10%;width:clamp(112px,150%,260px);pointer-events:none;transform:translateX(-50%);overflow:visible;filter:drop-shadow(0 8px 10px rgba(20,0,30,.45))}
-      .db-nature-vines-vfx img{display:block;width:100%;height:auto;max-width:none!important;max-height:none!important;object-fit:contain}
-      #combatPlayerIcon,.stage-enemy{position:relative;isolation:isolate}
-      @media(max-width:760px){.db-nature-vines-vfx{width:clamp(96px,135%,185px);bottom:-8%}}
-      @media(prefers-reduced-motion:reduce){.db-nature-vines-vfx{filter:none}}
-    `;document.head.appendChild(style);
-  }
-  setTimeout(()=>{const effect=dbNatureEffect();effect?.frames?.forEach(src=>{const image=new Image();image.src=src;});},0);
+  enemyElementProc=function(enemy){const result=dbCombatVfx.withNatureLegacyPresentation(enemy?.affinity,()=>dbEnemyElementProcBase(enemy));if(enemy?.affinity==='nature'&&result&&player.hp>0)dbCombatVfx.playNatureOnPlayer();return result;};
   function dbNatureProcRegressionExercise(key='nature'){
     document.querySelectorAll('.db-nature-vines-vfx,.element-proc-fx,.enemy-proc-fx').forEach(node=>node.remove());
     resetPlayer('ranger');
@@ -9884,7 +9854,7 @@ function buildDiceboundHumanHarness235(){
     currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
     $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
     const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
-    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbNatureVfxEntries(),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
+    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatVfx.natureEntries(),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
   }
   function dbCombatPresentationExercise(kind='final'){
     document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
@@ -9897,12 +9867,12 @@ function buildDiceboundHumanHarness235(){
     return {kind,narrow:window.matchMedia('(max-width:760px)').matches,viewportHeight:window.innerHeight,stageClasses:stage?.className||'',hostClasses:host?.className||'',sprite:rect(sprite),art:rect(art),player:rect(player)};
   }
   window.DiceboundNatureVfxTest=Object.freeze({
-    effect:dbNatureEffect,
-    livingTargets:enemies=>dbLivingNatureTargets(enemies).map(enemy=>enemy.name||''),
-    previewPlayer:dbPlayNatureOnPlayer,
+    effect:dbCombatVfx.natureEffect,
+    livingTargets:enemies=>dbCombatVfx.livingNatureTargets(enemies).map(enemy=>enemy.name||''),
+    previewPlayer:dbCombatVfx.playNatureOnPlayer,
     exerciseProc:dbNatureProcRegressionExercise,
     exercisePresentation:dbCombatPresentationExercise,
-    active:dbNatureVfxEntries
+    active:dbCombatVfx.natureEntries
   });
 
   /* #128/#83 authored equipment identities.
@@ -10044,28 +10014,16 @@ function buildDiceboundHumanHarness235(){
 
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
      a real completed Donut proc and never changes its target, timing or RNG. */
-  const DB064_DONUT_EFFECT_KEY='donutProcRain';
-  function db064DonutEffect(){return window.DiceboundAssets?.resolveCombatEffect?.(DB064_DONUT_EFFECT_KEY)||null;}
-  function db064DonutVfxEntries(){return [...document.querySelectorAll('.db-donut-rain-vfx')].map(node=>({src:node.getAttribute('src')||'',effect:node.dataset.effect||''}));}
-  function db064PlayDonutRain(){
-    const effect=db064DonutEffect(),host=$('combatOverlay')?.querySelector('.modal');
-    if(!host||!effect?.image)return false;
-    host.querySelectorAll('.db-donut-rain-vfx').forEach(node=>node.remove());
-    const image=document.createElement('img'),reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    image.className='db-donut-rain-vfx';image.dataset.effect=DB064_DONUT_EFFECT_KEY;image.src=effect.image;image.alt='';image.draggable=false;host.append(image);
-    setTimeout(()=>image.remove(),reduced?260:Math.max(320,Number(effect.durationMs)||1450));
-    return true;
-  }
   const db064DonutTriggerElementBase=triggerElementEffect;
   triggerElementEffect=function(key,target=currentEnemy,opts={}){
     const result=db064DonutTriggerElementBase(key,target,opts);
-    if(key==='donut'&&result)db064PlayDonutRain();
+    if(key==='donut'&&result)dbCombatVfx.playDonutRain();
     return result;
   };
   window.DiceboundDonutVfxTest=Object.freeze({
-    effect:db064DonutEffect,
-    play:db064PlayDonutRain,
-    active:db064DonutVfxEntries
+    effect:dbCombatVfx.donutEffect,
+    play:dbCombatVfx.playDonutRain,
+    active:dbCombatVfx.donutEntries
   });
 
   /* #54 Battle log stays below the action controls and can be minimized

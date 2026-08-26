@@ -18,6 +18,7 @@
     "combat-effective-stats",
     "combat-strike-policy",
     "combat-enemy-policy",
+    "combat-vfx",
     "classes-registry",
     "progression-class-unlock-rules",
     "pets-registry",
@@ -212,6 +213,18 @@
       ]
     },
     {
+      "id": "combat-vfx",
+      "path": "js/combat/vfx.js",
+      "domain": "combat/authored-proc-presentation",
+      "status": "extracted",
+      "requires": [
+        "assets"
+      ],
+      "provides": [
+        "DiceboundCombatVfx"
+      ]
+    },
+    {
       "id": "classes-registry",
       "path": "js/classes/registry.js",
       "domain": "classes/registry",
@@ -374,6 +387,7 @@
         "combat-effective-stats",
         "combat-strike-policy",
         "combat-enemy-policy",
+        "combat-vfx",
         "classes-registry",
         "pets-registry",
         "board-registry",
