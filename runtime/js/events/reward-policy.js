@@ -55,5 +55,5 @@
     const observer=new MutationObserver(()=>{enhance();scaleCamp();});observer.observe(document.body,{childList:true,subtree:true});enhance();scaleCamp();addEventListener("resize",scaleCamp,{passive:true});window.DiceboundLunchHotfixTest=Object.freeze({parse,scaleCamp,enhance,heavyPurseBase:level=>goldBaseFor("heavyPurse",level)});
   }
 
-  bridgeHeavyPurse();bridgeNatureVfx();setTimeout(installBrowserPolish,0);
+  bridgeHeavyPurse();bridgeNatureVfx();if(typeof document!=="undefined")setTimeout(installBrowserPolish,0);
 })();
