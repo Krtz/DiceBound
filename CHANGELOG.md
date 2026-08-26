@@ -2,6 +2,16 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.4
+
+### Lunch playtest follow-ups (#156)
+- Tightened mixed authored/placeholder enemy-pack presentation without changing pack mechanics, targeting, stats or RNG.
+- Added final-stat loot comparison deltas and stacked Keep/Equip and Sell decisions for faster equipment reads.
+- Added presentation-only footsteps to traversed ordinary road spaces while deliberately leaving Merchant spaces unmarked; active-run resume restores the trail.
+- Added restrained hover/focus feedback and tighter hit areas for Camp interactions.
+- Kept Slime in the early road pool across Boards 1–6 using the correct Board-specific art.
+- Standard Slimes now gain 5% Radiation proc chance per earlier Slime killed in the current run, capped at 100%, with the count reset on new runs and preserved by active-run checkpoints.
+
 ## Beta 0.6.4.3
 
 ### Screenshot-driven browser hotfix (#154)

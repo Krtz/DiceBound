@@ -1,3 +1,15 @@
+# Beta 0.6.4.4
+
+## Lunch playtest follow-ups (#156)
+- Mixed enemy packs keep authored art and fallback combatants aligned in a more consistent row without changing combat mechanics.
+- Found gear keeps the current/new side-by-side comparison and now adds compact final-stat deltas with vertically stacked Keep/Equip and Sell controls.
+- Traversed ordinary road spaces leave subtle footsteps that survive Continue Run; Merchant spaces intentionally stay unmarked.
+- Camp interactions use restrained hover/focus lift and glow feedback with tighter clickable regions around visible artwork.
+- Slime remains an early-road enemy on Boards 1–6 and uses the matching Board-specific progression art.
+- Standard Slime Radiation chance is 5% per earlier Slime kill this run, safely capped at 100%; the run counter resets on a new run and survives active-run checkpoint/resume.
+
+---
+
 # Beta 0.6.4.3
 
 ## Screenshot-driven browser hotfix (#154)
