@@ -252,7 +252,7 @@
   function unlockClass(id){
     if(!CLASSES[id]||meta.unlocks?.[id])return false;
     meta.unlocks=meta.unlocks||{};meta.unlocks[id]=true;saveMeta();
-    const cls=CLASSES[id];if(gameStarted)addLog(`<b>Class unlocked:</b> ${cls.icon} ${cls.name}!`);showToast(`NEW CLASS UNLOCKED · ${cls.icon} ${cls.name}`,3400,true);renderClassChoices();return true;
+    const cls=CLASSES[id],unlockFeedback=window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id);if(gameStarted)addLog(`<b>Class unlocked:</b> ${cls.icon} ${cls.name}!`);showToast(unlockFeedback?.toast||`NEW CLASS UNLOCKED · ${cls.icon} ${cls.name}`,3400,true);renderClassChoices();return true;
   }
   function checkDynamicClassUnlocks(){
     if((meta.pets?.neutral?.level||1)>=50)unlockClass("d20");
@@ -10247,9 +10247,13 @@ function buildDiceboundHumanHarness235(){
     }
     return changed;
   }
+  function db064ScheduleCampHitTargets(){
+    const sync=()=>requestAnimationFrame(db064SyncCampHitTargets);
+    sync();setTimeout(sync,0);setTimeout(sync,120);
+  }
   const db064FriendsUpdateMetaUiBase=updateMetaUI;
-  updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);requestAnimationFrame(db064SyncCampHitTargets);return result;};
-  window.addEventListener('resize',()=>requestAnimationFrame(db064SyncCampHitTargets));requestAnimationFrame(db064SyncCampHitTargets);
+  updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);db064ScheduleCampHitTargets();return result;};
+  window.addEventListener('resize',db064ScheduleCampHitTargets);db064ScheduleCampHitTargets();
 
   /* #124: keep the recorder independent from game ownership. The compatibility
      monolith supplies a read-only live context; sampling/retention/UI controls

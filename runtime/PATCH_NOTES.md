@@ -1,3 +1,13 @@
+# Beta 0.6.4.5
+
+## Class unlock feedback (#116)
+- Unlock toasts now explain the completed, authoritative requirement instead of only naming the class.
+- Returning to Camp presents queued new classes one at a time with their canonical artwork, identity, play-style summary and unlock reason.
+- Acknowledged reveal cards remain acknowledged across restart/Continue Run; secret requirements are shown only after their class actually unlocks.
+- Native Camp layout rerenders keep the Start Run button matched to the painted caravan.
+
+---
+
 # Beta 0.6.4.4
 
 ## Lunch playtest follow-ups (#156)

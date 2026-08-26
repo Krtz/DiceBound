@@ -9,8 +9,11 @@ const w={DiceboundStorage:{getString:key=>stored.get(String(key))??null,setStrin
 load("runtime/js/classes/registry.js",w);
 load("runtime/js/assets.js",w);
 load("runtime/js/progression/class-unlock-rules.js",w);
-const F=w.DiceboundClassUnlockRules.feedback;
+load("runtime/js/progression/class-unlock-feedback.js",w);
+const F=w.DiceboundClassUnlockFeedback;
 assert(F,"unlock feedback owner missing");
+const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
+assert(monolith.includes("DiceboundClassUnlockFeedback?.onClassUnlocked?.(id)"),"canonical unlock path is not wired to the feedback owner");
 assert(F.toastFor("cleric")==="You healed 1,000 total HP: Cleric unlocked!","Cleric toast should explain healing trigger");
 assert(F.toastFor("rogue")==="You held at least 5,000 Gold at once and defeated the Board 3 miniboss: Rogue unlocked!","Rogue compound toast drifted");
 assert(F.reasonFor("paladin")==="You cleared Board 3 with both Fighter and Cleric.","Paladin reason should explain both prerequisite clears");
@@ -25,8 +28,9 @@ assert(cleric.howItPlays&&cleric.howItPlays.length>20,"Cleric gameplay copy miss
 const secret=F.revealFor("bloodmage");
 assert(secret.secret===true,"secret marker should be preserved after unlock");
 assert(F.reasonFor("bloodmage").startsWith("You defeated"),"secret condition should only become player-facing through the post-unlock feedback path");
-assert(F.enqueue("cleric")===true,"first reveal should queue");
-assert(F.enqueue("cleric")===false,"duplicate reveal should not queue");
+assert(F.onClassUnlocked("cleric").queued===true,"first class unlock should queue a reveal");
+assert(F.onClassUnlocked("cleric").toast==="You healed 1,000 total HP: Cleric unlocked!","direct unlock feedback drifted");
+assert(F.onClassUnlocked("cleric").queued===false,"duplicate reveal should not queue");
 assert(F.state().pending.join(",")==="cleric","pending queue drifted");
 F.acknowledge("cleric");
 assert(F.state().pending.length===0&&F.state().acknowledged.includes("cleric"),"acknowledged reveal should persist and leave queue");
