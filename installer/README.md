@@ -52,13 +52,13 @@ go build -buildvcs=false -trimpath -ldflags '-s -w -buildid= -H=windowsgui' -o D
 
 For release builds, apply the existing DiceBound icon and VERSIONINFO using `wrapper-source/launcher/windows/embed_icon.py` in the same way the native game wrapper is branded.
 
-## Current Beta 0.6.1 payload
+## Current Beta 0.6.4.0 payload
 
-- Size: `326948864` bytes
-- SHA-256: `3b9d25763528e03926c1713c01491359a9c57f651e3d931c3545ef4d3a542b92`
-- Build ID: `dicebound-0.6.1-93875d806d311b10`
+- Size: `417647616` bytes
+- SHA-256: `339336c8a9fa6ad0d6413f5bcf934301ed0848a17904cb50a20109d8bec9c075`
+- Build ID: `dicebound-0.6.4.0-7091dc662edd58a4`
 
-The manifest points to the verified `beta-0.6.1` prerelease asset. A later release can replace that target without changing normal launcher logic.
+The manifest points to the verified `beta-0.6.4.0` prerelease asset. A later release can replace that target without changing normal launcher logic.
 
 ## Validation before merging #23
 
