@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.3
+
+### Screenshot-driven browser hotfix (#154)
+- Kept the now-confirmed authored Nature Poison Vines fix: live combat rerenders no longer delete the effect before it becomes visible, and Nature mechanics/RNG/turns remain unchanged.
+- Unified authored and rolled equipment stats in player-facing presentation, retained the RPG-style equipped-item hover, and added side-by-side currently-equipped versus newly-found loot comparison on desktop.
+- Replaced the broken fixed 1600×900 Camp transform with viewport-relative object placement over the authored cover background so wide and tall Edge windows keep the Camp interaction set on-screen.
+- Corrected guardian sizing by enlarging the actual miniboss/final-boss image frames rather than only their stage containers; final bosses remain larger than minibosses.
+- Heavy Purse now consumes the shared level-scaled Gold policy at a 0.70 source multiplier, with the authoritative Gold modifier applied once.
+
 ## Unreleased — Beta 0.6.4.2
 
 ### Combat presentation ownership (#40)
