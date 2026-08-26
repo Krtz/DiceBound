@@ -29,5 +29,12 @@ assert.deepEqual(
   [[0.05, 0.35, 0.65], [0.10, 0.40, 0.70], [0.15, 0.45, 0.75], [0.20, 0.50, 0.80], [0.25, 0.55, 0.85], [0.30, 0.60, 0.90]],
 );
 assert.equal(policy.standardDevilFlameChance(99, "hell"), 0.90, "Devil chance is safely capped");
+assert.deepEqual(
+  [0, 1, 4, 10, 20, 99].map(kills => policy.slimeRadiationChance(kills)),
+  [0, 0.05, 0.20, 0.50, 1, 1],
+  "Slime Radiation should gain exactly 5 percentage points per prior Slime kill and cap at 100%",
+);
+assert.equal(policy.slimeRadiationChance(-4), 0);
+assert.equal(policy.slimeRadiationChance(2.9), 0.10, "Only completed Slime kills count");
 
-console.log("Enemy policy passes Wolf and standard Devil board/mode boundaries");
+console.log("Enemy policy passes Wolf, Devil and Slime escalation boundaries");
