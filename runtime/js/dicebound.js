@@ -9983,6 +9983,89 @@ function buildDiceboundHumanHarness235(){
     generate:(rarity='common',slot='weapon')=>generateEquipment(rarity,slot)
   });
 
+  /* #91 / #144 ordinary-enemy mechanics.  The extracted policy owns the
+     tables; this live adapter only supplies combat-state application. */
+  const db064EnemyPolicy=window.DiceboundEnemyPolicy;
+  if(!db064EnemyPolicy)throw new Error('DiceBound requires the enemy policy domain.');
+  function db064CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+  function db064IsStandardDevil(enemy){return /\bdevil\b/i.test(String(enemy?.name||''))&&!/\bpale\s+devil\b/i.test(String(enemy?.name||''));}
+  const db064ScaleEnemyBase=scaleEnemy;
+  scaleEnemy=function(...args){
+    const enemy=db064ScaleEnemyBase.apply(this,args);
+    if(db064IsStandardDevil(enemy)){
+      enemy.innateElement='fire';
+      enemy.elementProcChance=db064EnemyPolicy.standardDevilFlameChance(boardLevel,db064CombatMode());
+    }
+    return enemy;
+  };
+  const db064EnemyElementProcBase=enemyElementProc;
+  enemyElementProc=function(enemy){
+    const innate=enemy?.innateElement;
+    if(!innate)return db064EnemyElementProcBase(enemy);
+    const originalAffinity=enemy.affinity;
+    enemy.affinity=innate;
+    try{return db064EnemyElementProcBase(enemy);}
+    finally{if(originalAffinity===undefined)delete enemy.affinity;else enemy.affinity=originalAffinity;}
+  };
+  async function db064ResolveWolfEchoes(){
+    const chance=db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode());
+    if(!chance||player.hp<=0)return {notes:[],defeated:false};
+    const notes=[];
+    for(const wolf of livingEnemies().filter(enemy=>/\bwolf\b/i.test(String(enemy?.name||''))&&!enemy.guardian)){
+      if(random()>=chance)continue;
+      if(random()<effectiveDodgeChance()){notes.push(`🐺 ${wolf.name}'s Echo Strike is dodged.`);continue;}
+      if(player.combatShield>0){player.combatShield--;notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`);continue;}
+      const base=Math.max(1,wolf.attack+rand(-1,1)),raw=Math.max(1,Math.round(base*(1-defenseDamageReduction())-player.flatReduction)),hit=v24ApplyDamage(raw);
+      meta.damageTaken=(meta.damageTaken||0)+hit.total;
+      notes.push(`🐺 ${wolf.name}'s Echo Strike hits for ${hit.total}${hit.shield?` (${hit.shield} absorbed by Energy Shield)`:''}.`);
+      if(player.thorns>0&&hit.total>0){const returned=damageEnemy(wolf,player.thorns,true);notes.push(`Spikes return ${returned}.`);}
+      if(player.hp<=0)break;
+    }
+    if(notes.length){notes.forEach(addCombatHistory);setCombatText(notes.join(' '));updateCombatUI();await delay(380);}
+    return {notes,defeated:player.hp<=0};
+  }
+  const db064EnemyTurnBase=enemyTurn;
+  enemyTurn=async function(...args){
+    const result=await db064EnemyTurnBase.apply(this,args);
+    if(!currentEnemy||player.hp<=0||!livingEnemies().length)return result;
+    combatBusy=true;
+    const echo=await db064ResolveWolfEchoes();
+    if(echo.defeated)return handlePlayerDeath();
+    combatBusy=false;updateCombatUI();
+    return result;
+  };
+  window.DiceboundEnemyMechanicsTest=Object.freeze({
+    wolfEchoChance:(board,mode)=>db064EnemyPolicy.wolfEchoChance(board,mode),
+    devilFlameChance:(board,mode)=>db064EnemyPolicy.standardDevilFlameChance(board,mode),
+    isStandardDevil:db064IsStandardDevil
+  });
+
+  /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
+     a real completed Donut proc and never changes its target, timing or RNG. */
+  const DB064_DONUT_EFFECT_KEY='donutProcRain';
+  function db064DonutEffect(){return window.DiceboundAssets?.resolveCombatEffect?.(DB064_DONUT_EFFECT_KEY)||null;}
+  function db064DonutVfxEntries(){return [...document.querySelectorAll('.db-donut-rain-vfx')].map(node=>({src:node.getAttribute('src')||'',effect:node.dataset.effect||''}));}
+  function db064PlayDonutRain(){
+    const effect=db064DonutEffect(),host=$('combatOverlay')?.querySelector('.modal');
+    if(!host||!effect?.image)return false;
+    host.querySelectorAll('.db-donut-rain-vfx').forEach(node=>node.remove());
+    const image=document.createElement('img'),reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    image.className='db-donut-rain-vfx';image.dataset.effect=DB064_DONUT_EFFECT_KEY;image.src=effect.image;image.alt='';image.draggable=false;host.append(image);
+    setTimeout(()=>image.remove(),reduced?260:Math.max(320,Number(effect.durationMs)||1450));
+    return true;
+  }
+  const db064DonutTriggerElementBase=triggerElementEffect;
+  triggerElementEffect=function(key,target=currentEnemy,opts={}){
+    const result=db064DonutTriggerElementBase(key,target,opts);
+    if(key==='donut'&&result)db064PlayDonutRain();
+    return result;
+  };
+  window.DiceboundDonutVfxTest=Object.freeze({
+    effect:db064DonutEffect,
+    play:db064PlayDonutRain,
+    active:db064DonutVfxEntries
+  });
+
   // Isolated browser-harness coverage for the #123 semantic contract.  This
   // exercises the live composed strike pipeline, including the Ranger wrapper.
   window.DiceboundEchoStrikeTest=Object.freeze({

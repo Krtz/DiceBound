@@ -722,6 +722,10 @@
   @keyframes fxMetal{0%{opacity:0;transform:translate(-50%,-20%) scale(.2) rotate(-20deg)}40%{opacity:1;transform:translate(-50%,-55%) scale(1.45) rotate(12deg)}100%{opacity:0;transform:translate(-50%,-90%) scale(1.8) rotate(-12deg)}}
   @keyframes fxCoffee{0%{opacity:0;transform:translate(-50%,-30%) scale(.4)}45%{opacity:1;transform:translate(-50%,-55%) scale(1.35) rotate(-10deg)}100%{opacity:0;transform:translate(-25%,-75%) scale(.9) rotate(16deg)}}
   @keyframes fxGun{0%{opacity:0;transform:translate(-120%,-48%) scale(.5)}20%{opacity:1;transform:translate(-75%,-48%) scale(1.35)}45%{opacity:1;transform:translate(-10%,-48%) scale(.8)}100%{opacity:0;transform:translate(60%,-48%) scale(.25)}}
+  #combatOverlay .modal{position:relative}
+  .db-donut-rain-vfx{position:absolute;z-index:36;pointer-events:none;left:-18%;top:7%;width:136%;max-width:none;height:auto;filter:drop-shadow(0 10px 13px rgba(31,8,54,.52));animation:dbDonutRain 1.45s cubic-bezier(.22,.73,.25,1) forwards}
+  @keyframes dbDonutRain{0%{opacity:0;transform:translateX(-18%) scale(.86)}16%{opacity:1;transform:translateX(-6%) scale(1)}72%{opacity:1;transform:translateX(9%) scale(1.03)}100%{opacity:0;transform:translateX(22%) scale(1.05)}}
+  @media(prefers-reduced-motion:reduce){.db-donut-rain-vfx{animation:none;opacity:.88}}
   @media(max-width:700px){#combatOverlay .fighter:last-of-type{min-width:190px}#enemyIcon.enemy-stage-icons{gap:7px}.stage-enemy{min-width:48px}.stage-enemy .stage-sprite{font-size:42px}}
 
   /* Alpha v1 interface additions */

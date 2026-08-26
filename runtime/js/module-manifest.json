@@ -16,6 +16,7 @@
     "runtime-services",
     "combat-effective-stats",
     "combat-strike-policy",
+    "combat-enemy-policy",
     "classes-registry",
     "progression-class-unlock-rules",
     "pets-registry",
@@ -185,6 +186,16 @@
       ]
     },
     {
+      "id": "combat-enemy-policy",
+      "path": "js/combat/enemy-policy.js",
+      "domain": "combat/enemy-proc-and-followup-policy",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundEnemyPolicy"
+      ]
+    },
+    {
       "id": "classes-registry",
       "path": "js/classes/registry.js",
       "domain": "classes/registry",
@@ -336,6 +347,7 @@
         "runtime-services",
         "combat-effective-stats",
         "combat-strike-policy",
+        "combat-enemy-policy",
         "classes-registry",
         "pets-registry",
         "board-registry",

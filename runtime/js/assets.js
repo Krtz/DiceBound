@@ -33,7 +33,7 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:14,
+  const manifest=Object.freeze({version:16,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
@@ -41,13 +41,13 @@
       goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
       wolf:Object.freeze({portrait:`${paths.normalEnemyBattle}/wolf.png`,battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/wolf-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/wolf.png`,alt:"Wolf"}),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
       orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:normalEnemy("wraith","Wraith"),
-      troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),demon:normalEnemy("demon","Demon"),lich:normalEnemy("lich","Lich")
+      troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),devil:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/devil-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/demon.png`,alt:"Devil"}),lich:normalEnemy("lich","Lich")
     }),
     minibosses:Object.freeze(guardians(MINI,paths.minibossBattle,paths.minibossMarkers)),bosses:Object.freeze(guardians(BOSS,paths.bossBattle,paths.bossMarkers)),secretBosses:Object.freeze(guardians(SECRET,paths.secretBossBattle,paths.secretBossMarkers)),
     classes:Object.freeze(classes),pets:Object.freeze(pets),powerups,
     camp:Object.freeze({objects:Object.freeze({bonfire:{image:`${paths.campDecorations}/bonfire.png`,alt:"Bonfire"},roadCaravan:{image:`${paths.campInteractions}/road-caravan.png`,alt:"Horse pulling a modern caravan"},infoBooks:{image:`${paths.campInteractions}/info-books.png`,alt:"Stack of books and scrolls"},talentStar:{image:`${paths.campInteractions}/talent-star.png`,alt:"Northern star of talents"},prestigeMoon:{image:`${paths.campInteractions}/prestige-moon.png`,alt:"Glowing full moon"},achievementKeg:{image:`${paths.campInteractions}/achievement-keg.png`,alt:"Ale keg and trophy"},optionsCog:{image:`${paths.campInteractions}/options-cog.png`,alt:"Steampunk options cog"},nightmareOff:{image:`${paths.nightmareToggle}/off.png`,alt:"Nightmare creature hidden"},nightmareOn:{image:`${paths.nightmareToggle}/on.png`,alt:"Nightmare creature emerged"},chest:{image:`${paths.campInteractions}/chest.png`,alt:"Treasure chest"}}),backgrounds:Object.freeze({campsite:{image:`${paths.campBackground}/campsite.png`,alt:"Star-lit campsite clearing",focus:"50% 50%"}})}),
     board:Object.freeze({backgrounds:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map((n,i)=>[String(n),{image:`${paths.boardBackgrounds}/board-${n}-${["green-road","astral-road","fractured-road","crown-road","oblivion-ringroad","end-of-mathematics"][i]}.png`,alt:`Board ${n}`}]))),events:Object.freeze({gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"}})}),
-    combat:Object.freeze({backgrounds:Object.freeze({normal:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(n=>[String(n),Object.freeze({image:`${paths.combatBackgrounds}/board-${n}-normal.png`,alt:`Board ${n} Normal battle background`,focus:"50% 50%"})])))} ),effects:Object.freeze({naturePoisonVines:Object.freeze({frames:Object.freeze([1,2,3,4,5,6,7,8].map(frame=>`${paths.combatEffects}/nature-poison-vines-${String(frame).padStart(2,"0")}.png`)),frameDurationMs:75,alt:"Thorny poison vines erupt, lash, and recede"})})}),
+    combat:Object.freeze({backgrounds:Object.freeze({normal:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(n=>[String(n),Object.freeze({image:`${paths.combatBackgrounds}/board-${n}-normal.png`,alt:`Board ${n} Normal battle background`,focus:"50% 50%"})])))} ),effects:Object.freeze({naturePoisonVines:Object.freeze({frames:Object.freeze([1,2,3,4,5,6,7,8].map(frame=>`${paths.combatEffects}/nature-poison-vines-${String(frame).padStart(2,"0")}.png`)),frameDurationMs:75,alt:"Thorny poison vines erupt, lash, and recede"}),donutProcRain:Object.freeze({image:`${paths.combatEffects}/donut-proc-rain-spritesheet.png`,durationMs:1450,alt:"A magical cloud rains colorful donuts across the battlefield"})})}),
     equipment:Object.freeze({hat:Object.freeze({helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"}})}),
     ui:Object.freeze({icons:Object.freeze({chest:{image:`${paths.campInteractions}/chest.png`,alt:"Treasure chest"},coins:{image:`${paths.uiCurrencies}/coins.png`,alt:"Coins"},troll:{image:`${paths.normalEnemyBattle}/troll.png`,alt:"Troll"},helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"},quickdraw:powerups.quickdraw,heavyPurse:powerups.heavyPurse,bandit:{image:`${paths.normalEnemyBattle}/bandit.png`,alt:"Bandit"},gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"},glassNeedle:powerups.glassNeedle})}),
     audio:Object.freeze({sfx:Object.freeze(Object.fromEntries(["roll","step","hit","crit","coin","heal","lose","level","win","holy"].map(x=>[x,{customBase:x,alt:x}])) )})
@@ -60,7 +60,7 @@
   // Retired source art remains inventoried but is never returned by a resolver.
   add(`${ROOT}/powerups/_legacy/heavy-purse-beta-0.6.png`); add(`${paths.installerIcons}/dicebound-launcher.ico`); add(`${paths.installerIcons}/dicebound-launcher.png`);
   const SOUND_EXTENSIONS=Object.freeze(["ogg","mp3","wav","webm"]); const buildSoundCandidates=base=>SOUND_EXTENSIONS.map(ext=>`${paths.audioCustom}/${base}.${ext}`);
-  const matchers=[{key:"slime",test:/\bslime\b/i},{key:"goblin",test:/\bgoblin\b/i},{key:"skeleton",test:/\bskeleton\b/i},{key:"wolf",test:/\bwolf\b/i},{key:"bandit",test:/\bbandit\b/i},{key:"orc",test:/\borc\b/i},{key:"cultist",test:/\bcultist\b/i},{key:"wraith",test:/\bwraith\b/i},{key:"troll",test:/\btroll\b/i},{key:"demon",test:/\bdemon\b/i},{key:"lich",test:/\blich\b/i}];
+  const matchers=[{key:"slime",test:/\bslime\b/i},{key:"goblin",test:/\bgoblin\b/i},{key:"skeleton",test:/\bskeleton\b/i},{key:"wolf",test:/\bwolf\b/i},{key:"bandit",test:/\bbandit\b/i},{key:"orc",test:/\borc\b/i},{key:"cultist",test:/\bcultist\b/i},{key:"wraith",test:/\bwraith\b/i},{key:"troll",test:/\btroll\b/i},{key:"devil",test:/\b(?:demon|devil)\b/i},{key:"lich",test:/\blich\b/i}];
   const GUARDIAN_MARKER_MATCHERS=Object.freeze([
     {key:"ogre-roadwarden",test:/ogre\s+roadwarden/i},{key:"titan-guard",test:/titan\s+guard/i},{key:"paradox-warden",test:/paradox\s+warden/i},
     {key:"crownless-auditor",test:/crownless\s+auditor/i},{key:"ringbound-chancellor",test:/ringbound\s+chancellor/i},{key:"abyssal-custodian",test:/abyssal\s+custodian/i},
@@ -68,7 +68,7 @@
     {key:"crown-eater",test:/crown[-\s]?eater/i},{key:"ring-tyrant",test:/ring\s+tyrant/i},{key:"last-equation",test:/last\s+equation/i},
     {key:"road-merchant",test:/road\s+merchant/i},{key:"bloodmage-boss",test:/\bbloodmage\b/i},{key:"pale-devil",test:/pale\s+devil/i}
   ]);
-  const matchEnemy=name=>matchers.find(x=>x.test.test(String(name)));
+  const matchEnemy=name=>/\bpale\s+devil\b/i.test(String(name))?null:matchers.find(x=>x.test.test(String(name)));
   const normalizeBattleBoard=level=>Math.min(6,Math.max(1,Math.floor(Number(level)||1)));
   const ENEMY_MODE_AURAS=Object.freeze({normal:Object.freeze({id:"normal",className:""}),nightmare:Object.freeze({id:"nightmare",className:"db-enemy-mode-nightmare"}),hell:Object.freeze({id:"hell",className:"db-enemy-mode-hell"})});
   const normalizeEnemyMode=mode=>String(mode||"normal").toLowerCase()==="hell"?"hell":String(mode||"normal").toLowerCase()==="nightmare"?"nightmare":"normal";
