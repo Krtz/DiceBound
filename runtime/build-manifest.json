@@ -29,7 +29,7 @@
     "js/combat/enemy-policy.js": "8ace34e307951915427d8b7ee75c7a50df8f0b909a03a8a7ebe7814faa9d5464",
     "js/combat/vfx.js": "19f1f95497adaac5cf8df2988f416c5a5b4ca54bc20528ce25be687b2eb5e80a",
     "js/classes/registry.js": "850d4c47166f851f66c353a6a50f81f63938b43adab6dff91485823b4468d558",
-    "js/progression/class-unlock-rules.js": "617c71ca2a498b1bbee90d39fffc76b5bb01a4e3c08",
+    "js/progression/class-unlock-rules.js": "617c71ca2a498b1ffb8224d6da8c68c1abca3e6589a8280c5bf64aa79672eabc",
     "js/pets/registry.js": "964593e8b51e5708d9c6b6ca75b691c2b95cec0cda5d842177fea02ac7b62957",
     "js/board/registry.js": "1b7e6284e15e98a7d7cdab216c46f33e46c56bee90d39fffc76b5bb01a4e3c08",
     "js/combat/enemies.js": "fceba653b7395df13bfd1b5832d7a8ee6793db4b9f3dfc3f94b78cd500869fbb",
