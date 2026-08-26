@@ -1,73 +1,59 @@
 (() => {
   "use strict";
 
-  /*
-   * Event rewards deliberately own only the pure numbers and probabilities.
-   * The live runtime supplies its already-authoritative Gold modifier when it
-   * pays a result, so this module cannot accidentally introduce a second
-   * multiplier or consume RNG.
-   */
-  const EVENT_GOLD = Object.freeze({
-    base: 50,
-    perLevel: 20,
-    sourceMultiplier: Object.freeze({
-      talentRank: 0.35,
-      slotPair: 1,
-      slotJackpot: 1.6,
-      slotPity: 0.25,
-      wheel: 1.25
-    })
-  });
+  const EVENT_GOLD=Object.freeze({base:50,perLevel:20,sourceMultiplier:Object.freeze({talentRank:.35,heavyPurse:.70,slotPair:1,slotJackpot:1.6,slotPity:.25,wheel:1.25})});
+  const adventurerLevel=level=>Math.max(1,Math.floor(Number(level)||1));
+  const baseGold=level=>EVENT_GOLD.base+EVENT_GOLD.perLevel*adventurerLevel(level);
+  function goldBaseFor(source,level,multiplier=1){const sourceMultiplier=EVENT_GOLD.sourceMultiplier[source];if(!Number.isFinite(sourceMultiplier))throw new Error(`Unknown event-Gold source: ${source}`);return Math.max(1,Math.round(baseGold(level)*sourceMultiplier*Math.max(0,Number(multiplier)||0)));}
+  function roadTileCutoffs(board){return Number(board)>=5?Object.freeze({enemy:.75,slot:.82,treasure:.98}):Object.freeze({enemy:.72,slot:.80,treasure:.98});}
+  function roadTileType(roll,board){const c=roadTileCutoffs(board),v=Number(roll)||0;return v<c.enemy?"enemy":v<c.slot?"event":v<c.treasure?"treasure":"empty";}
+  function slotMatchOdds(luck=0){const v=Math.max(0,Number(luck)||0);return Object.freeze({secondMatch:Math.min(.78,.30+v),tripleFromPair:Math.min(.88,.42+v),pairFromMiss:Math.min(.72,.30+v*.55)});}
+  window.DiceboundEventRewards=Object.freeze({apiVersion:1,gold:EVENT_GOLD,adventurerLevel,baseGold,goldBaseFor,roadTileCutoffs,roadTileType,slotMatchOdds});
 
-  function adventurerLevel(level) {
-    return Math.max(1, Math.floor(Number(level) || 1));
+  // Beta 0.6.4.3 emergency browser polish (#154). Keep mechanics unchanged
+  // except Heavy Purse joining the shared level-scaled Gold policy.
+  function bridgeHeavyPurse(){
+    if(Object.prototype.hasOwnProperty.call(window,"DiceboundPowerupRegistry"))return;
+    Object.defineProperty(window,"DiceboundPowerupRegistry",{configurable:true,enumerable:true,get(){return undefined;},set(value){
+      const base=value,wrapped=Object.freeze({...base,createRegistry(services){
+        const list=base.createRegistry(services),purse=list.find(x=>x?.id==="purse");
+        if(purse){const player=services.run.player,pay=services.economy.goldReward,raw=()=>goldBaseFor("heavyPurse",player.level);Object.defineProperty(purse,"desc",{configurable:true,enumerable:true,get(){return `Gain ${pay(raw())} gold now. Scales with Adventurer Level and Gold modifiers.`;}});purse.apply=()=>{player.gold+=pay(raw());};}
+        return list;
+      }});
+      Object.defineProperty(window,"DiceboundPowerupRegistry",{configurable:true,enumerable:true,writable:true,value:wrapped});
+    }});
   }
 
-  function baseGold(level) {
-    return EVENT_GOLD.base + EVENT_GOLD.perLevel * adventurerLevel(level);
+  function bridgeNatureVfx(){
+    const base=window.DiceboundCombatVfx;if(!base?.create||base.hotfixVersion==="0.6.4.3")return;
+    function hoist(node,host,index=null){if(!node||!host)return;const r=host.getBoundingClientRect();if(!r.width||!r.height)return;node.classList.add("db0643-vines");if(index!==null)node.dataset.enemyIndex=String(index);Object.assign(node.style,{left:`${Math.round(r.left+r.width/2)}px`,top:`${Math.round(r.top-r.height*.08)}px`,bottom:"auto",width:`${Math.round(Math.max(118,Math.min(290,r.width*1.55)))}px`,transform:"translateX(-50%)"});document.body.appendChild(node);}
+    window.DiceboundCombatVfx=Object.freeze({...base,hotfixVersion:"0.6.4.3",create(options={}){const api=base.create(options),getEnemies=typeof options.getEnemies==="function"?options.getEnemies:()=>[];return Object.freeze({...api,
+      playNatureOnEnemy(enemy){const enemies=getEnemies()||[],index=enemies.indexOf(enemy),host=index>=0?document.querySelector(`#enemyIcon .stage-enemy[data-enemy-index="${index}"]`):null,result=api.playNatureOnEnemy(enemy),node=host?.querySelector?.(".db-nature-vines-vfx");if(result&&node)hoist(node,host,index);return result;},
+      playNatureOnPlayer(){const host=document.getElementById("combatPlayerIcon"),result=api.playNatureOnPlayer(),node=host?.querySelector?.(".db-nature-vines-vfx");if(result&&node)hoist(node,host);return result;},
+      natureEntries(){return [...document.querySelectorAll(".db-nature-vines-vfx")].map(node=>({target:node.dataset.natureVfxTarget,frame:Number(node.dataset.natureVfxFrame),enemyIndex:node.dataset.enemyIndex===undefined?null:Number(node.dataset.enemyIndex)}));}
+    });}});
   }
 
-  function goldBaseFor(source, level, multiplier = 1) {
-    const sourceMultiplier = EVENT_GOLD.sourceMultiplier[source];
-    if (!Number.isFinite(sourceMultiplier)) throw new Error(`Unknown event-Gold source: ${source}`);
-    return Math.max(1, Math.round(baseGold(level) * sourceMultiplier * Math.max(0, Number(multiplier) || 0)));
+  function installBrowserPolish(){
+    if(document.getElementById("db0643-hotfix-style"))return;
+    const style=document.createElement("style");style.id="db0643-hotfix-style";style.textContent=`
+.db-nature-vines-vfx.db0643-vines{position:fixed!important;z-index:9999!important;pointer-events:none!important;opacity:1!important;visibility:visible!important;overflow:visible!important}.db-nature-vines-vfx.db0643-vines img{display:block!important;width:100%!important;height:auto!important;max-width:none!important;max-height:none!important;opacity:1!important;visibility:visible!important}
+#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="devil"]){min-width:clamp(82px,13vw,175px)!important;min-height:clamp(145px,22vh,260px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="devil"]) .stage-sprite{width:min(15vw,180px)!important;height:clamp(140px,22vh,255px)!important}
+#enemyIcon.enemy-stage-icons .stage-enemy.miniboss{min-width:clamp(190px,26vw,340px)!important;min-height:clamp(260px,38vh,460px)!important}#enemyIcon.enemy-stage-icons .stage-enemy.miniboss .stage-sprite{width:min(30vw,340px)!important;height:clamp(255px,37vh,450px)!important}#enemyIcon.enemy-stage-icons .stage-enemy.final-boss{min-width:clamp(220px,31vw,410px)!important;min-height:clamp(300px,44vh,520px)!important}#enemyIcon.enemy-stage-icons .stage-enemy.final-boss .stage-sprite{width:min(35vw,410px)!important;height:clamp(295px,43vh,510px)!important}
+.app-tooltip-layer.db0643-gear{width:min(360px,calc(100vw - 18px));max-width:360px!important;padding:0!important;border:1px solid rgba(245,200,91,.38)!important;border-radius:12px!important;background:linear-gradient(180deg,#101827,#070b12)!important;box-shadow:0 18px 60px rgba(0,0,0,.76)!important;overflow:hidden}.db0643-head{display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:center;padding:11px 12px 9px;border-bottom:1px solid rgba(255,255,255,.09)}.db0643-art{width:52px;height:52px;object-fit:contain}.db0643-name{font-size:15px;font-weight:950}.db0643-meta{font-size:10px;color:#aab5cb;margin-top:4px;text-transform:uppercase;letter-spacing:.06em}.db0643-name.poor{color:#b9bec8}.db0643-name.uncommon{color:#62d79a}.db0643-name.rare{color:#65a9ff}.db0643-name.epic{color:#b58cff}.db0643-name.legendary{color:#f5c85b}.db0643-name.mythical{color:#ff87e7}.db0643-name.artifact{color:#ff9d68}.db0643-stats{display:grid;padding:8px 12px 10px}.db0643-row{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px;font-weight:750}.db0643-row:last-child{border-bottom:0}.db0643-row.special{color:#ffe4a0;margin-top:4px;border-top:1px solid rgba(245,200,91,.18)}.loot-bonuses.db0643-lines,.db0643-lines{display:grid!important;gap:3px!important}.db0643-line{display:block;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+@media(min-width:800px){#startOverlay.camp-fullscreen{background:#030711!important;overflow:hidden!important}#startOverlay.camp-fullscreen .start-modal,#startOverlay.camp-fullscreen .legacy-camp-modal{position:relative!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-width:none!important;overflow:hidden!important;margin:0!important;padding:0!important}#startOverlay.camp-fullscreen .camp-scene{position:absolute!important;left:50%!important;top:50%!important;width:1600px!important;height:900px!important;min-height:0!important;max-width:none!important;margin:0!important;padding:0!important;overflow:visible!important;transform-origin:center!important;background:linear-gradient(rgba(3,8,20,.08),rgba(3,7,16,.14)),url("assets/camp/background/campsite.png") center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important}#startOverlay.camp-fullscreen .camp-sky,#startOverlay.camp-fullscreen .camp-stars,#startOverlay.camp-fullscreen .camp-ground{display:contents!important}#startOverlay.camp-fullscreen .camp-spot,#startOverlay.camp-fullscreen .camp-bonfire{position:absolute!important;margin:0!important}#campOptionsBtn{left:24px!important;top:20px!important;width:118px!important}#campTalentBtn{left:714px!important;top:88px!important;width:172px!important;transform:none!important}#campMoonBtn{left:990px!important;top:76px!important;width:180px!important}#campNightmareBtn{left:1450px!important;right:auto!important;top:170px!important;width:135px!important}#campHellBtn{left:1230px!important;right:auto!important;top:140px!important;width:128px!important}#campClassBtn{left:296px!important;top:430px!important;width:255px!important}#campPetBtn{left:280px!important;top:650px!important;width:270px!important}#campAchievementBtn{left:80px!important;top:630px!important;width:185px!important;transform:none!important}#campInfoBtn{left:725px!important;top:650px!important;width:165px!important}.camp-bonfire{left:800px!important;top:535px!important;width:190px!important;transform:translate(-50%,-50%)!important}#campChestBtn{left:930px!important;top:430px!important;width:278px!important;min-height:168px!important}#campGoBtn{left:1210px!important;right:auto!important;top:545px!important;width:380px!important;min-height:225px!important}#campGoBtn .camp-journey-art-frame{width:360px!important;max-width:360px!important;height:175px!important}#campGoBtn .camp-journey-art{max-width:360px!important;max-height:175px!important}.camp-popup-layer{left:800px!important;bottom:22px!important;width:1380px!important;max-height:570px!important;transform:translateX(-50%)!important}}
+`;document.head.appendChild(style);
+
+    const rarityIds=["poor","common","uncommon","rare","epic","legendary","mythical","artifact","omega"],statRe=/^([+−-]?\d+(?:\.\d+)?%?)\s+(.+)$/;
+    const esc=v=>String(v??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    function parse(raw){const parts=String(raw||"").replace(/\+\-/g,"-").replace(/\s*·\s*INTRINSIC\s*\([^)]*\)\s*:\s*/gi," · ").replace(/\s*INTRINSIC\s*\([^)]*\)\s*:\s*/gi,"").split(/\s*·\s*/).map(x=>x.trim()).filter(Boolean),map=new Map(),order=[],special=[];for(const part of parts){if(/^(Unique:|Set:|Element:|Fire|Ice|Electric|Light|Void|Nature|Donut|Tech|Metal|Coffee|Gun|Radiation)\b/i.test(part)){special.push(part);continue;}const m=part.match(statRe);if(!m){special.push(part);continue;}const rv=m[1].replace("−","-"),pct=rv.endsWith("%"),val=Number(rv.replace("%","")),label=m[2].trim(),key=`${pct?"%":"n"}:${label.toLowerCase()}`;if(!Number.isFinite(val)){special.push(part);continue;}if(!map.has(key))order.push(key);const e=map.get(key)||{value:0,pct,label};e.value+=val;map.set(key,e);}return{stats:order.map(k=>{const e=map.get(k),a=Math.abs(e.value);return`${e.value>=0?"+":"−"}${Number.isInteger(a)?a:a.toFixed(2).replace(/0+$/,"").replace(/\.$/,"")}${e.pct?"%":""} ${e.label}`;}),special};}
+    const rows=p=>[...p.stats,...p.special].map(v=>`<span class="db0643-line">${esc(v)}</span>`).join("")||'<span class="db0643-line">No bonuses</span>';
+    function enhance(){document.querySelectorAll("#equipmentGrid .equipment-slot:not(.empty)").forEach(slot=>{const title=slot.getAttribute("title");if(title&&!slot.dataset.db0643Raw)slot.dataset.db0643Raw=title;const raw=slot.dataset.db0643Raw||"",i=raw.indexOf(":"),name=i>=0?raw.slice(0,i).trim():slot.querySelector(".slot-item span")?.textContent?.trim()||"Equipment",p=parse(i>=0?raw.slice(i+1):""),rarity=rarityIds.find(x=>slot.classList.contains(x))||"common";Object.assign(slot.dataset,{db0643Name:name,db0643Rarity:rarity,db0643Stats:JSON.stringify(p.stats),db0643Special:JSON.stringify(p.special),tooltip:"equipment"});slot.removeAttribute("title");});document.querySelectorAll(".loot-bonuses:not([data-db0643])").forEach(n=>{n.dataset.db0643="1";n.classList.add("db0643-lines");n.innerHTML=rows(parse(n.textContent));});document.querySelectorAll(".loot-current:not([data-db0643])").forEach(n=>{const t=n.textContent||"";if(!/Currently equipped:/i.test(t)||!t.includes("—"))return;const name=n.querySelector("b")?.textContent?.trim()||"Current item";n.dataset.db0643="1";n.innerHTML=`<div><strong>Currently equipped:</strong> <b>${esc(name)}</b></div><div class="db0643-lines">${rows(parse(t.slice(t.indexOf("—")+1)))}</div>`;});}
+    function tooltip(slot){const layer=document.getElementById("appTooltipLayer");if(!layer)return;const rarity=slot.dataset.db0643Rarity||"common",name=slot.dataset.db0643Name||"Equipment",meta=`${rarity} · ${slot.querySelector(".slot-label")?.textContent?.trim()||"Equipment"}`,art=slot.querySelector("img")?.getAttribute("src")||"";let stats=[],special=[];try{stats=JSON.parse(slot.dataset.db0643Stats||"[]");special=JSON.parse(slot.dataset.db0643Special||"[]");}catch(_){}layer.classList.add("db0643-gear");layer.innerHTML=`<div class="db0643-head">${art?`<img class="db0643-art" src="${esc(art)}" alt="">`:"<span></span>"}<div><div class="db0643-name ${rarity}">${esc(name)}</div><div class="db0643-meta">${esc(meta)}</div></div></div><div class="db0643-stats">${stats.map(v=>`<div class="db0643-row">${esc(v)}</div>`).join("")}${special.map(v=>`<div class="db0643-row special">${esc(v)}</div>`).join("")}</div>`;layer.classList.remove("hidden");const r=slot.getBoundingClientRect(),tr=layer.getBoundingClientRect(),g=10,m=8;let left=r.right+g,top=r.top;if(left+tr.width>innerWidth-m)left=r.left-tr.width-g;left=Math.max(m,Math.min(innerWidth-tr.width-m,left));top=Math.max(m,Math.min(innerHeight-tr.height-m,top));layer.style.left=`${Math.round(left)}px`;layer.style.top=`${Math.round(top)}px`;}
+    document.addEventListener("pointerover",e=>{const slot=e.target?.closest?.("#equipmentGrid .equipment-slot[data-db0643-name]"),layer=document.getElementById("appTooltipLayer");if(slot)tooltip(slot);else layer?.classList.remove("db0643-gear");});document.addEventListener("focusin",e=>{const slot=e.target?.closest?.("#equipmentGrid .equipment-slot[data-db0643-name]");if(slot)tooltip(slot);});
+    function scaleCamp(){const overlay=document.getElementById("startOverlay"),scene=document.getElementById("campScene");if(!overlay?.classList.contains("camp-fullscreen")||!scene||innerWidth<800)return;scene.style.transform=`translate(-50%,-50%) scale(${Math.max(.35,Math.min(innerWidth/1600,innerHeight/900))})`;}
+    const observer=new MutationObserver(()=>{enhance();scaleCamp();});observer.observe(document.body,{childList:true,subtree:true});enhance();scaleCamp();addEventListener("resize",scaleCamp,{passive:true});window.DiceboundLunchHotfixTest=Object.freeze({parse,scaleCamp,enhance,heavyPurseBase:level=>goldBaseFor("heavyPurse",level)});
   }
 
-  /* Fixed cutoffs preserve the one road-tile RNG roll.  Slots become roughly
-   * half as common, while the reclaimed space becomes ordinary encounters. */
-  function roadTileCutoffs(board) {
-    return Number(board) >= 5
-      ? Object.freeze({ enemy: 0.75, slot: 0.82, treasure: 0.98 })
-      : Object.freeze({ enemy: 0.72, slot: 0.80, treasure: 0.98 });
-  }
-
-  function roadTileType(roll, board) {
-    const cutoffs = roadTileCutoffs(board), value = Number(roll) || 0;
-    if (value < cutoffs.enemy) return "enemy";
-    if (value < cutoffs.slot) return "event";
-    if (value < cutoffs.treasure) return "treasure";
-    return "empty";
-  }
-
-  /* The number and order of rolls stay unchanged; only their thresholds grow
-   * so a rare slot visit has meaningfully better match odds. */
-  function slotMatchOdds(luck = 0) {
-    const value = Math.max(0, Number(luck) || 0);
-    return Object.freeze({
-      secondMatch: Math.min(0.78, 0.30 + value),
-      tripleFromPair: Math.min(0.88, 0.42 + value),
-      pairFromMiss: Math.min(0.72, 0.30 + value * 0.55)
-    });
-  }
-
-  window.DiceboundEventRewards = Object.freeze({
-    apiVersion: 1,
-    gold: EVENT_GOLD,
-    adventurerLevel,
-    baseGold,
-    goldBaseFor,
-    roadTileCutoffs,
-    roadTileType,
-    slotMatchOdds
-  });
+  bridgeHeavyPurse();bridgeNatureVfx();setTimeout(installBrowserPolish,0);
 })();
