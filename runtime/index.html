@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.4.0</title>
+<title>Dicebound: Beta v0.6.4.1</title>
 <link rel="stylesheet" href="css/dicebound.css">
 <style id="db-boot-gate">
   html.db-booting body{background:#050912}
@@ -19,8 +19,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.4.0</h1>
-        <p>Beta v0.6.4.0 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
+        <h1>Dicebound: Beta v0.6.4.1</h1>
+        <p>Beta v0.6.4.1 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -365,6 +365,17 @@
       <button class="small-btn" data-debug="board3">Jump to Board 3</button><button class="small-btn" data-debug="board4">Jump to Board 4</button>
       <button class="small-btn" data-debug="boss">Jump to final boss</button>
     </div>
+    <details class="memory-diagnostics" id="memoryDiagnosticsPanel">
+      <summary>ðŸ§  Memory Diagnostics <span id="memoryDiagnosticsCount">0/500 samples</span></summary>
+      <p class="subtitle">Lightweight time-series samples only. Recording is off by default; unavailable browser/native metrics are shown as unavailable, never as zero.</p>
+      <div class="memory-diagnostics-controls">
+        <button class="small-btn" type="button" id="memoryDiagnosticsSnapshot">Memory Snapshot</button>
+        <label class="memory-diagnostics-record"><input type="checkbox" id="memoryDiagnosticsRecord"> Record Memory Diagnostics</label>
+        <button class="small-btn" type="button" id="memoryDiagnosticsClear">Clear Memory Log</button>
+      </div>
+      <p class="memory-diagnostics-status" id="memoryDiagnosticsStatus" aria-live="polite">Recording off · heap unavailable</p>
+      <pre class="memory-diagnostics-log" id="memoryDiagnosticsLog" aria-live="polite"></pre>
+    </details>
     <button class="main-btn" id="debugCloseBtn" style="width:100%;margin-top:12px">Close testing menu</button>
   </div>
 </div>
@@ -446,6 +457,7 @@
 <script src="js/core/run-checkpoint.js"></script>
 <script src="js/core/state.js"></script>
 <script src="js/core/runtime-services.js"></script>
+<script src="js/core/memory-diagnostics.js"></script>
 <script src="js/combat/effective-stats.js"></script>
 <script src="js/combat/strike-policy.js"></script>
 <script src="js/combat/enemy-policy.js"></script>

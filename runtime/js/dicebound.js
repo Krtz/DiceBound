@@ -10293,4 +10293,25 @@ function buildDiceboundHumanHarness235(){
   updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);requestAnimationFrame(db064SyncCampHitTargets);return result;};
   window.addEventListener('resize',()=>requestAnimationFrame(db064SyncCampHitTargets));requestAnimationFrame(db064SyncCampHitTargets);
 
+  /* #124: keep the recorder independent from game ownership. The compatibility
+     monolith supplies a read-only live context; sampling/retention/UI controls
+     stay in the extracted core owner and do not wrap combat or timer behavior. */
+  const db064MemoryDiagnostics=window.DiceboundMemoryDiagnostics;
+  if(!db064MemoryDiagnostics)throw new Error('DiceBound requires the memory diagnostics core module.');
+  db064MemoryDiagnostics.configure({getContext:()=>{
+    const combatOpen=!$('combatOverlay')?.classList.contains('hidden'),activeOverlays=[...document.querySelectorAll('.overlay:not(.hidden)')].map(overlay=>overlay.id),hasNonCampOverlay=activeOverlays.some(id=>id!=='startOverlay');
+    return {
+      screen:combatOpen?'Combat':!gameStarted?'Camp':hasNonCampOverlay?'Modal':'Board',
+      board:boardLevel,
+      adventurerLevel:player?.level,
+      difficulty:hellMode?'Hell':nightmareMode?'Nightmare':'Normal',
+      runActive:!!gameStarted,
+      enemyCount:currentEnemies?.length||0,
+      livingEnemyCount:currentEnemies?.filter(enemy=>enemy?.hp>0).length||0,
+      battleLogEntries:$('combatHistory')?.querySelectorAll('p').length||0,
+      tileCount:tiles?.length||0,
+      position:player?.position,
+    };
+  }});
+
 })();

@@ -1,4 +1,14 @@
-# Unreleased — Beta 0.6.4.0
+# Unreleased — Beta 0.6.4.1
+
+## Memory Diagnostics (#124)
+
+- Debug now contains lightweight Memory Diagnostics: take a one-shot snapshot, optionally record a bounded periodic/lifecycle time series, or clear the local log.
+- Samples record actual runtime context, Chromium heap data when exposed, DOM/overlay state and DiceBound asset-registry paths. Unsupported timer/listener/native-process metrics stay visibly unavailable rather than pretending to be zero.
+- Direct Edge and native WebView2 smoke now capture representative Camp, Board and overlay samples.
+
+---
+
+# Beta 0.6.4.0
 
 ## Friends patch
 

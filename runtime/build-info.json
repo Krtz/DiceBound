@@ -1,15 +1,15 @@
 {
   "assetCount": 362,
-  "browserContentHash": "7091dc662edd58a4839155080750eeece76c179fabe64dbebedf60285e29295b",
-  "buildId": "dicebound-0.6.4.0-dev-7091dc662edd58a4",
+  "browserContentHash": "9e1eaad05993a30af2cfa3462e07ece7babb3030523807a46b52487aa02306f4",
+  "buildId": "dicebound-0.6.4.1-dev-9e1eaad05993a30a",
   "channel": "Beta",
-  "contentFileCount": 394,
+  "contentFileCount": 395,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Friends patch: visual combat polish, event economy, campsite interaction, and achievement hierarchy.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.4.1.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -23,6 +23,7 @@
     "js/core/run-checkpoint.js",
     "js/core/state.js",
     "js/core/runtime-services.js",
+    "js/core/memory-diagnostics.js",
     "js/combat/effective-stats.js",
     "js/combat/strike-policy.js",
     "js/combat/enemy-policy.js",
@@ -43,9 +44,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "7091dc662edd58a4839155080750eeece76c179fabe64dbebedf60285e29295b",
+  "sourceHash": "9e1eaad05993a30af2cfa3462e07ece7babb3030523807a46b52487aa02306f4",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads",
-  "version": "0.6.4.0",
+  "version": "0.6.4.1",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
