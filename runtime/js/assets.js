@@ -33,7 +33,7 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:13,
+  const manifest=Object.freeze({version:14,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
@@ -56,7 +56,7 @@
   // Equipment identities own their gameplay metadata and art references in
   // items/equipment.js. This is only the runtime preload inventory, kept here
   // so the asset validator can prove every approved binary is packaged.
-  ["assets/equipment/weapon/bronze-longsword.png","assets/equipment/weapon/shortbow.png","assets/equipment/weapon/rubber-chicken.png","assets/equipment/weapon/crimson-brush.png","assets/equipment/weapon/tongue-lash.png","assets/equipment/hat/bronze-full-helm.png","assets/equipment/chest/bronze-platebody.png","assets/equipment/legs/bronze-platelegs.png","assets/equipment/boots/bronze-armoured-boots.png","assets/equipment/offhand/bronze-round-shield.png"].forEach(add);
+  ["assets/equipment/weapon/bronze-longsword.png","assets/equipment/weapon/shortbow.png","assets/equipment/weapon/rubber-chicken.png","assets/equipment/weapon/crimson-brush.png","assets/equipment/weapon/tongue-lash.png","assets/equipment/hat/bronze-full-helm.png","assets/equipment/chest/bronze-platebody.png","assets/equipment/legs/bronze-platelegs.png","assets/equipment/boots/bronze-armoured-boots.png","assets/equipment/offhand/bronze-round-shield.png","assets/equipment/weapon/oak-shortbow.png","assets/equipment/weapon/bronze-battleaxe.png","assets/equipment/offhand/iron-round-shield.png","assets/equipment/offhand/spellbook.png","assets/equipment/hat/hunter-hood.png","assets/equipment/chest/leather-harness.png","assets/equipment/legs/ranger-trousers.png","assets/equipment/boots/trail-boots.png","assets/equipment/ring/mood-ring.png","assets/equipment/amulet/hawkeye-charm.png"].forEach(add);
   // Retired source art remains inventoried but is never returned by a resolver.
   add(`${ROOT}/powerups/_legacy/heavy-purse-beta-0.6.png`); add(`${paths.installerIcons}/dicebound-launcher.ico`); add(`${paths.installerIcons}/dicebound-launcher.png`);
   const SOUND_EXTENSIONS=Object.freeze(["ogg","mp3","wav","webm"]); const buildSoundCandidates=base=>SOUND_EXTENSIONS.map(ext=>`${paths.audioCustom}/${base}.${ext}`);

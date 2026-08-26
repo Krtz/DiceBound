@@ -48,7 +48,7 @@ assert.equal(Object.keys(equipment.special).length, 11);
 assert.equal(equipment.special["axels-coffee-mug"].rarity, "legendary");
 assert.equal(equipment.special["devils-horns"].rarity, "omega");
 assert.equal(equipment.special["impossible-weapon"].setName, "Impossible Road");
-assert.equal(equipment.identities.length, 12);
+assert.equal(equipment.identities.length, 20);
 assert.equal(equipment.identities.find(identity => identity.id === "bronze-longsword").intrinsicBonuses.attack, 1);
 assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 
