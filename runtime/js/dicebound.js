@@ -945,19 +945,19 @@
   }
 
   function rollTieredProc(chance){const guaranteed=Math.floor(Math.max(0,chance)),fraction=Math.max(0,chance-guaranteed);return guaranteed+(random()<fraction?1:0);}
-  function strikeBaseDamage(echo=false,chaos=null){let attack=player.attack+(player.goldAttackScale?Math.floor(player.gold*player.goldAttackScale):0),damage=Math.max(1,Math.round(attack+player.defense*player.defenseAttackScale)+rand(-1,2)),burst="";if(classIdentityActive("sorcerer")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Arcane Surge! ";}if(classIdentityActive("monk")&&random()<player.classBurst){damage=Math.round(damage*1.35);player.ultimateCharge=clamp(player.ultimateCharge+6,0,100);burst="Flowing Combo! ";}if(classIdentityActive("clown")&&random()<player.classBurst){damage=Math.round(damage*(.9+random()*1.1));burst="Unlicensed Comedy! ";}if(classIdentityActive("rouge")&&random()<player.classBurst){damage=Math.round(damage*1.45);burst="Crimson Stroke! ";}if(classIdentityActive("berserker")&&random()<player.classBurst){damage=Math.round(damage*1.55);burst="Blood Frenzy! ";}if(classIdentityActive("frog")&&random()<player.classBurst){damage=Math.round(damage*1.35);burst="Resonant Croak! ";}if(classIdentityActive("vampire")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Blood Frenzy! ";}if(classIdentityActive("ninja")&&random()<player.classBurst){damage=Math.round(damage*1.6);burst="Perfect Ambush! ";}if(classIdentityActive("ceo")&&random()<player.classBurst){damage=Math.round(damage*1.55);player.gold+=5;burst="Quarterly Growth! ";}if(classIdentityActive("merchant")&&random()<player.classBurst){damage=Math.round(damage*1.6);player.gold+=10;burst="Excellent Margin! ";}if(player.combatAttackCount===0&&player.firstAttackBonus>0)damage=Math.round(damage*(1+player.firstAttackBonus));if(player.hp/player.maxHp<.5)damage=Math.round(damage*(1+player.berserk));if(echo)damage=Math.max(1,Math.round(damage*(player.echoDamageScale||.70)*(player.criticalEchoBonus||0?1+player.criticalEchoBonus:1)));const weapon=player.equipment?.weapon;if(weapon?.merchantWeapon)damage+=Math.floor(player.gold*(weapon.merchantWeaponScale||1));if(livingEnemies().length>=2&&player.packDamageBonus)damage=Math.round(damage*(1+player.packDamageBonus));damage=Math.round(damage*(chaos?.mult||1)*(1+player.damageBonus+(v19SetDamageBonus())));return {damage,burst};}
-  async function performStrike(target,{echo=false,index=0,chaos=null}={}){
+  function strikeBaseDamage(echo=false,chaos=null,{canCrit=true}={}){let attack=player.attack+(player.goldAttackScale?Math.floor(player.gold*player.goldAttackScale):0),damage=Math.max(1,Math.round(attack+player.defense*player.defenseAttackScale)+rand(-1,2)),burst="";if(classIdentityActive("sorcerer")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Arcane Surge! ";}if(classIdentityActive("monk")&&random()<player.classBurst){damage=Math.round(damage*1.35);player.ultimateCharge=clamp(player.ultimateCharge+6,0,100);burst="Flowing Combo! ";}if(classIdentityActive("clown")&&random()<player.classBurst){damage=Math.round(damage*(.9+random()*1.1));burst="Unlicensed Comedy! ";}if(classIdentityActive("rouge")&&random()<player.classBurst){damage=Math.round(damage*1.45);burst="Crimson Stroke! ";}if(classIdentityActive("berserker")&&random()<player.classBurst){damage=Math.round(damage*1.55);burst="Blood Frenzy! ";}if(classIdentityActive("frog")&&random()<player.classBurst){damage=Math.round(damage*1.35);burst="Resonant Croak! ";}if(classIdentityActive("vampire")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Blood Frenzy! ";}if(classIdentityActive("ninja")&&random()<player.classBurst){damage=Math.round(damage*1.6);burst="Perfect Ambush! ";}if(classIdentityActive("ceo")&&random()<player.classBurst){damage=Math.round(damage*1.55);player.gold+=5;burst="Quarterly Growth! ";}if(classIdentityActive("merchant")&&random()<player.classBurst){damage=Math.round(damage*1.6);player.gold+=10;burst="Excellent Margin! ";}if(player.combatAttackCount===0&&player.firstAttackBonus>0)damage=Math.round(damage*(1+player.firstAttackBonus));if(player.hp/player.maxHp<.5)damage=Math.round(damage*(1+player.berserk));if(echo)damage=Math.max(1,Math.round(damage*(player.echoDamageScale||.70)*(canCrit&&player.criticalEchoBonus?1+player.criticalEchoBonus:1)));const weapon=player.equipment?.weapon;if(weapon?.merchantWeapon)damage+=Math.floor(player.gold*(weapon.merchantWeaponScale||1));if(livingEnemies().length>=2&&player.packDamageBonus)damage=Math.round(damage*(1+player.packDamageBonus));damage=Math.round(damage*(chaos?.mult||1)*(1+player.damageBonus+(v19SetDamageBonus())));return {damage,burst};}
+  async function performStrike(target,{echo=false,index=0,chaos=null,canCrit=true}={}){
     if(!target||target.hp<=0)target=livingEnemies()[0];if(!target)return {domain:"combat",type:"strike",dealt:0,crit:0,critTiers:0,elementDamage:0};
-    const critTiers=rollTieredProc(player.crit)+(chaos?.bonusCrit||0),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos);let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}
+    const critTiers=window.DiceboundStrikePolicy.resolveCriticalTiers(rollTieredProc,{canCrit,critChance:player.crit,bonusCrit:chaos?.bonusCrit}),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos,{canCrit});let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}
     let poisonApplied=0;if(target.hp>0&&player.poisonOnHitChance&&random()<clamp(player.poisonOnHitChance,0,.95)){target.poisonStacks=(target.poisonStacks||0)+1;poisonApplied=1;playElementAnimation("nature",target,false);addCombatHistory(`${echo?`Echo ${index}`:"Attack"} applies 1 Poison stack to ${target.name}.`);}
     player.combatAttackCount++;const element=triggerStrikeElements(target,chaos),drainDamage=dealt+(element.totalDamage||0),heal=player.lifeSteal>0&&drainDamage>0?healPlayer(Math.max(1,Math.floor(drainDamage*player.lifeSteal))):0,label=echo?`Echo ${index}`:"Attack";
-    const result={domain:"combat",type:"strike",label,echo,index,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
+    const result={domain:"combat",type:"strike",label,echo,index,canCrit,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
   }
 
   async function playerAttack(){
     if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("attack");updateCombatUI();const firstTarget=currentEnemy,echoes=rollTieredProc(player.doubleStrike)+(chaos.extraEcho||0);let totalCrit=0;
     const base=await performStrike(firstTarget,{echo:false,chaos});totalCrit+=base.crit;
-    for(let i=1;i<=echoes&&livingEnemies().length;i++){const t=firstTarget.hp>0?firstTarget:(currentEnemy?.hp>0?currentEnemy:livingEnemies()[0]);const r=await performStrike(t,{echo:true,index:i,chaos});totalCrit+=r.crit;}
+    for(let i=1;i<=echoes&&livingEnemies().length;i++){const t=firstTarget.hp>0?firstTarget:(currentEnemy?.hp>0?currentEnemy:livingEnemies()[0]);const r=await performStrike(t,{echo:true,index:i,chaos,canCrit:false});totalCrit+=r.crit;}
     chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*totalCrit);const pants=applyMythicPantsPulse();if(pants)setCombatText(pants);updateCombatUI();if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   }
   async function guardAction(){
@@ -6718,17 +6718,16 @@ function buildDiceboundHumanHarness235(){
   const db04Brand=document.querySelector('.brand h1');if(db04Brand)db04Brand.textContent='Dicebound: Beta v0.4.9';
   const db04Sub=document.querySelector('.brand p');if(db04Sub)db04Sub.textContent='Beta v0.4.9 · integrated icon art, custom-sound prep and a real volume slider.';
 
-  /* Ranger identity: a normal landed strike establishes one Mark; an Echo
-     establishes two. Always respect the live mark cap (including Perfected
-     Signature) rather than the inherited hard-coded cap of three. */
+  /* Ranger identity: each qualifying hit establishes exactly one Mark.
+     Echoes are separate strikes, never multi-Mark packets. */
   const performStrikeBeta04Base=performStrike;
   performStrike=async function(target,opts={}){
     const ranger=classIdentityActive('ranger')&&target?.hp>0,before=ranger?(target.rangerMarks||0):0;
     const result=await performStrikeBeta04Base(target,opts);
     if(ranger&&target?.hp>0&&!result?.dodged){
-      const cap=Math.max(3,Number(player.rangerMarkMax)||3),gain=opts.echo?2:1;
-      target.rangerMarks=Math.min(cap,before+gain);
-      if(target.rangerMarks!==before)identityFlash(`🏹 Marked Quarry ×${target.rangerMarks}${opts.echo?' · Echo +2':''}`);
+      const cap=Math.max(3,Number(player.rangerMarkMax)||3);
+      target.rangerMarks=window.DiceboundStrikePolicy.rangerMarkTotal(before,{cap,landed:true});
+      if(target.rangerMarks!==before)identityFlash(`🏹 Marked Quarry ×${target.rangerMarks}${opts.echo?' · Echo +1':''}`);
       updateCombatUI();
     }
     return result;
@@ -6738,7 +6737,7 @@ function buildDiceboundHumanHarness235(){
     const r=updateCombatUIBeta04Base();
     if(classIdentityActive('ranger')){
       const marks=currentEnemy?.rangerMarks||0,cap=Math.max(3,Number(player.rangerMarkMax)||3);
-      setResourceUI('mark','Marks on target',marks,cap,`Landed basic strikes add 1 Mark; landed Echo strikes add 2. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: ${cap}.`);
+      setResourceUI('mark','Marks on target',marks,cap,`Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: ${cap}.`);
     }
     return r;
   };
@@ -9982,6 +9981,21 @@ function buildDiceboundHumanHarness235(){
     intrinsic:item=>db06314Equipment.intrinsicBonusesForItem(item),
     total:item=>db06314Equipment.allBonusesForItem(item),
     generate:(rarity='common',slot='weapon')=>generateEquipment(rarity,slot)
+  });
+
+  // Isolated browser-harness coverage for the #123 semantic contract.  This
+  // exercises the live composed strike pipeline, including the Ranger wrapper.
+  window.DiceboundEchoStrikeTest=Object.freeze({
+    async highCritRangerEchoes(){
+      if(meta.unlocks)meta.unlocks.ranger=true;
+      resetPlayer('ranger');
+      Object.assign(player,{attack:1,crit:3.5,doubleStrike:2,criticalEchoBonus:1,combatAttackCount:0});
+      const enemy={name:'Echo Regression Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,rangerMarks:0};
+      currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+      const strikes=[];
+      for(let index=1;index<=3;index++)strikes.push(await performStrike(enemy,{echo:true,index,canCrit:false}));
+      return {crits:strikes.map(strike=>strike.critTiers),canCrit:strikes.map(strike=>strike.canCrit),marks:enemy.rangerMarks,expectedMarks:3};
+    }
   });
 
 })();

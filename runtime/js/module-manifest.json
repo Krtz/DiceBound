@@ -15,6 +15,7 @@
     "core-state",
     "runtime-services",
     "combat-effective-stats",
+    "combat-strike-policy",
     "classes-registry",
     "progression-class-unlock-rules",
     "pets-registry",
@@ -174,6 +175,16 @@
       ]
     },
     {
+      "id": "combat-strike-policy",
+      "path": "js/combat/strike-policy.js",
+      "domain": "combat/strike-policy",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundStrikePolicy"
+      ]
+    },
+    {
       "id": "classes-registry",
       "path": "js/classes/registry.js",
       "domain": "classes/registry",
@@ -324,6 +335,7 @@
         "core-state",
         "runtime-services",
         "combat-effective-stats",
+        "combat-strike-policy",
         "classes-registry",
         "pets-registry",
         "board-registry",
