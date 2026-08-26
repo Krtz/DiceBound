@@ -25,6 +25,7 @@
     "pets-registry",
     "board-registry",
     "combat-enemies",
+    "combat-guardians",
     "item-rarities",
     "item-equipment",
     "progression-talents",
@@ -267,6 +268,20 @@
       ]
     },
     {
+      "id": "combat-guardians",
+      "path": "js/combat/guardians.js",
+      "domain": "combat/guardian-identity",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "board-registry",
+        "combat-enemies"
+      ],
+      "provides": [
+        "DiceboundGuardians"
+      ]
+    },
+    {
       "id": "item-rarities",
       "path": "js/items/rarities.js",
       "domain": "items/rarities",
@@ -419,6 +434,7 @@
         "pets-registry",
         "board-registry",
         "combat-enemies",
+        "combat-guardians",
         "item-rarities",
         "item-equipment",
         "progression-talents",

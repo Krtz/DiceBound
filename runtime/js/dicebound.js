@@ -175,8 +175,12 @@
   const DB317_ULTIMATE_SUPPORT_RAW=window.DiceboundClasses?.createUltimateSupportRegistry?.();
   if(!DB317_ULTIMATE_SUPPORT_RAW)throw new Error("DiceboundClasses ultimate-support registry must load before dicebound.js");
   const ULTIMATE_SUPPORT_MECHANICS=db317Readonly(DB317_ULTIMATE_SUPPORT_RAW);
+  const DB317_GUARDIANS=window.DiceboundGuardians;
+  if(!DB317_GUARDIANS)throw new Error("DiceboundGuardians must load before dicebound.js");
   function db317Enemy(id){const e=ENEMY_REGISTRY[id];return e?{...e}:null;}
   function db317Board(level=boardLevel){return BOARD_REGISTRY[String(level)]||BOARD_REGISTRY["1"];}
+  function db317FinalGuardian(level=boardLevel){return DB317_GUARDIANS.resolveFinal(level).combat;}
+  function db317MinibossGuardian(level=boardLevel){return DB317_GUARDIANS.resolveMiniboss(level).combat;}
   const DiceboundContentRegistry=db317Readonly({version:3,classes:CLASSES,classUnlocks:CLASS_UNLOCK_REGISTRY,classTagVocabulary:CLASS_TAG_VOCABULARY,powerups:upgrades,powerupGates:POWERUP_GATE_REGISTRY,equipment:EQUIPMENT_REGISTRY,pets:PETS,enemies:{normal:enemyPool,special:ENEMY_REGISTRY},talents,achievements:ACHIEVEMENT_REGISTRY,boards:BOARD_REGISTRY,rarities:rarityInfo,classTags:CLASS_TAGS,classPassives:CLASS_PASSIVES,classMechanics:CLASS_MECHANICS_REGISTRY,mechanicTagVocabulary:MECHANIC_TAG_VOCABULARY,powerupMechanics:POWERUP_MECHANICS_REGISTRY,ultimateSupportMechanics:ULTIMATE_SUPPORT_MECHANICS,elementIds:ELEMENT_ID_VOCABULARY});
   window.DiceboundContent=DiceboundContentRegistry;
   /* Alpha v3.1.7: foundation continues after authoritative registries. */
@@ -2205,7 +2209,7 @@
   const generateBoardV11=generateBoard;generateBoard=function(){if(boardLevel!==5)return generateBoardV11();tiles=[];merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;const count=currentTileCount(),mini=currentMinibossTile()-1,merchantIndexes=new Set();for(let n=MERCHANT_SPACING;n<count;n+=MERCHANT_SPACING)merchantIndexes.add(n-1);merchantFaceTotal=merchantIndexes.size;const campIndexes=new Set(currentCampTiles().filter(n=>n<count).map(n=>n-1)),reserved=new Set([0,count-1,mini,...merchantIndexes,...campIndexes]),candidates=[];for(let i=5;i<count-4;i++)if(!reserved.has(i))candidates.push(i);const blessing=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),mystic=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),powerups=new Set(drawSpecialIndexes(candidates,currentPowerupCount())),wheels=new Set(drawSpecialIndexes(candidates,currentWheelCount())),bloodwells=new Set(drawSpecialIndexes(candidates,1)),gamblers=new Set(drawSpecialIndexes(candidates,1));for(let i=0;i<count;i++){let tile={type:"empty",cleared:false,packSize:1};if(i===0)tile.type="start";else if(i===count-1)tile.type="boss";else if(i===mini){tile.type="miniboss";tile.enemyBase=db317Enemy(db317Board(5).minibossId);}else if(merchantIndexes.has(i))tile.type="merchant";else if(campIndexes.has(i))tile.type="camp";else if(blessing.has(i))tile.type="blessing";else if(mystic.has(i))tile.type="mystic";else if(powerups.has(i))tile.type="powerup";else if(wheels.has(i))tile.type="wheel";else if(bloodwells.has(i))tile.type="bloodwell";else if(gamblers.has(i))tile.type="gambler";else{const r=random(),kind=window.DiceboundEventRewards.roadTileType(r,boardLevel);if(kind==="enemy"){tile.type="enemy";tile.packSize=plannedPackSize(i);tile.enemyBases=[enemyForPosition(i)];while(tile.enemyBases.length<tile.packSize)tile.enemyBases.push(enemyForPosition(i+rand(0,5)));tile.enemyBase=tile.enemyBases[0];}else tile.type=kind;}tiles.push(tile);} };
   const scaleEnemyV11=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV11(base,kind,packSize);if(boardLevel===5){e.hp=Math.round(e.hp*1.55);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.45);e.defense+=(e.guardian?8:4);}if(hellMode){e.hp=Math.round(e.hp*2.1);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.85);e.defense+=(e.guardian?14:7);e.affinity=e.affinity||pick(ELEMENT_KEYS);e.elementProcChance=Math.max(e.elementProcChance||0,.36);}return e;};
 
-  startCombat=function(kind="normal"){const tile=tiles[player.position];let bases=[];merchantBossBattle=kind==="merchant";if(kind==="merchant"){const m=db317Enemy("road-merchant");m.hp=185+boardLevel*60;m.attack=28+boardLevel*5;bases=[m];}else if(kind==="bloodmage"){const b=db317Enemy("bloodmage-boss");b.hp=210+boardLevel*35;b.attack=34+boardLevel*4;bases=[b];}else if(kind==="final")bases=[db317Enemy(db317Board(boardLevel).bossId)];else if(kind==="miniboss")bases=[db317Enemy(db317Board(boardLevel).minibossId)];else bases=(tile.enemyBases?.length?tile.enemyBases:[tile.enemyBase||enemyForPosition(player.position)]).map(x=>({...x}));currentEnemies=bases.map(b=>scaleEnemy(b,kind,bases.length));if(kind==="bloodmage")currentEnemies.forEach(e=>{e.bloodmageBoss=true;e.guardian=true;e.merchantBoss=false;});currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];currentEnemyTile=player.position;currentEncounterTurn=0;combatBusy=false;player.combatShield=player.firstHitBlocks+(mythicalSetCount()>=5?1:0)+(hasMythicPiece("hat")?1:0);player.combatAttackCount=0;player.combatActionCount=0;player.mythicActionCount=0;player.mythicAmuletUsed=false;player.omegaRingUsed=false;if(mythicalSetCount()>=4)player.ultimateCharge=Math.max(player.ultimateCharge,v19SetStartUltimate());$("combatTitle").textContent=kind==="bloodmage"?"Secret Boss: The Bloodmage":kind==="merchant"?"Secret Boss: The Merchant":kind==="final"?"Final Guardian":kind==="miniboss"?"Halfway Miniboss":currentEnemies.length>1?`Enemy Pack ×${currentEnemies.length}`:"Battle!";$("combatSubtitle").textContent=kind==="bloodmage"?"The Bloodwell answers with forbidden scholarship.":kind==="merchant"?"He closes the shop, raises barriers and begins charging interest.":currentEnemies.length>1?"Every enemy is visible below. The arrow marks your selected target.":"Choose your action.";$("combatHistory").innerHTML="";setCombatText(`${currentEnemies.map(e=>e.name).join(", ")} block the road. Choose your action.`);$("combatOverlay").classList.remove("hidden");addLog(`Combat begins against <b>${currentEnemies.map(e=>e.name).join(", ")}</b>.`);renderEnemyParty();updateCombatUI();};
+  startCombat=function(kind="normal"){const tile=tiles[player.position];let bases=[];merchantBossBattle=kind==="merchant";if(kind==="merchant"){const m=db317Enemy("road-merchant");m.hp=185+boardLevel*60;m.attack=28+boardLevel*5;bases=[m];}else if(kind==="bloodmage"){const b=db317Enemy("bloodmage-boss");b.hp=210+boardLevel*35;b.attack=34+boardLevel*4;bases=[b];}else if(kind==="final")bases=[db317FinalGuardian(boardLevel)];else if(kind==="miniboss")bases=[db317MinibossGuardian(boardLevel)];else bases=(tile.enemyBases?.length?tile.enemyBases:[tile.enemyBase||enemyForPosition(player.position)]).map(x=>({...x}));currentEnemies=bases.map(b=>scaleEnemy(b,kind,bases.length));if(kind==="bloodmage")currentEnemies.forEach(e=>{e.bloodmageBoss=true;e.guardian=true;e.merchantBoss=false;});currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];currentEnemyTile=player.position;currentEncounterTurn=0;combatBusy=false;player.combatShield=player.firstHitBlocks+(mythicalSetCount()>=5?1:0)+(hasMythicPiece("hat")?1:0);player.combatAttackCount=0;player.combatActionCount=0;player.mythicActionCount=0;player.mythicAmuletUsed=false;player.omegaRingUsed=false;if(mythicalSetCount()>=4)player.ultimateCharge=Math.max(player.ultimateCharge,v19SetStartUltimate());$("combatTitle").textContent=kind==="bloodmage"?"Secret Boss: The Bloodmage":kind==="merchant"?"Secret Boss: The Merchant":kind==="final"?"Final Guardian":kind==="miniboss"?"Halfway Miniboss":currentEnemies.length>1?`Enemy Pack ×${currentEnemies.length}`:"Battle!";$("combatSubtitle").textContent=kind==="bloodmage"?"The Bloodwell answers with forbidden scholarship.":kind==="merchant"?"He closes the shop, raises barriers and begins charging interest.":currentEnemies.length>1?"Every enemy is visible below. The arrow marks your selected target.":"Choose your action.";$("combatHistory").innerHTML="";setCombatText(`${currentEnemies.map(e=>e.name).join(", ")} block the road. Choose your action.`);$("combatOverlay").classList.remove("hidden");addLog(`Combat begins against <b>${currentEnemies.map(e=>e.name).join(", ")}</b>.`);renderEnemyParty();updateCombatUI();};
 
   const enemyTurnV11=enemyTurn;enemyTurn=async function(guarded,extraGuardPower=0){await enemyTurnV11(guarded,extraGuardPower);if(player.hp>0&&mythicalSetCount()>=7&&!player.omegaRingUsed&&player.hp/player.maxHp<=.25){player.omegaRingUsed=true;const heal=healPlayer(Math.ceil(player.maxHp*.25));player.combatShield=(player.combatShield||0)+1;setCombatText(`💍 Impossible Road 7-piece bonus restores ${heal} HP and grants 1 barrier.`);updateCombatUI();await delay(220);}};
 
@@ -4088,7 +4092,7 @@
   startCombat=function(kind="normal"){
     const out=startCombatV19Base(kind);if(boardLevel!==6||!currentEnemies.length)return out;
     if(kind==="final"){
-      const base=db317Enemy(db317Board(6).bossId);currentEnemies=[scaleEnemy(base,"final",1)];currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];
+      const base=db317FinalGuardian(6);currentEnemies=[scaleEnemy(base,"final",1)];currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];
     }else if(kind==="miniboss"){
       currentEnemies[0].name="Abyssal Custodian";currentEnemies[0].specialName="Sixth Seal Collapse";currentEncounterLead=currentEnemies[0];currentEnemy=currentEnemies[0];
     }
@@ -4171,6 +4175,10 @@
   // Board-6 guardian labels in the road HUD.
   const updateHUDV19RoadBase=updateHUD;
   updateHUD=function(){updateHUDV19RoadBase();if(boardLevel===6&&gameStarted){const count=currentTileCount(),mini=currentMinibossTile();$("floorText").textContent=`Board 6 · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Abyssal Custodian · tile ${mini}`:`The Last Equation · tile ${count}`;}};
+  // Keep the road HUD on the same final guardian identity used for combat,
+  // including Boards 4-6 where legacy labels previously drifted.
+  const updateHUDV20GuardianBase=updateHUD;
+  updateHUD=function(){updateHUDV20GuardianBase();if(!gameStarted)return;const guardian=DB317_GUARDIANS.resolveFinal(boardLevel),count=currentTileCount(),mini=currentMinibossTile();if(guardian&&player.position>=mini-1)$("guardianText").textContent=`${guardian.name} · tile ${count}`;};
 
   // ---- Set bonuses: runtime hooks ------------------------------------------
   // Normalize old hard-coded thresholds by wrapping the two main combat entry
@@ -9197,39 +9205,23 @@ function buildDiceboundHumanHarness235(){
   // The original 0.5.13 handoff appended these bindings outside the runtime
   // closure. Keep the art/assets, but bind them here where the live combat and
   // camp owners actually exist.
-  const DB060_BOSS_ART=Object.freeze({
-    'ancient-road-dragon':'assets/enemies/portraits/ancient-road-dragon.png',
-    'ogre-roadwarden':'assets/enemies/portraits/ogre-roadwarden.png',
-    'titan-guard':'assets/enemies/portraits/titan-guard.png',
-    'astral-devourer-dragon':'assets/enemies/portraits/astral-devourer-dragon.png',
-    'paradox-warden':'assets/enemies/portraits/paradox-warden.png',
-    'nullstar-hydra':'assets/enemies/portraits/nullstar-hydra.png',
-    'crownless-auditor':'assets/enemies/portraits/crownless-auditor.png',
-    'crown-eater':'assets/enemies/portraits/crown-eater.png',
-    'ringbound-chancellor':'assets/enemies/portraits/ringbound-chancellor.png',
-    'ring-tyrant':'assets/enemies/portraits/ring-tyrant.png',
-    'abyssal-custodian':'assets/enemies/portraits/abyssal-custodian.png',
-    'last-equation':'assets/enemies/portraits/last-equation.png',
-    'road-merchant':'assets/enemies/portraits/road-merchant.png',
-    'bloodmage-boss':'assets/enemies/portraits/bloodmage-boss.png',
-    'pale-devil':'assets/enemies/portraits/pale-devil.png'
-  });
+  const db060GuardianArt=id=>DB317_GUARDIANS.resolveById(id)?.art||window.DiceboundAssets.resolveGuardianArt(id)||null;
   const db060EnemyPortraitBase=enemyPortraitSVG;
   enemyPortraitSVG=function(enemy){
-    const src=DB060_BOSS_ART[enemy?.id];
+    const src=db060GuardianArt(enemy?.id)?.battle;
     if(src)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${src}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
     return db060EnemyPortraitBase(enemy);
   };
   function db060GuardianTileArt(id,alt='Guardian'){
-    const src=DB060_BOSS_ART[id];
+    const src=db060GuardianArt(id)?.boardMarker;
     return src?`<img class="db060-guardian-tile-art" src="${src}" alt="${alt}" draggable="false">`:'';
   }
   const db060TileMetaBase=tileMeta;
   tileMeta=function(tile){
-    if(tile?.type==='miniboss'&&tile.enemyBase?.id&&DB060_BOSS_ART[tile.enemyBase.id])return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
+    if(tile?.type==='miniboss'&&tile.enemyBase?.id&&db060GuardianArt(tile.enemyBase.id))return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
     if(tile?.type==='boss'){
-      const boss=db317Enemy(db317Board(boardLevel)?.bossId);
-      if(boss?.id&&DB060_BOSS_ART[boss.id])return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
+      const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
+      if(boss?.id&&boss.art?.boardMarker)return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
     }
     return db060TileMetaBase(tile);
   };
@@ -9635,6 +9627,21 @@ function buildDiceboundHumanHarness235(){
   const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
   document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRunClearCheckpoint();dbRunSeedNewRun();$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));dbRunStartBase();}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
+  // Test-only exercise of the live final-boss path. It deliberately resets the
+  // ephemeral test session after each capture; it is never exposed to player UI.
+  function dbGuardianIdentityExercise(board,mode="normal",resume=false){
+    const level=Math.floor(Number(board));if(!DB317_GUARDIANS.resolveFinal(level))throw new Error(`Unknown final guardian Board ${board}`);
+    window.DiceboundRng.seed(`guardian-identity-${level}-${mode}`);resetPlayer("ranger");boardLevel=level;nightmareMode=mode==="nightmare";hellMode=mode==="hell";gameStarted=true;rollLocked=false;runFinalized=false;combatBusy=false;generateBoard();buildBoard();player.position=currentTileCount()-1;
+    if(resume)dbRunRestore(dbRunSnapshot());
+    startCombat("final");
+    const enemy=currentEncounterLead,art=$("enemyIcon")?.querySelector("img.db060-guardian-art")?.getAttribute("src")||null;
+    return {board:boardLevel,mode:hellMode?"hell":nightmareMode?"nightmare":"normal",resumed:!!resume,id:enemy?.id||null,name:enemy?.name||null,weakness:enemy?.weakness||null,specialName:enemy?.specialName||null,art,hud:$("guardianText")?.textContent||""};
+  }
+  function dbGuardianIdentityMatrix(){
+    try{return [dbGuardianIdentityExercise(1,"normal"),dbGuardianIdentityExercise(3,"nightmare",true),dbGuardianIdentityExercise(6,"hell")];}
+    finally{dbRunClearCheckpoint();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;combatBusy=false;gameStarted=false;rollLocked=true;nightmareMode=false;hellMode=false;boardLevel=1;resetPlayer("ranger");$("combatOverlay")?.classList.add("hidden");}
+  }
+  window.DiceboundGuardianIdentityTest=Object.freeze({matrix:dbGuardianIdentityMatrix});
   setTimeout(dbRunRefreshControls,0);
 
   window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),runCheckpoint:()=>DB_RUN_CHECKPOINT.diagnostics(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});

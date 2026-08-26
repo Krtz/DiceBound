@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 from pathlib import Path
 
 from dicebound_version import VERSION_PATTERN, release_tag, require_supported_version
+from runtime_manifest_hash import sha256_runtime_file
 
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1]
@@ -41,7 +41,7 @@ def expect(actual: object, expected: object, errors: list[str], label: str) -> N
 
 
 def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return sha256_runtime_file(path)
 
 
 def main() -> int:
