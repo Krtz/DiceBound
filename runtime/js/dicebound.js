@@ -10066,6 +10066,59 @@ function buildDiceboundHumanHarness235(){
     active:db064DonutVfxEntries
   });
 
+  /* #54 Battle log stays below the action controls and can be minimized
+     without becoming unreachable.  The preference lives with normal UI
+     settings so it survives the next combat without affecting run state. */
+  function db064BattleLogCollapsed(){return !!meta.settings?.battleLogCollapsed;}
+  function db064SyncBattleLog(){
+    const wrap=$('combatHistoryWrap'),button=$('combatHistoryToggle'),collapsed=db064BattleLogCollapsed();
+    wrap?.classList.toggle('is-collapsed',collapsed);
+    if(button){button.textContent=collapsed?'Show log':'Collapse log';button.setAttribute('aria-expanded',String(!collapsed));}
+    return collapsed;
+  }
+  function db064SetBattleLogCollapsed(collapsed){
+    if(!meta.settings||typeof meta.settings!=='object')meta.settings={};
+    meta.settings.battleLogCollapsed=!!collapsed;db064SyncBattleLog();saveMeta();return !!collapsed;
+  }
+  $('combatHistoryToggle')?.addEventListener('click',()=>db064SetBattleLogCollapsed(!db064BattleLogCollapsed()));
+  const db064StartCombatBase=startCombat;
+  startCombat=function(...args){const result=db064StartCombatBase.apply(this,args);db064SyncBattleLog();return result;};
+
+  /* #55 Root tooltip portal.  The tooltip is a root sibling instead of a
+     child of a scrolling panel, so overflow and local stacking contexts can
+     no longer clip it. */
+  let db064TooltipTarget=null;
+  function db064TooltipLayer(){return $('appTooltipLayer');}
+  function db064TooltipText(target){return String(target?.dataset?.tip||target?.dataset?.tooltip||'').trim();}
+  function db064PositionTooltip(){
+    const target=db064TooltipTarget,layer=db064TooltipLayer();if(!target||!layer||layer.classList.contains('hidden'))return false;
+    const rect=target.getBoundingClientRect(),gap=10,margin=8,layerRect=layer.getBoundingClientRect();
+    let left=rect.left+rect.width/2-layerRect.width/2,top=rect.top-layerRect.height-gap;
+    left=Math.min(window.innerWidth-layerRect.width-margin,Math.max(margin,left));
+    if(top<margin)top=Math.min(window.innerHeight-layerRect.height-margin,rect.bottom+gap);
+    layer.style.left=`${Math.round(left)}px`;layer.style.top=`${Math.round(Math.max(margin,top))}px`;
+    return true;
+  }
+  function db064ShowTooltip(target){
+    const text=db064TooltipText(target),layer=db064TooltipLayer();if(!text||!layer)return false;
+    db064TooltipTarget=target;layer.textContent=text;layer.classList.remove('hidden');db064PositionTooltip();return true;
+  }
+  function db064HideTooltip(target=null){
+    if(target&&target!==db064TooltipTarget)return false;
+    db064TooltipTarget=null;const layer=db064TooltipLayer();layer?.classList.add('hidden');return true;
+  }
+  document.addEventListener('pointerover',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target!==db064TooltipTarget)db064ShowTooltip(target);});
+  document.addEventListener('pointerout',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target===db064TooltipTarget&&!target.contains(event.relatedTarget))db064HideTooltip(target);});
+  document.addEventListener('focusin',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target)db064ShowTooltip(target);});
+  document.addEventListener('focusout',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target===db064TooltipTarget)db064HideTooltip(target);});
+  window.addEventListener('resize',db064PositionTooltip);window.addEventListener('scroll',db064PositionTooltip,true);
+  window.DiceboundCombatUiTest=Object.freeze({
+    battleLogCollapsed:db064BattleLogCollapsed,
+    setBattleLogCollapsed:db064SetBattleLogCollapsed,
+    tooltip:()=>({active:!!db064TooltipTarget,text:db064TooltipLayer()?.textContent||'',hidden:db064TooltipLayer()?.classList.contains('hidden')??true}),
+    positionTooltip:db064PositionTooltip
+  });
+
   // Isolated browser-harness coverage for the #123 semantic contract.  This
   // exercises the live composed strike pipeline, including the Ranger wrapper.
   window.DiceboundEchoStrikeTest=Object.freeze({
