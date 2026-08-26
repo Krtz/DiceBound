@@ -80,7 +80,7 @@
     campProbe.src=campBackground;
     const important=(node,prop,value)=>node?.style?.setProperty?.(prop,value,"important");
     const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
-    function positionCampNode(node,spec,scale){if(!node)return;important(node,"left",`${(spec.x*100).toFixed(3)}%`);important(node,"top",`${(spec.y*100).toFixed(3)}%`);important(node,"right","auto");important(node,"bottom","auto");important(node,"width",`${Math.round(clamp(spec.w*scale,spec.w*.68,spec.w*1.08))}px`);if(spec.h)important(node,"min-height",`${Math.round(clamp(spec.h*scale,spec.h*.72,spec.h*1.08))}px`);important(node,"transform","translate(-50%,-50%)");}
+    function positionCampNode(node,spec,scale){if(!node)return;important(node,"left",`${(spec.x*100).toFixed(3)}%`);important(node,"top",`${(spec.y*100).toFixed(3)}%`);important(node,"right","auto");important(node,"bottom","auto");important(node,"width",`${Math.round(clamp(spec.w*scale,spec.w*.68,spec.w*1.08))}px`);if(spec.h&&node.dataset.db064HitTarget!=="painted-object")important(node,"min-height",`${Math.round(clamp(spec.h*scale,spec.h*.72,spec.h*1.08))}px`);important(node,"transform","translate(-50%,-50%)");}
     function scaleCamp(){
       const overlay=document.getElementById("startOverlay"),scene=document.getElementById("campScene");
       if(!overlay?.classList.contains("camp-fullscreen")||!scene||innerWidth<800)return;

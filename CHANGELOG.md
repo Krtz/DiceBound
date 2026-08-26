@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.5
+
+### Class unlock feedback (#116)
+- Added immediate, registry-derived unlock reasons from the canonical successful `unlockClass` path instead of inferring them from toast text.
+- Added a persistent, sequential Camp reveal for newly unlocked classes with canonical artwork, class identity, a concise play-style summary and the completed requirement.
+- Acknowledged reveals do not replay, while multiple new classes remain queued one at a time.
+- Kept the semantic Start Run target tied to the painted caravan after native Camp layout rerenders, rather than allowing a later generic minimum height to enlarge it.
+
 ## Beta 0.6.4.4
 
 ### Lunch playtest follow-ups (#156)

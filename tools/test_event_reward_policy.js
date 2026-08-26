@@ -1,9 +1,11 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 global.window = {};
 require("../runtime/js/events/reward-policy.js");
 const policy = window.DiceboundEventRewards;
+const source = fs.readFileSync(require.resolve("../runtime/js/events/reward-policy.js"), "utf8");
 
 assert.equal(policy.baseGold(1), 70);
 assert.equal(policy.baseGold(5), 150);
@@ -22,5 +24,6 @@ assert.equal(policy.roadTileType(0.819, 5), "event");
 assert.equal(policy.roadTileType(0.82, 5), "treasure");
 assert.deepEqual(policy.slotMatchOdds(0), { secondMatch: 0.30, tripleFromPair: 0.42, pairFromMiss: 0.30 });
 assert.deepEqual(policy.slotMatchOdds(0.5), { secondMatch: 0.78, tripleFromPair: 0.88, pairFromMiss: 0.575 });
+assert.ok(source.includes('node.dataset.db064HitTarget!=="painted-object"'), "Camp layout must not restore a generic min-height after painted-object synchronization");
 
 console.log("event reward policy tests passed");

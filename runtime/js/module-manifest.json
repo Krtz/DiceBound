@@ -21,6 +21,7 @@
     "combat-vfx",
     "classes-registry",
     "progression-class-unlock-rules",
+    "progression-class-unlock-feedback",
     "pets-registry",
     "board-registry",
     "combat-enemies",
@@ -359,6 +360,21 @@
       ]
     },
     {
+      "id": "progression-class-unlock-feedback",
+      "path": "js/progression/class-unlock-feedback.js",
+      "domain": "progression/class-unlock-feedback",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "storage",
+        "classes-registry",
+        "progression-class-unlock-rules"
+      ],
+      "provides": [
+        "DiceboundClassUnlockFeedback"
+      ]
+    },
+    {
       "id": "powerup-borrowing",
       "path": "js/powerups/borrowing.js",
       "domain": "powerups/borrowing-eligibility",
@@ -401,6 +417,7 @@
         "loot",
         "powerup-registry",
         "progression-class-unlock-rules",
+        "progression-class-unlock-feedback",
         "powerup-borrowing"
       ],
       "provides": []
