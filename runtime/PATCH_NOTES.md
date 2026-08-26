@@ -1,3 +1,15 @@
+# Beta 0.6.4.3
+
+## Screenshot-driven browser hotfix (#154)
+- Nature Poison Vines now stays visible through live combat rerenders by moving the authored effect to a stable foreground host without changing Nature mechanics, RNG or turns.
+- Equipment presentation combines authored and rolled stats into one readable item block; equipped-item hover uses the same readable RPG-style presentation.
+- Newly found equipment is shown side by side with the currently equipped item on desktop for faster comparison, with a single-column fallback on narrow windows.
+- Camp no longer scales a fixed 1600×900 interaction canvas. Interactions use viewport-relative positions over the authored `cover` background so wide and tall Edge windows keep the Camp controls on-screen.
+- Miniboss and final-boss art now sizes the actual guardian image frame instead of only enlarging its empty stage container; final bosses remain larger than minibosses.
+- Heavy Purse now uses the shared level-scaled Gold policy at a 0.70 source multiplier before the authoritative Gold modifier is applied once.
+
+---
+
 # Unreleased — Beta 0.6.4.2
 
 ## Combat presentation ownership (#40)

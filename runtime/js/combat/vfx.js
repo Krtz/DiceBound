@@ -44,9 +44,10 @@
     function prepareNature() {
       const installed = ensureStyle("dicebound-nature-vfx-style", `
         .db-nature-vines-vfx{position:absolute;z-index:30;left:50%;bottom:-10%;width:clamp(112px,150%,260px);pointer-events:none;transform:translateX(-50%);overflow:visible;filter:drop-shadow(0 8px 10px rgba(20,0,30,.45))}
+        .db-nature-vines-vfx.db-nature-vines-stable{position:fixed;z-index:9999;bottom:auto;pointer-events:none;isolation:isolate}
         .db-nature-vines-vfx img{display:block;width:100%;height:auto;max-width:none!important;max-height:none!important;object-fit:contain}
         #combatPlayerIcon,.stage-enemy{position:relative;isolation:isolate}
-        @media(max-width:760px){.db-nature-vines-vfx{width:clamp(96px,135%,185px);bottom:-8%}}
+        @media(max-width:760px){.db-nature-vines-vfx:not(.db-nature-vines-stable){width:clamp(96px,135%,185px);bottom:-8%}}
         @media(prefers-reduced-motion:reduce){.db-nature-vines-vfx{filter:none}}
       `);
       if (typeof globalThis.setTimeout === "function" && typeof globalThis.Image === "function") {
@@ -70,8 +71,13 @@
       const document = documentRoot();
       if (!document?.querySelectorAll) return [];
       return [...document.querySelectorAll(".db-nature-vines-vfx")].map(node => {
-        const host = node.closest(".stage-enemy");
-        return { target: node.dataset.natureVfxTarget, frame: Number(node.dataset.natureVfxFrame), enemyIndex: host ? Number(host.dataset.enemyIndex) : null };
+        const host = node.closest?.(".stage-enemy");
+        const explicitIndex = node.dataset.enemyIndex;
+        return {
+          target: node.dataset.natureVfxTarget,
+          frame: Number(node.dataset.natureVfxFrame),
+          enemyIndex: explicitIndex !== undefined ? Number(explicitIndex) : host ? Number(host.dataset.enemyIndex) : null,
+        };
       });
     }
 
@@ -81,12 +87,42 @@
       return documentRoot()?.querySelector?.(`#enemyIcon .stage-enemy[data-enemy-index="${index}"]`) || null;
     }
 
+    function mountNatureVfx(node, host, target) {
+      const document = documentRoot();
+      if (!document?.body || typeof host?.getBoundingClientRect !== "function") {
+        host.append(node);
+        return;
+      }
+      const rect = host.getBoundingClientRect();
+      if (!rect?.width || !rect?.height) {
+        host.append(node);
+        return;
+      }
+      node.classList.add("db-nature-vines-stable");
+      node.dataset.natureVfxTarget = target;
+      if (target === "enemy" && host.dataset?.enemyIndex !== undefined) node.dataset.enemyIndex = String(host.dataset.enemyIndex);
+      const width = Math.round(Math.max(118, Math.min(290, rect.width * 1.55)));
+      Object.assign(node.style, {
+        left: `${Math.round(rect.left + rect.width / 2)}px`,
+        top: `${Math.round(rect.top - rect.height * .08)}px`,
+        bottom: "auto",
+        width: `${width}px`,
+        transform: "translateX(-50%)",
+      });
+      document.body.append(node);
+    }
+
     function playNatureVfx(host, target) {
       const document = documentRoot();
       const effect = natureEffect();
       if (!document?.createElement || !host || !effect?.frames?.length) return false;
       const reduced = !!rootWindow().matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-      host.querySelector(".db-nature-vines-vfx")?.remove();
+      const enemyIndex = target === "enemy" ? host.dataset?.enemyIndex : undefined;
+      const selector = enemyIndex === undefined
+        ? `.db-nature-vines-vfx[data-nature-vfx-target="${target}"]`
+        : `.db-nature-vines-vfx[data-nature-vfx-target="enemy"][data-enemy-index="${enemyIndex}"]`;
+      document.querySelectorAll?.(selector)?.forEach(node => node.remove());
+      host.querySelector?.(".db-nature-vines-vfx")?.remove();
       const node = document.createElement("span");
       const image = document.createElement("img");
       node.className = "db-nature-vines-vfx";
@@ -94,7 +130,7 @@
       image.alt = "";
       image.draggable = false;
       node.append(image);
-      host.append(node);
+      mountNatureVfx(node, host, target);
       const frames = effect.frames;
       const duration = Math.max(40, Math.floor(Number(effect.frameDurationMs) || 75));
       let frame = 0;
