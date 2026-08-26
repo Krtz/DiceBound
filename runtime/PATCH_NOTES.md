@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.3.15
+# Unreleased — Beta 0.6.4.0
+
+## Friends patch
+
+- Combat framing now gives mini-bosses/final bosses more presence and keeps Slime/Wolf Board art proportionate.
+- Slot frequency, odds and rewards are owned by a deterministic event-reward policy; Fortune, slots and the Wheel share level-scaled Gold.
+- Camp hit targets follow their visible painted objects while preserving keyboard buttons.
+- Achievements are grouped into collapsible semantic sections with a Hero Mastery subgroup for every playable class.
+
+## Beta 0.6.3.15
 
 ## Authored equipment identity foundation (#128, #83, #110)
 - Imported the ten approved transparent modular equipment assets into their canonical slot-based runtime folders; the raw art handoff remains outside Git.

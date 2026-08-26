@@ -605,8 +605,8 @@
     player.doubleStrike+=rank("power_echo")*.03;
     player.ultimateDamageBonus+=rank("power_apex")*.15;
 
-    player.gold+=rank("fortune_gold")*25;
     player.goldBonus+=rank("fortune_gold")*.05;
+    player.gold+=modifiedGold(window.DiceboundEventRewards.goldBaseFor("talentRank",player.level,rank("fortune_gold")));
     player.shopDiscount+=rank("fortune_discount")*.05;
     player.blessingBonus+=rank("fortune_blessing");
     player.luck+=rank("fortune_luck")*.03+rank("fortune_impossible")*.04;
@@ -945,19 +945,19 @@
   }
 
   function rollTieredProc(chance){const guaranteed=Math.floor(Math.max(0,chance)),fraction=Math.max(0,chance-guaranteed);return guaranteed+(random()<fraction?1:0);}
-  function strikeBaseDamage(echo=false,chaos=null){let attack=player.attack+(player.goldAttackScale?Math.floor(player.gold*player.goldAttackScale):0),damage=Math.max(1,Math.round(attack+player.defense*player.defenseAttackScale)+rand(-1,2)),burst="";if(classIdentityActive("sorcerer")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Arcane Surge! ";}if(classIdentityActive("monk")&&random()<player.classBurst){damage=Math.round(damage*1.35);player.ultimateCharge=clamp(player.ultimateCharge+6,0,100);burst="Flowing Combo! ";}if(classIdentityActive("clown")&&random()<player.classBurst){damage=Math.round(damage*(.9+random()*1.1));burst="Unlicensed Comedy! ";}if(classIdentityActive("rouge")&&random()<player.classBurst){damage=Math.round(damage*1.45);burst="Crimson Stroke! ";}if(classIdentityActive("berserker")&&random()<player.classBurst){damage=Math.round(damage*1.55);burst="Blood Frenzy! ";}if(classIdentityActive("frog")&&random()<player.classBurst){damage=Math.round(damage*1.35);burst="Resonant Croak! ";}if(classIdentityActive("vampire")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Blood Frenzy! ";}if(classIdentityActive("ninja")&&random()<player.classBurst){damage=Math.round(damage*1.6);burst="Perfect Ambush! ";}if(classIdentityActive("ceo")&&random()<player.classBurst){damage=Math.round(damage*1.55);player.gold+=5;burst="Quarterly Growth! ";}if(classIdentityActive("merchant")&&random()<player.classBurst){damage=Math.round(damage*1.6);player.gold+=10;burst="Excellent Margin! ";}if(player.combatAttackCount===0&&player.firstAttackBonus>0)damage=Math.round(damage*(1+player.firstAttackBonus));if(player.hp/player.maxHp<.5)damage=Math.round(damage*(1+player.berserk));if(echo)damage=Math.max(1,Math.round(damage*(player.echoDamageScale||.70)*(player.criticalEchoBonus||0?1+player.criticalEchoBonus:1)));const weapon=player.equipment?.weapon;if(weapon?.merchantWeapon)damage+=Math.floor(player.gold*(weapon.merchantWeaponScale||1));if(livingEnemies().length>=2&&player.packDamageBonus)damage=Math.round(damage*(1+player.packDamageBonus));damage=Math.round(damage*(chaos?.mult||1)*(1+player.damageBonus+(v19SetDamageBonus())));return {damage,burst};}
-  async function performStrike(target,{echo=false,index=0,chaos=null}={}){
+  function strikeBaseDamage(echo=false,chaos=null,{canCrit=true}={}){let attack=player.attack+(player.goldAttackScale?Math.floor(player.gold*player.goldAttackScale):0),damage=Math.max(1,Math.round(attack+player.defense*player.defenseAttackScale)+rand(-1,2)),burst="";if(classIdentityActive("sorcerer")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Arcane Surge! ";}if(classIdentityActive("monk")&&random()<player.classBurst){damage=Math.round(damage*1.35);player.ultimateCharge=clamp(player.ultimateCharge+6,0,100);burst="Flowing Combo! ";}if(classIdentityActive("clown")&&random()<player.classBurst){damage=Math.round(damage*(.9+random()*1.1));burst="Unlicensed Comedy! ";}if(classIdentityActive("rouge")&&random()<player.classBurst){damage=Math.round(damage*1.45);burst="Crimson Stroke! ";}if(classIdentityActive("berserker")&&random()<player.classBurst){damage=Math.round(damage*1.55);burst="Blood Frenzy! ";}if(classIdentityActive("frog")&&random()<player.classBurst){damage=Math.round(damage*1.35);burst="Resonant Croak! ";}if(classIdentityActive("vampire")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Blood Frenzy! ";}if(classIdentityActive("ninja")&&random()<player.classBurst){damage=Math.round(damage*1.6);burst="Perfect Ambush! ";}if(classIdentityActive("ceo")&&random()<player.classBurst){damage=Math.round(damage*1.55);player.gold+=5;burst="Quarterly Growth! ";}if(classIdentityActive("merchant")&&random()<player.classBurst){damage=Math.round(damage*1.6);player.gold+=10;burst="Excellent Margin! ";}if(player.combatAttackCount===0&&player.firstAttackBonus>0)damage=Math.round(damage*(1+player.firstAttackBonus));if(player.hp/player.maxHp<.5)damage=Math.round(damage*(1+player.berserk));if(echo)damage=Math.max(1,Math.round(damage*(player.echoDamageScale||.70)*(canCrit&&player.criticalEchoBonus?1+player.criticalEchoBonus:1)));const weapon=player.equipment?.weapon;if(weapon?.merchantWeapon)damage+=Math.floor(player.gold*(weapon.merchantWeaponScale||1));if(livingEnemies().length>=2&&player.packDamageBonus)damage=Math.round(damage*(1+player.packDamageBonus));damage=Math.round(damage*(chaos?.mult||1)*(1+player.damageBonus+(v19SetDamageBonus())));return {damage,burst};}
+  async function performStrike(target,{echo=false,index=0,chaos=null,canCrit=true}={}){
     if(!target||target.hp<=0)target=livingEnemies()[0];if(!target)return {domain:"combat",type:"strike",dealt:0,crit:0,critTiers:0,elementDamage:0};
-    const critTiers=rollTieredProc(player.crit)+(chaos?.bonusCrit||0),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos);let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}
+    const critTiers=window.DiceboundStrikePolicy.resolveCriticalTiers(rollTieredProc,{canCrit,critChance:player.crit,bonusCrit:chaos?.bonusCrit}),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos,{canCrit});let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}
     let poisonApplied=0;if(target.hp>0&&player.poisonOnHitChance&&random()<clamp(player.poisonOnHitChance,0,.95)){target.poisonStacks=(target.poisonStacks||0)+1;poisonApplied=1;playElementAnimation("nature",target,false);addCombatHistory(`${echo?`Echo ${index}`:"Attack"} applies 1 Poison stack to ${target.name}.`);}
     player.combatAttackCount++;const element=triggerStrikeElements(target,chaos),drainDamage=dealt+(element.totalDamage||0),heal=player.lifeSteal>0&&drainDamage>0?healPlayer(Math.max(1,Math.floor(drainDamage*player.lifeSteal))):0,label=echo?`Echo ${index}`:"Attack";
-    const result={domain:"combat",type:"strike",label,echo,index,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
+    const result={domain:"combat",type:"strike",label,echo,index,canCrit,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
   }
 
   async function playerAttack(){
     if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("attack");updateCombatUI();const firstTarget=currentEnemy,echoes=rollTieredProc(player.doubleStrike)+(chaos.extraEcho||0);let totalCrit=0;
     const base=await performStrike(firstTarget,{echo:false,chaos});totalCrit+=base.crit;
-    for(let i=1;i<=echoes&&livingEnemies().length;i++){const t=firstTarget.hp>0?firstTarget:(currentEnemy?.hp>0?currentEnemy:livingEnemies()[0]);const r=await performStrike(t,{echo:true,index:i,chaos});totalCrit+=r.crit;}
+    for(let i=1;i<=echoes&&livingEnemies().length;i++){const t=firstTarget.hp>0?firstTarget:(currentEnemy?.hp>0?currentEnemy:livingEnemies()[0]);const r=await performStrike(t,{echo:true,index:i,chaos,canCrit:false});totalCrit+=r.crit;}
     chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*totalCrit);const pants=applyMythicPantsPulse();if(pants)setCombatText(pants);updateCombatUI();if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   }
   async function guardAction(){
@@ -1119,9 +1119,9 @@
   }
   function setSlotReelSymbol(reel,symbol){if(reel)reel.innerHTML=slotSymbolHTML(symbol);}
   function generateSlotResult(){
-    const symbols=["⚔️","❤️","🪙","🛡️","⭐","💀"],first=pick(symbols),matchChance=clamp(.20+player.luck,0,.72);
-    const second=random()<matchChance?first:pick(symbols);let third;
-    if(second===first)third=random()<clamp(.30+player.luck,0,.86)?first:pick(symbols);else third=random()<clamp(.20+player.luck*.55,0,.68)?second:pick(symbols);
+    const symbols=["⚔️","❤️","🪙","🛡️","⭐","💀"],first=pick(symbols),odds=window.DiceboundEventRewards.slotMatchOdds(player.luck);
+    const second=random()<odds.secondMatch?first:pick(symbols);let third;
+    if(second===first)third=random()<odds.tripleFromPair?first:pick(symbols);else third=random()<odds.pairFromMiss?second:pick(symbols);
     return [first,second,third];
   }
   async function spinEvent(){
@@ -1583,7 +1583,7 @@
   function generateBoard(){
     tiles=[];merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;const count=currentTileCount(),mini=currentMinibossTile()-1,merchantIndexes=new Set();for(let n=MERCHANT_SPACING;n<count;n+=MERCHANT_SPACING)merchantIndexes.add(n-1);merchantFaceTotal=merchantIndexes.size;const campIndexes=new Set(currentCampTiles().filter(n=>n<count).map(n=>n-1)),reserved=new Set([0,count-1,mini,...merchantIndexes,...campIndexes]),candidates=[];for(let i=5;i<count-4;i++)if(!reserved.has(i))candidates.push(i);
     const blessing=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),mystic=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),powerups=new Set(drawSpecialIndexes(candidates,currentPowerupCount())),wheels=new Set(drawSpecialIndexes(candidates,currentWheelCount())),bloodwells=new Set(drawSpecialIndexes(candidates,boardLevel===4?1:2)),gamblers=new Set(drawSpecialIndexes(candidates,boardLevel===4?1:2));
-    for(let i=0;i<count;i++){let tile={type:"empty",cleared:false,packSize:1};if(i===0)tile.type="start";else if(i===count-1)tile.type="boss";else if(i===mini){tile.type="miniboss";tile.enemyBase=db317Enemy(db317Board(boardLevel).minibossId);}else if(merchantIndexes.has(i))tile.type="merchant";else if(campIndexes.has(i))tile.type="camp";else if(blessing.has(i))tile.type="blessing";else if(mystic.has(i))tile.type="mystic";else if(powerups.has(i))tile.type="powerup";else if(wheels.has(i))tile.type="wheel";else if(bloodwells.has(i))tile.type="bloodwell";else if(gamblers.has(i))tile.type="gambler";else{const r=random();if(r<.64){tile.type="enemy";tile.packSize=plannedPackSize(i);tile.enemyBases=[enemyForPosition(i)];while(tile.enemyBases.length<tile.packSize)tile.enemyBases.push(enemyForPosition(i+rand(0,5)));tile.enemyBase=tile.enemyBases[0];}else if(r<.80)tile.type="event";else if(r<.98)tile.type="treasure";}tiles.push(tile);}
+    for(let i=0;i<count;i++){let tile={type:"empty",cleared:false,packSize:1};if(i===0)tile.type="start";else if(i===count-1)tile.type="boss";else if(i===mini){tile.type="miniboss";tile.enemyBase=db317Enemy(db317Board(boardLevel).minibossId);}else if(merchantIndexes.has(i))tile.type="merchant";else if(campIndexes.has(i))tile.type="camp";else if(blessing.has(i))tile.type="blessing";else if(mystic.has(i))tile.type="mystic";else if(powerups.has(i))tile.type="powerup";else if(wheels.has(i))tile.type="wheel";else if(bloodwells.has(i))tile.type="bloodwell";else if(gamblers.has(i))tile.type="gambler";else{const r=random(),kind=window.DiceboundEventRewards.roadTileType(r,boardLevel);if(kind==="enemy"){tile.type="enemy";tile.packSize=plannedPackSize(i);tile.enemyBases=[enemyForPosition(i)];while(tile.enemyBases.length<tile.packSize)tile.enemyBases.push(enemyForPosition(i+rand(0,5)));tile.enemyBase=tile.enemyBases[0];}else tile.type=kind;}tiles.push(tile);}
   }
   function tileMeta(tile){if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];}
   function buildBoard(){
@@ -2202,7 +2202,7 @@
 
   const enemyForPositionV11=enemyForPosition;enemyForPosition=function(index){const e={...enemyForPositionV11(index)};if(boardLevel===5){e.name=`Ringbound ${e.name}`;e.hp=Math.round(e.hp*1.35);e.attack=Math.round(e.attack*1.25);e.defenseBias=(e.defenseBias||0)+2;e.weakness=e.weakness||pick(ELEMENT_KEYS);}return e;};
   const plannedPackSizeV11=plannedPackSize;plannedPackSize=function(index){if(boardLevel===5){const r=random();return r<.58?3:r<.92?2:1;}return plannedPackSizeV11(index);};
-  const generateBoardV11=generateBoard;generateBoard=function(){if(boardLevel!==5)return generateBoardV11();tiles=[];merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;const count=currentTileCount(),mini=currentMinibossTile()-1,merchantIndexes=new Set();for(let n=MERCHANT_SPACING;n<count;n+=MERCHANT_SPACING)merchantIndexes.add(n-1);merchantFaceTotal=merchantIndexes.size;const campIndexes=new Set(currentCampTiles().filter(n=>n<count).map(n=>n-1)),reserved=new Set([0,count-1,mini,...merchantIndexes,...campIndexes]),candidates=[];for(let i=5;i<count-4;i++)if(!reserved.has(i))candidates.push(i);const blessing=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),mystic=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),powerups=new Set(drawSpecialIndexes(candidates,currentPowerupCount())),wheels=new Set(drawSpecialIndexes(candidates,currentWheelCount())),bloodwells=new Set(drawSpecialIndexes(candidates,1)),gamblers=new Set(drawSpecialIndexes(candidates,1));for(let i=0;i<count;i++){let tile={type:"empty",cleared:false,packSize:1};if(i===0)tile.type="start";else if(i===count-1)tile.type="boss";else if(i===mini){tile.type="miniboss";tile.enemyBase=db317Enemy(db317Board(5).minibossId);}else if(merchantIndexes.has(i))tile.type="merchant";else if(campIndexes.has(i))tile.type="camp";else if(blessing.has(i))tile.type="blessing";else if(mystic.has(i))tile.type="mystic";else if(powerups.has(i))tile.type="powerup";else if(wheels.has(i))tile.type="wheel";else if(bloodwells.has(i))tile.type="bloodwell";else if(gamblers.has(i))tile.type="gambler";else{const r=random();if(r<.70){tile.type="enemy";tile.packSize=plannedPackSize(i);tile.enemyBases=[enemyForPosition(i)];while(tile.enemyBases.length<tile.packSize)tile.enemyBases.push(enemyForPosition(i+rand(0,5)));tile.enemyBase=tile.enemyBases[0];}else if(r<.83)tile.type="event";else if(r<.98)tile.type="treasure";}tiles.push(tile);} };
+  const generateBoardV11=generateBoard;generateBoard=function(){if(boardLevel!==5)return generateBoardV11();tiles=[];merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;const count=currentTileCount(),mini=currentMinibossTile()-1,merchantIndexes=new Set();for(let n=MERCHANT_SPACING;n<count;n+=MERCHANT_SPACING)merchantIndexes.add(n-1);merchantFaceTotal=merchantIndexes.size;const campIndexes=new Set(currentCampTiles().filter(n=>n<count).map(n=>n-1)),reserved=new Set([0,count-1,mini,...merchantIndexes,...campIndexes]),candidates=[];for(let i=5;i<count-4;i++)if(!reserved.has(i))candidates.push(i);const blessing=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),mystic=new Set(drawSpecialIndexes(candidates,gameplayTalentRank("fortune_omens")?2:1)),powerups=new Set(drawSpecialIndexes(candidates,currentPowerupCount())),wheels=new Set(drawSpecialIndexes(candidates,currentWheelCount())),bloodwells=new Set(drawSpecialIndexes(candidates,1)),gamblers=new Set(drawSpecialIndexes(candidates,1));for(let i=0;i<count;i++){let tile={type:"empty",cleared:false,packSize:1};if(i===0)tile.type="start";else if(i===count-1)tile.type="boss";else if(i===mini){tile.type="miniboss";tile.enemyBase=db317Enemy(db317Board(5).minibossId);}else if(merchantIndexes.has(i))tile.type="merchant";else if(campIndexes.has(i))tile.type="camp";else if(blessing.has(i))tile.type="blessing";else if(mystic.has(i))tile.type="mystic";else if(powerups.has(i))tile.type="powerup";else if(wheels.has(i))tile.type="wheel";else if(bloodwells.has(i))tile.type="bloodwell";else if(gamblers.has(i))tile.type="gambler";else{const r=random(),kind=window.DiceboundEventRewards.roadTileType(r,boardLevel);if(kind==="enemy"){tile.type="enemy";tile.packSize=plannedPackSize(i);tile.enemyBases=[enemyForPosition(i)];while(tile.enemyBases.length<tile.packSize)tile.enemyBases.push(enemyForPosition(i+rand(0,5)));tile.enemyBase=tile.enemyBases[0];}else tile.type=kind;}tiles.push(tile);} };
   const scaleEnemyV11=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV11(base,kind,packSize);if(boardLevel===5){e.hp=Math.round(e.hp*1.55);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.45);e.defense+=(e.guardian?8:4);}if(hellMode){e.hp=Math.round(e.hp*2.1);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.85);e.defense+=(e.guardian?14:7);e.affinity=e.affinity||pick(ELEMENT_KEYS);e.elementProcChance=Math.max(e.elementProcChance||0,.36);}return e;};
 
   startCombat=function(kind="normal"){const tile=tiles[player.position];let bases=[];merchantBossBattle=kind==="merchant";if(kind==="merchant"){const m=db317Enemy("road-merchant");m.hp=185+boardLevel*60;m.attack=28+boardLevel*5;bases=[m];}else if(kind==="bloodmage"){const b=db317Enemy("bloodmage-boss");b.hp=210+boardLevel*35;b.attack=34+boardLevel*4;bases=[b];}else if(kind==="final")bases=[db317Enemy(db317Board(boardLevel).bossId)];else if(kind==="miniboss")bases=[db317Enemy(db317Board(boardLevel).minibossId)];else bases=(tile.enemyBases?.length?tile.enemyBases:[tile.enemyBase||enemyForPosition(player.position)]).map(x=>({...x}));currentEnemies=bases.map(b=>scaleEnemy(b,kind,bases.length));if(kind==="bloodmage")currentEnemies.forEach(e=>{e.bloodmageBoss=true;e.guardian=true;e.merchantBoss=false;});currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];currentEnemyTile=player.position;currentEncounterTurn=0;combatBusy=false;player.combatShield=player.firstHitBlocks+(mythicalSetCount()>=5?1:0)+(hasMythicPiece("hat")?1:0);player.combatAttackCount=0;player.combatActionCount=0;player.mythicActionCount=0;player.mythicAmuletUsed=false;player.omegaRingUsed=false;if(mythicalSetCount()>=4)player.ultimateCharge=Math.max(player.ultimateCharge,v19SetStartUltimate());$("combatTitle").textContent=kind==="bloodmage"?"Secret Boss: The Bloodmage":kind==="merchant"?"Secret Boss: The Merchant":kind==="final"?"Final Guardian":kind==="miniboss"?"Halfway Miniboss":currentEnemies.length>1?`Enemy Pack ×${currentEnemies.length}`:"Battle!";$("combatSubtitle").textContent=kind==="bloodmage"?"The Bloodwell answers with forbidden scholarship.":kind==="merchant"?"He closes the shop, raises barriers and begins charging interest.":currentEnemies.length>1?"Every enemy is visible below. The arrow marks your selected target.":"Choose your action.";$("combatHistory").innerHTML="";setCombatText(`${currentEnemies.map(e=>e.name).join(", ")} block the road. Choose your action.`);$("combatOverlay").classList.remove("hidden");addLog(`Combat begins against <b>${currentEnemies.map(e=>e.name).join(", ")}</b>.`);renderEnemyParty();updateCombatUI();};
@@ -6718,17 +6718,16 @@ function buildDiceboundHumanHarness235(){
   const db04Brand=document.querySelector('.brand h1');if(db04Brand)db04Brand.textContent='Dicebound: Beta v0.4.9';
   const db04Sub=document.querySelector('.brand p');if(db04Sub)db04Sub.textContent='Beta v0.4.9 · integrated icon art, custom-sound prep and a real volume slider.';
 
-  /* Ranger identity: a normal landed strike establishes one Mark; an Echo
-     establishes two. Always respect the live mark cap (including Perfected
-     Signature) rather than the inherited hard-coded cap of three. */
+  /* Ranger identity: each qualifying hit establishes exactly one Mark.
+     Echoes are separate strikes, never multi-Mark packets. */
   const performStrikeBeta04Base=performStrike;
   performStrike=async function(target,opts={}){
     const ranger=classIdentityActive('ranger')&&target?.hp>0,before=ranger?(target.rangerMarks||0):0;
     const result=await performStrikeBeta04Base(target,opts);
     if(ranger&&target?.hp>0&&!result?.dodged){
-      const cap=Math.max(3,Number(player.rangerMarkMax)||3),gain=opts.echo?2:1;
-      target.rangerMarks=Math.min(cap,before+gain);
-      if(target.rangerMarks!==before)identityFlash(`🏹 Marked Quarry ×${target.rangerMarks}${opts.echo?' · Echo +2':''}`);
+      const cap=Math.max(3,Number(player.rangerMarkMax)||3);
+      target.rangerMarks=window.DiceboundStrikePolicy.rangerMarkTotal(before,{cap,landed:true});
+      if(target.rangerMarks!==before)identityFlash(`🏹 Marked Quarry ×${target.rangerMarks}${opts.echo?' · Echo +1':''}`);
       updateCombatUI();
     }
     return result;
@@ -6738,7 +6737,7 @@ function buildDiceboundHumanHarness235(){
     const r=updateCombatUIBeta04Base();
     if(classIdentityActive('ranger')){
       const marks=currentEnemy?.rangerMarks||0,cap=Math.max(3,Number(player.rangerMarkMax)||3);
-      setResourceUI('mark','Marks on target',marks,cap,`Landed basic strikes add 1 Mark; landed Echo strikes add 2. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: ${cap}.`);
+      setResourceUI('mark','Marks on target',marks,cap,`Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: ${cap}.`);
     }
     return r;
   };
@@ -9800,13 +9799,15 @@ function buildDiceboundHumanHarness235(){
       #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(224px,35vh,430px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
       #enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:clamp(100px,18vw,250px)!important;min-height:clamp(205px,32vh,400px)!important;justify-content:flex-end!important;overflow:visible!important}
       #enemyIcon.db0636-tiered-enemy-stage .stage-sprite{display:block!important;width:min(22vw,260px)!important;height:clamp(200px,31vh,390px)!important;line-height:0!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:clamp(92px,16vw,225px)!important;min-height:clamp(180px,28vh,350px)!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:min(19vw,225px)!important;height:clamp(176px,27vh,342px)!important}
       .db0636-tiered-enemy-art{position:relative;display:block;width:100%;height:100%;isolation:isolate;overflow:visible}
       .db0636-tiered-enemy-image{position:relative;z-index:1;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center bottom!important;overflow:visible!important;border-radius:0!important;filter:drop-shadow(0 14px 13px rgba(0,0,0,.56))}
       .db0636-tiered-enemy-art::before{content:"";position:absolute;z-index:0;inset:13% 12% 8%;border-radius:50%;opacity:0;filter:blur(18px);pointer-events:none}
       .db0636-tiered-enemy-art.db-enemy-mode-nightmare::before{opacity:.52;background:radial-gradient(ellipse,rgba(129,69,179,.64),rgba(41,17,71,.38) 48%,transparent 74%)}
       .db0636-tiered-enemy-art.db-enemy-mode-hell::before{opacity:.56;background:radial-gradient(ellipse,rgba(230,84,43,.68),rgba(135,25,24,.42) 50%,transparent 75%)}
       #enemyIcon.db0636-tiered-enemy-stage .stage-enemy.selected .db0636-tiered-enemy-image{filter:drop-shadow(0 0 15px rgba(245,200,91,.34)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
-      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(172px,32vh,270px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(150px,28vh,235px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(146px,27vh,225px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
+      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(172px,32vh,270px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(150px,28vh,235px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(146px,27vh,225px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:calc((100vw - 68px)/3)!important;min-height:clamp(132px,25vh,210px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:calc((100vw - 68px)/3)!important;height:clamp(128px,24vh,202px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
     `;document.head.appendChild(style);
   }
   window.DiceboundEnemyBattleArt=Object.freeze({
@@ -9904,16 +9905,17 @@ function buildDiceboundHumanHarness235(){
     active:dbNatureVfxEntries
   });
 
-  /* BETA 0.6.3.14 — #128/#83 authored equipment identities.
+  /* #128/#83 authored equipment identities.
      The extracted equipment domain selects and owns stable base IDs, intrinsic
      stats and visual metadata. This adapter deliberately keeps live combat,
      saves and the ordinary rolled-point budget in their existing owners. */
   const db06314Equipment=window.DiceboundEquipment;
-  if(!db06314Equipment?.identityForItem||!db06314Equipment?.allBonusesForItem)throw new Error('Beta 0.6.3.14 requires the equipment identity domain.');
+  if(!db06314Equipment?.identityForItem||!db06314Equipment?.allBonusesForItem)throw new Error('DiceBound requires the equipment identity domain.');
   function db06314Identity(item){return db06314Equipment.identityForItem(item);}
+  function db06314BonusLabel(key,value){return key==='maxMana'?`+${value} Mana`:bonusLabel(key,value);}
   function db06314IntrinsicParts(item){
     const identity=db06314Identity(item),bonuses=db06314Equipment.intrinsicBonusesForItem(item);
-    const values=Object.entries(bonuses).map(([key,value])=>bonusLabel(key,value));
+    const values=Object.entries(bonuses).map(([key,value])=>db06314BonusLabel(key,value));
     return identity&&values.length?{identity,values}:null;
   }
   function db06314EquipmentArtMarkup(item,klass='db06314-equipment-art'){
@@ -9925,12 +9927,17 @@ function buildDiceboundHumanHarness235(){
   const db06314ApplyItemStatsBase=applyItemStats;
   applyItemStats=function(item,sign){
     if(!db06314Identity(item))return db06314ApplyItemStatsBase(item,sign);
-    const oldMax=player.maxHp;
+    const oldMax=player.maxHp,oldMaxMana=Number(player.maxMana)||0;
     Object.entries(db06314Equipment.allBonusesForItem(item)).forEach(([key,value])=>{if(typeof player[key]==='number')player[key]+=value*sign;});
     player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
     if(player.maxHp<1)player.maxHp=1;
     if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
     player.hp=clamp(player.hp,1,player.maxHp);
+    if(typeof player.maxMana==='number'){
+      player.maxMana=Math.max(0,player.maxMana);
+      if(sign>0&&player.maxMana>oldMaxMana)player.mana=(Number(player.mana)||0)+(player.maxMana-oldMaxMana);
+      if(typeof player.mana==='number')player.mana=clamp(player.mana,0,player.maxMana);
+    }
   };
   const db06314FormatBonusesBase=formatBonuses;
   formatBonuses=function(item){
@@ -9939,14 +9946,14 @@ function buildDiceboundHumanHarness235(){
   };
   const db06314GearScoreBase=gearPowerScore;
   gearPowerScore=function(item){
-    const weights={attack:7,defense:8,maxHp:.55,crit:45,dodge:38,lifeSteal:45,luck:18,goldBonus:20,potionPower:15,bossDamage:34,doubleStrike:42,classBurst:30,extraStepChance:18,damageBonus:50,flatReduction:11,elementProcBonus:45};
+    const weights={attack:7,defense:8,maxHp:.55,maxMana:.7,crit:45,dodge:38,lifeSteal:45,luck:18,goldBonus:20,potionPower:15,bossDamage:34,doubleStrike:42,classBurst:30,extraStepChance:18,damageBonus:50,flatReduction:11,elementProcBonus:45};
     return db06314GearScoreBase(item)+Object.entries(db06314Equipment.intrinsicBonusesForItem(item)).reduce((score,[key,value])=>score+Math.abs(value)*(weights[key]||2),0);
   };
   formatGearComparison=function(item,current){
     if(!current)return '<b>Empty slot.</b> Equipping this item will not replace anything.';
     const score=gearPowerScore(item)-gearPowerScore(current),incoming=db06314Equipment.allBonusesForItem(item),equipped=db06314Equipment.allBonusesForItem(current),deltas=[];
     const keys=new Set([...Object.keys(equipped),...Object.keys(incoming)]);
-    keys.forEach(key=>{const delta=(incoming[key]||0)-(equipped[key]||0);if(Math.abs(delta)>.0001)deltas.push(`${STAT_LABELS[key]||key} ${formatBonusValue(key,delta)}`);});
+    keys.forEach(key=>{const delta=(incoming[key]||0)-(equipped[key]||0);if(Math.abs(delta)>.0001){const label=db06314BonusLabel(key,Math.abs(delta)).replace(/^\+/,'');deltas.push(`<span class="${delta>0?'better':'worse'}">${delta>0?'+':'−'}${label}</span>`);}});
     const quality=score>12?'<span class="better">Overall quality: stronger</span>':score<-12?'<span class="worse">Overall quality: weaker</span>':'<span class="same">Overall quality: similar</span>';
     return `${quality}<br>${deltas.length?deltas.join(' · '):'<span class="same">No numerical stat change</span>'}`;
   };
@@ -9977,5 +9984,313 @@ function buildDiceboundHumanHarness235(){
     total:item=>db06314Equipment.allBonusesForItem(item),
     generate:(rarity='common',slot='weapon')=>generateEquipment(rarity,slot)
   });
+
+  /* #91 / #144 ordinary-enemy mechanics.  The extracted policy owns the
+     tables; this live adapter only supplies combat-state application. */
+  const db064EnemyPolicy=window.DiceboundEnemyPolicy;
+  if(!db064EnemyPolicy)throw new Error('DiceBound requires the enemy policy domain.');
+  function db064CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+  function db064IsStandardDevil(enemy){return /\bdevil\b/i.test(String(enemy?.name||''))&&!/\bpale\s+devil\b/i.test(String(enemy?.name||''));}
+  const db064ScaleEnemyBase=scaleEnemy;
+  scaleEnemy=function(...args){
+    const enemy=db064ScaleEnemyBase.apply(this,args);
+    if(db064IsStandardDevil(enemy)){
+      enemy.innateElement='fire';
+      enemy.elementProcChance=db064EnemyPolicy.standardDevilFlameChance(boardLevel,db064CombatMode());
+    }
+    return enemy;
+  };
+  const db064EnemyElementProcBase=enemyElementProc;
+  enemyElementProc=function(enemy){
+    const innate=enemy?.innateElement;
+    if(!innate)return db064EnemyElementProcBase(enemy);
+    const originalAffinity=enemy.affinity;
+    enemy.affinity=innate;
+    try{return db064EnemyElementProcBase(enemy);}
+    finally{if(originalAffinity===undefined)delete enemy.affinity;else enemy.affinity=originalAffinity;}
+  };
+  async function db064ResolveWolfEchoes(){
+    const chance=db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode());
+    if(!chance||player.hp<=0)return {notes:[],defeated:false};
+    const notes=[];
+    for(const wolf of livingEnemies().filter(enemy=>/\bwolf\b/i.test(String(enemy?.name||''))&&!enemy.guardian)){
+      if(random()>=chance)continue;
+      if(random()<effectiveDodgeChance()){notes.push(`🐺 ${wolf.name}'s Echo Strike is dodged.`);continue;}
+      if(player.combatShield>0){player.combatShield--;notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`);continue;}
+      const base=Math.max(1,wolf.attack+rand(-1,1)),raw=Math.max(1,Math.round(base*(1-defenseDamageReduction())-player.flatReduction)),hit=v24ApplyDamage(raw);
+      meta.damageTaken=(meta.damageTaken||0)+hit.total;
+      notes.push(`🐺 ${wolf.name}'s Echo Strike hits for ${hit.total}${hit.shield?` (${hit.shield} absorbed by Energy Shield)`:''}.`);
+      if(player.thorns>0&&hit.total>0){const returned=damageEnemy(wolf,player.thorns,true);notes.push(`Spikes return ${returned}.`);}
+      if(player.hp<=0)break;
+    }
+    if(notes.length){notes.forEach(addCombatHistory);setCombatText(notes.join(' '));updateCombatUI();await delay(380);}
+    return {notes,defeated:player.hp<=0};
+  }
+  const db064EnemyTurnBase=enemyTurn;
+  enemyTurn=async function(...args){
+    const result=await db064EnemyTurnBase.apply(this,args);
+    if(!currentEnemy||player.hp<=0||!livingEnemies().length)return result;
+    combatBusy=true;
+    const echo=await db064ResolveWolfEchoes();
+    if(echo.defeated)return handlePlayerDeath();
+    combatBusy=false;updateCombatUI();
+    return result;
+  };
+  window.DiceboundEnemyMechanicsTest=Object.freeze({
+    wolfEchoChance:(board,mode)=>db064EnemyPolicy.wolfEchoChance(board,mode),
+    devilFlameChance:(board,mode)=>db064EnemyPolicy.standardDevilFlameChance(board,mode),
+    isStandardDevil:db064IsStandardDevil
+  });
+
+  /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
+     a real completed Donut proc and never changes its target, timing or RNG. */
+  const DB064_DONUT_EFFECT_KEY='donutProcRain';
+  function db064DonutEffect(){return window.DiceboundAssets?.resolveCombatEffect?.(DB064_DONUT_EFFECT_KEY)||null;}
+  function db064DonutVfxEntries(){return [...document.querySelectorAll('.db-donut-rain-vfx')].map(node=>({src:node.getAttribute('src')||'',effect:node.dataset.effect||''}));}
+  function db064PlayDonutRain(){
+    const effect=db064DonutEffect(),host=$('combatOverlay')?.querySelector('.modal');
+    if(!host||!effect?.image)return false;
+    host.querySelectorAll('.db-donut-rain-vfx').forEach(node=>node.remove());
+    const image=document.createElement('img'),reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    image.className='db-donut-rain-vfx';image.dataset.effect=DB064_DONUT_EFFECT_KEY;image.src=effect.image;image.alt='';image.draggable=false;host.append(image);
+    setTimeout(()=>image.remove(),reduced?260:Math.max(320,Number(effect.durationMs)||1450));
+    return true;
+  }
+  const db064DonutTriggerElementBase=triggerElementEffect;
+  triggerElementEffect=function(key,target=currentEnemy,opts={}){
+    const result=db064DonutTriggerElementBase(key,target,opts);
+    if(key==='donut'&&result)db064PlayDonutRain();
+    return result;
+  };
+  window.DiceboundDonutVfxTest=Object.freeze({
+    effect:db064DonutEffect,
+    play:db064PlayDonutRain,
+    active:db064DonutVfxEntries
+  });
+
+  /* #54 Battle log stays below the action controls and can be minimized
+     without becoming unreachable.  The preference lives with normal UI
+     settings so it survives the next combat without affecting run state. */
+  function db064BattleLogCollapsed(){return !!meta.settings?.battleLogCollapsed;}
+  function db064SyncBattleLog(){
+    const wrap=$('combatHistoryWrap'),button=$('combatHistoryToggle'),collapsed=db064BattleLogCollapsed();
+    wrap?.classList.toggle('is-collapsed',collapsed);
+    if(button){button.textContent=collapsed?'Show log':'Collapse log';button.setAttribute('aria-expanded',String(!collapsed));}
+    return collapsed;
+  }
+  function db064SetBattleLogCollapsed(collapsed){
+    if(!meta.settings||typeof meta.settings!=='object')meta.settings={};
+    meta.settings.battleLogCollapsed=!!collapsed;db064SyncBattleLog();saveMeta();return !!collapsed;
+  }
+  $('combatHistoryToggle')?.addEventListener('click',()=>db064SetBattleLogCollapsed(!db064BattleLogCollapsed()));
+  const db064StartCombatBase=startCombat;
+  startCombat=function(...args){const result=db064StartCombatBase.apply(this,args);db064SyncBattleLog();return result;};
+
+  /* #55 Root tooltip portal.  The tooltip is a root sibling instead of a
+     child of a scrolling panel, so overflow and local stacking contexts can
+     no longer clip it. */
+  let db064TooltipTarget=null;
+  function db064TooltipLayer(){return $('appTooltipLayer');}
+  function db064TooltipText(target){return String(target?.dataset?.tip||target?.dataset?.tooltip||'').trim();}
+  function db064PositionTooltip(){
+    const target=db064TooltipTarget,layer=db064TooltipLayer();if(!target||!layer||layer.classList.contains('hidden'))return false;
+    const rect=target.getBoundingClientRect(),gap=10,margin=8,layerRect=layer.getBoundingClientRect();
+    let left=rect.left+rect.width/2-layerRect.width/2,top=rect.top-layerRect.height-gap;
+    left=Math.min(window.innerWidth-layerRect.width-margin,Math.max(margin,left));
+    if(top<margin)top=Math.min(window.innerHeight-layerRect.height-margin,rect.bottom+gap);
+    layer.style.left=`${Math.round(left)}px`;layer.style.top=`${Math.round(Math.max(margin,top))}px`;
+    return true;
+  }
+  function db064ShowTooltip(target){
+    const text=db064TooltipText(target),layer=db064TooltipLayer();if(!text||!layer)return false;
+    db064TooltipTarget=target;layer.textContent=text;layer.classList.remove('hidden');db064PositionTooltip();return true;
+  }
+  function db064HideTooltip(target=null){
+    if(target&&target!==db064TooltipTarget)return false;
+    db064TooltipTarget=null;const layer=db064TooltipLayer();layer?.classList.add('hidden');return true;
+  }
+  document.addEventListener('pointerover',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target!==db064TooltipTarget)db064ShowTooltip(target);});
+  document.addEventListener('pointerout',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target===db064TooltipTarget&&!target.contains(event.relatedTarget))db064HideTooltip(target);});
+  document.addEventListener('focusin',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target)db064ShowTooltip(target);});
+  document.addEventListener('focusout',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target===db064TooltipTarget)db064HideTooltip(target);});
+  window.addEventListener('resize',db064PositionTooltip);window.addEventListener('scroll',db064PositionTooltip,true);
+  window.DiceboundCombatUiTest=Object.freeze({
+    battleLogCollapsed:db064BattleLogCollapsed,
+    setBattleLogCollapsed:db064SetBattleLogCollapsed,
+    tooltip:()=>({active:!!db064TooltipTarget,text:db064TooltipLayer()?.textContent||'',hidden:db064TooltipLayer()?.classList.contains('hidden')??true}),
+    positionTooltip:db064PositionTooltip
+  });
+
+  // Isolated browser-harness coverage for the #123 semantic contract.  This
+  // exercises the live composed strike pipeline, including the Ranger wrapper.
+  window.DiceboundEchoStrikeTest=Object.freeze({
+    async highCritRangerEchoes(){
+      if(meta.unlocks)meta.unlocks.ranger=true;
+      resetPlayer('ranger');
+      Object.assign(player,{attack:1,crit:3.5,doubleStrike:2,criticalEchoBonus:1,combatAttackCount:0});
+      const enemy={name:'Echo Regression Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,rangerMarks:0};
+      currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+      const strikes=[];
+      for(let index=1;index<=3;index++)strikes.push(await performStrike(enemy,{echo:true,index,canCrit:false}));
+      return {crits:strikes.map(strike=>strike.critTiers),canCrit:strikes.map(strike=>strike.canCrit),marks:enemy.rangerMarks,expectedMarks:3};
+    }
+  });
+
+  /* #75 / #122 — one source for the level-aware event Gold family.  The
+     runtime applies its existing effective-Gold calculation exactly once. */
+  const db064FriendsEventRewards=window.DiceboundEventRewards;
+  if(!db064FriendsEventRewards)throw new Error('DiceBound requires the event reward policy domain.');
+  function db064EventGold(source,multiplier=1){
+    return modifiedGold(db064FriendsEventRewards.goldBaseFor(source,player.level,multiplier));
+  }
+  function db064ApplySlotReward(result){
+    const counts={};result.forEach(symbol=>counts[symbol]=(counts[symbol]||0)+1);
+    const triple=Object.keys(counts).find(symbol=>counts[symbol]===3),pair=Object.keys(counts).find(symbol=>counts[symbol]===2);let text='';
+    if(triple){
+      switch(triple){
+        case '⚔️':player.attack+=5;text='Jackpot! +5 attack permanently.';break;
+        case '❤️':player.maxHp+=20;player.hp=Math.min(player.maxHp,player.hp+20);text='Jackpot! +20 max HP and heal 20.';break;
+        case '🪙':{const gold=db064EventGold('slotJackpot');player.gold+=gold;text=`Jackpot! +${gold} gold.`;break;}
+        case '🛡️':player.defense+=4;text='Jackpot! +4 defense permanently.';break;
+        case '⭐':player.attack+=5;player.maxHp+=18;player.hp+=18;player.crit+=.10;text='Legendary jackpot! +5 attack, +18 max HP and +10% crit.';break;
+        case '💀':{const loss=Math.max(1,Math.floor(player.hp*.25));player.hp=Math.max(1,player.hp-loss);text=`Triple skulls! You lose ${loss} HP.`;break;}
+      }
+      sfx.level();
+    }else if(pair){
+      switch(pair){
+        case '⚔️':player.attack+=2;text='Two swords: +2 attack permanently.';break;
+        case '❤️':{const heal=Math.min(player.maxHp-player.hp,18);player.hp+=heal;text=`Two hearts: heal ${heal} HP.`;break;}
+        case '🪙':{const gold=db064EventGold('slotPair');player.gold+=gold;text=`Two coins: +${gold} gold.`;break;}
+        case '🛡️':player.flatReduction+=2;text='Two shields: reduce incoming damage by 2.';break;
+        case '⭐':player.crit+=.08;text='Two stars: +8% critical chance.';break;
+        case '💀':{const loss=Math.max(1,Math.floor(player.hp*.10));player.hp=Math.max(1,player.hp-loss);text=`Two skulls: lose ${loss} HP.`;break;}
+      }
+      tone(650,.15,'triangle',.04,950);
+    }else{
+      const gold=db064EventGold('slotPity');player.gold+=gold;text=`No match. The machine pays ${gold} consolation gold.`;sfx.coin();
+    }
+    const cookieChance=.14+gameplayTalentRank('fortune_cookie')*.03;
+    if(random()<cookieChance){meta.petCookies++;saveMeta();text+=' A rare pet cookie drops from the machine!';showToast('🍪 Pet cookie found!');}
+    $('slotResult').textContent=text;addLog(`<b>Slots:</b> ${text}`);updateMetaUI();
+  }
+  applySlotReward=db064ApplySlotReward;
+  const db064GoldenRain=wheelRewards.find(reward=>reward.name==='Golden Rain');
+  if(db064GoldenRain)db064GoldenRain.apply=function(){const gold=db064EventGold('wheel');player.gold+=gold;return `The wheel grants ${gold} gold.`;};
+  const db064PurseTalent=talents.find(talent=>talent.id==='fortune_gold');
+  if(db064PurseTalent)db064PurseTalent.desc='Each rank adds 35% of the level-scaled event-Gold reward at run start (25 Gold per rank at level 1) and +5% Gold Gain.';
+  window.DiceboundEventRewardTest=Object.freeze({
+    gold:(source,level=player.level,multiplier=1,goldModifier=1)=>Math.round(db064FriendsEventRewards.goldBaseFor(source,level,multiplier)*goldModifier),
+    slotOdds:luck=>db064FriendsEventRewards.slotMatchOdds(luck),
+    tileType:(roll,board)=>db064FriendsEventRewards.roadTileType(roll,board),
+    sources:()=>Object.keys(db064FriendsEventRewards.gold.sourceMultiplier)
+  });
+
+  /* #78 — registry metadata drives a compact, keyboard-native hierarchy.
+     Class-specific talent cards derive from authoritative powerup gates, not
+     from card text or rendered DOM labels. */
+  const db064AchievementGroups=window.DiceboundAchievements?.groups||[];
+  function db064AchievementUiSettings(){
+    if(!meta.settings||typeof meta.settings!=='object')meta.settings={};
+    if(!meta.settings.achievementGroups||typeof meta.settings.achievementGroups!=='object')meta.settings.achievementGroups={};
+    return meta.settings.achievementGroups;
+  }
+  function db064AchievementOpen(id,defaultOpen=false){
+    const value=db064AchievementUiSettings()[id];return value===undefined?defaultOpen:!!value;
+  }
+  function db064PersistAchievementOpen(details){
+    details.addEventListener('toggle',()=>{db064AchievementUiSettings()[details.dataset.achievementGroup]=details.open;saveMeta();});
+  }
+  function db064AchievementCard({name,description,done=false,hidden=false}){
+    const card=document.createElement('div'),heading=document.createElement('b'),body=document.createElement('span');
+    card.className=`achievement${done?' done':''}${hidden?' secret-locked':''}`;
+    heading.textContent=`${done?'✅':'⬜'} ${hidden?'???':name}`;
+    body.textContent=hidden?'A secret achievement.':description;
+    card.append(heading,body);return card;
+  }
+  function db064AchievementDetails(id,label,done,total,children,defaultOpen=false,className='achievement-group'){
+    const details=document.createElement('details'),summary=document.createElement('summary'),count=document.createElement('span'),body=document.createElement('div');
+    details.className=className;details.dataset.achievementGroup=id;details.open=db064AchievementOpen(id,defaultOpen);
+    summary.textContent=label;count.className='achievement-group-count';count.textContent=total?`${done}/${total}`:'—';summary.append(count);
+    body.className='achievement-group-body';children.forEach(child=>child&&body.append(child));details.append(summary,body);db064PersistAchievementOpen(details);return details;
+  }
+  function db064PowerupGateDone(gate){return achievementGateUnlocked(gate);}
+  function db064HeroMasteryEntries(classId){
+    return upgrades.filter(upgrade=>(upgrade.classId===classId||(upgrade.classIds||[]).includes(classId))&&!!upgrade.achievementGate)
+      .map(upgrade=>{
+        const gate=String(upgrade.achievementGate),match=/^class_b(\d+):/.exec(gate),achievement=gate.startsWith('achievement:')?ACHIEVEMENT_REGISTRY.find(entry=>entry.id===gate.slice('achievement:'.length)):ACHIEVEMENT_REGISTRY.find(entry=>entry.id===gate);
+        const condition=match?`Clear Board ${match[1]} as this hero.`:achievement?db317AchievementConditionText(achievement):'Complete this hero’s listed unlock condition.';
+        return {id:`hero-talent:${classId}:${upgrade.id}`,name:`${upgrade.icon||'✨'} ${upgrade.name}`,description:`${condition} Unlocks this hero-specific talent.`,done:db064PowerupGateDone(gate)};
+      });
+  }
+  const db064RenderAchievementsBase=renderAchievements;
+  renderAchievements=function(){
+    /* Preserve any non-registry setup performed by the old renderer, then
+       replace only the list contents with the semantic hierarchy. */
+    db064RenderAchievementsBase();
+    const grid=$('achievementGrid');if(!grid)return;
+    grid.replaceChildren();
+    db064AchievementGroups.filter(group=>group.id!=='hero-mastery').forEach(group=>{
+      const entries=ACHIEVEMENT_REGISTRY.filter(achievement=>achievement.hierarchy?.group===group.id),cards=entries.map(achievement=>{
+        const done=db317AchievementDone(achievement),hidden=!!achievement.secret&&!done;
+        return db064AchievementCard({name:achievement.name,description:db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),done,hidden});
+      });
+      grid.append(db064AchievementDetails(`top:${group.id}`,group.label,entries.filter(db317AchievementDone).length,entries.length,cards,group.id==='roads'));
+    });
+    const heroGroups=Object.values(CLASSES).map(hero=>{
+      const hidden=!!hero.secret&&!isClassUnlocked(hero.id),milestones=ACHIEVEMENT_REGISTRY.filter(achievement=>achievement.hierarchy?.heroId===hero.id),talents=db064HeroMasteryEntries(hero.id),entries=[
+        ...milestones.map(achievement=>({id:`milestone:${achievement.id}`,name:achievement.name,description:db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),done:db317AchievementDone(achievement),hidden:!!achievement.secret&&!db317AchievementDone(achievement)})),
+        ...talents
+      ],cards=hidden?[]:entries.map(entry=>db064AchievementCard(entry));
+      if(!hidden&&!cards.length)cards.push(db064AchievementCard({name:'No authored mastery unlocks yet',description:'This hero has a reserved mastery subgroup for future authored unlocks.'}));
+      return db064AchievementDetails(`hero:${hero.id}`,hidden?'❔ Unrevealed hero':`${hero.icon} ${hero.name}`,entries.filter(entry=>entry.done).length,hidden?0:entries.length,cards,false,`achievement-subgroup${hidden?' secret-locked':''}`);
+    });
+    const heroDone=heroGroups.reduce((total,details)=>total+Number((details.querySelector('.achievement-group-count')?.textContent||'0').split('/')[0])||0,0),heroTotal=heroGroups.reduce((total,details)=>total+Number((details.querySelector('.achievement-group-count')?.textContent||'0').split('/')[1])||0,0);
+    grid.append(db064AchievementDetails('top:hero-mastery','✨ Hero Mastery',heroDone,heroTotal,heroGroups,false));
+  };
+  window.DiceboundAchievementHierarchyTest=Object.freeze({
+    groups:()=>ACHIEVEMENT_REGISTRY.map(achievement=>({id:achievement.id,hierarchy:achievement.hierarchy})),
+    heroTalents:classId=>db064HeroMasteryEntries(classId).map(entry=>({id:entry.id,done:entry.done})),
+    groupOpen:id=>db064AchievementOpen(id),
+    render:()=>{renderAchievements();return [...document.querySelectorAll('#achievementGrid>.achievement-group')].map(group=>({id:group.dataset.achievementGroup,label:group.querySelector('summary')?.textContent||'',subgroups:group.querySelectorAll('.achievement-subgroup').length}));}
+  });
+
+  /* #77: keep the one semantic, keyboard-focusable camp button tied to the
+     visible object it contains.  This narrow contract catches a return of a
+     large detached chest hit rectangle without inventing alpha-mask clicks. */
+  window.DiceboundCampHitTargetTest=Object.freeze({
+    inspect:()=>['campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'].map(id=>{
+      const button=$(id),visual=button?.querySelector('.camp-icon,.camp-journey-art-frame'),buttonRect=button?.getBoundingClientRect(),visualRect=visual?.getBoundingClientRect(),painted=button&&db064PaintedCampBounds(button);
+      return {id,present:!!button,semantic:button?.tagName==='BUTTON',focusable:button?.tabIndex===0,button:buttonRect?{width:Math.round(buttonRect.width),height:Math.round(buttonRect.height)}:null,visual:visualRect?{width:Math.round(visualRect.width),height:Math.round(visualRect.height)}:null,painted:painted?{width:Math.round(painted.right-painted.left),height:Math.round(painted.bottom-painted.top)}:null};
+    })
+  });
+  const DB064_CAMP_HIT_TARGET_IDS=['campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'];
+  function db064PaintedCampBounds(button){
+    const rects=[...button.children].map(child=>child.getBoundingClientRect()).filter(rect=>rect.width>1&&rect.height>1);
+    if(!rects.length)return null;
+    return {left:Math.min(...rects.map(rect=>rect.left)),top:Math.min(...rects.map(rect=>rect.top)),right:Math.max(...rects.map(rect=>rect.right)),bottom:Math.max(...rects.map(rect=>rect.bottom))};
+  }
+  function db064SyncCampHitTargets(){
+    let changed=false;
+    for(const id of DB064_CAMP_HIT_TARGET_IDS){
+      const button=$(id),painted=button&&db064PaintedCampBounds(button),buttonRect=button?.getBoundingClientRect(),parent=button?.offsetParent?.getBoundingClientRect();
+      if(!button||!painted||!buttonRect||!parent)continue;
+      const width=Math.ceil(painted.right-painted.left),height=Math.ceil(painted.bottom-painted.top);
+      if(width<1||height<1)continue;
+      const detached=buttonRect.width>width+3||buttonRect.height>height+3;
+      if(!detached)continue;
+      button.style.setProperty('width',`${width}px`,'important');button.style.setProperty('min-width','0','important');button.style.setProperty('max-width',`${width}px`,'important');
+      button.style.setProperty('height',`${height}px`,'important');button.style.setProperty('min-height','0','important');button.style.setProperty('max-height',`${height}px`,'important');
+      button.style.setProperty('padding','0','important');button.style.setProperty('justify-self','center','important');
+      if(getComputedStyle(button).position==='absolute'){
+        button.style.setProperty('left',`${Math.round(painted.left-parent.left)}px`,'important');button.style.setProperty('top',`${Math.round(painted.top-parent.top)}px`,'important');
+        button.style.setProperty('right','auto','important');button.style.setProperty('bottom','auto','important');
+      }
+      button.dataset.db064HitTarget='painted-object';changed=true;
+    }
+    return changed;
+  }
+  const db064FriendsUpdateMetaUiBase=updateMetaUI;
+  updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);requestAnimationFrame(db064SyncCampHitTargets);return result;};
+  window.addEventListener('resize',()=>requestAnimationFrame(db064SyncCampHitTargets));requestAnimationFrame(db064SyncCampHitTargets);
 
 })();

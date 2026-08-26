@@ -14,7 +14,7 @@ const equipment=context.window.DiceboundEquipment;
 const registry=equipment.createRegistry(),identities=registry.identities;
 
 assert.equal(equipment.apiVersion,2);
-assert.equal(identities.length,12,"the first authored pack plus ring/amulet fallbacks must share one registry");
+assert.equal(identities.length,20,"the two approved authored packs must share one registry without generic ring/amulet fallbacks");
 const expectedArt={
   "bronze-longsword":"assets/equipment/weapon/bronze-longsword.png",
   shortbow:"assets/equipment/weapon/shortbow.png",
@@ -26,6 +26,16 @@ const expectedArt={
   "bronze-platelegs":"assets/equipment/legs/bronze-platelegs.png",
   "bronze-armoured-boots":"assets/equipment/boots/bronze-armoured-boots.png",
   "bronze-round-shield":"assets/equipment/offhand/bronze-round-shield.png",
+  "oak-shortbow":"assets/equipment/weapon/oak-shortbow.png",
+  "bronze-battleaxe":"assets/equipment/weapon/bronze-battleaxe.png",
+  "iron-round-shield":"assets/equipment/offhand/iron-round-shield.png",
+  spellbook:"assets/equipment/offhand/spellbook.png",
+  "hunter-hood":"assets/equipment/hat/hunter-hood.png",
+  "leather-harness":"assets/equipment/chest/leather-harness.png",
+  "ranger-trousers":"assets/equipment/legs/ranger-trousers.png",
+  "trail-boots":"assets/equipment/boots/trail-boots.png",
+  "mood-ring":"assets/equipment/ring/mood-ring.png",
+  "hawkeye-charm":"assets/equipment/amulet/hawkeye-charm.png",
 };
 for(const [id,asset] of Object.entries(expectedArt)){
   const identity=equipment.equipmentIdentity(id);
@@ -36,12 +46,14 @@ for(const [id,asset] of Object.entries(expectedArt)){
   assert.ok(identity.rarityEligibility.includes("poor")&&identity.rarityEligibility.includes("epic"),`${id} should be eligible across ordinary rarities`);
 }
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"shortbow"}))),{attack:1,crit:.01});
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"oak-shortbow"}))),{attack:2,crit:.01},"Oak Shortbow must remain a distinct approved identity");
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"offhand",equipmentId:"spellbook"}))),{maxMana:5});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.allBonusesForItem({slot:"weapon",equipmentId:"shortbow",bonuses:{attack:3}}))),{attack:4,crit:.01});
 assert.equal(equipment.identityForItem({slot:"weapon",equipmentId:"bronze-round-shield"}),null,"wrong-slot identities must never be accepted from saves");
 assert.equal(equipment.identityForItem({slot:"weapon",name:"Old saved gear"}),null,"old saves must not be rerolled into random identities");
 
 const weaponIds=Array.from(equipment.eligibleEquipmentIdentities({slot:"weapon",rarity:"common"}),identity=>identity.id);
-assert.deepEqual(weaponIds,["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash"]);
+assert.deepEqual(weaponIds,["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash","oak-shortbow","bronze-battleaxe"]);
 for(const classId of ["ranger","fighter","clown","rouge","frog","slime"]){
   const distribution=Object.fromEntries(weaponIds.map(id=>[id,0]));
   for(let index=0;index<10000;index++)distribution[equipment.selectEquipmentIdentity({slot:"weapon",rarity:"common",classId,seed:`${classId}-${index}`}).id]++;

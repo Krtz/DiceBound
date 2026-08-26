@@ -29,6 +29,12 @@
     "enemies/normal/battle/wolf-board-4.png",
     "enemies/normal/battle/wolf-board-5.png",
     "enemies/normal/battle/wolf-board-6.png",
+    "enemies/normal/battle/devil-board-1.png",
+    "enemies/normal/battle/devil-board-2.png",
+    "enemies/normal/battle/devil-board-3.png",
+    "enemies/normal/battle/devil-board-4.png",
+    "enemies/normal/battle/devil-board-5.png",
+    "enemies/normal/battle/devil-board-6.png",
     "enemies/minibosses/battle/ogre-roadwarden.png",
     "enemies/minibosses/battle/titan-guard.png",
     "enemies/minibosses/battle/paradox-warden.png",
@@ -189,6 +195,16 @@
     "equipment/legs/bronze-platelegs.png",
     "equipment/boots/bronze-armoured-boots.png",
     "equipment/offhand/bronze-round-shield.png",
+    "equipment/weapon/oak-shortbow.png",
+    "equipment/weapon/bronze-battleaxe.png",
+    "equipment/offhand/iron-round-shield.png",
+    "equipment/offhand/spellbook.png",
+    "equipment/hat/hunter-hood.png",
+    "equipment/chest/leather-harness.png",
+    "equipment/legs/ranger-trousers.png",
+    "equipment/boots/trail-boots.png",
+    "equipment/ring/mood-ring.png",
+    "equipment/amulet/hawkeye-charm.png",
     "ui/currencies/coins.png",
     "installer/icons/dicebound-launcher.ico",
     "installer/icons/dicebound-launcher.png",
@@ -199,7 +215,8 @@
     "combat/effects/nature-poison-vines-05.png",
     "combat/effects/nature-poison-vines-06.png",
     "combat/effects/nature-poison-vines-07.png",
-    "combat/effects/nature-poison-vines-08.png"
+    "combat/effects/nature-poison-vines-08.png",
+    "combat/effects/donut-proc-rain-spritesheet.png"
   ],
   "retired": [
     "powerups/_legacy/heavy-purse-beta-0.6.png"
@@ -286,8 +303,8 @@
     }
   ],
   "counts": {
-    "canonicalRegistryFiles": 195,
-    "implementedCurrent": 194,
+    "canonicalRegistryFiles": 202,
+    "implementedCurrent": 201,
     "retiredSourceAssets": 1,
     "powerupArtKeys": 22,
     "powerupRenderedNameMappings": 28,

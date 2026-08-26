@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.3.15</title>
+<title>Dicebound: Beta v0.6.4.0</title>
 <link rel="stylesheet" href="css/dicebound.css">
 <style id="db-boot-gate">
   html.db-booting body{background:#050912}
@@ -19,8 +19,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.3.15</h1>
-        <p>Beta v0.6.3.15 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
+        <h1>Dicebound: Beta v0.6.4.0</h1>
+        <p>Beta v0.6.4.0 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -154,7 +154,6 @@
       <div class="battle-victory-hint">The complete battle log remains below if you want to inspect what happened.</div>
       <button class="main-btn battle-victory-continue" id="battleVictoryContinue">Continue</button>
     </div>
-    <div class="combat-history" id="combatHistory" aria-label="Battle history"></div>
     <div class="ultimate-wrap">
       <div class="ultimate-label"><span id="ultimateName">Ultimate</span><span id="ultimateText">0 / 100</span></div>
       <div class="ultimate-bar"><i id="ultimateFill"></i></div>
@@ -165,6 +164,10 @@
       <button class="combat-btn potion action-tooltip" id="potionBtn" data-tip="Consume one potion to restore HP. The amount scales with level and Potion Mastery.">🧪 Potion</button>
       <button class="combat-btn ultimate action-tooltip" id="ultimateBtn" data-tip="Spend 100 ultimate charge to use your class ultimate.">💥 Ultimate</button>
     </div>
+    <section class="combat-history-wrap" id="combatHistoryWrap" aria-label="Battle log">
+      <div class="combat-history-head"><strong>Battle log</strong><button class="small-btn" type="button" id="combatHistoryToggle" aria-controls="combatHistory" aria-expanded="true">Collapse log</button></div>
+      <div class="combat-history" id="combatHistory" aria-label="Battle history"></div>
+    </section>
   </div>
 </div>
 
@@ -431,6 +434,7 @@
   </div>
 </div>
 <div class="touch-tip-popover hidden" id="touchTipPopover" role="status" aria-live="polite"></div>
+<div class="app-tooltip-layer hidden" id="appTooltipLayer" role="tooltip"></div>
 <script src="js/version.js"></script>
 <script src="js/assets.js"></script>
 <script src="js/rng.js"></script>
@@ -443,6 +447,8 @@
 <script src="js/core/state.js"></script>
 <script src="js/core/runtime-services.js"></script>
 <script src="js/combat/effective-stats.js"></script>
+<script src="js/combat/strike-policy.js"></script>
+<script src="js/combat/enemy-policy.js"></script>
 <script src="js/classes/registry.js"></script>
 <script src="js/progression/class-unlock-rules.js"></script>
 <script src="js/pets/registry.js"></script>
@@ -452,6 +458,7 @@
 <script src="js/items/equipment.js"></script>
 <script src="js/progression/talents.js"></script>
 <script src="js/progression/achievements.js"></script>
+<script src="js/events/reward-policy.js"></script>
 <script src="js/items/artifacts.js"></script>
 <script src="js/items/loot.js"></script>
 <script src="js/powerups/registry.js"></script>

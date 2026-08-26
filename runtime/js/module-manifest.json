@@ -15,6 +15,8 @@
     "core-state",
     "runtime-services",
     "combat-effective-stats",
+    "combat-strike-policy",
+    "combat-enemy-policy",
     "classes-registry",
     "progression-class-unlock-rules",
     "pets-registry",
@@ -24,6 +26,7 @@
     "item-equipment",
     "progression-talents",
     "progression-achievements",
+    "event-rewards",
     "artifacts",
     "loot",
     "powerup-registry",
@@ -174,6 +177,26 @@
       ]
     },
     {
+      "id": "combat-strike-policy",
+      "path": "js/combat/strike-policy.js",
+      "domain": "combat/strike-policy",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundStrikePolicy"
+      ]
+    },
+    {
+      "id": "combat-enemy-policy",
+      "path": "js/combat/enemy-policy.js",
+      "domain": "combat/enemy-proc-and-followup-policy",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundEnemyPolicy"
+      ]
+    },
+    {
       "id": "classes-registry",
       "path": "js/classes/registry.js",
       "domain": "classes/registry",
@@ -256,6 +279,16 @@
       ]
     },
     {
+      "id": "event-rewards",
+      "path": "js/events/reward-policy.js",
+      "domain": "events/level-scaled-rewards-and-slot-policy",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundEventRewards"
+      ]
+    },
+    {
       "id": "artifacts",
       "path": "js/items/artifacts.js",
       "domain": "items/artifacts",
@@ -324,6 +357,8 @@
         "core-state",
         "runtime-services",
         "combat-effective-stats",
+        "combat-strike-policy",
+        "combat-enemy-policy",
         "classes-registry",
         "pets-registry",
         "board-registry",
@@ -332,6 +367,7 @@
         "item-equipment",
         "progression-talents",
         "progression-achievements",
+        "event-rewards",
         "artifacts",
         "loot",
         "powerup-registry",
