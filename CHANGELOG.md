@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.7
+
+### Final guardian identity correctness (#161)
+- Added `combat/guardians.js`, the single resolver joining Board selection, combat data and canonical semantic battle/board-marker paths for every miniboss and final guardian.
+- Routed live final/miniboss combat construction, Board 6's final override, the road HUD and the legacy portrait adapter through that resolver, removing the stale portrait map that could disagree with encounter identity.
+- Added deterministic Board 1–6 registry coverage plus Edge/WebView2 smoke assertions for Board 1, a resumed Board 3, and Board 6 across Normal/Nightmare/Hell.
+
 ## Beta 0.6.4.6
 
 ### Merchant reward transaction reliability (#160)

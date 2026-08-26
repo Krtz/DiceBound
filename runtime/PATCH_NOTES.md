@@ -1,9 +1,9 @@
-# Beta 0.6.4.6
+# Beta 0.6.4.7
 
-## Merchant reward transaction reliability (#160)
-- Merchant visits now own sold-offer state and an exclusive Legendary-choice transaction.
-- Sovereign Relic and Tyrant's Legendary Contract cannot reopen, refresh stock or start another choice while their first choice is pending.
-- If no Legendary remains eligible, the price is refunded but the visit's offer remains sold.
+## Final guardian identity correctness (#161)
+- Final guardians now resolve from one Board-owned identity covering combat data, special/weakness and semantic battle/board-marker artwork.
+- The runtime no longer lets the legacy portrait map independently override guardian art.
+- Deterministic coverage plus browser/native smoke assertions cover Board 1, resumed Board 3 and Board 6 in Normal, Nightmare and Hell.
 
 ---
 
