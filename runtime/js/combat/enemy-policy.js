@@ -24,11 +24,20 @@
     return Number(Math.min(0.90, boardNumber(board) * 0.05 + DEVIL_FLAME_MODE_BONUSES[modeId(mode)]).toFixed(2));
   }
 
+  // #156: standard Slimes scale their innate Radiation chance from Slimes
+  // defeated earlier in the current expedition. The combat/run owner supplies
+  // that persisted per-run count; this policy remains pure and deterministic.
+  function slimeRadiationChance(slimesKilledEarlierThisRun = 0) {
+    const kills = Math.max(0, Math.floor(Number(slimesKilledEarlierThisRun) || 0));
+    return Number(Math.min(1, kills * 0.05).toFixed(2));
+  }
+
   window.DiceboundEnemyPolicy = Object.freeze({
     apiVersion: 1,
     boardNumber,
     modeId,
     wolfEchoChance,
     standardDevilFlameChance,
+    slimeRadiationChance,
   });
 })();
