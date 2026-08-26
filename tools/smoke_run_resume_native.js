@@ -6,7 +6,15 @@ const fs=require("node:fs");
 const os=require("node:os");
 const path=require("node:path");
 
-const ROOT=path.join(__dirname,".."),EXE=process.env.DICEBOUND_NATIVE_EXE||path.join(ROOT,"wrapper-source","release","DiceBound.exe"),DEBUG_PORT=Number(process.env.DICEBOUND_NATIVE_DEBUG_PORT||19358);
+const ROOT=path.join(__dirname,".."),RELEASE_DIR=path.join(ROOT,"wrapper-source","release"),DEBUG_PORT=Number(process.env.DICEBOUND_NATIVE_DEBUG_PORT||19358);
+function newestReleaseExe(){
+  if(!fs.existsSync(RELEASE_DIR))return path.join(RELEASE_DIR,"DiceBound.exe");
+  return fs.readdirSync(RELEASE_DIR)
+    .filter(name=>/^Dicebound_Beta_[\d_]+\.exe$/i.test(name))
+    .map(name=>({path:path.join(RELEASE_DIR,name),mtime:fs.statSync(path.join(RELEASE_DIR,name)).mtimeMs}))
+    .sort((left,right)=>right.mtime-left.mtime)[0]?.path||path.join(RELEASE_DIR,"DiceBound.exe");
+}
+const EXE=process.env.DICEBOUND_NATIVE_EXE||newestReleaseExe();
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitForTargets(timeout=25000){const deadline=Date.now()+timeout;let last;while(Date.now()<deadline){try{const response=await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/list`);if(response.ok)return response.json();}catch(error){last=error;}await sleep(100);}throw last||new Error("Native WebView2 DevTools endpoint did not start");}
 async function connectNative(){
@@ -35,6 +43,8 @@ async function stop(instance){try{instance.socket.close();}catch(_){}if(instance
     first=await launch(localAppData);console.log("Native pass 1 loaded through WebView2; checking fresh Camp then writing deterministic checkpoint");
     const freshCamp=await first.evaluate(`(()=>{const ids=['campAchievementBtn','campTalentBtn','campMoonBtn'];return {objects:window.DiceboundCampProgressionTest?.campObjectIds?.()||null,absent:ids.every(id=>!document.getElementById(id))};})()`);
     assert.deepEqual(freshCamp.objects,[],"a fresh native career must not render Camp progression objects");assert.equal(freshCamp.absent,true,"fresh native Camp objects must be absent rather than invisible controls");
+    const friendsUi=await first.evaluate(`(()=>{const groups=window.DiceboundAchievementHierarchyTest.render(),camp=window.DiceboundCampHitTargetTest.inspect();return {groups,camp,classCount:Object.keys(window.DiceboundContent.classes).length};})()`);
+    assert.deepEqual(friendsUi.groups.map(group=>group.id),['top:roads','top:builds','top:legacy','top:secrets','top:hero-mastery']);assert.equal(friendsUi.groups.at(-1).subgroups,friendsUi.classCount,"native Hero Mastery must reserve one subgroup per playable class without revealing secrets");assert.ok(friendsUi.camp.filter(item=>item.present).every(item=>item.semantic&&item.focusable),"a visible native Camp interaction lost its semantic button/focus target");assert.ok(friendsUi.camp.filter(item=>item.present&&item.painted).every(item=>item.button.width<=item.painted.width+3&&item.button.height<=item.painted.height+3),`native Camp has a detached visual hit target: ${JSON.stringify(friendsUi.camp)}`);
     const combatBackgrounds=await first.evaluate(`(()=>{const normal=[1,2,3,4,5,6].map(board=>window.DiceboundCombatBackgrounds?.resolve(board,'normal')?.image||null),nightmare=window.DiceboundCombatBackgrounds?.resolve(3,'nightmare')||null,active=window.DiceboundCombatBackgrounds?.active()?.image||null,overlay=document.getElementById('combatOverlay');return {normal,nightmare,active,attribute:overlay?.dataset.combatBackground||null,style:overlay?.style.getPropertyValue('--db0635-combat-background-image')||null};})()`);
     assert.deepEqual(combatBackgrounds.normal,[1,2,3,4,5,6].map(board=>`assets/combat/backgrounds/board-${board}-normal.png`));assert.equal(combatBackgrounds.nightmare,null,"native Nightmare must not use an invented Normal background");assert.equal(combatBackgrounds.active,'assets/combat/backgrounds/board-1-normal.png');assert.equal(combatBackgrounds.attribute,'board-1-normal');assert.match(combatBackgrounds.style,/board-1-normal\.png/);
     const created=await first.evaluate(`(async()=>{window.DiceboundRng.seed('native-resume-seed');document.getElementById('campGoBtn').click();await new Promise(resolve=>setTimeout(resolve,240));const automaticSaved=!!window.DiceboundRunCheckpoint.load().checkpoint;const checkpoint=window.DiceboundRunResumeTest.snapshot();checkpoint.run.player.gold=654;checkpoint.run.player.position=Math.min(3,checkpoint.run.tiles.length-1);checkpoint.summary.gold=654;checkpoint.summary.tile=checkpoint.run.player.position+1;window.DiceboundRunCheckpoint.store(checkpoint);const expected=[window.DiceboundRng.random(),window.DiceboundRng.random(),window.DiceboundRng.random()];const version=window.DiceboundVersion.version,channel=window.DiceboundVersion.channel;const markerSources=[...document.querySelectorAll('.tile.enemy img.db-road-marker')].map(image=>image.getAttribute('src'));return {title:document.title,expectedTitle:'Dicebound: '+channel+' v'+version,readyLog:'Frontend ready handshake received for '+channel+' '+version+'.',storage:window.DiceboundStorage.diagnostics(),checkpoint,expected,automaticSaved,markerSources};})()`);
