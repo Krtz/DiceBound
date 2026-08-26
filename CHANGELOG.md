@@ -2,7 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
-## Unreleased — Beta 0.6.3.14
+## Unreleased — Beta 0.6.3.15
+
+### Authored equipment identity foundation (#128, #83, #110)
+- Imported the first ten approved modular equipment assets and introduced stable, persisted equipment identities with canonical slot, family, art, visual and relative class-weight metadata.
+- Base Intrinsics are now explicit and distinct from ordinary rolled item points; the Equipment and loot panels expose the actual identity, artwork and Intrinsic values.
+- Every class can still equip valid gear. Class preferences only alter relative generation likelihood.
+
+## Beta 0.6.3.14
 
 ### Nature Poison Vines presentation hotfix (#80)
 - Authored Nature Poison Vines now replaces the legacy generic Nature burst for a real elemental proc instead of layering over it.

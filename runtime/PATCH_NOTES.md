@@ -1,4 +1,15 @@
-# Unreleased — Beta 0.6.3.14
+# Unreleased — Beta 0.6.3.15
+
+## Authored equipment identity foundation (#128, #83, #110)
+- Imported the ten approved transparent modular equipment assets into their canonical slot-based runtime folders; the raw art handoff remains outside Git.
+- Ordinary generated equipment now persists a stable `equipmentId` selected by one extracted equipment-domain registry with slot, family, material, eligibility, visual rig/anchor, canonical art and roll-weight metadata.
+- Base Intrinsics are authoritative and separate from the ordinary generated point budget: the first pack adds its approved Attack, Defense, Crit, elemental-proc and Echo values.
+- Class preferences are relative roll weights only. Every class can still equip every valid item and stored equipment remains cross-class usable.
+- The Equipment panel and loot card resolve the identity-owned artwork and label Intrinsics explicitly. Existing untagged Beta gear is not rerolled or migrated.
+
+---
+
+# Beta 0.6.3.14
 
 ## Nature Poison Vines presentation hotfix (#80)
 - A real Nature elemental proc now replaces the retired generic Nature burst with the authored Poison Vines sequence instead of showing both effects.
