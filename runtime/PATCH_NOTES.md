@@ -1,3 +1,12 @@
+# Beta 0.6.4.6
+
+## Merchant reward transaction reliability (#160)
+- Merchant visits now own sold-offer state and an exclusive Legendary-choice transaction.
+- Sovereign Relic and Tyrant's Legendary Contract cannot reopen, refresh stock or start another choice while their first choice is pending.
+- If no Legendary remains eligible, the price is refunded but the visit's offer remains sold.
+
+---
+
 # Beta 0.6.4.5
 
 ## Class unlock feedback (#116)

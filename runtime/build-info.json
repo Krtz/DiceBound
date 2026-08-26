@@ -1,15 +1,15 @@
 {
   "assetCount": 362,
-  "browserContentHash": "a156976a4bd4d60b6fafb70025a89f3e0db9f457b2dd646b2ece0d7ff6923d91",
-  "buildId": "dicebound-0.6.4.5-dev-a156976a4bd4d60b",
+  "browserContentHash": "27344830e3d36034c7e3a2df818e7e1d2cc315e77e94d388852408ac7c9bc5a8",
+  "buildId": "dicebound-0.6.4.6-dev-27344830e3d36034",
   "channel": "Beta",
-  "contentFileCount": 397,
+  "contentFileCount": 398,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.4.5.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.4.6.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -39,6 +39,7 @@
     "js/progression/talents.js",
     "js/progression/achievements.js",
     "js/events/reward-policy.js",
+    "js/events/merchant-transaction.js",
     "js/items/artifacts.js",
     "js/items/loot.js",
     "js/powerups/registry.js",
@@ -46,9 +47,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "a156976a4bd4d60b6fafb70025a89f3e0db9f457b2dd646b2ece0d7ff6923d91",
+  "sourceHash": "27344830e3d36034c7e3a2df818e7e1d2cc315e77e94d388852408ac7c9bc5a8",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads",
-  "version": "0.6.4.5",
+  "version": "0.6.4.6",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
