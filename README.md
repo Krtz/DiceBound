@@ -14,7 +14,7 @@ DiceBound is a single-player RPG/board-game hybrid built around dice movement, e
 
 **Current source identity:** see `wrapper-source/config/project.json`; every merged implementation PR advances it to a unique four-component version.
 
-**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-08-26 it points at the verified **Beta 0.6.4.0** prerelease (`beta-0.6.4.0`). Treat the manifest itself as authoritative if this paragraph later ages.
+**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-08-27 it points at the verified **Beta 0.6.4.11** prerelease (`beta-0.6.4.11`). Treat the manifest itself as authoritative if this paragraph later ages.
 
 Every implementation PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. A source PR may advance development beyond the currently published launcher build; `distribution/latest.json` only advances after the exact release artifact has been built, verified and published.
 
@@ -105,7 +105,7 @@ python wrapper-source/tools/build_launcher.py
 For a production release, point `WEBVIEW2_LOADER_DLL` at the signed x64 loader from the pinned `Microsoft.Web.WebView2` SDK, set `WEBVIEW2_SDK_VERSION`, and run the root release command with the intended version/channel, for example:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.4.0 -Channel Beta -PythonExecutable python -RequireSignedLoader
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.4.11 -Channel Beta -PythonExecutable python -RequireSignedLoader
 ```
 
 The root script stamps and validates release identity, stages the exact runtime tree, requires a valid Microsoft-signed loader, builds the native wrapper, and records the resulting SHA-256, byte size, and build ID. Current production/release validation uses the official loader path; future public Authenticode signing is tracked separately in issue #11.
