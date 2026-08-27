@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.9
+
+### Memory Diagnostics export (#124)
+- Debug → Memory Diagnostics can now write/download its bounded time series as a plain `.log` without clearing it.
+- The file starts with generated time and truthful Version/Channel/Build-ID metadata, then contains the same canonical concise sample lines visible in Debug.
+- Added deterministic contract coverage for the shared platform save path and non-mutating exports, plus runtime smoke assertions for the new control and log text.
+
 ## Beta 0.6.4.8
 
 ### Chained combat target presentation (#73, #40)
