@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.13
+
+### Camp composition follow-up
+- Repositioned the existing Camp interaction groups from screenshot playtest feedback: Options moves to the top-left; Talents and Prestige rise into the sky; Trophy moves to the far-left foreground; Info takes the former Trophy area; Pet moves under Class; Chest takes the former Pet area; and the bonfire settles slightly lower.
+- Start Run, artwork sizes, gameplay, saves and semantic Camp hit-target synchronization are unchanged.
+
 ## Beta 0.6.4.12
 
 ### Astral Devourer Dragon battle art (#13)
