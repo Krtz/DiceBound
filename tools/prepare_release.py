@@ -54,6 +54,11 @@ def bootstrap_pr_materialization(root: Path, version: str, channel: str) -> None
     if version != "0.6.4.12" or channel != "Beta":
         return
 
+    # pull_request checks run on GitHub's synthetic merge commit. Reset to the
+    # real feature head first so the materialized commit remains linear and
+    # satisfies the repository's no-merge-commits branch rule.
+    subprocess.run(["git", "reset", "--hard", f"origin/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
+
     changelog_path = root / "CHANGELOG.md"
     changelog = changelog_path.read_text(encoding="utf-8")
     if "## Beta 0.6.4.12" not in changelog:
