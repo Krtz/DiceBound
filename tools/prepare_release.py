@@ -14,6 +14,7 @@ from dicebound_version import release_tag, require_supported_version
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOTSTRAP_BRANCH = "art/0.6.4.12-astral-devourer-dragon"
+MATERIALIZED_TAG = "tmp-materialized-0.6.4.12"
 
 
 def current_notes(patch_notes: str) -> str:
@@ -93,7 +94,7 @@ def bootstrap_pr_materialization(root: Path, version: str, channel: str) -> None
     subprocess.run(["git", "config", "user.email", "actions@users.noreply.github.com"], cwd=root, check=True)
     subprocess.run(["git", "add", "CHANGELOG.md", "runtime/PATCH_NOTES.md", "runtime/index.html", "runtime/js/version.js", "runtime/build-info.json", "runtime/build-manifest.json", "wrapper-source/config/project.json", "wrapper-source/wrappers/webview2/native-go/main.go", "tools/prepare_release.py"], cwd=root, check=True)
     subprocess.run(["git", "commit", "-m", "chore: materialize Beta 0.6.4.12 identity"], cwd=root, check=True)
-    subprocess.run(["git", "push", "origin", f"HEAD:refs/heads/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
+    subprocess.run(["git", "push", "origin", f"HEAD:refs/tags/{MATERIALIZED_TAG}"], cwd=root, check=True)
 
 
 def main() -> int:
