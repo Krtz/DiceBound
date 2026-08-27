@@ -74,7 +74,9 @@ void (async () => {
   assert.equal(downloads.length, 1);
   assert.match(downloads[0].filename, /^dicebound_memory_\d+\.log$/);
   assert.equal(downloads[0].mimeType, "text/plain;charset=utf-8");
-  assert.equal(downloads[0].text, api.formatLog(), "export must contain the same complete authoritative log text");
+  const generated = /^Generated: (.+)$/m.exec(downloads[0].text)?.[1];
+  assert.ok(generated, "export must include its generated timestamp");
+  assert.equal(downloads[0].text, api.formatLog(generated), "export must contain the same complete authoritative log text");
   assert.deepEqual(plain(api.samples()), beforeExport, "export must not mutate bounded in-memory samples");
   assert.equal(api.clear(), 0);
   assert.equal(api.samples().length, 0);

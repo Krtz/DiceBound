@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.4.10
+
+## Memory Diagnostics export validation hotfix (#124)
+
+- Made the deterministic `.log` export assertion compare the captured generated timestamp instead of creating a second timestamped export representation.
+
+---
+
 # Unreleased — Beta 0.6.4.9
 
 ## Memory Diagnostics export (#124)
