@@ -53,14 +53,22 @@ def bootstrap_hit_target_gate(root: Path) -> None:
     subprocess.run(["git", "reset", "--hard", f"origin/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
     css_path = root / "runtime/css/dicebound.css"
     css = css_path.read_text(encoding="utf-8")
-    ids = ["campOptionsBtn", "campTalentBtn", "campMoonBtn", "campAchievementBtn", "campInfoBtn", "campPetBtn", "campChestBtn"]
-    for camp_id in ids:
+
+    for camp_id in ("campOptionsBtn", "campTalentBtn", "campMoonBtn", "campAchievementBtn", "campPetBtn", "campChestBtn"):
         old = f"#startOverlay.camp-fullscreen #{camp_id}{{translate:"
         new = f"#startOverlay.camp-fullscreen #{camp_id}[data-db064-hit-target=\"painted-object\"]{{translate:"
         count = css.count(old)
         if count != 2:
             raise SystemExit(f"Expected two composition translate rules for {camp_id}, found {count}")
         css = css.replace(old, new)
+
+    info_large = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important;translate:10vw 25vh!important}'
+    info_large_new = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important}\n  html body #startOverlay.camp-fullscreen #campInfoBtn[data-db064-hit-target="painted-object"]{translate:10vw 25vh!important}'
+    info_narrow = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important;translate:9vw 23vh!important}'
+    info_narrow_new = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important}\n  html body #startOverlay.camp-fullscreen #campInfoBtn[data-db064-hit-target="painted-object"]{translate:9vw 23vh!important}'
+    if css.count(info_large) != 1 or css.count(info_narrow) != 1:
+        raise SystemExit("Expected one large and one narrow Info composition rule")
+    css = css.replace(info_large, info_large_new, 1).replace(info_narrow, info_narrow_new, 1)
     css_path.write_text(css, encoding="utf-8")
 
     subprocess.run([sys.executable, str(root / "tools/set_project_version.py"), "--version", "0.6.4.13", "--channel", "Beta"], cwd=root, check=True)
