@@ -144,6 +144,29 @@ def main() -> int:
 
     monolith_id = next((m["id"] for m in modules if m.get("status") == "monolith"), None)
     monolith_source = sources.get(str(monolith_id), "") if monolith_id else ""
+    camp_module = by_id.get("ui-camp")
+    camp_owner_ok = False
+    if not camp_module:
+        errors.append("Camp presentation owner ui-camp is missing from the runtime manifest")
+    else:
+        camp_owner_ok = (
+            camp_module.get("path") == "js/ui/camp.js"
+            and "assets" in (camp_module.get("requires") or [])
+            and "DiceboundCamp" in (camp_module.get("provides") or [])
+            and position.get("ui-camp", -1) < position.get(str(monolith_id), -1)
+        )
+        if not camp_owner_ok:
+            errors.append("ui-camp must provide DiceboundCamp, require assets, and load before the monolith")
+    for retired_camp_implementation in [
+        "function db064PaintedCampBounds(",
+        "function db064SyncCampHitTargets(",
+        "function db058SetArt(",
+    ]:
+        if retired_camp_implementation in monolith_source:
+            errors.append(
+                "retired Camp presentation implementation remains in dicebound.js: "
+                + retired_camp_implementation
+            )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -181,6 +204,10 @@ def main() -> int:
         "scriptLoadOrder": actual_scripts,
         "plannedDomains": planned_domains,
         "publicSymbolOwners": symbol_owner,
+        "campOwner": {
+            "id": "ui-camp",
+            "configured": camp_owner_ok,
+        },
         "monolith": {
             "id": monolith_id,
             "bytes": monolith_bytes,

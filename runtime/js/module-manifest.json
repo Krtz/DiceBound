@@ -37,6 +37,7 @@
     "loot",
     "powerup-registry",
     "powerup-borrowing",
+    "ui-camp",
     "dicebound-monolith"
   ],
   "modules": [
@@ -422,6 +423,18 @@
       ]
     },
     {
+      "id": "ui-camp",
+      "path": "js/ui/camp.js",
+      "domain": "ui/camp-presentation-layout-and-hit-target-lifecycle",
+      "status": "extracted",
+      "requires": [
+        "assets"
+      ],
+      "provides": [
+        "DiceboundCamp"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -457,7 +470,8 @@
         "powerup-registry",
         "progression-class-unlock-rules",
         "progression-class-unlock-feedback",
-        "powerup-borrowing"
+        "powerup-borrowing",
+        "ui-camp"
       ],
       "provides": []
     }

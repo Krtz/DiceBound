@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.4.14",
+  "version": "0.6.4.15",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -44,6 +44,7 @@
     "js/items/loot.js",
     "js/powerups/registry.js",
     "js/powerups/borrowing.js",
+    "js/ui/camp.js",
     "js/dicebound.js"
   ],
   "gameBundle": "js/dicebound.js",

@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.15
+
+### Camp presentation ownership (#185, #40)
+- Added `runtime/js/ui/camp.js` as the authoritative owner for Camp scene construction, approved wide/compact/stacked composition regimes, authored Camp-object rendering, and painted-object hit-target synchronization.
+- Moved the final Beta 0.6.4.13 Camp coordinate definitions into that owner and removed the duplicate external layout block.
+- Kept class, pet, progression, save, mode and gameplay owners in their existing domains; the compatibility monolith now supplies a narrow Camp view model/actions adapter only.
+
 ## Beta 0.6.4.14
 
 ### Monolith hygiene (#180, #40)
