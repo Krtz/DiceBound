@@ -22,6 +22,7 @@ INDEX_PATH = RUNTIME / "index.html"
 
 SCRIPT_RE = re.compile(r"<script\b[^>]*\bsrc=[\"']([^\"']+)[\"'][^>]*>\s*</script>", re.I)
 FUNCTION_RE = re.compile(r"(?:^|\n)\s*function\s+([A-Za-z_$][\w$]*)\s*\(", re.M)
+TOP_LEVEL_FUNCTION_RE = re.compile(r"^  (?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(", re.M)
 
 
 def assignment_patterns(symbol: str) -> tuple[re.Pattern[str], re.Pattern[str]]:
@@ -144,6 +145,7 @@ def main() -> int:
     monolith_id = next((m["id"] for m in modules if m.get("status") == "monolith"), None)
     monolith_source = sources.get(str(monolith_id), "") if monolith_id else ""
     duplicate_functions: list[str] = []
+    duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
     monolith_lines = 0
     if monolith_source:
@@ -151,10 +153,19 @@ def main() -> int:
         monolith_lines = monolith_source.count("\n") + 1
         counts = Counter(FUNCTION_RE.findall(monolith_source))
         duplicate_functions = sorted(name for name, count in counts.items() if count > 1)
+        top_level_counts = Counter(TOP_LEVEL_FUNCTION_RE.findall(monolith_source))
+        duplicate_top_level_functions = sorted(
+            name for name, count in top_level_counts.items() if count > 1
+        )
         if duplicate_functions:
             warnings.append(
                 "compatibility monolith still contains repeated named function declarations; "
                 "treat these as extraction targets, not as new module patterns"
+            )
+        if duplicate_top_level_functions:
+            errors.append(
+                "compatibility monolith contains duplicate top-level function declarations: "
+                + ", ".join(duplicate_top_level_functions)
             )
 
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
@@ -176,6 +187,8 @@ def main() -> int:
             "lines": monolith_lines,
             "duplicateNamedFunctionCount": len(duplicate_functions),
             "duplicateNamedFunctions": duplicate_functions,
+            "duplicateTopLevelFunctionCount": len(duplicate_top_level_functions),
+            "duplicateTopLevelFunctions": duplicate_top_level_functions,
         },
         "warnings": warnings,
         "errors": errors,
@@ -189,6 +202,10 @@ def main() -> int:
         if monolith_id:
             print(f"  monolith: {monolith_lines:,} lines / {monolith_bytes:,} bytes")
             print(f"  repeated named functions (advisory): {len(duplicate_functions)}")
+            print(
+                "  duplicate top-level function declarations (strict): "
+                f"{len(duplicate_top_level_functions)}"
+            )
         for warning in warnings:
             print(f"  WARNING: {warning}")
         if errors:
