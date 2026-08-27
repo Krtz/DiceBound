@@ -2,6 +2,11 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.10
+
+### Memory Diagnostics export validation hotfix (#124)
+- Fixed the export test to compare the captured export timestamp, eliminating a millisecond-boundary false failure without changing runtime export behavior.
+
 ## Beta 0.6.4.9
 
 ### Memory Diagnostics export (#124)
