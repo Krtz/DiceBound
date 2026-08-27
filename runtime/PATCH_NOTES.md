@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.9
+
+## Memory Diagnostics export (#124)
+
+- Debug → Memory Diagnostics now exports the complete bounded time series as a plain `.log` through the shared browser/native text-save contract.
+- The export includes generated time, Version, Channel and truthful Build ID availability, then uses the exact same canonical sample lines shown in Debug.
+- Exporting never clears, reorders or otherwise mutates the retained diagnostic samples.
+
+---
+
 # Beta 0.6.4.8
 
 ## Chained combat target presentation (#73, #40)

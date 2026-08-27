@@ -123,11 +123,45 @@
       status.textContent = `${recording ? "Recording every 15 seconds and lifecycle changes" : "Recording off"} · ${heapState}`;
     }
     if (output) {
-      output.textContent = samples.slice(-8).map(sample => {
-        const heapUsed = sample.heap.usedBytes === null ? "heap unavailable" : `${Math.round(sample.heap.usedBytes / 1048576)} MiB heap`;
-        return `${sample.timestamp} · ${sample.reason} · ${sample.state.screen} · Board ${sample.state.board ?? "—"} · ${heapUsed} · ${sample.dom.nodeCount ?? "—"} DOM nodes`;
-      }).join("\n");
+      output.textContent = samples.slice(-8).map(formatSampleLine).join("\n");
     }
+  }
+
+  // This is deliberately the one sample representation for both the Debug
+  // panel and exports. A player can therefore attach a complete log without
+  // losing the concise, directly comparable text they saw in the game.
+  function formatSampleLine(sample) {
+    const heapUsed = sample?.heap?.usedBytes === null || sample?.heap?.usedBytes === undefined
+      ? "heap unavailable"
+      : `${Math.round(sample.heap.usedBytes / 1048576)} MiB heap`;
+    return `${sample?.timestamp || "unavailable timestamp"} | ${sample?.reason || "manual"} | ${sample?.state?.screen || "unavailable screen"} | Board ${sample?.state?.board ?? "unavailable"} | ${heapUsed} | ${sample?.dom?.nodeCount ?? "unavailable"} DOM nodes`;
+  }
+
+  function exportIdentity() {
+    const latest = samples.at(-1)?.identity;
+    return latest || identityFor(safeContext());
+  }
+
+  function formatLog(exportedAt = new Date().toISOString()) {
+    const identity = exportIdentity();
+    const buildId = identity.buildIdAvailable ? identity.buildId : "unavailable (not exposed by this runtime)";
+    const header = [
+      "DiceBound Memory Diagnostics",
+      `Generated: ${String(exportedAt)}`,
+      `Version: ${identity.version}`,
+      `Channel: ${identity.channel}`,
+      `Build ID: ${buildId}`,
+      `Samples: ${samples.length}/${maxSamples}`,
+      "",
+    ];
+    return `${header.concat(samples.map(formatSampleLine)).join("\n")}\n`;
+  }
+
+  async function exportLog() {
+    const platform = globalThis.window?.DiceboundPlatform;
+    if (typeof platform?.downloadText !== "function") return false;
+    const filename = `dicebound_memory_${Date.now()}.log`;
+    return !!(await platform.downloadText(filename, formatLog(), "text/plain;charset=utf-8"));
   }
 
   function snapshot(reason = "manual") {
@@ -228,9 +262,11 @@
     const snapshotButton = root.getElementById("memoryDiagnosticsSnapshot");
     const recordToggle = root.getElementById("memoryDiagnosticsRecord");
     const clearButton = root.getElementById("memoryDiagnosticsClear");
+    const exportButton = root.getElementById("memoryDiagnosticsExport");
     snapshotButton?.addEventListener("click", () => snapshot("manual"));
     recordToggle?.addEventListener("change", event => setRecording(!!event.currentTarget?.checked));
     clearButton?.addEventListener("click", clear);
+    exportButton?.addEventListener("click", () => { void exportLog(); });
     panel.dataset.memoryDiagnosticsBound = "true";
     renderControls();
     return true;
@@ -268,6 +304,9 @@
     setRecording,
     clear,
     samples: () => Object.freeze([...samples]),
+    formatSampleLine,
+    formatLog,
+    exportLog,
     diagnostics,
     attachDebugControls,
   });

@@ -9,10 +9,17 @@ const plain = value => JSON.parse(JSON.stringify(value));
 const nodes = new Array(37).fill({});
 let intervals = 0;
 let clearedIntervals = 0;
+const downloads = [];
 const context = vm.createContext({
   window: {
     DiceboundVersion: Object.freeze({ version: "0.6.4.1", channel: "Beta" }),
     DiceboundAssets: Object.freeze({ sample: "assets/example.png", nested: Object.freeze({ other: "assets/other.png" }) }),
+    DiceboundPlatform: Object.freeze({
+      downloadText: async (filename, text, mimeType) => {
+        downloads.push({ filename, text, mimeType });
+        return true;
+      },
+    }),
   },
   performance: { memory: { usedJSHeapSize: 12 * 1048576, totalJSHeapSize: 20 * 1048576, jsHeapSizeLimit: 1024 * 1048576 } },
   document: {
@@ -57,7 +64,22 @@ assert.equal(clearedIntervals, 1, "stopping recording should clear its periodic 
 for (let index = 0; index < 14; index += 1) api.snapshot(`sample-${index}`);
 assert.equal(api.samples().length, 10, "memory diagnostics log must remain bounded");
 assert.equal(api.samples()[0].reason, "sample-4");
-assert.equal(api.clear(), 0);
-assert.equal(api.samples().length, 0);
+const beforeExport = plain(api.samples());
+const log = api.formatLog("2026-08-27T00:00:00.000Z");
+assert.match(log, /^DiceBound Memory Diagnostics\nGenerated: 2026-08-27T00:00:00.000Z\nVersion: 0.6.4.1\nChannel: Beta\nBuild ID: unavailable \(not exposed by this runtime\)\nSamples: 10\/10\n/);
+assert.match(log, /sample-4 \| Camp \| Board 1 \| 12 MiB heap \| 37 DOM nodes/);
 
-console.log("Memory diagnostics tests pass: bounded time-series, capability truthfulness, and off-by-default recording");
+void (async () => {
+  assert.equal(await api.exportLog(), true, "memory log export did not use the authoritative platform text-save contract");
+  assert.equal(downloads.length, 1);
+  assert.match(downloads[0].filename, /^dicebound_memory_\d+\.log$/);
+  assert.equal(downloads[0].mimeType, "text/plain;charset=utf-8");
+  assert.equal(downloads[0].text, api.formatLog(), "export must contain the same complete authoritative log text");
+  assert.deepEqual(plain(api.samples()), beforeExport, "export must not mutate bounded in-memory samples");
+  assert.equal(api.clear(), 0);
+  assert.equal(api.samples().length, 0);
+  console.log("Memory diagnostics tests pass: bounded time-series, capability truthfulness, off-by-default recording, and non-mutating export");
+})().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});
