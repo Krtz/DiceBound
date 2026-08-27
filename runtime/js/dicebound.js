@@ -10394,4 +10394,56 @@ function buildDiceboundHumanHarness235(){
     chainedKills:db0648ChainedTargetPresentationExercise
   });
 
+  /* #124: a test-only, real-runtime cycle for comparing like with like.
+     It intentionally records observations rather than declaring any node/heap
+     increase a leak. The temporary run is discarded through the existing
+     checkpoint owner before and after the exercise, and it is never exposed
+     through the player-facing Debug menu. */
+  const DB06411_MEMORY_STRESS_MAX_CYCLES=12;
+  const db06411NextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  function db06411ResetMemoryStressSession(){
+    dbRunClearCheckpoint();
+    currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;currentEncounterTurn=0;
+    combatBusy=false;gameStarted=false;rollLocked=true;$('combatOverlay')?.classList.add('hidden');
+    openStartScreen();
+  }
+  function db06411PrepareSingleEnemyCombat(){
+    const index=Math.min(1,Math.max(0,tiles.length-1)),base=enemyForPosition(index);
+    if(!base)throw new Error('Memory stress exercise could not resolve its ordinary-enemy fixture.');
+    tiles[index]={...(tiles[index]||{}),type:'enemy',cleared:false,enemyBase:{...base},enemyBases:undefined};
+    player.position=index;refreshBoardHighlights();
+    startCombat('normal');
+    if(!currentEnemy||currentEnemies.length!==1)throw new Error('Memory stress exercise did not enter a single ordinary-enemy combat.');
+  }
+  function db06411LeaveStressCombat(){
+    const tile=tiles[player.position];
+    if(tile){tile.cleared=true;tile.type='empty';delete tile.enemyBase;delete tile.enemyBases;refreshTile(player.position);}
+    $('combatOverlay')?.classList.add('hidden');
+    currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;currentEncounterTurn=0;combatBusy=false;
+    returnToRoad();
+  }
+  async function db06411RunMemoryStressCycles(requestedCycles=3){
+    const cycles=Math.max(1,Math.min(DB06411_MEMORY_STRESS_MAX_CYCLES,Math.floor(Number(requestedCycles)||3))),api=db064MemoryDiagnostics,wasRecording=api.diagnostics().recording,samples=[];
+    if(wasRecording)api.setRecording(false);
+    const capture=reason=>{const sample=api.snapshot(reason);samples.push(sample);return sample;};
+    try{
+      db06411ResetMemoryStressSession();await db06411NextFrame();capture('stress:camp:baseline');
+      for(let cycle=1;cycle<=cycles;cycle++){
+        startNewGame();await db06411NextFrame();capture(`stress:cycle-${cycle}:board:started`);
+        db06411PrepareSingleEnemyCombat();await db06411NextFrame();capture(`stress:cycle-${cycle}:combat:ordinary`);
+        db06411LeaveStressCombat();await db06411NextFrame();capture(`stress:cycle-${cycle}:board:after-combat`);
+        db06411ResetMemoryStressSession();await db06411NextFrame();capture(`stress:cycle-${cycle}:camp`);
+      }
+      const camp=api.summarizeEquivalentState(samples,{screen:'Camp',runActive:false}),board=api.summarizeEquivalentState(samples,{screen:'Board',runActive:true}),combat=api.summarizeEquivalentState(samples,{screen:'Combat',runActive:true});
+      return Object.freeze({cycles,samples:Object.freeze([...samples]),equivalent:Object.freeze({camp,board,combat}),notes:Object.freeze(['Equivalent-state deltas are measurements, not leak conclusions.','The test fixture uses one ordinary enemy per cycle and clears its temporary active-run checkpoint.'])});
+    }finally{
+      db06411ResetMemoryStressSession();
+      if(wasRecording)api.setRecording(true);
+    }
+  }
+  window.DiceboundMemoryDiagnosticsStressTest=Object.freeze({
+    maxCycles:DB06411_MEMORY_STRESS_MAX_CYCLES,
+    run:db06411RunMemoryStressCycles
+  });
+
 })();

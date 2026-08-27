@@ -40,7 +40,7 @@ var payload []byte
 var packagedWebView2Loader []byte
 
 const (
-    appTitle       = "Dicebound: Beta v0.6.4.10"
+    appTitle       = "Dicebound: Beta v0.6.4.11"
     className      = "DiceboundNativeWebView2Window"
     mutexName      = `Local\Dicebound_Beta_Native_Single_Instance`
     runtimeGUID    = `{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}`
@@ -252,7 +252,7 @@ func requestRuntimeRepair(reason string){
 }
 func watchFrontendReady(){
     select{
-    case <-frontendReady: logf("Frontend ready handshake received for Beta 0.6.4.10.")
+    case <-frontendReady: logf("Frontend ready handshake received for Beta 0.6.4.11.")
     case <-time.After(12*time.Second): requestRuntimeRepair("frontend did not initialize within 12 seconds")
     }
 }
@@ -411,11 +411,11 @@ func initWebView2(dataDir,userDataDir string) error {
 func main(){
     runtime.LockOSThread();defer runtime.UnlockOSThread()
     dataDir:=appDataDir();dataRoot=dataDir;for _,a:=range os.Args[1:]{if a=="--repair-attempted"{repairAttempted=true}};logPath=filepath.Join(dataDir,"logs","native-wrapper.log");windowFile=filepath.Join(dataDir,"wrapper","window.json");saveDir:=filepath.Join(dataDir,"saves");runtimeCacheDir=filepath.Join(dataDir,"runtime-cache");buildKey:=payloadHash()[:16];gameDir:=filepath.Join(runtimeCacheDir,"payloads",buildKey);userDataDir:=filepath.Join(runtimeCacheDir,"webview2",buildKey);_ = os.MkdirAll(saveDir,0755);_ = os.MkdirAll(runtimeCacheDir,0755)
-    logf("Starting Dicebound Beta 0.6.4.10 native WebView2 wrapper. payload=%s repairAttempted=%v",buildKey,repairAttempted);logf("data=%s saves=%s runtime-cache=%s game=%s webview2=%s",dataDir,saveDir,runtimeCacheDir,gameDir,userDataDir)
+    logf("Starting Dicebound Beta 0.6.4.11 native WebView2 wrapper. payload=%s repairAttempted=%v",buildKey,repairAttempted);logf("data=%s saves=%s runtime-cache=%s game=%s webview2=%s",dataDir,saveDir,runtimeCacheDir,gameDir,userDataDir)
     if len(os.Args)>1&&(os.Args[1]=="--open-save-folder"||os.Args[1]=="--open-app-data"||os.Args[1]=="--open-data-folder"){target:=saveDir;if os.Args[1]!="--open-save-folder"{target=dataDir};if err:=openFolder(target);err!=nil{fatal(err)};return}
     mutex,already,err:=createSingleInstance();if err!=nil{fatal(err)};defer procCloseHandle.Call(mutex);if already{focusExisting();return}
     if err:=preparePayload(gameDir);err!=nil{fatal(fmt.Errorf("could not prepare exact dist/browser payload: %w",err))}
-    base,err:=startServer(gameDir,saveDir);if err!=nil{fatal(fmt.Errorf("could not start local Dicebound host: %w",err))};serverBase=base;initURL=base+"/index.html?diceboundNative=1&v=0.6.4.10&build="+buildKey;logf("Serving exact browser payload at %s",base)
+    base,err:=startServer(gameDir,saveDir);if err!=nil{fatal(fmt.Errorf("could not start local Dicebound host: %w",err))};serverBase=base;initURL=base+"/index.html?diceboundNative=1&v=0.6.4.11&build="+buildKey;logf("Serving exact browser payload at %s",base)
     if hr,_,_:=procCoInitializeEx.Call(0,coinitApartmentThreaded);hresultFailed(hr)&&uint32(hr)!=0x80010106{fatal(fmt.Errorf("CoInitializeEx failed: 0x%08X",uint32(hr)))}else{defer procCoUninitialize.Call()}
     state,ok:=loadWindowState(windowFile);var e error;hwnd,e=createNativeWindow(state,ok);if e!=nil{fatal(e)};if ok{logf("Restoring native window %dx%d at %d,%d maximized=%v",state.Width,state.Height,state.X,state.Y,state.Maximized)}
     if err:=initWebView2(runtimeCacheDir,userDataDir);err!=nil{fatal(err)}

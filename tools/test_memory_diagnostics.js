@@ -69,6 +69,21 @@ const log = api.formatLog("2026-08-27T00:00:00.000Z");
 assert.match(log, /^DiceBound Memory Diagnostics\nGenerated: 2026-08-27T00:00:00.000Z\nVersion: 0.6.4.1\nChannel: Beta\nBuild ID: unavailable \(not exposed by this runtime\)\nSamples: 10\/10\n/);
 assert.match(log, /sample-4 \| Camp \| Board 1 \| 12 MiB heap \| 37 DOM nodes/);
 
+const equivalent = api.summarizeEquivalentState([
+  { timestamp: "baseline", reason: "camp:baseline", state: { screen: "Camp", runActive: false }, dom: { nodeCount: 100 }, heap: { usedBytes: 1000 } },
+  { timestamp: "ignored", reason: "board", state: { screen: "Board", runActive: true }, dom: { nodeCount: 140 }, heap: { usedBytes: 1500 } },
+  { timestamp: "cycle", reason: "camp:cycle-1", state: { screen: "Camp", runActive: false }, dom: { nodeCount: 103 }, heap: { usedBytes: 1100 } },
+], { screen: "Camp", runActive: false });
+assert.deepEqual(plain(equivalent.criteria), { screen: "Camp", runActive: false });
+assert.equal(equivalent.sampleCount, 2);
+assert.deepEqual(plain(equivalent.samples), [
+  { timestamp: "baseline", reason: "camp:baseline", domNodeCount: 100, heapUsedBytes: 1000 },
+  { timestamp: "cycle", reason: "camp:cycle-1", domNodeCount: 103, heapUsedBytes: 1100 },
+]);
+assert.deepEqual(plain(equivalent.domNodeDeltas), [0, 3]);
+assert.deepEqual(plain(equivalent.heapUsedByteDeltas), [0, 100]);
+assert.ok(Object.isFrozen(equivalent), "equivalent-state summaries must not be mutable diagnostic state");
+
 void (async () => {
   assert.equal(await api.exportLog(), true, "memory log export did not use the authoritative platform text-save contract");
   assert.equal(downloads.length, 1);

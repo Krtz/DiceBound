@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.11
+
+## Equivalent-state memory-cycle diagnostics (#124)
+
+- Added a test-only real-runtime Camp → Board → ordinary combat → Board → Camp cycle for comparable memory samples; the temporary active run is cleared before and after the exercise.
+- Memory Diagnostics now summarizes DOM and available heap deltas only among samples with the same lifecycle state. These are measurements, not automatic leak verdicts.
+- Added deterministic summary coverage and Edge/WebView2 smoke assertions for three complete cycles.
+
+---
+
 # Unreleased — Beta 0.6.4.10
 
 ## Memory Diagnostics export validation hotfix (#124)

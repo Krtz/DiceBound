@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.11
+
+### Equivalent-state memory-cycle diagnostics (#124)
+- Added a test-only real-runtime Camp -> Board -> ordinary combat -> Board -> Camp cycle that clears its temporary active-run checkpoint before and after the exercise.
+- Memory Diagnostics now produces one canonical equivalent-state summary with Camp/Board/Combat DOM and available heap deltas relative to each state’s baseline; it records evidence and does not label a change a leak.
+- Added deterministic summary coverage plus Edge/WebView2 smoke assertions for three complete cycles.
+
 ## Beta 0.6.4.10
 
 ### Memory Diagnostics export validation hotfix (#124)
