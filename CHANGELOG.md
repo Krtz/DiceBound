@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.14
+
+### Monolith hygiene (#180, #40)
+- Removed 50 provably unreachable earlier top-level function declarations from `runtime/js/dicebound.js`; the JavaScript runtime already initialized the last same-scope declaration before any game code could run.
+- Kept every authoritative final declaration and all later wrapper/adaptor chains, so gameplay, RNG order, saves and Camp behavior are unchanged.
+- Runtime architecture validation now fails if duplicate top-level function declarations are reintroduced; repeated nested test/helper names remain advisory because they are independent scopes.
+
 ## Beta 0.6.4.13
 
 ### Camp composition follow-up

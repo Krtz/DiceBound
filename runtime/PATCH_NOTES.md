@@ -1,3 +1,12 @@
+# Unreleased — Beta 0.6.4.14
+
+## Monolith hygiene (#180, #40)
+
+- Removed 50 provably unreachable earlier top-level function declarations from the compatibility monolith, leaving the existing authoritative final declarations and wrapper chains intact.
+- Added a strict architecture guard against new duplicate top-level declarations; no gameplay, RNG, save or visual behavior changes are intended.
+
+---
+
 # Unreleased — Beta 0.6.4.13
 
 ## Camp composition follow-up
