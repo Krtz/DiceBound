@@ -4,15 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 from dicebound_version import release_tag, require_supported_version
 
+
 ROOT = Path(__file__).resolve().parents[1]
-BOOTSTRAP_BRANCH = "ui/0.6.4.13-camp-composition-pass"
 
 
 def current_notes(patch_notes: str) -> str:
@@ -47,41 +44,6 @@ def derive(version: str, channel: str, save_schema: int, notes: str) -> tuple[di
     return spec, rendered
 
 
-def bootstrap_hit_target_gate(root: Path) -> None:
-    if os.environ.get("GITHUB_ACTIONS") != "true" or os.environ.get("GITHUB_HEAD_REF") != BOOTSTRAP_BRANCH:
-        return
-    subprocess.run(["git", "reset", "--hard", f"origin/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
-    css_path = root / "runtime/css/dicebound.css"
-    css = css_path.read_text(encoding="utf-8")
-
-    for camp_id in ("campOptionsBtn", "campTalentBtn", "campMoonBtn", "campAchievementBtn", "campPetBtn", "campChestBtn"):
-        old = f"#startOverlay.camp-fullscreen #{camp_id}{{translate:"
-        new = f"#startOverlay.camp-fullscreen #{camp_id}[data-db064-hit-target=\"painted-object\"]{{translate:"
-        count = css.count(old)
-        if count != 2:
-            raise SystemExit(f"Expected two composition translate rules for {camp_id}, found {count}")
-        css = css.replace(old, new)
-
-    info_large = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important;translate:10vw 25vh!important}'
-    info_large_new = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important}\n  html body #startOverlay.camp-fullscreen #campInfoBtn[data-db064-hit-target="painted-object"]{translate:10vw 25vh!important}'
-    info_narrow = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important;translate:9vw 23vh!important}'
-    info_narrow_new = 'html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important}\n  html body #startOverlay.camp-fullscreen #campInfoBtn[data-db064-hit-target="painted-object"]{translate:9vw 23vh!important}'
-    if css.count(info_large) != 1 or css.count(info_narrow) != 1:
-        raise SystemExit("Expected one large and one narrow Info composition rule")
-    css = css.replace(info_large, info_large_new, 1).replace(info_narrow, info_narrow_new, 1)
-    css_path.write_text(css, encoding="utf-8")
-
-    subprocess.run([sys.executable, str(root / "tools/set_project_version.py"), "--version", "0.6.4.13", "--channel", "Beta"], cwd=root, check=True)
-    subprocess.run([sys.executable, str(root / "tools/refresh_runtime_manifest.py"), "--version", "0.6.4.13", "--channel", "Beta", "--development-state", "Unreleased"], cwd=root, check=True)
-    subprocess.run(["git", "checkout", "origin/main", "--", "tools/prepare_release.py"], cwd=root, check=True)
-    subprocess.run(["git", "config", "user.name", "DiceBound CI materializer"], cwd=root, check=True)
-    subprocess.run(["git", "config", "user.email", "actions@users.noreply.github.com"], cwd=root, check=True)
-    subprocess.run(["git", "add", "runtime/css/dicebound.css", "runtime/build-info.json", "runtime/build-manifest.json", "tools/prepare_release.py"], cwd=root, check=True)
-    subprocess.run(["git", "commit", "-m", "fix: move Camp objects after hit-target synchronization"], cwd=root, check=True)
-    subprocess.run(["git", "tag", "-f", "tmp-materialized-0.6.4.13"], cwd=root, check=True)
-    subprocess.run(["git", "push", "origin", "refs/tags/tmp-materialized-0.6.4.13", "--force"], cwd=root, check=True)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
@@ -90,8 +52,8 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default=Path("wrapper-source/release/generated"))
     parser.add_argument("--github-output", type=Path)
     args = parser.parse_args()
+
     root = args.root.resolve()
-    bootstrap_hit_target_gate(root)
     project = json.loads((root / "wrapper-source/config/project.json").read_text(encoding="utf-8"))
     version = require_supported_version(args.version or project["version"])
     channel = str(args.channel or project["channel"]).strip()
@@ -99,12 +61,14 @@ def main() -> int:
         raise SystemExit("release channel must not be empty")
     notes = current_notes((root / "runtime/PATCH_NOTES.md").read_text(encoding="utf-8"))
     spec, rendered_notes = derive(version, channel, int(project["saveSchemaVersion"]), notes)
+
     output_dir = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     spec_path = output_dir / "release-spec.json"
     notes_path = output_dir / "release-notes.md"
     spec_path.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
     notes_path.write_text(rendered_notes, encoding="utf-8")
+
     relative = lambda path: path.relative_to(root).as_posix()
     outputs = {
         "version": version,
@@ -121,6 +85,7 @@ def main() -> int:
                 stream.write(f"{key}={value}\n")
     print(json.dumps({**outputs, "spec": spec}, indent=2))
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

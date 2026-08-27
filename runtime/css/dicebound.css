@@ -1200,24 +1200,26 @@ body[data-hud-flow="stacked"] .sidebar>.log-card{grid-column:1/-1}
    Keep existing authored object sizes, semantic controls and hit-target sync;
    these desktop-only offsets spread the painted campsite back across the scene. */
 @media (min-width:1360px) and (min-height:650px){
-  html body #startOverlay.camp-fullscreen #campOptionsBtn{translate:-3vw -30vh!important}
-  html body #startOverlay.camp-fullscreen #campTalentBtn{translate:0 -27vh!important}
-  html body #startOverlay.camp-fullscreen #campMoonBtn{translate:0 -27vh!important}
-  html body #startOverlay.camp-fullscreen #campAchievementBtn{translate:-35vw 0!important}
-  html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important;translate:10vw 25vh!important}
-  html body #startOverlay.camp-fullscreen #campPetBtn{translate:-31vw -4vh!important}
-  html body #startOverlay.camp-fullscreen #campChestBtn{translate:-22vw 8vh!important}
+  html body #startOverlay.camp-fullscreen #campOptionsBtn[data-db064-hit-target="painted-object"]{translate:-3vw -30vh!important}
+  html body #startOverlay.camp-fullscreen #campTalentBtn[data-db064-hit-target="painted-object"]{translate:0 -27vh!important}
+  html body #startOverlay.camp-fullscreen #campMoonBtn[data-db064-hit-target="painted-object"]{translate:0 -27vh!important}
+  html body #startOverlay.camp-fullscreen #campAchievementBtn[data-db064-hit-target="painted-object"]{translate:-35vw 0!important}
+  html body #startOverlay.camp-fullscreen #campInfoBtn{left:45vw!important}
+  html body #startOverlay.camp-fullscreen #campInfoBtn[data-db064-hit-target="painted-object"]{translate:10vw 25vh!important}
+  html body #startOverlay.camp-fullscreen #campPetBtn[data-db064-hit-target="painted-object"]{translate:-31vw -4vh!important}
+  html body #startOverlay.camp-fullscreen #campChestBtn[data-db064-hit-target="painted-object"]{translate:-22vw 8vh!important}
   html body #startOverlay.camp-fullscreen .camp-bonfire{translate:0 4vh!important}
   html body #startOverlay.camp-fullscreen #campGoBtn{right:-5vw!important}
 }
 @media (min-width:1000px) and (max-width:1359px) and (min-height:650px){
-  html body #startOverlay.camp-fullscreen #campOptionsBtn{translate:-2.5vw -28vh!important}
-  html body #startOverlay.camp-fullscreen #campTalentBtn{translate:0 -25vh!important}
-  html body #startOverlay.camp-fullscreen #campMoonBtn{translate:0 -25vh!important}
-  html body #startOverlay.camp-fullscreen #campAchievementBtn{translate:-32vw 0!important}
-  html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important;translate:9vw 23vh!important}
-  html body #startOverlay.camp-fullscreen #campPetBtn{translate:-28vw -4vh!important}
-  html body #startOverlay.camp-fullscreen #campChestBtn{translate:-20vw 7vh!important}
+  html body #startOverlay.camp-fullscreen #campOptionsBtn[data-db064-hit-target="painted-object"]{translate:-2.5vw -28vh!important}
+  html body #startOverlay.camp-fullscreen #campTalentBtn[data-db064-hit-target="painted-object"]{translate:0 -25vh!important}
+  html body #startOverlay.camp-fullscreen #campMoonBtn[data-db064-hit-target="painted-object"]{translate:0 -25vh!important}
+  html body #startOverlay.camp-fullscreen #campAchievementBtn[data-db064-hit-target="painted-object"]{translate:-32vw 0!important}
+  html body #startOverlay.camp-fullscreen #campInfoBtn{left:43vw!important}
+  html body #startOverlay.camp-fullscreen #campInfoBtn[data-db064-hit-target="painted-object"]{translate:9vw 23vh!important}
+  html body #startOverlay.camp-fullscreen #campPetBtn[data-db064-hit-target="painted-object"]{translate:-28vw -4vh!important}
+  html body #startOverlay.camp-fullscreen #campChestBtn[data-db064-hit-target="painted-object"]{translate:-20vw 7vh!important}
   html body #startOverlay.camp-fullscreen .camp-bonfire{translate:0 4vh!important}
   html body #startOverlay.camp-fullscreen #campGoBtn{right:-6vw!important}
 }
