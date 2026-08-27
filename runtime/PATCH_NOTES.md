@@ -1,3 +1,12 @@
+# Unreleased — Beta 0.6.4.13
+
+## Camp composition follow-up
+
+- Spread the existing Camp objects back across the authored scene from screenshot playtest feedback: Options top-left, Talents/Prestige much higher, Trophy far left, Info into the former Trophy area, Pet under Class, Chest into the former Pet area, and the bonfire slightly lower.
+- Start Run and all gameplay, save, interaction and hit-target behavior remain unchanged.
+
+---
+
 # Unreleased — Beta 0.6.4.12
 
 ## Astral Devourer Dragon battle art (#13)
