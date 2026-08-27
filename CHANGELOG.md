@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.12
+
+### Astral Devourer Dragon battle art (#13)
+- Replaced the incorrect canonical Board 2 final-guardian portrait with the approved Astral Devourer Dragon artwork.
+- Kept the authoritative #169 guardian identity/resolver unchanged; this is an art-only correction with no combat, RNG, balance or save changes.
+
 ## Beta 0.6.4.11
 
 ### Equivalent-state memory-cycle diagnostics (#124)

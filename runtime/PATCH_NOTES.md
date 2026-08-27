@@ -1,3 +1,12 @@
+# Unreleased — Beta 0.6.4.12
+
+## Astral Devourer Dragon battle art (#13)
+
+- Replaced the incorrect canonical Board 2 final-guardian portrait with the approved Astral Devourer Dragon artwork.
+- The existing authoritative guardian resolver remains unchanged; gameplay, RNG, balance and save behavior are unaffected.
+
+---
+
 # Unreleased — Beta 0.6.4.11
 
 ## Equivalent-state memory-cycle diagnostics (#124)
