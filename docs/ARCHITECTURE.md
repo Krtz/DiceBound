@@ -73,6 +73,10 @@ The audit syntax-checks the core JavaScript, loads/evaluates the asset registry,
 
 `runtime/js/combat/vfx.js` is the authoritative owner for authored combat-effect DOM presentation. It resolves the canonical Nature Poison Vines frame sequence and Donut Rain overlay, manages their bounded DOM lifetime, and scopes suppression of Nature's retired generic burst to the real authored Nature proc. The compatibility monolith supplies only live combat-local accessors and installs the existing post-resolution hooks; combat mechanics retain targets, damage, turns and RNG ownership.
 
+### Camp presentation ownership
+
+`runtime/js/ui/camp.js` is the authoritative Camp presentation owner. It builds the semantic Camp scene, renders current class/pet/progression presentation supplied by live domain owners, owns the approved wide/compact/stacked layout regimes, renders authored Camp objects, and keeps each semantic button's hit target aligned with its visible painted object. The compatibility monolith supplies a narrow configured view model and action callbacks only; it retains class, pet, progression, save, mode and gameplay ownership. New Camp placement work belongs in `ui/camp.js`, not in another late monolith style patch.
+
 ## Build identity
 
 The exact shipped Beta 0.6 build identity is preserved under `docs/releases/beta-0.6/`.

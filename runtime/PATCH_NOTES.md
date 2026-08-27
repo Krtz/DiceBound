@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.15
+
+## Camp presentation ownership (#185, #40)
+
+- Camp scene construction, current presentation refresh, approved responsive composition, authored Camp-object art and painted-object hit targets now have one owner: `runtime/js/ui/camp.js`.
+- The approved Beta 0.6.4.13 visual arrangement is preserved while its final desktop coordinate definitions move out of the generic stylesheet and into the Camp owner.
+- Class, pet, progression, save, mode and gameplay behavior remain in their existing domain owners; no balance, RNG or save semantics change.
+
+---
+
 # Unreleased — Beta 0.6.4.14
 
 ## Monolith hygiene (#180, #40)

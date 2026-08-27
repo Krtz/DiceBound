@@ -3950,75 +3950,22 @@
   function campSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
   function setCampMode(button,on,labelOn,labelOff){if(!button)return;button.classList.toggle('active',!!on);const sub=button.querySelector('.camp-sub');if(sub)sub.textContent=on?labelOn:labelOff;}
 
-  function v110CloseCampPanels(){document.querySelectorAll('.camp-panel').forEach(p=>p.classList.remove('active'));}
-  function v110OpenCampPanel(id){v110EnsureCampScene();v110CloseCampPanels();const panel=$(id);if(panel)panel.classList.add('active');}
-
-  function v110EnsureCampScene(){
-    const modal=$("startOverlay")?.querySelector('.start-modal');if(!modal||$("campScene"))return;
-    modal.classList.add('legacy-camp-modal');
-    const oldHub=$("betweenRunsHub");if(oldHub)oldHub.remove();
-    const art=modal.querySelector('.start-art');if(art)art.remove();
-    const title=modal.querySelector('h2');if(title)title.remove();
-    const subtitle=modal.querySelector('.subtitle');if(subtitle)subtitle.innerHTML='Between runs, gather at camp. Assign talents, swap companions, inspect heirlooms, toggle difficulties and then head back onto the road.';
-    $("nightmareBox")?.classList.add('camp-hidden');$("hellBox")?.classList.add('camp-hidden');$("startHeirloom")?.classList.add('camp-hidden');
-    const classGrid=$("classGrid"),startBtn=$("startBtn");if(classGrid)classGrid.classList.add('camp-hidden');if(startBtn)startBtn.classList.add('camp-hidden');
-    const help=document.createElement('div');help.className='camp-help';help.textContent='Click the camp features to open their popups. Your selected class and companion remain visible in camp so the hub feels like a literal place between expeditions.';
-    modal.insertBefore(help,classGrid||startBtn||modal.lastElementChild);
-    const scene=document.createElement('div');scene.id='campScene';scene.className='camp-scene';
-    scene.innerHTML=`<div class="camp-topline"><span id="campLegacyLine">${campSummaryText()}</span><span id="campPetLine"></span></div>
-      <div class="camp-sky"><div class="camp-stars"><button class="camp-spot camp-art-button talent-art-button" id="campTalentBtn"><div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${window.DiceboundAssets?.resolveCampObject?.('talentStar')?.image || 'assets/camp/objects/talent-star.png'}" alt="${window.DiceboundAssets?.resolveCampObject?.('talentStar')?.alt || 'Northern star of talents'}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div></button><button class="camp-spot camp-art-button info-art-button" id="campInfoBtn"><div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-info-art" src="${window.DiceboundAssets?.resolveCampObject?.('infoBooks')?.image || 'assets/camp/objects/info-books.png'}" alt="${window.DiceboundAssets?.resolveCampObject?.('infoBooks')?.alt || 'Stack of books and scrolls'}"></div><div class="camp-label">Info</div><div class="camp-sub">Rules & systems</div></button><button class="camp-spot" id="campMoonBtn"><div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige & reset</div></button></div><div class="camp-stars"><button class="camp-spot nightmare-spot" id="campNightmareBtn"><div class="camp-icon">🕴️</div><div class="camp-label">Nightmare</div><div class="camp-sub">Locked</div></button><button class="camp-spot hell-spot" id="campHellBtn"><div class="camp-icon">😈🤝🕴️</div><div class="camp-label">Hell</div><div class="camp-sub">Locked</div></button></div></div>
-      <div class="camp-ground"><button class="camp-spot" id="campPetBtn"><div class="camp-icon" id="campPetIcon">🎲</div><div class="camp-label">Pet</div><div class="camp-sub">Choose companion</div></button><button class="camp-spot class-picker" id="campClassBtn"><div class="camp-icon" id="campClassIcon">🏹</div><div class="camp-label">Class</div><div class="camp-sub" id="campClassSub">Select class</div></button><div class="camp-bonfire" aria-label="Bonfire"><div class="camp-icon camp-art-frame"><img class="camp-art camp-bonfire-art" src="${window.DiceboundAssets?.resolveCampObject?.('bonfire')?.image || 'assets/camp/objects/bonfire.png'}" alt="${window.DiceboundAssets?.resolveCampObject?.('bonfire')?.alt || 'Bonfire'}"></div></div><button class="camp-spot go-spot camp-journey-control" id="campGoBtn" aria-label="Start next run" title="Start next run"><div class="camp-journey-art-frame"><img class="camp-journey-art" src="${window.DiceboundAssets?.resolveCampObject?.('roadCaravan')?.image || 'assets/camp/objects/road-caravan.png'}" alt="${window.DiceboundAssets?.resolveCampObject?.('roadCaravan')?.alt || 'Horse pulling a modern caravan'}"></div><div class="camp-journey-label">Start run</div></button><button class="camp-spot" id="campChestBtn"><div class="camp-icon">🪙📦</div><div class="camp-label">Chest</div><div class="camp-sub">Heirlooms & set</div></button><button class="camp-spot" id="campAchievementBtn"><div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div></button></div>
-      <div class="camp-popup-layer" id="campPopupLayer">
-        <div class="camp-panel" id="campClassPanel"><div class="camp-panel-head"><h3>Classes</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div class="camp-note-line">Select a class for the next expedition. When you return to camp, the figure in the clearing updates to the new choice.</div><div id="campClassHost"></div></div>
-        <div class="camp-panel" id="campChestPanel"><div class="camp-panel-head"><h3>Heirlooms & Impossible Road</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div id="campHeirloomSummary"></div><div id="campChestSet"></div></div>
-        <div class="camp-panel" id="campMoonPanel"><div class="camp-panel-head"><h3>Prestige & reset progress</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div class="camp-heirloom-card"><strong>Prestige summary</strong><br><span id="campPrestigeSummary"></span></div><div class="camp-moon-actions"><button class="small-btn" id="campOpenTalentPrestigeBtn">Open talent / Prestige screen</button><button class="small-btn danger" id="campResetProgressBtn">Reset all progress</button></div><div class="camp-note-line">Prestige still happens through the Talent screen, but the moon is now the obvious place to manage that meta-progression and to wipe the save if you really want to.</div></div>
-      </div>`;
-    help.after(scene);
-    if(classGrid)$("campClassHost").appendChild(classGrid);
-    if(startBtn)startBtn.remove();
-
-    $("campClassBtn").addEventListener('click',()=>{classGrid?.classList.remove('camp-hidden');v22OpenCampPanel('campClassPanel');});
-    $("campChestBtn").addEventListener('click',()=>{v22OpenCampPanel('campChestPanel');renderEquipment();});
-    $("campMoonBtn").addEventListener('click',()=>{v22OpenCampPanel('campMoonPanel');v110UpdateCampScene();});
-    $("campTalentBtn").addEventListener('click',()=>openTalentTree('startOverlay'));
-    $("campInfoBtn").addEventListener('click',openInfo);
-    $("campAchievementBtn").addEventListener('click',()=>{renderAchievements();$("achievementOverlay").classList.remove('hidden');});
-    $("campPetBtn").addEventListener('click',()=>{renderPetCollection();$("petCollectionOverlay").classList.remove('hidden');});
-    $("campGoBtn").addEventListener('click',()=>{$("startOverlay").classList.add('hidden');v110CloseCampPanels();startNewGame();});
-    $("campNightmareBtn").addEventListener('click',()=>{if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;renderClassChoices();v110UpdateCampScene();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);});
-    $("campHellBtn").addEventListener('click',()=>{if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;renderClassChoices();v110UpdateCampScene();showToast(`Hell ${hellMode?'enabled':'disabled'}`);});
-    $("campOpenTalentPrestigeBtn").addEventListener('click',()=>openTalentTree('startOverlay'));
-    $("campResetProgressBtn").addEventListener('click',async()=>{if(await diceboundConfirm('Reset all Dicebound progress, achievements, pets, heirlooms and unlocks? This cannot be undone.',{title:'Reset ALL Dicebound progress?',confirmLabel:'Reset everything',danger:true})){window.DiceboundSave?.reset();window.DiceboundPlatform?.reload();}});
-    scene.querySelectorAll('[data-close-camp-panel]').forEach(btn=>btn.addEventListener('click',v110CloseCampPanels));
-  }
-
-  function v110UpdateCampScene(){
-    if(!$("campScene"))return;
-    const cls=CLASSES[selectedClassId]||CLASSES.ranger;const pet=PETS[meta.activePet]||PETS.neutral;const petState=meta.pets?.[meta.activePet]||meta.pets?.neutral||{level:1};
-    const classIcon=$("campClassIcon");if(classIcon)classIcon.textContent=cls.icon;
-    const classSub=$("campClassSub");if(classSub)classSub.textContent=`${cls.name} selected`;
-    const petIcon=$("campPetIcon");if(petIcon)petIcon.textContent=pet.icon;
-    const petLine=$("campPetLine");if(petLine)petLine.textContent=`${pet.icon} ${pet.name} · Bond Lv ${petState.level}`;
-    const legacyLine=$("campLegacyLine");if(legacyLine)legacyLine.textContent=campSummaryText();
-    const prestige=$("campPrestigeSummary");if(prestige)prestige.textContent=`${prestigeSummary()}  |  ${allocatedTalentPoints()+(meta.points||0)} total talent points currently available for 9-point Prestige conversion.`;
-    if($("campHeirloomSummary"))$("campHeirloomSummary").innerHTML=campHeirloomHtml();
-    if($("campChestSet"))$("campChestSet").innerHTML=impossibleRoadPanelHtml((meta.heirlooms||[]).filter(i=>i?.setName==="Impossible Road").length);
-    const nightmareBtn=$("campNightmareBtn"),hellBtn=$("campHellBtn");
-    if(nightmareBtn){nightmareBtn.style.visibility=meta.nightmareUnlocked?'visible':'hidden';setCampMode(nightmareBtn,nightmareMode,'Nightmare ON','Nightmare OFF');}
-    if(hellBtn){hellBtn.style.visibility=meta.hellUnlocked?'visible':'hidden';setCampMode(hellBtn,hellMode,'Hell ON','Hell OFF');}
-  }
-
-  // Retire the old compact v1.9 hub in favour of the literal camp scene.
-  v19EnsureHub=function(){}; v19UpdateHub=function(){};
+  // Camp DOM/presentation ownership moved to runtime/js/ui/camp.js.  These
+  // compatibility-shaped callers preserve current lifecycle order only.
+  function v110CloseCampPanels(){return window.DiceboundCamp?.closePanels();}
+  function v110OpenCampPanel(id){return window.DiceboundCamp?.openPanel(id);}
+  function v110EnsureCampScene(){return window.DiceboundCamp?.ensure();}
+  function v110UpdateCampScene(){return window.DiceboundCamp?.refresh();}
 
   const renderClassChoicesV110Base=renderClassChoices;
-  renderClassChoices=function(){renderClassChoicesV110Base();const alchemist=[...$("classGrid").querySelectorAll('.class-card')].find(x=>x.querySelector('.class-name')?.textContent==="Alchemist");if(alchemist){let counter=alchemist.querySelector('.v18-potion-counter');if(!counter){counter=document.createElement('span');counter.className='class-stats v18-potion-counter';alchemist.appendChild(counter);}counter.textContent=`Potion uses: ${Math.floor(meta.stats?.potionsUsed||0)} / ${alchemistRequirement}`;}v110EnsureCampScene();v110UpdateCampScene();};
+  renderClassChoices=function(){const result=renderClassChoicesV110Base();v110EnsureCampScene();v110UpdateCampScene();return result;};
   const openStartScreenV110Base=openStartScreen;
-  openStartScreen=function(){const r=openStartScreenV110Base();v110EnsureCampScene();v110UpdateCampScene();return r;};
+  openStartScreen=function(){const result=openStartScreenV110Base();v110EnsureCampScene();v110UpdateCampScene();return result;};
   const updateMetaUIV110Base=updateMetaUI;
-  updateMetaUI=function(){updateMetaUIV110Base();v110EnsureCampScene();v110UpdateCampScene();};
+  updateMetaUI=function(){const result=updateMetaUIV110Base();v110EnsureCampScene();v110UpdateCampScene();return result;};
 
-  // Initial sync if the start screen is already in the DOM.
+  // The module is configured after all legacy action owners have initialized;
+  // this timer deliberately runs after that deterministic bootstrap boundary.
   setTimeout(()=>{v110EnsureCampScene();v110UpdateCampScene();renderEquipment();},0);
 })();
 
@@ -4298,57 +4245,56 @@
   function v22ImpossibleRoadPanelHtml(count){return `<strong>🌈 Impossible Road set</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${v22ImpossibleRoadTierData().map(t=>`<div class="set-tier ${count>=t.pieces?'active':''}"><b>${t.pieces}-piece bonus</b><span>${t.text}</span></div>`).join('')}</div>`;}
   function v22CampSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
   function v22CampHeirloomHtml(){const hs=(meta.heirlooms||[]),capacity=getHeirloomSlots();return hs.length?`<div class="camp-heirloom-card"><strong>Bound heirlooms (${hs.length}/${capacity})</strong><br>${hs.map(h=>`<strong>${h.icon} ${h.name}</strong> — ${formatBonuses(h)}`).join('<br>')}</div>`:`<div class="camp-heirloom-card">No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?'':'s'}.</div>`;}
-  function v22OpenCampPanel(id){document.querySelectorAll('.camp-panel').forEach(x=>x.classList.remove('active'));const panel=$(id);if(panel)panel.classList.add('active');}
+  // Camp presentation stays behind the existing names while its DOM, layout,
+  // art and click-target ownership live in DiceboundCamp.
+  function v22OpenCampPanel(id){return window.DiceboundCamp?.openPanel(id);}
+  function v22MovePrestigeControls(){return window.DiceboundCamp?.refresh();}
+  function v22ScrollPanel(id){return window.DiceboundCamp?.scrollPanel(id);}
+  function v22UpdateCamp(){return window.DiceboundCamp?.refresh();}
+  function v22EnsureCompatStartBtn(){return window.DiceboundCamp?.ensureCompatStartButton();}
 
-  // ----- Full-screen camp state and reliable state synchronization. ---------
-  function v22MovePrestigeControls(){
-    const moon=$('campMoonPanel');if(!moon)return;
-    let host=$('campPrestigeActions');if(!host){host=document.createElement('div');host.id='campPrestigeActions';host.className='camp-prestige-actions';const note=moon.querySelector('.camp-note-line');if(note)note.before(host);else moon.appendChild(host);}
-    const box=$('talentOverlay')?.querySelector('.prestige-box'),prestige=$('prestigeBtn'),reset=$('resetMetaBtn');
-    if(box&&box.parentElement!==host)host.appendChild(box);
-    if(prestige&&prestige.parentElement!==host)host.appendChild(prestige);
-    if(reset&&reset.parentElement!==host)host.appendChild(reset);
-    const duplicate=$('campResetProgressBtn');if(duplicate)duplicate.remove();
-    const oldOpen=$('campOpenTalentPrestigeBtn');if(oldOpen)oldOpen.textContent='⭐ Open talents to allocate points';
-  }
-  function v22ScrollPanel(id){const el=$(id);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}}
-  function v22UpdateCamp(){
-    const overlay=$('startOverlay');if(!overlay)return;overlay.classList.add('camp-fullscreen');
-    if(!$('campScene'))return;v22MovePrestigeControls();
-    const cls=CLASSES[selectedClassId]||CLASSES.ranger,icon=$('campClassIcon');
-    if(icon){icon.classList.remove('class-portrait','combat-portrait');icon.innerHTML='';try{applyClassPortrait(icon,cls.id,false);}catch(e){icon.textContent=cls.icon;}}
-    const sub=$('campClassSub');if(sub)sub.textContent=`${cls.name} selected · click to change`;
-    const pet=PETS[meta.activePet]||PETS.neutral,state=meta.pets?.[meta.activePet]||{level:1};if($('campPetIcon'))$('campPetIcon').textContent=pet.icon;if($('campPetLine'))$('campPetLine').textContent=`${pet.icon} ${pet.name} · Bond Lv ${state.level}`;
-    if($('campLegacyLine'))$('campLegacyLine').textContent=v22CampSummaryText();
-    if($('campPrestigeSummary'))$('campPrestigeSummary').textContent=`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`;
-    if($('campHeirloomSummary'))$('campHeirloomSummary').innerHTML=v22CampHeirloomHtml();
-    if($('campChestSet'))$('campChestSet').innerHTML=v22ImpossibleRoadPanelHtml((meta.heirlooms||[]).filter(i=>i?.setName==='Impossible Road').length);
-    const n=$('campNightmareBtn'),hell=$('campHellBtn');
-    if(n){n.style.visibility=meta.nightmareUnlocked?'visible':'hidden';n.classList.toggle('active',nightmareMode);n.setAttribute('aria-pressed',String(!!nightmareMode));const s=n.querySelector('.camp-sub');if(s)s.innerHTML=`${nightmareMode?'Nightmare ON':'Nightmare OFF'} <span class="camp-mode-state">${nightmareMode?'ON':'OFF'}</span>`;}
-    if(hell){hell.style.visibility=meta.hellUnlocked?'visible':'hidden';hell.classList.toggle('active',hellMode);hell.setAttribute('aria-pressed',String(!!hellMode));const s=hell.querySelector('.camp-sub');if(s)s.innerHTML=`${hellMode?'HELL ON':'HELL OFF'} <span class="camp-mode-state">${hellMode?'ON':'OFF'}</span>`;}
-  }
-
-  // Replace camp click handlers where needed with capture handlers. They run
-  // first, stop the old popup-oriented behavior, then update the full-screen UI.
-  setTimeout(()=>{
-    renderClassChoices();v22UpdateCamp();
-    const clsBtn=$('campClassBtn');if(clsBtn)clsBtn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const grid=$('classGrid');grid?.classList.remove('camp-hidden');v22OpenCampPanel('campClassPanel');v22UpdateCamp();v22ScrollPanel('campClassPanel');},true);
-    const chest=$('campChestBtn');if(chest)chest.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();v22OpenCampPanel('campChestPanel');renderEquipment();v22UpdateCamp();v22ScrollPanel('campChestPanel');},true);
-    const moon=$('campMoonBtn');if(moon)moon.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();v22OpenCampPanel('campMoonPanel');renderTalents();v22UpdateCamp();v22ScrollPanel('campMoonPanel');},true);
-    const n=$('campNightmareBtn');if(n)n.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;renderClassChoices();v22UpdateCamp();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);},true);
-    const hell=$('campHellBtn');if(hell)hell.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;renderClassChoices();v22UpdateCamp();showToast(`Hell ${hellMode?'enabled':'disabled'}`);},true);
-    const reset=$('resetMetaBtn');if(reset)reset.addEventListener('click',()=>setTimeout(()=>{renderClassChoices();v22UpdateCamp();},0));
-  },0);
-
-  function v22EnsureCompatStartBtn(){if(!$('startBtn')){const compat=document.createElement('button');compat.id='startBtn';compat.className='camp-hidden';compat.type='button';compat.setAttribute('aria-hidden','true');$('startOverlay')?.querySelector('.start-modal')?.appendChild(compat);}}
   const renderClassChoicesV22Base=renderClassChoices;
-  renderClassChoices=function(){v22EnsureCompatStartBtn();renderClassChoicesV22Base();v22UpdateCamp();};
+  renderClassChoices=function(){v22EnsureCompatStartBtn();const result=renderClassChoicesV22Base();v22UpdateCamp();return result;};
   const renderPetCollectionV22Base=renderPetCollection;
-  renderPetCollection=function(){renderPetCollectionV22Base();v22UpdateCamp();};
+  renderPetCollection=function(){const result=renderPetCollectionV22Base();v22UpdateCamp();return result;};
   const updateMetaUIV22Base=updateMetaUI;
-  updateMetaUI=function(){updateMetaUIV22Base();v22UpdateCamp();};
+  updateMetaUI=function(){const result=updateMetaUIV22Base();v22UpdateCamp();return result;};
   const openStartScreenV22Base=openStartScreen;
-  openStartScreen=function(){const r=openStartScreenV22Base();v22UpdateCamp();return r;};
+  openStartScreen=function(){const result=openStartScreenV22Base();v22UpdateCamp();return result;};
+
+  // This adapter intentionally lives in the v2.2 lexical scope: it supplies
+  // presentation data/actions, while ui/camp.js remains the sole DOM/layout
+  // owner and keeps domain mechanics in their existing modules.
+  window.DiceboundCamp?.configure({
+    find:$,
+    renderClassPortrait:(element,classId)=>applyClassPortrait(element,classId,false),
+    getViewModel:()=>{
+      const cls=CLASSES[selectedClassId]||CLASSES.ranger,pet=PETS[meta.activePet]||PETS.neutral,state=meta.pets?.[meta.activePet]||{level:1};
+      return {
+        classId:cls.id,className:cls.name,classIcon:cls.icon,
+        petIcon:pet.icon,petLine:`${pet.icon} ${pet.name} · Bond Lv ${state.level}`,
+        summary:v22CampSummaryText(),
+        prestigeSummary:`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
+        heirloomHtml:v22CampHeirloomHtml(),
+        setHtml:v22ImpossibleRoadPanelHtml((meta.heirlooms||[]).filter(item=>item?.setName==='Impossible Road').length),
+        nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
+        hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
+      };
+    },
+    actions:{
+      showClassChoices:()=>renderClassChoices(),
+      renderEquipment:()=>renderEquipment(),
+      renderTalents:()=>renderTalents(),
+      openTalents:()=>openTalentTree('startOverlay'),
+      openInfo:()=>openInfo(),
+      openAchievements:()=>{renderAchievements();$('achievementOverlay')?.classList.remove('hidden');},
+      openPets:()=>{renderPetCollection();$('petCollectionOverlay')?.classList.remove('hidden');},
+      startRun:()=>startNewGame(),
+      toggleNightmare:()=>{if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;renderClassChoices();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);},
+      toggleHell:()=>{if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;renderClassChoices();showToast(`Hell ${hellMode?'enabled':'disabled'}`);},
+      resetProgress:async()=>{if(await diceboundConfirm('Reset all Dicebound progress, achievements, pets, heirlooms and unlocks? This cannot be undone.',{title:'Reset ALL Dicebound progress?',confirmLabel:'Reset everything',danger:true})){window.DiceboundSave?.reset();window.DiceboundPlatform?.reload();}}
+    }
+  });
 
   // ----- Debug menu: class and pet unlocks are separate destructive cheats. --
   function v22EnsureDebugUnlockButtons(){
@@ -6531,19 +6477,7 @@ function buildDiceboundHumanHarness235(){
     }
     beta042EnsureOptionsOverlay();
   }
-  function beta042EnsureCampOptions(){
-    const scene=$('campScene');
-    if(!scene||$('campOptionsBtn'))return;
-    const groups=scene.querySelectorAll('.camp-sky .camp-stars');
-    const host=groups[0]||scene.querySelector('.camp-sky');
-    if(!host)return;
-    const btn=document.createElement('button');
-    btn.className='camp-spot';
-    btn.id='campOptionsBtn';
-    btn.innerHTML='<div class="camp-icon">⚙️</div><div class="camp-label">Options</div><div class="camp-sub">Save, sound & reset</div>';
-    btn.addEventListener('click',beta042OpenOptions);
-    host.appendChild(btn);
-  }
+  function beta042EnsureCampOptions(){return window.DiceboundCamp?.ensureOptionsButton();}
   function beta042RefreshCampAndHud(){
     beta042EnsureTopOptions();
     beta042EnsureOptionsOverlay();
@@ -8090,47 +8024,10 @@ function buildDiceboundHumanHarness235(){
   `;
   document.head.appendChild(db058Style);
 
-  function db058CampObject(key,fallback){return window.DiceboundAssets?.resolveCampObject?.(key)?.image||fallback;}
-  function db058SetArt(button,key,cls,alt,fallback){
-    if(!button)return;
-    let frame=button.querySelector('.db058-camp-art-frame');
-    if(!frame){
-      const old=button.querySelector('.camp-icon');
-      frame=document.createElement('div');frame.className='camp-icon db058-camp-art-frame';
-      if(old)old.replaceWith(frame);else button.prepend(frame);
-    }
-    let img=frame.querySelector('img');
-    if(!img){img=document.createElement('img');frame.replaceChildren(img);}
-    img.className=`db058-camp-art ${cls||''}`.trim();img.alt=alt;img.draggable=false;
-    const src=db058CampObject(key,fallback);if(img.getAttribute('src')!==src)img.src=src;
-  }
-  function db058ApplyClassFigure(){
-    const el=$('campClassIcon');if(!el)return;
-    const cls=CLASSES[selectedClassId]||CLASSES.ranger;
-    const art=window.DiceboundAssets?.resolveClassArt?.(cls.id);
-    const src=art?.battle||`assets/ui/class-art/battle/${cls.id}.png`;
-    const current=el.querySelector('img.db058-camp-class-fullbody');
-    if(current&&current.getAttribute('src')===src)return;
-    el.classList.remove('class-portrait','combat-portrait','db054-art-frame');
-    el.innerHTML=`<img class="db058-camp-class-fullbody" src="${src}" alt="${cls.name}" draggable="false">`;
-  }
-  function db058RefreshCampArt(){
-    if(!$('campScene'))return;
-    db058SetArt($('campMoonBtn'),'prestigeMoon','db058-prestige-moon','Prestige moon','assets/camp/objects/prestige-moon.png');
-    db058SetArt($('campAchievementBtn'),'achievementKeg','db058-achievement-keg','Ale keg and trophy cup','assets/camp/objects/achievement-keg.png');
-    db058SetArt($('campOptionsBtn'),'optionsCog','db058-options-cog','Options cog','assets/camp/objects/options-cog.png');
-    db058SetArt($('campNightmareBtn'),nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',nightmareMode?'assets/camp/objects/nightmare-on.png':'assets/camp/objects/nightmare-off.png');
-    db058ApplyClassFigure();
-  }
-
-  let db058RefreshPending=false;
-  function db058ScheduleRefresh(){
-    if(db058RefreshPending)return;db058RefreshPending=true;
-    (window.requestAnimationFrame||setTimeout)(()=>{db058RefreshPending=false;db058RefreshCampArt();});
-  }
-  const db058Observer=typeof MutationObserver==='function'?new MutationObserver(db058ScheduleRefresh):null;
-  if(db058Observer&&document.body)db058Observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','src']});
-  document.addEventListener('click',db058ScheduleRefresh,true);
+  // Authored Camp-object rendering is now owned by DiceboundCamp.  Retain the
+  // historic entry points only for callers that still refresh surrounding UI.
+  function db058RefreshCampArt(){return window.DiceboundCamp?.refreshArt();}
+  function db058ScheduleRefresh(){return window.DiceboundCamp?.refresh();}
   setTimeout(db058ScheduleRefresh,0);
   /* ========================================================================
      Beta 0.5.10 — pet artwork + campsite composition tuning
@@ -9861,48 +9758,14 @@ function buildDiceboundHumanHarness235(){
     render:()=>{renderAchievements();return [...document.querySelectorAll('#achievementGrid>.achievement-group')].map(group=>({id:group.dataset.achievementGroup,label:group.querySelector('summary')?.textContent||'',subgroups:group.querySelectorAll('.achievement-subgroup').length}));}
   });
 
-  /* #77: keep the one semantic, keyboard-focusable camp button tied to the
-     visible object it contains.  This narrow contract catches a return of a
-     large detached chest hit rectangle without inventing alpha-mask clicks. */
-  window.DiceboundCampHitTargetTest=Object.freeze({
-    inspect:()=>['campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'].map(id=>{
-      const button=$(id),visual=button?.querySelector('.camp-icon,.camp-journey-art-frame'),buttonRect=button?.getBoundingClientRect(),visualRect=visual?.getBoundingClientRect(),painted=button&&db064PaintedCampBounds(button);
-      return {id,present:!!button,semantic:button?.tagName==='BUTTON',focusable:button?.tabIndex===0,button:buttonRect?{width:Math.round(buttonRect.width),height:Math.round(buttonRect.height)}:null,visual:visualRect?{width:Math.round(visualRect.width),height:Math.round(visualRect.height)}:null,painted:painted?{width:Math.round(painted.right-painted.left),height:Math.round(painted.bottom-painted.top)}:null};
-    })
-  });
-  const DB064_CAMP_HIT_TARGET_IDS=['campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'];
-  function db064PaintedCampBounds(button){
-    const rects=[...button.children].map(child=>child.getBoundingClientRect()).filter(rect=>rect.width>1&&rect.height>1);
-    if(!rects.length)return null;
-    return {left:Math.min(...rects.map(rect=>rect.left)),top:Math.min(...rects.map(rect=>rect.top)),right:Math.max(...rects.map(rect=>rect.right)),bottom:Math.max(...rects.map(rect=>rect.bottom))};
-  }
-  function db064SyncCampHitTargets(){
-    let changed=false;
-    for(const id of DB064_CAMP_HIT_TARGET_IDS){
-      const button=$(id),painted=button&&db064PaintedCampBounds(button),buttonRect=button?.getBoundingClientRect(),parent=button?.offsetParent?.getBoundingClientRect();
-      if(!button||!painted||!buttonRect||!parent)continue;
-      const width=Math.ceil(painted.right-painted.left),height=Math.ceil(painted.bottom-painted.top);
-      if(width<1||height<1)continue;
-      const detached=buttonRect.width>width+3||buttonRect.height>height+3;
-      if(!detached)continue;
-      button.style.setProperty('width',`${width}px`,'important');button.style.setProperty('min-width','0','important');button.style.setProperty('max-width',`${width}px`,'important');
-      button.style.setProperty('height',`${height}px`,'important');button.style.setProperty('min-height','0','important');button.style.setProperty('max-height',`${height}px`,'important');
-      button.style.setProperty('padding','0','important');button.style.setProperty('justify-self','center','important');
-      if(getComputedStyle(button).position==='absolute'){
-        button.style.setProperty('left',`${Math.round(painted.left-parent.left)}px`,'important');button.style.setProperty('top',`${Math.round(painted.top-parent.top)}px`,'important');
-        button.style.setProperty('right','auto','important');button.style.setProperty('bottom','auto','important');
-      }
-      button.dataset.db064HitTarget='painted-object';changed=true;
-    }
-    return changed;
-  }
-  function db064ScheduleCampHitTargets(){
-    const sync=()=>requestAnimationFrame(db064SyncCampHitTargets);
-    sync();setTimeout(sync,0);setTimeout(sync,120);
-  }
+  /* #185: the extracted Camp owner consumes live domain data/actions without
+     duplicating class, pet, progression, storage, save or mode ownership. */
+  const db064Camp=window.DiceboundCamp;
+  if(!db064Camp)throw new Error('DiceBound requires the Camp UI module before dicebound.js');
+  window.DiceboundCampHitTargetTest=Object.freeze({inspect:()=>db064Camp.inspectHitTargets()});
   const db064FriendsUpdateMetaUiBase=updateMetaUI;
-  updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);db064ScheduleCampHitTargets();return result;};
-  window.addEventListener('resize',db064ScheduleCampHitTargets);db064ScheduleCampHitTargets();
+  updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);db064Camp.scheduleHitTargetSync();return result;};
+  db064Camp.scheduleHitTargetSync();
 
   /* #124: keep the recorder independent from game ownership. The compatibility
      monolith supplies a read-only live context; sampling/retention/UI controls
