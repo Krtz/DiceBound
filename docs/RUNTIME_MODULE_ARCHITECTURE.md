@@ -51,6 +51,8 @@ dicebound.js
 
 `events/merchant-transaction.js` owns the current Merchant visit's offer reservations, consumed-offer state and exclusive reward-choice transaction. Merchant rendering remains in the compatibility runtime for now, but it cannot rebuild stock or enter another Sovereign/Contract choice while that transaction owns input.
 
+`core/memory-diagnostics.js` owns the bounded diagnostics time series, canonical export text and pure equivalent-state summaries. Its test-only live cycle adapter remains in the compatibility runtime because it deliberately exercises the final Camp/run/combat lifecycle; it uses one ordinary-enemy fixture per cycle, clears its temporary checkpoint, and reports evidence only rather than declaring a memory leak.
+
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
 ## Dependency direction

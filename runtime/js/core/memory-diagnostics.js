@@ -137,6 +137,30 @@
     return `${sample?.timestamp || "unavailable timestamp"} | ${sample?.reason || "manual"} | ${sample?.state?.screen || "unavailable screen"} | Board ${sample?.state?.board ?? "unavailable"} | ${heapUsed} | ${sample?.dom?.nodeCount ?? "unavailable"} DOM nodes`;
   }
 
+  // A baseline only means something when the compared samples describe the
+  // same lifecycle state. Keep this small, pure summary in the diagnostics
+  // owner so browser/native stress drivers do not each invent their own
+  // filtering or accidentally call unrelated samples a memory trend.
+  function summarizeEquivalentState(sourceSamples, expectedState = {}) {
+    const criteria = Object.entries(expectedState || {}).filter(([, value]) => value !== undefined);
+    const matching = (Array.isArray(sourceSamples) ? sourceSamples : []).filter(sample => criteria.every(([key, value]) => sample?.state?.[key] === value));
+    const values = matching.map(sample => freeze({
+      timestamp: sample?.timestamp || null,
+      reason: sample?.reason || "manual",
+      domNodeCount: asFiniteNumber(sample?.dom?.nodeCount),
+      heapUsedBytes: asFiniteNumber(sample?.heap?.usedBytes),
+    }));
+    const baselineDomNodeCount = values[0]?.domNodeCount ?? null;
+    const baselineHeapUsedBytes = values[0]?.heapUsedBytes ?? null;
+    return freeze({
+      criteria: freeze(Object.fromEntries(criteria)),
+      sampleCount: values.length,
+      samples: values,
+      domNodeDeltas: values.map(value => baselineDomNodeCount === null || value.domNodeCount === null ? null : value.domNodeCount - baselineDomNodeCount),
+      heapUsedByteDeltas: values.map(value => baselineHeapUsedBytes === null || value.heapUsedBytes === null ? null : value.heapUsedBytes - baselineHeapUsedBytes),
+    });
+  }
+
   function exportIdentity() {
     const latest = samples.at(-1)?.identity;
     return latest || identityFor(safeContext());
@@ -305,6 +329,7 @@
     clear,
     samples: () => Object.freeze([...samples]),
     formatSampleLine,
+    summarizeEquivalentState,
     formatLog,
     exportLog,
     diagnostics,
