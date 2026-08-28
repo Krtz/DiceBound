@@ -208,15 +208,15 @@
     "ui/currencies/coins.png",
     "installer/icons/dicebound-launcher.ico",
     "installer/icons/dicebound-launcher.png",
-    "combat/effects/nature-poison-vines-01.png",
-    "combat/effects/nature-poison-vines-02.png",
-    "combat/effects/nature-poison-vines-03.png",
-    "combat/effects/nature-poison-vines-04.png",
-    "combat/effects/nature-poison-vines-05.png",
-    "combat/effects/nature-poison-vines-06.png",
-    "combat/effects/nature-poison-vines-07.png",
-    "combat/effects/nature-poison-vines-08.png",
-    "combat/effects/donut-proc-rain-spritesheet.png"
+    "combat/effects/nature/nature-poison-vines-01.png",
+    "combat/effects/nature/nature-poison-vines-02.png",
+    "combat/effects/nature/nature-poison-vines-03.png",
+    "combat/effects/nature/nature-poison-vines-04.png",
+    "combat/effects/nature/nature-poison-vines-05.png",
+    "combat/effects/nature/nature-poison-vines-06.png",
+    "combat/effects/nature/nature-poison-vines-07.png",
+    "combat/effects/nature/nature-poison-vines-08.png",
+    "combat/effects/donut/donut-proc-rain-spritesheet.png"
   ],
   "retired": [
     "powerups/_legacy/heavy-purse-beta-0.6.png"
@@ -309,5 +309,17 @@
     "powerupArtKeys": 22,
     "powerupRenderedNameMappings": 28,
     "placeholderDocumentationHomes": 27
-  }
+  },
+  "staged": [
+    "combat/effects/gun/gun_spawn_01_no_arm.png",
+    "combat/effects/gun/gun_fire_02_no_arm.png",
+    "combat/effects/gun/gun_muzzle_smoke_03.png",
+    "combat/effects/gun/gun_muzzle_flash_04.png",
+    "combat/effects/gun/gun_bullet_tracer_05.png",
+    "combat/effects/gun/gun_bullet_trail_06.png",
+    "combat/effects/gun/gun_shell_casing_07.png",
+    "combat/effects/gun/gun_impact_burst_08.png",
+    "combat/effects/gun/gun_blood_burst_09.png",
+    "combat/effects/gun/gun_blood_splatter_10.png"
+  ]
 }

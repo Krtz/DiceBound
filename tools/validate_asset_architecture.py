@@ -76,10 +76,16 @@ def main():
     count(runtime/"assets/enemies/normal/board-markers",EXPECTED["normal_enemy_board_markers"])
     count(runtime/"assets/board/backgrounds",6)
     count(runtime/"assets/combat/backgrounds",6)
-    count(runtime/"assets/combat/effects",EXPECTED["combat_effect_assets"])
+    count(runtime/"assets/combat/effects/nature",8)
+    count(runtime/"assets/combat/effects/donut",1)
+    count(runtime/"assets/combat/effects/gun",10)
+    loose_effects=list((runtime/"assets/combat/effects").glob("*.png"))
+    if loose_effects: fail("combat proc PNGs must live in per-element folders: "+", ".join(p.name for p in loose_effects))
     inv=json.loads((runtime/"assets/ASSET_INVENTORY.json").read_text())
     for rel in inv.get("implemented",[]):
         if not (runtime/"assets"/rel).is_file(): fail(f"inventory implemented asset missing: {rel}")
+    for rel in inv.get("staged",[]):
+        if not (runtime/"assets"/rel).is_file(): fail(f"inventory staged asset missing: {rel}")
     for rel in inv.get("placeholderDocs",[]):
         if not (runtime/"assets"/rel).is_file(): fail(f"placeholder home missing: {rel}")
     bad={k for k in reg["powerupNames"].values() if k not in m["powerups"] and k not in m["ui"]["icons"]}
