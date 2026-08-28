@@ -48,4 +48,7 @@ assert.doesNotMatch(monolith,/renderClassPortrait:\(element,classId\)=>applyClas
 assert.doesNotMatch(monolith,/campClassIcon\.dataset\.portraitClass!==String\(selectedClassId/,'legacy Camp refresh must not repaint the Class figure as a portrait card');
 assert(monolith.includes('window.DiceboundCamp?.refreshArt?.();'),'legacy Camp refresh must delegate Class art to the Camp owner');
 
+assert.match(source,/\.camp-panel\.active > \.camp-panel-head\{position:sticky!important;top:0!important/,'Camp panel header must stay visible while panel content scrolls');
+assert.match(source,/\.camp-panel-head \.camp-close-btn\{margin-left:auto!important/,'Camp Done/Exit control must stay pinned to the top-right header');
+
 console.log('Camp UI owner PASS: deterministic layouts, semantic controls and monolith drain contract');

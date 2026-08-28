@@ -90,6 +90,7 @@
         `html body #startOverlay.camp-fullscreen ${selector}{${declaration}!important}`
       ).join('')}}`
     ).join('\n');
+    style.textContent += `\nhtml body #startOverlay.camp-fullscreen .camp-panel.active > .camp-panel-head{position:sticky!important;top:0!important;z-index:80!important;background:linear-gradient(180deg,rgba(17,24,42,.98),rgba(17,24,42,.90))!important;padding:10px 12px!important;box-shadow:0 8px 18px rgba(0,0,0,.22)!important;backdrop-filter:blur(8px)}\nhtml body #startOverlay.camp-fullscreen .camp-panel.active > .camp-panel-head .camp-close-btn{margin-left:auto!important;flex:0 0 auto!important;position:relative!important;z-index:81!important}`;
     documentRef.head?.appendChild(style);
   }
 
