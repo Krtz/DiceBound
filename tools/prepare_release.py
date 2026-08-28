@@ -183,7 +183,7 @@ def bootstrap_pr_materialization(root: Path) -> None:
         "gun_fire_legacy_02_with_arm.png",
     ]
     for literal in old_literals:
-        probe = subprocess.run(["git", "grep", "-n", literal, "--", "runtime", "tools"], cwd=root, text=True, capture_output=True)
+        probe = subprocess.run(["git", "grep", "-n", literal, "--", "runtime"], cwd=root, text=True, capture_output=True)
         if probe.returncode == 0:
             raise SystemExit(f"Obsolete combat-effect reference remains after migration: {literal}\n{probe.stdout}")
         if probe.returncode not in (0, 1):
