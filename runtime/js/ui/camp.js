@@ -13,15 +13,19 @@
     'campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'
   ]);
 
-  // These are the approved Beta 0.6.4.13 desktop composition offsets.  Keep
-  // all final-coordinate ownership here rather than in successive patch blocks.
+  // These are the approved Beta 0.6.4.13 desktop composition coordinates.
+  // The original composition used the stage-layout anchors below; its old
+  // translate values were late *adjustments* to those anchors, not standalone
+  // positions.  Keep the actual top-stage coordinates here so this owner does
+  // not send controls above the viewport when it refreshes a Camp scene.
   const CAMP_LAYOUTS=Object.freeze([
     Object.freeze({
       id:'wide-desktop',query:'(min-width:1360px) and (min-height:650px)',
       rules:Object.freeze([
-        ['#campOptionsBtn[data-db064-hit-target="painted-object"]','translate:-3vw -30vh'],
-        ['#campTalentBtn[data-db064-hit-target="painted-object"]','translate:0 -27vh'],
-        ['#campMoonBtn[data-db064-hit-target="painted-object"]','translate:0 -27vh'],
+        ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
+        ['#campTalentBtn','left:31.5%;top:12.5%;translate:none'],
+        ['#campMoonBtn','left:42.5%;top:11.5%;translate:none'],
+        ['#campClassBtn','left:22.5%;top:40.5%;translate:none'],
         ['#campAchievementBtn[data-db064-hit-target="painted-object"]','translate:-35vw 0'],
         ['#campInfoBtn','left:45vw'],
         ['#campInfoBtn[data-db064-hit-target="painted-object"]','translate:10vw 25vh'],
@@ -34,9 +38,10 @@
     Object.freeze({
       id:'compact-desktop',query:'(min-width:1000px) and (max-width:1359px) and (min-height:650px)',
       rules:Object.freeze([
-        ['#campOptionsBtn[data-db064-hit-target="painted-object"]','translate:-2.5vw -28vh'],
-        ['#campTalentBtn[data-db064-hit-target="painted-object"]','translate:0 -25vh'],
-        ['#campMoonBtn[data-db064-hit-target="painted-object"]','translate:0 -25vh'],
+        ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
+        ['#campTalentBtn','left:31.5%;top:12.5%;translate:none'],
+        ['#campMoonBtn','left:42.5%;top:11.5%;translate:none'],
+        ['#campClassBtn','left:22.5%;top:40.5%;translate:none'],
         ['#campAchievementBtn[data-db064-hit-target="painted-object"]','translate:-32vw 0'],
         ['#campInfoBtn','left:43vw'],
         ['#campInfoBtn[data-db064-hit-target="painted-object"]','translate:9vw 23vh'],
@@ -46,7 +51,17 @@
         ['#campGoBtn','right:-6vw']
       ])
     }),
-    Object.freeze({id:'stacked-or-short',query:'',rules:Object.freeze([])})
+    Object.freeze({
+      id:'stacked-or-short',query:'(min-width:1000px) and (max-height:649px)',
+      rules:Object.freeze([
+        // Preserve the same anchored composition in a short desktop viewport,
+        // while allowing the tall moon/class artwork to remain wholly onscreen.
+        ['#campOptionsBtn','left:8.5%;top:16%;translate:none'],
+        ['#campTalentBtn','left:31.5%;top:14%;translate:none'],
+        ['#campMoonBtn','left:42.5%;top:24%;translate:none'],
+        ['#campClassBtn','left:22.5%;top:58%;translate:none']
+      ])
+    })
   ]);
 
   let runtime={};
@@ -176,17 +191,26 @@
     const src=asset(key,fallback);if(image.getAttribute('src')!==src)image.src=src;
   }
 
+  function renderClassFigure(icon,view){
+    if(!icon||!view.classId)return;
+    const art=runtime.resolveClassArt?.(view.classId)||root.DiceboundAssets?.resolveClassArt?.(view.classId);
+    const src=art?.battle||`assets/ui/class-art/battle/${view.classId}.png`;
+    if(icon.dataset.campFullbodyClass===String(view.classId)&&icon.querySelector('img.db058-camp-class-fullbody')?.getAttribute('src')===src)return;
+    icon.classList.remove('class-portrait','combat-portrait','db054-art-frame');
+    delete icon.dataset.portraitClass;
+    const image=doc()?.createElement('img');
+    if(!image){icon.textContent=view.classIcon||'';return;}
+    image.className='db058-camp-class-fullbody';image.src=src;image.alt=view.className||String(view.classId);image.draggable=false;
+    icon.replaceChildren(image);icon.dataset.campFullbodyClass=String(view.classId);
+  }
+
   function refreshArt(view=runtime.getViewModel?.()||{}){
     if(!find('campScene'))return;
     setObjectArt('campMoonBtn','prestigeMoon','db058-prestige-moon','Prestige moon','assets/camp/objects/prestige-moon.png');
     setObjectArt('campAchievementBtn','achievementKeg','db058-achievement-keg','Ale keg and trophy cup','assets/camp/objects/achievement-keg.png');
     setObjectArt('campOptionsBtn','optionsCog','db058-options-cog','Options cog','assets/camp/objects/options-cog.png');
     setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/objects/nightmare-on.png':'assets/camp/objects/nightmare-off.png');
-    const icon=find('campClassIcon');
-    if(icon&&view.classId&&icon.dataset.portraitClass!==String(view.classId)){
-      icon.classList.remove('class-portrait','combat-portrait','db054-art-frame');icon.innerHTML='';
-      try{runtime.renderClassPortrait?.(icon,view.classId);icon.dataset.portraitClass=String(view.classId);}catch(_){icon.textContent=view.classIcon||'';}
-    }
+    renderClassFigure(find('campClassIcon'),view);
   }
 
   function refresh(){
@@ -202,7 +226,7 @@
     const set=find('campChestSet');if(set)set.innerHTML=view.setHtml||'';
     setMode('campNightmareBtn',view.nightmareUnlocked,view.nightmareMode,'Nightmare');
     setMode('campHellBtn',view.hellUnlocked,view.hellMode,'HELL');
-    scene.dataset.dbCampLayout=layoutForViewport().id;refreshArt(view);scheduleHitTargetSync();return scene;
+    scene.dataset.dbCampLayout=layoutForViewport().id;refreshArt(view);scheduleHitTargetSync();scheduleViewportPositionSync();return scene;
   }
 
   function setMode(id,unlocked,enabled,label){
@@ -219,7 +243,9 @@
 
   function syncHitTargets(){
     let changed=false;
+    const preserveShortViewportPositions=(root.innerWidth||0)>=1000&&(root.innerHeight||0)<650;
     for(const id of CAMP_OBJECT_IDS){
+      if(preserveShortViewportPositions&&['campOptionsBtn','campTalentBtn','campMoonBtn','campClassBtn'].includes(id))continue;
       const button=find(id),painted=button&&paintedBounds(button),buttonRect=button?.getBoundingClientRect(),parent=button?.offsetParent?.getBoundingClientRect();
       if(!button||!painted||!buttonRect||!parent)continue;
       const width=Math.ceil(painted.right-painted.left),height=Math.ceil(painted.bottom-painted.top);if(width<1||height<1)continue;
@@ -241,6 +267,49 @@
     const sync=()=>schedule(syncHitTargets);sync();root.setTimeout?.(sync,0);root.setTimeout?.(sync,120);
   }
 
+  // The historical stage scaler writes inline !important anchors after the
+  // stylesheet is loaded. Reapply this owner's semantic coordinates after
+  // hit-target sizing so a resize cannot resurrect an old offset or eject a
+  // short-viewport control from the scene.
+  function positionedLayoutControls(layout=layoutForViewport()){
+    return layout.rules.map(([selector,declaration])=>{
+      const match=selector.match(/^#(camp(?:Options|Talent|Moon|Class)Btn)$/);
+      return match?{id:match[1],declaration}:null;
+    }).filter(Boolean);
+  }
+
+  function applyViewportPositions(){
+    for(const {id,declaration} of positionedLayoutControls()){
+      const button=find(id);if(!button)continue;
+      for(const property of ['left','top','translate']){
+        const value=declaration.match(new RegExp(`(?:^|;)${property}:([^;]+)`))?.[1];
+        if(value)button.style.setProperty(property,value,'important');
+      }
+    }
+  }
+
+  function clampShortViewportPositions(){
+    if((root.innerWidth||0)<1000||(root.innerHeight||0)>=650)return [];
+    const inset=8,width=root.innerWidth||0,height=root.innerHeight||0;
+    const adjustments=[];
+    for(const {id} of positionedLayoutControls()){
+      const button=find(id),rect=button?.getBoundingClientRect();
+      if(!rect||rect.width<1||rect.height<1)continue;
+      const dx=rect.left<inset?inset-rect.left:rect.right>width-inset?width-inset-rect.right:0;
+      const dy=rect.top<inset?inset-rect.top:rect.bottom>height-inset?height-inset-rect.bottom:0;
+      if(dx||dy){button.style.setProperty('translate',`${Math.round(dx)}px ${Math.round(dy)}px`,'important');adjustments.push({id,dx:Math.round(dx),dy:Math.round(dy)});}
+    }
+    return adjustments;
+  }
+
+  function scheduleViewportPositionSync(){
+    const schedule=root.requestAnimationFrame||root.setTimeout||setTimeout;
+    const apply=()=>{applyViewportPositions();schedule(clampShortViewportPositions);};
+    apply();
+    root.setTimeout?.(()=>{apply();root.setTimeout?.(clampShortViewportPositions,40);},180);
+    root.setTimeout?.(clampShortViewportPositions,360);
+  }
+
   function inspectHitTargets(){
     return CAMP_OBJECT_IDS.map(id=>{
       const button=find(id),visual=button?.querySelector('.camp-icon,.camp-journey-art-frame'),buttonRect=button?.getBoundingClientRect(),visualRect=visual?.getBoundingClientRect(),painted=button&&paintedBounds(button);
@@ -256,13 +325,13 @@
   function configure(nextRuntime={}){
     runtime={...runtime,...nextRuntime,actions:{...runtime.actions,...nextRuntime.actions}};
     installLayoutStyles();
-    if(!resizeBound&&root.addEventListener){resizeBound=true;root.addEventListener('resize',()=>{scheduleRefresh();scheduleHitTargetSync();},{passive:true});}
+    if(!resizeBound&&root.addEventListener){resizeBound=true;root.addEventListener('resize',()=>{scheduleRefresh();scheduleHitTargetSync();scheduleViewportPositionSync();},{passive:true});}
     return api;
   }
 
   const api=Object.freeze({
-    configure,ensure,refresh,refreshArt,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
-    layoutForViewport,layouts:CAMP_LAYOUTS,syncHitTargets,scheduleHitTargetSync,inspectHitTargets,
+    configure,ensure,refresh,refreshArt,renderClassFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
+    layoutForViewport,layouts:CAMP_LAYOUTS,syncHitTargets,scheduleHitTargetSync,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,
     requiredSemanticIds:()=>[...CAMP_OBJECT_IDS]
   });
   window.DiceboundCamp=api;
