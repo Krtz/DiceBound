@@ -74,6 +74,31 @@
     });
   }
 
+  function equipmentStatTotal(equipment, key, bonusesForItem = (item) => item?.bonuses || {}) {
+    if (!equipment || typeof equipment !== "object") return 0;
+    return Object.values(equipment).reduce((total, item) => {
+      const bonuses = bonusesForItem(item);
+      return total + number(bonuses?.[key]);
+    }, 0);
+  }
+
+  function manaResourceSnapshot({
+    baseMaxMana = 0,
+    currentMana = 0,
+    usesMana = false,
+    equipmentMana = 0,
+  } = {}) {
+    const base = Math.max(0, number(baseMaxMana));
+    const bonus = usesMana ? number(equipmentMana) : 0;
+    const maxMana = usesMana ? Math.max(0, base + bonus) : 0;
+    return Object.freeze({
+      baseMaxMana: base,
+      equipmentMana: bonus,
+      maxMana,
+      mana: Math.max(0, Math.min(maxMana, number(currentMana))),
+    });
+  }
+
   function berserkerUltimateSnapshot(run, { setDamageBonus = 0, rageActive = true } = {}) {
     const baseMultiplier = ultimateBaseMultiplier("berserker");
     const commonMultiplier = commonUltimateMultiplier(run, { setDamageBonus });
@@ -119,5 +144,7 @@
     goldMultiplier,
     scaleGold,
     goldSnapshot,
+    equipmentStatTotal,
+    manaResourceSnapshot,
   });
 })();

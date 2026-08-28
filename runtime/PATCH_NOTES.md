@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.21
+
+## Effective equipment Mana (#215)
+
+- `+Mana` from ordinary bonuses and authored equipment now raises the real Mana cap for Mana-using classes.
+- Equipping Mana gear increases capacity without restoring free Mana; removing it clamps current Mana safely.
+- Active runs retain the same effective cap after reset/checkpoint restoration, while non-Mana classes stay Mana-free.
+
+---
+
 # Unreleased — Beta 0.6.4.19
 
 # Unreleased — Beta 0.6.4.20

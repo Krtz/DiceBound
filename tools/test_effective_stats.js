@@ -73,6 +73,24 @@ assert.equal(gold.difficultyMultiplierPercent, 50);
 assert.equal(gold.effectivePercent, 75);
 assert.match(gold.description, /Nightmare\/Hell difficulty applies 50%/);
 
+const manaEquipment = {
+  offhand: { bonuses: { maxMana: 5 } },
+  ring: { bonuses: { maxMana: 7 } },
+  chest: { bonuses: { attack: 3 } },
+};
+assert.equal(stats.equipmentStatTotal(manaEquipment, "maxMana"), 12);
+assert.equal(stats.equipmentStatTotal(manaEquipment, "attack"), 3);
+assert.equal(stats.equipmentStatTotal(null, "maxMana"), 0);
+let mana = stats.manaResourceSnapshot({ baseMaxMana: 100, currentMana: 17, usesMana: true, equipmentMana: 5 });
+assert.deepEqual(JSON.parse(JSON.stringify(mana)), { baseMaxMana: 100, equipmentMana: 5, maxMana: 105, mana: 17 }, "equipping Mana must raise only the cap, not refill current Mana");
+mana = stats.manaResourceSnapshot({ baseMaxMana: 120, currentMana: 17, usesMana: true, equipmentMana: 12 });
+assert.equal(mana.maxMana, 132, "class and Powerup Mana bases must compose with all equipped Mana bonuses");
+assert.equal(mana.mana, 17, "multiple Mana gear pieces must not grant a free refill");
+mana = stats.manaResourceSnapshot({ baseMaxMana: 100, currentMana: 107, usesMana: true, equipmentMana: 0 });
+assert.deepEqual(JSON.parse(JSON.stringify(mana)), { baseMaxMana: 100, equipmentMana: 0, maxMana: 100, mana: 100 }, "removing Mana gear must clamp safely");
+mana = stats.manaResourceSnapshot({ baseMaxMana: 0, currentMana: 9, usesMana: false, equipmentMana: 12 });
+assert.deepEqual(JSON.parse(JSON.stringify(mana)), { baseMaxMana: 0, equipmentMana: 0, maxMana: 0, mana: 0 }, "non-Mana classes must not gain a hidden Mana resource from gear");
+
 const monolith = fs.readFileSync(path.join(__dirname, "..", "runtime", "js", "dicebound.js"), "utf8");
 assert.match(monolith, /DB_EFFECTIVE_STATS\.ultimateBaseDamage\("berserker"/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.scaleUltimateDamage/);
@@ -80,5 +98,7 @@ assert.match(monolith, /DB_EFFECTIVE_STATS\.scaleBerserkerRageDamage/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.describeUltimate/);
 assert.match(monolith, /function modifiedGold\(base\)\{return DB_EFFECTIVE_STATS\.scaleGold\(base,player,\{nightmare:nightmareMode\}\);\}/);
 assert.match(monolith, /data-effective-gold/);
+assert.match(monolith, /DB_EFFECTIVE_STATS\.manaResourceSnapshot/);
+assert.match(monolith, /function db06421SyncMana/);
 
 console.log("Effective stats PASS: authoritative Berserker scaling, Gold rewards and live UI snapshots agree");

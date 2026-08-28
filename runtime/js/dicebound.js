@@ -401,7 +401,7 @@
   function generateMythicalAmulet(){return {id:`mythical_amulet_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"mythical",mythical:true,mythicPiece:"amulet",setName:"Impossible Road",uniqueEffect:"Devourer's Gaze: once per battle below 35% HP, consume 12% of every living enemy's max HP and heal for half the damage.",icon:"👁️",name:"The Devourer's Last Eye",bonuses:{maxHp:30,attack:8,crit:.15,luck:.20,lifeSteal:.10,bossDamage:.50}};}
   function generateMythicalPants(){return {id:`mythical_legs_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"legs",rarity:"mythical",mythical:true,mythicPiece:"legs",setName:"Impossible Road",uniqueEffect:"Paradox Loop: every third player action restores 6% max HP and grants 15 ultimate charge.",icon:"👖",name:"Paradox Weave, Legguards Outside Time",bonuses:{maxHp:34,defense:5,attack:5,doubleStrike:.16,luck:.14}};}
   function bonusLabel(key,value){
-    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage"};
+    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage"};
     if(key==="luck")return `+${Math.round(value*100)} Luck`;
     const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
     return `+${pct?Math.round(value*100)+"%":value} ${names[key]||key}`;
@@ -9435,10 +9435,8 @@ function buildDiceboundHumanHarness235(){
     const alt=String(entry.alt||item?.name||'Equipment').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     return `<img class="${klass}" src="${entry.image}" alt="${alt}" draggable="false">`;
   }
-  const db06314ApplyItemStatsBase=applyItemStats;
   applyItemStats=function(item,sign){
-    if(!db06314Identity(item))return db06314ApplyItemStatsBase(item,sign);
-    const oldMax=player.maxHp,oldMaxMana=Number(player.maxMana)||0;
+    const oldMax=player.maxHp;
     Object.entries(db06314Equipment.allBonusesForItem(item)).forEach(([key,value])=>{if(typeof player[key]==='number')player[key]+=value*sign;});
     player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
     if(player.maxHp<1)player.maxHp=1;
@@ -9446,7 +9444,6 @@ function buildDiceboundHumanHarness235(){
     player.hp=clamp(player.hp,1,player.maxHp);
     if(typeof player.maxMana==='number'){
       player.maxMana=Math.max(0,player.maxMana);
-      if(sign>0&&player.maxMana>oldMaxMana)player.mana=(Number(player.mana)||0)+(player.maxMana-oldMaxMana);
       if(typeof player.mana==='number')player.mana=clamp(player.mana,0,player.maxMana);
     }
   };
@@ -9494,6 +9491,59 @@ function buildDiceboundHumanHarness235(){
     intrinsic:item=>db06314Equipment.intrinsicBonusesForItem(item),
     total:item=>db06314Equipment.allBonusesForItem(item),
     generate:(rarity='common',slot='weapon')=>generateEquipment(rarity,slot)
+  });
+
+  /* #215 — one effective Mana-cap policy for ordinary and authored equipment.
+     Equipment continues to own the item's bonuses; effective-stats owns the
+     pure resource calculation; this adapter only applies that result to the
+     live player at the equipment and reset lifecycle boundaries. */
+  function db06421UsesMana(){return classHasMechanic('mana');}
+  function db06421EquipmentMana(){return DB_EFFECTIVE_STATS.equipmentStatTotal(player.equipment,'maxMana',db06314Equipment.allBonusesForItem);}
+  function db06421SyncMana({baseMaxMana=player.maxMana,currentMana=player.mana}={}){
+    const snapshot=DB_EFFECTIVE_STATS.manaResourceSnapshot({baseMaxMana,currentMana,usesMana:db06421UsesMana(),equipmentMana:db06421EquipmentMana()});
+    player.maxMana=snapshot.maxMana;player.mana=snapshot.mana;return snapshot;
+  }
+  const db06421EquipItemBase=equipItem;
+  equipItem=function(item,silent=false){
+    const priorEquipmentMana=db06421UsesMana()?db06421EquipmentMana():0,baseMaxMana=Math.max(0,(Number(player.maxMana)||0)-priorEquipmentMana),currentMana=Number(player.mana)||0;
+    const result=db06421EquipItemBase(item,silent);
+    db06421SyncMana({baseMaxMana,currentMana});
+    return result;
+  };
+  const db06421ResetPlayerBase=resetPlayer;
+  resetPlayer=function(classId=selectedClassId){
+    const result=db06421ResetPlayerBase(classId);
+    // The historical reset chain mounts heirlooms before it initializes each
+    // class resource, so rebuild the effective cap once that base is final.
+    db06421SyncMana({baseMaxMana:player.maxMana,currentMana:player.mana});
+    return result;
+  };
+  function db06421ManaEquipmentExercise(){
+    try{
+      window.DiceboundRng.seed('db06421-mana-equipment');resetPlayer('sorcerer');gameStarted=true;rollLocked=false;generateBoard();buildBoard();
+      const base={maxMana:player.maxMana,mana:player.mana};player.mana=17;
+      equipItem({id:'db06421-spellbook',slot:'offhand',rarity:'common',equipmentId:'spellbook',bonuses:{}},true);
+      const one={maxMana:player.maxMana,mana:player.mana};
+      equipItem({id:'db06421-mana-ring',slot:'ring',rarity:'rare',bonuses:{maxMana:7}},true);
+      const multiple={maxMana:player.maxMana,mana:player.mana};
+      const checkpoint=dbRunSnapshot();player.maxMana=1;player.mana=1;dbRunRestore(JSON.parse(JSON.stringify(checkpoint)));
+      const restored={maxMana:player.maxMana,mana:player.mana};
+      equipItem({id:'db06421-plain-offhand',slot:'offhand',rarity:'common',bonuses:{}},true);
+      const removedOne={maxMana:player.maxMana,mana:player.mana};player.mana=removedOne.maxMana;
+      equipItem({id:'db06421-plain-ring',slot:'ring',rarity:'common',bonuses:{}},true);
+      const removedAll={maxMana:player.maxMana,mana:player.mana};
+      resetPlayer('ranger');
+      equipItem({id:'db06421-ranger-spellbook',slot:'offhand',rarity:'common',equipmentId:'spellbook',bonuses:{}},true);
+      const nonMana={maxMana:player.maxMana,mana:player.mana};
+      return {base,one,multiple,restored,removedOne,removedAll,nonMana};
+    } finally {
+      dbRunClearCheckpoint();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;combatBusy=false;gameStarted=false;rollLocked=true;resetPlayer('ranger');openStartScreen();
+    }
+  }
+  window.DiceboundManaEquipmentTest=Object.freeze({
+    equipmentMana:db06421EquipmentMana,
+    snapshot:options=>DB_EFFECTIVE_STATS.manaResourceSnapshot(options),
+    exercise:db06421ManaEquipmentExercise
   });
 
   /* #91 / #144 ordinary-enemy mechanics.  The extracted policy owns the
