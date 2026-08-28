@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.20
+
+### Playtest follow-ups (#213)
+- Unbound Impossible Relic now selects from the canonical Rare/Epic/Legendary/Mythical powerup progression instead of Legendary-only.
+- Kept gear affix data and affixed names while removing redundant Prefix/Suffix detail text.
+- Reworked the authored six-frame Donut Rain sheet into controlled player-and-actual-target VFX for player and enemy proc origins.
+- Poison kills now reconcile selected-target presentation through the existing combat targeting owner before subsequent status presentation.
+
 ## Beta 0.6.4.19
 
 ### Element proc artwork structure

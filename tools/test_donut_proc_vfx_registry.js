@@ -12,6 +12,9 @@ const effect = context.window.DiceboundAssets.resolveCombatEffect("donutProcRain
 
 assert.ok(Object.isFrozen(effect));
 assert.equal(effect.image, "assets/combat/effects/donut/donut-proc-rain-spritesheet.png");
+assert.equal(effect.frameCount, 6);
+assert.equal(effect.frameWidth, 362);
+assert.equal(effect.frameHeight, 724);
 assert.equal(effect.durationMs, 1450);
 assert.equal(effect.alt, "A magical cloud rains colorful donuts across the battlefield");
 assert.ok(fs.existsSync(path.join(root, "runtime", effect.image)));

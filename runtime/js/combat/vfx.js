@@ -7,6 +7,12 @@
   const NATURE_EFFECT_KEY = "naturePoisonVines";
   const DONUT_EFFECT_KEY = "donutProcRain";
 
+  function donutFramePosition(frame, frameCount) {
+    const count = Math.max(1, Math.floor(Number(frameCount) || 1));
+    const index = Math.max(0, Math.min(count - 1, Math.floor(Number(frame) || 0)));
+    return `${count === 1 ? 0 : Math.round(index * 100 / (count - 1))}% 0%`;
+  }
+
   function rootWindow() {
     return globalThis.window || globalThis;
   }
@@ -173,24 +179,77 @@
     function donutEntries() {
       const document = documentRoot();
       if (!document?.querySelectorAll) return [];
-      return [...document.querySelectorAll(".db-donut-rain-vfx")].map(node => ({ src: node.getAttribute("src") || "", effect: node.dataset.effect || "" }));
+      return [...document.querySelectorAll(".db-donut-rain-vfx")].map(node => ({
+        src: node.dataset.source || "",
+        effect: node.dataset.effect || "",
+        target: node.dataset.donutTarget || "",
+        origin: node.dataset.origin || "",
+        frame: Number(node.dataset.donutFrame || 0),
+      }));
     }
 
-    function playDonutRain() {
+    function prepareDonut() {
+      return ensureStyle("dicebound-donut-vfx-style", `
+        .db-donut-rain-vfx{position:absolute;z-index:32;left:50%;bottom:-12%;width:clamp(92px,175%,196px);aspect-ratio:1 / 2;pointer-events:none;transform:translateX(-50%);background-repeat:no-repeat;filter:drop-shadow(0 7px 9px rgba(28,8,35,.42));isolation:isolate}
+        #combatPlayerIcon,.stage-enemy{position:relative;isolation:isolate}
+        @media(max-width:760px){.db-donut-rain-vfx{width:clamp(78px,145%,156px);bottom:-9%}}
+        @media(prefers-reduced-motion:reduce){.db-donut-rain-vfx{filter:none}}
+      `);
+    }
+
+    function donutHostForEnemy(enemy) {
+      return natureHostForEnemy(enemy) || documentRoot()?.querySelector?.("#enemyIcon .stage-enemy.selected") || null;
+    }
+
+    function mountDonutRain(host, target, origin, effect) {
+      const document = documentRoot();
+      const frameCount = Math.max(1, Math.floor(Number(effect.frameCount) || 1));
+      const frameWidth = Math.max(1, Math.floor(Number(effect.frameWidth) || 1));
+      const frameHeight = Math.max(1, Math.floor(Number(effect.frameHeight) || 2));
+      const node = document.createElement("span");
+      node.className = "db-donut-rain-vfx";
+      node.dataset.effect = DONUT_EFFECT_KEY;
+      node.dataset.source = effect.image;
+      node.dataset.donutTarget = target;
+      node.dataset.origin = origin;
+      node.dataset.donutFrame = "0";
+      Object.assign(node.style, {
+        aspectRatio: `${frameWidth} / ${frameHeight}`,
+        backgroundImage: `url("${effect.image}")`,
+        backgroundPosition: donutFramePosition(0, frameCount),
+        backgroundSize: `${frameCount * 100}% 100%`,
+      });
+      host.append(node);
+      return node;
+    }
+
+    function setDonutFrame(node, frame, frameCount) {
+      if (!node) return;
+      node.dataset.donutFrame = String(frame);
+      node.style.backgroundPosition = donutFramePosition(frame, frameCount);
+    }
+
+    function playDonutRain({ origin = "player", enemy = null } = {}) {
       const document = documentRoot();
       const effect = donutEffect();
-      const host = document?.getElementById?.("combatOverlay")?.querySelector(".modal");
-      if (!document?.createElement || !host || !effect?.image) return false;
-      host.querySelectorAll(".db-donut-rain-vfx").forEach(node => node.remove());
-      const image = document.createElement("img");
+      if (!document?.createElement || !effect?.image) return false;
+      prepareDonut();
+      document.querySelectorAll?.(".db-donut-rain-vfx")?.forEach(node => node.remove());
+      const normalizedOrigin = origin === "enemy" ? "enemy" : "player";
+      const nodes = [
+        [document.getElementById?.("combatPlayerIcon"), "player"],
+        [donutHostForEnemy(enemy), "enemy"],
+      ].filter(([host]) => !!host).map(([host, target]) => mountDonutRain(host, target, normalizedOrigin, effect));
+      if (!nodes.length) return false;
       const reduced = !!rootWindow().matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-      image.className = "db-donut-rain-vfx";
-      image.dataset.effect = DONUT_EFFECT_KEY;
-      image.src = effect.image;
-      image.alt = "";
-      image.draggable = false;
-      host.append(image);
-      globalThis.setTimeout?.(() => image.remove(), reduced ? 260 : Math.max(320, Number(effect.durationMs) || 1450));
+      const frameCount = Math.max(1, Math.floor(Number(effect.frameCount) || 1));
+      const duration = Math.max(320, Number(effect.durationMs) || 1450);
+      if (!reduced) {
+        for (let frame = 1; frame < frameCount; frame += 1) {
+          globalThis.setTimeout?.(() => nodes.forEach(node => setDonutFrame(node, frame, frameCount)), Math.round(duration * frame / frameCount));
+        }
+      }
+      globalThis.setTimeout?.(() => nodes.forEach(node => node.remove()), reduced ? 260 : duration);
       return true;
     }
 
@@ -206,6 +265,7 @@
       withNatureLegacyPresentation,
       suppressLegacyElementAnimation,
       donutEntries,
+      donutFramePosition,
       playDonutRain,
     });
   }

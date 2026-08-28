@@ -88,6 +88,8 @@
   const DB317_ENEMY_POOL_RAW=window.DiceboundEnemies?.createNormalRegistry();
   if(!DB317_ENEMY_POOL_RAW)throw new Error("DiceboundEnemies must load before dicebound.js");
   const enemyPool=db317Readonly(DB317_ENEMY_POOL_RAW);
+  const DB_RARITIES=window.DiceboundRarities;
+  if(!DB_RARITIES?.isPowerupRarityAtLeast)throw new Error("DiceboundRarities must provide powerup rarity policy before dicebound.js");
   const DB317_RARITY_INFO_RAW=window.DiceboundRarities?.createInfoRegistry();
   if(!DB317_RARITY_INFO_RAW)throw new Error("DiceboundRarities must load before dicebound.js");
   const rarityInfo=db317Readonly(DB317_RARITY_INFO_RAW);
@@ -1170,7 +1172,7 @@
   }
   function merchantCatalog(){
     if(boardLevel<4)return boardLevel===3?[
-      {id:"potion",icon:"🧪",name:"Impossible Apothecary Chest",desc:"Gain 6 potions and +50% potion power.",base:95+player.position,buy(){player.potions+=6;player.potionPower+=.50;}},{id:"heal",icon:"❤️",name:"Reality Reconstruction",desc:"Restore all HP and gain +14 max HP.",base:135+player.position,buy(){player.maxHp+=14;player.hp=player.maxHp;}},{id:"attack",icon:"⚔️",name:"Nullstar Edge Treatment",desc:"Gain +4 attack.",base:178+player.position,buy(){player.attack+=4;}},{id:"armor",icon:"🛡️",name:"Paradox Armor Plating",desc:"Gain +4 defense and 1 flat reduction.",base:192+player.position,buy(){player.defense+=4;player.flatReduction+=1;}},{id:"charm",icon:"🌈",name:"Impossible Fate Engine",desc:"Gain +20 Luck, +10% Crit and +10% Echo.",base:180+player.position,buy(){player.luck+=.20;player.crit+=.10;player.doubleStrike+=.10;}},{id:"relic",icon:"🌌",name:"Unbound Impossible Relic",desc:"Reveal one Legendary powerup.",base:285+player.position*2,buy(){const up=pick(eligibleUpgrades(u=>u.rarity==="legendary"));applyUpgrade(up,"Impossible Relic");return up;}}
+      {id:"potion",icon:"🧪",name:"Impossible Apothecary Chest",desc:"Gain 6 potions and +50% potion power.",base:95+player.position,buy(){player.potions+=6;player.potionPower+=.50;}},{id:"heal",icon:"❤️",name:"Reality Reconstruction",desc:"Restore all HP and gain +14 max HP.",base:135+player.position,buy(){player.maxHp+=14;player.hp=player.maxHp;}},{id:"attack",icon:"⚔️",name:"Nullstar Edge Treatment",desc:"Gain +4 attack.",base:178+player.position,buy(){player.attack+=4;}},{id:"armor",icon:"🛡️",name:"Paradox Armor Plating",desc:"Gain +4 defense and 1 flat reduction.",base:192+player.position,buy(){player.defense+=4;player.flatReduction+=1;}},{id:"charm",icon:"🌈",name:"Impossible Fate Engine",desc:"Gain +20 Luck, +10% Crit and +10% Echo.",base:180+player.position,buy(){player.luck+=.20;player.crit+=.10;player.doubleStrike+=.10;}},{id:"relic",icon:"🌌",name:"Unbound Impossible Relic",desc:"Reveal one Rare+ powerup.",base:285+player.position*2,buy(){const up=pick(eligibleUpgrades(u=>DB_RARITIES.isPowerupRarityAtLeast(u.rarity,"rare")));applyUpgrade(up,"Unbound Impossible Relic");return up;}}
     ]:boardLevel===2?[
       {id:"potion",icon:"🧪",name:"Astral Potion Crate",desc:"Gain 4 potions.",base:58+player.position,buy(){player.potions+=4;}},{id:"heal",icon:"❤️",name:"Devourer-Safe Restoration",desc:"Restore all HP and gain +6 max HP.",base:82+player.position,buy(){player.maxHp+=6;player.hp=player.maxHp;}},{id:"attack",icon:"⚔️",name:"Starforged Whetstone",desc:"Gain +2 attack.",base:112+player.position,buy(){player.attack+=2;}},{id:"armor",icon:"🛡️",name:"Titan Plate Rivets",desc:"Gain +2 defense.",base:126+player.position,buy(){player.defense+=2;}},{id:"charm",icon:"🍀",name:"Astral Fate Prism",desc:"Gain +10 Luck and +5% Crit.",base:108+player.position,buy(){player.luck+=.10;player.crit+=.05;}},{id:"relic",icon:"🌌",name:"Unsealed Astral Relic",desc:"Reveal an Epic or Legendary powerup.",base:190+player.position*2,buy(){const up=pick(eligibleUpgrades(u=>u.rarity==="epic"||u.rarity==="legendary"));applyUpgrade(up,"Astral Relic");return up;}}
     ]:[
@@ -1936,7 +1938,7 @@
     trackElementProgress(key,totalDamage+heal);const message=`${weak?"WEAKNESS! ":""}${e.icon} ${e.spell}${totalDamage?` deals ${totalDamage} elemental damage${aoe?" across the pack":""}.`:""}${extra}`;addLog(`<b>${e.spell}</b> ${source}${weak?" exploits a weakness":" activates"}${echoed?" and echoes":""}.`);showToast(`${e.icon} ${e.spell}${weak?" — WEAKNESS!":""}${echoed?" ×2":""}`);return {totalDamage,heal,message,weak,echoed,aoe};
   };
 
-  applyPoisonTick=function(){let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(total){playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
+  applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
 
   petTurn=async function(){const targets=livingEnemies();if(!targets.length)return;const target=currentEnemy?.hp>0?currentEnemy:targets[0],def=activePetDef(),pet=$("combatPet");pet.classList.remove("pet-attack");void pet.offsetWidth;pet.classList.add("pet-attack");await delay(300);let hits=1,totalBase=petDamage();if(random()<clamp(player.petDoubleChance+(v19SetPetDoubleBonus()),0,.95))hits=2;let total=0,element=def.element;if(def.id==="neutral")element=pick(DIBO_ELEMENTS);for(let i=0;i<hits;i++){let amount=totalBase;if(element&&target.weakness===element)amount=Math.round(amount*1.5);if(element&&target.affinity===element)amount=Math.round(amount*.5);total+=damageEnemy(target,amount);if(element)trackElementProgress(element,amount);}tone(520,.08,"triangle",.025,760);setCombatText(`${def.name} ${hits===2?"attacks twice":"attacks"} for ${total} ${element?ELEMENTS[element].name:"neutral"} damage${target.affinity===element?" (affinity resisted half)":""}${def.id==="neutral"?` after rolling ${ELEMENTS[element].icon}`:""}.`);if(target.hp<=0)setCurrentEnemy(currentEnemies.indexOf(target));updateCombatUI();await delay(620);pet.classList.remove("pet-attack");};
 
@@ -2452,9 +2454,6 @@
   function v14FallbackPower(item){if(!item)return 0;if(Number(item.spentPower)>0)return Number(item.spentPower);if(Number(item.itemPower)>0)return Number(item.itemPower);const floor={common:13,uncommon:23,rare:37,epic:58,legendary:90,mythical:135,omega:175}[item.rarity]||25;return Math.max(floor,Math.round(gearPowerScorePreV14(item)*.72));}
   function v14RawSellValue(item){const p=v14FallbackPower(item),mult={common:.80,uncommon:.90,rare:1,epic:1.10,legendary:1.25,mythical:1.45,omega:1.70}[item.rarity]||1;return Math.max(8,Math.round((12+p*1.45+p*p*.042)*mult));}
   itemSellValue=function(item){const base=v14RawSellValue(item);return classIdentityActive("merchant")?Math.round(base*2):base;};
-
-  const formatBonusesV13=formatBonuses;
-  formatBonuses=function(item){const base=formatBonusesV13(item);if(!item?.prefix&&!item?.suffix)return base;const parts=[];if(item.prefix)parts.push(`Prefix: ${item.prefix}`);if(item.suffix)parts.push(`Suffix: ${item.suffix}`);return `${base} · ${parts.join(" · ")}`;};
 
   makeMerchantGear=function(){
     let bonus=boardLevel>=5?1.05:boardLevel===4?.82:boardLevel===3?.52:boardLevel===2?.30:.08,rarity=rollGearRarity(bonus);
@@ -9559,14 +9558,14 @@ function buildDiceboundHumanHarness235(){
   const db064DonutTriggerElementBase=triggerElementEffect;
   triggerElementEffect=function(key,target=currentEnemy,opts={}){
     const result=db064DonutTriggerElementBase(key,target,opts);
-    if(key==='donut'&&result)dbCombatVfx.playDonutRain();
+    if(key==='donut'&&result)dbCombatVfx.playDonutRain({origin:'player',enemy:target});
     return result;
   };
   const db064DonutEnemyElementProcBase=enemyElementProc;
   enemyElementProc=function(enemy){
     const isDonut=enemy?.affinity==='donut';
     const result=db064DonutEnemyElementProcBase(enemy);
-    if(isDonut&&result)dbCombatVfx.playDonutRain();
+    if(isDonut&&result)dbCombatVfx.playDonutRain({origin:'enemy',enemy});
     return result;
   };
   window.DiceboundDonutVfxTest=Object.freeze({
@@ -9844,10 +9843,22 @@ function buildDiceboundHumanHarness235(){
     try{await playerAttack();return {captures,events,afterDelay:db0648SelectedTargetSurfaces(),living:livingEnemies().map(enemy=>enemy.name)};}
     finally{stop();animateClassAttack=baseAnimate;resolveEnemyResponse=baseResponse;combatBusy=false;}
   }
+  function db06420PassivePoisonTargetExercise(){
+    resetPlayer('fighter');
+    Object.assign(player,{attack:100,poisonStackPower:.12,classElementProcs:{},omniElementChance:0,equipment:{}});
+    const defeated={name:'Poison Target A',icon:'🎯',hp:1,maxHp:1,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:1,rangerMarks:0,gold:0,xp:0};
+    const survivor={name:'Poison Target B',icon:'🎯',hp:20,maxHp:20,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,rangerMarks:0,gold:0,xp:0};
+    currentEnemies=[defeated,survivor];currentEnemyIndex=0;currentEnemy=defeated;currentEncounterLead=defeated;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+    $('combatOverlay')?.classList.remove('hidden');updateCombatUI();
+    const events=[],stop=DiceboundStateEvents.on('combat:target-advanced',event=>events.push({reason:event.reason,defeatedIndex:event.defeatedIndex,targetIndex:event.targetIndex,targetName:event.targetName}));
+    try{const dealt=applyPoisonTick();return {dealt,defeatedHp:defeated.hp,surfaces:db0648SelectedTargetSurfaces(),events,living:livingEnemies().map(enemy=>enemy.name)};}
+    finally{stop();combatBusy=false;}
+  }
   window.DiceboundTargetPresentationTest=Object.freeze({
     resolver:()=>({apiVersion:db0648Targeting.apiVersion}),
     surfaces:db0648SelectedTargetSurfaces,
-    chainedKills:db0648ChainedTargetPresentationExercise
+    chainedKills:db0648ChainedTargetPresentationExercise,
+    passivePoisonDeath:db06420PassivePoisonTargetExercise
   });
 
   /* #124: a test-only, real-runtime cycle for comparing like with like.

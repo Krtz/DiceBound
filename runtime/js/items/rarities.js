@@ -53,7 +53,16 @@
   };
 
   const RARITY_IDS=Object.freeze(Object.keys(RARITY_INFO_DATA));
+  // Powerup offers deliberately use the normal progression only. Artifact and
+  // Omega are distinct content types, so their display order must never make
+  // them implicitly eligible for a "Rare+" reward.
+  const POWERUP_PROGRESSION=Object.freeze(["common","uncommon","rare","epic","legendary","mythical"]);
   function createInfoRegistry(){return JSON.parse(JSON.stringify(RARITY_INFO_DATA));}
   function createValueRegistry(){return JSON.parse(JSON.stringify(RARITY_VALUE_DATA));}
-  window.DiceboundRarities=Object.freeze({apiVersion:1,ids:RARITY_IDS,createInfoRegistry,createValueRegistry});
+  function isPowerupRarityAtLeast(rarity,floor="rare"){
+    const rarityIndex=POWERUP_PROGRESSION.indexOf(String(rarity||"").toLowerCase());
+    const floorIndex=POWERUP_PROGRESSION.indexOf(String(floor||"").toLowerCase());
+    return rarityIndex>=0&&floorIndex>=0&&rarityIndex>=floorIndex;
+  }
+  window.DiceboundRarities=Object.freeze({apiVersion:1,ids:RARITY_IDS,powerupProgression:POWERUP_PROGRESSION,createInfoRegistry,createValueRegistry,isPowerupRarityAtLeast});
 })();

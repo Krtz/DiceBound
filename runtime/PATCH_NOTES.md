@@ -1,5 +1,18 @@
 # Unreleased — Beta 0.6.4.19
 
+# Unreleased — Beta 0.6.4.20
+
+## Playtest follow-ups (#213)
+
+- Unbound Impossible Relic now offers the authoritative Rare/Epic/Legendary/Mythical powerup progression rather than Legendary-only.
+- Gear details keep affixed item names while no longer repeat separate Prefix/Suffix text.
+- Donut Rain renders its six authored spritesheet frames as restrained player-and-target cloud/rain effects for both proc origins, rather than scaling the entire sheet across the battlefield.
+- A selected enemy killed by a Poison tick now advances through the authoritative targeting owner before status presentation continues.
+
+---
+
+# Unreleased — Beta 0.6.4.19
+
 ## Element proc artwork structure
 
 - Nature, Donut and Gun proc artwork now live in dedicated per-element folders under `assets/combat/effects/`.
