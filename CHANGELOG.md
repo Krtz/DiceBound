@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.22
+
+### Prismatic Birthright heirloom eligibility (#210)
+- Prismatic Birthright starter weapons now carry semantic temporary-run provenance and are excluded from end-run and Prestige heirloom candidates.
+- Replacing one with ordinary equipment keeps the replacement heirloom-eligible; already-bound legacy heirlooms are preserved without guessing from names.
+
 ## Beta 0.6.4.21
 
 ### Effective equipment Mana (#215)
