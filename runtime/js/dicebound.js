@@ -4267,7 +4267,6 @@
   // owner and keeps domain mechanics in their existing modules.
   window.DiceboundCamp?.configure({
     find:$,
-    renderClassPortrait:(element,classId)=>applyClassPortrait(element,classId,false),
     getViewModel:()=>{
       const cls=CLASSES[selectedClassId]||CLASSES.ranger,pet=PETS[meta.activePet]||PETS.neutral,state=meta.pets?.[meta.activePet]||{level:1};
       return {
@@ -6489,10 +6488,7 @@ function buildDiceboundHumanHarness235(){
       const legacy=$('campLegacyLine');if(legacy)legacy.textContent=beta042CampSummary();
       const petLine=$('campPetLine');if(petLine){petLine.textContent='';petLine.hidden=true;}
       const resetBtn=$('campResetProgressBtn');if(resetBtn)resetBtn.remove();
-      const campClassIcon=$('campClassIcon');
-      if(campClassIcon&&campClassIcon.dataset.portraitClass!==String(selectedClassId||'')){
-        try{campClassIcon.classList.remove('class-portrait','combat-portrait');campClassIcon.innerHTML='';applyClassPortrait(campClassIcon,selectedClassId,false);campClassIcon.dataset.portraitClass=String(selectedClassId||'');}catch(_){/* fall back to existing text/icon owner */}
-      }
+      window.DiceboundCamp?.refreshArt?.();
     }
   }
 

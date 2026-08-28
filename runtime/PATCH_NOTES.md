@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.16
+
+## Camp visual-baseline regression (#194)
+
+- Restored the approved Beta 0.6.4.13 on-screen anchors for Options, Talents and Prestige after the Camp ownership extraction treated old adjustment offsets as standalone positions.
+- Selected Class again renders as the full-body Camp figure, not a portrait-card image.
+- Gameplay, RNG, saves and Camp progression reveals are unchanged.
+
+---
+
 # Unreleased — Beta 0.6.4.15
 
 ## Camp presentation ownership (#185, #40)

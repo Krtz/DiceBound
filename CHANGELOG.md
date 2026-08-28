@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.16
+
+### Camp visual-baseline regression (#194)
+- Restored the approved 0.6.4.13 top-stage Camp anchors for Options, Talents and Prestige after the #185 extraction incorrectly treated historical offsets as complete coordinates.
+- Restored the selected Class figure to the semantic full-body Camp artwork path rather than the portrait-card renderer.
+- Kept gameplay, RNG, saves, progression reveals and the remaining Camp layout unchanged.
+
 ## Beta 0.6.4.15
 
 ### Camp presentation ownership (#185, #40)
