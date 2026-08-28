@@ -65,6 +65,11 @@ def bootstrap_pr_materialization(root: Path, version: str, channel: str) -> None
     if version != BOOTSTRAP_VERSION or channel != "Beta":
         return
 
+    # Pull-request Actions checks out GitHub's synthetic merge ref. Building a
+    # materialized commit on top of that would inject a merge commit into the
+    # protected feature branch, so switch to the real branch head first.
+    subprocess.run(["git", "checkout", "-B", "dicebound-materialize", f"origin/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
+
     new_astral = root / "runtime/assets/enemies/bosses/battle/astral-devourer-dragon-2.png"
     if not new_astral.exists():
         raise RuntimeError("approved transparent Astral Devourer Dragon asset is missing")
