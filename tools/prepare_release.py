@@ -65,9 +65,10 @@ def bootstrap_pr_materialization(root: Path, version: str, channel: str) -> None
     if version != BOOTSTRAP_VERSION or channel != "Beta":
         return
 
-    # Pull-request Actions checks out GitHub's synthetic merge ref. Building a
-    # materialized commit on top of that would inject a merge commit into the
-    # protected feature branch, so switch to the real branch head first.
+    # Pull-request Actions checks out GitHub's synthetic merge ref. Build the
+    # materialized commit from the real feature head instead so its history is
+    # linear. The protected feature ref itself is updated later through the
+    # normal GitHub connector; Actions only exposes this clean commit via tag.
     subprocess.run(["git", "checkout", "-B", "dicebound-materialize", f"origin/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
 
     new_astral = root / "runtime/assets/enemies/bosses/battle/astral-devourer-dragon-2.png"
@@ -161,7 +162,6 @@ def bootstrap_pr_materialization(root: Path, version: str, channel: str) -> None
     subprocess.run(["git", "commit", "-m", "fix: transparent Astral art and enemy Donut VFX"], cwd=root, check=True)
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     subprocess.run(["git", "tag", "-f", BOOTSTRAP_TAG, commit], cwd=root, check=True)
-    subprocess.run(["git", "push", "origin", f"HEAD:refs/heads/{BOOTSTRAP_BRANCH}"], cwd=root, check=True)
     subprocess.run(["git", "push", "origin", f"refs/tags/{BOOTSTRAP_TAG}", "--force"], cwd=root, check=True)
 
 
