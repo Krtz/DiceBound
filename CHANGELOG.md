@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.17
+
+### Persistent Class chooser exit (#197)
+- Kept the Class chooser Done/Exit control visible at the top-right while its class list scrolls or the window is scaled down.
+- Added a focused Camp UI regression guard; no class mechanics, unlock, RNG, save or balance behavior changed.
+
 ## Beta 0.6.4.16
 
 ### Camp visual-baseline regression (#194)

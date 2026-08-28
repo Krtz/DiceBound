@@ -1,3 +1,12 @@
+# Unreleased — Beta 0.6.4.17
+
+## Persistent Class chooser exit (#197)
+
+- The Class chooser now keeps its Done/Exit header visible at the top-right while the class list scrolls or the window is scaled down.
+- This is a presentation-only fix: class selection, unlocks, RNG, saves and run behavior are unchanged.
+
+---
+
 # Unreleased — Beta 0.6.4.16
 
 ## Camp visual-baseline regression (#194)
