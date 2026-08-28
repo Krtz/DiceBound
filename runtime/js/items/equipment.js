@@ -143,6 +143,10 @@
   }
   function intrinsicBonusesForItem(item){return {...(identityForItem(item)?.intrinsicBonuses||{})};}
   function allBonusesForItem(item){const combined={...(item?.bonuses||{})};for(const [key,value] of Object.entries(intrinsicBonusesForItem(item)))combined[key]=(combined[key]||0)+value;return combined;}
+  // Ordinary generated equipment and existing saved heirlooms remain eligible
+  // unless an item explicitly opts out through semantic item metadata. This
+  // avoids fragile display-name rules for temporary run-only equipment.
+  function isHeirloomEligible(item){return !!item&&item.heirloomEligible!==false;}
 
   // The runtime owns its current mutable balance tables and compatibility helpers;
   // this module owns the ordinary-item construction algorithm. Keeping those inputs
@@ -168,5 +172,5 @@
     item.itemPower=clamp(Number(item.itemPower)||rarityBudgets[rarity][0],rarityBudgets[rarity][0],rarityBudgets[rarity][1]);return item;
   }
 
-  window.DiceboundEquipment=Object.freeze({apiVersion:2,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix,equipmentIdentity,identityForItem,eligibleEquipmentIdentities,identityWeight,selectEquipmentIdentity,intrinsicBonusesForItem,allBonusesForItem,generateOrdinaryFromSeedCode,generateOrdinaryItem});
+  window.DiceboundEquipment=Object.freeze({apiVersion:3,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix,equipmentIdentity,identityForItem,eligibleEquipmentIdentities,identityWeight,selectEquipmentIdentity,intrinsicBonusesForItem,allBonusesForItem,isHeirloomEligible,generateOrdinaryFromSeedCode,generateOrdinaryItem});
 })();

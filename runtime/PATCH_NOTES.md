@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.4.21
+# Unreleased — Beta 0.6.4.22
+
+## Prismatic Birthright heirlooms (#210)
+
+- Prismatic Birthright weapons are now run-only and no longer appear as heirloom candidates.
+- Replacing one with ordinary gear still lets that replacement become an heirloom normally.
+
+---
+
+# Beta 0.6.4.21
 
 ## Effective equipment Mana (#215)
 

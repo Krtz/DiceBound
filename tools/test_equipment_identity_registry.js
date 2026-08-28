@@ -13,7 +13,7 @@ for(const relative of [["items","rarities.js"],["items","equipment.js"]]){
 const equipment=context.window.DiceboundEquipment;
 const registry=equipment.createRegistry(),identities=registry.identities;
 
-assert.equal(equipment.apiVersion,2);
+assert.equal(equipment.apiVersion,3);
 assert.equal(identities.length,20,"the two approved authored packs must share one registry without generic ring/amulet fallbacks");
 const expectedArt={
   "bronze-longsword":"assets/equipment/weapon/bronze-longsword.png",
@@ -49,6 +49,9 @@ assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({sl
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"oak-shortbow"}))),{attack:2,crit:.01},"Oak Shortbow must remain a distinct approved identity");
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"offhand",equipmentId:"spellbook"}))),{maxMana:5});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.allBonusesForItem({slot:"weapon",equipmentId:"shortbow",bonuses:{attack:3}}))),{attack:4,crit:.01});
+assert.equal(equipment.isHeirloomEligible({id:"ordinary",slot:"weapon",name:"Prismatic-sounding ordinary weapon"}),true,"ordinary eligibility must not inspect display names");
+assert.equal(equipment.isHeirloomEligible({id:"birthright",slot:"weapon",provenance:"prismatic-birthright",heirloomEligible:false}),false,"explicit run-only equipment must be rejected semantically");
+assert.equal(equipment.isHeirloomEligible(null),false,"missing equipment cannot become an heirloom");
 assert.equal(equipment.identityForItem({slot:"weapon",equipmentId:"bronze-round-shield"}),null,"wrong-slot identities must never be accepted from saves");
 assert.equal(equipment.identityForItem({slot:"weapon",name:"Old saved gear"}),null,"old saves must not be rerolled into random identities");
 

@@ -1018,13 +1018,14 @@
 
 
   function renderEndGear(){
-    const grid=$("endGearGrid");grid.innerHTML="";const items=EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean),capacity=getHeirloomSlots(),bound=meta.heirlooms||[];
+    const grid=$("endGearGrid");grid.innerHTML="";const items=EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)),capacity=getHeirloomSlots(),bound=meta.heirlooms||[];
     $("endHeirloomStatus").innerHTML=`Bound heirlooms: <strong>${bound.length} / ${capacity}</strong>. Click equipped items to bind or unbind them. A new item in the same slot replaces the old one.`;
     if(!items.length){grid.innerHTML='<div class="hint">No equipment survived this run. Your existing heirlooms remain bound.</div>';return;}
     items.forEach(item=>{
       const btn=document.createElement("button"),isKept=bound.some(h=>h.id===item.id);btn.className=`gear-keep-btn${isKept?" kept":""} ${item.rarity||""}`.trim();
       btn.innerHTML=`<strong>${item.icon} <span class="journey-gear-name ${item.rarity||""}">${item.name}</span></strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;
       btn.addEventListener("click",()=>{
+        if(!window.DiceboundEquipment.isHeirloomEligible(item)){showToast(`${item.name} cannot become an heirloom`);return;}
         let hs=[...(meta.heirlooms||[])],index=hs.findIndex(h=>h.id===item.id);
         if(index>=0)hs.splice(index,1);
         else{
@@ -1264,9 +1265,9 @@
   function importSave(){try{const raw=$("saveTransferText").value.trim();if(!raw)throw new Error("empty");meta=window.DiceboundSave.importText(raw,{defaultFactory:defaultMeta,normalize:v13NormalizeMeta});repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast("Save imported");$("infoOverlay").classList.add("hidden");openStartScreen();}catch(e){window.DiceboundPlatform.alert("That save string could not be imported.");}}
 
   function prestigeSummary(){const p=meta.prestige||defaultPrestige(),parts=[];if(p.maxHp)parts.push(`+${p.maxHp*3} Max HP`);if(p.attack)parts.push(`+${p.attack} Attack`);if(p.defense)parts.push(`+${p.defense} Defense`);if(p.crit)parts.push(`+${p.crit}% Crit`);if(p.dodge)parts.push(`+${p.dodge}% Dodge`);if(p.luck)parts.push(`+${p.luck*2} Luck`);if(p.lifeSteal)parts.push(`+${p.lifeSteal}% Lifesteal`);return parts.length?parts.join(" · "):"No permanent Prestige stats yet.";}
-  function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});$("prestigeHeirloomOverlay").classList.remove("hidden");}
+  function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});$("prestigeHeirloomOverlay").classList.remove("hidden");}
   function completePrestige(data,keepIds=[]){const {rewards,remainder}=data,keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"],gained=[];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;gained.push(key);}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder+(data.unspent||0);pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();}
-  function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
+  function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
 
   function applyRunThemeV13(){applyRunTheme();}
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
@@ -1533,7 +1534,7 @@
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
   const getHeirloomSlotsV15=getHeirloomSlots;getHeirloomSlots=function(){const source=runTalentSnapshot;if(!source)return getHeirloomSlotsV15();return 1+(Number(source.legacy_heirloom)||0)+((meta.prestige?.count||0)>=20?1:0);};
   const generateBoardV15=generateBoard;generateBoard=function(){if(!runTalentSnapshot)return generateBoardV15();const live=meta.purchased;try{meta.purchased=runTalentSnapshot;return generateBoardV15();}finally{meta.purchased=live;}};
-  const resetPlayerV15=resetPlayer;resetPlayer=function(classId=selectedClassId){runTalentSnapshot=JSON.parse(JSON.stringify(meta.purchased||{}));resetPlayerV15(classId);player.bloodOverhealBonus=0;player.clericHealBonus=0;if(gameplayTalentRank("element_prismatic")&&!player.equipment.weapon){const pr=gameplayTalentRank("element_prismatic"),rr=pr>=3?"rare":pr>=2?"uncommon":"common",starter=generateEquipment(rr,"weapon");starter.element=pick(ELEMENT_KEYS);starter.name=`Prismatic ${starter.name}`;equipItem(starter,true);recordRunBuff("🌈","Prismatic Birthright",`Rank ${pr} started with ${starter.name}: ${elementSummary(starter)}`,"legacy","Element Talent");}if(classIdentityActive("beastmaster")){player.petDamageBonus+=4;player.petDoubleChance+=.10;}if(classIdentityActive("paladin"))player.defenseAttackScale+=.35;statsLastHp=player.hp;statsLastGold=player.gold;};
+  const resetPlayerV15=resetPlayer;resetPlayer=function(classId=selectedClassId){runTalentSnapshot=JSON.parse(JSON.stringify(meta.purchased||{}));resetPlayerV15(classId);player.bloodOverhealBonus=0;player.clericHealBonus=0;if(gameplayTalentRank("element_prismatic")&&!player.equipment.weapon){const pr=gameplayTalentRank("element_prismatic"),rr=pr>=3?"rare":pr>=2?"uncommon":"common",starter=generateEquipment(rr,"weapon");starter.provenance="prismatic-birthright";starter.heirloomEligible=false;starter.element=pick(ELEMENT_KEYS);starter.name=`Prismatic ${starter.name}`;equipItem(starter,true);recordRunBuff("🌈","Prismatic Birthright",`Rank ${pr} started with ${starter.name}: ${elementSummary(starter)}`,"legacy","Element Talent");}if(classIdentityActive("beastmaster")){player.petDamageBonus+=4;player.petDoubleChance+=.10;}if(classIdentityActive("paladin"))player.defenseAttackScale+=.35;statsLastHp=player.hp;statsLastGold=player.gold;};
   const openStartScreenV15=openStartScreen;openStartScreen=function(){runTalentSnapshot=null;openStartScreenV15();};
 
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
@@ -9545,6 +9546,32 @@ function buildDiceboundHumanHarness235(){
     snapshot:options=>DB_EFFECTIVE_STATS.manaResourceSnapshot(options),
     exercise:db06421ManaEquipmentExercise
   });
+
+  /* #210 — Prismatic Birthright is useful run gear, not a permanent account
+     reward. The test runs the real reset, end-run and Prestige candidate paths. */
+  function db06422PrismaticBirthrightExercise(){
+    try{
+      window.DiceboundRng.seed('db06422-prismatic-birthright');v319ResetCareer();
+      meta.purchased.element_prismatic=1;resetPlayer('ranger');
+      const starter=JSON.parse(JSON.stringify(player.equipment.weapon));renderEndGear();
+      const endStarterCandidates=[...document.querySelectorAll('#endGearGrid .gear-keep-btn')].map(button=>button.textContent);
+      gameStarted=true;const prestigeStarter={rewards:1};openPrestigeHeirloomChoice(prestigeStarter);
+      const prestigeStarterCandidates=(prestigeStarter.candidates||[]).map(item=>({id:item.id,name:item.name,eligible:db06314Equipment.isHeirloomEligible(item)}));
+      const ordinary=generateEquipment('common','weapon');equipItem(ordinary,true);renderEndGear();
+      const endReplacementCandidates=[...document.querySelectorAll('#endGearGrid .gear-keep-btn')].map(button=>button.textContent);
+      v319ResetCareer();const existing={id:'db06422-existing-heirloom',slot:'weapon',rarity:'common',icon:'⚔️',name:'Historic Bound Weapon',bonuses:{attack:1}};
+      meta.heirlooms=[existing];meta.purchased.element_prismatic=3;resetPlayer('ranger');
+      return {
+        starter:{id:starter?.id,rarity:starter?.rarity,element:starter?.element,provenance:starter?.provenance,heirloomEligible:starter?.heirloomEligible,eligible:db06314Equipment.isHeirloomEligible(starter)},
+        endStarterCandidates,prestigeStarterCandidates,
+        replacement:{id:ordinary.id,eligible:db06314Equipment.isHeirloomEligible(ordinary),endCandidate:endReplacementCandidates.some(text=>text.includes(ordinary.name))},
+        existingHeirloom:{id:player.equipment.weapon?.id,provenance:player.equipment.weapon?.provenance||null,starterGenerated:player.equipment.weapon?.provenance==='prismatic-birthright'}
+      };
+    } finally {
+      v319ResetCareer();resetPlayer('ranger');openStartScreen();
+    }
+  }
+  window.DiceboundPrismaticBirthrightTest=Object.freeze({exercise:db06422PrismaticBirthrightExercise,eligible:item=>db06314Equipment.isHeirloomEligible(item)});
 
   /* #91 / #144 ordinary-enemy mechanics.  The extracted policy owns the
      tables; this live adapter only supplies combat-state application. */

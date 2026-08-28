@@ -20,9 +20,10 @@ for (const relative of [
 const boardsApi = context.window.DiceboundBoards;
 const equipmentApi = context.window.DiceboundEquipment;
 const achievementsApi = context.window.DiceboundAchievements;
+const apiVersions = { boards: 1, equipment: 3, achievements: 2 };
 for (const [name, api] of [["boards", boardsApi], ["equipment", equipmentApi], ["achievements", achievementsApi]]) {
   assert.ok(api, `${name} module did not publish its API`);
-  assert.equal(api.apiVersion, name === "equipment" || name === "achievements" ? 2 : 1);
+  assert.equal(api.apiVersion, apiVersions[name]);
   assert.ok(Object.isFrozen(api), `${name} API is mutable`);
 }
 
