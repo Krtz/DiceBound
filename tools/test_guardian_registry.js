@@ -25,7 +25,7 @@ for(const [board,id,name,specialName,weakness] of expected){
   const guardian=guardians.resolveFinal(board);
   assert.deepEqual(JSON.parse(JSON.stringify({board:guardian.board,kind:guardian.kind,id:guardian.id,name:guardian.name,specialName:guardian.combat.specialName,weakness:guardian.combat.weakness,art:guardian.art})),{
     board,kind:"final",id,name,specialName,weakness,
-    art:{battle:`assets/enemies/bosses/battle/${id}.png`,boardMarker:`assets/enemies/bosses/board-markers/${id}.png`,alt:name}
+    art:{battle:id==="astral-devourer-dragon"?"assets/enemies/bosses/battle/astral-devourer-dragon-2.png":`assets/enemies/bosses/battle/${id}.png`,boardMarker:`assets/enemies/bosses/board-markers/${id}.png`,alt:name}
   });
   assert.ok(fs.existsSync(path.join(root,"runtime",guardian.art.battle)),`${id} battle art is absent`);
   assert.ok(fs.existsSync(path.join(root,"runtime",guardian.art.boardMarker)),`${id} board marker is absent`);
@@ -41,5 +41,6 @@ assert.match(monolith,/db317FinalGuardian\(boardLevel\)/,"the active final-comba
 assert.match(monolith,/DB317_GUARDIANS\.resolveFinal\(boardLevel\)/,"the final board tile must use the guardian resolver");
 assert.doesNotMatch(monolith,/const DB060_BOSS_ART=/,"legacy guardian portrait map must not bypass semantic artwork");
 assert.doesNotMatch(monolith,/assets\/enemies\/portraits\/astral-devourer-dragon\.png/,"guardian rendering must not retain the stale Astral portrait path");
+assert.ok(!fs.existsSync(path.join(root,"runtime","assets","enemies","bosses","battle","astral-devourer-dragon.png")),"opaque Astral battle art should be retired once the transparent replacement is canonical");
 
 console.log("Guardian registry PASS: Boards 1-6 use one isolated final identity with canonical battle/marker asset paths");
