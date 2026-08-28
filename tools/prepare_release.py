@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 from dicebound_version import release_tag, require_supported_version
@@ -19,6 +20,10 @@ def diagnostic_monolith_context(root: Path) -> None:
     """Temporary CI-only probe for monolith-owned playtest follow-ups."""
     if os.environ.get("GITHUB_ACTIONS") != "true" or os.environ.get("GITHUB_HEAD_REF") != DIAGNOSTIC_BRANCH:
         return
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, ValueError):
+        pass
     source = (root / "runtime" / "js" / "dicebound.js").read_text(encoding="utf-8")
     lines = source.splitlines()
     probes = [
