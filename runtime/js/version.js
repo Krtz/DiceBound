@@ -3,10 +3,10 @@
 
   // These are the only release-version literals in the browser runtime.
   // tools/set_project_version.py stamps them from its explicit Version/Channel input.
-  const VERSION="0.6.4.20";
+  const VERSION="0.6.4.21";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Camp visual-baseline restoration for the approved Beta 0.6.4.13 composition.";
+  const RELEASE_SUMMARY="Equipment Mana now feeds the real cap without refilling current Mana.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,

@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.21
+
+### Effective equipment Mana (#215)
+- Equipped `+Mana` now contributes exactly once to the authoritative effective Mana cap for Mana-using classes, including both ordinary rolled bonuses and authored equipment intrinsics.
+- Equipping or replacing Mana gear raises only the cap; it no longer refills current Mana. Removing it safely clamps current Mana if the cap falls.
+- Run reset and active-run checkpoint restore retain the same effective Mana cap. Non-Mana classes do not gain a hidden Mana resource from equipped Mana gear.
+
 ## Beta 0.6.4.20
 
 ### Playtest follow-ups (#213)
