@@ -4,12 +4,50 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 from pathlib import Path
 
 from dicebound_version import release_tag, require_supported_version
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DIAGNOSTIC_BRANCH = "fix/0.6.4.20-playtest-followups"
+
+
+def diagnostic_monolith_context(root: Path) -> None:
+    """Temporary CI-only probe for monolith-owned playtest follow-ups."""
+    if os.environ.get("GITHUB_ACTIONS") != "true" or os.environ.get("GITHUB_HEAD_REF") != DIAGNOSTIC_BRANCH:
+        return
+    source = (root / "runtime" / "js" / "dicebound.js").read_text(encoding="utf-8")
+    lines = source.splitlines()
+    probes = [
+        ("IMPOSSIBLE", re.compile(r"Impossible|impossible"), 80),
+        ("RELIC", re.compile(r"Relic|relic"), 80),
+        ("PREFIX_SUFFIX_UI", re.compile(r"Prefix|Suffix|prefix|suffix"), 100),
+        ("POISON", re.compile(r"poison", re.I), 140),
+        ("TARGET_SELECTION", re.compile(r"selected(?:Enemy|Target)|targetIndex|enemyIndex|currentTarget", re.I), 140),
+    ]
+    print("=== DICEBOUND 0.6.4.20 MONOLITH DIAGNOSTIC ===")
+    for label, rx, limit in probes:
+        print(f"\n--- {label} ---")
+        found = 0
+        for index, line in enumerate(lines):
+            if not rx.search(line):
+                continue
+            found += 1
+            if found > limit:
+                print(f"... truncated after {limit} matches ...")
+                break
+            lo = max(0, index - 3)
+            hi = min(len(lines), index + 4)
+            print(f"\n[{label} match {found} @ line {index + 1}]")
+            for cursor in range(lo, hi):
+                marker = ">" if cursor == index else " "
+                print(f"{marker}{cursor + 1}: {lines[cursor]}")
+        if found == 0:
+            print("(no matches)")
+    raise SystemExit("Diagnostic probe complete; inspect CI log before materializing Beta 0.6.4.20.")
 
 
 def current_notes(patch_notes: str) -> str:
@@ -54,6 +92,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = args.root.resolve()
+    diagnostic_monolith_context(root)
     project = json.loads((root / "wrapper-source/config/project.json").read_text(encoding="utf-8"))
     version = require_supported_version(args.version or project["version"])
     channel = str(args.channel or project["channel"]).strip()
