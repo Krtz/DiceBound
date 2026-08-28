@@ -42,6 +42,8 @@ items/artifacts.js
 items/loot.js
 powerups/registry.js
 powerups/borrowing.js
+ui/camp.js
+ui/class-chooser.js
 dicebound.js
 ```
 
@@ -52,6 +54,8 @@ dicebound.js
 `events/merchant-transaction.js` owns the current Merchant visit's offer reservations, consumed-offer state and exclusive reward-choice transaction. Merchant rendering remains in the compatibility runtime for now, but it cannot rebuild stock or enter another Sovereign/Contract choice while that transaction owns input.
 
 `core/memory-diagnostics.js` owns the bounded diagnostics time series, canonical export text and pure equivalent-state summaries. Its test-only live cycle adapter remains in the compatibility runtime because it deliberately exercises the final Camp/run/combat lifecycle; it uses one ordinary-enemy fixture per cycle, clears its temporary checkpoint, and reports evidence only rather than declaring a memory leak.
+
+`ui/camp.js` owns Camp scene presentation, responsive layout and painted-object hit targets. `ui/class-chooser.js` owns the Class roster/detail destination, semantic artwork, safe locked-class inspection, Random chooser state and persistent dismissal chrome. Both receive domain data/actions through injected contracts; neither duplicates class registry, unlock, save or RNG policy. The monolith retains only a documented `renderClassChoices()` forwarding adapter for legacy lifecycle call sites and the `startNewGame()` composition hook that resolves the already-selected Random class exactly once.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -133,6 +137,8 @@ runtime/js/
 ├─ modes/
 ├─ save/
 └─ ui/
+   ├─ camp.js                 Camp presentation/layout/hit targets
+   └─ class-chooser.js        Class roster/detail, Random and Done chrome
 ```
 
 The already-extracted platform/storage/save/RNG files may later move into subdirectories only if doing so provides value. Moving files merely to make the tree prettier is not a priority.

@@ -167,6 +167,51 @@ def main() -> int:
                 "retired Camp presentation implementation remains in dicebound.js: "
                 + retired_camp_implementation
             )
+    chooser_module = by_id.get("ui-class-chooser")
+    chooser_owner_ok = False
+    if not chooser_module:
+        errors.append("Class chooser presentation owner ui-class-chooser is missing from the runtime manifest")
+    else:
+        chooser_owner_ok = (
+            chooser_module.get("path") == "js/ui/class-chooser.js"
+            and {"assets", "classes-registry", "ui-camp"}.issubset(set(chooser_module.get("requires") or []))
+            and "DiceboundClassChooser" in (chooser_module.get("provides") or [])
+            and position.get("ui-class-chooser", -1) < position.get(str(monolith_id), -1)
+        )
+        if not chooser_owner_ok:
+            errors.append(
+                "ui-class-chooser must provide DiceboundClassChooser, require its class/Camp dependencies, "
+                "and load before the monolith"
+            )
+    chooser_source = sources.get("ui-class-chooser", "")
+    for required_chooser_behavior in [
+        "resolveClassArt",
+        "resolveRandomForRun",
+        "data-class-chooser-done",
+        "class-chooser-layout",
+    ]:
+        if required_chooser_behavior not in chooser_source:
+            errors.append(
+                "Class chooser owner is missing required presentation behavior: "
+                + required_chooser_behavior
+            )
+    if monolith_source:
+        expected_adapter = "function renderClassChoices(){return window.DiceboundClassChooser?.render();}"
+        if expected_adapter not in monolith_source:
+            errors.append("dicebound.js must retain only the thin Class chooser composition adapter")
+        for retired_chooser_layer in [
+            "renderClassChoices=function",
+            "renderClassChoicesV",
+            "renderClassChoicesBeta",
+            "renderClassChoicesBase",
+            "function v19EnsureHub()",
+            "Legacy Planning",
+        ]:
+            if retired_chooser_layer in monolith_source:
+                errors.append(
+                    "retired Class chooser implementation/wrapper remains in dicebound.js: "
+                    + retired_chooser_layer
+                )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -207,6 +252,10 @@ def main() -> int:
         "campOwner": {
             "id": "ui-camp",
             "configured": camp_owner_ok,
+        },
+        "classChooserOwner": {
+            "id": "ui-class-chooser",
+            "configured": chooser_owner_ok,
         },
         "monolith": {
             "id": monolith_id,
