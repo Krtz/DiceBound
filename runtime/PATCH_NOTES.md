@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.18
+
+## Transparent Astral art + enemy Donut VFX (#13, #201)
+
+- Astral Devourer Dragon now uses the approved transparent battle cutout instead of the opaque rectangular image.
+- Donut elemental procs triggered by enemies/Guardians now play the authored Donut Rain artwork just like player-origin Donut procs.
+- This patch changes presentation only; Donut damage/healing, proc odds, RNG, targeting, guardian behavior and saves are unchanged.
+
+---
+
 # Unreleased — Beta 0.6.4.17
 
 ## Persistent Class chooser exit (#197)

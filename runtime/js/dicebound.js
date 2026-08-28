@@ -9562,6 +9562,13 @@ function buildDiceboundHumanHarness235(){
     if(key==='donut'&&result)dbCombatVfx.playDonutRain();
     return result;
   };
+  const db064DonutEnemyElementProcBase=enemyElementProc;
+  enemyElementProc=function(enemy){
+    const isDonut=enemy?.affinity==='donut';
+    const result=db064DonutEnemyElementProcBase(enemy);
+    if(isDonut&&result)dbCombatVfx.playDonutRain();
+    return result;
+  };
   window.DiceboundDonutVfxTest=Object.freeze({
     effect:dbCombatVfx.donutEffect,
     play:dbCombatVfx.playDonutRain,

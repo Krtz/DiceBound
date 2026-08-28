@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.18
+
+### Transparent Astral art + enemy Donut VFX (#13, #201)
+- Replaced the opaque Astral Devourer Dragon battle image with the approved transparent cutout and made it the canonical Board 2 final-guardian art.
+- Enemy-origin Donut procs now invoke the same authored Donut Rain battlefield VFX as player-origin procs after the real proc resolves.
+- Gameplay values, targeting, RNG, Donut damage/healing, guardian mechanics and save behavior are unchanged.
+
 ## Beta 0.6.4.17
 
 ### Persistent Class chooser exit (#197)
