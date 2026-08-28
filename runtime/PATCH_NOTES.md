@@ -1,3 +1,14 @@
+# Unreleased — Beta 0.6.4.19
+
+## Element proc artwork structure
+
+- Nature, Donut and Gun proc artwork now live in dedicated per-element folders under `assets/combat/effects/`.
+- Nature and Donut keep their existing implemented behavior through corrected canonical asset-registry paths.
+- The approved ten-image Gun VFX pack is staged for a later Gun proc implementation; the two rejected arm variants are not shipped in the runtime repository.
+- Asset validation now enforces the per-element proc folder convention.
+
+---
+
 # Unreleased — Beta 0.6.4.18
 
 ## Transparent Astral art + enemy Donut VFX (#13, #201)
