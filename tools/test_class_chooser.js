@@ -45,7 +45,9 @@ assert.equal(chooser.lastRandomClass(),'monk');
 
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');
 assert(monolith.includes('function renderClassChoices(){return window.DiceboundClassChooser?.render();}'),'monolith should retain only the thin Class chooser composition adapter');
-for(const retired of ['renderClassChoices=function','renderClassChoicesV','renderClassChoicesBeta','renderClassChoicesBase','function v19EnsureHub()','Legacy Planning'])assert(!monolith.includes(retired),`retired Class chooser layer must not remain: ${retired}`);
+for(const retired of ['renderClassChoices=function','renderClassChoicesV','renderClassChoicesBeta','renderClassChoicesBase','function v19EnsureHub()','Legacy Planning','.class-card .identity-note','.class-card .mana-note','.camp-panel .class-grid'])assert(!monolith.includes(retired),`retired Class chooser layer must not remain: ${retired}`);
 assert(monolith.includes('const db064ClassChooser=window.DiceboundClassChooser;'),'monolith must configure the extracted Class chooser owner');
+const stylesheet=fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),'utf8');
+for(const retiredStyle of ['.class-card{','.class-grid{'])assert(!stylesheet.includes(retiredStyle),`retired Class chooser stylesheet must not remain: ${retiredStyle}`);
 
 console.log('Class chooser owner PASS: semantic roster/detail contract, Random ownership and monolith drain guard');

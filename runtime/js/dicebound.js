@@ -1996,8 +1996,6 @@
     .stage-mark{font-size:11px;line-height:1;color:#dff8e1;font-weight:1000;background:rgba(33,87,50,.7);border:1px solid rgba(115,222,139,.35);padding:2px 5px;border-radius:999px;margin-top:2px}
     .identity-flash{position:absolute;z-index:45;left:50%;top:24%;transform:translate(-50%,-50%);pointer-events:none;font-size:15px;font-weight:1000;padding:8px 12px;border-radius:999px;background:rgba(10,15,28,.92);border:1px solid rgba(181,140,255,.42);box-shadow:0 8px 20px rgba(0,0,0,.45);animation:identityFlash .95s ease-out forwards}
     @keyframes identityFlash{0%{opacity:0;transform:translate(-50%,-25%) scale(.7)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-78%) scale(.94)}}
-    .class-card .identity-note{display:block;margin-top:6px;font-size:9px;line-height:1.35;color:#cfe3f7}
-    .class-card .mana-note{color:#b9abff}
     @media(max-width:760px){.combat-actions.has-special{grid-template-columns:1fr 1fr}}
   `;
   document.head.appendChild(v13Style);
@@ -3839,7 +3837,6 @@
     .camp-panel.active{display:block}
     .camp-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
     .camp-panel-head h3{margin:0;font-size:18px}
-    .camp-panel .class-grid{margin-top:8px}
     .camp-close-btn{min-width:120px}
     .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
     .set-tier{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(245,241,232,.62)}

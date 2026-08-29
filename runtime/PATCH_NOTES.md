@@ -1,4 +1,14 @@
-# Unreleased — Beta 0.6.4.22
+# Unreleased — Beta 0.6.4.23
+
+## Class chooser modernization (#199, #209, #40)
+
+- Class selection is now a dedicated roster-and-detail Camp destination rather than the historical card dump.
+- Each class uses its canonical artwork; safe locked-class inspection, the existing five-unlock Random option, and the visible top-right Done control are preserved.
+- This is presentation/architecture work only: class mechanics, unlock rules, Random choice behavior, save data and run behavior are unchanged.
+
+---
+
+# Beta 0.6.4.22
 
 ## Prismatic Birthright heirlooms (#210)
 

@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "runtime"
 MANIFEST_PATH = RUNTIME / "js" / "module-manifest.json"
 INDEX_PATH = RUNTIME / "index.html"
+STYLE_PATH = RUNTIME / "css" / "dicebound.css"
 
 SCRIPT_RE = re.compile(r"<script\b[^>]*\bsrc=[\"']([^\"']+)[\"'][^>]*>\s*</script>", re.I)
 FUNCTION_RE = re.compile(r"(?:^|\n)\s*function\s+([A-Za-z_$][\w$]*)\s*\(", re.M)
@@ -50,6 +51,9 @@ def main() -> int:
         return 1
     if not INDEX_PATH.is_file():
         print(f"missing runtime index: {INDEX_PATH}", file=sys.stderr)
+        return 1
+    if not STYLE_PATH.is_file():
+        print(f"missing runtime stylesheet: {STYLE_PATH}", file=sys.stderr)
         return 1
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
@@ -206,12 +210,22 @@ def main() -> int:
             "renderClassChoicesBase",
             "function v19EnsureHub()",
             "Legacy Planning",
+            ".class-card .identity-note",
+            ".class-card .mana-note",
+            ".camp-panel .class-grid",
         ]:
             if retired_chooser_layer in monolith_source:
                 errors.append(
                     "retired Class chooser implementation/wrapper remains in dicebound.js: "
                     + retired_chooser_layer
                 )
+    stylesheet_source = STYLE_PATH.read_text(encoding="utf-8")
+    for retired_chooser_style in [".class-card{", ".class-grid{"]:
+        if retired_chooser_style in stylesheet_source:
+            errors.append(
+                "retired Class chooser style remains in runtime/css/dicebound.css: "
+                + retired_chooser_style
+            )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0

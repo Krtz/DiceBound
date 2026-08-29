@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.23
+
+### Class chooser presentation ownership (#199, #209, #40)
+- Replaced the historical Class-card grid and its reassignment chain with the authoritative `ui/class-chooser.js` roster/detail destination.
+- The Camp Class surface now supports semantic class artwork, safe locked-class inspection, the existing five-unlock Random pool, and persistent top-right Done chrome across wide, compact and short/wide layouts.
+- Removed the old chooser hub/card CSS and strengthened architecture checks so the former Class UI owner cannot return to the monolith. Class mechanics, unlock rules, RNG, saves and start-run behavior are unchanged.
+
 ## Beta 0.6.4.22
 
 ### Prismatic Birthright heirloom eligibility (#210)
