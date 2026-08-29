@@ -194,6 +194,16 @@
 
   function renderClassFigure(icon,view){
     if(!icon||!view.classId)return;
+    if(view.classId==='random'){
+      if(icon.dataset.campFullbodyClass==='random')return;
+      icon.classList.remove('class-portrait','combat-portrait','db054-art-frame');
+      delete icon.dataset.portraitClass;
+      const placeholder=doc()?.createElement('div');
+      if(!placeholder){icon.textContent='🎲';return;}
+      placeholder.className='camp-random-class-placeholder';placeholder.setAttribute('aria-label','Random class');
+      placeholder.innerHTML='<span>🎲</span><i>?</i>';
+      icon.replaceChildren(placeholder);icon.dataset.campFullbodyClass='random';return;
+    }
     const art=runtime.resolveClassArt?.(view.classId)||root.DiceboundAssets?.resolveClassArt?.(view.classId);
     const src=art?.battle||`assets/ui/class-art/battle/${view.classId}.png`;
     if(icon.dataset.campFullbodyClass===String(view.classId)&&icon.querySelector('img.db058-camp-class-fullbody')?.getAttribute('src')===src)return;

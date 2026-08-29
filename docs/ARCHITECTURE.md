@@ -77,6 +77,10 @@ The audit syntax-checks the core JavaScript, loads/evaluates the asset registry,
 
 `runtime/js/ui/camp.js` is the authoritative Camp presentation owner. It builds the semantic Camp scene, renders current class/pet/progression presentation supplied by live domain owners, owns the approved wide/compact/stacked layout regimes, renders authored Camp objects, and keeps each semantic button's hit target aligned with its visible painted object. The compatibility monolith supplies a narrow configured view model and action callbacks only; it retains class, pet, progression, save, mode and gameplay ownership. New Camp placement work belongs in `ui/camp.js`, not in another late monolith style patch.
 
+### Class chooser presentation ownership
+
+`runtime/js/ui/class-chooser.js` is the authoritative Class destination opened from Camp. It owns roster/detail rendering, locked-but-safe inspection, semantic class artwork, Random selection state and the persistent top-right Done control. The canonical class registry, unlock policy, selected-class persistence and RNG remain in their existing domain owners and are supplied through a narrow configuration contract. `dicebound.js` retains only the `renderClassChoices()` lifecycle forwarding adapter for existing start/unlock/prestige callers plus the `startNewGame()` composition hook that asks the chooser to resolve Random exactly once; it no longer owns a Class grid, card styling or historical chooser wrapper chain.
+
 ## Build identity
 
 The exact shipped Beta 0.6 build identity is preserved under `docs/releases/beta-0.6/`.

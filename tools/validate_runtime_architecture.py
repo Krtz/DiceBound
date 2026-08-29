@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "runtime"
 MANIFEST_PATH = RUNTIME / "js" / "module-manifest.json"
 INDEX_PATH = RUNTIME / "index.html"
+STYLE_PATH = RUNTIME / "css" / "dicebound.css"
 
 SCRIPT_RE = re.compile(r"<script\b[^>]*\bsrc=[\"']([^\"']+)[\"'][^>]*>\s*</script>", re.I)
 FUNCTION_RE = re.compile(r"(?:^|\n)\s*function\s+([A-Za-z_$][\w$]*)\s*\(", re.M)
@@ -50,6 +51,9 @@ def main() -> int:
         return 1
     if not INDEX_PATH.is_file():
         print(f"missing runtime index: {INDEX_PATH}", file=sys.stderr)
+        return 1
+    if not STYLE_PATH.is_file():
+        print(f"missing runtime stylesheet: {STYLE_PATH}", file=sys.stderr)
         return 1
 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
@@ -167,6 +171,61 @@ def main() -> int:
                 "retired Camp presentation implementation remains in dicebound.js: "
                 + retired_camp_implementation
             )
+    chooser_module = by_id.get("ui-class-chooser")
+    chooser_owner_ok = False
+    if not chooser_module:
+        errors.append("Class chooser presentation owner ui-class-chooser is missing from the runtime manifest")
+    else:
+        chooser_owner_ok = (
+            chooser_module.get("path") == "js/ui/class-chooser.js"
+            and {"assets", "classes-registry", "ui-camp"}.issubset(set(chooser_module.get("requires") or []))
+            and "DiceboundClassChooser" in (chooser_module.get("provides") or [])
+            and position.get("ui-class-chooser", -1) < position.get(str(monolith_id), -1)
+        )
+        if not chooser_owner_ok:
+            errors.append(
+                "ui-class-chooser must provide DiceboundClassChooser, require its class/Camp dependencies, "
+                "and load before the monolith"
+            )
+    chooser_source = sources.get("ui-class-chooser", "")
+    for required_chooser_behavior in [
+        "resolveClassArt",
+        "resolveRandomForRun",
+        "data-class-chooser-done",
+        "class-chooser-layout",
+    ]:
+        if required_chooser_behavior not in chooser_source:
+            errors.append(
+                "Class chooser owner is missing required presentation behavior: "
+                + required_chooser_behavior
+            )
+    if monolith_source:
+        expected_adapter = "function renderClassChoices(){return window.DiceboundClassChooser?.render();}"
+        if expected_adapter not in monolith_source:
+            errors.append("dicebound.js must retain only the thin Class chooser composition adapter")
+        for retired_chooser_layer in [
+            "renderClassChoices=function",
+            "renderClassChoicesV",
+            "renderClassChoicesBeta",
+            "renderClassChoicesBase",
+            "function v19EnsureHub()",
+            "Legacy Planning",
+            ".class-card .identity-note",
+            ".class-card .mana-note",
+            ".camp-panel .class-grid",
+        ]:
+            if retired_chooser_layer in monolith_source:
+                errors.append(
+                    "retired Class chooser implementation/wrapper remains in dicebound.js: "
+                    + retired_chooser_layer
+                )
+    stylesheet_source = STYLE_PATH.read_text(encoding="utf-8")
+    for retired_chooser_style in [".class-card{", ".class-grid{"]:
+        if retired_chooser_style in stylesheet_source:
+            errors.append(
+                "retired Class chooser style remains in runtime/css/dicebound.css: "
+                + retired_chooser_style
+            )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -207,6 +266,10 @@ def main() -> int:
         "campOwner": {
             "id": "ui-camp",
             "configured": camp_owner_ok,
+        },
+        "classChooserOwner": {
+            "id": "ui-class-chooser",
+            "configured": chooser_owner_ok,
         },
         "monolith": {
             "id": monolith_id,

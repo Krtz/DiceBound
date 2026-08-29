@@ -38,6 +38,7 @@
     "powerup-registry",
     "powerup-borrowing",
     "ui-camp",
+    "ui-class-chooser",
     "dicebound-monolith"
   ],
   "modules": [
@@ -435,6 +436,22 @@
       ]
     },
     {
+      "id": "ui-class-chooser",
+      "path": "js/ui/class-chooser.js",
+      "domain": "ui/class-chooser-presentation-and-random-selection",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "classes-registry",
+        "progression-class-unlock-rules",
+        "progression-class-unlock-feedback",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundClassChooser"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -471,7 +488,8 @@
         "progression-class-unlock-rules",
         "progression-class-unlock-feedback",
         "powerup-borrowing",
-        "ui-camp"
+        "ui-camp",
+        "ui-class-chooser"
       ],
       "provides": []
     }
