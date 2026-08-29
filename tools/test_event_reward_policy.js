@@ -24,6 +24,8 @@ assert.equal(policy.roadTileType(0.819, 5), "event");
 assert.equal(policy.roadTileType(0.82, 5), "treasure");
 assert.deepEqual(policy.slotMatchOdds(0), { secondMatch: 0.30, tripleFromPair: 0.42, pairFromMiss: 0.30 });
 assert.deepEqual(policy.slotMatchOdds(0.5), { secondMatch: 0.78, tripleFromPair: 0.88, pairFromMiss: 0.575 });
-assert.ok(source.includes('node.dataset.db064HitTarget!=="painted-object"'), "Camp layout must not restore a generic min-height after painted-object synchronization");
+for (const retiredCampOwner of ["campAnchors", "function scaleCamp(", "#startOverlay.camp-fullscreen", "#campScene .camp-spot"]) {
+  assert.ok(!source.includes(retiredCampOwner), `event reward policy must not retain Camp presentation ownership: ${retiredCampOwner}`);
+}
 
 console.log("event reward policy tests passed");

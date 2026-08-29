@@ -1,7 +1,8 @@
 /* DiceBound Camp presentation owner.
  *
  * This module deliberately owns DOM composition, responsive layout regime
- * selection, authored Camp-object rendering, and painted-object hit targets.
+ * selection, authored Camp-object rendering, painted-object hit targets, and
+ * the full stage layout used by the Campsite.
  * Gameplay/progression data and actions remain supplied by the compatibility
  * runtime through configure(), so this is not a second class/pet/save owner.
  */
@@ -11,6 +12,11 @@
   const CAMP_OBJECT_IDS=Object.freeze([
     'campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn',
     'campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'
+  ]);
+  const CAMP_PROGRESSIVE_OBJECTS=Object.freeze([
+    Object.freeze({id:'campAchievementBtn',reveal:'achievementTrophy'}),
+    Object.freeze({id:'campTalentBtn',reveal:'talentStar'}),
+    Object.freeze({id:'campMoonBtn',reveal:'prestigeMoon'})
   ]);
 
   // These are the approved Beta 0.6.4.13 desktop composition coordinates.
@@ -25,14 +31,7 @@
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
         ['#campTalentBtn','left:31.5%;top:12.5%;translate:none'],
         ['#campMoonBtn','left:42.5%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:22.5%;top:40.5%;translate:none'],
-        ['#campAchievementBtn[data-db064-hit-target="painted-object"]','translate:-35vw 0'],
-        ['#campInfoBtn','left:45vw'],
-        ['#campInfoBtn[data-db064-hit-target="painted-object"]','translate:10vw 25vh'],
-        ['#campPetBtn[data-db064-hit-target="painted-object"]','translate:-31vw -4vh'],
-        ['#campChestBtn[data-db064-hit-target="painted-object"]','translate:-22vw 8vh'],
-        ['.camp-bonfire','translate:0 4vh'],
-        ['#campGoBtn','right:-5vw']
+        ['#campClassBtn','left:22.5%;top:40.5%;translate:none']
       ])
     }),
     Object.freeze({
@@ -41,14 +40,7 @@
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
         ['#campTalentBtn','left:31.5%;top:12.5%;translate:none'],
         ['#campMoonBtn','left:42.5%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:22.5%;top:40.5%;translate:none'],
-        ['#campAchievementBtn[data-db064-hit-target="painted-object"]','translate:-32vw 0'],
-        ['#campInfoBtn','left:43vw'],
-        ['#campInfoBtn[data-db064-hit-target="painted-object"]','translate:9vw 23vh'],
-        ['#campPetBtn[data-db064-hit-target="painted-object"]','translate:-28vw -4vh'],
-        ['#campChestBtn[data-db064-hit-target="painted-object"]','translate:-20vw 7vh'],
-        ['.camp-bonfire','translate:0 4vh'],
-        ['#campGoBtn','right:-6vw']
+        ['#campClassBtn','left:22.5%;top:40.5%;translate:none']
       ])
     }),
     Object.freeze({
@@ -57,12 +49,117 @@
         // Preserve the same anchored composition in a short desktop viewport,
         // while allowing the tall moon/class artwork to remain wholly onscreen.
         ['#campOptionsBtn','left:8.5%;top:16%;translate:none'],
-        ['#campTalentBtn','left:31.5%;top:14%;translate:none'],
+        ['#campTalentBtn','left:31.5%;top:18%;translate:none'],
         ['#campMoonBtn','left:42.5%;top:24%;translate:none'],
         ['#campClassBtn','left:22.5%;top:58%;translate:none']
       ])
     })
   ]);
+
+  // The authored 16:9 campsite is the single source of final object anchors.
+  // The first four values are also mirrored in CAMP_LAYOUTS above because the
+  // Beta 0.6.4.13 / #194 baseline names those protected placements directly.
+  // Wider/compact refinements are explicit data, not late CSS translations.
+  const CAMP_STAGE_ASPECT=16/9;
+  const CAMP_STAGE_ANCHORS=Object.freeze({
+    campOptionsBtn:Object.freeze({x:.085,y:.105,w:110}),
+    campTalentBtn:Object.freeze({x:.315,y:.125,w:165}),
+    campMoonBtn:Object.freeze({x:.425,y:.115,w:165}),
+    campNightmareBtn:Object.freeze({x:.905,y:.205,w:120}),
+    campHellBtn:Object.freeze({x:.805,y:.175,w:118}),
+    campClassBtn:Object.freeze({x:.225,y:.405,w:235}),
+    campInfoBtn:Object.freeze({x:.345,y:.405,w:145}),
+    campBonfire:Object.freeze({x:.505,y:.505,w:170}),
+    campGoBtn:Object.freeze({x:.765,y:.505,w:340,h:190}),
+    campChestBtn:Object.freeze({x:.785,y:.685,w:245,h:150}),
+    campAchievementBtn:Object.freeze({x:.445,y:.805,w:165}),
+    campPetBtn:Object.freeze({x:.555,y:.805,w:220})
+  });
+  const CAMP_STAGE_REFINEMENTS=Object.freeze({
+    'wide-desktop':Object.freeze({
+      campInfoBtn:Object.freeze({x:.445,y:.655}),campBonfire:Object.freeze({y:.545}),
+      campChestBtn:Object.freeze({x:.565,y:.765}),campAchievementBtn:Object.freeze({x:.095}),
+      campPetBtn:Object.freeze({x:.245,y:.765})
+    }),
+    'compact-desktop':Object.freeze({
+      campInfoBtn:Object.freeze({x:.435,y:.635}),campBonfire:Object.freeze({y:.545}),
+      campChestBtn:Object.freeze({x:.585,y:.755}),campAchievementBtn:Object.freeze({x:.125}),
+      campPetBtn:Object.freeze({x:.275,y:.765})
+    }),
+    'stacked-or-short':Object.freeze({})
+  });
+  // Static Camp styling lives beside the stage layout.  The mobile/grid
+  // fallback is still a Camp presentation regime; it must not survive as a
+  // historical style injection in the compatibility monolith or shared CSS.
+  const CAMP_BASE_STYLE=`
+    .legacy-camp-modal{max-width:1100px;background:linear-gradient(180deg,rgba(11,16,30,.96),rgba(16,24,43,.97));overflow:hidden}
+    .legacy-camp-modal .legacy-strip,.legacy-camp-modal .rules{display:none !important}
+    .camp-help{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.5}
+    .camp-scene{position:relative;border:1px solid rgba(255,255,255,.10);border-radius:20px;padding:18px 18px 16px;background:radial-gradient(circle at 50% 78%,rgba(255,158,76,.28),rgba(255,158,76,.06) 20%,transparent 32%),radial-gradient(circle at 18% 10%,rgba(255,255,255,.10),transparent 18%),radial-gradient(circle at 82% 12%,rgba(181,140,255,.16),transparent 18%),linear-gradient(180deg,#0c1630 0%,#122347 45%,#0d1527 46%,#1a2c1d 80%,#23351f 100%);box-shadow:inset 0 0 40px rgba(255,255,255,.04),0 18px 40px rgba(0,0,0,.28)}
+    .camp-scene::before{content:"";position:absolute;left:0;right:0;bottom:24px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+    .camp-topline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;color:#e8eefb;font-size:12px}
+    .camp-topline span{padding:6px 10px;border-radius:999px;background:rgba(7,11,22,.35);border:1px solid rgba(255,255,255,.08)}
+    .camp-sky{display:flex;justify-content:space-between;align-items:flex-start;min-height:110px;margin-bottom:18px}
+    .camp-stars{display:flex;gap:12px;align-items:flex-start}
+    .camp-ground{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:". trophy ." "class fire go" "pet chest .";gap:14px;align-items:center}
+    .camp-spot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:102px;padding:10px;border-radius:18px;background:rgba(9,12,21,.28);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(2px);text-align:center;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03))}
+    .camp-bonfire{grid-area:fire;display:flex;align-items:center;justify-content:center;min-height:150px;padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;pointer-events:none;text-align:center}
+    #campAchievementBtn{grid-area:trophy}#campClassBtn{grid-area:class}#campPetBtn{grid-area:pet}#campChestBtn{grid-area:chest}#campGoBtn{grid-area:go}
+    .camp-spot:hover{transform:translateY(-2px);border-color:rgba(245,200,91,.42);box-shadow:0 10px 18px rgba(0,0,0,.24),0 0 0 1px rgba(245,200,91,.08) inset}
+    .camp-spot .camp-icon,.camp-bonfire .camp-icon{font-size:36px;line-height:1;filter:drop-shadow(0 0 12px rgba(255,255,255,.12))}
+    .camp-spot .camp-label,.camp-bonfire .camp-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+    .camp-spot .camp-sub{font-size:10px;color:var(--muted);line-height:1.3}
+    .camp-spot.class-picker{min-height:132px}.camp-spot.go-spot{min-height:132px;border-color:rgba(98,215,154,.22)}.camp-spot.nightmare-spot{border-color:rgba(181,140,255,.22)}.camp-spot.hell-spot{border-color:rgba(239,90,99,.22)}
+    .camp-popup-layer{margin-top:14px;display:grid;gap:12px}.camp-panel{display:none;border-radius:18px;border:1px solid rgba(255,255,255,.10);background:linear-gradient(180deg,rgba(7,11,22,.88),rgba(19,28,49,.94));padding:14px;box-shadow:inset 0 0 18px rgba(255,255,255,.03)}.camp-panel.active{display:block}.camp-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.camp-panel-head h3{margin:0;font-size:18px}.camp-close-btn{min-width:120px}
+    .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}.set-tier{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(245,241,232,.62)}.set-tier.active{color:var(--ink);border-color:rgba(245,200,91,.42);background:linear-gradient(180deg,rgba(245,200,91,.12),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(245,200,91,.08)}.set-tier b{display:block;margin-bottom:4px;font-size:12px}.camp-heirloom-card{padding:12px;border-radius:14px;background:rgba(181,140,255,.08);border:1px solid rgba(181,140,255,.16);font-size:11px;line-height:1.5;margin-bottom:10px}.camp-moon-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}.camp-note-line{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}.camp-hidden{display:none !important}
+    .camp-art-frame{display:flex;align-items:center;justify-content:center;overflow:visible}.camp-bonfire .camp-icon{width:96px;height:96px;font-size:0;line-height:0}.camp-bonfire-art{display:block;max-width:92px;max-height:92px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,162,77,.28)) drop-shadow(0 0 26px rgba(255,120,40,.18))}
+    #startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-areas:". trophy ." "class fire go" "pet chest ."!important;align-items:center!important;gap:18px!important}#startOverlay.camp-fullscreen .camp-bonfire{grid-area:fire!important;min-height:160px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;pointer-events:none!important}#startOverlay.camp-fullscreen .camp-bonfire .camp-icon{width:150px!important;height:150px!important;background:transparent!important;border:0!important;border-radius:0!important;overflow:visible!important}#startOverlay.camp-fullscreen .camp-bonfire-art{max-width:148px!important;max-height:148px!important}
+    #startOverlay.camp-fullscreen #campGoBtn.camp-journey-control{min-height:132px!important;padding:4px!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible}#startOverlay.camp-fullscreen #campGoBtn.camp-journey-control:hover{transform:translateY(-3px) scale(1.025)!important;border:0!important;box-shadow:none!important;background:transparent!important}.camp-journey-art-frame{width:min(100%,230px);height:104px;display:flex;align-items:center;justify-content:center;overflow:visible;pointer-events:none}.camp-journey-art{display:block;max-width:100%;max-height:104px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 9px 9px rgba(0,0,0,.42));transition:filter .15s ease}#campGoBtn:hover .camp-journey-art{filter:drop-shadow(0 10px 10px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(98,215,154,.18))}.camp-journey-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#dff7e9;text-shadow:0 2px 6px rgba(0,0,0,.65);pointer-events:none}
+    @media(max-width:860px){.camp-ground{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"trophy trophy" "class fire" "pet chest" "go go"}.camp-spot.class-picker,.camp-spot.go-spot{min-height:116px}.camp-sky{min-height:88px}#startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"trophy trophy" "class fire" "pet chest" "go go"!important}.camp-journey-art-frame{height:90px}.camp-journey-art{max-height:90px}}
+    #startOverlay.camp-fullscreen{position:fixed;inset:0;z-index:50;padding:0;display:block;overflow-y:auto;overflow-x:hidden;background:linear-gradient(180deg,#08101f,#0d182a 42%,#101b20 70%,#16251a);backdrop-filter:none;scrollbar-color:#53647f transparent}#startOverlay.camp-fullscreen.hidden{display:none}#startOverlay.camp-fullscreen .start-modal,#startOverlay.camp-fullscreen .legacy-camp-modal{width:100%;max-width:none;min-height:100vh;max-height:none;overflow:visible;margin:0;padding:22px clamp(14px,3vw,42px) 48px;border:0;border-radius:0;box-shadow:none;background:transparent}#startOverlay.camp-fullscreen .camp-help{max-width:1160px;margin:0 auto 12px;text-align:center;background:transparent!important;border:0!important;box-shadow:none!important}#startOverlay.camp-fullscreen .camp-popup-layer{display:block;margin-top:18px}#startOverlay.camp-fullscreen .camp-panel{max-height:none;overflow:visible}#startOverlay.camp-fullscreen .camp-panel.active{display:block}#startOverlay.camp-fullscreen #campClassPanel,#startOverlay.camp-fullscreen #campChestPanel{scroll-margin-top:18px}#startOverlay.camp-fullscreen .camp-ground{margin-top:8px}#startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon{width:78px;height:78px;font-size:50px;border-radius:18px;overflow:hidden}#startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon svg{width:100%;height:100%;display:block}#startOverlay.camp-fullscreen .camp-spot.active{border-color:rgba(245,200,91,.78);box-shadow:0 0 0 2px rgba(245,200,91,.12) inset,0 0 24px rgba(245,200,91,.16)}#startOverlay.camp-fullscreen .nightmare-spot.active{border-color:#b58cff;box-shadow:0 0 24px rgba(181,140,255,.30),inset 0 0 26px rgba(181,140,255,.12)}#startOverlay.camp-fullscreen .hell-spot.active{border-color:#ef5a63;box-shadow:0 0 25px rgba(239,90,99,.34),inset 0 0 28px rgba(239,90,99,.13)}.camp-mode-state{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:900;margin-top:2px;background:rgba(255,255,255,.08)}.camp-prestige-actions{display:grid;gap:10px;margin-top:12px}.camp-prestige-actions .prestige-box{margin:0}.camp-prestige-actions #prestigeBtn,.camp-prestige-actions #resetMetaBtn{width:100%;margin:0!important}#talentOverlay .talent-modal>.prestige-box,#talentOverlay .talent-modal>#prestigeBtn,#talentOverlay .talent-modal>#resetMetaBtn{display:none}.camp-heirloom-card{overflow-wrap:anywhere}.camp-topline{justify-content:center}#campPetLine{display:none!important}.set-tier:not(.active){display:none!important}
+    #startOverlay.camp-fullscreen .camp-scene{width:min(96vw,1380px)!important;max-width:1380px!important;min-height:calc(100dvh - 150px)!important;margin:0 auto!important;padding:10px clamp(8px,2vw,22px) 32px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}#startOverlay.camp-fullscreen .camp-scene::before{display:none!important}#startOverlay.camp-fullscreen .camp-label,#startOverlay.camp-fullscreen .camp-bonfire .camp-label{color:#fff!important;font-weight:900;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 3px #000}
+    #startOverlay.camp-fullscreen #campChestBtn{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;min-height:auto!important;padding:0 6px 2px!important}#startOverlay.camp-fullscreen #campChestBtn:hover{transform:translateY(-2px) scale(1.01);box-shadow:none!important;border-color:transparent!important}#startOverlay.camp-fullscreen #campChestBtn .camp-icon{font-size:48px}#startOverlay.camp-fullscreen #campChestBtn .camp-label{margin-top:2px}#startOverlay.camp-fullscreen #campChestBtn .camp-sub{max-width:140px}
+    @media(max-width:799px){#startOverlay.camp-fullscreen .camp-scene{min-height:auto}.camp-sky{flex-direction:column;gap:12px}.camp-stars{flex-wrap:wrap}.camp-ground{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}.camp-topline,.camp-sky,.camp-ground,.camp-popup-layer{max-width:none}}
+  `;
+  const CAMP_STAGE_STYLE=`
+    @media(min-width:800px){
+      #startOverlay.camp-fullscreen{background:#020611!important;overflow:hidden!important}
+      #startOverlay.camp-fullscreen .start-modal,#startOverlay.camp-fullscreen .legacy-camp-modal{position:relative!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-width:none!important;overflow:hidden!important;margin:0!important;padding:0!important}
+      #startOverlay.camp-fullscreen .camp-scene{position:absolute!important;margin:0!important;padding:0!important;overflow:visible!important;transform:none!important;transform-origin:center!important;background:linear-gradient(rgba(3,8,20,.08),rgba(3,7,16,.14)),url("assets/camp/background/campsite.png") center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+      #startOverlay.camp-fullscreen .camp-sky,#startOverlay.camp-fullscreen .camp-stars,#startOverlay.camp-fullscreen .camp-ground{display:contents!important}
+      #startOverlay.camp-fullscreen .camp-spot,#startOverlay.camp-fullscreen .camp-bonfire{position:absolute!important;right:auto!important;bottom:auto!important;margin:0!important}
+      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:92%!important;max-width:none!important;height:72%!important;min-height:0!important}
+      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:100%!important;max-height:100%!important}
+      #startOverlay.camp-fullscreen .camp-popup-layer{left:50%!important;bottom:2.5vh!important;width:min(88vw,1380px)!important;max-height:64vh!important;transform:translateX(-50%)!important}
+    }
+    #startOverlay.camp-fullscreen .start-art,#startOverlay.camp-fullscreen .start-modal>h2,#startOverlay.camp-fullscreen .hub-class-heading,#startOverlay.camp-fullscreen .start-modal>.subtitle,#startOverlay.camp-fullscreen .camp-help,#startOverlay.camp-fullscreen .camp-topline{display:none!important}
+    #startOverlay.camp-fullscreen .camp-art-button,#startOverlay.camp-fullscreen #campTalentBtn,#startOverlay.camp-fullscreen #campInfoBtn,#startOverlay.camp-fullscreen #campMoonBtn,#startOverlay.camp-fullscreen #campAchievementBtn,#startOverlay.camp-fullscreen #campOptionsBtn,#startOverlay.camp-fullscreen #campNightmareBtn,#startOverlay.camp-fullscreen #campClassBtn,#startOverlay.camp-fullscreen #campPetBtn,#startOverlay.camp-fullscreen #campChestBtn{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible!important}
+    #startOverlay.camp-fullscreen .camp-spot:hover,#startOverlay.camp-fullscreen .camp-spot:focus-visible{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+    #startOverlay.camp-fullscreen .camp-special-art-frame,.db058-camp-art-frame{display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important;background:transparent!important;border:0!important;border-radius:0!important;margin:0 auto}
+    #startOverlay.camp-fullscreen .camp-special-art,.db058-camp-art{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
+    #startOverlay.camp-fullscreen #campTalentBtn .camp-special-art-frame{width:142px!important;height:142px!important}
+    #startOverlay.camp-fullscreen #campInfoBtn .camp-special-art-frame{width:112px!important;height:112px!important}
+    #startOverlay.camp-fullscreen #campOptionsBtn .db058-camp-art-frame{width:94px;height:94px}
+    #startOverlay.camp-fullscreen #campOptionsBtn .db058-camp-art{filter:drop-shadow(0 7px 12px rgba(0,0,0,.38))}
+    #startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art-frame{width:160px;height:160px}
+    #startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art{filter:drop-shadow(0 0 18px rgba(80,160,255,.62)) drop-shadow(0 8px 16px rgba(0,0,0,.3))}
+    #startOverlay.camp-fullscreen #campAchievementBtn .db058-camp-art-frame{width:175px;height:145px}
+    #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:118px;height:165px}
+    #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art{object-position:right bottom;filter:drop-shadow(0 12px 18px rgba(0,0,0,.46))}
+    #startOverlay.camp-fullscreen #campClassBtn{padding:0!important}
+    #startOverlay.camp-fullscreen #campClassIcon{width:210px!important;height:245px!important;max-width:none!important;max-height:none!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important;filter:drop-shadow(0 14px 18px rgba(0,0,0,.45))}
+    #startOverlay.camp-fullscreen #campClassIcon .db058-camp-class-fullbody{width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block;pointer-events:none}
+    #startOverlay.camp-fullscreen #campChestBtn .camp-icon{min-height:102px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+    #startOverlay.camp-fullscreen #campChestBtn .db-art-camp{width:112px!important;height:112px!important;max-width:112px!important;max-height:112px!important;object-fit:contain!important}
+    #startOverlay.camp-fullscreen #campPetIcon{width:96px!important;height:96px!important;font-size:0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}
+    #startOverlay.camp-fullscreen #campPetIcon .db059-pet-art{width:96px;height:96px}
+    #startOverlay.camp-fullscreen #campPetBtn .camp-label,#startOverlay.camp-fullscreen #campPetBtn .camp-sub,#startOverlay.camp-fullscreen #campClassBtn .camp-label,#startOverlay.camp-fullscreen #campClassBtn .camp-sub,#startOverlay.camp-fullscreen #campMoonBtn .camp-label,#startOverlay.camp-fullscreen #campMoonBtn .camp-sub,#startOverlay.camp-fullscreen #campAchievementBtn .camp-label,#startOverlay.camp-fullscreen #campAchievementBtn .camp-sub,#startOverlay.camp-fullscreen #campOptionsBtn .camp-label,#startOverlay.camp-fullscreen #campOptionsBtn .camp-sub,#startOverlay.camp-fullscreen #campNightmareBtn .camp-label,#startOverlay.camp-fullscreen #campNightmareBtn .camp-sub,#startOverlay.camp-fullscreen #campTalentBtn .camp-label,#startOverlay.camp-fullscreen #campInfoBtn .camp-label{ text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 3px 8px rgba(0,0,0,.95)!important}
+    #startOverlay.camp-fullscreen #campTalentBtn .camp-sub,#startOverlay.camp-fullscreen #campInfoBtn .camp-sub{color:#d9e2f3!important;text-shadow:0 2px 5px rgba(0,0,0,.95)!important}
+    @media(max-width:999px){#startOverlay.camp-fullscreen #campClassIcon{width:155px!important;height:185px!important}#startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:130px;height:190px}#startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art-frame{width:110px;height:110px}#startOverlay.camp-fullscreen #campAchievementBtn .db058-camp-art-frame{width:130px;height:110px}#startOverlay.camp-fullscreen #campPetIcon,#startOverlay.camp-fullscreen #campPetIcon .db059-pet-art{width:72px!important;height:72px!important}}
+    #campScene .camp-spot,#campScene .camp-bonfire{transition:scale .14s ease,filter .14s ease!important;transform-origin:center!important}
+    #campScene .camp-spot:not(:disabled):hover,#campScene .camp-spot:not(:disabled):focus-visible,#campScene .camp-bonfire:hover{scale:1.035;filter:brightness(1.09) drop-shadow(0 0 11px rgba(255,218,142,.34)) drop-shadow(0 0 22px rgba(123,190,255,.16))}
+    #campScene .camp-spot:not(:disabled):hover .camp-spot-title,#campScene .camp-spot:not(:disabled):focus-visible .camp-spot-title{color:#fff4ce!important;text-shadow:0 0 8px rgba(255,218,142,.45)!important}
+  `;
 
   let runtime={};
   let resizeBound=false;
@@ -73,6 +170,8 @@
   function action(name,...args){return runtime.actions?.[name]?.(...args);}
   function asset(key,fallback){return root.DiceboundAssets?.resolveCampObject?.(key)?.image||fallback;}
   function assetAlt(key,fallback){return root.DiceboundAssets?.resolveCampObject?.(key)?.alt||fallback;}
+  function important(node,property,value){node?.style?.setProperty?.(property,value,'important');}
+  function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
 
   function layoutForViewport(width=root.innerWidth||0,height=root.innerHeight||0){
     if(width>=1360&&height>=650)return CAMP_LAYOUTS[0];
@@ -85,11 +184,7 @@
     if(!documentRef||documentRef.getElementById('dicebound-camp-layout-owner'))return;
     const style=documentRef.createElement('style');
     style.id='dicebound-camp-layout-owner';
-    style.textContent=CAMP_LAYOUTS.filter(layout=>layout.query).map(layout=>
-      `@media ${layout.query}{${layout.rules.map(([selector,declaration])=>
-        `html body #startOverlay.camp-fullscreen ${selector}{${declaration}!important}`
-      ).join('')}}`
-    ).join('\n');
+    style.textContent=CAMP_BASE_STYLE+CAMP_STAGE_STYLE;
     style.textContent += `\nhtml body #startOverlay.camp-fullscreen .camp-panel.active > .camp-panel-head{position:sticky!important;top:0!important;z-index:80!important;background:linear-gradient(180deg,rgba(17,24,42,.98),rgba(17,24,42,.90))!important;padding:10px 12px!important;box-shadow:0 8px 18px rgba(0,0,0,.22)!important;backdrop-filter:blur(8px)}\nhtml body #startOverlay.camp-fullscreen .camp-panel.active > .camp-panel-head .camp-close-btn{margin-left:auto!important;flex:0 0 auto!important;position:relative!important;z-index:81!important}`;
     documentRef.head?.appendChild(style);
   }
@@ -150,6 +245,43 @@
     button.innerHTML='<div class="camp-icon">⚙️</div><div class="camp-label">Options</div><div class="camp-sub">Save, sound &amp; reset</div>';
     button.addEventListener('click',()=>find('optionsBtn')?.click());host.appendChild(button);
     return button;
+  }
+
+  function progressionObjectMarkup(id){
+    if(id==='campAchievementBtn')return '<div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div>';
+    if(id==='campTalentBtn')return `<div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${asset('talentStar','assets/camp/objects/talent-star.png')}" alt="${assetAlt('talentStar','Northern star of talents')}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div>`;
+    if(id==='campMoonBtn')return '<div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige &amp; reset</div>';
+    return '';
+  }
+
+  function attachProgressionObject(id){
+    const existing=find(id);if(existing)return existing;
+    const scene=find('campScene');if(!scene)return null;
+    const button=doc()?.createElement('button');if(!button)return null;
+    button.type='button';button.id=id;button.className=id==='campTalentBtn'?'camp-spot camp-art-button talent-art-button':'camp-spot';button.innerHTML=progressionObjectMarkup(id);
+    if(id==='campAchievementBtn')scene.querySelector('.camp-ground')?.appendChild(button);
+    else {
+      const stars=scene.querySelector('.camp-sky .camp-stars'),info=find('campInfoBtn');
+      if(id==='campTalentBtn')stars?.insertBefore(button,info||null);
+      if(id==='campMoonBtn'){
+        if(info?.parentElement)info.after(button);else stars?.appendChild(button);
+      }
+    }
+    if(!button.parentElement)return null;
+    wireScene();return button;
+  }
+
+  // Progression decides whether an object is earned.  Camp owns the DOM
+  // consequence: a locked object is physically absent, and an earned object
+  // is recreated in the canonical scene with this module's click bindings.
+  function syncProgressionReveals(reveals={}){
+    if(!find('campScene'))return Object.freeze({});
+    const visible={};
+    for(const entry of CAMP_PROGRESSIVE_OBJECTS){
+      const unlocked=!!reveals?.[entry.reveal];visible[entry.id]=unlocked;
+      if(unlocked)attachProgressionObject(entry.id);else find(entry.id)?.remove();
+    }
+    return Object.freeze(visible);
   }
 
   function ensure(){
@@ -220,6 +352,8 @@
     setObjectArt('campMoonBtn','prestigeMoon','db058-prestige-moon','Prestige moon','assets/camp/objects/prestige-moon.png');
     setObjectArt('campAchievementBtn','achievementKeg','db058-achievement-keg','Ale keg and trophy cup','assets/camp/objects/achievement-keg.png');
     setObjectArt('campOptionsBtn','optionsCog','db058-options-cog','Options cog','assets/camp/objects/options-cog.png');
+    setObjectArt('campChestBtn','chest','db-art-camp db058-chest','Treasure chest','assets/camp/interactions/chest.png');
+    find('campChestBtn')?.classList.add('camp-chest-bare');
     setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/objects/nightmare-on.png':'assets/camp/objects/nightmare-off.png');
     renderClassFigure(find('campClassIcon'),view);
   }
@@ -228,6 +362,7 @@
     const overlay=find('startOverlay');if(!overlay)return null;overlay.classList.add('camp-fullscreen');
     const scene=ensure();if(!scene)return null;movePrestigeControls();
     const view=runtime.getViewModel?.()||{};
+    syncProgressionReveals(view.reveals);
     const classSub=find('campClassSub');if(classSub)classSub.textContent=view.className?`${view.className} selected · click to change`:'Select class';
     const petIcon=find('campPetIcon');if(petIcon&&view.petIcon)petIcon.textContent=view.petIcon;
     const petLine=find('campPetLine');if(petLine)petLine.textContent=view.petLine||'';
@@ -237,7 +372,7 @@
     const set=find('campChestSet');if(set)set.innerHTML=view.setHtml||'';
     setMode('campNightmareBtn',view.nightmareUnlocked,view.nightmareMode,'Nightmare');
     setMode('campHellBtn',view.hellUnlocked,view.hellMode,'HELL');
-    scene.dataset.dbCampLayout=layoutForViewport().id;refreshArt(view);scheduleHitTargetSync();scheduleViewportPositionSync();return scene;
+    scene.dataset.dbCampLayout=layoutForViewport().id;refreshArt(view);applyStageLayout();scheduleHitTargetSync();scheduleViewportPositionSync();return scene;
   }
 
   function setMode(id,unlocked,enabled,label){
@@ -254,20 +389,14 @@
 
   function syncHitTargets(){
     let changed=false;
-    const preserveShortViewportPositions=(root.innerWidth||0)>=1000&&(root.innerHeight||0)<650;
     for(const id of CAMP_OBJECT_IDS){
-      if(preserveShortViewportPositions&&['campOptionsBtn','campTalentBtn','campMoonBtn','campClassBtn'].includes(id))continue;
-      const button=find(id),painted=button&&paintedBounds(button),buttonRect=button?.getBoundingClientRect(),parent=button?.offsetParent?.getBoundingClientRect();
-      if(!button||!painted||!buttonRect||!parent)continue;
+      const button=find(id),painted=button&&paintedBounds(button),buttonRect=button?.getBoundingClientRect();
+      if(!button||!painted||!buttonRect)continue;
       const width=Math.ceil(painted.right-painted.left),height=Math.ceil(painted.bottom-painted.top);if(width<1||height<1)continue;
       if(buttonRect.width<=width+3&&buttonRect.height<=height+3)continue;
       button.style.setProperty('width',`${width}px`,'important');button.style.setProperty('min-width','0','important');button.style.setProperty('max-width',`${width}px`,'important');
       button.style.setProperty('height',`${height}px`,'important');button.style.setProperty('min-height','0','important');button.style.setProperty('max-height',`${height}px`,'important');
       button.style.setProperty('padding','0','important');button.style.setProperty('justify-self','center','important');
-      if(root.getComputedStyle?.(button).position==='absolute'){
-        button.style.setProperty('left',`${Math.round(painted.left-parent.left)}px`,'important');button.style.setProperty('top',`${Math.round(painted.top-parent.top)}px`,'important');
-        button.style.setProperty('right','auto','important');button.style.setProperty('bottom','auto','important');
-      }
       button.dataset.db064HitTarget='painted-object';changed=true;
     }
     return changed;
@@ -275,47 +404,79 @@
 
   function scheduleHitTargetSync(){
     const schedule=root.requestAnimationFrame||root.setTimeout||setTimeout;
-    const sync=()=>schedule(syncHitTargets);sync();root.setTimeout?.(sync,0);root.setTimeout?.(sync,120);
+    const sync=()=>schedule(()=>{syncHitTargets();applyStageLayout();});sync();root.setTimeout?.(sync,0);root.setTimeout?.(sync,120);
   }
 
-  // The historical stage scaler writes inline !important anchors after the
-  // stylesheet is loaded. Reapply this owner's semantic coordinates after
-  // hit-target sizing so a resize cannot resurrect an old offset or eject a
-  // short-viewport control from the scene.
-  function positionedLayoutControls(layout=layoutForViewport()){
-    return layout.rules.map(([selector,declaration])=>{
+  function layoutAnchorOverrides(layout=layoutForViewport()){
+    return Object.fromEntries(layout.rules.map(([selector,declaration])=>{
       const match=selector.match(/^#(camp(?:Options|Talent|Moon|Class)Btn)$/);
-      return match?{id:match[1],declaration}:null;
-    }).filter(Boolean);
+      if(!match)return null;
+      const left=declaration.match(/(?:^|;)left:([^;]+)/)?.[1],top=declaration.match(/(?:^|;)top:([^;]+)/)?.[1];
+      return [match[1],Object.freeze({x:Number.parseFloat(left)/100,y:Number.parseFloat(top)/100})];
+    }).filter(Boolean));
   }
 
-  function applyViewportPositions(){
-    for(const {id,declaration} of positionedLayoutControls()){
-      const button=find(id);if(!button)continue;
-      for(const property of ['left','top','translate']){
-        const value=declaration.match(new RegExp(`(?:^|;)${property}:([^;]+)`))?.[1];
-        if(value)button.style.setProperty(property,value,'important');
+  function stageSpec(id,layout=layoutForViewport()){
+    const base=CAMP_STAGE_ANCHORS[id],layoutOverride=layoutAnchorOverrides(layout)[id],refinement=CAMP_STAGE_REFINEMENTS[layout.id]?.[id];
+    return base?{...base,...layoutOverride,...refinement}:null;
+  }
+
+  function clearStageLayout(){
+    const scene=find('campScene');
+    for(const node of [scene,...CAMP_OBJECT_IDS.map(id=>find(id)),scene?.querySelector('.camp-bonfire')].filter(Boolean)){
+      const properties=['left','top','right','bottom','transform','translate','justify-self'];
+      // At the mobile/grid breakpoint a control still needs the painted-object
+      // size written by syncHitTargets().  Clearing those dimensions after
+      // every sync made the visual shrink while its semantic button stretched
+      // across the grid cell.
+      if(node===scene||node.dataset.db064HitTarget!=='painted-object')properties.push('width','height','min-width','min-height','max-width','max-height');
+      for(const property of properties)node.style.removeProperty(property);
+    }
+  }
+
+  function stageFrame(viewportWidth,viewportHeight){
+    const width=Math.max(1,Number(viewportWidth)||1),height=Math.max(1,Number(viewportHeight)||1),viewportAspect=width/height;
+    let stageWidth,stageHeight;
+    if(viewportAspect>CAMP_STAGE_ASPECT){stageHeight=height;stageWidth=stageHeight*CAMP_STAGE_ASPECT;}else{stageWidth=width;stageHeight=stageWidth/CAMP_STAGE_ASPECT;}
+    return Object.freeze({left:(width-stageWidth)/2,top:(height-stageHeight)/2,width:stageWidth,height:stageHeight,scale:clamp(Math.min(stageWidth/1600,stageHeight/900),.68,1.08)});
+  }
+
+  // This is the one authoritative layout writer for Camp.  It deliberately
+  // runs after painted-object hit-target sizing, so semantic controls stay
+  // centered on their actual artwork without inheriting stale late-patch
+  // coordinates or viewport-specific translate hacks.
+  function applyStageLayout(){
+    const overlay=find('startOverlay'),scene=find('campScene');
+    if(!overlay?.classList.contains('camp-fullscreen')||!scene)return false;
+    if((root.innerWidth||0)<800){clearStageLayout();return false;}
+    const bounds=overlay.getBoundingClientRect(),frame=stageFrame(bounds.width||root.innerWidth||1,bounds.height||root.innerHeight||1),layout=layoutForViewport();
+    for(const [property,value] of Object.entries({left:`${Math.round(frame.left)}px`,top:`${Math.round(frame.top)}px`,right:'auto',bottom:'auto',width:`${Math.round(frame.width)}px`,height:`${Math.round(frame.height)}px`,'min-height':'0','max-width':'none',transform:'none',translate:'none'}))important(scene,property,value);
+    for(const id of Object.keys(CAMP_STAGE_ANCHORS)){
+      const node=id==='campBonfire'?scene.querySelector('.camp-bonfire'):find(id),spec=stageSpec(id,layout);
+      if(!node||!spec)continue;
+      for(const [property,value] of Object.entries({position:'absolute',left:`${(spec.x*100).toFixed(3)}%`,top:`${(spec.y*100).toFixed(3)}%`,right:'auto',bottom:'auto',transform:'translate(-50%,-50%)',translate:'none'}))important(node,property,value);
+      if(node.dataset.db064HitTarget!=='painted-object'){
+        important(node,'width',`${Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08))}px`);
+        if(spec.h)important(node,'min-height',`${Math.round(clamp(spec.h*frame.scale,spec.h*.72,spec.h*1.08))}px`);
       }
     }
+    const journey=scene.querySelector('#campGoBtn .camp-journey-art-frame');if(journey){important(journey,'width','92%');important(journey,'height','72%');important(journey,'max-width','none');}
+    scene.dataset.dbCampStage=`${Math.round(frame.width)}x${Math.round(frame.height)}`;
+    scene.dataset.dbCampLayout=layout.id;
+    return true;
   }
 
+  // Kept as a public compatibility name while callers move to stage layout.
+  function applyViewportPositions(){return applyStageLayout();}
+
   function clampShortViewportPositions(){
-    if((root.innerWidth||0)<1000||(root.innerHeight||0)>=650)return [];
-    const inset=8,width=root.innerWidth||0,height=root.innerHeight||0;
-    const adjustments=[];
-    for(const {id} of positionedLayoutControls()){
-      const button=find(id),rect=button?.getBoundingClientRect();
-      if(!rect||rect.width<1||rect.height<1)continue;
-      const dx=rect.left<inset?inset-rect.left:rect.right>width-inset?width-inset-rect.right:0;
-      const dy=rect.top<inset?inset-rect.top:rect.bottom>height-inset?height-inset-rect.bottom:0;
-      if(dx||dy){button.style.setProperty('translate',`${Math.round(dx)}px ${Math.round(dy)}px`,'important');adjustments.push({id,dx:Math.round(dx),dy:Math.round(dy)});}
-    }
-    return adjustments;
+    if((root.innerWidth||0)<800)return [];
+    applyStageLayout();return [];
   }
 
   function scheduleViewportPositionSync(){
     const schedule=root.requestAnimationFrame||root.setTimeout||setTimeout;
-    const apply=()=>{applyViewportPositions();schedule(clampShortViewportPositions);};
+    const apply=()=>{applyStageLayout();schedule(clampShortViewportPositions);};
     apply();
     root.setTimeout?.(()=>{apply();root.setTimeout?.(clampShortViewportPositions,40);},180);
     root.setTimeout?.(clampShortViewportPositions,360);
@@ -342,7 +503,8 @@
 
   const api=Object.freeze({
     configure,ensure,refresh,refreshArt,renderClassFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
-    layoutForViewport,layouts:CAMP_LAYOUTS,syncHitTargets,scheduleHitTargetSync,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,
+    layoutForViewport,layouts:CAMP_LAYOUTS,stageAnchors:CAMP_STAGE_ANCHORS,stageFrame,syncHitTargets,scheduleHitTargetSync,applyStageLayout,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,
+    syncProgressionReveals,progressionRevealObjectIds:()=>CAMP_PROGRESSIVE_OBJECTS.map(entry=>entry.id),
     requiredSemanticIds:()=>[...CAMP_OBJECT_IDS]
   });
   window.DiceboundCamp=api;

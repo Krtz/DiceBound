@@ -3803,53 +3803,6 @@
   const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${V}`;
   const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${V} · Six roads, impossible builds and a proper between-runs camp.`;
 
-  const style=document.createElement('style');
-  style.textContent=`
-    .legacy-camp-modal{max-width:1100px;background:linear-gradient(180deg,rgba(11,16,30,.96),rgba(16,24,43,.97));overflow:hidden}
-    .legacy-camp-modal .legacy-strip,.legacy-camp-modal .rules{display:none !important}
-    .camp-help{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.5}
-    .camp-scene{position:relative;border:1px solid rgba(255,255,255,.10);border-radius:20px;padding:18px 18px 16px;background:
-      radial-gradient(circle at 50% 78%,rgba(255,158,76,.28),rgba(255,158,76,.06) 20%,transparent 32%),
-      radial-gradient(circle at 18% 10%,rgba(255,255,255,.10),transparent 18%),
-      radial-gradient(circle at 82% 12%,rgba(181,140,255,.16),transparent 18%),
-      linear-gradient(180deg,#0c1630 0%,#122347 45%,#0d1527 46%,#1a2c1d 80%,#23351f 100%);
-      box-shadow:inset 0 0 40px rgba(255,255,255,.04),0 18px 40px rgba(0,0,0,.28)}
-    .camp-scene::before{content:"";position:absolute;left:0;right:0;bottom:24px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
-    .camp-topline{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px;color:#e8eefb;font-size:12px}
-    .camp-topline span{padding:6px 10px;border-radius:999px;background:rgba(7,11,22,.35);border:1px solid rgba(255,255,255,.08)}
-    .camp-sky{display:flex;justify-content:space-between;align-items:flex-start;min-height:110px;margin-bottom:18px}
-    .camp-stars{display:flex;gap:12px;align-items:flex-start}
-    .camp-ground{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:". trophy ." "class fire go" "pet chest .";gap:14px;align-items:center}
-    .camp-spot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:102px;padding:10px;border-radius:18px;background:rgba(9,12,21,.28);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(2px);text-align:center}
-    .camp-bonfire{grid-area:fire;display:flex;align-items:center;justify-content:center;min-height:150px;padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none;pointer-events:none;text-align:center}
-    #campAchievementBtn{grid-area:trophy}#campClassBtn{grid-area:class}#campPetBtn{grid-area:pet}#campChestBtn{grid-area:chest}#campGoBtn{grid-area:go}
-    .camp-spot{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03))}
-    .camp-spot:hover{transform:translateY(-2px);border-color:rgba(245,200,91,.42);box-shadow:0 10px 18px rgba(0,0,0,.24),0 0 0 1px rgba(245,200,91,.08) inset}
-    .camp-spot .camp-icon,.camp-bonfire .camp-icon{font-size:36px;line-height:1;filter:drop-shadow(0 0 12px rgba(255,255,255,.12))}
-    .camp-spot .camp-label,.camp-bonfire .camp-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-    .camp-spot .camp-sub{font-size:10px;color:var(--muted);line-height:1.3}
-    .camp-spot.class-picker{min-height:132px}
-    .camp-spot.go-spot{min-height:132px;border-color:rgba(98,215,154,.22)}
-    .camp-spot.nightmare-spot{border-color:rgba(181,140,255,.22)}
-    .camp-spot.hell-spot{border-color:rgba(239,90,99,.22)}
-    .camp-popup-layer{margin-top:14px;display:grid;gap:12px}
-    .camp-panel{display:none;border-radius:18px;border:1px solid rgba(255,255,255,.10);background:linear-gradient(180deg,rgba(7,11,22,.88),rgba(19,28,49,.94));padding:14px;box-shadow:inset 0 0 18px rgba(255,255,255,.03)}
-    .camp-panel.active{display:block}
-    .camp-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
-    .camp-panel-head h3{margin:0;font-size:18px}
-    .camp-close-btn{min-width:120px}
-    .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
-    .set-tier{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(245,241,232,.62)}
-    .set-tier.active{color:var(--ink);border-color:rgba(245,200,91,.42);background:linear-gradient(180deg,rgba(245,200,91,.12),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(245,200,91,.08)}
-    .set-tier b{display:block;margin-bottom:4px;font-size:12px}
-    .camp-heirloom-card{padding:12px;border-radius:14px;background:rgba(181,140,255,.08);border:1px solid rgba(181,140,255,.16);font-size:11px;line-height:1.5;margin-bottom:10px}
-    .camp-moon-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-    .camp-note-line{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
-    .camp-hidden{display:none !important}
-    @media(max-width:860px){.camp-ground{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"trophy trophy" "class fire" "pet chest" "go go"}.camp-spot.class-picker,.camp-spot.go-spot{min-height:116px}.camp-sky{min-height:88px}}
-  `;
-  document.head.appendChild(style);
-
   const alchemistRequirement=50;
   if(CLASSES.alchemist)CLASSES.alchemist.unlock=`Use ${alchemistRequirement} potions across all runs`;
   const baseClassUnlockedV110=baseClassUnlocked;
@@ -4140,44 +4093,6 @@
   const h=document.querySelector('.brand h1');if(h)h.textContent=`Dicebound: ${V}`;
   const p=document.querySelector('.brand p');if(p)p.textContent=`${V} · The Legacy Camp is now a real full-screen between-runs state, with cleaner meta-progression and fate controls.`;
 
-  const style=document.createElement('style');
-  style.textContent=`
-    /* The start/camp state is deliberately no longer presented as a modal. */
-    #startOverlay.camp-fullscreen{
-      position:fixed;inset:0;z-index:50;padding:0;display:block;overflow-y:auto;overflow-x:hidden;
-      background:linear-gradient(180deg,#08101f,#0d182a 42%,#101b20 70%,#16251a);backdrop-filter:none;
-      scrollbar-color:#53647f transparent;
-    }
-    #startOverlay.camp-fullscreen.hidden{display:none}
-    #startOverlay.camp-fullscreen .start-modal,
-    #startOverlay.camp-fullscreen .legacy-camp-modal{
-      width:100%;max-width:none;min-height:100vh;max-height:none;overflow:visible;margin:0;padding:22px clamp(14px,3vw,42px) 48px;
-      border:0;border-radius:0;box-shadow:none;background:transparent;
-    }
-    #startOverlay.camp-fullscreen .start-art{margin-top:4px}
-    #startOverlay.camp-fullscreen .camp-help{max-width:1000px;margin:0 auto 12px;text-align:center}
-    #startOverlay.camp-fullscreen .camp-scene{max-width:1200px;min-height:calc(100vh - 170px);margin:0 auto;border-radius:28px;padding:20px clamp(14px,2.3vw,28px) 28px}
-    #startOverlay.camp-fullscreen .camp-popup-layer{display:block;margin-top:18px}
-    #startOverlay.camp-fullscreen .camp-panel{max-height:none;overflow:visible}
-    #startOverlay.camp-fullscreen .camp-panel.active{display:block}
-    #startOverlay.camp-fullscreen #campClassPanel{scroll-margin-top:18px}
-    #startOverlay.camp-fullscreen #campChestPanel{scroll-margin-top:18px}
-    #startOverlay.camp-fullscreen .camp-ground{margin-top:8px}
-    #startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon{width:78px;height:78px;font-size:50px;border-radius:18px;overflow:hidden}
-    #startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon svg{width:100%;height:100%;display:block}
-    #startOverlay.camp-fullscreen .camp-spot.active{border-color:rgba(245,200,91,.78);box-shadow:0 0 0 2px rgba(245,200,91,.12) inset,0 0 24px rgba(245,200,91,.16)}
-    #startOverlay.camp-fullscreen .nightmare-spot.active{border-color:#b58cff;box-shadow:0 0 24px rgba(181,140,255,.30),inset 0 0 26px rgba(181,140,255,.12)}
-    #startOverlay.camp-fullscreen .hell-spot.active{border-color:#ef5a63;box-shadow:0 0 25px rgba(239,90,99,.34),inset 0 0 28px rgba(239,90,99,.13)}
-    .camp-mode-state{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:900;margin-top:2px;background:rgba(255,255,255,.08)}
-    .camp-prestige-actions{display:grid;gap:10px;margin-top:12px}
-    .camp-prestige-actions .prestige-box{margin:0}
-    .camp-prestige-actions #prestigeBtn,.camp-prestige-actions #resetMetaBtn{width:100%;margin:0 !important}
-    #talentOverlay .talent-modal>.prestige-box,#talentOverlay .talent-modal>#prestigeBtn,#talentOverlay .talent-modal>#resetMetaBtn{display:none}
-    .camp-heirloom-card{overflow-wrap:anywhere}
-    @media(max-width:700px){#startOverlay.camp-fullscreen .camp-scene{min-height:auto}.camp-sky{flex-direction:column;gap:12px}.camp-stars{flex-wrap:wrap}.camp-ground{grid-template-columns:1fr 1fr}}
-  `;
-  document.head.appendChild(style);
-
   // Older class-render layers still write the legacy start button label. The
   // visual camp no longer uses that button, but keeping a hidden compatibility
   // target prevents those inherited renderers from dereferencing null.
@@ -4232,6 +4147,7 @@
         prestigeSummary:`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
         heirloomHtml:v22CampHeirloomHtml(),
         setHtml:v22ImpossibleRoadPanelHtml((meta.heirlooms||[]).filter(item=>item?.setName==='Impossible Road').length),
+        reveals:{...(meta.campReveals||{})},
         nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
         hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
       };
@@ -4351,25 +4267,14 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    /* Make the literal camp occupy more of the monitor while remaining centered. */
-    #startOverlay.camp-fullscreen .camp-scene{max-width:1380px;width:min(96vw,1380px);margin-left:auto;margin-right:auto}
-    #startOverlay.camp-fullscreen .camp-help{max-width:1160px}
-    #startOverlay.camp-fullscreen .camp-label,
-    #startOverlay.camp-fullscreen .camp-bonfire .camp-label{
-      color:#fff!important;font-weight:900;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 3px #000;
-    }
     /* Prestige survivor selection must sit above the full-screen camp. */
     #prestigeHeirloomOverlay{z-index:140!important}
     #prestigeHeirloomOverlay .modal{max-height:92vh;overflow-y:auto}
     .talent-link[data-v23-link="1"]{transition:stroke .16s ease,opacity .16s ease,stroke-width .16s ease}
     .talent-link[data-v23-link="1"].active{stroke-width:5px}
     .node-req.always-visible{display:block;margin-top:7px;color:#d9c9ff}
-    @media(min-width:1250px){#startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:". trophy ." "class fire go" "pet chest .";gap:18px}}
   `;
   document.head.appendChild(style);
-
-  // Remove the explanatory bonfire copy: the fire is intentionally just scenery.
-  const bonfireSub=document.querySelector('#campScene .camp-bonfire .camp-sub');if(bonfireSub)bonfireSub.remove();
 
   // ----- Impossible Road: 4-piece no longer grants the starting Barrier. ----
   function v23SetTierData(){return [
@@ -4496,10 +4401,9 @@
   const startCombatV23Base=startCombat;
   startCombat=function(kind='normal'){const out=startCombatV23Base(kind);if(kind==='bloodmage'){currentEnemies.forEach(e=>{e.bloodmageBoss=true;e.guardian=true;e.boss=true;e.specialName=e.specialName||'Hemorrhagic Tide';});currentEncounterLead=currentEnemies[0];currentEnemy=currentEnemies[currentEnemyIndex]||currentEnemies[0];updateBossSpecialIndicator();updateCombatUI();}return out;};
 
-  // Keep the camp copy synchronized after inherited rerenders.
-  const v23CampRefresh=()=>{const sub=document.querySelector('#campScene .camp-bonfire .camp-sub');if(sub)sub.remove();const scene=$('campScene');if(scene){scene.style.maxWidth='1380px';scene.style.width='min(96vw, 1380px)';}};
-  const updateMetaUIV23Base=updateMetaUI;updateMetaUI=function(){updateMetaUIV23Base();v23CampRefresh();};
-  setTimeout(()=>{v23CampRefresh();renderTalents();renderEquipment();},0);
+  // Camp owns its own scene dimensions and refresh.  Keep only the inherited
+  // domain refreshes that this historical checkpoint still needs.
+  setTimeout(()=>{renderTalents();renderEquipment();},0);
 
   window.DiceboundV23Test=Object.freeze({
     roadWisdom:()=>({desc:talents.find(t=>t.id==='legacy_travel')?.desc,requires:requirementText(talents.find(t=>t.id==='legacy_travel'))}),
@@ -4781,7 +4685,6 @@ function buildDiceboundHumanHarness235(){
     .heirloom-storage-item button{margin-top:8px}.heirloom-storage-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:stretch}.heirloom-storage-actions .small-btn{width:auto}.heirloom-storage-actions .danger{border-color:rgba(255,92,112,.35);color:#ffd2d9;background:rgba(112,25,43,.25)}
     .storage-locked{padding:12px;border-radius:13px;background:rgba(255,255,255,.04);color:var(--muted);line-height:1.5}
     .devil-ritual-armed{animation:v24DevilPulse .7s ease-in-out infinite alternate}@keyframes v24DevilPulse{from{filter:drop-shadow(0 0 4px #f44)}to{filter:drop-shadow(0 0 18px #ff4422) brightness(1.35)}}
-    #startOverlay.camp-fullscreen .start-modal>h2{font-size:clamp(28px,4vw,46px);margin-bottom:4px}
   `;
   document.head.appendChild(v24Style);
 
@@ -6371,13 +6274,8 @@ function buildDiceboundHumanHarness235(){
     .options-volume{width:100%}
     .options-range{width:100%;accent-color:#d8b36a}
     .options-select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(9,14,24,.88);color:var(--ink);font:inherit}
-    .camp-scene{max-width:980px;margin:0 auto}
-    .legacy-camp-modal{max-width:980px!important}
-    .camp-topline{justify-content:center}
-    #campPetLine{display:none!important}
     body[data-run-mode="nightmare"] .world-atmosphere-layer{opacity:.21!important}
     body[data-run-mode="hell"] .world-atmosphere-layer{opacity:.24!important}
-    .set-tier:not(.active){display:none!important}
     body[data-hud-flow="expanded"] .sidebar>.card:first-child{grid-column:1;grid-row:1}
     body[data-hud-flow="expanded"] .sidebar>.equipment-card{grid-column:2;grid-row:1}
     body[data-hud-flow="expanded"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2}
@@ -6520,11 +6418,6 @@ function buildDiceboundHumanHarness235(){
     const entry=list?.find?.(x=>x&&x.name===name);
     if(entry)entry.icon=beta043Art(key,name,klass)||entry.icon;
   }
-  function beta043RefreshCampIcons(){
-    const chest=$('campChestBtn');
-    const campIcon=chest?.querySelector('.camp-icon');
-    if(campIcon)campIcon.innerHTML=beta043Art('chest','Chest','db-art-camp');
-  }
   function beta043RefreshEquipmentArt(){
     EQUIPMENT_SLOTS.forEach(slot=>{
       const item=player?.equipment?.[slot];
@@ -6581,17 +6474,12 @@ function buildDiceboundHumanHarness235(){
   };
 
   const renderEquipmentBeta043Base=renderEquipment;
-  renderEquipment=function(){beta043RefreshEquipmentArt();const r=renderEquipmentBeta043Base();beta043RefreshCampIcons();return r;};
+  renderEquipment=function(){beta043RefreshEquipmentArt();return renderEquipmentBeta043Base();};
 
 
 
 
-  if(typeof v22UpdateCamp==='function'){
-    const v22UpdateCampBeta043Base=v22UpdateCamp;
-    v22UpdateCamp=function(){const r=v22UpdateCampBeta043Base();beta043RefreshCampIcons();return r;};
-  }
-
-  setTimeout(()=>{beta043RefreshCampIcons();beta043RefreshEquipmentArt();},0);
+  setTimeout(beta043RefreshEquipmentArt,0);
   /* ========================================================================
      Beta 0.4.4 — small balance + Sovereign chooser reliability
      ======================================================================== */
@@ -6620,14 +6508,6 @@ function buildDiceboundHumanHarness235(){
 
   const beta045Style=document.createElement('style');
   beta045Style.textContent=`
-    .camp-scene{max-width:1180px;margin:0 auto}
-    .camp-topline,.camp-sky,.camp-ground,.camp-popup-layer{max-width:1040px;margin-left:auto;margin-right:auto}
-    .camp-ground{grid-template-columns:repeat(3,minmax(170px,220px));justify-content:center;column-gap:18px;row-gap:16px}
-    #campChestBtn{background:transparent !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;min-height:auto !important;padding:0 6px 2px !important}
-    #campChestBtn:hover{transform:translateY(-2px) scale(1.01);box-shadow:none !important;border-color:transparent !important}
-    #campChestBtn .camp-icon{font-size:48px}
-    #campChestBtn .camp-label{margin-top:2px}
-    #campChestBtn .camp-sub{max-width:140px}
     .gear-keep-btn .journey-gear-name.common{color:#e7edf7}
     .gear-keep-btn .journey-gear-name.uncommon{color:#8cf3a8}
     .gear-keep-btn .journey-gear-name.rare{color:#72b8ff}
@@ -6635,8 +6515,6 @@ function buildDiceboundHumanHarness235(){
     .gear-keep-btn .journey-gear-name.legendary{color:#ffd86d}
     .gear-keep-btn .journey-gear-name.mythical{color:#ff95bf}
     .gear-keep-btn .journey-gear-name.omega{color:#9ef0ff}
-    @media(max-width:1100px){.camp-ground{grid-template-columns:repeat(3,minmax(150px,1fr));max-width:900px}}
-    @media(max-width:860px){.camp-topline,.camp-sky,.camp-ground,.camp-popup-layer{max-width:none}.camp-ground{grid-template-columns:repeat(2,minmax(0,1fr))}}
   `;
   document.head.appendChild(beta045Style);
 
@@ -6663,22 +6541,6 @@ function buildDiceboundHumanHarness235(){
       if(typeof cls.stats==='string')cls.stats=cls.stats.replace(/^(\d+) HP\b/,`${after} HP`);
     });
   }
-
-  // ----- Camp refresh helper ----------------------------------------------
-  function beta045RefreshCampLayout(){
-    const chest=$('campChestBtn');
-    if(chest){
-      chest.classList.add('camp-chest-bare');
-      const icon=chest.querySelector('.camp-icon');
-      if(icon)icon.innerHTML=beta045UiIconArt('chest','Chest','db-art-camp')||icon.innerHTML;
-    }
-  }
-  if(typeof v22UpdateCamp==='function'){
-    const beta045CampBase=v22UpdateCamp;
-    v22UpdateCamp=function(){const r=beta045CampBase();beta045RefreshCampLayout();return r;};
-  }
-  setTimeout(beta045RefreshCampLayout,0);
-
 
   // ----- Board pass: ensure late boards climb cleanly ---------------------
   const scaleEnemyBeta045Base=scaleEnemy;
@@ -6856,25 +6718,6 @@ function buildDiceboundHumanHarness235(){
   const db046Brand=document.querySelector('.brand h1');if(db046Brand)db046Brand.textContent='Dicebound: Beta v0.4.6';
   const db046Sub=document.querySelector('.brand p');if(db046Sub)db046Sub.textContent='Beta v0.4.6 · missing art restored, camp centered, haste anti-lock tightened, and a full board balance pass.';
 
-  const db046Style=document.createElement('style');
-  db046Style.textContent=`
-    #startOverlay.camp-fullscreen .start-modal{display:flex;flex-direction:column;align-items:center}
-    #startOverlay.camp-fullscreen .camp-scene{max-width:1240px !important;width:min(96vw,1240px) !important;margin-left:auto !important;margin-right:auto !important}
-    #startOverlay.camp-fullscreen .camp-topline,
-    #startOverlay.camp-fullscreen .camp-sky,
-    #startOverlay.camp-fullscreen .camp-ground,
-    #startOverlay.camp-fullscreen .camp-popup-layer{max-width:1080px !important;margin-left:auto !important;margin-right:auto !important}
-    #startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(3,minmax(170px,220px)) !important;justify-content:center !important;column-gap:18px !important;row-gap:16px !important}
-    #startOverlay.camp-fullscreen #campChestBtn{background:transparent !important;border:0 !important;box-shadow:none !important;backdrop-filter:none !important;min-height:auto !important;padding:0 4px 2px !important}
-    #startOverlay.camp-fullscreen #campChestBtn:hover{transform:translateY(-2px) scale(1.01) !important;box-shadow:none !important;border-color:transparent !important;background:transparent !important}
-    #startOverlay.camp-fullscreen #campChestBtn .camp-icon{font-size:50px !important;line-height:1}
-    #startOverlay.camp-fullscreen #campChestBtn .camp-label{margin-top:2px !important}
-    #startOverlay.camp-fullscreen #campChestBtn .camp-sub{max-width:150px}
-    @media(max-width:1100px){#startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(3,minmax(150px,1fr)) !important;max-width:900px !important}}
-    @media(max-width:860px){#startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(2,minmax(0,1fr)) !important;max-width:none !important}}
-  `;
-  document.head.appendChild(db046Style);
-
   function db046UiArt(key,label='',klass='db-art-inline'){
     const entry=window.DiceboundAssets?.resolveUiIcon?.(key)||null;
     if(!entry?.image)return '';
@@ -6898,20 +6741,6 @@ function buildDiceboundHumanHarness235(){
     });
   }
   db046ApplyAssetBindings();
-
-  function db046RefreshCamp(){
-    const chest=$('campChestBtn');
-    if(chest){
-      chest.classList.add('camp-chest-bare');
-      const icon=chest.querySelector('.camp-icon');
-      if(icon)icon.innerHTML=db046UiArt('chest','Chest','db-art-camp')||icon.innerHTML;
-    }
-  }
-  if(typeof v22UpdateCamp==='function'){
-    const db046CampBase=v22UpdateCamp;
-    v22UpdateCamp=function(){const r=db046CampBase();db046RefreshCamp();return r;};
-  }
-  setTimeout(db046RefreshCamp,0);
 
   // Alchemist should unlock much earlier and the UI should say so.
   if(CLASSES.alchemist){CLASSES.alchemist.unlock='Use 15 potions in total';}
@@ -7062,62 +6891,6 @@ function buildDiceboundHumanHarness235(){
   const db047Brand=document.querySelector('.brand h1');if(db047Brand)db047Brand.textContent='Dicebound: Beta v0.4.7';
   const db047Sub=document.querySelector('.brand p');if(db047Sub)db047Sub.textContent='Beta v0.4.7 · requested icon fixes, centered camp, tougher Board 5, haste anti-lock and Alchemist at 15 potions.';
 
-  // --- styling / camp centering / chest de-buttoning ----------------------
-  const db047Style=document.createElement('style');
-  db047Style.textContent=`
-    #startOverlay.camp-fullscreen .start-modal{
-      width:100vw !important;max-width:none !important;display:flex !important;justify-content:center !important;align-items:flex-start !important;
-    }
-    #startOverlay.camp-fullscreen .camp-scene{
-      width:min(94vw,1180px) !important;
-      max-width:1180px !important;
-      margin:0 auto !important;
-      display:grid !important;
-      justify-items:center !important;
-    }
-    #startOverlay.camp-fullscreen .camp-topline,
-    #startOverlay.camp-fullscreen .camp-sky,
-    #startOverlay.camp-fullscreen .camp-ground,
-    #startOverlay.camp-fullscreen .camp-popup-layer{
-      width:100% !important;
-      max-width:980px !important;
-      margin-left:auto !important;
-      margin-right:auto !important;
-      justify-self:center !important;
-    }
-    #startOverlay.camp-fullscreen .camp-ground{
-      grid-template-columns:repeat(3,minmax(170px,1fr)) !important;
-      justify-content:center !important;
-      align-items:start !important;
-      gap:18px !important;
-    }
-    #startOverlay.camp-fullscreen #campChestBtn{
-      background:transparent !important;
-      border-color:transparent !important;
-      box-shadow:none !important;
-      backdrop-filter:none !important;
-      -webkit-backdrop-filter:none !important;
-      min-height:auto !important;
-      padding:4px !important;
-    }
-    #startOverlay.camp-fullscreen #campChestBtn:hover,
-    #startOverlay.camp-fullscreen #campChestBtn:focus-visible{
-      background:transparent !important;
-      border-color:transparent !important;
-      box-shadow:none !important;
-      transform:translateY(-2px) !important;
-    }
-    #startOverlay.camp-fullscreen #campChestBtn .camp-icon{font-size:52px !important;line-height:1 !important}
-    #startOverlay.camp-fullscreen #campChestBtn .camp-label{margin-top:4px !important}
-    @media (max-width: 980px){
-      #startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(2,minmax(170px,1fr)) !important;max-width:760px !important}
-    }
-    @media (max-width: 700px){
-      #startOverlay.camp-fullscreen .camp-ground{grid-template-columns:1fr !important;max-width:340px !important}
-    }
-  `;
-  document.head.appendChild(db047Style);
-
   function db047UiArt(key,label='',klass='db-art-inline'){
     const entry=window.DiceboundAssets?.resolveUiIcon?.(key)||null;
     if(!entry?.image)return '';
@@ -7157,23 +6930,6 @@ function buildDiceboundHumanHarness235(){
     }
     return db047TileMetaBase(tile);
   };
-
-  function db047RefreshCamp(){
-    const chest=$('campChestBtn');
-    if(chest){
-      chest.style.background='transparent';
-      chest.style.borderColor='transparent';
-      chest.style.boxShadow='none';
-      chest.classList.add('camp-chest-bare');
-      const icon=chest.querySelector('.camp-icon');
-      if(icon){const art=db047UiArt('chest','Chest','db-art-camp');if(art)icon.innerHTML=art;}
-    }
-  }
-  if(typeof v22UpdateCamp==='function'){
-    const db047UpdateCampBase=v22UpdateCamp;
-    v22UpdateCamp=function(){const out=db047UpdateCampBase();db047RefreshCamp();return out;};
-  }
-  setTimeout(db047RefreshCamp,0);
 
   // --- alchemist requirement hard override ---------------------------------
   const DB047_ALCHEMIST_REQUIREMENT=15;
@@ -7648,120 +7404,11 @@ function buildDiceboundHumanHarness235(){
   /* ========================================================================
      Beta 0.5.10 — campsite environment art & alchemist scaling presentation
      ======================================================================== */
-  const db055Style=document.createElement('style');
-  db055Style.textContent=`
-    #startOverlay.camp-fullscreen{
-      background:
-        linear-gradient(180deg,rgba(3,8,20,.08),rgba(3,7,16,.14)),
-        url("assets/camp/backgrounds/campsite.png") center center / cover no-repeat fixed !important;
-      scrollbar-color:#53647f transparent;
-    }
-    #startOverlay.camp-fullscreen .start-modal,
-    #startOverlay.camp-fullscreen .legacy-camp-modal{background:transparent!important}
-    #startOverlay.camp-fullscreen .start-art,
-    #startOverlay.camp-fullscreen .start-modal>h2,
-    #startOverlay.camp-fullscreen .hub-class-heading{display:none!important}
-    #startOverlay.camp-fullscreen .camp-scene{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
-    #startOverlay.camp-fullscreen .camp-scene::before{display:none!important}
-    #startOverlay.camp-fullscreen .camp-art-button{background:rgba(8,13,27,.14)!important;border-color:rgba(255,255,255,.06)!important;backdrop-filter:none!important}
-    #startOverlay.camp-fullscreen .camp-art-button:hover{background:rgba(10,16,31,.20)!important;border-color:rgba(245,200,91,.36)!important}
-    #startOverlay.camp-fullscreen .camp-special-art-frame{
-      width:86px!important;height:86px!important;display:flex!important;align-items:center!important;justify-content:center!important;
-      overflow:visible!important;background:transparent!important;border:0!important;border-radius:0!important;
-    }
-    #startOverlay.camp-fullscreen .camp-special-art{
-      width:100%!important;height:100%!important;object-fit:contain!important;display:block!important;pointer-events:none!important;
-      filter:drop-shadow(0 8px 14px rgba(0,0,0,.32));
-    }
-    #startOverlay.camp-fullscreen .talent-art-button .camp-special-art-frame{width:98px!important;height:98px!important}
-    #startOverlay.camp-fullscreen .talent-art-button .camp-talent-art{filter:drop-shadow(0 0 14px rgba(78,159,255,.55)) drop-shadow(0 8px 14px rgba(0,0,0,.30))}
-    #startOverlay.camp-fullscreen .info-art-button .camp-special-art-frame{width:96px!important;height:90px!important}
-    @media(max-width:700px){
-      #startOverlay.camp-fullscreen{background-position:50% 50%!important;background-attachment:scroll!important}
-      #startOverlay.camp-fullscreen .camp-special-art-frame{width:72px!important;height:72px!important}
-      #startOverlay.camp-fullscreen .talent-art-button .camp-special-art-frame{width:80px!important;height:80px!important}
-    }
-  `;
-  document.head.appendChild(db055Style);
   /* ========================================================================
      Beta 0.5.10 — campsite spatial composition + wheel-zoom talent atlas
      ======================================================================== */
   const db056Style=document.createElement('style');
   db056Style.textContent=`
-    /* Remove the old explanatory/summary chrome from the campsite scene. */
-    #startOverlay.camp-fullscreen .start-modal>.subtitle,
-    #startOverlay.camp-fullscreen .camp-help,
-    #startOverlay.camp-fullscreen .camp-topline{display:none!important}
-
-    /* Talent and Info art are scenery-like interactive objects, not cards. */
-    #startOverlay.camp-fullscreen #campTalentBtn,
-    #startOverlay.camp-fullscreen #campInfoBtn{
-      background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;
-      padding:4px!important;min-height:auto!important;overflow:visible!important
-    }
-    #startOverlay.camp-fullscreen #campTalentBtn:hover,
-    #startOverlay.camp-fullscreen #campInfoBtn:hover,
-    #startOverlay.camp-fullscreen #campTalentBtn:focus-visible,
-    #startOverlay.camp-fullscreen #campInfoBtn:focus-visible{
-      background:transparent!important;border-color:transparent!important;box-shadow:none!important;
-      transform:translateY(-3px) scale(1.045)!important
-    }
-    #startOverlay.camp-fullscreen #campTalentBtn .camp-label,
-    #startOverlay.camp-fullscreen #campInfoBtn .camp-label{
-      text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 3px 8px rgba(0,0,0,.9)!important
-    }
-    #startOverlay.camp-fullscreen #campTalentBtn .camp-sub,
-    #startOverlay.camp-fullscreen #campInfoBtn .camp-sub{
-      color:#d9e2f3!important;text-shadow:0 2px 5px rgba(0,0,0,.95)!important
-    }
-
-    /* Desktop composition follows the annotated campsite screenshot. */
-    @media(min-width:1000px) and (min-height:650px){
-      #startOverlay.camp-fullscreen{overflow:hidden!important}
-      #startOverlay.camp-fullscreen .start-modal,
-      #startOverlay.camp-fullscreen .legacy-camp-modal{
-        min-height:100dvh!important;height:100dvh!important;overflow:hidden!important;padding:0!important
-      }
-      #startOverlay.camp-fullscreen .camp-scene{
-        position:relative!important;width:100vw!important;max-width:none!important;height:100dvh!important;min-height:100dvh!important;
-        margin:0!important;padding:0!important;overflow:hidden!important
-      }
-      #startOverlay.camp-fullscreen .camp-sky,
-      #startOverlay.camp-fullscreen .camp-stars,
-      #startOverlay.camp-fullscreen .camp-ground{display:contents!important}
-      #startOverlay.camp-fullscreen .camp-spot,
-      #startOverlay.camp-fullscreen .camp-bonfire{position:absolute!important;margin:0!important;z-index:4}
-
-      /* upper-left scenery interactions */
-      #startOverlay.camp-fullscreen #campTalentBtn{left:4.0vw!important;top:18.5vh!important;width:132px!important}
-      #startOverlay.camp-fullscreen #campInfoBtn{left:15.0vw!important;top:24.0vh!important;width:142px!important}
-
-      /* meta controls move out toward the upper-right */
-      #startOverlay.camp-fullscreen #campMoonBtn{left:59vw!important;top:18.5vh!important;width:120px!important}
-      #startOverlay.camp-fullscreen #campOptionsBtn{left:68vw!important;top:18.5vh!important;width:120px!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{right:15vw!important;top:18.5vh!important;width:128px!important}
-      #startOverlay.camp-fullscreen #campHellBtn{right:5.5vw!important;top:18.5vh!important;width:128px!important}
-
-      /* central campsite objects */
-      #startOverlay.camp-fullscreen #campAchievementBtn{left:50%!important;top:36%!important;width:250px!important;transform:translateX(-50%)!important}
-      #startOverlay.camp-fullscreen #campAchievementBtn:hover{transform:translateX(-50%) translateY(-2px)!important}
-      #startOverlay.camp-fullscreen #campClassBtn{left:12vw!important;top:52%!important;width:270px!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:12vw!important;top:72%!important;width:270px!important}
-      #startOverlay.camp-fullscreen .camp-bonfire{left:50%!important;top:57%!important;transform:translate(-50%,-50%)!important;width:190px!important}
-
-      /* lower arrows: chest and caravan pushed into the open right side. */
-      #startOverlay.camp-fullscreen #campChestBtn{left:67vw!important;top:72%!important;width:185px!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:8vw!important;top:61%!important;width:260px!important}
-
-      /* panels overlay the world instead of reflowing the campsite. */
-      #startOverlay.camp-fullscreen .camp-popup-layer{
-        position:absolute!important;left:50%!important;bottom:3vh!important;transform:translateX(-50%)!important;
-        width:min(92vw,1380px)!important;max-height:66vh!important;margin:0!important;z-index:20!important;
-        pointer-events:none!important;overflow:auto!important;scrollbar-width:thin
-      }
-      #startOverlay.camp-fullscreen .camp-panel{pointer-events:auto!important;max-height:64vh!important;overflow:auto!important}
-    }
-
     /* Talent atlas: still scrollable internally for drag-to-pan, but never show bars. */
     #talentOverlay .talent-viewport{
       overflow:scroll!important;scrollbar-width:none!important;-ms-overflow-style:none!important;
@@ -7797,180 +7444,12 @@ function buildDiceboundHumanHarness235(){
   const db056TalentSub=document.querySelector('#talentOverlay .talent-modal>.subtitle');
   if(db056TalentSub)db056TalentSub.innerHTML='Chart a path through the Legacy Constellation. <b>Purchased nodes activate on your next expedition.</b> Drag to pan; use the mouse wheel to zoom in and out.';
 
-  // One late cleanup after all inherited camp builders have run.
-  setTimeout(()=>{
-    const subtitle=$('startOverlay')?.querySelector('.start-modal>.subtitle');if(subtitle)subtitle.style.display='none';
-    const help=$('startOverlay')?.querySelector('.camp-help');if(help)help.style.display='none';
-    const topline=$('campScene')?.querySelector('.camp-topline');if(topline)topline.style.display='none';
-    window.DiceboundResponsive?.schedule?.();
-  },0);
   /* ========================================================================
      Beta 0.5.10 — campsite spatial refinement
      ======================================================================== */
-  const db057Style=document.createElement('style');
-  db057Style.textContent=`
-    @media(min-width:1000px) and (min-height:650px){
-      /* Talent is now the celestial focal point, centered high above the clearing. */
-      #startOverlay.camp-fullscreen #campTalentBtn{
-        left:50%!important;top:10.5vh!important;width:172px!important;
-        transform:translateX(-50%)!important;z-index:6!important
-      }
-      #startOverlay.camp-fullscreen #campTalentBtn:hover,
-      #startOverlay.camp-fullscreen #campTalentBtn:focus-visible{
-        transform:translateX(-50%) translateY(-3px) scale(1.045)!important
-      }
-      #startOverlay.camp-fullscreen #campTalentBtn .camp-special-art-frame{width:142px!important;height:142px!important;margin:0 auto!important}
-      #startOverlay.camp-fullscreen #campTalentBtn .camp-special-art{max-width:142px!important;max-height:142px!important}
-
-      /* Info becomes a ground-side object immediately left of the heirloom chest. */
-      #startOverlay.camp-fullscreen #campInfoBtn{
-        left:49vw!important;top:72%!important;width:165px!important;z-index:5!important
-      }
-      #startOverlay.camp-fullscreen #campInfoBtn .camp-special-art-frame{width:112px!important;height:112px!important;margin:0 auto!important}
-      #startOverlay.camp-fullscreen #campInfoBtn .camp-special-art{max-width:112px!important;max-height:112px!important}
-
-      /* Trophy is now down on the ground, to the left of the Pet interaction. */
-      #startOverlay.camp-fullscreen #campAchievementBtn{
-        left:1.5vw!important;top:72%!important;width:175px!important;
-        transform:none!important;z-index:5!important
-      }
-      #startOverlay.camp-fullscreen #campAchievementBtn:hover,
-      #startOverlay.camp-fullscreen #campAchievementBtn:focus-visible{transform:translateY(-2px)!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:13.5vw!important;top:72%!important;width:270px!important}
-
-      /* Give the heirloom chest much more physical presence. */
-      #startOverlay.camp-fullscreen #campChestBtn{
-        left:61vw!important;top:70%!important;width:255px!important;min-height:150px!important;z-index:5!important
-      }
-      #startOverlay.camp-fullscreen #campChestBtn .camp-icon{min-height:102px!important;display:flex!important;align-items:center!important;justify-content:center!important}
-      #startOverlay.camp-fullscreen #campChestBtn .db-art-camp{
-        width:100px!important;height:100px!important;max-width:100px!important;max-height:100px!important;object-fit:contain!important
-      }
-      #startOverlay.camp-fullscreen #campChestBtn .camp-label{font-size:14px!important}
-
-      /* Start Run should read as a major physical campsite object, not a tiny icon. */
-      #startOverlay.camp-fullscreen #campGoBtn{
-        right:3.5vw!important;top:54%!important;width:410px!important;min-height:215px!important;z-index:5!important
-      }
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{
-        width:390px!important;max-width:390px!important;height:175px!important;margin:0 auto!important
-      }
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{
-        max-width:390px!important;max-height:175px!important;width:auto!important;height:auto!important
-      }
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-label{font-size:15px!important;margin-top:2px!important}
-    }
-
-    @media(min-width:1000px) and (max-width:1350px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campAchievementBtn{left:1vw!important;width:150px!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:13vw!important;width:230px!important}
-      #startOverlay.camp-fullscreen #campInfoBtn{left:47vw!important;width:145px!important}
-      #startOverlay.camp-fullscreen #campChestBtn{left:59vw!important;width:220px!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:2vw!important;width:330px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:315px!important;height:150px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:315px!important;max-height:150px!important}
-    }
-  `;
-  document.head.appendChild(db057Style);
   /* ========================================================================
      Beta 0.5.10 — campsite art replacement + selected-class figure
      ======================================================================== */
-  const db058Style=document.createElement('style');
-  db058Style.textContent=`
-    /* New campsite art is scenery, not generic button chrome. */
-    #startOverlay.camp-fullscreen #campMoonBtn,
-    #startOverlay.camp-fullscreen #campAchievementBtn,
-    #startOverlay.camp-fullscreen #campOptionsBtn,
-    #startOverlay.camp-fullscreen #campNightmareBtn,
-    #startOverlay.camp-fullscreen #campClassBtn{
-      background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;
-      overflow:visible!important
-    }
-    #startOverlay.camp-fullscreen #campMoonBtn:hover,
-    #startOverlay.camp-fullscreen #campAchievementBtn:hover,
-    #startOverlay.camp-fullscreen #campOptionsBtn:hover,
-    #startOverlay.camp-fullscreen #campNightmareBtn:hover,
-    #startOverlay.camp-fullscreen #campClassBtn:hover{
-      background:transparent!important;border-color:transparent!important;box-shadow:none!important
-    }
-    .db058-camp-art{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
-    .db058-camp-art-frame{display:flex;align-items:center;justify-content:center;background:transparent!important;border:0!important;overflow:visible!important;margin:0 auto}
-
-    #startOverlay.camp-fullscreen #campOptionsBtn .db058-camp-art-frame{width:94px;height:94px}
-    #startOverlay.camp-fullscreen #campOptionsBtn .db058-camp-art{filter:drop-shadow(0 7px 12px rgba(0,0,0,.38))}
-    #startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art-frame{width:160px;height:160px}
-    #startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art{filter:drop-shadow(0 0 18px rgba(80,160,255,.62)) drop-shadow(0 8px 16px rgba(0,0,0,.3))}
-    #startOverlay.camp-fullscreen #campAchievementBtn .db058-camp-art-frame{width:175px;height:145px}
-    #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:235px;height:330px}
-    #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art{object-position:right bottom;filter:drop-shadow(0 12px 18px rgba(0,0,0,.46))}
-
-    /* Selected class becomes the actual adventurer standing in camp. */
-    #startOverlay.camp-fullscreen #campClassBtn{padding:0!important;min-height:290px!important}
-    #startOverlay.camp-fullscreen #campClassIcon{
-      width:210px!important;height:245px!important;max-width:none!important;max-height:none!important;
-      padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important;
-      filter:drop-shadow(0 14px 18px rgba(0,0,0,.45))
-    }
-    #startOverlay.camp-fullscreen #campClassIcon .db058-camp-class-fullbody{width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block;pointer-events:none}
-    #startOverlay.camp-fullscreen #campClassBtn .camp-label,
-    #startOverlay.camp-fullscreen #campClassBtn .camp-sub,
-    #startOverlay.camp-fullscreen #campMoonBtn .camp-label,
-    #startOverlay.camp-fullscreen #campMoonBtn .camp-sub,
-    #startOverlay.camp-fullscreen #campAchievementBtn .camp-label,
-    #startOverlay.camp-fullscreen #campAchievementBtn .camp-sub,
-    #startOverlay.camp-fullscreen #campOptionsBtn .camp-label,
-    #startOverlay.camp-fullscreen #campOptionsBtn .camp-sub,
-    #startOverlay.camp-fullscreen #campNightmareBtn .camp-label,
-    #startOverlay.camp-fullscreen #campNightmareBtn .camp-sub{
-      text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 3px 8px rgba(0,0,0,.95)!important
-    }
-
-    @media(min-width:1000px) and (min-height:650px){
-      /* Options now lives in the true top-left corner of the campsite. */
-      #startOverlay.camp-fullscreen #campOptionsBtn{left:1.6vw!important;top:2.2vh!important;width:118px!important;z-index:8!important}
-
-      /* Prestige moon stays in the sky and gets room to glow. */
-      #startOverlay.camp-fullscreen #campMoonBtn{left:62vw!important;top:8.5vh!important;width:180px!important;z-index:5!important}
-
-      /* Nightmare creature belongs to the right-side treeline. */
-      #startOverlay.camp-fullscreen #campNightmareBtn{right:-.8vw!important;top:14vh!important;width:250px!important;min-height:355px!important;z-index:4!important;padding:0!important}
-      #startOverlay.camp-fullscreen #campHellBtn{right:15.5vw!important;top:15.5vh!important;width:128px!important;z-index:5!important}
-
-      /* Move the chosen adventurer and companion slightly right. */
-      #startOverlay.camp-fullscreen #campClassBtn{left:16vw!important;top:48%!important;width:255px!important;z-index:6!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:17.5vw!important;top:73%!important;width:270px!important;z-index:5!important}
-      #startOverlay.camp-fullscreen #campAchievementBtn{left:5vw!important;top:72%!important;width:185px!important;z-index:5!important}
-
-      /* Give the caravan a little more ground beneath it. */
-      #startOverlay.camp-fullscreen #campGoBtn{right:3.5vw!important;top:58%!important}
-    }
-
-    @media(min-width:1000px) and (max-width:1350px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campOptionsBtn{left:1vw!important;top:1.5vh!important}
-      #startOverlay.camp-fullscreen #campMoonBtn{left:59vw!important;top:7.5vh!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{right:-2vw!important;width:220px!important}
-      #startOverlay.camp-fullscreen #campHellBtn{right:16vw!important}
-      #startOverlay.camp-fullscreen #campClassBtn{left:14.5vw!important;width:230px!important}
-      #startOverlay.camp-fullscreen #campClassIcon{width:185px!important;height:220px!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:16vw!important;width:230px!important}
-      #startOverlay.camp-fullscreen #campAchievementBtn{left:3vw!important;width:160px!important}
-      #startOverlay.camp-fullscreen #campGoBtn{top:59%!important}
-    }
-
-    @media(max-width:999px){
-      #startOverlay.camp-fullscreen #campClassIcon{width:155px!important;height:185px!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:130px;height:190px}
-      #startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art-frame{width:110px;height:110px}
-      #startOverlay.camp-fullscreen #campAchievementBtn .db058-camp-art-frame{width:130px;height:110px}
-    }
-  `;
-  document.head.appendChild(db058Style);
-
-  // Authored Camp-object rendering is now owned by DiceboundCamp.  Retain the
-  // historic entry points only for callers that still refresh surrounding UI.
-  function db058RefreshCampArt(){return window.DiceboundCamp?.refreshArt();}
-  function db058ScheduleRefresh(){return window.DiceboundCamp?.refresh();}
-  setTimeout(db058ScheduleRefresh,0);
   /* ========================================================================
      Beta 0.5.10 — pet artwork + campsite composition tuning
      ======================================================================== */
@@ -7988,49 +7467,9 @@ function buildDiceboundHumanHarness235(){
     .camp-pet-choice-beta021 .db059-pet-choice-art{width:78px;height:78px;margin:0 auto 7px}
     .summoner-spirit-token .db059-pet-art{width:28px;height:28px}
 
-    /* Requested campsite tuning ----------------------------------------- */
-    @media(min-width:1000px) and (min-height:650px){
-      /* Nightmare creature: about half the visual size and slightly lower. */
-      #startOverlay.camp-fullscreen #campNightmareBtn{right:1.2vw!important;top:19vh!important;width:135px!important;min-height:190px!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:118px!important;height:165px!important}
-
-      /* Chosen adventurer nudged farther into the clearing. */
-      #startOverlay.camp-fullscreen #campClassBtn{left:18.5vw!important}
-
-      /* Bonfire settles a little lower on the ground. */
-      #startOverlay.camp-fullscreen .camp-bonfire{top:59.5%!important}
-
-      /* Trophy only needs a tiny lift. */
-      #startOverlay.camp-fullscreen #campAchievementBtn{top:70.5%!important}
-
-      /* Chest gets a little more physical presence. */
-      #startOverlay.camp-fullscreen #campChestBtn{width:278px!important;min-height:168px!important}
-      #startOverlay.camp-fullscreen #campChestBtn .camp-icon{min-height:114px!important}
-      #startOverlay.camp-fullscreen #campChestBtn .db-art-camp{width:112px!important;height:112px!important;max-width:112px!important;max-height:112px!important}
-
-      /* Caravan becomes slightly larger and sits a little lower. */
-      #startOverlay.camp-fullscreen #campGoBtn{right:2.8vw!important;top:61%!important;width:445px!important;min-height:235px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:425px!important;max-width:425px!important;height:190px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:425px!important;max-height:190px!important}
-    }
-
-    @media(min-width:1000px) and (max-width:1350px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campNightmareBtn{right:.4vw!important;top:19.5vh!important;width:120px!important;min-height:170px!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:104px!important;height:150px!important}
-      #startOverlay.camp-fullscreen #campClassBtn{left:16.5vw!important}
-      #startOverlay.camp-fullscreen .camp-bonfire{top:59.5%!important}
-      #startOverlay.camp-fullscreen #campAchievementBtn{top:70.5%!important}
-      #startOverlay.camp-fullscreen #campChestBtn{width:238px!important;min-height:158px!important}
-      #startOverlay.camp-fullscreen #campChestBtn .db-art-camp{width:106px!important;height:106px!important;max-width:106px!important;max-height:106px!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:1.5vw!important;top:61.5%!important;width:360px!important;min-height:210px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:345px!important;height:165px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:345px!important;max-height:165px!important}
-    }
-
     @media(max-width:999px){
       #combatPet{width:62px;height:62px}
       #combatPet .db059-pet-art{width:62px;height:62px}
-      #campPetIcon,#campPetIcon .db059-pet-art{width:72px!important;height:72px!important}
       .pet-choice .db059-pet-choice-art{width:64px;height:64px}
     }
     body[data-window-height="very-short"] #combatPet,
@@ -8095,51 +7534,6 @@ function buildDiceboundHumanHarness235(){
   /* ========================================================================
      Beta 0.5.10 — campsite placement refinement + Arcane Lance scaling pass
      ======================================================================== */
-  const db0510Style=document.createElement('style');
-  db0510Style.textContent=`
-    /* Pet is now a free-standing campsite object, like Class/Trophy/Info. */
-    #startOverlay.camp-fullscreen #campPetBtn{
-      background:transparent!important;border:0!important;box-shadow:none!important;
-      backdrop-filter:none!important;overflow:visible!important;padding:0!important
-    }
-    #startOverlay.camp-fullscreen #campPetBtn:hover,
-    #startOverlay.camp-fullscreen #campPetBtn:focus-visible{
-      background:transparent!important;border-color:transparent!important;box-shadow:none!important
-    }
-    #startOverlay.camp-fullscreen #campPetBtn .camp-label,
-    #startOverlay.camp-fullscreen #campPetBtn .camp-sub{
-      text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 3px 8px rgba(0,0,0,.95)!important
-    }
-
-    @media(min-width:1000px) and (min-height:650px){
-      /* Follow-up placement from the annotated 0.5.9 screenshot. */
-      #startOverlay.camp-fullscreen #campClassBtn{left:21vw!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:21.5vw!important;top:77%!important;width:205px!important;min-height:145px!important}
-      #startOverlay.camp-fullscreen #campPetIcon{margin:0 auto!important}
-      #startOverlay.camp-fullscreen .camp-bonfire{top:62.5%!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:2.2vw!important;top:64%!important;width:475px!important;min-height:250px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:455px!important;max-width:455px!important;height:205px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:455px!important;max-height:205px!important}
-
-      /* Smaller arrows in the markup: subtle, not a redesign. */
-      #startOverlay.camp-fullscreen #campMoonBtn{left:65vw!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:22vh!important}
-      #startOverlay.camp-fullscreen #campInfoBtn{top:75%!important}
-    }
-
-    @media(min-width:1000px) and (max-width:1350px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campClassBtn{left:19vw!important}
-      #startOverlay.camp-fullscreen #campPetBtn{left:19.5vw!important;top:77%!important;width:185px!important}
-      #startOverlay.camp-fullscreen .camp-bonfire{top:62.5%!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:1vw!important;top:64.5%!important;width:390px!important;min-height:225px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:375px!important;height:178px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:375px!important;max-height:178px!important}
-      #startOverlay.camp-fullscreen #campMoonBtn{left:62vw!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:22vh!important}
-      #startOverlay.camp-fullscreen #campInfoBtn{top:75%!important}
-    }
-  `;
-  document.head.appendChild(db0510Style);
   /* ========================================================================
      Alpha 3.1.9 — deterministic actual-system regression API
      ------------------------------------------------------------------------
@@ -8277,27 +7671,9 @@ function buildDiceboundHumanHarness235(){
      Beta 0.5.11 — full-screen combat, elemental parity & progression fixes
      ======================================================================== */
 
-  // CAMP PLACEMENT — follow the 0.5.10 annotated layout one step farther.
-  // These rules intentionally live after the earlier campsite styles so this is
-  // the single final owner of the 0.5.11 desktop positions.
   const db0511Style=document.createElement('style');
   db0511Style.id='dicebound-beta-0-5-11-style';
   db0511Style.textContent=`
-    @media(min-width:1000px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campClassBtn{left:24vw!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:31vh!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:1.2vw!important;top:67.5%!important;width:710px!important;min-height:340px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:680px!important;max-width:680px!important;height:292px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:680px!important;max-height:292px!important}
-    }
-    @media(min-width:1000px) and (max-width:1350px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campClassBtn{left:22vw!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:30vh!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:.5vw!important;top:67.5%!important;width:535px!important;min-height:285px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:510px!important;max-width:510px!important;height:235px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:510px!important;max-height:235px!important}
-    }
-
     /* Combat is now a game screen rather than a floating desktop modal. */
     #combatOverlay{
       padding:0!important;
@@ -8498,28 +7874,6 @@ function buildDiceboundHumanHarness235(){
      Beta 0.5.12 — campsite placement + achievement powerup progression
      ======================================================================== */
 
-  // CAMP — pull the heirloom chest toward the bonfire, make Start Run more
-  // prominent without pushing it off-screen, and lower the Nightmare watcher.
-  const db0512Style=document.createElement('style');
-  db0512Style.id='dicebound-beta-0-5-12-style';
-  db0512Style.textContent=`
-    @media(min-width:1360px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campChestBtn{left:55vw!important;top:65.5%!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:35vh!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:1.2vw!important;top:63.5%!important;width:852px!important;min-height:405px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:816px!important;max-width:816px!important;height:350px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:816px!important;max-height:350px!important}
-    }
-    @media(min-width:1000px) and (max-width:1359px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campChestBtn{left:53.5vw!important;top:65.5%!important}
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:34vh!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:.5vw!important;top:64%!important;width:642px!important;min-height:342px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:612px!important;max-width:612px!important;height:282px!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:612px!important;max-height:282px!important}
-    }
-  `;
-  document.head.appendChild(db0512Style);
-
   // ACHIEVEMENT GATES — 0.5.12 expands the long-term reward pool. Existing
   // saves unlock these immediately if the corresponding achievement is already
   // complete; no progress is reset or re-earned.
@@ -8655,27 +8009,13 @@ function buildDiceboundHumanHarness235(){
     return db060TileMetaBase(tile);
   };
 
-  // Preserve the requested 0.5.13 campsite placement and Random placeholder.
-  const db060CampStyle=document.createElement('style');
-  db060CampStyle.id='dicebound-beta-0-6-style';
-  db060CampStyle.textContent=`
+  const db060GuardianArtStyle=document.createElement('style');
+  db060GuardianArtStyle.id='dicebound-beta-0-6-guardian-art-style';
+  db060GuardianArtStyle.textContent=`
     .db060-guardian-tile-art{display:block;width:42px;height:42px;object-fit:cover;object-position:center;border-radius:10px;box-shadow:0 5px 14px rgba(0,0,0,.42)}
     .db060-guardian-art{object-fit:cover!important;object-position:center!important}
-    .db060-random-placeholder{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:90px;min-height:110px;border-radius:18px;background:radial-gradient(circle at 30% 30%,rgba(99,122,255,.38),rgba(52,27,116,.64) 58%,rgba(15,12,34,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.13),0 10px 24px rgba(0,0,0,.30)}
-    .db060-random-placeholder .die{font-size:48px;filter:drop-shadow(0 5px 10px rgba(0,0,0,.45))}
-    .db060-random-placeholder .question{position:absolute;right:13px;bottom:9px;font-size:28px;font-weight:1000;color:#fff4a9;text-shadow:0 3px 10px #000}
-    @media(min-width:1360px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:37vh!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:.3vw!important;top:61.8%!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-label{margin-top:-6px!important;transform:translateY(-8px)!important;line-height:1.05!important}
-    }
-    @media(min-width:1000px) and (max-width:1359px) and (min-height:650px){
-      #startOverlay.camp-fullscreen #campNightmareBtn{top:36vh!important}
-      #startOverlay.camp-fullscreen #campGoBtn{right:-.1vw!important;top:62.1%!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-label{margin-top:-6px!important;transform:translateY(-8px)!important;line-height:1.05!important}
-    }
   `;
-  document.head.appendChild(db060CampStyle);
+  document.head.appendChild(db060GuardianArtStyle);
 
   // RARITY BODY -------------------------------------------------------------
   // Exact 0.6 item-power ranges. Road depth now improves rarity odds rather
@@ -9123,7 +8463,6 @@ function buildDiceboundHumanHarness235(){
   const DB0633_CAMP_TROPHY_TIERS=Object.freeze([
     Object.freeze({id:'current-trophy',minimumAchievementCount:2})
   ]);
-  const DB0633_CAMP_OBJECT_IDS=Object.freeze(['campAchievementBtn','campTalentBtn','campMoonBtn']);
   function db0633TrophyTierForAchievementCount(count){
     const earned=Math.max(0,Math.floor(Number(count)||0));
     let tier=null;
@@ -9170,42 +8509,9 @@ function buildDiceboundHumanHarness235(){
     }
     return {changed,state:db0633CurrentCampRevealState()};
   }
-  function db0633CampObjectMarkup(id){
-    if(id==='campAchievementBtn')return '<div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div>';
-    if(id==='campTalentBtn')return `<div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${window.DiceboundAssets?.resolveCampObject?.('talentStar')?.image||'assets/camp/objects/talent-star.png'}" alt="${window.DiceboundAssets?.resolveCampObject?.('talentStar')?.alt||'Northern star of talents'}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div>`;
-    if(id==='campMoonBtn')return '<div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige & reset</div>';
-    return '';
-  }
-  function db0633BindCampObject(button){
-    if(!button||button.dataset.db0633Bound)return;
-    button.dataset.db0633Bound='true';
-    if(button.id==='campAchievementBtn')button.addEventListener('click',()=>{renderAchievements();$('achievementOverlay')?.classList.remove('hidden');});
-    if(button.id==='campTalentBtn')button.addEventListener('click',()=>openTalentTree('startOverlay'));
-    if(button.id==='campMoonBtn')button.addEventListener('click',()=>{document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));$('campMoonPanel')?.classList.add('active');});
-  }
-  function db0633AttachCampObject(id){
-    const existing=$(id);if(existing)return existing;
-    const scene=$('campScene');if(!scene)return null;
-    const button=document.createElement('button');button.type='button';button.id=id;button.className=id==='campTalentBtn'?'camp-spot camp-art-button talent-art-button':'camp-spot';button.innerHTML=db0633CampObjectMarkup(id);
-    if(id==='campAchievementBtn')scene.querySelector('.camp-ground')?.appendChild(button);
-    else {
-      const stars=scene.querySelector('.camp-sky .camp-stars'),info=$('campInfoBtn');
-      if(id==='campTalentBtn')stars?.insertBefore(button,info||null);
-      if(id==='campMoonBtn'){
-        if(info?.parentElement)info.after(button);else stars?.appendChild(button);
-      }
-    }
-    if(!button.parentElement)return null;
-    db0633BindCampObject(button);return button;
-  }
   function db0633SyncCampObjects(){
-    if(!$('campScene'))return db0633CurrentCampRevealState();
     const state=db0633CurrentCampRevealState();
-    const visibility={campAchievementBtn:state.achievementTrophy,campTalentBtn:state.talentStar,campMoonBtn:state.prestigeMoon};
-    for(const id of DB0633_CAMP_OBJECT_IDS){
-      if(visibility[id])db0633AttachCampObject(id);else $(id)?.remove();
-    }
-    return state;
+    return window.DiceboundCamp?.syncProgressionReveals?.(state)||state;
   }
   function db0633RefreshCampProgression(options={}){
     const result=db0633ReconcileCampReveals(options);if(result.changed)saveMeta();db0633SyncCampObjects();return result;
@@ -9225,7 +8531,7 @@ function buildDiceboundHumanHarness235(){
     prestigeOfferPoints:db0633PrestigeOfferPoints,
     reconcile:(current,facts)=>db0633ReconcileCampRevealState(current,facts),
     current:db0633CurrentCampRevealState,
-    campObjectIds:()=>DB0633_CAMP_OBJECT_IDS.filter(id=>!!$(id))
+    campObjectIds:()=>window.DiceboundCamp?.progressionRevealObjectIds?.().filter(id=>!!$(id))||[]
   });
   setTimeout(()=>db0633RefreshCampProgression(),0);
 

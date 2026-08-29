@@ -1,4 +1,14 @@
-# Unreleased — Beta 0.6.4.23
+# Unreleased — Beta 0.6.4.24
+
+## Camp stage ownership cleanup (#185, #209, #40)
+
+- The Campsite now has one authoritative 16:9 stage owner for final layout, authored Camp objects and painted-object hit targets.
+- Removed the reward-policy Camp scaler, residual mobile/grid CSS, reveal-control DOM builders and historical monolith refresh chains instead of retaining a late translation patch layer.
+- Class, pets, progression, saves, gameplay and RNG behavior are unchanged.
+
+---
+
+# Beta 0.6.4.23
 
 ## Class chooser modernization (#199, #209, #40)
 
