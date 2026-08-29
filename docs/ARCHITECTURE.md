@@ -75,7 +75,7 @@ The audit syntax-checks the core JavaScript, loads/evaluates the asset registry,
 
 ### Camp presentation ownership
 
-`runtime/js/ui/camp.js` is the authoritative Camp presentation owner. It builds the semantic Camp scene, renders current class/pet/progression presentation supplied by live domain owners, owns the approved wide/compact/stacked layout regimes, renders authored Camp objects, and keeps each semantic button's hit target aligned with its visible painted object. The compatibility monolith supplies a narrow configured view model and action callbacks only; it retains class, pet, progression, save, mode and gameplay ownership. New Camp placement work belongs in `ui/camp.js`, not in another late monolith style patch.
+`runtime/js/ui/camp.js` is the authoritative Camp presentation owner. It builds the semantic Camp scene, owns its desktop stage and mobile/grid fallback styles, renders current class/pet/progression presentation supplied by live domain owners, and owns the complete authored 16:9 stage: the wide/compact/short-wide anchor table, stage fitting, object art, and painted-object hit targets. Progression decides whether Trophy/Talent/Prestige have been earned; Camp alone creates/removes their semantic controls and bindings. The compatibility monolith supplies a narrow configured view model and action callbacks only; it retains class, pet, progression, save, mode and gameplay ownership. `events/reward-policy.js` and the shared stylesheet have no Camp layout role. New Camp placement or art work belongs in `ui/camp.js`, not in another late monolith style patch.
 
 ### Class chooser presentation ownership
 

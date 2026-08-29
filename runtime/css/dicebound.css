@@ -790,37 +790,6 @@
   }
 
 
-/* Alpha 3.1 asset-backed camp art */
-.camp-art-frame{display:flex;align-items:center;justify-content:center;overflow:visible}
-.camp-bonfire .camp-icon{width:96px;height:96px;font-size:0;line-height:0}
-.camp-bonfire-art{display:block;max-width:92px;max-height:92px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,162,77,.28)) drop-shadow(0 0 26px rgba(255,120,40,.18));}
-
-
-/* Alpha 3.1.2 campsite composition: controls gather around atmospheric fire. */
-#startOverlay.camp-fullscreen .camp-ground{
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  grid-template-areas:". trophy ." "class fire go" "pet chest ."!important;
-  align-items:center!important;gap:18px!important;
-}
-#campAchievementBtn{grid-area:trophy}#campClassBtn{grid-area:class}#campPetBtn{grid-area:pet}#campChestBtn{grid-area:chest}#campGoBtn{grid-area:go}
-#startOverlay.camp-fullscreen .camp-bonfire{grid-area:fire!important;min-height:160px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;pointer-events:none!important}
-#startOverlay.camp-fullscreen .camp-bonfire .camp-icon{width:150px!important;height:150px!important;background:transparent!important;border:0!important;border-radius:0!important;overflow:visible!important}
-#startOverlay.camp-fullscreen .camp-bonfire-art{max-width:148px!important;max-height:148px!important}
-@media(max-width:860px){#startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"trophy trophy" "class fire" "pet chest" "go go"!important}}
-
-
-/* Alpha 3.1.3 — caravan start control */
-#startOverlay.camp-fullscreen #campGoBtn.camp-journey-control{
-  min-height:132px!important;padding:4px!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible;
-}
-#startOverlay.camp-fullscreen #campGoBtn.camp-journey-control:hover{transform:translateY(-3px) scale(1.025)!important;border:0!important;box-shadow:none!important;background:transparent!important}
-.camp-journey-art-frame{width:min(100%,230px);height:104px;display:flex;align-items:center;justify-content:center;overflow:visible;pointer-events:none}
-.camp-journey-art{display:block;max-width:100%;max-height:104px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 9px 9px rgba(0,0,0,.42));transition:filter .15s ease}
-#campGoBtn:hover .camp-journey-art{filter:drop-shadow(0 10px 10px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(98,215,154,.18))}
-.camp-journey-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#dff7e9;text-shadow:0 2px 6px rgba(0,0,0,.65);pointer-events:none}
-@media(max-width:860px){.camp-journey-art-frame{height:90px}.camp-journey-art{max-height:90px}}
-
-
 /* Alpha 3.2.4 — post-battle victory summary. Combat history intentionally remains visible. */
 .battle-victory.hidden,.battle-victory-reward.hidden{display:none!important}
 .battle-victory{margin:4px auto 12px;max-width:680px;padding:18px 20px;border:1px solid rgba(245,200,91,.28);border-radius:18px;background:linear-gradient(180deg,rgba(47,39,18,.78),rgba(10,14,22,.92));box-shadow:0 16px 44px rgba(0,0,0,.28);text-align:center}
@@ -992,22 +961,6 @@ body[data-window-height="very-short"] .log{height:82px}
 /* ========================================================================
    Beta 0.3 — responsive short/wide HUD + camp/class/pet polish foundation
    ======================================================================== */
-
-/* The campsite itself is the screen now. Kill the old decorative container. */
-#startOverlay.camp-fullscreen .camp-scene{
-  width:min(96vw,1380px)!important;
-  max-width:1380px!important;
-  min-height:calc(100dvh - 150px)!important;
-  margin:0 auto!important;
-  padding:10px clamp(8px,2vw,22px) 32px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  backdrop-filter:none!important;
-}
-#startOverlay.camp-fullscreen .camp-scene::before{display:none!important}
-#startOverlay.camp-fullscreen .camp-help{background:transparent!important;border:0!important;box-shadow:none!important}
 
 /* Camp companion selection mirrors the class selector instead of opening a
    modal. The modal remains intact for mid-run pet-changing classes. */

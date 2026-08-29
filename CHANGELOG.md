@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.24
+
+### Camp presentation authority cleanup (#185, #209, #40)
+- Moved the complete authored 16:9 Campsite stage, final object anchors, Camp-object art, and painted-object hit-target positioning into `ui/camp.js`.
+- Removed the duplicate reward-policy scaler, residual mobile/grid Camp CSS, Camp-reveal DOM builders, scene-size override and chest-refresh wrapper chains from `dicebound.js`/shared CSS; Camp now has one final layout/art writer with no coordinate-translation patch layer.
+- Added deterministic stage-frame and ownership guards, including short/wide containment coverage. Camp gameplay, class/pet/progression data, saves and RNG are unchanged.
+
 ## Beta 0.6.4.23
 
 ### Class chooser presentation ownership (#199, #209, #40)

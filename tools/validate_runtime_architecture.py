@@ -148,6 +148,9 @@ def main() -> int:
 
     monolith_id = next((m["id"] for m in modules if m.get("status") == "monolith"), None)
     monolith_source = sources.get(str(monolith_id), "") if monolith_id else ""
+    camp_source = sources.get("ui-camp", "")
+    reward_policy_source = sources.get("event-rewards", "")
+    stylesheet_source = STYLE_PATH.read_text(encoding="utf-8")
     camp_module = by_id.get("ui-camp")
     camp_owner_ok = False
     if not camp_module:
@@ -165,12 +168,50 @@ def main() -> int:
         "function db064PaintedCampBounds(",
         "function db064SyncCampHitTargets(",
         "function db058SetArt(",
+        "function beta043RefreshCampIcons(",
+        "function beta045RefreshCampLayout(",
+        "function db046RefreshCamp(",
+        "function db047RefreshCamp(",
+        "const db055Style=",
+        "const db057Style=",
+        "const db058Style=",
+        "const db0510Style=",
+        "const db0512Style=",
+        "const db060CampStyle=",
+        "const v23CampRefresh=",
+        "function db0633CampObjectMarkup(",
+        "function db0633BindCampObject(",
+        "function db0633AttachCampObject(",
+        ".legacy-camp-modal{max-width:1100px",
     ]:
         if retired_camp_implementation in monolith_source:
             errors.append(
                 "retired Camp presentation implementation remains in dicebound.js: "
                 + retired_camp_implementation
             )
+    if "#startOverlay.camp-fullscreen" in monolith_source:
+        errors.append("dicebound.js retains a final Camp stylesheet block after ui-camp extraction")
+    for required_camp_stage_owner in [
+        "function applyStageLayout(",
+        "function stageSpec(",
+        "CAMP_STAGE_ANCHORS",
+        "const CAMP_BASE_STYLE=",
+        "function syncProgressionReveals(",
+    ]:
+        if required_camp_stage_owner not in camp_source:
+            errors.append("ui-camp is missing authoritative Camp stage ownership: " + required_camp_stage_owner)
+    for retired_reward_policy_camp_owner in ["campAnchors", "function scaleCamp(", "#startOverlay.camp-fullscreen", "#campScene .camp-spot"]:
+        if retired_reward_policy_camp_owner in reward_policy_source:
+            errors.append("event-rewards retains Camp presentation ownership: " + retired_reward_policy_camp_owner)
+    for retired_shared_camp_style in [
+        "Alpha 3.1 asset-backed camp art",
+        "Alpha 3.1.2 campsite composition",
+        "Alpha 3.1.3 — caravan start control",
+    ]:
+        if retired_shared_camp_style in stylesheet_source:
+            errors.append("runtime/css/dicebound.css retains historical Camp presentation ownership: " + retired_shared_camp_style)
+    if re.search(r"#startOverlay\.camp-fullscreen \.camp-(?:scene|ground|sky|spot|bonfire|popup|panel|journey)", stylesheet_source):
+        errors.append("runtime/css/dicebound.css retains final Camp layout ownership after ui-camp extraction")
     chooser_module = by_id.get("ui-class-chooser")
     chooser_owner_ok = False
     if not chooser_module:
@@ -219,7 +260,6 @@ def main() -> int:
                     "retired Class chooser implementation/wrapper remains in dicebound.js: "
                     + retired_chooser_layer
                 )
-    stylesheet_source = STYLE_PATH.read_text(encoding="utf-8")
     for retired_chooser_style in [".class-card{", ".class-grid{"]:
         if retired_chooser_style in stylesheet_source:
             errors.append(

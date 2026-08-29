@@ -6,6 +6,7 @@ const path=require("node:path");
 const vm=require("node:vm");
 
 const source=fs.readFileSync(path.join(__dirname,"..","runtime","js","dicebound.js"),"utf8");
+const campSource=fs.readFileSync(path.join(__dirname,"..","runtime","js","ui","camp.js"),"utf8");
 const start=source.indexOf("  const DB0633_CAMP_TROPHY_TIERS=");
 const end=source.indexOf("  const db0633GrantLegacyXpBase=",start);
 assert.ok(start>=0&&end>start,"#109 Camp progression implementation block is missing");
@@ -46,13 +47,22 @@ ground.appendChild(new FakeNode(nodes,"campAchievementBtn"));
 stars.insertBefore(new FakeNode(nodes,"campTalentBtn"),info);
 info.after(new FakeNode(nodes,"campMoonBtn"));
 
+const document={
+  createElement:()=>new FakeNode(nodes),
+  getElementById:id=>nodes[id]||null,
+  querySelectorAll:()=>[]
+};
 const context=vm.createContext({
   Math,Number,Object,
   meta:{campReveals:{}},
-  window:{},
-  $:id=>nodes[id]||null,
-  document:{createElement:()=>new FakeNode(nodes)}
+  document,
+  innerWidth:0,
+  innerHeight:0,
+  $:id=>nodes[id]||null
 });
+context.window=context;
+vm.runInContext(campSource,context,{filename:"ui/camp.js"});
+context.window.DiceboundCamp.configure({find:id=>nodes[id]||null,actions:{}});
 vm.runInContext(`${implementation}\nthis.campApi={tiers:DB0633_CAMP_TROPHY_TIERS,trophy:db0633TrophyTierForAchievementCount,prestige:db0633PrestigeOfferPoints,reconcile:db0633ReconcileCampRevealState,sync:db0633SyncCampObjects};`,context,{filename:"#109-camp-progression"});
 const api=context.campApi;
 
@@ -91,7 +101,8 @@ assert.equal(nodes.campAchievementBtn.parentElement,ground,"Trophy position must
 assert.equal(stars.children[0].id,"campTalentBtn","Star position must remain before Info");
 assert.equal(stars.children[2].id,"campMoonBtn","Moon position must remain after Info");
 
-assert.match(source,/DB0633_CAMP_OBJECT_IDS/);
-assert.match(source,/\$\(id\)\?\.remove\(\)/,"hidden Camp objects must be physically removed from the DOM");
+assert.match(campSource,/syncProgressionReveals/);
+assert.match(campSource,/find\(entry\.id\)\?\.remove\(\)/,"hidden Camp objects must be physically removed by the Camp owner");
+assert.doesNotMatch(source,/db0633CampObjectMarkup|db0633AttachCampObject|db0633BindCampObject/,"the monolith must not recreate Camp controls");
 assert.match(source,/db0633PrestigeOfferPoints\(total\)/,"the live Prestige completion path must use the shared authoritative offer helper");
 console.log("Camp progression reveals pass: thresholds, permanence, advanced-save reconciliation and absent hidden DOM controls");

@@ -426,7 +426,7 @@
     {
       "id": "ui-camp",
       "path": "js/ui/camp.js",
-      "domain": "ui/camp-presentation-layout-and-hit-target-lifecycle",
+      "domain": "ui/camp-presentation-authoritative-stage-mobile-layout-art-hit-target-and-progression-object-dom-lifecycle",
       "status": "extracted",
       "requires": [
         "assets"
