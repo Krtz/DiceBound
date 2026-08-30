@@ -344,7 +344,6 @@
     position:relative;
   }
   .modal.wide{width:min(760px,100%)}
-  .modal.talent-modal{width:min(1120px,98vw);max-height:96vh}
   .modal.start-modal{width:min(940px,96vw);max-height:96vh;padding:28px}
   .modal h2{margin:0;text-align:center;font-size:30px}
   .modal .subtitle{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin:8px auto 18px;max-width:52ch}
@@ -445,33 +444,6 @@
   .blessing-btn:hover{filter:brightness(1.12);transform:translateY(-2px)}
   .blessing-icon{font-size:43px;display:block;margin-bottom:10px}.blessing-name{display:block;font-size:17px;color:#fff3bd;margin-bottom:7px}.blessing-desc{font-size:11px;line-height:1.48;color:#d9d6e7}
 
-  .talent-summary{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:14px 0}
-  .talent-summary .stat{text-align:center}
-  .talent-tools{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0}.talent-tools span{min-width:48px;text-align:center;font-weight:900;color:#d8cbff}
-  .talent-viewport{height:min(68vh,760px);overflow:auto;border-radius:18px;border:1px solid rgba(181,140,255,.2);background:radial-gradient(circle at center,rgba(181,140,255,.10),rgba(7,12,24,.76) 48%,rgba(4,8,17,.95));cursor:grab}
-  .talent-viewport.dragging{cursor:grabbing}.talent-canvas{position:relative;width:2700px;height:2700px;transform-origin:0 0;transition:transform .15s ease}
-  .talent-links{position:absolute;inset:0;width:2700px;height:2700px;pointer-events:none;overflow:visible}.talent-link{stroke:rgba(181,140,255,.34);stroke-width:3;fill:none}.talent-link.active{stroke:rgba(98,215,154,.58)}
-  .talent-node.radial{position:absolute;width:190px;min-height:116px;transform:translate(-50%,-50%);z-index:2}.talent-node.radial.root{width:230px;border-color:var(--gold);box-shadow:0 0 30px rgba(245,200,91,.14)}
-  .branch-label{position:absolute;transform:translate(-50%,-50%);padding:6px 11px;border-radius:999px;background:#161f34;border:1px solid rgba(181,140,255,.28);font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#e6dcff;z-index:3}
-  .talent-root-wrap{display:none}
-  .talent-root-wrap::after{content:"";position:absolute;width:80%;height:18px;left:10%;bottom:0;border-top:2px solid rgba(181,140,255,.24);border-left:2px solid rgba(181,140,255,.16);border-right:2px solid rgba(181,140,255,.16);border-radius:14px 14px 0 0}
-  .talent-root-wrap .talent-node{width:min(360px,100%);min-height:104px}
-  .talent-branch{display:none}
-  .talent-branch::before{content:"";position:absolute;top:-18px;bottom:0;left:50%;width:2px;background:linear-gradient(rgba(181,140,255,.24),rgba(181,140,255,.04));z-index:0}
-  .talent-branch h3{text-align:center;margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#e2d9ff;position:relative;z-index:1;background:#161f34;border:1px solid rgba(181,140,255,.18);padding:7px;border-radius:999px}
-  .talent-node{
-    min-height:118px;border-radius:15px;padding:13px;border:1px solid rgba(255,255,255,.09);
-    background:linear-gradient(180deg,#293654,#182238);color:var(--ink);text-align:left;cursor:pointer;position:relative;z-index:1
-  }
-  .talent-node.locked{opacity:.48;filter:grayscale(.55)}
-  .talent-node.partial{border-color:rgba(101,169,255,.52);background:linear-gradient(180deg,#29476a,#182a43)}
-  .talent-node.bought{border-color:rgba(98,215,154,.62);background:linear-gradient(180deg,#25493d,#172d2a)}
-  .talent-node .node-head{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:6px}
-  .talent-node .node-name{font-weight:900;font-size:13px}.talent-node .node-cost{font-size:10px;color:var(--gold);font-weight:900;text-align:right}
-  .talent-node .node-rank{display:inline-block;margin:0 0 7px;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.07);font-size:9px;font-weight:900;color:#cfe0ff}
-  .talent-node .node-desc{font-size:10px;color:var(--muted);line-height:1.4}
-  .talent-node .node-req{display:block;margin-top:7px;font-size:9px;color:#d2bfff}
-  .talent-note{text-align:center;font-size:10px;color:var(--muted);margin-top:12px}
   .buff-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:14px 0}
   .buff-card{border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:12px;background:linear-gradient(180deg,#273652,#172238)}
   .buff-card h3{font-size:13px;margin:0 0 7px;color:#efe9ff}.buff-card p{font-size:10px;line-height:1.5;color:var(--muted);margin:0}.buff-card strong{color:#fff}
@@ -610,7 +582,6 @@
     .log-card{grid-column:auto}
     .rules,.choice-grid,.blessing-grid,.shop-grid{grid-template-columns:1fr}
     .buff-grid,.prestige-keep-grid{grid-template-columns:1fr}
-    .talent-summary{grid-template-columns:repeat(2,1fr)}
     .gear-keep-grid{grid-template-columns:1fr}
     .choice-btn{min-height:0}
     .combat-head{gap:7px}.fighter-icon{font-size:46px}
@@ -653,7 +624,7 @@
   .memory-diagnostics-record{display:flex;align-items:center;gap:6px;padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.05);font-size:10px;font-weight:800;cursor:pointer}.memory-diagnostics-record input{accent-color:var(--gold)}
   .memory-diagnostics-status{margin:8px 0 0;color:var(--muted);font-size:10px}.memory-diagnostics-log{max-height:150px;overflow:auto;margin:8px 0 0;white-space:pre-wrap;font:9px/1.45 ui-monospace,Consolas,monospace;color:#b9d9fa}
   .mythic-set-box{margin:10px 0;padding:11px;border-radius:13px;background:linear-gradient(145deg,rgba(255,94,220,.12),rgba(101,220,255,.08));border:1px solid rgba(255,120,220,.32);font-size:11px;line-height:1.5}
-  @media(max-width:620px){.talent-viewport{height:64vh}.debug-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.debug-grid{grid-template-columns:1fr 1fr}}
 
 
   /* v12 combat, class and Nightmare refinements */
@@ -667,7 +638,6 @@
   .mythic-set-box[hidden]{display:none!important}
   .action-tooltip{position:relative}
   .action-tooltip:hover::after,.action-tooltip:focus-visible::after{content:none!important}
-  .talent-canvas{width:3300px;height:3300px}
 
   /* v13 Blood & Fortune additions */
   #combatOverlay .modal{width:min(1080px,98vw)!important}
@@ -827,7 +797,7 @@
   #combatOverlay .combat-history{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .overlay{overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom))}
   .modal{max-height:none;overflow:visible;margin:auto 0}
-  .talent-viewport,.combat-history,.log,.info-body{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+  .combat-history,.log,.info-body{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
   #campScene.devil-ritual-tracking{touch-action:none;overscroll-behavior:none}
 }
 @media(max-width:700px){
@@ -876,8 +846,6 @@
   .modal{max-height:calc(100dvh - 24px)}
   .modal.wide{width:min(960px,calc(100vw - 28px))}
   .modal.start-modal{width:min(1080px,calc(100vw - 28px));max-height:calc(100dvh - 24px);padding:clamp(18px,2.2vh,28px)}
-  .modal.talent-modal{width:min(1500px,calc(100vw - 24px));height:min(94dvh,980px);max-height:calc(100dvh - 18px)}
-  .talent-viewport{height:calc(100% - 112px);min-height:300px}
   .choice-grid,.blessing-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
   .shop-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 }
@@ -941,7 +909,7 @@ body[data-window-height="very-short"] .log{height:82px}
   .game-panel{height:auto;min-height:0}
   .board-wrap{width:100%;height:auto;min-height:0;max-height:none;aspect-ratio:1/1;align-self:stretch}
   .sidebar{height:auto;overflow:visible;padding-right:0}
-  .modal,.modal.wide,.modal.start-modal,.modal.talent-modal{max-height:calc(100dvh - 20px)}
+  .modal,.modal.wide,.modal.start-modal{max-height:calc(100dvh - 20px)}
 }
 
 /* Fullscreen uses every usable pixel but retains the same responsive algorithm. */

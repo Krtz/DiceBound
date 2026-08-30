@@ -210,7 +210,6 @@
   let currentMerchantItems = [];
   let currentMysticBuff = null;
   let currentMerchantNotice = "";
-  let talentReturnOverlay = null;
   let wheelRotation = 0;
   let wheelBusy = false;
   let pendingPrestige = null;
@@ -225,9 +224,6 @@
   let boardLevel = 1;
   let tileEls = [];
   let tiles = [];
-  let talentZoom = .75;
-  let talentDragging = false;
-  let talentDragStart = null;
   let pendingDiceChoiceResolve = null;
   let nightmareMode = false;
   let pendingPrestigeKeepIds = new Set();
@@ -612,8 +608,6 @@
   function updateMetaUI(){
     const pet=activePetState(),def=activePetDef();
     $("talentPointTop").textContent=meta.points;$("startLegacyLevel").textContent=meta.level;$("startLegacyXp").textContent=`${meta.xp} / ${meta.xpNext} XP`;
-    $("metaLevel").textContent=meta.level;$("metaXp").textContent=`${meta.xp} / ${meta.xpNext}`;$("metaPoints").textContent=meta.points;$("metaRuns").textContent=meta.runs;
-    $("metaPet").textContent=`${def.icon} Lv ${pet.level}`;$("metaHeirlooms").textContent=`${(meta.heirlooms||[]).length} / ${getHeirloomSlots()}`;$("metaPrestige").textContent=meta.prestige?.count||0;
     $("petAvatar").textContent=def.icon;$("petName").textContent=def.name;$("combatPet").textContent=def.icon;$("petCookies").textContent=meta.petCookies;
     $("petStats").textContent=`Level ${pet.level} · ${petDamage()} ${def.id==="neutral"?"random core-element":def.element?ELEMENTS[def.element].name:"neutral"} damage · ${pet.xp} / ${pet.xpNext} bond`;
     $("feedPetBtn").disabled=meta.petCookies<=0;$("feedAllPetBtn").disabled=meta.petCookies<=0;
@@ -968,31 +962,20 @@
   function allocatedTalentPoints(){return talents.reduce((sum,t)=>sum+talentRank(t.id)*t.cost,0);}
 
   function talentAvailable(t){return (t.requires||[]).every(r=>talentRank(r.id)>=r.rank);}
-  function requirementText(t){
-    return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} ${r.rank>1?`rank ${r.rank}`:""}`.trim();}).join(" + ");
+  function requirementText(t){return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} rank ${r.rank}`;}).join(" + ");}
+  function purchaseTalentNode(id){
+    const t=talents.find(node=>node.id===id),rank=talentRank(id);
+    if(!t||rank>=t.maxRank||!talentAvailable(t)||meta.points<t.cost)return false;
+    meta.points-=t.cost;meta.purchased[t.id]=rank+1;saveMeta();sfx.level();showToast(`${t.name} rank ${rank+1} · activates next run`);
+    if(t.id==='legacy_storage'&&talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();saveMeta();showToast('🗄️ Heirloom Storage permanently unlocked!',3000,true);v24RenderHeirloomStorage();}
+    renderTalents();return true;
   }
-  function createTalentButton(t){
-    const rank=talentRank(t.id),maxed=rank>=t.maxRank,available=talentAvailable(t),btn=document.createElement("button");
-    btn.className=`talent-node${maxed?" bought":rank>0?" partial":""}${!maxed&&!available?" locked":""}`;btn.disabled=maxed||!available||meta.points<t.cost;
-    btn.innerHTML=`<div class="node-head"><span class="node-name">${t.icon} ${t.name}</span><span class="node-cost">${maxed?"MAX":t.cost+" pt"}</span></div><span class="node-rank">Rank ${rank} / ${t.maxRank}</span><div class="node-desc">${t.desc}</div>${!available?`<span class="node-req">Requires: ${requirementText(t)}</span>`:""}`;
-    btn.addEventListener("click",()=>{if(maxed||!talentAvailable(t)||meta.points<t.cost)return;meta.points-=t.cost;meta.purchased[t.id]=rank+1;saveMeta();sfx.level();showToast(`${t.name} rank ${rank+1} · activates next run`);renderTalents();});return btn;
-  }
-  function talentPrimaryParent(t){return (t.requires||[])[0]?.id||null;}
-  function renderTalents(){
-    updateMetaUI();const canvas=$("talentGrid");canvas.innerHTML="";const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10);$("prestigeStats").textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points.`;$("prestigeBtn").disabled=rewards<1;$("prestigeBtn").textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?"":"s"}`:"♻️ Allocate at least 10 points to Prestige";
-    const center={x:1650,y:1650},positions={roadborn:center},branches=["Survival","Power","Fortune","Heirlooms","Companion","Elements"],radiusStep=370;
-    branches.forEach((branch,bi)=>{const angle=-Math.PI/2+bi*Math.PI/3,nodes=talents.filter(t=>t.branch===branch),depth={};const calc=t=>{if(depth[t.id])return depth[t.id];const same=(t.requires||[]).map(r=>talents.find(x=>x.id===r.id)).filter(x=>x&&x.branch===branch);return depth[t.id]=same.length?1+Math.max(...same.map(calc)):1;};nodes.forEach(calc);const byDepth={};nodes.forEach(t=>(byDepth[depth[t.id]]??=[]).push(t));Object.entries(byDepth).forEach(([d,list])=>{list.forEach((t,i)=>{const spread=(i-(list.length-1)/2)*285,perp=angle+Math.PI/2,r=Number(d)*radiusStep;positions[t.id]={x:center.x+Math.cos(angle)*r+Math.cos(perp)*spread,y:center.y+Math.sin(angle)*r+Math.sin(perp)*spread};});});const label=document.createElement("div");label.className="branch-label";label.textContent=branch;label.style.left=`${center.x+Math.cos(angle)*145}px`;label.style.top=`${center.y+Math.sin(angle)*145}px`;canvas.appendChild(label);});
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","talent-links");talents.forEach(t=>{(t.requires||[]).forEach(r=>{const a=positions[r.id],b=positions[t.id];if(!a||!b)return;const line=document.createElementNS("http://www.w3.org/2000/svg","line");line.setAttribute("x1",a.x);line.setAttribute("y1",a.y);line.setAttribute("x2",b.x);line.setAttribute("y2",b.y);line.setAttribute("class",`talent-link${talentRank(r.id)>=r.rank?" active":""}`);svg.appendChild(line);});});canvas.appendChild(svg);
-    talents.forEach(t=>{const btn=createTalentButton(t),p=positions[t.id]||center;btn.classList.add("radial");if(t.branch==="Root")btn.classList.add("root");btn.style.left=`${p.x}px`;btn.style.top=`${p.y}px`;canvas.appendChild(btn);});applyTalentZoom(false);
-  }
-  function applyTalentZoom(centerView=false){const canvas=$("talentGrid"),viewport=$("talentViewport");canvas.style.transform=`scale(${talentZoom})`;$("talentZoomLabel").textContent=`${Math.round(talentZoom*100)}%`;if(centerView){viewport.scrollLeft=1650*talentZoom-viewport.clientWidth/2;viewport.scrollTop=1650*talentZoom-viewport.clientHeight/2;}}
-  function changeTalentZoom(delta){talentZoom=clamp(talentZoom+delta,.4,1.35);applyTalentZoom(false);}
-  function openTalentTree(returnOverlay=null){
-    talentReturnOverlay=returnOverlay;if(returnOverlay&&$(returnOverlay))$(returnOverlay).classList.add("hidden");renderTalents();$("talentOverlay").classList.remove("hidden");requestAnimationFrame(()=>applyTalentZoom(true));
-  }
-  function closeTalentTree(){
-    $("talentOverlay").classList.add("hidden");if(talentReturnOverlay&&$(talentReturnOverlay))$(talentReturnOverlay).classList.remove("hidden");talentReturnOverlay=null;
-  }
+  // The extracted owner renders and navigates the Talent destination. These
+  // adapters remain because existing lifecycle/composition callers still use
+  // the historical function names.
+  function renderTalents(){return window.DiceboundTalentTree?.render?.()||null;}
+  function openTalentTree(returnOverlay=null){return window.DiceboundTalentTree?.open?.(returnOverlay)||null;}
+  function closeTalentTree(){return window.DiceboundTalentTree?.close?.()||null;}
 
   // #206 / #209: Pet chooser DOM, portrait presentation and persistent Done
   // chrome live in ui/pet-chooser.js. Historical lifecycle callers retain this
@@ -1263,7 +1246,7 @@
   function importSave(){try{const raw=$("saveTransferText").value.trim();if(!raw)throw new Error("empty");meta=window.DiceboundSave.importText(raw,{defaultFactory:defaultMeta,normalize:v13NormalizeMeta});repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast("Save imported");$("infoOverlay").classList.add("hidden");openStartScreen();}catch(e){window.DiceboundPlatform.alert("That save string could not be imported.");}}
 
   function prestigeSummary(){const p=meta.prestige||defaultPrestige(),parts=[];if(p.maxHp)parts.push(`+${p.maxHp*3} Max HP`);if(p.attack)parts.push(`+${p.attack} Attack`);if(p.defense)parts.push(`+${p.defense} Defense`);if(p.crit)parts.push(`+${p.crit}% Crit`);if(p.dodge)parts.push(`+${p.dodge}% Dodge`);if(p.luck)parts.push(`+${p.luck*2} Luck`);if(p.lifeSteal)parts.push(`+${p.lifeSteal}% Lifesteal`);return parts.length?parts.join(" · "):"No permanent Prestige stats yet.";}
-  function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});$("prestigeHeirloomOverlay").classList.remove("hidden");}
+  function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});prestigeOverlay.classList.remove("hidden");}
   function completePrestige(data,keepIds=[]){const {rewards,remainder}=data,keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"],gained=[];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;gained.push(key);}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder+(data.unspent||0);pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();}
   function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
 
@@ -1634,14 +1617,8 @@
   $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>{muted=!muted;$("muteBtn").textContent=muted?"🔇":"🔊";});
   $("talentBtn").addEventListener("click",()=>openTalentTree());$("startTalentBtn").addEventListener("click",()=>openTalentTree());$("endTalentBtn").addEventListener("click",()=>openTalentTree("endOverlay"));
-  $("talentCloseBtn").addEventListener("click",closeTalentTree);$("prestigeBtn").addEventListener("click",prestigeTree);
-  $("talentZoomIn").addEventListener("click",()=>changeTalentZoom(.1));$("talentZoomOut").addEventListener("click",()=>changeTalentZoom(-.1));$("talentZoomReset").addEventListener("click",()=>{talentZoom=.75;applyTalentZoom(true);});
-  $("talentViewport").addEventListener("wheel",e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();changeTalentZoom(e.deltaY<0?.08:-.08);}},{passive:false});
-  $("talentViewport").addEventListener("pointerdown",e=>{if(e.target.closest("button"))return;talentDragging=true;talentDragStart={x:e.clientX,y:e.clientY,left:$("talentViewport").scrollLeft,top:$("talentViewport").scrollTop};$("talentViewport").classList.add("dragging");});
-  window.addEventListener("pointermove",e=>{if(!talentDragging)return;$("talentViewport").scrollLeft=talentDragStart.left-(e.clientX-talentDragStart.x);$("talentViewport").scrollTop=talentDragStart.top-(e.clientY-talentDragStart.y);});window.addEventListener("pointerup",()=>{talentDragging=false;$("talentViewport").classList.remove("dragging");});
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
   $("prestigeKeepConfirmBtn").addEventListener("click",()=>{if(pendingPrestige)completePrestige(pendingPrestige,[...pendingPrestigeKeepIds]);});$("prestigeCancelBtn").addEventListener("click",()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");});
-  $("resetMetaBtn").addEventListener("click",async()=>{if(await diceboundConfirm("Reset all Legacy XP, talents, elemental pet progress, cookies, unlocks and heirlooms?",{title:"Reset Legacy progress?",confirmLabel:"Reset",danger:true})){window.DiceboundSave.reset();meta=defaultMeta();saveMeta();renderTalents();showToast("Legacy progress reset");}});
   window.addEventListener("resize",()=>placePawn(false));
   window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
 
@@ -2783,15 +2760,6 @@
     {id:"turtle_guard_element",branch:"Elements",icon:"🐢🌈",name:"Resonant Carapace",cost:2,maxRank:3,desc:"Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.",requires:[req("element_attunement",1),req("survival_armor",1)]}
   ];for(const t of v16Talents)if(!talents.some(x=>x.id===t.id))talents.push(t);
 
-  // Make Primal Spark's cross-branch line readable by moving the whole node, not merely its button.
-  renderTalents=function(){
-    updateMetaUI();const canvas=$("talentGrid");canvas.innerHTML="";const allocated=allocatedTalentPoints(),rewards=Math.floor((allocated+(meta.points||0))/10);$("prestigeStats").textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points.`;$("prestigeBtn").disabled=rewards<1;$("prestigeBtn").textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?"":"s"}`:"♻️ Allocate at least 10 total points to Prestige";
-    const center={x:1650,y:1650},positions={roadborn:center},branches=["Survival","Power","Fortune","Heirlooms","Companion","Elements"],radiusStep=370;
-    branches.forEach((branch,bi)=>{const angle=-Math.PI/2+bi*Math.PI/3,nodes=talents.filter(t=>t.branch===branch),depth={};const calc=t=>{if(depth[t.id])return depth[t.id];const same=(t.requires||[]).map(r=>talents.find(x=>x.id===r.id)).filter(x=>x&&x.branch===branch);return depth[t.id]=same.length?1+Math.max(...same.map(calc)):1;};nodes.forEach(calc);const byDepth={};nodes.forEach(t=>(byDepth[depth[t.id]]??=[]).push(t));Object.entries(byDepth).forEach(([d,list])=>{list.forEach((t,i)=>{const spread=(i-(list.length-1)/2)*285,perp=angle+Math.PI/2,r=Number(d)*radiusStep;positions[t.id]={x:center.x+Math.cos(angle)*r+Math.cos(perp)*spread,y:center.y+Math.sin(angle)*r+Math.sin(perp)*spread};});});const label=document.createElement("div");label.className="branch-label";label.textContent=branch;label.style.left=`${center.x+Math.cos(angle)*145}px`;label.style.top=`${center.y+Math.sin(angle)*145}px`;canvas.appendChild(label);});
-    if(positions.companion_element_proc){positions.companion_element_proc.x-=150;positions.companion_element_proc.y-=170;}
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","talent-links");talents.forEach(t=>{(t.requires||[]).forEach(r=>{const a=positions[r.id],b=positions[t.id];if(!a||!b)return;const line=document.createElementNS("http://www.w3.org/2000/svg","line");line.setAttribute("x1",a.x);line.setAttribute("y1",a.y);line.setAttribute("x2",b.x);line.setAttribute("y2",b.y);line.setAttribute("class",`talent-link${talentRank(r.id)>=r.rank?" active":""}`);svg.appendChild(line);});});canvas.appendChild(svg);talents.forEach(t=>{const btn=createTalentButton(t),p=positions[t.id]||center;btn.classList.add("radial");if(t.branch==="Root")btn.classList.add("root");btn.style.left=`${p.x}px`;btn.style.top=`${p.y}px`;canvas.appendChild(btn);});applyTalentZoom(false);
-  };
-
   // ---- Per-run identity state ----------------------------------------------
   const resetPlayerV16Base=resetPlayer;
   resetPlayer=function(classId=selectedClassId){resetPlayerV16Base(classId);v16FifthRoadCompleting=false;v16CombatKind=null;player.powerupRerolls=gameplayTalentRank("fortune_powerup_rerolls");player.rangerMarkMax=3+gameplayTalentRank("ranger_deep_marks");player.monkComboMax=5+gameplayTalentRank("monk_flow_ceiling");player.fighterCounterStacks=0;player.fighterCounterMax=1+Math.min(1,gameplayTalentRank("fighter_counter_reserve"));player.fighterCounterReady=false;player.turtleCrushReady=false;player.turtleGuardChain=0;player.turtleGuardMax=5;player.secondSun=false;player.secondSunUsedBoards={};player.radiationDefenseLost=0;player.alchemistBrewCounter=0;player.alchemistBrewNeed=3;player.alchemistFlaskBonus=0;player.alchemistElementChance=0;player.alchemistFreeFlask=0;player._activePetBonusId=null;if(classIdentityActive("alchemist")){player.potions+=2;if(player.classId!=="alchemist")player.potionPower+=.50;}syncActivePetBonusV16(true);};
@@ -3143,21 +3111,6 @@
     desc:"Level-ups offer 4 powerup choices instead of 3.",requires:[req("fortune_powerup_rerolls",3)]
   });
 
-  // ---- Talent layout: manually nudge crossing/overlapping late nodes --------
-  // This redraw keeps the radial layout algorithm but applies small documented
-  // offsets after auto-placement, so future talent additions remain readable.
-  renderTalents=function(){
-    updateMetaUI();const canvas=$("talentGrid");canvas.innerHTML="";const allocated=allocatedTalentPoints(),rewards=Math.floor((allocated+(meta.points||0))/10);$("prestigeStats").textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points.`;$("prestigeBtn").disabled=rewards<1;$("prestigeBtn").textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?"":"s"}`:"♻️ Allocate at least 10 total points to Prestige";
-    const center={x:1650,y:1650},positions={roadborn:center},branches=["Survival","Power","Fortune","Heirlooms","Companion","Elements"],radiusStep=370;
-    branches.forEach((branch,bi)=>{const angle=-Math.PI/2+bi*Math.PI/3,nodes=talents.filter(t=>t.branch===branch),depth={};const calc=t=>{if(depth[t.id])return depth[t.id];const same=(t.requires||[]).map(r=>talents.find(x=>x.id===r.id)).filter(x=>x&&x.branch===branch);return depth[t.id]=same.length?1+Math.max(...same.map(calc)):1;};nodes.forEach(calc);const byDepth={};nodes.forEach(t=>(byDepth[depth[t.id]]??=[]).push(t));Object.entries(byDepth).forEach(([d,list])=>{list.forEach((t,i)=>{const spread=(i-(list.length-1)/2)*285,perp=angle+Math.PI/2,r=Number(d)*radiusStep;positions[t.id]={x:center.x+Math.cos(angle)*r+Math.cos(perp)*spread,y:center.y+Math.sin(angle)*r+Math.sin(perp)*spread};});});const label=document.createElement("div");label.className="branch-label";label.textContent=branch;label.style.left=`${center.x+Math.cos(angle)*145}px`;label.style.top=`${center.y+Math.sin(angle)*145}px`;canvas.appendChild(label);});
-    if(positions.companion_element_proc){positions.companion_element_proc.x-=150;positions.companion_element_proc.y-=170;}
-    if(positions.fortune_luck&&positions.fortune_powerup_rerolls){positions.fortune_powerup_rerolls.x=positions.fortune_luck.x+235;positions.fortune_powerup_rerolls.y=positions.fortune_luck.y-225;}
-    if(positions.fortune_powerup_rerolls&&positions.fortune_extra_choice){positions.fortune_extra_choice.x=positions.fortune_powerup_rerolls.x+275;positions.fortune_extra_choice.y=positions.fortune_powerup_rerolls.y+20;}
-    if(positions.fortune_blessing){positions.fortune_blessing.x+=20;positions.fortune_blessing.y+=210;}
-    if(positions.turtle_guard_element){positions.turtle_guard_element.x+=190;positions.turtle_guard_element.y+=115;}
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","talent-links");talents.forEach(t=>{(t.requires||[]).forEach(r=>{const a=positions[r.id],b=positions[t.id];if(!a||!b)return;const line=document.createElementNS("http://www.w3.org/2000/svg","line");line.setAttribute("x1",a.x);line.setAttribute("y1",a.y);line.setAttribute("x2",b.x);line.setAttribute("y2",b.y);line.setAttribute("class",`talent-link${talentRank(r.id)>=r.rank?" active":""}`);svg.appendChild(line);});});canvas.appendChild(svg);talents.forEach(t=>{const btn=createTalentButton(t),p=positions[t.id]||center;btn.classList.add("radial");if(t.branch==="Root")btn.classList.add("root");btn.style.left=`${p.x}px`;btn.style.top=`${p.y}px`;canvas.appendChild(btn);});applyTalentZoom(false);
-  };
-
   // ---- Per-run state and class-passive normalization -----------------------
   function v18SyncOuroborosAttack(){
     if(!classIdentityActive("ouroboros"))return;
@@ -3496,18 +3449,19 @@
     const post=(meta.prestige?.count||0)+data.rewards,capacity=v19PrestigeKeepCapacity(post);
     const pool=[...(meta.heirlooms||[]),...(data.wasInRun?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])];
     const dedupe=new Map(pool.map(i=>[i.id,i]));prestigeCandidateItems=[...dedupe.values()];data.candidates=prestigeCandidateItems;pendingPrestige=data;pendingPrestigeKeepIds=new Set();
-    $("prestigeHeirloomSubtitle").textContent=`Choose up to ${capacity} survivor${capacity===1?"":"s"}. Selected items glow gold and show a large check mark.`;
-    const grid=$("prestigeKeepGrid");grid.innerHTML="";
-    prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.type="button";b.className="prestige-keep-btn";b.dataset.keepId=item.id;b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span><em class="prestige-selected-label">Not selected</em>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id))pendingPrestigeKeepIds.delete(item.id);else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Keep at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);}const on=pendingPrestigeKeepIds.has(item.id);b.classList.toggle("kept",on);b.querySelector(".prestige-selected-label").textContent=on?"✓ SELECTED":"Not selected";$("prestigeConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size}/${capacity} selected`;});grid.appendChild(b);});
-    $("prestigeConfirmBtn").textContent=`Confirm 0/${capacity} selected`;$("prestigeHeirloomOverlay").classList.remove("hidden");
+    const prestigeOverlay=$("prestigeHeirloomOverlay"),prestigeGrid=$("prestigeKeepGrid")||$("prestigeHeirloomGrid"),prestigeConfirm=$("prestigeConfirmBtn")||$("prestigeKeepConfirmBtn"),prestigeSubtitle=$("prestigeHeirloomSubtitle")||$("prestigeHeirloomOverlay")?.querySelector(".subtitle");
+    if(!prestigeOverlay||!prestigeGrid||!prestigeConfirm)return;
+    if(prestigeSubtitle)prestigeSubtitle.textContent=`Choose up to ${capacity} survivor${capacity===1?"":"s"}. Selected items glow gold and show a large check mark.`;
+    const grid=prestigeGrid;grid.innerHTML="";
+    prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.type="button";b.className="prestige-keep-btn";b.dataset.keepId=item.id;b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span><em class="prestige-selected-label">Not selected</em>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id))pendingPrestigeKeepIds.delete(item.id);else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Keep at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);}const on=pendingPrestigeKeepIds.has(item.id);b.classList.toggle("kept",on);b.querySelector(".prestige-selected-label").textContent=on?"✓ SELECTED":"Not selected";prestigeConfirm.textContent=`Confirm ${pendingPrestigeKeepIds.size}/${capacity} selected`;});grid.appendChild(b);});
+    prestigeConfirm.textContent=`Confirm 0/${capacity} selected`;$("prestigeHeirloomOverlay").classList.remove("hidden");
   };
   prestigeTree=function(){
     const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/9);if(rewards<1)return;
     const post=(meta.prestige?.count||0)+rewards,keep=v19PrestigeKeepCapacity(post),remainder=total%9,warning=`Prestige all ${total} talent points? Every 9 points becomes 1 permanent Prestige point (${rewards} reward${rewards===1?"":"s"}). ${remainder?`${remainder} leftover talent point${remainder===1?"":"s"} will be returned after the reset. `:""}Talents and Legacy level reset, and you may keep up to ${keep} heirloom${keep===1?"":"s"}.${gameStarted?" THIS ENDS THE CURRENT RUN AND RETURNS TO THE BETWEEN-RUNS HUB.":""}`;
     if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);
   };
-  const renderTalentsV19Base=renderTalents;
-  renderTalents=function(){renderTalentsV19Base();const allocated=allocatedTalentPoints(),rewards=Math.floor((allocated+(meta.points||0))/9),btn=$("prestigeBtn");if(btn){btn.disabled=rewards<1;btn.textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?"":"s"}`:"♻️ Allocate at least 9 total points to Prestige";}const stats=$("prestigeStats");if(stats)stats.textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points · 9 total talent points = 1 Prestige point.`;};
+
 
   // ---- Compact status markers ---------------------------------------------
   // Once stacks become numerous, a number is much more readable than a row of
@@ -4219,6 +4173,30 @@
     feed:count=>feedActivePet(count),
     afterRender:()=>{db059RefreshActivePetArt();v22UpdateCamp();}
   });
+  // #186 / #209: the extracted Talent owner owns the constellation surface,
+  // geometry and controls. This adapter deliberately supplies only live
+  // progression state plus domain actions; it does not render Talent UI.
+  const db064TalentTree=window.DiceboundTalentTree;
+  if(!db064TalentTree)throw new Error('DiceBound requires the Talent tree UI module before dicebound.js');
+  db064TalentTree.configure({
+    find:$,
+    getTalents:()=>talents,
+    getState:()=>{
+      const pet=PETS[meta.activePet]||PETS.neutral,petState=meta.pets?.[meta.activePet]||{level:1};
+      return {level:meta.level,points:meta.points,runs:meta.runs,petLabel:`${pet.name} Lv ${petState.level||1}`,heirlooms:`${(meta.heirlooms||[]).length} / ${getHeirloomSlots()}`,prestige:meta.prestige?.count||0};
+    },
+    rankFor:talentRank,
+    isAvailable:talentAvailable,
+    canPurchase:t=>talentRank(t.id)<t.maxRank&&talentAvailable(t)&&meta.points>=t.cost,
+    isVisible:t=>t.id!=='legacy_storage'||meta.nightmareUnlocked||meta.heirloomStorageUnlocked,
+    requirementText,
+    allocated:allocatedTalentPoints,
+    prestigeSummary,
+    purchase:id=>purchaseTalentNode(id),
+    prestige:()=>prestigeTree(),
+    resetProgress:async()=>{if(await diceboundConfirm('Reset all Legacy XP, talents, elemental pet progress, cookies, unlocks and heirlooms?',{title:'Reset Legacy progress?',confirmLabel:'Reset',danger:true})){window.DiceboundSave.reset();meta=defaultMeta();saveMeta();renderTalents();showToast('Legacy progress reset');}},
+    afterRender:()=>updateMetaUI()
+  });
   renderPetCollection();
   setTimeout(()=>renderClassChoices(),0);
 
@@ -4324,100 +4302,11 @@
   }
   const flowTalent=talents.find(t=>t.id==='power_ultimate_flow');
   if(flowTalent)flowTalent.desc='Attack and Defend generate 10% more ultimate charge per rank. Unlock requirement: Stored Power rank 1.';
-  requirementText=function(t){return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} rank ${r.rank}`;}).join(' + ');};
 
   // Base talent code already grants +1 Fast Travel XP/rank; add two more here
   // so Road Wisdom's real total is the documented +3/rank.
   const resetPlayerV23TalentBase=resetPlayer;
   resetPlayer=function(classId=selectedClassId){const r=resetPlayerV23TalentBase(classId);player.fastTravelBonus+=(gameplayTalentRank('legacy_travel')||0)*2;return r;};
-
-  // Add stable IDs to talent buttons for layout/debug clarity.
-  const createTalentButtonV23Base=createTalentButton;
-  createTalentButton=function(t){const b=createTalentButtonV23Base(t);b.dataset.talentId=t.id;if(t.id==='power_ultimate_flow'){const reqEl=b.querySelector('.node-req');if(!reqEl){const e=document.createElement('span');e.className='node-req always-visible';e.textContent=`Requires: ${requirementText(t)}`;b.appendChild(e);}else{reqEl.classList.add('always-visible');reqEl.textContent=`Requires: ${requirementText(t)}`;}}return b;};
-
-  // Redraw the radial tree with two deliberate layout fixes:
-  // - Resonant Carapace is placed well outside Armor Drills/other nodes.
-  // - Relentless Flow is nudged away from Bloodline so its connector is clear.
-  renderTalents=function(){
-    updateMetaUI();const canvas=$('talentGrid');canvas.innerHTML='';const allocated=allocatedTalentPoints(),rewards=Math.floor((allocated+(meta.points||0))/9);const stats=$('prestigeStats');if(stats)stats.textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points · 9 total talent points = 1 Prestige point.`;const pb=$('prestigeBtn');if(pb){pb.disabled=rewards<1;pb.textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?'':'s'}`:'♻️ Allocate at least 9 total points to Prestige';}
-    const center={x:1650,y:1650},positions={roadborn:center},branches=['Survival','Power','Fortune','Heirlooms','Companion','Elements'],radiusStep=370;
-    branches.forEach((branch,bi)=>{const angle=-Math.PI/2+bi*Math.PI/3,nodes=talents.filter(t=>t.branch===branch),depth={};const calc=t=>{if(depth[t.id])return depth[t.id];const same=(t.requires||[]).map(r=>talents.find(x=>x.id===r.id)).filter(x=>x&&x.branch===branch);return depth[t.id]=same.length?1+Math.max(...same.map(calc)):1;};nodes.forEach(calc);const byDepth={};nodes.forEach(t=>(byDepth[depth[t.id]]??=[]).push(t));Object.entries(byDepth).forEach(([d,list])=>{list.forEach((t,i)=>{const spread=(i-(list.length-1)/2)*285,perp=angle+Math.PI/2,r=Number(d)*radiusStep;positions[t.id]={x:center.x+Math.cos(angle)*r+Math.cos(perp)*spread,y:center.y+Math.sin(angle)*r+Math.sin(perp)*spread};});});const label=document.createElement('div');label.className='branch-label';label.textContent=branch;label.style.left=`${center.x+Math.cos(angle)*145}px`;label.style.top=`${center.y+Math.sin(angle)*145}px`;canvas.appendChild(label);});
-    if(positions.companion_element_proc){positions.companion_element_proc.x-=150;positions.companion_element_proc.y-=170;}
-    if(positions.fortune_luck&&positions.fortune_powerup_rerolls){positions.fortune_powerup_rerolls.x=positions.fortune_luck.x+235;positions.fortune_powerup_rerolls.y=positions.fortune_luck.y-225;}
-    if(positions.fortune_powerup_rerolls&&positions.fortune_extra_choice){positions.fortune_extra_choice.x=positions.fortune_powerup_rerolls.x+275;positions.fortune_extra_choice.y=positions.fortune_powerup_rerolls.y+20;}
-    if(positions.fortune_blessing){positions.fortune_blessing.x+=20;positions.fortune_blessing.y+=210;}
-    if(positions.element_attunement&&positions.turtle_guard_element){positions.turtle_guard_element.x=positions.element_attunement.x-455;positions.turtle_guard_element.y=positions.element_attunement.y-245;}
-    if(positions.power_ultimate_start&&positions.power_ultimate_flow){positions.power_ultimate_flow.x=positions.power_ultimate_start.x+340;positions.power_ultimate_flow.y=positions.power_ultimate_start.y+90;}
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','talent-links');talents.forEach(t=>{(t.requires||[]).forEach(r=>{const a=positions[r.id],b=positions[t.id];if(!a||!b)return;const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);line.dataset.v23Link='1';line.dataset.fromTalent=r.id;line.dataset.toTalent=t.id;line.setAttribute('class',`talent-link${talentRank(r.id)>=r.rank?' active':''}`);svg.appendChild(line);});});canvas.appendChild(svg);
-    talents.forEach(t=>{const btn=createTalentButton(t),pos=positions[t.id]||center;btn.classList.add('radial');if(t.branch==='Root')btn.classList.add('root');btn.style.left=`${pos.x}px`;btn.style.top=`${pos.y}px`;canvas.appendChild(btn);});applyTalentZoom(false);
-  };
-
-  // ----- Prestige: make the Moon-page button reliable above the camp. -------
-  // A capture listener owns the button, preventing old inherited listeners from
-  // competing with the moved control. The survivor overlay now renders over camp.
-  document.addEventListener('click',e=>{const b=e.target.closest?.('#prestigeBtn');if(!b||b.disabled)return;e.preventDefault();e.stopImmediatePropagation();prestigeTree();},true);
-  openPrestigeHeirloomChoice=function(data){
-    const post=(meta.prestige?.count||0)+data.rewards,capacity=v19PrestigeKeepCapacity(post);
-    const pool=[...(meta.heirlooms||[]),...(data.wasInRun?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])],dedupe=new Map(pool.map(i=>[i.id,i]));
-    prestigeCandidateItems=[...dedupe.values()];data.candidates=prestigeCandidateItems;pendingPrestige=data;pendingPrestigeKeepIds=new Set();
-    const overlay=$('prestigeHeirloomOverlay'),grid=$('prestigeHeirloomGrid'),confirmBtn=$('prestigeKeepConfirmBtn'),subtitle=overlay?.querySelector('.subtitle');
-    if(subtitle)subtitle.textContent=`Choose up to ${capacity} survivor${capacity===1?'':'s'}. Selected items glow gold and show a large check mark.`;
-    if(!grid||!confirmBtn)return;grid.innerHTML='';
-    prestigeCandidateItems.forEach(item=>{const b=document.createElement('button');b.type='button';b.className='prestige-keep-btn';b.dataset.keepId=item.id;b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span><em class="prestige-selected-label">Not selected</em>`;b.addEventListener('click',()=>{if(pendingPrestigeKeepIds.has(item.id))pendingPrestigeKeepIds.delete(item.id);else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Keep at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);}const on=pendingPrestigeKeepIds.has(item.id);b.classList.toggle('kept',on);b.querySelector('.prestige-selected-label').textContent=on?'✓ SELECTED':'Not selected';confirmBtn.textContent=`Confirm ${pendingPrestigeKeepIds.size}/${capacity} selected`;});grid.appendChild(b);});
-    confirmBtn.textContent=`Confirm 0/${capacity} selected`;overlay.style.zIndex='140';overlay.classList.remove('hidden');
-  };
-
-  // ----- Guardian normal-attack identities and Bloodmage boss special. -----
-  function v23AttackPattern(enemy){
-    const turn=currentEncounterTurn||1,name=enemy?.name||'';
-    if(enemy?.bloodmageBoss)return turn%2?{name:'Blood Needles',hits:[.62,.62]}:{name:'Sanguine Drain',hits:[1.05],drain:.30};
-    if(name.includes('Nullstar Hydra'))return turn%2?{name:'Hydra Heads',hits:[.46,.46,.46]}:{name:'Null Bite',hits:[1.12]};
-    if(name.includes('Crown-Eater'))return turn%2?{name:'Royal Talons',hits:[.64,.64]}:{name:'Crown Bite',hits:[1.12]};
-    if(name.includes('Ring Tyrant'))return turn%2?{name:'Looping Fangs',hits:[.68,.68]}:{name:'Tyrant Bite',hits:[1.14]};
-    if(name.includes('Abyssal Custodian'))return turn%2?{name:'Twin Seal Bash',hits:[.68,.68]}:{name:'Custodian Crush',hits:[1.12]};
-    if(name.includes('Last Equation'))return turn%2?{name:'Division Sequence',hits:[.50,.50,.50]}:{name:'Proof Strike',hits:[1.22]};
-    if(name.includes('Astral Devourer')&&turn%3===0)return {name:'Devouring Claws',hits:[.64,.64]};
-    return {name:'Attack',hits:[1]};
-  }
-  async function v23ResolveNormalHits(enemy,guarded,extraGuardPower,messages){
-    const pattern=v23AttackPattern(enemy),dr=defenseDamageReduction();let totalHpDamage=0,landedAny=false,blocked=0,dodged=0;
-    for(let i=0;i<pattern.hits.length;i++){
-      if(random()<effectiveDodgeChance()){dodged++;messages.push(`${enemy.name} ${pattern.hits.length>1?`${pattern.name} hit ${i+1}`:pattern.name} is dodged.`);continue;}
-      if(player.combatShield>0){player.combatShield--;blocked++;messages.push(`Barrier blocks ${enemy.name}'s ${pattern.hits.length>1?`${pattern.name} hit ${i+1}`:pattern.name}.`);continue;}
-      const base=Math.max(1,(enemy.attack+rand(-1,1))*pattern.hits[i]);let raw=Math.max(1,Math.round(base*(1-dr)-player.flatReduction));if(guarded)raw=Math.max(0,Math.floor(raw*(1-clamp(player.guardPower+extraGuardPower,0,.9))));player.hp=Math.max(0,player.hp-raw);meta.damageTaken=(meta.damageTaken||0)+raw;totalHpDamage+=raw;landedAny=landedAny||raw>0;messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length>1?` hit ${i+1}/${pattern.hits.length}`:''} ${guarded?'hits your guard':'hits'} for ${raw}.`);if(player.thorns>0&&raw>0){const returned=damageEnemy(enemy,player.thorns,true);messages.push(`Spikes return ${returned}.`);}if(player.hp<=0)break;
-    }
-    if(pattern.drain&&totalHpDamage>0&&enemy.hp>0){const heal=Math.min(enemy.maxHp-enemy.hp,Math.max(1,Math.floor(totalHpDamage*pattern.drain)));enemy.hp+=heal;if(heal)messages.push(`🩸 ${pattern.name} restores ${heal} HP to ${enemy.name}.`);}
-    if(landedAny){const proc=enemyElementProc(enemy);if(proc)messages.push(proc);}
-    return {landedAny,totalHpDamage,blocked,dodged};
-  }
-  enemyTurn=async function(guarded,extraGuardPower=0){
-    if(!currentEnemy)return;currentEncounterTurn++;let messages=[];const lead=currentEncounterLead,special=!!(lead?.guardian&&(lead.miniBoss||lead.finalBoss||lead.merchantBoss||lead.bloodmageBoss)&&lead.hp>0&&currentEncounterTurn%GUARDIAN_SPECIAL_INTERVAL===0);
-    for(const enemy of livingEnemies()){
-      if((enemy.skipTurns||0)>0&&!(special&&enemy===lead)){enemy.skipTurns--;messages.push(`${enemy.name} is frozen.`);continue;}
-      if(special&&enemy===lead){
-        const partialDR=defenseDamageReduction()*.55;
-        if(enemy.bloodmageBoss){
-          let total=0;for(let i=0;i<2;i++){const base=Math.max(1,enemy.attack*.98),rawBase=Math.max(1,Math.round(base*(1-partialDR)-player.flatReduction*.35));let raw=guarded?Math.max(0,Math.floor(rawBase*(1-clamp(player.guardPower+extraGuardPower,0,.9)))):rawBase;if(mythicalSetCount()>=4)raw=Math.floor(raw*v19SetGuardianSpecialMult());player.hp=Math.max(0,player.hp-raw);meta.damageTaken=(meta.damageTaken||0)+raw;total+=raw;messages.push(`⚠️ Hemorrhagic Tide pulse ${i+1}/2 pierces barriers for ${raw}.`);if(player.hp<=0)break;}
-          if(total>0&&enemy.hp>0){const heal=Math.min(enemy.maxHp-enemy.hp,Math.max(1,Math.floor(total*.22)));enemy.hp+=heal;if(heal)messages.push(`The Bloodmage drinks the tide and restores ${heal} HP.`);}
-        }else{
-          const base=Math.max(1,enemy.attack*(enemy.merchantBoss?2.6:2.25));let raw=Math.max(1,Math.round(base*(1-partialDR)-player.flatReduction*.5));if(guarded)raw=Math.max(0,Math.floor(raw*(1-clamp(player.guardPower+extraGuardPower,0,.9))));if(mythicalSetCount()>=4)raw=Math.floor(raw*v19SetGuardianSpecialMult());player.hp=Math.max(0,player.hp-raw);meta.damageTaken=(meta.damageTaken||0)+raw;messages.push(`⚠️ ${enemy.specialName||'Guardian special'} partially pierces Defense and ignores barriers${guarded?', but Guard reduces it further':''}, dealing ${raw}.`);if(enemy.merchantBoss){const stolen=Math.min(player.gold,Math.ceil(player.gold*.20));player.gold-=stolen;enemy.enemyBarrier=(enemy.enemyBarrier||0)+2;messages.push(`The Merchant steals ${stolen} gold and raises 2 barriers.`);}
-        }
-      }else{
-        await v23ResolveNormalHits(enemy,guarded,extraGuardPower,messages);
-        if(enemy.merchantBoss){const stolen=Math.min(player.gold,Math.max(1,Math.round(enemy.attack*.6)));player.gold-=stolen;messages.push(`The Merchant steals ${stolen} gold.`);}
-      }
-      if(player.hp<=0)break;
-    }
-    if(special&&hasMythicPiece('hat')&&player.hp>0){const heal=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.10)));player.hp+=heal;player.ultimateCharge=clamp(player.ultimateCharge+25,0,100);messages.push(`👑 Crown of the Fourth Road restores ${heal} HP and grants 25 ultimate.`);}
-    if(hasMythicPiece('amulet')&&!player.mythicAmuletUsed&&player.hp>0&&player.hp/player.maxHp<=.35){player.mythicAmuletUsed=true;let consumed=0;livingEnemies().forEach(e=>{const d=Math.max(1,Math.floor(e.maxHp*.12));consumed+=damageEnemy(e,d,true);});const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.floor(consumed*.5)));player.hp+=healed;messages.push(`👁️ Devourer's Gaze consumes ${consumed} enemy HP and restores ${healed} HP.`);}
-    if(player.hp>0&&mythicalSetCount()>=7&&!player.omegaRingUsed&&player.hp/player.maxHp<=.25){player.omegaRingUsed=true;const heal=healPlayer(Math.ceil(player.maxHp*.25));player.combatShield=(player.combatShield||0)+1;messages.push(`💍 Impossible Road 7-piece restores ${heal} HP and grants 1 barrier.`);}
-    checkDynamicClassUnlocks();saveMeta();sfx.hit();setCombatText(messages.join(' '));updateCombatUI();await delay(980);if(!livingEnemies().length)return winCombat();if(player.hp<=0)return handlePlayerDeath();combatBusy=false;updateCombatUI();setCombatText('Choose your next action.',false);
-  };
-
-  const updateBossSpecialIndicatorV23Base=updateBossSpecialIndicator;
-  updateBossSpecialIndicator=function(){const lead=currentEncounterLead,box=$('bossSpecialIndicator');if(lead?.bloodmageBoss){const remaining=GUARDIAN_SPECIAL_INTERVAL-(currentEncounterTurn%GUARDIAN_SPECIAL_INTERVAL);box.classList.remove('hidden');box.classList.toggle('imminent',remaining<=2);box.textContent=`⚠️ ${lead.specialName||'Hemorrhagic Tide'} in ${remaining} turn${remaining===1?'':'s'}`;return;}return updateBossSpecialIndicatorV23Base();};
-  const startCombatV23Base=startCombat;
-  startCombat=function(kind='normal'){const out=startCombatV23Base(kind);if(kind==='bloodmage'){currentEnemies.forEach(e=>{e.bloodmageBoss=true;e.guardian=true;e.boss=true;e.specialName=e.specialName||'Hemorrhagic Tide';});currentEncounterLead=currentEnemies[0];currentEnemy=currentEnemies[currentEnemyIndex]||currentEnemies[0];updateBossSpecialIndicator();updateCombatUI();}return out;};
 
   // Camp owns its own scene dimensions and refresh.  Keep only the inherited
   // domain refreshes that this historical checkpoint still needs.
@@ -4501,49 +4390,6 @@
     const beforeHp=player.hp,beforePotions=player.potions,result=v235AdvanceBase();
     if(boardLevel===6){const b=DB235.modules.balance.board6;player.hp=Math.min(player.maxHp,beforeHp+Math.ceil(player.maxHp*b.entryHeal));player.potions=beforePotions+b.entryPotions;updateHUD();}
     return result;
-  };
-
-  /* MODULE: talent-tree geometry ------------------------------------------ */
-  // Fixed geometry plus pre-routed orthogonal connectors. These coordinates
-  // were generated by a grid router that treats every talent card as an
-  // obstacle and forbids unrelated connector crossings. The audit function
-  // below can be rerun after future talent additions.
-  const V235_TALENT_POS={"roadborn":[1800,1800],"survival_vitality":[1800,1410],"survival_armor":[1520,1020],"survival_dodge":[1800,1020],"survival_prepared":[2080,1020],"survival_alchemy":[1660,630],"survival_double_dose":[1380,240],"survival_recovery":[1940,630],"survival_revive":[1800,240],"power_attack":[2138,1605],"fighter_counter_reserve":[2335,1168],"power_boss":[2475,1410],"power_crit":[2615,1652],"power_lifesteal":[2743,1094],"power_ultimate_start":[2883,1336],"power_ultimate_flow":[3151,1020],"power_apex":[3419,704],"power_echo":[3559,946],"monk_flow_ceiling":[3826,630],"fortune_gold":[2138,1995],"fortune_blessing":[2545,2069],"fortune_discount":[2405,2311],"fortune_luck":[2813,2385],"fortune_cookie":[3291,2338],"fortune_omens":[3151,2580],"fortune_powerup_rerolls":[3011,2822],"fortune_extra_choice":[3559,2654],"fortune_impossible":[3419,2896],"legacy_heirloom":[1800,2190],"legacy_travel":[1940,2580],"legacy_xp":[1660,2580],"legacy_scholar":[1800,2970],"companion_damage":[1462,1995],"companion_bond":[1195,2311],"companion_double":[1055,2069],"companion_ascendant":[857,2506],"companion_recovery":[717,2264],"companion_element_proc":[1050,3250],"element_attunement":[1462,1605],"element_power":[915,1774],"element_prismatic":[1055,1531],"element_weakness":[1195,1289],"turtle_guard_element":[350,1800],"element_conduit":[717,1336],"element_echo":[857,1094]};
-  const V235_TALENT_ROUTES={"power_attack>power_boss":[[2120,1600],[2120,1400],[2480,1400]],"companion_bond>companion_ascendant":[[1200,2320],[1200,2520],[840,2520]],"roadborn>element_attunement":[[1800,1800],[1800,1600],[1480,1600]],"roadborn>survival_vitality":[[1800,1800],[1840,1800],[1840,1400],[1800,1400]],"survival_vitality>survival_dodge":[[1800,1400],[1800,1040]],"roadborn>legacy_heirloom":[[1800,1800],[1800,2200]],"roadborn>companion_damage":[[1800,1800],[1480,1800],[1480,2000]],"roadborn>power_attack":[[1800,1800],[2120,1800],[2120,1600]],"roadborn>fortune_gold":[[1800,1800],[1800,1840],[2120,1840],[2120,2000]],"fortune_luck>fortune_omens":[[2800,2400],[2800,2560],[3160,2560]],"companion_double>companion_recovery":[[1040,2080],[1040,2280],[720,2280]],"element_weakness>element_echo":[[1200,1280],[1200,1080],[840,1080]],"fortune_discount>fortune_luck":[[2400,2320],[2400,2400],[2800,2400]],"fortune_omens>fortune_impossible":[[3160,2560],[3160,2880],[3400,2880]],"power_echo>monk_flow_ceiling":[[3560,960],[3840,960],[3840,640]],"power_ultimate_start>power_ultimate_flow":[[2880,1320],[3160,1320],[3160,1040]],"element_attunement>element_prismatic":[[1480,1600],[1480,1520],[1040,1520]],"power_crit>power_ultimate_start":[[2600,1640],[2880,1640],[2880,1320]],"companion_damage>companion_double":[[1480,2000],[1480,2080],[1040,2080]],"survival_recovery>survival_revive":[[1920,640],[1920,240],[1800,240]],"survival_alchemy>survival_revive":[[1680,640],[1680,240],[1800,240]],"survival_alchemy>survival_double_dose":[[1640,640],[1380,640],[1380,240]],"legacy_heirloom>legacy_xp":[[1800,2200],[1680,2200],[1680,2560]],"legacy_heirloom>legacy_travel":[[1800,2200],[1920,2200],[1920,2560]],"legacy_travel>legacy_scholar":[[1920,2560],[1920,2960],[1800,2960]],"element_attunement>element_weakness":[[1480,1600],[1200,1600],[1200,1280]],"power_boss>power_lifesteal":[[2480,1400],[2720,1400],[2720,1080],[2760,1080]],"fortune_gold>fortune_discount":[[2120,2000],[2120,2320],[2400,2320]],"fortune_gold>fortune_blessing":[[2120,2000],[2560,2000],[2560,2080]],"companion_damage>companion_bond":[[1480,2000],[1520,2000],[1520,2320],[1200,2320]],"power_ultimate_flow>power_apex":[[3160,1040],[3160,720],[3400,720]],"power_ultimate_flow>power_echo":[[3160,1040],[3560,1040],[3560,960]],"power_attack>power_crit":[[2120,1600],[2600,1600],[2600,1640]],"power_attack>fighter_counter_reserve":[[2120,1600],[2080,1600],[2080,1160],[2320,1160]],"survival_vitality>survival_armor":[[1800,1400],[1520,1400],[1520,1040]],"survival_vitality>survival_prepared":[[1800,1400],[2040,1400],[2040,1040],[2080,1040]],"fortune_luck>fortune_cookie":[[2800,2400],[2800,2320],[3280,2320]],"companion_double>companion_ascendant":[[1040,2080],[880,2080],[880,2480],[840,2480],[840,2520]],"element_weakness>element_conduit":[[1200,1280],[720,1280],[720,1320]],"fortune_luck>fortune_powerup_rerolls":[[2800,2400],[3000,2400],[3000,2840]],"survival_armor>survival_recovery":[[1520,1040],[1520,760],[1920,760],[1920,640]],"survival_prepared>survival_alchemy":[[2080,1040],[2120,1040],[2120,120],[1640,120],[1640,640],[1680,640]],"element_attunement>element_power":[[1480,1600],[1480,1760],[920,1760]],"fortune_powerup_rerolls>fortune_extra_choice":[[3000,2840],[3000,3040],[3600,3040],[3600,2640],[3560,2640]],"element_power>element_echo":[[920,1760],[560,1760],[560,1080],[840,1080]],"companion_ascendant>companion_element_proc":[[840,2520],[840,3240],[1040,3240]],"fortune_blessing>fortune_omens":[[2560,2080],[3440,2080],[3440,2520],[3160,2520],[3160,2560]],"element_attunement>turtle_guard_element":[[1480,1600],[1440,1600],[1440,1880],[360,1880],[360,1800]],"power_boss>power_apex":[[2480,1400],[2480,1280],[2560,1280],[2560,680],[3400,680],[3400,720]],"survival_armor>turtle_guard_element":[[1520,1040],[1040,1040],[1040,960],[360,960],[360,1800]],"element_attunement>companion_element_proc":[[1480,1600],[1480,1640],[1080,1640],[1080,1960],[560,1960],[560,3280],[1040,3280],[1040,3240]]};
-  DB235.modules.talentLayout={positions:V235_TALENT_POS,routes:V235_TALENT_ROUTES,cardWidth:240,cardHeight:190,canvasWidth:4200,canvasHeight:3600};
-  const v235TalentStyle=document.createElement('style');v235TalentStyle.textContent=`
-    .talent-canvas{width:4200px!important;height:3600px!important}
-    .talent-links{width:4200px!important;height:3600px!important}
-    .talent-node.radial{width:230px!important;min-height:142px}
-    .talent-link{stroke-linecap:round;stroke-linejoin:round}
-  `;document.head.appendChild(v235TalentStyle);
-  function v235Segments(route){const out=[];for(let i=1;i<route.length;i++)out.push([route[i-1],route[i]]);return out;}
-  function v235SegRect(a,b,r){
-    // Liang-Barsky segment/rectangle test.
-    let x1=a[0],y1=a[1],dx=b[0]-x1,dy=b[1]-y1,u1=0,u2=1;const p=[-dx,dx,-dy,dy],q=[x1-r[0],r[2]-x1,y1-r[1],r[3]-y1];
-    for(let i=0;i<4;i++){if(Math.abs(p[i])<1e-9){if(q[i]<0)return false;}else{const t=q[i]/p[i];if(p[i]<0){if(t>u2)return false;if(t>u1)u1=t;}else{if(t<u1)return false;if(t<u2)u2=t;}}}return true;
-  }
-  function v235SegSeg(a,b,c,d){
-    const cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]);
-    const c1=cross(a,b,c),c2=cross(a,b,d),c3=cross(c,d,a),c4=cross(c,d,b);
-    return ((c1===0&&c2===0&&c3===0&&c4===0)?false:((c1===0||c2===0||Math.sign(c1)!==Math.sign(c2))&&(c3===0||c4===0||Math.sign(c3)!==Math.sign(c4))));
-  }
-  function v235TalentAudit(){
-    const W=DB235.modules.talentLayout.cardWidth,H=DB235.modules.talentLayout.cardHeight,ids=Object.keys(V235_TALENT_POS),rects={},boxOverlaps=[],pathThroughBoxes=[],connectorCrossings=[];
-    ids.forEach(id=>{const [x,y]=V235_TALENT_POS[id];rects[id]=[x-W/2,y-H/2,x+W/2,y+H/2];});
-    for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){const a=rects[ids[i]],b=rects[ids[j]];if(!(a[2]<b[0]||b[2]<a[0]||a[3]<b[1]||b[3]<a[1]))boxOverlaps.push([ids[i],ids[j]]);}
-    for(const [key,route] of Object.entries(V235_TALENT_ROUTES)){const [from,to]=key.split('>');for(const seg of v235Segments(route))for(const id of ids){if(id===from||id===to)continue;if(v235SegRect(seg[0],seg[1],rects[id]))pathThroughBoxes.push([key,id]);}}
-    const routeEntries=Object.entries(V235_TALENT_ROUTES);for(let i=0;i<routeEntries.length;i++)for(let j=i+1;j<routeEntries.length;j++){const [ka,ra]=routeEntries[i],[kb,rb]=routeEntries[j],ea=ka.split('>'),eb=kb.split('>');if(ea.some(x=>eb.includes(x)))continue;outer:for(const sa of v235Segments(ra))for(const sb of v235Segments(rb))if(v235SegSeg(sa[0],sa[1],sb[0],sb[1])){connectorCrossings.push([ka,kb]);break outer;}}
-    return {ok:boxOverlaps.length===0&&pathThroughBoxes.length===0&&connectorCrossings.length===0,boxOverlaps,pathThroughBoxes,connectorCrossings,nodeCount:ids.length,connectorCount:Object.keys(V235_TALENT_ROUTES).length};
-  }
-  DB235.modules.talentLayout.audit=v235TalentAudit;
-  renderTalents=function(){
-    updateMetaUI();const canvas=$('talentGrid');canvas.innerHTML='';const allocated=allocatedTalentPoints(),rewards=Math.floor((allocated+(meta.points||0))/9);const stats=$('prestigeStats');if(stats)stats.textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points · 9 total talent points = 1 Prestige point.`;const pb=$('prestigeBtn');if(pb){pb.disabled=rewards<1;pb.textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?'':'s'}`:'♻️ Allocate at least 9 total points to Prestige';}
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','talent-links');svg.setAttribute('viewBox','0 0 4200 3600');
-    talents.forEach(t=>{(t.requires||[]).forEach(r=>{const key=`${r.id}>${t.id}`,route=V235_TALENT_ROUTES[key]||[V235_TALENT_POS[r.id],V235_TALENT_POS[t.id]];if(!route?.[0]||!route?.[1])return;const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');pl.setAttribute('points',route.map(p=>p.join(',')).join(' '));pl.dataset.fromTalent=r.id;pl.dataset.toTalent=t.id;pl.setAttribute('class',`talent-link${talentRank(r.id)>=r.rank?' active':''}`);svg.appendChild(pl);});});canvas.appendChild(svg);
-    const labelPos={Survival:[1800,1580],Power:[2020,1685],Fortune:[2020,1945],Heirlooms:[1800,2035],Companion:[1580,1945],Elements:[1580,1685]};
-    Object.entries(labelPos).forEach(([name,p])=>{const label=document.createElement('div');label.className='branch-label';label.textContent=name;label.style.left=`${p[0]}px`;label.style.top=`${p[1]}px`;canvas.appendChild(label);});
-    talents.forEach(t=>{let p=V235_TALENT_POS[t.id];if(!p){p=[3900,3300];}const btn=createTalentButton(t);btn.classList.add('radial');if(t.branch==='Root')btn.classList.add('root');btn.style.left=`${p[0]}px`;btn.style.top=`${p[1]}px`;canvas.appendChild(btn);});applyTalentZoom(false);
   };
 
   /* MODULE: camp presentation --------------------------------------------- */
@@ -4643,7 +4489,8 @@ function buildDiceboundHumanHarness235(){
   }
   const v235HumanHarness=buildDiceboundHumanHarness235();
   try{Object.defineProperty(window,'DiceboundCareerTest',{value:v235HumanHarness,enumerable:false,configurable:false,writable:false});}catch(e){window.DiceboundCareerTest=v235HumanHarness;}
-  DB235.modules.testing={career:v235HumanHarness,legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:v235TalentAudit};
+  DB235.modules.talentLayout=window.DiceboundTalentTree?.layout;
+  DB235.modules.testing={career:v235HumanHarness,legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:()=>window.DiceboundTalentTree?.layoutAudit?.()};
 
   // Public manifest only; gameplay continues to use the existing internal
   // variables. The module boundaries are deliberately extraction-friendly for
@@ -4865,18 +4712,6 @@ function buildDiceboundHumanHarness235(){
   }
   const storageTalent={id:'legacy_storage',branch:'Heirlooms',icon:'🗄️',name:'Heirloom Storage',cost:3,maxRank:1,desc:'Permanently unlock Heirloom Storage at the Campsite. It begins with one storage slot per equipment slot; major milestones add more.',requires:[req('legacy_xp',1)]};
   if(!talents.some(t=>t.id===storageTalent.id))talents.push(storageTalent);
-  V235_TALENT_POS.legacy_storage=[1380,2970];V235_TALENT_ROUTES['legacy_xp>legacy_storage']=[[1660,2580],[1400,2580],[1400,2960],[1380,2960]];
-  DB235.modules.talentLayout.positions=V235_TALENT_POS;DB235.modules.talentLayout.routes=V235_TALENT_ROUTES;
-  const createTalentButtonV24Base=createTalentButton;
-  createTalentButton=function(t){const b=createTalentButtonV24Base(t);if(t.id==='legacy_storage'){b.addEventListener('click',()=>{if(talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();saveMeta();showToast('🗄️ Heirloom Storage permanently unlocked!',3000,true);v24RenderHeirloomStorage();}},false);}return b;};
-  renderTalents=function(){
-    updateMetaUI();const canvas=$('talentGrid');canvas.innerHTML='';const allocated=allocatedTalentPoints(),rewards=Math.floor((allocated+(meta.points||0))/9);const stats=$('prestigeStats');if(stats)stats.textContent=`${prestigeSummary()} · Currently allocated: ${allocated} points · 9 total talent points = 1 Prestige point.`;const pb=$('prestigeBtn');if(pb){pb.disabled=rewards<1;pb.textContent=rewards?`♻️ Prestige for ${rewards} permanent stat point${rewards===1?'':'s'}`:'♻️ Allocate at least 9 total points to Prestige';}
-    const visible=talents.filter(t=>t.id!=='legacy_storage'||meta.nightmareUnlocked||meta.heirloomStorageUnlocked);
-    const visibleIds=new Set(visible.map(t=>t.id)),svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','talent-links');svg.setAttribute('viewBox','0 0 4200 3600');
-    visible.forEach(t=>(t.requires||[]).forEach(r=>{if(!visibleIds.has(r.id))return;const key=`${r.id}>${t.id}`,route=V235_TALENT_ROUTES[key]||[V235_TALENT_POS[r.id],V235_TALENT_POS[t.id]];if(!route?.[0]||!route?.[1])return;const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');pl.setAttribute('points',route.map(p=>p.join(',')).join(' '));pl.dataset.fromTalent=r.id;pl.dataset.toTalent=t.id;pl.setAttribute('class',`talent-link${talentRank(r.id)>=r.rank?' active':''}`);svg.appendChild(pl);}));canvas.appendChild(svg);
-    const labelPos={Survival:[1800,1580],Power:[2020,1685],Fortune:[2020,1945],Heirlooms:[1800,2035],Companion:[1580,1945],Elements:[1580,1685]};Object.entries(labelPos).forEach(([name,p])=>{const label=document.createElement('div');label.className='branch-label';label.textContent=name;label.style.left=`${p[0]}px`;label.style.top=`${p[1]}px`;canvas.appendChild(label);});
-    visible.forEach(t=>{const p=V235_TALENT_POS[t.id]||[3900,3300],btn=createTalentButton(t);btn.classList.add('radial');if(t.branch==='Root')btn.classList.add('root');btn.style.left=`${p[0]}px`;btn.style.top=`${p[1]}px`;canvas.appendChild(btn);});applyTalentZoom(false);
-  };
   function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:(meta.prestige?.count||0)>=5,text:'Prestige 5'},{on:(meta.prestige?.count||0)>=50,text:'Prestige 50'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
   function v24RenderHeirloomStorage(){
     const panel=$('campChestPanel');if(!panel)return;let host=$('campHeirloomStorage');if(!host){host=document.createElement('div');host.id='campHeirloomStorage';host.className='heirloom-storage-wrap';panel.appendChild(host);}if(!v24StorageUnlocked()){host.innerHTML=`<div class="storage-locked"><b>🗄️ Heirloom Storage locked</b><br>After defeating Board 3, a one-rank talent appears beyond Living Legend. Purchase it once to permanently unlock storage.</div>`;return;}
@@ -4977,7 +4812,7 @@ function buildDiceboundHumanHarness235(){
   const renderInfoV24Base=renderInfo;renderInfo=function(){renderInfoV24Base();const sections=$('infoSections');if(!sections)return;sections.querySelectorAll('details').forEach(d=>{const s=d.querySelector('summary')?.textContent||'';if(s.includes('Affixes, suffixes'))d.innerHTML=`<summary>🗡️ Equipment rarity & rolled quality</summary><div class="info-body"><p><b>Ordinary equipment tiers:</b> Poor (light grey) → Common (white) → Uncommon (light blue) → Rare (blue) → Epic (pale yellow). Ordinary generated gear stops at Epic.</p><p><b>Legendary</b> (gold) pieces are handcrafted oddities found through extremely rare/special discoveries. <b>Artifact</b> (orange) currently contains the Impossible Road set. <b>Mythical</b> (purple) and <b>Omega</b> sit above Artifact and remain handcrafted chase tiers.</p><p>Ordinary gear still uses hidden point budgets, prefixes and suffixes. Higher ordinary rarity raises the budget range; special Legendary/Artifact/Mythical/Omega items ignore those normal generation rules.</p></div>`;});const d=document.createElement('details');d.className='info-section';d.innerHTML=`<summary>🗄️ Heirloom Storage</summary><div class="info-body"><p>After Board 3, a one-rank talent appears beyond Living Legend. Buying it permanently unlocks the Campsite storage chest with eight storage slots—one for each equipment slot.</p><p>Storage expands by one after clearing Board 5, reaching Prestige 5, reaching Prestige 50, and defeating the secret Road Merchant once. Stored items survive Prestige; your normal heirloom-slot count still controls how many stored items may be equipped for the next run.</p></div>`;sections.appendChild(d);};
 
   /* MODULE: v2.4 smoke/regression helpers --------------------------------- */
-  function v24TalentAudit(){return v235TalentAudit();}
+  function v24TalentAudit(){return window.DiceboundTalentTree?.layoutAudit?.();}
   window.DiceboundV24Test=Object.freeze({
     rarity:()=>({labels:Object.fromEntries(['poor','common','uncommon','rare','epic','legendary','artifact','mythical','omega'].map(k=>[k,rarityInfo[k]?.label])),ordinary:Object.keys(V14_RARITY_BUDGETS),powerups:Object.fromEntries(['poor','common','uncommon','rare','epic','legendary','artifact','mythical','omega'].map(k=>[k,upgrades.filter(u=>u.rarity===k).length]))}),
     storage:()=>({unlocked:v24StorageUnlocked(),capacity:v24StorageCapacity(),stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length}),
@@ -5471,8 +5306,6 @@ function buildDiceboundHumanHarness235(){
   /* COUNTER RESERVE -> ENDLESS FORM --------------------------------------- */
   const v26CounterIdx=talents.findIndex(t=>t.id==='fighter_counter_reserve');
   if(v26CounterIdx>=0){const t=talents[v26CounterIdx],rank=Math.max(0,Number(meta.purchased?.fighter_counter_reserve)||0);if(rank){meta.points=(meta.points||0)+rank*(t.cost||2);delete meta.purchased.fighter_counter_reserve;showToast('Counter Reserve refunded — its effect moved into Endless Form');}if(runTalentSnapshot?.fighter_counter_reserve)delete runTalentSnapshot.fighter_counter_reserve;talents.splice(v26CounterIdx,1);saveMeta();}
-  if(typeof V235_TALENT_POS!=='undefined')delete V235_TALENT_POS.fighter_counter_reserve;
-  if(typeof V235_TALENT_ROUTES!=='undefined')Object.keys(V235_TALENT_ROUTES).filter(k=>k.includes('fighter_counter_reserve')).forEach(k=>delete V235_TALENT_ROUTES[k]);
   const endless26=talents.find(t=>t.id==='monk_flow_ceiling');if(endless26)endless26.desc='Each rank improves many class signatures: Ranger Marks, Monk Combo, Turtle Guard chain, Fighter Counterblow damage and +1 stored Counterblow, Mana building, Cleric Faith gain, Summoner spirits and Alchemist flasks.';
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
@@ -6218,7 +6051,7 @@ function buildDiceboundHumanHarness235(){
   const beta042Style=document.createElement('style');
   beta042Style.textContent=`
     #muteBtn,#saveFolderBtn{display:none!important}
-    #resetMetaBtn,#campResetProgressBtn{display:none!important}
+    #campResetProgressBtn{display:none!important}
     #optionsBtn{min-width:132px}
     .options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
     .options-card{padding:12px 13px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);display:grid;gap:8px}
@@ -6270,7 +6103,7 @@ function buildDiceboundHumanHarness235(){
     $('optionsVolumeSlider')?.addEventListener('input',e=>{meta.settings=meta.settings||{};meta.settings.masterVolume=clamp(Number(e.target.value)/100,0,1);saveMeta();beta042SyncOptionsMenu(false);});
     $('optionsVolumeSlider')?.addEventListener('change',()=>{try{sfx.coin();}catch(_){}});
     $('optionsSoundPackSelect')?.addEventListener('change',e=>{meta.settings=meta.settings||{};meta.settings.soundPack=e.target.value==='custom'?'custom':'synth';saveMeta();beta042SyncOptionsMenu();try{sfx.coin();}catch(_){}});
-    $('optionsResetBtn')?.addEventListener('click',()=>{$('resetMetaBtn')?.click();beta042CloseOptions();});
+    $('optionsResetBtn')?.addEventListener('click',()=>{window.DiceboundTalentTree?.resetProgress?.();beta042CloseOptions();});
     $('optionsCloseBtn')?.addEventListener('click',beta042CloseOptions);
     overlay.addEventListener('click',e=>{if(e.target===overlay)beta042CloseOptions();});
     return overlay;
@@ -7196,90 +7029,8 @@ function buildDiceboundHumanHarness235(){
     .heirloom-storage-actions .small-btn{margin-top:0!important;width:auto!important;min-height:34px}
     .heirloom-storage-actions .danger{border-color:rgba(255,100,118,.34)!important;background:rgba(106,24,42,.28)!important;color:#ffd3da!important}
 
-    /* --- Legacy Constellation ----------------------------------------- */
-    #talentOverlay{background:radial-gradient(circle at 50% 42%,rgba(26,22,38,.68),rgba(2,4,10,.94) 72%)!important}
-    #talentOverlay .talent-modal{
-      position:relative;overflow:hidden;
-      width:min(1580px,calc(100vw - 20px))!important;
-      height:min(96dvh,1020px)!important;
-      padding:15px 16px 13px!important;
-      border:1px solid rgba(218,174,83,.48)!important;
-      border-radius:18px!important;
-      background:
-        radial-gradient(circle at 50% -15%,rgba(137,93,37,.18),transparent 42%),
-        linear-gradient(180deg,rgba(17,18,29,.985),rgba(5,7,14,.99))!important;
-      box-shadow:0 28px 90px rgba(0,0,0,.72),inset 0 0 0 1px rgba(255,232,170,.035)!important;
-    }
-    #talentOverlay .talent-modal::before{
-      content:"";position:absolute;inset:7px;pointer-events:none;border:1px solid rgba(218,174,83,.13);border-radius:12px;
-      background:linear-gradient(90deg,transparent 0 8%,rgba(238,196,99,.10) 8.1% 8.3%,transparent 8.4% 91.6%,rgba(238,196,99,.10) 91.7% 91.9%,transparent 92%);
-    }
-    #talentOverlay .talent-modal>h2{margin:0;text-align:center;font-size:22px;letter-spacing:.08em;text-transform:uppercase;color:#f2d995;text-shadow:0 2px 14px rgba(232,185,83,.18)}
-    #talentOverlay .talent-modal>.subtitle{max-width:900px;margin:4px auto 8px;text-align:center;color:#aeb7cb;font-size:10px}
-    #talentOverlay .talent-summary{
-      position:relative;z-index:2;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:5px!important;margin:8px auto 7px!important;max-width:1120px;
-      padding:5px;border-top:1px solid rgba(218,174,83,.20);border-bottom:1px solid rgba(218,174,83,.20);
-      background:linear-gradient(90deg,transparent,rgba(194,143,57,.055),transparent);
-    }
-    #talentOverlay .talent-summary .stat{padding:5px 7px!important;background:rgba(10,13,23,.55)!important;border-color:rgba(218,174,83,.11)!important}
-    #talentOverlay .talent-summary .stat span{font-size:8px!important;letter-spacing:.08em;text-transform:uppercase;color:#8f98aa}
-    #talentOverlay .talent-summary .stat strong{font-size:13px!important;color:#efe5c7}
-    #talentOverlay .talent-tools{position:relative;z-index:3;margin:4px auto 6px!important;padding:4px 6px;width:max-content;border:1px solid rgba(218,174,83,.18);border-radius:999px;background:rgba(9,11,19,.86);box-shadow:0 8px 20px rgba(0,0,0,.25)}
-    #talentOverlay .talent-tools .small-btn{padding:5px 8px!important;border-radius:999px!important}
-    #talentOverlay .talent-tools span{color:#efcf7e!important}
-    #talentOverlay .talent-viewport{
-      position:relative;z-index:2;height:calc(100% - 205px)!important;min-height:380px!important;
-      border:1px solid rgba(191,151,77,.26)!important;border-radius:12px!important;
-      background-color:#050711!important;
-      background-image:
-        radial-gradient(circle at 18% 24%,rgba(241,213,143,.24) 0 1px,transparent 1.5px),
-        radial-gradient(circle at 67% 73%,rgba(137,180,255,.18) 0 1px,transparent 1.4px),
-        radial-gradient(circle at 81% 17%,rgba(241,213,143,.18) 0 1px,transparent 1.5px),
-        radial-gradient(circle at 48% 46%,rgba(60,70,113,.26),transparent 44%),
-        radial-gradient(circle at 50% 50%,rgba(16,20,38,.65),rgba(3,5,10,.94) 70%)!important;
-      background-size:83px 83px,113px 113px,151px 151px,100% 100%,100% 100%!important;
-      box-shadow:inset 0 0 70px rgba(0,0,0,.68),0 8px 28px rgba(0,0,0,.25)!important;
-    }
-    #talentOverlay .branch-label{
-      background:linear-gradient(180deg,rgba(40,31,20,.96),rgba(17,15,15,.96))!important;
-      border:1px solid rgba(225,183,89,.42)!important;color:#f1d58e!important;
-      box-shadow:0 0 20px rgba(205,153,63,.08)!important;letter-spacing:.13em!important;
-    }
-    #talentOverlay .talent-link{stroke:rgba(151,118,72,.28)!important;stroke-width:3!important;filter:drop-shadow(0 0 2px rgba(0,0,0,.8))}
-    #talentOverlay .talent-link.active{stroke:rgba(232,187,88,.74)!important;stroke-width:4!important;filter:drop-shadow(0 0 5px rgba(214,164,70,.27))}
-    #talentOverlay .talent-node.radial{
-      border-radius:12px!important;border:1px solid rgba(169,139,86,.26)!important;
-      background:linear-gradient(180deg,rgba(28,31,43,.97),rgba(12,15,24,.98))!important;
-      box-shadow:0 8px 22px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.035)!important;
-      transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease,filter .14s ease!important;
-    }
-    #talentOverlay .talent-node.radial:not(:disabled):hover{transform:translate(-50%,-50%) scale(1.035)!important;border-color:rgba(239,198,105,.72)!important;box-shadow:0 10px 28px rgba(0,0,0,.50),0 0 18px rgba(224,178,78,.14)!important}
-    #talentOverlay .talent-node.radial.bought{border-color:rgba(102,218,161,.58)!important;background:linear-gradient(180deg,rgba(25,54,45,.97),rgba(10,28,25,.98))!important;box-shadow:0 0 18px rgba(80,204,145,.12),inset 0 1px 0 rgba(154,255,211,.06)!important}
-    #talentOverlay .talent-node.radial.partial{border-color:rgba(105,169,241,.54)!important;background:linear-gradient(180deg,rgba(29,48,70,.97),rgba(13,26,42,.98))!important}
-    #talentOverlay .talent-node.radial.locked{opacity:.40!important;filter:grayscale(.62) brightness(.72)!important}
-    #talentOverlay .talent-node.radial.root{border-color:rgba(244,201,101,.78)!important;box-shadow:0 0 34px rgba(225,175,74,.17),inset 0 0 20px rgba(225,175,74,.04)!important}
-    #talentOverlay .talent-node .node-name{color:#f0e7d3!important;letter-spacing:.015em}
-    #talentOverlay .talent-node .node-cost{color:#edc86f!important}
-    #talentOverlay .talent-node .node-rank{background:rgba(218,174,83,.08)!important;border:1px solid rgba(218,174,83,.11);color:#d9c392!important}
-    #talentOverlay .prestige-box{position:relative;z-index:2;margin:7px 0 5px!important;padding:7px 10px!important;border-color:rgba(218,174,83,.20)!important;background:rgba(20,16,13,.52)!important;font-size:9px!important;line-height:1.35!important}
-    #talentOverlay #prestigeBtn{position:relative;z-index:2;padding:8px 11px!important}
-    #talentOverlay .talent-note{display:none!important}
-    #talentOverlay #talentCloseBtn{position:absolute;right:18px;top:15px;width:auto!important;margin:0!important;padding:7px 10px!important;z-index:5}
-    #talentOverlay #resetMetaBtn{display:none!important}
-    @media(max-width:900px){
-      #talentOverlay .talent-modal{height:calc(100dvh - 10px)!important;padding:12px!important}
-      #talentOverlay .talent-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-      #talentOverlay .talent-viewport{height:calc(100% - 260px)!important}
-    }
   `;
   document.head.appendChild(db050Style);
-
-  // Re-label the existing modal without adding another talent implementation.
-  const db050Talent=document.getElementById('talentOverlay');
-  if(db050Talent){
-    const title=db050Talent.querySelector('.talent-modal>h2');if(title)title.textContent='✦ Legacy Constellation';
-    const sub=db050Talent.querySelector('.talent-modal>.subtitle');if(sub)sub.innerHTML='Chart a path through the Legacy Constellation. <b>Purchased nodes activate on your next expedition.</b> Drag the atlas to explore and use the controls to zoom.';
-  }
 
   // Layout geometry changed: immediately let the board claim the reclaimed pixels.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
@@ -7363,43 +7114,6 @@ function buildDiceboundHumanHarness235(){
   /* ========================================================================
      Beta 0.5.10 — campsite spatial composition + wheel-zoom talent atlas
      ======================================================================== */
-  const db056Style=document.createElement('style');
-  db056Style.textContent=`
-    /* Talent atlas: still scrollable internally for drag-to-pan, but never show bars. */
-    #talentOverlay .talent-viewport{
-      overflow:scroll!important;scrollbar-width:none!important;-ms-overflow-style:none!important;
-      overscroll-behavior:contain!important
-    }
-    #talentOverlay .talent-viewport::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
-    #talentOverlay .talent-modal>.subtitle{max-width:980px!important}
-  `;
-  document.head.appendChild(db056Style);
-
-  const db056TalentViewport=$('talentViewport');
-  if(db056TalentViewport && db056TalentViewport.dataset.db056WheelZoom!=='1'){
-    db056TalentViewport.dataset.db056WheelZoom='1';
-    db056TalentViewport.addEventListener('wheel',e=>{
-      if($('talentOverlay')?.classList.contains('hidden'))return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const oldZoom=talentZoom;
-      const nextZoom=clamp(oldZoom+(e.deltaY<0?.08:-.08),.4,1.35);
-      if(nextZoom===oldZoom)return;
-      const rect=db056TalentViewport.getBoundingClientRect();
-      const pointerX=e.clientX-rect.left;
-      const pointerY=e.clientY-rect.top;
-      const contentX=(db056TalentViewport.scrollLeft+pointerX)/oldZoom;
-      const contentY=(db056TalentViewport.scrollTop+pointerY)/oldZoom;
-      talentZoom=nextZoom;
-      applyTalentZoom(false);
-      db056TalentViewport.scrollLeft=contentX*nextZoom-pointerX;
-      db056TalentViewport.scrollTop=contentY*nextZoom-pointerY;
-    },{passive:false,capture:true});
-  }
-
-  const db056TalentSub=document.querySelector('#talentOverlay .talent-modal>.subtitle');
-  if(db056TalentSub)db056TalentSub.innerHTML='Chart a path through the Legacy Constellation. <b>Purchased nodes activate on your next expedition.</b> Drag to pan; use the mouse wheel to zoom in and out.';
-
   /* ========================================================================
      Beta 0.5.10 — campsite spatial refinement
      ======================================================================== */
@@ -7548,7 +7262,7 @@ function buildDiceboundHumanHarness235(){
   function beta03BurnTick(){v319ResetCareer();resetPlayer('ranger');gameStarted=true;player.hp=player.maxHp;const e={name:'Burn Dummy',icon:'🎯',hp:1000,maxHp:1000,attack:0,defense:0,burnStacks:3,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;const before=e.hp,result=beta03TickEnemyBurns();return {before,after:e.hp,dealt:before-e.hp,result};}
   function beta03BerserkerPowers(){v319ResetCareer();resetPlayer('berserker');const before={attack:player.attack,berserk:player.berserk},pain=upgrades.find(u=>u.id==='berserker_pain'),roar=upgrades.find(u=>u.id==='berserker_blood_roar');pain.apply();const afterPain={attack:player.attack,berserk:player.berserk};roar.apply();return {before,afterPain,afterRoar:{attack:player.attack,berserk:player.berserk},painDesc:pain.desc,roarDesc:roar.desc};}
   async function beta03DoubleDose(){window.DiceboundRng.seed('beta03-double-dose');v319ResetCareer();meta.purchased.survival_prepared=2;meta.purchased.survival_alchemy=2;meta.purchased.survival_double_dose=1;resetPlayer('ranger');gameStarted=true;player.maxHp=200;player.hp=1;player.potions=2;const e={name:'Potion Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'ice',affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;combatBusy=false;let responses=0;const baseResponse=resolveEnemyResponse;resolveEnemyResponse=async function(){responses++;combatBusy=false;};try{const before={hp:player.hp,potions:player.potions,used:meta.stats?.potionsUsed||0};await usePotion();return {before,after:{hp:player.hp,potions:player.potions,used:meta.stats?.potionsUsed||0},responses,enabled:player.doublePotionTurn,talent:talents.find(t=>t.id==='survival_double_dose')};}finally{resolveEnemyResponse=baseResponse;combatBusy=false;}}
-  window.DiceboundBeta03Test=Object.freeze({rewardOdds:beta03RewardOdds,mysticSample:beta03MysticSample,minibossSample:beta03MinibossSample,burnCap:beta03BurnCap,fireSample:beta03FireSample,burnTick:beta03BurnTick,berserkerPowers:beta03BerserkerPowers,doubleDose:beta03DoubleDose,talentAudit:()=>DB235.modules.talentLayout.audit()});
+  window.DiceboundBeta03Test=Object.freeze({rewardOdds:beta03RewardOdds,mysticSample:beta03MysticSample,minibossSample:beta03MinibossSample,burnCap:beta03BurnCap,fireSample:beta03FireSample,burnTick:beta03BurnTick,berserkerPowers:beta03BerserkerPowers,doubleDose:beta03DoubleDose,talentAudit:()=>window.DiceboundTalentTree?.layoutAudit?.()});
   /* ========================================================================
      Alpha 3.2.4 — touch/mobile + victory/eligibility regression API
      ======================================================================== */

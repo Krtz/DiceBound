@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.4.25",
+  "version": "0.6.4.26",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -47,6 +47,7 @@
     "js/ui/camp.js",
     "js/ui/class-chooser.js",
     "js/ui/pet-chooser.js",
+    "js/ui/talent-tree.js",
     "js/dicebound.js"
   ],
   "gameBundle": "js/dicebound.js",

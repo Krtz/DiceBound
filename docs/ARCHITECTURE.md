@@ -85,6 +85,10 @@ The audit syntax-checks the core JavaScript, loads/evaluates the asset registry,
 
 `runtime/js/ui/pet-chooser.js` is the authoritative Companion destination. It owns the responsive roster surface, semantic pet portrait presentation, locked/current state copy, cookie-feeding controls when outside a run, and the persistent top-right Done control. The pet registry, unlock/bond state, switching restrictions, saves, pet damage and combat bonuses remain authoritative in their existing runtime domains and are supplied through a narrow configuration contract. `dicebound.js` retains only a `renderPetCollection()` lifecycle forwarding adapter for legacy callers; the old chooser override chain, Camp-only duplicate chooser and mutation-observer art patch are removed.
 
+### Talent constellation presentation ownership
+
+`runtime/js/ui/talent-tree.js` is the authoritative Talent destination. It owns the full-screen constellation surface, authored node/connector geometry, responsive HUD and persistent top-right Done control, Fit Tree, cursor-focused wheel zoom and drag-to-pan behavior. The Talent registry, ranks, prerequisites, purchase rules, Prestige calculations, save state and gameplay effects remain in their existing progression/runtime owners and are supplied through a narrow configuration contract. `dicebound.js` retains only the documented `renderTalents()`, `openTalentTree()` and `closeTalentTree()` lifecycle adapters plus the domain purchase callback; the historical radial renderers, fixed-layout patches, zoom handlers and shared Talent CSS are removed.
+
 ## Build identity
 
 The exact shipped Beta 0.6 build identity is preserved under `docs/releases/beta-0.6/`.

@@ -45,6 +45,7 @@ powerups/borrowing.js
 ui/camp.js
 ui/class-chooser.js
 ui/pet-chooser.js
+ui/talent-tree.js
 dicebound.js
 ```
 
@@ -56,7 +57,7 @@ dicebound.js
 
 `core/memory-diagnostics.js` owns the bounded diagnostics time series, canonical export text and pure equivalent-state summaries. Its test-only live cycle adapter remains in the compatibility runtime because it deliberately exercises the final Camp/run/combat lifecycle; it uses one ordinary-enemy fixture per cycle, clears its temporary checkpoint, and reports evidence only rather than declaring a memory leak.
 
-`ui/camp.js` owns Camp scene presentation, desktop stage and mobile/grid fallback styling, final object anchors, Camp-object art, progression-object DOM lifecycle, responsive layout and painted-object hit targets. `ui/class-chooser.js` owns the Class roster/detail destination, semantic artwork, safe locked-class inspection, Random chooser state and persistent dismissal chrome. `ui/pet-chooser.js` owns the Companion roster destination, semantic pet art, locked/current state presentation, outside-run cookie controls and persistent Done chrome. These UI owners receive domain data/actions through injected contracts; none duplicates registry, unlock, save, RNG or combat policy. The monolith retains only documented thin lifecycle forwarding adapters, including `renderClassChoices()` and `renderPetCollection()`.
+`ui/camp.js` owns Camp scene presentation, desktop stage and mobile/grid fallback styling, final object anchors, Camp-object art, progression-object DOM lifecycle, responsive layout and painted-object hit targets. `ui/class-chooser.js` owns the Class roster/detail destination, semantic artwork, safe locked-class inspection, Random chooser state and persistent dismissal chrome. `ui/pet-chooser.js` owns the Companion roster destination, semantic pet art, locked/current state presentation, outside-run cookie controls and persistent Done chrome. `ui/talent-tree.js` owns the full-screen Talent constellation surface, its fixed node/connector layout, node rendering, pan/zoom, Fit Tree and persistent dismissal chrome. These UI owners receive domain data/actions through injected contracts; none duplicates registry, unlock, save, RNG or combat policy. The monolith retains only documented thin lifecycle forwarding adapters, including `renderClassChoices()`, `renderPetCollection()` and the Talent open/render/close adapters.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 
@@ -140,6 +141,8 @@ runtime/js/
 └─ ui/
    ├─ camp.js                 Camp presentation/layout/hit targets
    └─ class-chooser.js        Class roster/detail, Random and Done chrome
+   ├─ pet-chooser.js          Companion roster and Done chrome
+   └─ talent-tree.js          Talent constellation, pan/zoom and Done chrome
 ```
 
 The already-extracted platform/storage/save/RNG files may later move into subdirectories only if doing so provides value. Moving files merely to make the tree prettier is not a priority.
@@ -241,6 +244,7 @@ node tools/test_artifacts_module.js
 node tools/test_loot_module.js
 node tools/test_class_registry.js
 node tools/test_talent_registry.js
+node tools/test_talent_tree.js
 node tools/test_static_registries.js
 node tools/test_content_registries.js
 node tools/test_core_state.js
