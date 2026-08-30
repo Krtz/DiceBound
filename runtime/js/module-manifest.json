@@ -39,6 +39,7 @@
     "powerup-borrowing",
     "ui-camp",
     "ui-class-chooser",
+    "ui-pet-chooser",
     "dicebound-monolith"
   ],
   "modules": [
@@ -452,6 +453,20 @@
       ]
     },
     {
+      "id": "ui-pet-chooser",
+      "path": "js/ui/pet-chooser.js",
+      "domain": "ui/pet-chooser-presentation-and-persistent-dismissal-chrome",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "pets-registry",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundPetChooser"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -489,7 +504,8 @@
         "progression-class-unlock-feedback",
         "powerup-borrowing",
         "ui-camp",
-        "ui-class-chooser"
+        "ui-class-chooser",
+        "ui-pet-chooser"
       ],
       "provides": []
     }

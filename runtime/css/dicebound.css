@@ -642,7 +642,6 @@
   @keyframes echoSlash{0%{transform:translate(5px,-18px) scale(.45);opacity:.4}45%{opacity:1}100%{transform:translate(285px,18px) scale(1.55) rotate(-25deg);opacity:0}}
   @keyframes berserkerSmash{0%{transform:translate(0,-55px) rotate(-60deg) scale(.5)}55%{opacity:1}100%{transform:translate(275px,25px) rotate(70deg) scale(1.9);opacity:0}}
   @keyframes ultimateBerserker{0%{transform:translate(80px,-150px) scale(.3)}50%{opacity:1;filter:drop-shadow(0 0 40px #ff3b35)}100%{transform:translate(235px,15px) scale(2.8) rotate(220deg);opacity:0}}
-  .pet-collection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.pet-choice{border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:12px;background:#21304d;color:var(--ink);text-align:left;cursor:pointer}.pet-choice.active{border-color:var(--gold)}.pet-choice.locked{opacity:.5;cursor:not-allowed}.pet-choice b,.pet-choice span{display:block}.pet-choice span{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4}
   .dice-choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}.dice-choice-grid button{font-size:42px;padding:15px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:#263655;color:#fff;cursor:pointer}
   #diceChoiceOverlay{background:transparent;backdrop-filter:none;pointer-events:none;align-items:flex-end;justify-content:center;padding:18px}
   #diceChoiceOverlay .modal{pointer-events:auto;width:min(560px,calc(100vw - 28px));padding:18px;box-shadow:0 20px 70px rgba(0,0,0,.72);border-color:rgba(245,200,91,.4)}
@@ -654,7 +653,7 @@
   .memory-diagnostics-record{display:flex;align-items:center;gap:6px;padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.05);font-size:10px;font-weight:800;cursor:pointer}.memory-diagnostics-record input{accent-color:var(--gold)}
   .memory-diagnostics-status{margin:8px 0 0;color:var(--muted);font-size:10px}.memory-diagnostics-log{max-height:150px;overflow:auto;margin:8px 0 0;white-space:pre-wrap;font:9px/1.45 ui-monospace,Consolas,monospace;color:#b9d9fa}
   .mythic-set-box{margin:10px 0;padding:11px;border-radius:13px;background:linear-gradient(145deg,rgba(255,94,220,.12),rgba(101,220,255,.08));border:1px solid rgba(255,120,220,.32);font-size:11px;line-height:1.5}
-  @media(max-width:620px){.pet-collection-grid{grid-template-columns:1fr 1fr}.talent-viewport{height:64vh}.debug-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.talent-viewport{height:64vh}.debug-grid{grid-template-columns:1fr 1fr}}
 
 
   /* v12 combat, class and Nightmare refinements */
@@ -962,25 +961,6 @@ body[data-window-height="very-short"] .log{height:82px}
    Beta 0.3 — responsive short/wide HUD + camp/class/pet polish foundation
    ======================================================================== */
 
-/* Camp companion selection mirrors the class selector instead of opening a
-   modal. The modal remains intact for mid-run pet-changing classes. */
-#campPetPanel{scroll-margin-top:18px}
-.camp-pet-grid-beta021{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px;margin-top:12px;padding-bottom:20px}
-.camp-pet-choice-beta021{
-  min-height:150px;padding:14px;border-radius:17px;border:1px solid rgba(255,255,255,.09);
-  background:linear-gradient(180deg,#2a3859,#182239);color:var(--ink);text-align:left;cursor:pointer;
-  transition:transform .16s ease,filter .16s ease,border-color .16s ease;position:relative;
-}
-.camp-pet-choice-beta021:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
-.camp-pet-choice-beta021.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,200,91,.13),inset 0 0 28px rgba(245,200,91,.06)}
-.camp-pet-choice-beta021.locked{opacity:.48;filter:grayscale(.65);cursor:not-allowed}
-.camp-pet-choice-beta021 .pet-choice-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.camp-pet-choice-beta021 .pet-choice-icon{font-size:38px;line-height:1}
-.camp-pet-choice-beta021 .pet-choice-name{font-size:16px;font-weight:900}
-.camp-pet-choice-beta021 .pet-choice-desc{font-size:10px;line-height:1.45;color:var(--muted);font-weight:650}
-.camp-pet-choice-beta021 .pet-choice-stats{display:block;margin-top:9px;font-size:10px;color:#e8ddbc;font-weight:900;line-height:1.45}
-.camp-pet-summary-beta021{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px;color:var(--muted);font-size:11px}
-.camp-pet-summary-beta021 span{padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.07)}
 
 /* Short + landscape-ish desktop windows use the horizontal space instead of
    making the Adventurer/Equipment/Pet cards fight for vertical room. */
@@ -1131,8 +1111,6 @@ body[data-hud-flow="stacked"] .sidebar>.log-card{grid-column:1/-1}
   }
 }
 .slot-coin-art{width:1.08em;height:1.08em;object-fit:contain;vertical-align:-.14em;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
-.camp-pet-feed-beta021{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
-.camp-pet-feed-beta021 .small-btn{flex:1 1 150px}
 .sovereign-choice-modal{width:min(920px,calc(100vw - 28px))}
 .sovereign-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px;margin-top:14px}
 

@@ -44,6 +44,8 @@ assert.equal(typeof camp.clampShortViewportPositions,'function','Camp must keep 
 assert.equal(typeof camp.renderClassFigure,'function','Camp must own semantic selected-class figure rendering');
 assert.match(source,/db058-camp-class-fullbody/,'Camp selected class must use the approved full-body art class');
 assert.doesNotMatch(source,/renderClassPortrait/,'Camp must not use the portrait-card renderer');
+assert.equal(typeof camp.renderPetFigure,'function','Camp must own semantic selected-pet figure rendering');
+assert.match(source,/camp-pet-portrait/,'Camp selected Pet must use Camp-owned semantic art');
 
 const ids=[...camp.requiredSemanticIds()];
 for(const id of ['campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'])assert(ids.includes(id),`missing semantic Camp control ${id}`);
@@ -63,6 +65,7 @@ assert(!monolith.includes('const scene=document.createElement(\'div\');scene.id=
 assert(monolith.includes('function beta042EnsureCampOptions(){return window.DiceboundCamp?.ensureOptionsButton();}'),'the legacy Options caller must remain a thin Camp adapter');
 assert.doesNotMatch(monolith,/renderClassPortrait:\(element,classId\)=>applyClassPortrait/,'the Camp adapter must not retain the portrait-card art path');
 assert.doesNotMatch(monolith,/campClassIcon\.dataset\.portraitClass!==String\(selectedClassId/,'legacy Camp refresh must not repaint the Class figure as a portrait card');
+assert.doesNotMatch(monolith,/db059SetPetArt\(\$\('campPetIcon'\)/,'legacy Pet art must not repaint the Camp figure outside the Camp owner');
 assert(monolith.includes('window.DiceboundCamp?.refreshArt?.();'),'legacy Camp refresh must delegate Class art to the Camp owner');
 assert.doesNotMatch(monolith,/db0633CampObjectMarkup|db0633AttachCampObject|db0633BindCampObject/,'progression may decide reveals, but Camp must own the controls it creates');
 assert.doesNotMatch(monolith,/const v23CampRefresh=/,'the monolith must not reassert Camp scene dimensions after the stage owner refreshes');

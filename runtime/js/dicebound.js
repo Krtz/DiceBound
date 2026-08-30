@@ -994,9 +994,10 @@
     $("talentOverlay").classList.add("hidden");if(talentReturnOverlay&&$(talentReturnOverlay))$(talentReturnOverlay).classList.remove("hidden");talentReturnOverlay=null;
   }
 
-  function renderPetCollection(){
-    const grid=$("petCollectionGrid");grid.innerHTML="";Object.values(PETS).forEach(def=>{const state=meta.pets[def.id],progress=def.element?Math.min(PET_UNLOCK_REQUIREMENT,Math.floor(meta.elementProgress[def.element]||0)):PET_UNLOCK_REQUIREMENT,btn=document.createElement("button");btn.className=`pet-choice${meta.activePet===def.id?" active":""}${state.unlocked?"":" locked"}`;btn.disabled=!state.unlocked;btn.innerHTML=`<b>${def.icon} ${def.name}${meta.activePet===def.id?" · Active":""}</b><span>${def.desc}<br>${state.unlocked?`Level ${state.level} · ${1+Math.ceil(state.level*.8)} base damage · ${state.xp}/${state.xpNext} bond`:`Locked · ${progress}/${PET_UNLOCK_REQUIREMENT} ${ELEMENTS[def.element].name} damage or healing`}</span>`;if(state.unlocked)btn.addEventListener("click",()=>{meta.activePet=def.id;saveMeta();updateMetaUI();renderPetCollection();showToast(`${def.icon} ${def.name} selected`);});grid.appendChild(btn);});
-  }
+  // #206 / #209: Pet chooser DOM, portrait presentation and persistent Done
+  // chrome live in ui/pet-chooser.js. Historical lifecycle callers retain this
+  // one forwarding name while pet mechanics remain in this composition layer.
+  function renderPetCollection(){return window.DiceboundPetChooser?.render?.()||null;}
   function feedActivePet(count=1){const state=activePetState(),def=activePetDef(),actual=Math.min(count,meta.petCookies);if(actual<=0)return;meta.petCookies-=actual;state.xp+=actual*(1+player.cookieBondBonus);let levels=0;while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}saveMeta();checkDynamicClassUnlocks();levels?sfx.level():sfx.coin();showToast(levels?`${def.name} gained ${levels} level${levels===1?"":"s"}!`:`${def.name} ate ${actual} cookie${actual===1?"":"s"}`);updateMetaUI();}
 
   function renderRunBuffs(){
@@ -1624,8 +1625,6 @@
   $("wheelContinueBtn").addEventListener("click",()=>{$("wheelOverlay").classList.add("hidden");returnToRoad();});
   $("feedPetBtn").addEventListener("click",()=>feedActivePet(1));
   $("feedAllPetBtn").addEventListener("click",()=>feedActivePet(meta.petCookies));
-  $("petCollectionBtn").addEventListener("click",()=>{renderPetCollection();$("petCollectionOverlay").classList.remove("hidden");});
-  $("petCollectionClose").addEventListener("click",()=>$("petCollectionOverlay").classList.add("hidden"));
   $("debugTrigger").addEventListener("click",openDebugMenu);$("debugCloseBtn").addEventListener("click",()=>$("debugOverlay").classList.add("hidden"));$("debugGrid").addEventListener("click",e=>{const btn=e.target.closest("[data-debug]");if(btn)debugAction(btn.dataset.debug);});
   $("acceptMysticBtn").addEventListener("click",()=>{
     if(!currentMysticBuff)return;player.maxHp=Math.max(1,player.maxHp-10);player.hp=Math.min(player.hp,player.maxHp);const buff=currentMysticBuff;applyUpgrade(buff,"The Mystic");sfx.holy();addLog(`The Mystic takes <b>10 max HP</b>. You gain <b>${buff.name}</b> (Legendary).`);showToast(`Legendary: ${buff.name}`);clearMysticTile();
@@ -2804,7 +2803,6 @@
   function syncActivePetBonusV16(force=false){if(!gameStarted&&!force)return;const next=meta.activePet||"neutral",prev=player._activePetBonusId;if(prev===next&&!force)return;if(prev&&prev!=="neutral"&&PET_STAT_BONUSES[prev]){const b=PET_STAT_BONUSES[prev];b.remove(b.v);}player._activePetBonusId=next;if(next!=="neutral"&&PET_STAT_BONUSES[next]){const b=PET_STAT_BONUSES[next];b.apply(b.v);}}
   const petDamageV16Base=petDamage;petDamage=function(){return petDamageV16Base()+(meta.activePet&&meta.activePet!=="neutral"?2:0);};
   if(typeof trainerPetDamage==="function"){const trainerPetDamageV16Base=trainerPetDamage;trainerPetDamage=function(id){return trainerPetDamageV16Base(id)+(id&&id!=="neutral"?2:0);};}
-  const renderPetCollectionV16Base=renderPetCollection;renderPetCollection=function(){renderPetCollectionV16Base();const buttons=[...$("petCollectionGrid").querySelectorAll(".pet-choice")],defs=Object.values(PETS);buttons.forEach((btn,i)=>{const def=defs[i];if(!def)return;const span=btn.querySelector("span");if(span&&def.id!=="neutral"){const b=PET_STAT_BONUSES[def.id],extra=document.createElement("em");extra.className="pet-stat-boost";extra.textContent=`Bonus: +2 base pet damage${b?` · ${b.label}`:""}`;span.appendChild(extra);}if(!btn.disabled)btn.addEventListener("click",()=>setTimeout(()=>{syncActivePetBonusV16();updateHUD();},0));});};
 
   // ---- Powerup rerolls ------------------------------------------------------
   function attachPowerupRerollV16(grid,reroll){if(!grid)return;const b=document.createElement("button");b.className="powerup-reroll-btn";b.disabled=(player.powerupRerolls||0)<=0;b.textContent=`🔄 Reroll choices · ${player.powerupRerolls||0} remaining`;b.addEventListener("click",()=>{if((player.powerupRerolls||0)<=0)return;player.powerupRerolls--;sfx.roll();reroll();});grid.appendChild(b);}
@@ -2928,7 +2926,6 @@
   syncActivePetBonusV16=function(force=false){if(!gameStarted&&!force)return;const next=meta.activePet||"neutral",prev=player._activePetBonusId,prevScale=player._v17PetBonusScale||1;if(prev&&prev!=="neutral"&&PET_STAT_BONUSES[prev]){const b=PET_STAT_BONUSES[prev];if(prev==="donut"){player.maxHp=Math.max(1,player.maxHp-3*prevScale);player.hp=Math.min(player.hp,player.maxHp);player.potionPower-=.05*prevScale;}else b.remove(b.v*prevScale);}player._activePetBonusId=next;player._v17PetBonusScale=v17PetBonusScale(next);if(next!=="neutral"&&PET_STAT_BONUSES[next]){const b=PET_STAT_BONUSES[next],scale=player._v17PetBonusScale;if(next==="donut"){player.maxHp+=3*scale;player.hp+=3*scale;player.potionPower+=.05*scale;}else b.apply(b.v*scale);}};
   const petDamageV17Base=petDamage;petDamage=function(){const current=petDamageV17Base(),id=meta.activePet||"neutral";return current+(id!=="neutral"?(v17PetDamageExtra(id)-2):0);};
   if(typeof trainerPetDamage==="function"){const trainerPetDamageV17Base=trainerPetDamage;trainerPetDamage=function(id){return trainerPetDamageV17Base(id)+(id&&id!=="neutral"?Math.max(0,v17PetDamageExtra(id)-2):0);};}
-  const renderPetCollectionV17Base=renderPetCollection;renderPetCollection=function(){renderPetCollectionV17Base();const buttons=[...$("petCollectionGrid").querySelectorAll(".pet-choice")],defs=Object.values(PETS);buttons.forEach((btn,i)=>{const def=defs[i];if(!def||def.id==="neutral")return;btn.querySelectorAll(".pet-stat-boost").forEach(x=>x.remove());const span=btn.querySelector("span");if(span){const em=document.createElement("em");em.className="pet-stat-boost";em.textContent=v17PetBonusText(def.id);span.appendChild(em);}});};
 
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
   const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){resonantTalent.name="Resonant Carapace";resonantTalent.desc="Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.";resonantTalent.maxRank=3;}
@@ -3574,11 +3571,7 @@
   // Summoner and Pokémon Trainer already carry the `pet` tag in their definitions.
   CLASSES.beastmaster.tags=Array.from(new Set([...(CLASSES.beastmaster.tags||[]),"pet"]));
   function v19PetTaggedClass(){return classHasMechanic("pet");}
-  renderPetCollection=function(){
-    const grid=$("petCollectionGrid");grid.innerHTML="";Object.values(PETS).forEach(def=>{const state=meta.pets[def.id],progress=def.element?Math.min(PET_UNLOCK_REQUIREMENT,Math.floor(meta.elementProgress[def.element]||0)):PET_UNLOCK_REQUIREMENT,active=meta.activePet===def.id,canSwitch=!gameStarted||v19PetTaggedClass()||active,btn=document.createElement("button");btn.className=`pet-choice${active?" active":""}${state.unlocked?"":" locked"}`;btn.disabled=!state.unlocked||!canSwitch;const bonus=def.id==="neutral"?"No stat bonus":v17PetBonusText(def.id);btn.innerHTML=`<b>${def.icon} ${def.name}${active?" · Active":""}</b><span>${def.desc}<br>${state.unlocked?`Level ${state.level} · ${1+Math.ceil(state.level*.8)+(def.id!=="neutral"?v17PetDamageExtra(def.id):0)} base damage · ${state.xp}/${state.xpNext} bond<br><em class="pet-stat-boost">${bonus}</em>${gameStarted&&!v19PetTaggedClass()&&!active?"<br>Switching is locked until the run ends.":""}`:`Locked · ${progress}/${PET_UNLOCK_REQUIREMENT} ${ELEMENTS[def.element]?.name||"elemental"} damage or healing`}</span>`;
-      if(state.unlocked&&canSwitch&&!active)btn.addEventListener("click",()=>{meta.activePet=def.id;saveMeta();if(gameStarted)syncActivePetBonusV16();updateMetaUI();renderPetCollection();updateHUD();showToast(`${def.icon} ${def.name} selected`);});grid.appendChild(btn);
-    });
-  };
+  function v19CanSwitchPet(petId){return !gameStarted||v19PetTaggedClass()||meta.activePet===petId;}
 
   // ---- Paladin: healing stores Grace, Grace empowers Guard ----------------
   // This deliberately fuses Cleric's healing feedback loop with Fighter's
@@ -4125,9 +4118,6 @@
   function v22UpdateCamp(){return window.DiceboundCamp?.refresh();}
   function v22EnsureCompatStartBtn(){return window.DiceboundCamp?.ensureCompatStartButton();}
 
-
-  const renderPetCollectionV22Base=renderPetCollection;
-  renderPetCollection=function(){const result=renderPetCollectionV22Base();v22UpdateCamp();return result;};
   const updateMetaUIV22Base=updateMetaUI;
   updateMetaUI=function(){const result=updateMetaUIV22Base();v22UpdateCamp();return result;};
   const openStartScreenV22Base=openStartScreen;
@@ -4142,7 +4132,7 @@
       const randomClass=!!window.DiceboundClassChooser?.isRandomMode?.(),cls=randomClass?{id:'random',name:'Random',icon:'🎲'}:(CLASSES[selectedClassId]||CLASSES.ranger),pet=PETS[meta.activePet]||PETS.neutral,state=meta.pets?.[meta.activePet]||{level:1};
       return {
         classId:cls.id,className:cls.name,classIcon:cls.icon,
-        petIcon:pet.icon,petLine:`${pet.icon} ${pet.name} · Bond Lv ${state.level}`,
+        petId:pet.id,petName:pet.name,petIcon:pet.icon,petLine:`${pet.icon} ${pet.name} · Bond Lv ${state.level}`,
         summary:v22CampSummaryText(),
         prestigeSummary:`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
         heirloomHtml:v22CampHeirloomHtml(),
@@ -4159,7 +4149,7 @@
       openTalents:()=>openTalentTree('startOverlay'),
       openInfo:()=>openInfo(),
       openAchievements:()=>{renderAchievements();$('achievementOverlay')?.classList.remove('hidden');},
-      openPets:()=>{renderPetCollection();$('petCollectionOverlay')?.classList.remove('hidden');},
+      openPets:()=>window.DiceboundPetChooser?.open(),
       startRun:()=>startNewGame(),
       toggleNightmare:()=>{if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;renderClassChoices();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);},
       toggleHell:()=>{if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;renderClassChoices();showToast(`Hell ${hellMode?'enabled':'disabled'}`);},
@@ -4202,6 +4192,34 @@
     dismiss:()=>window.DiceboundCamp?.closePanels(),
     afterRender:()=>{v22EnsureCompatStartBtn();ensureHellToggle();v22UpdateCamp();}
   });
+  // #206 / #209: Pet mechanics stay in their existing progression/combat
+  // paths. This adapter supplies read-only state plus actions to the sole
+  // Pet chooser presentation owner.
+  const db064PetChooser=window.DiceboundPetChooser;
+  if(!db064PetChooser)throw new Error('DiceBound requires the Pet chooser UI module before dicebound.js');
+  db064PetChooser.configure({
+    find:$,
+    getState:()=>({
+      pets:Object.values(PETS),petStates:meta.pets||{},elementProgress:meta.elementProgress||{},
+      activePetId:meta.activePet,cookies:meta.petCookies||0,unlockRequirement:PET_UNLOCK_REQUIREMENT,
+      runActive:!!gameStarted
+    }),
+    canSwitch:id=>v19CanSwitchPet(id),
+    damageFor:(id,state)=>{
+      const petState=state.petStates?.[id]||{level:1};
+      return 1+Math.ceil((petState.level||1)*.8)+(id!=='neutral'?v17PetDamageExtra(id):0);
+    },
+    bonusFor:(id)=>id==='neutral'?'Neutral companion · no stat bonus':v17PetBonusText(id),
+    elementName:id=>ELEMENTS[id]?.name||'elemental',
+    resolvePetArt:id=>window.DiceboundAssets?.resolvePetArt?.(id),
+    selectPet:id=>{
+      if(!v19CanSwitchPet(id)||meta.activePet===id||!meta.pets?.[id]?.unlocked)return false;
+      const def=PETS[id]||PETS.neutral;meta.activePet=id;saveMeta();if(gameStarted)syncActivePetBonusV16();updateMetaUI();updateHUD();showToast(`${def.icon} ${def.name} selected`);return true;
+    },
+    feed:count=>feedActivePet(count),
+    afterRender:()=>{db059RefreshActivePetArt();v22UpdateCamp();}
+  });
+  renderPetCollection();
   setTimeout(()=>renderClassChoices(),0);
 
   // ----- Debug menu: class and pet unlocks are separate destructive cheats. --
@@ -5497,10 +5515,7 @@ function buildDiceboundHumanHarness235(){
   const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
 
   /* CAMPSITE PET COOKIE FEEDING ------------------------------------------- */
-  const feedActivePetV26Base=feedActivePet;feedActivePet=function(count=1){const old=player.cookieBondBonus;if(!gameStarted)player.cookieBondBonus=talentRank('companion_bond');try{return feedActivePetV26Base(count);}finally{if(!gameStarted)player.cookieBondBonus=old;renderPetCollection();v26RefreshCampPetFeed();}};
-  function v26RefreshCampPetFeed(){const box=$('campPetFeedV26');if(!box)return;const def=activePetDef(),st=activePetState();box.innerHTML=`<div><strong>${def.icon} ${def.name}</strong> · Level ${st.level} · ${st.xp}/${st.xpNext} bond · 🍪 ${meta.petCookies||0}</div><div class="camp-pet-feed-actions"><button class="small-btn" id="campFeedOneV26" ${(meta.petCookies||0)<=0?'disabled':''}>Feed 1 cookie</button><button class="small-btn" id="campFeedAllV26" ${(meta.petCookies||0)<=0?'disabled':''}>Feed all</button></div>`;$('campFeedOneV26')?.addEventListener('click',()=>feedActivePet(1));$('campFeedAllV26')?.addEventListener('click',()=>feedActivePet(meta.petCookies||0));}
-  function v26EnsureCampPetFeed(){const modal=$('petCollectionOverlay')?.querySelector('.modal');if(!modal)return;let box=$('campPetFeedV26');if(!box){box=document.createElement('div');box.id='campPetFeedV26';box.className='camp-heirloom-card camp-pet-feed-v26';const grid=$('petCollectionGrid');grid?.before(box);}box.style.display=gameStarted?'none':'block';v26RefreshCampPetFeed();}
-  const renderPetCollectionV26Base=renderPetCollection;renderPetCollection=function(){const r=renderPetCollectionV26Base();v26EnsureCampPetFeed();return r;};
+  const feedActivePetV26Base=feedActivePet;feedActivePet=function(count=1){const old=player.cookieBondBonus;if(!gameStarted)player.cookieBondBonus=talentRank('companion_bond');try{return feedActivePetV26Base(count);}finally{if(!gameStarted)player.cookieBondBonus=old;renderPetCollection();}};
 
   /* DEBUG MENU CLEANUP / DEATH SIMULATION / CURRENT ARTIFACT GEAR --------- */
   const v25EnsureDebugControlsV26Base=v25EnsureDebugControls;v25EnsureDebugControls=function(){v25EnsureDebugControlsV26Base();const grid=$('debugGrid');if(!grid)return;
@@ -5514,9 +5529,6 @@ function buildDiceboundHumanHarness235(){
   const debugActionV26Base=debugAction;debugAction=function(action){if(action==='kill_character_v26'){if(!gameStarted){showToast('Start a run first');return;}$('debugOverlay')?.classList.add('hidden');const damage=Math.max(1,Math.ceil(player.hp+player.maxHp));meta.damageTaken=(meta.damageTaken||0)+damage;player.hp=0;addLog('<b>Debug monster</b> deals lethal damage. Running the normal death/revive pipeline.');showToast('☠️ Debug monster attacks');handlePlayerDeath();updateHUD();return;}const artifactFns={mythic_weapon:generateMythicalWeapon,mythic_offhand:generateMythicalOffhand,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(artifactFns[action]){if(!gameStarted){showToast('Start a run first');return;}const item=artifactFns[action]();equipItem(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;}if(action==='mythic'){if(!gameStarted){showToast('Start a run first');return;}[generateMythicalWeapon,generateMythicalOffhand,generateMythicalBoots,generateMythicalPants,generateMythicalAmulet,generateMythicalHat,generateMythicalRing].forEach(fn=>equipItem(fn(),true));renderEquipment();updateHUD();showToast('Full current seven-piece Artifact set equipped');return;}return debugActionV26Base(action);};
   const refreshDebugButtonsV26Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV26Base();v25EnsureDebugControls();return r;};
 
-  /* Small UI styling ------------------------------------------------------- */
-  const v26Style=document.createElement('style');v26Style.textContent=`.camp-pet-feed-v26{margin:0 0 12px}.camp-pet-feed-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}`;document.head.appendChild(v26Style);
-
   /* Regression helpers ---------------------------------------------------- */
   window.DiceboundV26Test=Object.freeze({
     powerups:()=>['purse','scholar','scholar_common_v26','scholar_uncommon_v26','ward','heal','thorns','thorns_common_v26','ouro_venom_coil','venom_edge_rare_v25','legendary_packbreaker'].map(id=>{const u=v26Upgrade(id);return {id,rarity:u?.rarity,name:u?.name,desc:u?.desc};}),
@@ -5526,7 +5538,7 @@ function buildDiceboundHumanHarness235(){
     highLuckPoor:(n=5000)=>{const old=player.luck;player.luck=1.01;let poor=0;for(let i=0;i<n;i++)if(rollGearRarity()==='poor')poor++;player.luck=old;return {n,poor,rate:poor/n};},
     debugOrphans:()=>document.querySelectorAll('#debugGrid [data-v19-action]').length
   });
-  setTimeout(()=>{v26EnsurePoisonStat();v25EnsureDebugControls();v26EnsureCampPetFeed();updateHUD();renderTalents();},0);
+  setTimeout(()=>{v26EnsurePoisonStat();v25EnsureDebugControls();updateHUD();renderTalents();},0);
 
   /* ========================================================================
      Alpha v2.7 — rarity rewards, nightmare defenses, Ouroboros & UI polish
@@ -5557,7 +5569,7 @@ function buildDiceboundHumanHarness235(){
     while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}
     saveMeta();checkDynamicClassUnlocks();levels?sfx.level():sfx.coin();
     addLog(`${def.icon} ${def.name} ate <b>${actual}</b> cookie${actual===1?'':'s'}${levels?` and gained <b>${levels}</b> level${levels===1?'':'s'}`:''}.`);
-    updateMetaUI();renderPetCollection?.();v26RefreshCampPetFeed?.();
+    updateMetaUI();renderPetCollection?.();
   };
 
   /* LEGENDARY DESIGN: RARITY != UNIQUE ------------------------------------ */
@@ -6062,62 +6074,6 @@ function buildDiceboundHumanHarness235(){
      This file is intentionally last in the normal UI build order, so these
      listeners cannot be silently replaced by older popup-era camp handlers.
      ====================================================================== */
-  function dbBeta021CampPetPanel(){
-    const layer=document.getElementById('campPopupLayer');if(!layer)return null;
-    let panel=document.getElementById('campPetPanel');
-    if(!panel){
-      panel=document.createElement('div');panel.id='campPetPanel';panel.className='camp-panel';
-      panel.innerHTML='<div class="camp-panel-head"><h3>Choose your companion</h3><button class="small-btn camp-close-btn" data-beta021-close-pet>Done</button></div><div class="camp-note-line">Choose the companion for your next expedition. You can also spend cookies here between runs.</div><div class="camp-pet-summary-beta021" id="campPetSummaryBeta021"></div><div class="camp-pet-feed-beta021"><button class="small-btn" id="campFeedOneBeta021">🍪 Feed active pet · 1</button><button class="small-btn" id="campFeedAllBeta021">🍪 Feed all cookies</button></div><div class="camp-pet-grid-beta021" id="campPetGridBeta021"></div>';
-      layer.appendChild(panel);
-      panel.querySelector('[data-beta021-close-pet]')?.addEventListener('click',()=>panel.classList.remove('active'));
-      panel.querySelector('#campFeedOneBeta021')?.addEventListener('click',()=>{if((meta.petCookies||0)<=0)return;feedActivePet(1);dbBeta021RenderCampPets();v22UpdateCamp?.();});
-      panel.querySelector('#campFeedAllBeta021')?.addEventListener('click',()=>{const n=meta.petCookies||0;if(n<=0)return;feedActivePet(n);dbBeta021RenderCampPets();v22UpdateCamp?.();});
-    }
-    return panel;
-  }
-  function dbBeta021PetBonusText(def){
-    if(def.id==='neutral')return 'Neutral companion · no stat bonus';
-    if(typeof v17PetBonusText==='function')return v17PetBonusText(def.id);
-    return def.element&&ELEMENTS[def.element]?`${ELEMENTS[def.element].icon} ${ELEMENTS[def.element].name} companion`: 'Elemental companion';
-  }
-  function dbBeta021RenderCampPets(){
-    const panel=dbBeta021CampPetPanel(),grid=document.getElementById('campPetGridBeta021'),summary=document.getElementById('campPetSummaryBeta021');if(!panel||!grid)return;
-    const active=PETS[meta.activePet]||PETS.neutral,activeState=meta.pets?.[active.id]||{level:1,xp:0,xpNext:2};
-    if(summary)summary.innerHTML=`<span>${active.icon} ${active.name} active</span><span>Bond Lv ${activeState.level}</span><span>🍪 ${meta.petCookies||0} cookies</span>`;
-    const one=document.getElementById('campFeedOneBeta021'),all=document.getElementById('campFeedAllBeta021'),cookies=Math.max(0,meta.petCookies||0);
-    if(one){one.disabled=cookies<=0;one.textContent=`🍪 Feed ${active.name} · 1`;}
-    if(all){all.disabled=cookies<=0;all.textContent=`🍪 Feed all · ${cookies}`;}
-    grid.innerHTML='';
-    Object.values(PETS).forEach(def=>{
-      const state=meta.pets?.[def.id]||{unlocked:false,level:1,xp:0,xpNext:2},activeNow=meta.activePet===def.id;
-      const progress=def.element?Math.min(PET_UNLOCK_REQUIREMENT,Math.floor(meta.elementProgress?.[def.element]||0)):PET_UNLOCK_REQUIREMENT;
-      const damage=1+Math.ceil((state.level||1)*.8)+(def.id!=='neutral'&&typeof v17PetDamageExtra==='function'?v17PetDamageExtra(def.id):0);
-      const btn=document.createElement('button');btn.type='button';btn.className=`camp-pet-choice-beta021${activeNow?' active':''}${state.unlocked?'':' locked'}`;btn.disabled=!state.unlocked;
-      btn.innerHTML=`<div class="pet-choice-head"><span class="pet-choice-icon">${def.icon}</span><span class="pet-choice-name">${def.name}${activeNow?' · Active':''}</span></div><span class="pet-choice-desc">${def.desc}</span><span class="pet-choice-stats">${state.unlocked?`Bond Lv ${state.level} · ${damage} base damage · ${state.xp}/${state.xpNext} bond<br>${dbBeta021PetBonusText(def)}`:`Locked · ${progress}/${PET_UNLOCK_REQUIREMENT} ${ELEMENTS[def.element]?.name||'elemental'} damage or healing`}</span>`;
-      if(state.unlocked)btn.addEventListener('click',()=>{
-        meta.activePet=def.id;saveMeta();if(typeof syncActivePetBonusV16==='function')syncActivePetBonusV16();updateMetaUI();renderPetCollection();dbBeta021RenderCampPets();showToast(`${def.icon} ${def.name} selected`);
-      });
-      grid.appendChild(btn);
-    });
-  }
-  function dbBeta021OpenCampPets(){
-    const panel=dbBeta021CampPetPanel();if(!panel)return;
-    document.querySelectorAll('.camp-panel').forEach(p=>p.classList.remove('active'));dbBeta021RenderCampPets();panel.classList.add('active');
-    panel.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-
-  // Capture on document so this wins before the inherited popup-era button
-  // listeners on #campPetBtn. The ordinary petCollectionBtn is untouched.
-  document.addEventListener('click',e=>{
-    const pet=e.target?.closest?.('#campPetBtn');if(!pet)return;
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();dbBeta021OpenCampPets();
-  },true);
-
-  setTimeout(()=>{
-    document.querySelectorAll('#startOverlay .rule').forEach(el=>{if(/Systems guide/i.test(el.textContent||''))el.remove();});
-    const help=document.querySelector('#startOverlay .camp-help');if(help)help.textContent='Between expeditions. Choose who leaves camp, what they carry, and which terrible idea to enable next.';
-    dbBeta021CampPetPanel();dbBeta021RenderCampPets();dbBeta02Schedule();
-  },0);
 
 
   // Beta 0.2.1 regression hooks. Hidden from normal UI; these exercise the
@@ -6136,7 +6092,7 @@ function buildDiceboundHumanHarness235(){
       try{await rogueSteal();const after=Object.values(player.upgradeCounts||{}).reduce((n,v)=>n+(Number(v)||0),0);return {stolePowerup:after>before,before,after,gold:player.gold,potions:player.potions,luck:player.luck,powerChance:beta021RoguePowerStealChance(player.luck),rng:window.DiceboundRng?.snapshot?.(),stealRoll:player._beta021LastStealPower||null,text:$('combatText')?.textContent||''};}
       finally{resolveEnemyResponse=oldResponse;if(snap)window.DiceboundRng?.restore?.(snap);combatBusy=false;}
     },
-    ui(){return {systemGuide:[...document.querySelectorAll('#startOverlay .rule')].some(el=>/Systems guide/i.test(el.textContent||'')),petPanel:!!document.getElementById('campPetPanel'),classGrid:!!document.getElementById('classGrid')};}
+    ui(){return {systemGuide:[...document.querySelectorAll('#startOverlay .rule')].some(el=>/Systems guide/i.test(el.textContent||'')),petChooser:!!window.DiceboundPetChooser,classGrid:!!document.getElementById('classGrid')};}
   })});
   /* ========================================================================
      Beta 0.4 — native-wrapper game boundary + world-board presentation
@@ -7463,14 +7419,11 @@ function buildDiceboundHumanHarness235(){
     #combatPet .db059-pet-art{width:78px;height:78px;filter:drop-shadow(0 8px 8px rgba(0,0,0,.42))}
     #campPetIcon{width:96px!important;height:96px!important;font-size:0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}
     #campPetIcon .db059-pet-art{width:96px;height:96px}
-    .pet-choice .db059-pet-choice-art{display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 6px;filter:drop-shadow(0 5px 7px rgba(0,0,0,.34));pointer-events:none}
-    .camp-pet-choice-beta021 .db059-pet-choice-art{width:78px;height:78px;margin:0 auto 7px}
     .summoner-spirit-token .db059-pet-art{width:28px;height:28px}
 
     @media(max-width:999px){
       #combatPet{width:62px;height:62px}
       #combatPet .db059-pet-art{width:62px;height:62px}
-      .pet-choice .db059-pet-choice-art{width:64px;height:64px}
     }
     body[data-window-height="very-short"] #combatPet,
     body[data-window-height="very-short"] #combatPet .db059-pet-art{width:50px!important;height:50px!important}
@@ -7495,42 +7448,8 @@ function buildDiceboundHumanHarness235(){
     db059SetPetArt($('petAvatar'),def.id);
     db059SetPetArt($('combatPet'),def.id);
     const combat=$('combatPet');if(combat)combat.dataset.name=def.name;
-    db059SetPetArt($('campPetIcon'),def.id);
   }
-  function db059DecoratePetCollection(){
-    const grid=$('petCollectionGrid');if(!grid)return;
-    const defs=Object.values(PETS),buttons=[...grid.querySelectorAll('.pet-choice')];
-    buttons.forEach((btn,i)=>{
-      const def=defs[i];if(!def)return;
-      let img=btn.querySelector(':scope > img.db059-pet-choice-art');
-      if(!img){img=document.createElement('img');img.className='db059-pet-choice-art';btn.prepend(img);}
-      const entry=db059PetArtEntry(def.id);img.src=entry?.portrait||`assets/pets/portraits/${def.id}.png`;img.alt=def.name;img.draggable=false;
-    });
-  }
-  function db059DecorateCampPetPanel(){
-    document.querySelectorAll('.camp-pet-choice-beta021').forEach(btn=>{
-      const name=btn.querySelector('.pet-choice-name')?.textContent?.trim();
-      const def=Object.values(PETS).find(p=>p.name===name);if(!def)return;
-      let img=btn.querySelector(':scope > img.db059-pet-choice-art');
-      if(!img){img=document.createElement('img');img.className='db059-pet-choice-art';btn.prepend(img);}
-      const entry=db059PetArtEntry(def.id);img.src=entry?.portrait||`assets/pets/portraits/${def.id}.png`;img.alt=def.name;img.draggable=false;
-    });
-  }
-
-  let db059RefreshQueued=false;
-  function db059SchedulePetRefresh(){
-    if(db059RefreshQueued)return;db059RefreshQueued=true;
-    (window.requestAnimationFrame||setTimeout)(()=>{
-      db059RefreshQueued=false;
-      db059RefreshActivePetArt();
-      db059DecoratePetCollection();
-      db059DecorateCampPetPanel();
-    });
-  }
-  const db059Observer=(typeof MutationObserver==='function'&&document.body)?new MutationObserver(db059SchedulePetRefresh):null;
-  if(db059Observer)db059Observer.observe(document.body,{subtree:true,childList:true,characterData:true});
-  document.addEventListener('click',()=>setTimeout(db059SchedulePetRefresh,0),true);
-  setTimeout(db059SchedulePetRefresh,0);
+  setTimeout(db059RefreshActivePetArt,0);
   /* ========================================================================
      Beta 0.5.10 — campsite placement refinement + Arcane Lance scaling pass
      ======================================================================== */

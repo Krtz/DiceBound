@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.25
+
+### Pet chooser presentation ownership (#206, #209, #40)
+- Replaced the layered Companion picker, duplicate Camp panel and late mutation-observer art patch with the authoritative `ui/pet-chooser.js` destination.
+- The roster now uses semantic pet artwork, preserves locked/current state and outside-run cookie feeding, and keeps its Done control visible while scrolling or resizing a compact window.
+- Camp now owns the selected pet figure it presents. Pet unlocks, bonding, switching restrictions, combat bonuses, saves and RNG are unchanged.
+
 ## Beta 0.6.4.24
 
 ### Camp presentation authority cleanup (#185, #209, #40)

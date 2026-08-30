@@ -1,5 +1,15 @@
 # Unreleased — Beta 0.6.4.24
 
+## Beta 0.6.4.25 Companion chooser ownership (#206, #209, #40)
+
+- Companion selection now has one responsive roster destination with semantic pet art, clear locked/current state and cookie feeding outside active runs.
+- Done remains visible while the roster scrolls or the window changes size; the Camp scene owns its selected-pet presentation.
+- Pet progression, unlocks, switching rules, saves, combat bonuses and RNG are unchanged.
+
+---
+
+# Beta 0.6.4.24
+
 ## Camp stage ownership cleanup (#185, #209, #40)
 
 - The Campsite now has one authoritative 16:9 stage owner for final layout, authored Camp objects and painted-object hit targets.
