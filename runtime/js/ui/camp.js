@@ -209,7 +209,6 @@
       <div class="camp-popup-layer" id="campPopupLayer">
         <div class="camp-panel" id="campClassPanel"><div class="camp-panel-head"><h3>Classes</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div class="camp-note-line">Select a class for the next expedition. When you return to camp, the figure in the clearing updates to the new choice.</div><div id="campClassHost"></div></div>
         <div class="camp-panel" id="campChestPanel"><div class="camp-panel-head"><h3>Heirlooms &amp; Impossible Road</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div id="campHeirloomSummary"></div><div id="campChestSet"></div></div>
-        <div class="camp-panel" id="campMoonPanel"><div class="camp-panel-head"><h3>Prestige &amp; reset progress</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div class="camp-heirloom-card"><strong>Prestige summary</strong><br><span id="campPrestigeSummary"></span></div><div class="camp-moon-actions"><button class="small-btn" id="campOpenTalentPrestigeBtn">Open talent / Prestige screen</button><button class="small-btn danger" id="campResetProgressBtn">Reset all progress</button></div><div class="camp-note-line">Prestige still happens through the Talent screen, but the moon is now the obvious place to manage that meta-progression and to wipe the save if you really want to.</div></div>
       </div>`;
   }
 
@@ -221,7 +220,7 @@
   function wireScene(){
     wireClick('campClassBtn',()=>{action('showClassChoices');openPanel('campClassPanel');refresh();scrollPanel('campClassPanel');});
     wireClick('campChestBtn',()=>{openPanel('campChestPanel');action('renderEquipment');refresh();scrollPanel('campChestPanel');});
-    wireClick('campMoonBtn',()=>{openPanel('campMoonPanel');action('renderTalents');refresh();scrollPanel('campMoonPanel');});
+    wireClick('campMoonBtn',()=>action('openPrestigeMoon'));
     wireClick('campTalentBtn',()=>action('openTalents'));
     wireClick('campInfoBtn',()=>action('openInfo'));
     wireClick('campAchievementBtn',()=>action('openAchievements'));
@@ -229,8 +228,6 @@
     wireClick('campGoBtn',()=>{find('startOverlay')?.classList.add('hidden');closePanels();action('startRun');});
     wireClick('campNightmareBtn',()=>{action('toggleNightmare');refresh();});
     wireClick('campHellBtn',()=>{action('toggleHell');refresh();});
-    wireClick('campOpenTalentPrestigeBtn',()=>action('openTalents'));
-    wireClick('campResetProgressBtn',()=>action('resetProgress'));
     doc()?.querySelectorAll('[data-close-camp-panel]').forEach(button=>{
       if(button.dataset.dbCampWired==='1')return;
       button.dataset.dbCampWired='1';button.addEventListener('click',closePanels);
@@ -303,18 +300,6 @@
     wireScene();ensureOptionsButton();return scene;
   }
 
-  function movePrestigeControls(){
-    const moon=find('campMoonPanel');if(!moon)return;
-    let host=find('campPrestigeActions');
-    if(!host){host=doc()?.createElement('div');if(!host)return;host.id='campPrestigeActions';host.className='camp-prestige-actions';const note=moon.querySelector('.camp-note-line');if(note)note.before(host);else moon.appendChild(host);}
-    const box=find('talentOverlay')?.querySelector('.prestige-box'),prestige=find('prestigeBtn'),reset=find('resetMetaBtn');
-    if(box&&box.parentElement!==host)host.appendChild(box);
-    if(prestige&&prestige.parentElement!==host)host.appendChild(prestige);
-    if(reset&&reset.parentElement!==host)host.appendChild(reset);
-    find('campResetProgressBtn')?.remove();
-    const open=find('campOpenTalentPrestigeBtn');if(open)open.textContent='⭐ Open talents to allocate points';
-  }
-
   function setObjectArt(id,key,cls,alt,fallback){
     const button=find(id);if(!button)return;
     let frame=button.querySelector('.db058-camp-art-frame');
@@ -374,13 +359,12 @@
 
   function refresh(){
     const overlay=find('startOverlay');if(!overlay)return null;overlay.classList.add('camp-fullscreen');
-    const scene=ensure();if(!scene)return null;movePrestigeControls();
+    const scene=ensure();if(!scene)return null;
     const view=runtime.getViewModel?.()||{};
     syncProgressionReveals(view.reveals);
     const classSub=find('campClassSub');if(classSub)classSub.textContent=view.className?`${view.className} selected · click to change`:'Select class';
     const petLine=find('campPetLine');if(petLine)petLine.textContent=view.petLine||'';
     const legacy=find('campLegacyLine');if(legacy)legacy.textContent=view.summary||'';
-    const prestige=find('campPrestigeSummary');if(prestige)prestige.textContent=view.prestigeSummary||'';
     const heirloom=find('campHeirloomSummary');if(heirloom)heirloom.innerHTML=view.heirloomHtml||'';
     const set=find('campChestSet');if(set)set.innerHTML=view.setHtml||'';
     setMode('campNightmareBtn',view.nightmareUnlocked,view.nightmareMode,'Nightmare');
