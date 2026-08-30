@@ -64,7 +64,7 @@
     const disabled = node.cost === null || (!node.repeatable && purchased) || !node.affordable;
     const label = purchased && node.id === 'moon-forge' ? 'Moon Forge built' : node.label;
     const detail = purchased && node.id === 'moon-forge' ? 'The lunar smithy is ready for future Prestige crafting.' : node.detail;
-    return `<button type="button" class="prestige-moon-node ${escapeHtml(node.placement || '')}${purchased ? ' forge-built' : ''}" data-prestige-node="${escapeHtml(node.id)}" ${disabled ? 'disabled' : ''}><b>${escapeHtml(label)}</b><span>${escapeHtml(detail)}</span><em>${escapeHtml(purchased ? 'Purchased' : node.unavailableReason || costLabel)}</em></button>`;
+    return `<button type="button" class="prestige-moon-node ${escapeHtml(node.placement || '')}${purchased && node.id === 'moon-forge' ? ' forge-built' : ''}" data-prestige-node="${escapeHtml(node.id)}" ${disabled ? 'disabled' : ''}><b>${escapeHtml(label)}</b><span>${escapeHtml(detail)}</span><em>${escapeHtml(purchased ? 'Purchased' : node.unavailableReason || costLabel)}</em></button>`;
   }
 
   function render() {
@@ -74,7 +74,11 @@
     const prestige = state.prestige || {unspent: 0, heldSummary: 'Unavailable', permanentSummary: 'Unavailable', nodes: []};
     overlay.innerHTML = `<div class="prestige-moon-stars" aria-hidden="true"></div><section class="prestige-moon-scene"><button type="button" class="small-btn prestige-moon-back" data-prestige-back>Back to Camp</button><header class="prestige-moon-intro"><p class="prestige-moon-kicker">Account progression destination</p><h2 class="prestige-moon-title">Prestige Moon</h2><p class="prestige-moon-subtitle">Approach the lunar surface to convert Legacy progress into lasting account choices.</p></header><div class="prestige-moon-body"><div class="prestige-moon-orb"><button type="button" class="prestige-held-counter" data-prestige-held><span>Unspent Prestige Points</span><strong>${escapeHtml(prestige.unspent)}</strong><div class="prestige-held-tooltip"><b>Held Prestige bonus</b><br>Every unspent Prestige Point grants one deterministic stat point while it remains unspent.<br><br><b>Current held bonus:</b><br>${escapeHtml(prestige.heldSummary)}</div></button>${(prestige.nodes || []).map(nodeMarkup).join('')}<div class="prestige-moon-core"><b>Legacy conversion</b><p>${escapeHtml(state.prestigeDescription || 'Every 9 total Talent Points becomes one unspent Prestige Point.')}</p><button type="button" class="main-btn" data-prestige-action ${state.canPrestige ? '' : 'disabled'}>Prestige for ${state.prestigeOffer || 1} Point${state.prestigeOffer === 1 ? '' : 's'}</button><p>${escapeHtml(prestige.permanentSummary)}</p></div></div></div><button type="button" class="small-btn danger prestige-moon-refund" data-prestige-refund ${prestige.spent > 0 ? '' : 'disabled'}>Refund All</button><div class="prestige-moon-status">${escapeHtml(state.status || 'Moon Forge is intentionally cost-TBD until balance review.')} </div></section>`;
     overlay.querySelector('[data-prestige-back]')?.addEventListener('click', close);
-    overlay.querySelector('[data-prestige-action]')?.addEventListener('click', () => runtime.prestige?.());
+    overlay.querySelector('[data-prestige-action]')?.addEventListener('click', async () => {
+      if (busy) return;
+      busy = true;
+      try { await runtime.prestige?.(); } finally { busy = false; render(); }
+    });
     overlay.querySelector('[data-prestige-refund]')?.addEventListener('click', async () => {
       if (busy) return;
       busy = true;
@@ -102,7 +106,7 @@
     return overlay || null;
   }
   function configure(next = {}) { runtime = {...runtime, ...next}; return api; }
-  function inspect() { const overlay = find('prestigeMoonOverlay'); return Object.freeze({owner: overlay?.dataset.prestigeMoonOwner || null, open: !!overlay && !overlay.classList.contains('hidden'), hasBack: !!overlay?.querySelector?.('[data-prestige-back]')}); }
+  function inspect() { const overlay = find('prestigeMoonOverlay'); return Object.freeze({owner: overlay?.dataset.prestigeMoonOwner || null, open: !!overlay && !overlay.classList.contains('hidden'), hasBack: !!overlay?.querySelector?.('[data-prestige-back]'), hasHeldCounter: !!overlay?.querySelector?.('[data-prestige-held]'), nodeCount: overlay?.querySelectorAll?.('[data-prestige-node]').length || 0, hasRefund: !!overlay?.querySelector?.('[data-prestige-refund]')}); }
 
   const api = Object.freeze({owner: OWNER, configure, open, close, render, inspect});
   window.DiceboundPrestigeMoon = api;

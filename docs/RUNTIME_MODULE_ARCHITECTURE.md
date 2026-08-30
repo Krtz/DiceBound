@@ -35,6 +35,7 @@ combat/enemies.js
 items/rarities.js
 items/equipment.js
 progression/talents.js
+progression/prestige.js
 progression/achievements.js
 events/reward-policy.js
 events/merchant-transaction.js
@@ -46,6 +47,7 @@ ui/camp.js
 ui/class-chooser.js
 ui/pet-chooser.js
 ui/talent-tree.js
+ui/prestige-moon.js
 dicebound.js
 ```
 
@@ -57,7 +59,7 @@ dicebound.js
 
 `core/memory-diagnostics.js` owns the bounded diagnostics time series, canonical export text and pure equivalent-state summaries. Its test-only live cycle adapter remains in the compatibility runtime because it deliberately exercises the final Camp/run/combat lifecycle; it uses one ordinary-enemy fixture per cycle, clears its temporary checkpoint, and reports evidence only rather than declaring a memory leak.
 
-`ui/camp.js` owns Camp scene presentation, desktop stage and mobile/grid fallback styling, final object anchors, Camp-object art, progression-object DOM lifecycle, responsive layout and painted-object hit targets. `ui/class-chooser.js` owns the Class roster/detail destination, semantic artwork, safe locked-class inspection, Random chooser state and persistent dismissal chrome. `ui/pet-chooser.js` owns the Companion roster destination, semantic pet art, locked/current state presentation, outside-run cookie controls and persistent Done chrome. `ui/talent-tree.js` owns the full-screen Talent constellation surface, its fixed node/connector layout, node rendering, pan/zoom, Fit Tree and persistent dismissal chrome. These UI owners receive domain data/actions through injected contracts; none duplicates registry, unlock, save, RNG or combat policy. The monolith retains only documented thin lifecycle forwarding adapters, including `renderClassChoices()`, `renderPetCollection()` and the Talent open/render/close adapters.
+`progression/prestige.js` owns Prestige currency normalization, earned/spent/unspent accounting, the persisted random-stat purchase bundles, held-currency stat totals and free Refund All transaction. It is pure: the runtime retains reset eligibility/reset composition, persistence and the injected RNG source. `ui/camp.js` owns Camp scene presentation, desktop stage and mobile/grid fallback styling, final object anchors, Camp-object art, progression-object DOM lifecycle, responsive layout and painted-object hit targets. `ui/class-chooser.js` owns the Class roster/detail destination, semantic artwork, safe locked-class inspection, Random chooser state and persistent dismissal chrome. `ui/pet-chooser.js` owns the Companion roster destination, semantic pet art, locked/current state presentation, outside-run cookie controls and persistent Done chrome. `ui/talent-tree.js` owns the full-screen Talent constellation surface, its fixed node/connector layout, node rendering, pan/zoom, Fit Tree and persistent dismissal chrome. `ui/prestige-moon.js` owns the full-screen Moon destination, node presentation, held-bonus tooltip and persistent Back chrome. Its cost-TBD Moon Forge node is data-driven but unavailable until a balance value is approved. These UI owners receive domain data/actions through injected contracts; none duplicates registry, unlock, save, RNG or combat policy. The monolith retains only documented thin lifecycle forwarding adapters, including `renderClassChoices()`, `renderPetCollection()`, Talent open/render/close, and Camp -> Moon opening/reset composition.
 
 The machine-readable source of truth for this order is `runtime/js/module-manifest.json`. Run `python tools/validate_runtime_architecture.py` after changing runtime module ownership or script ordering.
 

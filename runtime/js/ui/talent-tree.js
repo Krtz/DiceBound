@@ -71,9 +71,9 @@
       #talentOverlay .talent-tree-node:not(:disabled):hover,#talentOverlay .talent-tree-node:focus-visible{transform:translate(-50%,-50%) scale(1.035);border-color:rgba(239,198,105,.72);box-shadow:0 10px 28px rgba(0,0,0,.50),0 0 18px rgba(224,178,78,.14)}
       #talentOverlay .talent-tree-node.bought{border-color:rgba(102,218,161,.58);background:linear-gradient(180deg,rgba(25,54,45,.97),rgba(10,28,25,.98));box-shadow:0 0 18px rgba(80,204,145,.12),inset 0 1px 0 rgba(154,255,211,.06)}#talentOverlay .talent-tree-node.partial{border-color:rgba(105,169,241,.54);background:linear-gradient(180deg,rgba(29,48,70,.97),rgba(13,26,42,.98))}#talentOverlay .talent-tree-node.locked{opacity:.42;filter:grayscale(.62) brightness(.72);cursor:not-allowed}#talentOverlay .talent-tree-node.root{border-color:rgba(244,201,101,.78);box-shadow:0 0 34px rgba(225,175,74,.17),inset 0 0 20px rgba(225,175,74,.04)}
       #talentOverlay .talent-tree-node-head{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:900}.talent-tree-node-cost{flex:0 0 auto;color:#edc86f;font-size:10px}.talent-tree-node-rank{width:max-content;padding:3px 5px;border:1px solid rgba(218,174,83,.11);border-radius:5px;background:rgba(218,174,83,.08);color:#d9c392;font-size:9px}.talent-tree-node-desc{color:#c7cde0;font-size:10px;line-height:1.35}.talent-tree-node-req{color:#f2c87d;font-size:9px;line-height:1.3}
-      #talentOverlay .talent-tree-footer{position:absolute;z-index:6;right:12px;bottom:12px;left:12px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;pointer-events:none}.talent-tree-prestige{max-width:min(710px,75%);padding:9px 12px;border:1px solid rgba(218,174,83,.22);border-radius:12px;background:rgba(14,12,17,.9);box-shadow:0 8px 28px rgba(0,0,0,.32);color:#d8d9df;font-size:10px;line-height:1.4;pointer-events:auto}.talent-tree-prestige b{color:#f2ce79}.talent-tree-prestige-stats{margin-top:3px;color:#bfc7db}.talent-tree-footer-actions{display:grid;gap:6px;justify-items:end;pointer-events:auto}.talent-tree-prestige-btn{pointer-events:auto}.talent-tree-reset{font-size:9px;color:#d7adbd!important}
-      @media(max-width:780px){#talentOverlay.talent-tree-overlay{padding:0}#talentOverlay .talent-tree-shell{border-width:0;border-radius:0}#talentOverlay .talent-tree-chrome{padding:12px 14px}#talentOverlay .talent-tree-subtitle{display:none}#talentOverlay .talent-tree-hud{top:8px;left:8px;right:8px;align-items:flex-start}.talent-tree-meta span:nth-child(n+4){display:none}.talent-tree-tools [data-talent-zoom-out],.talent-tree-tools [data-talent-zoom-in]{display:none}#talentOverlay .talent-tree-footer{right:8px;bottom:8px;left:8px}.talent-tree-prestige{max-width:72%;font-size:9px}.talent-tree-prestige-btn{padding:7px 9px!important;font-size:10px!important}}
-      @media(max-height:590px){#talentOverlay .talent-tree-chrome{padding-top:8px;padding-bottom:8px}#talentOverlay .talent-tree-title{font-size:17px}#talentOverlay .talent-tree-meta span:nth-child(n+3){display:none}.talent-tree-prestige{display:none}}
+      #talentOverlay .talent-tree-footer{position:absolute;z-index:6;right:12px;bottom:12px;left:12px;display:flex;justify-content:flex-end;pointer-events:none}.talent-tree-footer-actions{display:grid;gap:6px;justify-items:end;pointer-events:auto}.talent-tree-reset{font-size:9px;color:#d7adbd!important}
+      @media(max-width:780px){#talentOverlay.talent-tree-overlay{padding:0}#talentOverlay .talent-tree-shell{border-width:0;border-radius:0}#talentOverlay .talent-tree-chrome{padding:12px 14px}#talentOverlay .talent-tree-subtitle{display:none}#talentOverlay .talent-tree-hud{top:8px;left:8px;right:8px;align-items:flex-start}.talent-tree-meta span:nth-child(n+4){display:none}.talent-tree-tools [data-talent-zoom-out],.talent-tree-tools [data-talent-zoom-in]{display:none}#talentOverlay .talent-tree-footer{right:8px;bottom:8px;left:8px}}
+      @media(max-height:590px){#talentOverlay .talent-tree-chrome{padding-top:8px;padding-bottom:8px}#talentOverlay .talent-tree-title{font-size:17px}#talentOverlay .talent-tree-meta span:nth-child(n+3){display:none}}
     `;
     documentRef.head?.appendChild(style);
   }
@@ -91,12 +91,11 @@
     overlay.setAttribute('aria-label','Legacy Constellation');
     if(overlay.dataset.talentTreeSurface!=='1'){
       overlay.dataset.talentTreeSurface='1';
-      overlay.innerHTML=`<section class="talent-tree-shell"><header class="talent-tree-chrome"><div><span class="talent-tree-kicker">Legacy progression</span><h2 class="talent-tree-title">Legacy Constellation</h2><p class="talent-tree-subtitle">Chart the permanent paths between expeditions. Purchased nodes activate on your next expedition.</p></div><button type="button" class="small-btn talent-tree-done" data-talent-done>Done</button></header><div class="talent-tree-body"><div class="talent-tree-hud"><div class="talent-tree-meta" data-talent-meta></div><div class="talent-tree-tools"><button type="button" class="small-btn" data-talent-zoom-out aria-label="Zoom out">−</button><span class="talent-tree-zoom-label" data-talent-zoom-label>75%</span><button type="button" class="small-btn" data-talent-zoom-in aria-label="Zoom in">+</button><button type="button" class="small-btn" data-talent-fit>Fit tree</button></div></div><div class="talent-tree-viewport" data-talent-viewport><div class="talent-tree-world" data-talent-world><div class="talent-tree-canvas" data-talent-canvas></div></div></div><div class="talent-tree-footer"><div class="talent-tree-prestige" data-talent-prestige></div><div class="talent-tree-footer-actions"><button type="button" class="main-btn talent-tree-prestige-btn" data-talent-prestige-btn></button><button type="button" class="linklike talent-tree-reset" data-talent-reset>Reset permanent progress</button></div></div></div></section>`;
+      overlay.innerHTML=`<section class="talent-tree-shell"><header class="talent-tree-chrome"><div><span class="talent-tree-kicker">Legacy progression</span><h2 class="talent-tree-title">Legacy Constellation</h2><p class="talent-tree-subtitle">Chart the permanent paths between expeditions. Purchased nodes activate on your next expedition.</p></div><button type="button" class="small-btn talent-tree-done" data-talent-done>Done</button></header><div class="talent-tree-body"><div class="talent-tree-hud"><div class="talent-tree-meta" data-talent-meta></div><div class="talent-tree-tools"><button type="button" class="small-btn" data-talent-zoom-out aria-label="Zoom out">−</button><span class="talent-tree-zoom-label" data-talent-zoom-label>75%</span><button type="button" class="small-btn" data-talent-zoom-in aria-label="Zoom in">+</button><button type="button" class="small-btn" data-talent-fit>Fit tree</button></div></div><div class="talent-tree-viewport" data-talent-viewport><div class="talent-tree-world" data-talent-world><div class="talent-tree-canvas" data-talent-canvas></div></div></div><div class="talent-tree-footer"><div class="talent-tree-footer-actions"><button type="button" class="linklike talent-tree-reset" data-talent-reset>Reset permanent progress</button></div></div></div></section>`;
       overlay.querySelector('[data-talent-done]')?.addEventListener('click',close);
       overlay.querySelector('[data-talent-zoom-out]')?.addEventListener('click',()=>zoomAtCenter(-.12));
       overlay.querySelector('[data-talent-zoom-in]')?.addEventListener('click',()=>zoomAtCenter(.12));
       overlay.querySelector('[data-talent-fit]')?.addEventListener('click',fit);
-      overlay.querySelector('[data-talent-prestige-btn]')?.addEventListener('click',()=>runtime.prestige?.());
       overlay.querySelector('[data-talent-reset]')?.addEventListener('click',()=>runtime.resetProgress?.());
       bindViewport(overlay.querySelector('[data-talent-viewport]'));
     }
@@ -120,16 +119,9 @@
     const meta=overlay.querySelector('[data-talent-meta]');
     const state=runtime.getState?.()||{};
     if(meta){
-      const values=[['Legacy',state.level],['Points',state.points],['Runs',state.runs],['Pet',state.petLabel],['Heirlooms',state.heirlooms],['Prestige',state.prestige]];
+      const values=[['Legacy',state.level],['Points',state.points],['Runs',state.runs],['Pet',state.petLabel],['Heirlooms',state.heirlooms]];
       meta.innerHTML=values.map(([name,value])=>`<span>${escapeHtml(name)} <b>${escapeHtml(value??'—')}</b></span>`).join('');
     }
-    const allocated=Math.max(0,Number(runtime.allocated?.()||0));
-    const total=allocated+Math.max(0,Number(state.points)||0);
-    const rewards=Math.floor(total/9);
-    const prestige=overlay.querySelector('[data-talent-prestige]');
-    if(prestige)prestige.innerHTML=`<b>Prestige the tree</b><br>Every 9 total Talent Points becomes one permanent random stat point. Prestige resets Talent ranks and Legacy level, returns to class selection, and preserves the current Heirloom Storage rules.<div class="talent-tree-prestige-stats">${escapeHtml(runtime.prestigeSummary?.()||'No permanent Prestige stats yet.')} · ${allocated} allocated · 9 total points = 1 Prestige point.</div>`;
-    const prestigeButton=overlay.querySelector('[data-talent-prestige-btn]');
-    if(prestigeButton){prestigeButton.disabled=rewards<1;prestigeButton.textContent=rewards?`Prestige for ${rewards} point${rewards===1?'':'s'}`:'Need 9 total points';}
     const canvas=overlay.querySelector('[data-talent-canvas]');
     if(canvas){
       const ids=new Set(list.map(t=>t.id));
@@ -143,7 +135,7 @@
     }
     applyZoom();
     runtime.afterRender?.();
-    return Object.freeze({owner:OWNER,nodeCount:list.length,allocated,rewards,zoom});
+    return Object.freeze({owner:OWNER,nodeCount:list.length,zoom});
   }
 
   function purchase(id){

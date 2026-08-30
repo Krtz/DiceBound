@@ -90,10 +90,15 @@
     return stats;
   }
 
+  function permanentStats(prestige) {
+    const state = normalize(prestige), stats = blankStats();
+    addStats(stats, state);
+    addStats(stats, purchasedStats(state));
+    return stats;
+  }
+
   function statTotals(prestige) {
-    const state = normalize(prestige), totals = blankStats();
-    addStats(totals, state);
-    addStats(totals, purchasedStats(state));
+    const state = normalize(prestige), totals = permanentStats(state);
     addStats(totals, heldStats(state));
     return totals;
   }
@@ -107,7 +112,7 @@
   }
 
   function inspect(prestige) {
-    const state = normalize(prestige), held = heldStats(state), purchased = purchasedStats(state), totals = statTotals(state);
+    const state = normalize(prestige), held = heldStats(state), purchased = purchasedStats(state), permanent = permanentStats(state), totals = statTotals(state);
     const purchasedNodes = state.moon.purchases.map(purchase => purchase.nodeId);
     return Object.freeze({
       owner: OWNER,
@@ -118,7 +123,8 @@
       purchased: Object.freeze(purchased),
       totals: Object.freeze(totals),
       heldSummary: formatStats(held) || 'No held Prestige Point bonus yet.',
-      permanentSummary: formatStats({...state, ...purchased}) || 'No permanent Prestige stats yet.',
+      permanent: Object.freeze(permanent),
+      permanentSummary: formatStats(permanent) || 'No permanent Prestige stats yet.',
       purchasedNodes: Object.freeze(purchasedNodes),
       nodes: Object.freeze(NODES.map(node => ({...node, purchased: purchasedNodes.includes(node.id), affordable: node.cost !== null && unspent(state) >= node.cost})))
     });
@@ -168,6 +174,7 @@
     statTotals,
     heldStats,
     purchasedStats,
+    permanentStats,
     formatStats,
     award,
     purchase,

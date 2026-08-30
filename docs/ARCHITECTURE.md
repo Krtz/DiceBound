@@ -89,6 +89,10 @@ The audit syntax-checks the core JavaScript, loads/evaluates the asset registry,
 
 `runtime/js/ui/talent-tree.js` is the authoritative Talent destination. It owns the full-screen constellation surface, authored node/connector geometry, responsive HUD and persistent top-right Done control, Fit Tree, cursor-focused wheel zoom and drag-to-pan behavior. The Talent registry, ranks, prerequisites, purchase rules, Prestige calculations, save state and gameplay effects remain in their existing progression/runtime owners and are supplied through a narrow configuration contract. `dicebound.js` retains only the documented `renderTalents()`, `openTalentTree()` and `closeTalentTree()` lifecycle adapters plus the domain purchase callback; the historical radial renderers, fixed-layout patches, zoom handlers and shared Talent CSS are removed.
 
+### Prestige Moon ownership
+
+`runtime/js/progression/prestige.js` is the authoritative non-UI owner for Prestige currency normalization, earned/spent/unspent accounting, persisted five-random-stat bundles, derived held-currency bonuses, permanent totals and the free Refund All transaction. `runtime/js/ui/prestige-moon.js` is the authoritative full-screen Moon presentation owner: it renders the lunar destination, the live held-bonus tooltip, data-driven upgrade nodes and persistent top-right Back chrome. The compatibility monolith retains only a Camp-opening lifecycle adapter plus the existing reset composition callback, persistence and injected RNG source. The Moon Forge is deliberately represented as a semantic cost-TBD node until a real balance value is approved; no hidden magic cost exists in UI code.
+
 ## Build identity
 
 The exact shipped Beta 0.6 build identity is preserved under `docs/releases/beta-0.6/`.
