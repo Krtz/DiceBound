@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.4.25</title>
+<title>Dicebound: Beta v0.6.4.26</title>
 <link rel="stylesheet" href="css/dicebound.css">
 <style id="db-boot-gate">
   html.db-booting body{background:#050912}
@@ -19,8 +19,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.4.25</h1>
-        <p>Beta v0.6.4.25 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
+        <h1>Dicebound: Beta v0.6.4.26</h1>
+        <p>Beta v0.6.4.26 · resumable active runs use deterministic safe-state checkpoints and backup recovery.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -276,28 +276,7 @@
   </div>
 </div>
 
-<div class="overlay hidden" id="talentOverlay">
-  <div class="modal wide talent-modal">
-    <h2>✦ Legacy Constellation</h2>
-    <p class="subtitle">Chart a path through the Legacy Constellation. <b>Talent points bought during a run are queued and activate when the next run begins.</b></p>
-    <div class="talent-summary">
-      <div class="stat"><span>Legacy level</span><strong id="metaLevel">1</strong></div>
-      <div class="stat"><span>Legacy XP</span><strong id="metaXp">0 / 20</strong></div>
-      <div class="stat"><span>Points</span><strong id="metaPoints">0</strong></div>
-      <div class="stat"><span>Runs</span><strong id="metaRuns">0</strong></div>
-      <div class="stat"><span>Pet</span><strong id="metaPet">Lv 1</strong></div>
-      <div class="stat"><span>Heirlooms</span><strong id="metaHeirlooms">0 / 1</strong></div>
-      <div class="stat"><span>Prestige</span><strong id="metaPrestige">0</strong></div>
-    </div>
-    <div class="talent-tools"><button class="small-btn" id="talentZoomOut">➖</button><span id="talentZoomLabel">75%</span><button class="small-btn" id="talentZoomIn">➕</button><button class="small-btn" id="talentZoomReset">Center</button></div>
-    <div class="talent-viewport" id="talentViewport"><div class="talent-canvas" id="talentGrid"></div></div>
-    <div class="prestige-box"><strong>Prestige the tree</strong><br>Every 9 total talent points becomes one permanent random stat point. Prestige resets the tree and Legacy level to 1. Prestige ends the current run and returns to class selection. Choose one surviving heirloom, or two after reaching 20 Prestige points.<div class="prestige-stats" id="prestigeStats">No permanent Prestige stats yet.</div></div>
-    <button class="main-btn" id="prestigeBtn">♻️ Prestige talent tree</button>
-    <p class="talent-note"><b>New talent ranks activate on your next run.</b> Progress is stored locally in this browser. Moving or renaming the HTML file may create a separate save in some browsers.</p>
-    <button class="small-btn" id="talentCloseBtn" style="width:100%;margin-top:10px">Close talent tree</button>
-    <button class="linklike" id="resetMetaBtn" style="display:block;margin:12px auto 0">Reset permanent progress</button>
-  </div>
-</div>
+<div class="overlay hidden" id="talentOverlay" aria-hidden="true"></div>
 
 <div class="overlay hidden" id="prestigeHeirloomOverlay">
   <div class="modal">
@@ -477,6 +456,7 @@
 <script src="js/ui/camp.js"></script>
 <script src="js/ui/class-chooser.js"></script>
 <script src="js/ui/pet-chooser.js"></script>
+<script src="js/ui/talent-tree.js"></script>
 <script src="js/dicebound.js"></script>
 <script id="db-boot-reveal">document.documentElement.classList.remove("db-booting");</script>
 </body>

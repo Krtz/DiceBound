@@ -40,6 +40,7 @@
     "ui-camp",
     "ui-class-chooser",
     "ui-pet-chooser",
+    "ui-talent-tree",
     "dicebound-monolith"
   ],
   "modules": [
@@ -467,6 +468,19 @@
       ]
     },
     {
+      "id": "ui-talent-tree",
+      "path": "js/ui/talent-tree.js",
+      "domain": "ui/talent-constellation-presentation-pan-zoom-and-persistent-dismissal-chrome",
+      "status": "extracted",
+      "requires": [
+        "progression-talents",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundTalentTree"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -505,7 +519,8 @@
         "powerup-borrowing",
         "ui-camp",
         "ui-class-chooser",
-        "ui-pet-chooser"
+        "ui-pet-chooser",
+        "ui-talent-tree"
       ],
       "provides": []
     }

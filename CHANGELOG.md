@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.26
+
+### Talent constellation presentation ownership (#186, #198, #209, #40)
+- Replaced the historical Talent modal renderer, fixed-layout override chain, wheel handlers and shared CSS with the authoritative `ui/talent-tree.js` full-screen constellation destination.
+- The destination keeps a persistent top-right Done control, pointer drag-to-pan, cursor-focused wheel zoom, Fit Tree and responsive wide/compact/short-wide behavior. Its geometry audit and Edge/native smoke assertions guard the node/connector layout and prevent legacy presentation ownership from returning.
+- Talent mechanics, prerequisites, points/costs, Prestige calculation, saves, checkpoints and RNG remain unchanged. A discovered historical Prestige survivor-dialog ID mismatch was corrected while preserving existing survivor semantics.
+
 ## Beta 0.6.4.25
 
 ### Pet chooser presentation ownership (#206, #209, #40)

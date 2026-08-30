@@ -1,3 +1,13 @@
+# Unreleased — Beta 0.6.4.26
+
+## Beta 0.6.4.26 Talent constellation ownership and full-screen atlas (#186, #198, #209, #40)
+
+- Talents now open in a dedicated full-screen constellation destination with a persistent top-right Done control.
+- The atlas supports drag-to-pan, cursor-focused mouse-wheel zoom, Fit Tree, overview and close-inspection scales, and compact/short-wide layouts.
+- Talent definitions, prerequisites, ranks, costs, Prestige, saves and gameplay effects are unchanged; the historical renderer/zoom/style patch chain is removed.
+
+---
+
 # Unreleased — Beta 0.6.4.24
 
 ## Beta 0.6.4.25 Companion chooser ownership (#206, #209, #40)
