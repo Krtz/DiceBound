@@ -1,15 +1,15 @@
 {
   "assetCount": 372,
-  "browserContentHash": "e8304f0809cfa9462ead6736ac76b078e9ad936111ecb7d249fc0c5b2dae092b",
-  "buildId": "dicebound-0.6.4.24-dev-e8304f0809cfa946",
+  "browserContentHash": "e082697cdbbd48668be90a8646230073ca5ea0050544d6dacc9817b29c041d9b",
+  "buildId": "dicebound-0.6.4.25-dev-e082697cdbbd4866",
   "channel": "Beta",
-  "contentFileCount": 412,
+  "contentFileCount": 413,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.4.24.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.4.25.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -48,12 +48,13 @@
     "js/powerups/borrowing.js",
     "js/ui/camp.js",
     "js/ui/class-chooser.js",
+    "js/ui/pet-chooser.js",
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "e8304f0809cfa9462ead6736ac76b078e9ad936111ecb7d249fc0c5b2dae092b",
+  "sourceHash": "e082697cdbbd48668be90a8646230073ca5ea0050544d6dacc9817b29c041d9b",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.4.24",
+  "version": "0.6.4.25",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

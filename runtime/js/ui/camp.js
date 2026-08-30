@@ -152,10 +152,10 @@
     #startOverlay.camp-fullscreen #campChestBtn .camp-icon{min-height:102px!important;display:flex!important;align-items:center!important;justify-content:center!important}
     #startOverlay.camp-fullscreen #campChestBtn .db-art-camp{width:112px!important;height:112px!important;max-width:112px!important;max-height:112px!important;object-fit:contain!important}
     #startOverlay.camp-fullscreen #campPetIcon{width:96px!important;height:96px!important;font-size:0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}
-    #startOverlay.camp-fullscreen #campPetIcon .db059-pet-art{width:96px;height:96px}
+    #startOverlay.camp-fullscreen #campPetIcon .camp-pet-portrait{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 5px 7px rgba(0,0,0,.34));pointer-events:none;user-select:none}
     #startOverlay.camp-fullscreen #campPetBtn .camp-label,#startOverlay.camp-fullscreen #campPetBtn .camp-sub,#startOverlay.camp-fullscreen #campClassBtn .camp-label,#startOverlay.camp-fullscreen #campClassBtn .camp-sub,#startOverlay.camp-fullscreen #campMoonBtn .camp-label,#startOverlay.camp-fullscreen #campMoonBtn .camp-sub,#startOverlay.camp-fullscreen #campAchievementBtn .camp-label,#startOverlay.camp-fullscreen #campAchievementBtn .camp-sub,#startOverlay.camp-fullscreen #campOptionsBtn .camp-label,#startOverlay.camp-fullscreen #campOptionsBtn .camp-sub,#startOverlay.camp-fullscreen #campNightmareBtn .camp-label,#startOverlay.camp-fullscreen #campNightmareBtn .camp-sub,#startOverlay.camp-fullscreen #campTalentBtn .camp-label,#startOverlay.camp-fullscreen #campInfoBtn .camp-label{ text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 3px 8px rgba(0,0,0,.95)!important}
     #startOverlay.camp-fullscreen #campTalentBtn .camp-sub,#startOverlay.camp-fullscreen #campInfoBtn .camp-sub{color:#d9e2f3!important;text-shadow:0 2px 5px rgba(0,0,0,.95)!important}
-    @media(max-width:999px){#startOverlay.camp-fullscreen #campClassIcon{width:155px!important;height:185px!important}#startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:130px;height:190px}#startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art-frame{width:110px;height:110px}#startOverlay.camp-fullscreen #campAchievementBtn .db058-camp-art-frame{width:130px;height:110px}#startOverlay.camp-fullscreen #campPetIcon,#startOverlay.camp-fullscreen #campPetIcon .db059-pet-art{width:72px!important;height:72px!important}}
+    @media(max-width:999px){#startOverlay.camp-fullscreen #campClassIcon{width:155px!important;height:185px!important}#startOverlay.camp-fullscreen #campNightmareBtn .db058-camp-art-frame{width:130px;height:190px}#startOverlay.camp-fullscreen #campMoonBtn .db058-camp-art-frame{width:110px;height:110px}#startOverlay.camp-fullscreen #campAchievementBtn .db058-camp-art-frame{width:130px;height:110px}#startOverlay.camp-fullscreen #campPetIcon,#startOverlay.camp-fullscreen #campPetIcon .camp-pet-portrait{width:72px!important;height:72px!important}}
     #campScene .camp-spot,#campScene .camp-bonfire{transition:scale .14s ease,filter .14s ease!important;transform-origin:center!important}
     #campScene .camp-spot:not(:disabled):hover,#campScene .camp-spot:not(:disabled):focus-visible,#campScene .camp-bonfire:hover{scale:1.035;filter:brightness(1.09) drop-shadow(0 0 11px rgba(255,218,142,.34)) drop-shadow(0 0 22px rgba(123,190,255,.16))}
     #campScene .camp-spot:not(:disabled):hover .camp-spot-title,#campScene .camp-spot:not(:disabled):focus-visible .camp-spot-title{color:#fff4ce!important;text-shadow:0 0 8px rgba(255,218,142,.45)!important}
@@ -347,6 +347,19 @@
     icon.replaceChildren(image);icon.dataset.campFullbodyClass=String(view.classId);
   }
 
+  function renderPetFigure(icon,view){
+    if(!icon)return;
+    const petId=view.petId||'neutral',art=root.DiceboundAssets?.resolvePetArt?.(petId),src=art?.portrait||art?.image;
+    if(!src){icon.textContent=view.petIcon||'🐾';return;}
+    const existing=icon.querySelector('img.camp-pet-portrait');
+    if(existing?.getAttribute('src')===src&&icon.dataset.campPetId===String(petId))return;
+    const image=doc()?.createElement('img');
+    if(!image){icon.textContent=view.petIcon||'🐾';return;}
+    image.className='camp-pet-portrait';image.src=src;image.alt=art?.alt||view.petName||String(petId);image.draggable=false;
+    image.onerror=()=>{image.remove();icon.textContent=view.petIcon||'🐾';};
+    icon.replaceChildren(image);icon.dataset.campPetId=String(petId);
+  }
+
   function refreshArt(view=runtime.getViewModel?.()||{}){
     if(!find('campScene'))return;
     setObjectArt('campMoonBtn','prestigeMoon','db058-prestige-moon','Prestige moon','assets/camp/objects/prestige-moon.png');
@@ -356,6 +369,7 @@
     find('campChestBtn')?.classList.add('camp-chest-bare');
     setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/objects/nightmare-on.png':'assets/camp/objects/nightmare-off.png');
     renderClassFigure(find('campClassIcon'),view);
+    renderPetFigure(find('campPetIcon'),view);
   }
 
   function refresh(){
@@ -364,7 +378,6 @@
     const view=runtime.getViewModel?.()||{};
     syncProgressionReveals(view.reveals);
     const classSub=find('campClassSub');if(classSub)classSub.textContent=view.className?`${view.className} selected · click to change`:'Select class';
-    const petIcon=find('campPetIcon');if(petIcon&&view.petIcon)petIcon.textContent=view.petIcon;
     const petLine=find('campPetLine');if(petLine)petLine.textContent=view.petLine||'';
     const legacy=find('campLegacyLine');if(legacy)legacy.textContent=view.summary||'';
     const prestige=find('campPrestigeSummary');if(prestige)prestige.textContent=view.prestigeSummary||'';
@@ -502,7 +515,7 @@
   }
 
   const api=Object.freeze({
-    configure,ensure,refresh,refreshArt,renderClassFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
+    configure,ensure,refresh,refreshArt,renderClassFigure,renderPetFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
     layoutForViewport,layouts:CAMP_LAYOUTS,stageAnchors:CAMP_STAGE_ANCHORS,stageFrame,syncHitTargets,scheduleHitTargetSync,applyStageLayout,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,
     syncProgressionReveals,progressionRevealObjectIds:()=>CAMP_PROGRESSIVE_OBJECTS.map(entry=>entry.id),
     requiredSemanticIds:()=>[...CAMP_OBJECT_IDS]

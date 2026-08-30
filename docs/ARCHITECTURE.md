@@ -81,6 +81,10 @@ The audit syntax-checks the core JavaScript, loads/evaluates the asset registry,
 
 `runtime/js/ui/class-chooser.js` is the authoritative Class destination opened from Camp. It owns roster/detail rendering, locked-but-safe inspection, semantic class artwork, Random selection state and the persistent top-right Done control. The canonical class registry, unlock policy, selected-class persistence and RNG remain in their existing domain owners and are supplied through a narrow configuration contract. `dicebound.js` retains only the `renderClassChoices()` lifecycle forwarding adapter for existing start/unlock/prestige callers plus the `startNewGame()` composition hook that asks the chooser to resolve Random exactly once; it no longer owns a Class grid, card styling or historical chooser wrapper chain.
 
+### Pet chooser presentation ownership
+
+`runtime/js/ui/pet-chooser.js` is the authoritative Companion destination. It owns the responsive roster surface, semantic pet portrait presentation, locked/current state copy, cookie-feeding controls when outside a run, and the persistent top-right Done control. The pet registry, unlock/bond state, switching restrictions, saves, pet damage and combat bonuses remain authoritative in their existing runtime domains and are supplied through a narrow configuration contract. `dicebound.js` retains only a `renderPetCollection()` lifecycle forwarding adapter for legacy callers; the old chooser override chain, Camp-only duplicate chooser and mutation-observer art patch are removed.
+
 ## Build identity
 
 The exact shipped Beta 0.6 build identity is preserved under `docs/releases/beta-0.6/`.

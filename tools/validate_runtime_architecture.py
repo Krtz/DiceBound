@@ -266,6 +266,63 @@ def main() -> int:
                 "retired Class chooser style remains in runtime/css/dicebound.css: "
                 + retired_chooser_style
             )
+    pet_chooser_module = by_id.get("ui-pet-chooser")
+    pet_chooser_owner_ok = False
+    if not pet_chooser_module:
+        errors.append("Pet chooser presentation owner ui-pet-chooser is missing from the runtime manifest")
+    else:
+        pet_chooser_owner_ok = (
+            pet_chooser_module.get("path") == "js/ui/pet-chooser.js"
+            and {"assets", "pets-registry", "ui-camp"}.issubset(set(pet_chooser_module.get("requires") or []))
+            and "DiceboundPetChooser" in (pet_chooser_module.get("provides") or [])
+            and position.get("ui-pet-chooser", -1) < position.get(str(monolith_id), -1)
+        )
+        if not pet_chooser_owner_ok:
+            errors.append(
+                "ui-pet-chooser must provide DiceboundPetChooser, require its pet/Camp dependencies, "
+                "and load before the monolith"
+            )
+    pet_chooser_source = sources.get("ui-pet-chooser", "")
+    for required_pet_chooser_behavior in [
+        "resolvePetArt",
+        "data-pet-chooser-done",
+        "pet-chooser-chrome",
+        "function viewModel(",
+    ]:
+        if required_pet_chooser_behavior not in pet_chooser_source:
+            errors.append(
+                "Pet chooser owner is missing required presentation behavior: "
+                + required_pet_chooser_behavior
+            )
+    if monolith_source:
+        expected_pet_adapter = "function renderPetCollection(){return window.DiceboundPetChooser?.render?.()||null;}"
+        if expected_pet_adapter not in monolith_source:
+            errors.append("dicebound.js must retain only the thin Pet chooser lifecycle adapter")
+        for retired_pet_chooser_layer in [
+            "renderPetCollection=function",
+            "renderPetCollectionV",
+            "petCollectionGrid",
+            "petCollectionClose",
+            "campPetPanel",
+            "dbBeta021RenderCampPets",
+            "db059DecoratePetCollection",
+            "db059Observer",
+        ]:
+            if retired_pet_chooser_layer in monolith_source:
+                errors.append(
+                    "retired Pet chooser implementation/wrapper remains in dicebound.js: "
+                    + retired_pet_chooser_layer
+                )
+    for retired_pet_chooser_style in [
+        ".pet-collection-grid{",
+        ".camp-pet-choice-beta021{",
+        ".camp-pet-feed-beta021{",
+    ]:
+        if retired_pet_chooser_style in stylesheet_source:
+            errors.append(
+                "retired Pet chooser style remains in runtime/css/dicebound.css: "
+                + retired_pet_chooser_style
+            )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -310,6 +367,10 @@ def main() -> int:
         "classChooserOwner": {
             "id": "ui-class-chooser",
             "configured": chooser_owner_ok,
+        },
+        "petChooserOwner": {
+            "id": "ui-pet-chooser",
+            "configured": pet_chooser_owner_ok,
         },
         "monolith": {
             "id": monolith_id,
