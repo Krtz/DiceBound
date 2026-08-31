@@ -43,6 +43,7 @@
     "ui-pet-chooser",
     "ui-talent-tree",
     "ui-prestige-moon",
+    "ui-achievements",
     "dicebound-monolith"
   ],
   "modules": [
@@ -508,6 +509,19 @@
       ]
     },
     {
+      "id": "ui-achievements",
+      "path": "js/ui/achievements.js",
+      "domain": "ui/achievements-trophy-presentation-hierarchy-and-persistent-dismissal-chrome",
+      "status": "extracted",
+      "requires": [
+        "progression-achievements",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundAchievementsUi"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -549,7 +563,8 @@
         "ui-class-chooser",
         "ui-pet-chooser",
         "ui-talent-tree",
-        "ui-prestige-moon"
+        "ui-prestige-moon",
+        "ui-achievements"
       ],
       "provides": []
     }

@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.1
+
+### Achievements / Trophy presentation ownership (#40, #78, #198, #209)
+- Replaced the historical Achievements popup, shared card/group CSS and renderer override chain with `runtime/js/ui/achievements.js`, the single responsive Trophy destination owner.
+- The Trophy hall now has persistent top-right Done chrome, secret-safe registry cards, Hero Mastery subgroups, saved disclosure state, and wide/compact/short-wide scrolling behavior.
+- Achievement rules, reward eligibility, class/powerup progression, saves, checkpoints and RNG remain in their existing domain owners; `dicebound.js` keeps only a thin lifecycle adapter and data callbacks.
+
 ## Beta 0.6.5.0
 
 ### Camp scene and Donut VFX repair (#17, #71, #145)

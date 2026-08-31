@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.4.27
+# Unreleased — Beta 0.6.5.1
+
+## Beta 0.6.5.1 Achievements / Trophy presentation ownership (#40, #78, #198, #209)
+- Achievements now open in one responsive Trophy destination owned by `ui/achievements.js`, with a persistent top-right Done control across wide, compact and short-wide windows.
+- Registry groups and Hero Mastery use secret-safe cards and saved disclosure state. The old popup markup, shared styles and monolith renderer/patch chain are retired.
+- Achievement completion rules, reward gates, class/powerup progression, saves, checkpoints and RNG are unchanged.
 
 ## Beta 0.6.5.0 Camp scene and Donut VFX repair (#17, #71, #145)
 - Camp keeps legacy Nightmare, Hell and Storage source controls hidden whenever the destination refreshes, preventing locked Hell presentation from leaking outside the authored 16:9 stage.
