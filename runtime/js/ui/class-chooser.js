@@ -58,8 +58,9 @@
   function randomCard(current,selected){
     const pool=unlockedPool(current);
     if(pool.length<RANDOM_MINIMUM)return '';
+    const art=runtime.resolveRandomClassArt?.()||root.DiceboundAssets?.resolveRandomClassArt?.(),image=art?.campsite||art?.image;
     return `<button type="button" class="class-choice-card class-choice-random random-class-card${selected?' selected':''}" data-class-choice="random" aria-pressed="${selected?'true':'false'}">
-      <span class="class-choice-random-art" aria-hidden="true"><span>🎲</span><i>?</i></span>
+      <span class="class-choice-random-art" aria-hidden="true">${image?`<img src="${escapeHtml(image)}" alt="" draggable="false">`:'<span>🎲</span><i>?</i>'}</span>
       <span class="class-choice-copy"><span class="class-choice-name">Random</span><span class="class-choice-role">Let the Campsite choose one of your currently unlocked classes when the expedition begins.</span><span class="class-choice-lock">${pool.length} unlocked classes in the current pool</span></span>
     </button>`;
   }
@@ -79,7 +80,8 @@
   }
   function randomDetail(current){
     const pool=unlockedPool(current);
-    return `<div class="class-detail-art class-detail-random-art" aria-hidden="true"><span>🎲</span><i>?</i></div><div class="class-detail-copy"><div class="class-detail-kicker">Camp choice</div><h4>Random</h4><p class="class-detail-desc">At the start of the next expedition, DiceBound chooses one unlocked class from your current roster.</p><dl class="class-detail-facts"><div><dt>Current pool</dt><dd>${pool.length} unlocked classes</dd></div><div><dt>Selection</dt><dd>Exactly one normal class choice when the run begins</dd></div></dl><button type="button" class="small-btn class-detail-select" data-class-select="random">${randomMode?'Random selected':'Choose Random'}</button></div>`;
+    const art=runtime.resolveRandomClassArt?.()||root.DiceboundAssets?.resolveRandomClassArt?.(),image=art?.campsite||art?.image;
+    return `<div class="class-detail-art class-detail-random-art" aria-hidden="true">${image?`<img class="class-chooser-art class-chooser-art-battle" src="${escapeHtml(image)}" alt="" draggable="false">`:'<span>🎲</span><i>?</i>'}</div><div class="class-detail-copy"><div class="class-detail-kicker">Camp choice</div><h4>Random</h4><p class="class-detail-desc">At the start of the next expedition, DiceBound chooses one unlocked class from your current roster.</p><dl class="class-detail-facts"><div><dt>Current pool</dt><dd>${pool.length} unlocked classes</dd></div><div><dt>Selection</dt><dd>Exactly one normal class choice when the run begins</dd></div></dl><button type="button" class="small-btn class-detail-select" data-class-select="random">${randomMode?'Random selected':'Choose Random'}</button></div>`;
   }
   function currentDetailClass(current){
     const classes=orderedClasses(current.classes);

@@ -1410,7 +1410,7 @@
     for(const enemy of livingEnemies()){
       if((enemy.skipTurns||0)>0&&!(special&&enemy===lead)){enemy.skipTurns--;messages.push(`${enemy.name} is frozen.`);continue;}let raw=0,landed=false;
       if(special&&enemy===lead){raw=Math.max(1,Math.round(enemy.attack*(enemy.merchantBoss?2.6:2.25))-Math.floor((player.defense+player.flatReduction)*.5));if(guarded)raw=Math.max(0,Math.floor(raw*(1-clamp(player.guardPower+extraGuardPower,0,.9))));if(mythicalSetCount()>=4)raw=Math.floor(raw*v19SetGuardianSpecialMult());messages.push(`⚠️ ${enemy.specialName||"Guardian special"} ignores dodge and barriers${guarded?", but Guard reduces it":""}, dealing ${raw}.`);if(enemy.merchantBoss){const stolen=Math.min(player.gold,Math.ceil(player.gold*.20));player.gold-=stolen;enemy.enemyBarrier=(enemy.enemyBarrier||0)+2;messages.push(`The Merchant steals ${stolen} gold and raises 2 barriers.`);}landed=raw>0;}
-      else{if(random()<effectiveDodgeChance()){messages.push(`You dodge ${enemy.name}.`);continue;}if(player.combatShield>0){player.combatShield--;messages.push(`Barrier blocks ${enemy.name}.`);continue;}raw=Math.max(1,enemy.attack-player.defense-player.flatReduction+rand(-1,1));if(guarded)raw=Math.max(0,Math.floor(raw*(1-clamp(player.guardPower+extraGuardPower,0,.9))));messages.push(guarded?`${enemy.name} hits your guard for ${raw}.`:`${enemy.name} hits for ${raw}.`);if(enemy.merchantBoss){const stolen=Math.min(player.gold,Math.max(1,Math.round(enemy.attack*.6)));player.gold-=stolen;messages.push(`The Merchant steals ${stolen} gold.`);}landed=raw>0;}
+      else{if(random()<effectiveDodgeChance()){dbFriendSuccessfulDodgePresentation();messages.push(`You dodge ${enemy.name}.`);continue;}if(player.combatShield>0){player.combatShield--;messages.push(`Barrier blocks ${enemy.name}.`);continue;}raw=Math.max(1,enemy.attack-player.defense-player.flatReduction+rand(-1,1));if(guarded)raw=Math.max(0,Math.floor(raw*(1-clamp(player.guardPower+extraGuardPower,0,.9))));messages.push(guarded?`${enemy.name} hits your guard for ${raw}.`:`${enemy.name} hits for ${raw}.`);if(enemy.merchantBoss){const stolen=Math.min(player.gold,Math.max(1,Math.round(enemy.attack*.6)));player.gold-=stolen;messages.push(`The Merchant steals ${stolen} gold.`);}landed=raw>0;}
       player.hp=Math.max(0,player.hp-raw);meta.damageTaken=(meta.damageTaken||0)+raw;if(player.thorns>0&&raw>0){const returned=damageEnemy(enemy,player.thorns,true);messages.push(`Spikes return ${returned}.`);}if(landed&&!special){const proc=enemyElementProc(enemy);if(proc)messages.push(proc);}if(player.hp<=0)break;
     }
     if(special&&hasMythicPiece("hat")&&player.hp>0){const h=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.10)));player.hp+=h;player.ultimateCharge=clamp(player.ultimateCharge+25,0,100);messages.push(`👑 Crown of the Fourth Road restores ${h} HP and grants 25 ultimate.`);}if(hasMythicPiece("amulet")&&!player.mythicAmuletUsed&&player.hp>0&&player.hp/player.maxHp<=.35){player.mythicAmuletUsed=true;let consumed=0;livingEnemies().forEach(e=>{const d=Math.max(1,Math.floor(e.maxHp*.12));consumed+=damageEnemy(e,d,true);});const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.floor(consumed*.5)));player.hp+=healed;messages.push(`👁️ Devourer's Gaze consumes ${consumed} enemy HP and restores ${healed} HP.`);}checkDynamicClassUnlocks();saveMeta();sfx.hit();setCombatText(messages.join(" "));updateCombatUI();await delay(980);if(!livingEnemies().length)return winCombat();if(player.hp<=0)return handlePlayerDeath();combatBusy=false;updateCombatUI();setCombatText("Choose your next action.",false);
@@ -1450,8 +1450,10 @@
     const base=defaultLifetimeStats(),raw=meta.stats||{};meta.stats={...base,...raw,boardClears:{...(raw.boardClears||{})},classMaxLevel:{...(raw.classMaxLevel||{})}};meta.stats.damageTaken=Math.max(Number(meta.stats.damageTaken)||0,Number(meta.damageTaken)||0);meta.achievements={...(meta.achievements||{})};return meta.stats;
   }
   function gameplayTalentRank(id){const source=runTalentSnapshot||meta.purchased||{};return Math.max(0,Number(source[id])||0);}
-  function boardClearKey(classId,board){return `${classId}:b${board}`;}
-  function hasBoardClear(classId,board){ensureAlphaMeta();return (meta.stats.boardClears[boardClearKey(classId,board)]||0)>0;}
+  function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+  function boardClearKey(classId,board,mode=boardClearMode()){return `${classId}:${mode}:b${board}`;}
+  function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
+  function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')||key===legacyBoardClearKey(classId,board)));}
   function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();checkDynamicClassUnlocks();}
   function recordHealing(amount){amount=Math.max(0,Math.round(amount||0));if(!amount)return 0;const s=ensureAlphaMeta();s.healingDone+=amount;statsLastHp=player.hp;saveMeta();checkDynamicClassUnlocks();return amount;}
   function healPlayer(amount,{overheal=true}={}){
@@ -1582,7 +1584,8 @@
   function renderLifetimeStats(){
     const s=ensureAlphaMeta(),grid=$("lifetimeStats");if(!grid)return;
     const fmt=n=>Math.round(Number(n)||0).toLocaleString();
-    const clears=Object.entries(s.boardClears).filter(([,v])=>v>0).sort().map(([k,v])=>{const [cid,b]=k.split(":b"),cls=CLASSES[cid];return `${cls?.icon||"•"} ${cls?.name||cid} — Board ${b}: ${v}`;});
+    const highest=new Map();Object.entries(s.boardClears).filter(([,value])=>Number(value)>0).forEach(([key])=>{const modern=key.match(/^([^:]+):(normal|nightmare|hell):b(\d+)$/),legacy=key.match(/^([^:]+):b(\d+)$/),classId=modern?.[1]||legacy?.[1],mode=modern?.[2]||'normal',board=Number(modern?.[3]||legacy?.[2]||0);if(!classId||!board)return;const group=`${classId}:${mode}`;highest.set(group,Math.max(highest.get(group)||0,board));});
+    const clears=[...highest.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([key,board])=>{const [cid,mode]=key.split(':'),cls=CLASSES[cid],label=mode[0].toUpperCase()+mode.slice(1);return `${cls?.icon||"•"} ${cls?.name||cid} — ${label}: Board ${board}`;});
     grid.innerHTML=`<div class="lifetime-stat"><span>Runs started</span><strong>${fmt(s.runsStarted)}</strong></div><div class="lifetime-stat"><span>Runs finished</span><strong>${fmt(s.runsFinished)}</strong></div><div class="lifetime-stat"><span>Full victories</span><strong>${fmt(s.fullVictories)}</strong></div><div class="lifetime-stat"><span>Tiles traveled</span><strong>${fmt(s.tilesTraveled)}</strong></div><div class="lifetime-stat"><span>Dice rolls</span><strong>${fmt(s.rolls)}</strong></div><div class="lifetime-stat"><span>Highest run level</span><strong>${fmt(s.highestRunLevel)}</strong></div><div class="lifetime-stat"><span>Damage dealt</span><strong>${fmt(s.damageDealt)}</strong></div><div class="lifetime-stat"><span>Damage taken</span><strong>${fmt(Math.max(s.damageTaken||0,meta.damageTaken||0))}</strong></div><div class="lifetime-stat"><span>Healing done</span><strong>${fmt(s.healingDone)}</strong></div><div class="lifetime-stat"><span>Gold earned</span><strong>${fmt(s.goldEarned)}</strong></div><div class="lifetime-stat"><span>Gold spent</span><strong>${fmt(s.goldSpent)}</strong></div><div class="lifetime-stat"><span>Highest gold held</span><strong>${fmt(s.highestGold)}</strong></div><div class="lifetime-stat"><span>Enemies defeated</span><strong>${fmt(s.enemiesDefeated)}</strong></div><div class="lifetime-stat"><span>Bosses defeated</span><strong>${fmt(s.bossesDefeated)}</strong></div><div class="lifetime-stat"><span>Powerups taken</span><strong>${fmt(s.powerupsTaken)}</strong></div><div class="lifetime-stat lifetime-wide"><span>Board clears by class</span><div class="class-clear-list">${clears.length?clears.join("<br>"):"No recorded class-specific board clears yet."}</div></div>`;
     renderCurrentGoldStat();
   }
@@ -4107,7 +4110,7 @@
         prestigeSummary:`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
         heirloomHtml:v22CampHeirloomHtml(),
         setHtml:v22ImpossibleRoadPanelHtml((meta.heirlooms||[]).filter(item=>item?.setName==='Impossible Road').length),
-        reveals:{...(meta.campReveals||{})},
+        reveals:{...(meta.campReveals||{})},heirloomStorageUnlocked:!!meta.heirloomStorageUnlocked||!!v24StorageUnlocked?.(),
         nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
         hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
       };
@@ -7190,9 +7193,9 @@ function buildDiceboundHumanHarness235(){
     const id=String(petId||'neutral');
     return window.DiceboundAssets?.resolvePetArt?.(id)||{portrait:`assets/pets/portraits/${id}.png`,alt:PETS[id]?.name||id};
   }
-  function db059SetPetArt(el,petId,extraClass=''){
+  function db059SetPetArt(el,petId,extraClass='',context='portrait'){
     if(!el)return;
-    const def=PETS[petId]||PETS.neutral,entry=db059PetArtEntry(def.id),src=entry?.portrait||`assets/pets/portraits/${def.id}.png`;
+    const def=PETS[petId]||PETS.neutral,entry=db059PetArtEntry(def.id),src=entry?.[context]||entry?.portrait||`assets/pets/portraits/${def.id}.png`;
     let img=el.querySelector(':scope > img.db059-pet-art');
     if(!img){el.innerHTML='';img=document.createElement('img');el.appendChild(img);}
     img.className=`db059-pet-art ${extraClass}`.trim();img.alt=def.name;img.draggable=false;
@@ -7202,7 +7205,7 @@ function buildDiceboundHumanHarness235(){
   function db059RefreshActivePetArt(){
     const id=meta?.activePet||'neutral',def=PETS[id]||PETS.neutral;
     db059SetPetArt($('petAvatar'),def.id);
-    db059SetPetArt($('combatPet'),def.id);
+    db059SetPetArt($('combatPet'),def.id,'','battle');
     const combat=$('combatPet');if(combat)combat.dataset.name=def.name;
   }
   setTimeout(db059RefreshActivePetArt,0);
@@ -8219,8 +8222,8 @@ function buildDiceboundHumanHarness235(){
   db0635CombatBackgroundStyle.textContent=`
     #combatOverlay[data-combat-background]{isolation:isolate;overflow:hidden;background:#07101c!important}
     #combatOverlay[data-combat-background]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--db0635-combat-background-image);background-size:cover;background-position:center;transform:scale(1.01)}
-    #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.34),rgba(4,9,19,.64))}
-    #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.72),rgba(7,14,28,.86))!important}
+    #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.22),rgba(4,9,19,.48))}
+    #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.55),rgba(7,14,28,.72))!important}
   `;
   document.head.appendChild(db0635CombatBackgroundStyle);
   function db0635CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
@@ -8258,15 +8261,15 @@ function buildDiceboundHumanHarness235(){
       #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(224px,35vh,430px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
       #enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:clamp(100px,18vw,250px)!important;min-height:clamp(205px,32vh,400px)!important;justify-content:flex-end!important;overflow:visible!important}
       #enemyIcon.db0636-tiered-enemy-stage .stage-sprite{display:block!important;width:min(22vw,260px)!important;height:clamp(200px,31vh,390px)!important;line-height:0!important;overflow:visible!important}
-      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:clamp(92px,16vw,225px)!important;min-height:clamp(180px,28vh,350px)!important}
-      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:min(19vw,225px)!important;height:clamp(176px,27vh,342px)!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:clamp(86px,14.5vw,205px)!important;min-height:clamp(164px,25vh,315px)!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:min(17vw,200px)!important;height:clamp(160px,25vh,310px)!important}
       .db0636-tiered-enemy-art{position:relative;display:block;width:100%;height:100%;isolation:isolate;overflow:visible}
       .db0636-tiered-enemy-image{position:relative;z-index:1;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center bottom!important;overflow:visible!important;border-radius:0!important;filter:drop-shadow(0 14px 13px rgba(0,0,0,.56))}
       .db0636-tiered-enemy-art::before{content:"";position:absolute;z-index:0;inset:13% 12% 8%;border-radius:50%;opacity:0;filter:blur(18px);pointer-events:none}
       .db0636-tiered-enemy-art.db-enemy-mode-nightmare::before{opacity:.52;background:radial-gradient(ellipse,rgba(129,69,179,.64),rgba(41,17,71,.38) 48%,transparent 74%)}
       .db0636-tiered-enemy-art.db-enemy-mode-hell::before{opacity:.56;background:radial-gradient(ellipse,rgba(230,84,43,.68),rgba(135,25,24,.42) 50%,transparent 75%)}
       #enemyIcon.db0636-tiered-enemy-stage .stage-enemy.selected .db0636-tiered-enemy-image{filter:drop-shadow(0 0 15px rgba(245,200,91,.34)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
-      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(172px,32vh,270px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(150px,28vh,235px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(146px,27vh,225px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:calc((100vw - 68px)/3)!important;min-height:clamp(132px,25vh,210px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:calc((100vw - 68px)/3)!important;height:clamp(128px,24vh,202px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
+      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(172px,32vh,270px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(150px,28vh,235px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(146px,27vh,225px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:calc((100vw - 82px)/3)!important;min-height:clamp(120px,23vh,190px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:calc((100vw - 82px)/3)!important;height:clamp(116px,22vh,182px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
     `;document.head.appendChild(style);
   }
   window.DiceboundEnemyBattleArt=Object.freeze({
@@ -8313,7 +8316,7 @@ function buildDiceboundHumanHarness235(){
     currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
     $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
     const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
-    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatVfx.natureEntries(),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
+    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatVfx.natureEntries(),projectiles:[...document.querySelectorAll('.db-combat-projectile-vfx')].map(node=>({effect:node.dataset.effect,origin:node.dataset.origin})),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
   }
   function dbCombatPresentationExercise(kind='final'){
     document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
@@ -8520,7 +8523,7 @@ function buildDiceboundHumanHarness235(){
     const notes=[];
     for(const wolf of livingEnemies().filter(enemy=>/\bwolf\b/i.test(String(enemy?.name||''))&&!enemy.guardian)){
       if(random()>=chance)continue;
-      if(random()<effectiveDodgeChance()){notes.push(`🐺 ${wolf.name}'s Echo Strike is dodged.`);continue;}
+      if(random()<effectiveDodgeChance()){dbFriendSuccessfulDodgePresentation();notes.push(`🐺 ${wolf.name}'s Echo Strike is dodged.`);continue;}
       if(player.combatShield>0){player.combatShield--;notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`);continue;}
       const base=Math.max(1,wolf.attack+rand(-1,1)),raw=Math.max(1,Math.round(base*(1-defenseDamageReduction())-player.flatReduction)),hit=v24ApplyDamage(raw);
       meta.damageTaken=(meta.damageTaken||0)+hit.total;
@@ -8905,6 +8908,151 @@ function buildDiceboundHumanHarness235(){
   window.DiceboundMemoryDiagnosticsStressTest=Object.freeze({
     maxCycles:DB06411_MEMORY_STRESS_MAX_CYCLES,
     run:db06411RunMemoryStressCycles
+  });
+
+  /* Beta 0.6.4.29 — Friends Patch presentation and Dragoon integration.
+     These adapters consume the authoritative combat/state owners above. */
+  function dbFriendSuccessfulDodgePresentation(){
+    const icon=$('combatPlayerIcon');if(!icon)return false;
+    icon.classList.remove('db-dodge-backflip');void icon.offsetWidth;icon.classList.add('db-dodge-backflip');
+    setTimeout(()=>icon.classList.remove('db-dodge-backflip'),420);return true;
+  }
+
+  dbCombatVfx.prepareProjectileEffects?.();
+  const dbFriendLegacyElementPresentation=playElementAnimation;
+  playElementAnimation=function(key,target=currentEnemy,enemySource=false){
+    if(key==='fire'||key==='gun')return false;
+    return dbFriendLegacyElementPresentation(key,target,enemySource);
+  };
+  const dbFriendElementProcBase=triggerElementEffect;
+  triggerElementEffect=function(key,target=currentEnemy,opts={}){
+    const result=dbFriendElementProcBase(key,target,opts);
+    if(result&&(key==='fire'||key==='gun'))dbCombatVfx.playProjectileProc?.(key,{origin:'player',enemy:target});
+    return result;
+  };
+  const dbFriendEnemyElementProcBase=enemyElementProc;
+  enemyElementProc=function(enemy){
+    const key=enemy?.affinity,result=dbFriendEnemyElementProcBase(enemy);
+    if(result&&(key==='fire'||key==='gun'))dbCombatVfx.playProjectileProc?.(key,{origin:'enemy',enemy});
+    return result;
+  };
+  function dbFriendClearCombatPresentation(){
+    dbCombatVfx.clearTransient?.();
+    clearTimeout(dbFriendDragoonLandingTimer);
+    document.querySelectorAll('.element-proc-fx,.enemy-proc-fx,.db-combat-projectile-vfx').forEach(node=>node.remove());
+    const fx=$('attackFx');if(fx){fx.className='attack-fx';fx.replaceChildren();}
+    $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
+  }
+  const dbFriendStartCombatBase=startCombat;
+  startCombat=function(...args){dbFriendClearCombatPresentation();const result=dbFriendStartCombatBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
+  const dbFriendReturnToRoadBase=returnToRoad;
+  returnToRoad=function(...args){dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
+
+  const dbFriendUpdateMetaUiBase=updateMetaUI;
+  updateMetaUI=function(...args){const result=dbFriendUpdateMetaUiBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
+  const dbFriendFeedActivePetBase=feedActivePet;
+  feedActivePet=function(count=1){
+    const state=activePetState?.(),beforeCookies=Number(meta.petCookies)||0,beforeXp=Number(state?.xp)||0,beforeLevel=Number(state?.level)||1;
+    const result=dbFriendFeedActivePetBase(count),after=activePetState?.(),changed=(Number(meta.petCookies)||0)!==beforeCookies||Number(after?.xp)!==beforeXp||Number(after?.level)!==beforeLevel;
+    db059RefreshActivePetArt?.();return changed?Object.freeze({ok:true,spent:Math.max(0,beforeCookies-(Number(meta.petCookies)||0)),level:Number(after?.level)||1}):false;
+  };
+  function dbFriendHealAtCamp(){
+    const max=Math.max(1,Math.floor(Number(player?.maxHp)||1));
+    if(Number(player?.hp)>=max)return false;
+    player.hp=max;updateHUD();return true;
+  }
+  const dbFriendOpenStartScreenBase=openStartScreen;
+  openStartScreen=function(...args){const result=dbFriendOpenStartScreenBase.apply(this,args);dbFriendHealAtCamp();dbFriendClearCombatPresentation();db059RefreshActivePetArt?.();return result;};
+  function dbFriendCampRecoveryExercise(){resetPlayer('ranger');player.hp=1;openStartScreen();return Object.freeze({hp:player.hp,maxHp:player.maxHp,campVisible:!$('startOverlay')?.classList.contains('hidden')});}
+  function dbFriendBoardClearModeRegressionExercise(){
+    const before={...(ensureAlphaMeta().boardClears||{})},modes={nightmare:nightmareMode,hell:hellMode};
+    try{
+      meta.stats.boardClears={};nightmareMode=false;hellMode=false;recordBoardClear(2,'ranger');recordBoardClear(4,'ranger');nightmareMode=true;recordBoardClear(3,'ranger');hellMode=true;recordBoardClear(5,'ranger');renderLifetimeStats();
+      return Object.freeze({keys:Object.keys(meta.stats.boardClears).sort(),hasNormal:hasBoardClear('ranger',4),hasNightmare:hasBoardClear('ranger',3),hasHell:hasBoardClear('ranger',5),text:$('lifetimeStats')?.textContent||''});
+    }finally{meta.stats.boardClears=before;nightmareMode=modes.nightmare;hellMode=modes.hell;saveMeta();renderLifetimeStats();}
+  }
+
+  /* Dragoon #97 — one semantic airborne window and one forced landing action. */
+  const dbFriendDragoonTalentId='dragoon_aerial_discipline';
+  const dbFriendDragoonActive=()=>player?.classId==='dragoon';
+  const dbFriendDragoonCooldown=()=>Math.max(2,6-gameplayTalentRank(dbFriendDragoonTalentId));
+  let dbFriendDragoonLandingTimer=0;
+  function dbFriendSyncDragoonPresentation(){const icon=$('combatPlayerIcon'),airborne=dbFriendDragoonActive()&&(player.dragoonAirborneResponses>0||player.dragoonLandingReady);if(icon){if(airborne)icon.classList.remove('db-dragoon-landing');icon.classList.toggle('db-dragoon-airborne',airborne);}}
+  function dbFriendDragoonLandPresentation(){const icon=$('combatPlayerIcon');if(!icon)return;icon.classList.remove('db-dragoon-airborne');icon.classList.add('db-dragoon-landing');clearTimeout(dbFriendDragoonLandingTimer);dbFriendDragoonLandingTimer=setTimeout(()=>icon.classList.remove('db-dragoon-landing'),240);}
+  function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
+  const dbFriendResetPlayerBase=resetPlayer;
+  resetPlayer=function(...args){const result=dbFriendResetPlayerBase.apply(this,args);dbFriendResetDragoonState();return result;};
+  function dbFriendEnsureDragoonJumpButton(){
+    const actions=document.querySelector('#combatOverlay .combat-actions');if(!actions)return null;let button=$('dragoonJumpBtn');
+    if(!button){button=document.createElement('button');button.id='dragoonJumpBtn';button.type='button';button.className='combat-btn special action-tooltip';button.addEventListener('click',dbFriendDragoonJump);actions.insertBefore(button,$('guardBtn')||null);}
+    return button;
+  }
+  async function dbFriendDragoonLanding(){
+    if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
+    combatBusy=true;player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;dbFriendDragoonLandPresentation();
+    const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target){combatBusy=false;return false;}
+    const critTiers=rollTieredProc(player.crit),base=Math.max(1,Math.round((player.attack+rand(2,6))*2.45)),damage=Math.round(base*(1+critTiers)*(currentEncounterLead?.boss?1+player.bossDamage:1)),dealt=damageEnemy(target,damage);
+    player.combatAttackCount++;chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*critTiers);await animateClassAttack(critTiers?'crit':'normal');
+    const proc=target.hp>0?triggerStrikeElements(target):{message:'',totalDamage:0};
+    setCombatText(`🐉 Dragoon lands for ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?'':'s'}`:''}.${proc?.message?` ${proc.message}`:''}`);updateCombatUI();await delay(480);
+    if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);return true;
+  }
+  async function dbFriendDragoonJump(){
+    if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
+    combatBusy=true;player.guardCooldown=0;player.dragoonJumpCooldown=dbFriendDragoonCooldown();player.dragoonAirborneResponses=1;dbFriendSyncDragoonPresentation();
+    setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await resolveEnemyResponse(false);
+    if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
+  }
+  const dbFriendEnemyTurnBase=enemyTurn;
+  enemyTurn=async function(...args){
+    if(dbFriendDragoonActive()&&player.dragoonAirborneResponses>0&&!livingEnemies().some(enemy=>enemy.canHitAirborne===true)){
+      player.dragoonAirborneResponses-=1;if(player.dragoonAirborneResponses===0)player.dragoonLandingReady=true;currentEncounterTurn++;setCombatText('🐉 Dragoon is Airborne — ordinary attacks cannot reach the landing zone.');await delay(420);combatBusy=false;updateCombatUI();return;
+    }
+    return dbFriendEnemyTurnBase.apply(this,args);
+  };
+  function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
+  const dbFriendPlayerAttackBase=playerAttack;
+  playerAttack=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy)dbFriendTickDragoonCooldown();return dbFriendPlayerAttackBase.apply(this,args);};
+  const dbFriendGuardActionBase=guardAction;
+  guardAction=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.guardCooldown<=0)dbFriendTickDragoonCooldown();return dbFriendGuardActionBase.apply(this,args);};
+  const dbFriendPotionBase=usePotion;
+  usePotion=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.potions>0&&player.hp<player.maxHp)dbFriendTickDragoonCooldown();return dbFriendPotionBase.apply(this,args);};
+  async function dbFriendDragonDive(){
+    if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.ultimateCharge<100)return false;
+    combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],critTiers=rollTieredProc(player.crit),damage=Math.round((player.attack*4.4+rand(5,11))*(1+critTiers)*(currentEncounterLead?.boss?1+player.bossDamage:1)),dealt=damageEnemy(target,damage);
+    await animateUltimate();const proc=target?.hp>0?triggerStrikeElements(target):{message:''};setCombatText(`🐉 Dragon Dive deals ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?'':'s'}`:''}.${proc?.message?` ${proc.message}`:''}`);sfx.crit();updateCombatUI();await delay(720);
+    if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);return true;
+  }
+  const dbFriendUltimateBase=useUltimate;
+  useUltimate=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive())return dbFriendDragonDive();dbFriendTickDragoonCooldown();return dbFriendUltimateBase.apply(this,args);};
+  const dbFriendUpdateCombatUiBase=updateCombatUI;
+  updateCombatUI=function(...args){
+    const result=dbFriendUpdateCombatUiBase.apply(this,args),jump=dbFriendEnsureDragoonJumpButton(),active=dbFriendDragoonActive(),landing=active&&player.dragoonLandingReady;dbFriendSyncDragoonPresentation();
+    if(jump){jump.hidden=!active;jump.disabled=!active||combatBusy||landing||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0;jump.textContent=player.dragoonAirborneResponses>0?'🐉 Airborne':player.dragoonJumpCooldown>0?`🐉 Jump (${player.dragoonJumpCooldown})`:'🐉 Jump';}
+    if(active){const attack=$('attackBtn'),guard=$('guardBtn'),potion=$('potionBtn'),ultimate=$('ultimateBtn');if(attack)attack.textContent=landing?'🐉 Land':'⚔️ Attack';[guard,potion,ultimate].forEach(button=>{if(button&&landing)button.disabled=true;});}
+    return result;
+  };
+  async function dbFriendDragoonRegressionExercise(){
+    const enemy={name:'Airborne Exercise Guardian',icon:'🐲',hp:999,maxHp:999,attack:999,defense:0,weakness:'ice',affinity:null,poisonStacks:0,guardian:true,finalBoss:true,specialName:'Exercise Skybreaker'};
+    try{
+      resetPlayer('dragoon');gameStarted=true;rollLocked=false;combatBusy=false;currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEnemyTile=null;currentEncounterTurn=Math.max(0,GUARDIAN_SPECIAL_INTERVAL-1);
+      $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();updateCombatUI();
+      const hpBefore=player.hp,jumpButton=$('dragoonJumpBtn'),jumpVisible=!!jumpButton&&!jumpButton.hidden,jumped=await dbFriendDragoonJump();
+      const airborne={hp:player.hp,cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,airborneResponses:player.dragoonAirborneResponses,turn:currentEncounterTurn,artRaised:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===true};
+      const enemyHpBeforeLanding=enemy.hp,landed=await playerAttack();
+      return Object.freeze({jumped,jumpVisible,hpBefore,airborne,landed:!!landed,landingDamage:Math.max(0,enemyHpBeforeLanding-enemy.hp),cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,artRestored:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===false});
+    }finally{
+      dbFriendClearCombatPresentation();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;combatBusy=false;gameStarted=false;rollLocked=true;openStartScreen();
+    }
+  }
+  window.DiceboundFriendsPatchTest=Object.freeze({
+    dragoon:()=>Object.freeze({active:dbFriendDragoonActive(),cooldown:dbFriendDragoonCooldown(),airborneResponses:player?.dragoonAirborneResponses||0,landingReady:!!player?.dragoonLandingReady}),
+    exerciseDragoon:dbFriendDragoonRegressionExercise,
+    exerciseCampRecovery:dbFriendCampRecoveryExercise,
+    exerciseBoardClearModes:dbFriendBoardClearModeRegressionExercise,
+    clearCombatPresentation:dbFriendClearCombatPresentation,
+    feedPet:count=>feedActivePet(count),
+    petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
   });
 
 })();

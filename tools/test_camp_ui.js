@@ -23,7 +23,7 @@ assert.strictEqual(typeof camp.applyStageLayout,'function','Camp must own one fi
 assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable by late patch code');
 assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
-assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.225,y:.405,w:235},'Class must retain its approved full-body stage anchor');
+assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.45,w:235},'Class must retain its approved full-body stage anchor');
 assert.deepStrictEqual({...camp.stageFrame(1360,800)},{left:0,top:17.5,width:1360,height:765,scale:.85},'wide Camp must fit the authored 16:9 stage without distortion');
 assert.deepStrictEqual({...camp.stageFrame(1200,540)},{left:120,top:0,width:960,height:540,scale:.68},'short/wide Camp must letterbox rather than eject objects off-screen');
 assert.deepStrictEqual({...camp.stageFrame(1120,760)},{left:0,top:65,width:1120,height:630,scale:.7},'compact Camp must preserve the stage center and scale');
@@ -31,14 +31,14 @@ assert.deepStrictEqual({...camp.stageFrame(1120,760)},{left:0,top:65,width:1120,
 for(const layout of camp.layouts.slice(0,2)){
   const rules=Object.fromEntries(layout.rules);
   assert.equal(rules['#campOptionsBtn'],'left:8.5%;top:10.5%;translate:none',`${layout.id} must use the approved visible Options anchor`);
-  assert.equal(rules['#campTalentBtn'],'left:31.5%;top:12.5%;translate:none',`${layout.id} must use the approved visible Talents anchor`);
-  assert.equal(rules['#campMoonBtn'],'left:42.5%;top:11.5%;translate:none',`${layout.id} must use the approved visible Prestige anchor`);
-  assert.equal(rules['#campClassBtn'],'left:22.5%;top:40.5%;translate:none',`${layout.id} must use the approved Class figure anchor`);
+  assert.equal(rules['#campTalentBtn'],'left:30.5%;top:12.5%;translate:none',`${layout.id} must use the approved visible Talents anchor`);
+  assert.equal(rules['#campMoonBtn'],'left:48%;top:11.5%;translate:none',`${layout.id} must use the approved visible Prestige anchor`);
+  assert.equal(rules['#campClassBtn'],'left:39%;top:45%;translate:none',`${layout.id} must use the approved Class figure anchor`);
   assert.equal(layout.rules.length,4,`${layout.id} must not retain translated legacy Camp coordinates`);
 }
 const shortRules=Object.fromEntries(camp.layouts[2].rules);
-assert.equal(shortRules['#campTalentBtn'],'left:31.5%;top:18%;translate:none','short Camp layout must keep the full Talent artwork entirely onscreen');
-assert.equal(shortRules['#campMoonBtn'],'left:42.5%;top:24%;translate:none','short Camp layout must keep Prestige entirely onscreen');
+assert.equal(shortRules['#campTalentBtn'],'left:30.5%;top:18%;translate:none','short Camp layout must keep the full Talent artwork entirely onscreen');
+assert.equal(shortRules['#campMoonBtn'],'left:48%;top:20%;translate:none','short Camp layout must keep Prestige entirely onscreen');
 assert.equal(typeof camp.applyViewportPositions,'function','Camp must reassert its coordinates after legacy inline layout writes');
 assert.equal(typeof camp.clampShortViewportPositions,'function','Camp must keep short desktop controls inside the viewport');
 assert.equal(typeof camp.renderClassFigure,'function','Camp must own semantic selected-class figure rendering');
@@ -72,6 +72,8 @@ assert.doesNotMatch(monolith,/const v23CampRefresh=/,'the monolith must not reas
 assert.doesNotMatch(monolith,/\.legacy-camp-modal\{max-width:1100px/,'historical Camp base styles must live with the Camp owner');
 assert.doesNotMatch(monolith,/#startOverlay\.camp-fullscreen/,'the monolith must not retain any final Camp stylesheet block');
 assert.match(source,/function syncProgressionReveals\(/,'Camp must own progression-controlled object DOM lifecycle');
+assert.match(source,/function syncHeirloomStorageChest\(/,'Camp must remove the Chest entirely until Storage is unlocked');
+assert.match(source,/button\.hidden=!unlocked/,'locked modes must remove their painted control from layout and hit testing');
 assert.match(source,/const CAMP_BASE_STYLE=/,'Camp must own its responsive base/grid presentation style');
 for(const retiredCampLayer of ['function beta043RefreshCampIcons(','function beta045RefreshCampLayout(','function db046RefreshCamp(','function db047RefreshCamp(','const db055Style=','const db057Style=','const db058Style=','const db0510Style=','const db0512Style=','const db060CampStyle='])assert(!monolith.includes(retiredCampLayer),`retired Camp style/wrapper remains in dicebound.js: ${retiredCampLayer}`);
 assert.doesNotMatch(monolith,/#startOverlay\.camp-fullscreen #camp(?:Options|Talent|Moon|Class|Info|Pet|Chest|Achievement|Go|Nightmare|Hell)Btn/,'monolith must not retain final Camp-object CSS ownership');

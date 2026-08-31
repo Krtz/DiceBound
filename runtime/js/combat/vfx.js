@@ -38,6 +38,26 @@
 
   function create({ getEnemies = () => [], getPlayer = () => null } = {}) {
     let natureLegacySuppressions = 0;
+    let presentationEpoch = 0;
+    const transientTimers = new Set();
+
+    function schedule(callback, delay) {
+      const epoch = presentationEpoch;
+      const timer = globalThis.setTimeout?.(() => {
+        transientTimers.delete(timer);
+        if (epoch === presentationEpoch) callback();
+      }, delay);
+      if (timer !== undefined) transientTimers.add(timer);
+      return timer;
+    }
+
+    function clearTransient() {
+      presentationEpoch += 1;
+      transientTimers.forEach(timer => globalThis.clearTimeout?.(timer));
+      transientTimers.clear();
+      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx').forEach(node => node.remove());
+      return presentationEpoch;
+    }
 
     function natureEffect() {
       return assets()?.resolveCombatEffect?.(NATURE_EFFECT_KEY) || null;
@@ -144,11 +164,11 @@
         image.src = frames[frame];
         node.dataset.natureVfxFrame = String(frame + 1);
         if (reduced || frame >= frames.length - 1) {
-          globalThis.setTimeout?.(() => node.remove(), reduced ? 180 : duration);
+          schedule(() => node.remove(), reduced ? 180 : duration);
           return;
         }
         frame += 1;
-        globalThis.setTimeout?.(present, duration);
+        schedule(present, duration);
       };
       present();
       return true;
@@ -246,10 +266,54 @@
       const duration = Math.max(320, Number(effect.durationMs) || 1450);
       if (!reduced) {
         for (let frame = 1; frame < frameCount; frame += 1) {
-          globalThis.setTimeout?.(() => nodes.forEach(node => setDonutFrame(node, frame, frameCount)), Math.round(duration * frame / frameCount));
+          schedule(() => nodes.forEach(node => setDonutFrame(node, frame, frameCount)), Math.round(duration * frame / frameCount));
         }
       }
-      globalThis.setTimeout?.(() => nodes.forEach(node => node.remove()), reduced ? 260 : duration);
+      schedule(() => nodes.forEach(node => node.remove()), reduced ? 260 : duration);
+      return true;
+    }
+
+    function prepareProjectileEffects() {
+      return ensureStyle('dicebound-projectile-vfx-style', `
+        .db-combat-projectile-vfx{position:fixed;z-index:10020;pointer-events:none;display:grid;place-items:center;will-change:left,top,transform,opacity;filter:drop-shadow(0 8px 12px rgba(0,0,0,.52));transition:left .30s cubic-bezier(.22,.78,.28,1),top .30s cubic-bezier(.22,.78,.28,1),transform .30s ease,opacity .18s ease}
+        .db-combat-projectile-vfx img{display:block;width:100%;height:100%;object-fit:contain}.db-combat-projectile-vfx.db-fire-proc{width:clamp(54px,8vw,120px);height:clamp(54px,8vw,120px)}.db-combat-projectile-vfx.db-gun-proc{width:clamp(72px,10vw,142px);height:clamp(62px,9vw,124px)}
+        .db-combat-projectile-vfx.db-impact{transition:transform .14s ease,opacity .20s ease}.db-combat-projectile-vfx.db-impact img{animation:dbCombatImpact .34s ease-out both}@keyframes dbCombatImpact{0%{opacity:0;transform:scale(.35) rotate(-18deg)}35%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:scale(1.75) rotate(16deg)}}
+      `);
+    }
+
+    function hostRect(host) {
+      const rect = host?.getBoundingClientRect?.();
+      return rect?.width && rect?.height ? { left: rect.left + rect.width / 2, top: rect.top + rect.height / 2 } : null;
+    }
+
+    function projectileFrames(key, effect) {
+      const frames = effect?.frames || [];
+      if (key === 'gun') return { launch: frames[1] || frames[0], travel: frames[4] || frames[1] || frames[0], impact: frames[7] || frames[8] || frames[0] };
+      return { launch: frames[4] || frames[0], travel: frames[7] || frames[8] || frames[0], impact: frames[1] || frames[2] || frames[0] };
+    }
+
+    function playProjectileProc(key, { origin = 'player', enemy = null } = {}) {
+      const document = documentRoot();
+      const effect = assets()?.resolveCombatEffect?.(key === 'gun' ? 'gunProc' : key === 'fire' ? 'fireProc' : '') || null;
+      if (!document?.createElement || !effect?.frames?.length || !prepareProjectileEffects()) return false;
+      const enemyHost = donutHostForEnemy(enemy);
+      const playerHost = document.getElementById?.('combatPlayerIcon');
+      const from = origin === 'enemy' ? hostRect(enemyHost) : hostRect(playerHost);
+      const to = origin === 'enemy' ? hostRect(playerHost) : hostRect(enemyHost);
+      if (!from || !to) return false;
+      const frames = projectileFrames(key, effect);
+      const projectile = document.createElement('span');
+      const image = document.createElement('img');
+      projectile.className = `db-combat-projectile-vfx db-${key}-proc`;
+      projectile.dataset.effect = key;
+      projectile.dataset.origin = origin === 'enemy' ? 'enemy' : 'player';
+      image.alt = ''; image.draggable = false; image.src = frames.launch;
+      projectile.append(image);
+      Object.assign(projectile.style, { left: `${Math.round(from.left)}px`, top: `${Math.round(from.top)}px`, transform: 'translate(-50%,-50%) scale(.72)' });
+      document.body.append(projectile);
+      schedule(() => { image.src = frames.travel; Object.assign(projectile.style, { left: `${Math.round(to.left)}px`, top: `${Math.round(to.top)}px`, transform: 'translate(-50%,-50%) scale(1)' }); }, 40);
+      schedule(() => { projectile.classList.add('db-impact'); image.src = frames.impact; projectile.style.transform = 'translate(-50%,-50%) scale(1.1)'; }, 355);
+      schedule(() => projectile.remove(), 720);
       return true;
     }
 
@@ -267,6 +331,9 @@
       donutEntries,
       donutFramePosition,
       playDonutRain,
+      prepareProjectileEffects,
+      playProjectileProc,
+      clearTransient,
     });
   }
 

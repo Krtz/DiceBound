@@ -3,7 +3,7 @@
   const ROOT="assets";
   const paths=Object.freeze({
     classCampsite:`${ROOT}/characters/classes/campsite`,classBattle:`${ROOT}/characters/classes/battle`,classMarkers:`${ROOT}/characters/classes/markers`,
-    uiClassMarkers:`${ROOT}/characters/classes/markers`,petPortraits:`${ROOT}/characters/pets/portraits`,normalEnemyBattle:`${ROOT}/enemies/normal/battle`,normalEnemyMarkers:`${ROOT}/enemies/normal/board-markers`,
+    uiClassMarkers:`${ROOT}/characters/classes/markers`,petPortraits:`${ROOT}/characters/pets/portraits`,petBattle:`${ROOT}/characters/pets/battle`,normalEnemyBattle:`${ROOT}/enemies/normal/battle`,normalEnemyMarkers:`${ROOT}/enemies/normal/board-markers`,
     minibossBattle:`${ROOT}/enemies/minibosses/battle`,minibossMarkers:`${ROOT}/enemies/minibosses/board-markers`,bossBattle:`${ROOT}/enemies/bosses/battle`,bossMarkers:`${ROOT}/enemies/bosses/board-markers`,secretBossBattle:`${ROOT}/enemies/secret-bosses/battle`,secretBossMarkers:`${ROOT}/enemies/secret-bosses/board-markers`,
     equipmentHat:`${ROOT}/equipment/hat`,powerupPoor:`${ROOT}/powerups/poor`,powerupCommon:`${ROOT}/powerups/common`,powerupUncommon:`${ROOT}/powerups/uncommon`,
     powerupRare:`${ROOT}/powerups/rare`,powerupEpic:`${ROOT}/powerups/epic`,powerupLegendary:`${ROOT}/powerups/legendary`,powerupShared:`${ROOT}/powerups/shared`,
@@ -11,13 +11,16 @@
     boardBackgrounds:`${ROOT}/board/backgrounds`,boardEventTiles:`${ROOT}/board/tiles/events`,combatBackgrounds:`${ROOT}/combat/backgrounds`,combatEffects:`${ROOT}/combat/effects`,uiCurrencies:`${ROOT}/ui/currencies`,installerIcons:`${ROOT}/installer/icons`,
     audio:`${ROOT}/audio`,audioCustom:`${ROOT}/audio/custom`
   });
-  const CLASSES=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","ouroboros","slimerouge"];
+  const CLASSES=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","ouroboros","slimerouge","dragoon"];
   const PETS=["neutral","fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation"];
   const MINI=["ogre-roadwarden","titan-guard","paradox-warden","crownless-auditor","ringbound-chancellor","abyssal-custodian"];
   const BOSS=["ancient-road-dragon","astral-devourer-dragon","nullstar-hydra","crown-eater","ring-tyrant","last-equation"];
   const SECRET=["road-merchant","bloodmage-boss","pale-devil"];
   const classes=Object.fromEntries(CLASSES.map(id=>[id,Object.freeze({campsite:`${paths.classCampsite}/${id}.png`,headshot:`${paths.classCampsite}/${id}.png`,battle:`${paths.classBattle}/${id}.png`,marker:`${paths.classMarkers}/${id}.png`,alt:id})]));
-  const pets=Object.fromEntries(PETS.map(id=>[id,Object.freeze({portrait:`${paths.petPortraits}/${id}.png`,alt:id})]));
+  // The currently approved Pet finals are shared between portrait and battle
+  // contexts. Keep both semantic paths explicit so combat never falls back to
+  // a UI-context filename when dedicated battle variants arrive later.
+  const pets=Object.fromEntries(PETS.map(id=>[id,Object.freeze({portrait:`${paths.petPortraits}/${id}.png`,battle:`${paths.petBattle}/${id}.png`,alt:id})]));
   const guardians=(ids,battleBase,markerBase)=>Object.fromEntries(ids.map(id=>[id,Object.freeze({battle:`${battleBase}/${id}.png`,boardMarker:`${markerBase}/${id}.png`,dedicatedBoardMarker:true,alt:id})]));
   const bossGuardians=guardians(BOSS,paths.bossBattle,paths.bossMarkers);
   bossGuardians["astral-devourer-dragon"]=Object.freeze({...bossGuardians["astral-devourer-dragon"],battle:`${paths.bossBattle}/astral-devourer-dragon-2.png`});
@@ -35,21 +38,21 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:17,
+  const manifest=Object.freeze({version:19,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
       slime:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/slime-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/slime.png`,alt:"Slime"}),
       goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
       wolf:Object.freeze({portrait:`${paths.normalEnemyBattle}/wolf.png`,battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/wolf-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/wolf.png`,alt:"Wolf"}),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
-      orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:normalEnemy("wraith","Wraith"),
+      orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/wraith-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/wraith.png`,alt:"Wraith"}),
       troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),devil:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/devil-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/demon.png`,alt:"Devil"}),lich:normalEnemy("lich","Lich")
     }),
     minibosses:Object.freeze(guardians(MINI,paths.minibossBattle,paths.minibossMarkers)),bosses:Object.freeze(bossGuardians),secretBosses:Object.freeze(guardians(SECRET,paths.secretBossBattle,paths.secretBossMarkers)),
-    classes:Object.freeze(classes),pets:Object.freeze(pets),powerups,
+    classes:Object.freeze(classes),randomClass:Object.freeze({campsite:`${ROOT}/characters/random-class/campsite/random-class.png`,alt:"Random class"}),pets:Object.freeze(pets),powerups,
     camp:Object.freeze({objects:Object.freeze({bonfire:{image:`${paths.campDecorations}/bonfire.png`,alt:"Bonfire"},roadCaravan:{image:`${paths.campInteractions}/road-caravan.png`,alt:"Horse pulling a modern caravan"},infoBooks:{image:`${paths.campInteractions}/info-books.png`,alt:"Stack of books and scrolls"},talentStar:{image:`${paths.campInteractions}/talent-star.png`,alt:"Northern star of talents"},prestigeMoon:{image:`${paths.campInteractions}/prestige-moon.png`,alt:"Glowing full moon"},achievementKeg:{image:`${paths.campInteractions}/achievement-keg.png`,alt:"Ale keg and trophy"},optionsCog:{image:`${paths.campInteractions}/options-cog.png`,alt:"Steampunk options cog"},nightmareOff:{image:`${paths.nightmareToggle}/off.png`,alt:"Nightmare creature hidden"},nightmareOn:{image:`${paths.nightmareToggle}/on.png`,alt:"Nightmare creature emerged"},chest:{image:`${paths.campInteractions}/chest.png`,alt:"Treasure chest"}}),backgrounds:Object.freeze({campsite:{image:`${paths.campBackground}/campsite.png`,alt:"Star-lit campsite clearing",focus:"50% 50%"}})}),
     board:Object.freeze({backgrounds:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map((n,i)=>[String(n),{image:`${paths.boardBackgrounds}/board-${n}-${["green-road","astral-road","fractured-road","crown-road","oblivion-ringroad","end-of-mathematics"][i]}.png`,alt:`Board ${n}`}]))),events:Object.freeze({gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"}})}),
-    combat:Object.freeze({backgrounds:Object.freeze({normal:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(n=>[String(n),Object.freeze({image:`${paths.combatBackgrounds}/board-${n}-normal.png`,alt:`Board ${n} Normal battle background`,focus:"50% 50%"})])))} ),effects:Object.freeze({naturePoisonVines:Object.freeze({frames:Object.freeze([1,2,3,4,5,6,7,8].map(frame=>`${paths.combatEffects}/nature/nature-poison-vines-${String(frame).padStart(2,"0")}.png`)),frameDurationMs:75,alt:"Thorny poison vines erupt, lash, and recede"}),donutProcRain:Object.freeze({image:`${paths.combatEffects}/donut/donut-proc-rain-spritesheet.png`,frameCount:6,frameWidth:362,frameHeight:724,durationMs:1450,alt:"A magical cloud rains colorful donuts across the battlefield"})})}),
+    combat:Object.freeze({backgrounds:Object.freeze({normal:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(n=>[String(n),Object.freeze({image:`${paths.combatBackgrounds}/board-${n}-normal.png`,alt:`Board ${n} Normal battle background`,focus:"50% 50%"})])))} ),effects:Object.freeze({naturePoisonVines:Object.freeze({frames:Object.freeze([1,2,3,4,5,6,7,8].map(frame=>`${paths.combatEffects}/nature/nature-poison-vines-${String(frame).padStart(2,"0")}.png`)),frameDurationMs:75,alt:"Thorny poison vines erupt, lash, and recede"}),donutProcRain:Object.freeze({image:`${paths.combatEffects}/donut/donut-proc-rain-spritesheet.png`,frameCount:6,frameWidth:362,frameHeight:724,durationMs:1450,alt:"A magical cloud rains colorful donuts across the battlefield"}),gunProc:Object.freeze({frames:Object.freeze(["gun_spawn_01_no_arm.png","gun_fire_02_no_arm.png","gun_muzzle_smoke_03.png","gun_muzzle_flash_04.png","gun_bullet_tracer_05.png","gun_bullet_trail_06.png","gun_shell_casing_07.png","gun_impact_burst_08.png","gun_blood_burst_09.png","gun_blood_splatter_10.png"].map(file=>`${paths.combatEffects}/gun/${file}`)),frameDurationMs:78,alt:"A gun materializes, fires toward its target, and leaves an impact burst"}),fireProc:Object.freeze({frames:Object.freeze(["fire_embers_01.png","fire_impact_01.png","fire_impact_02.png","fire_impact_03.png","fire_launch_01.png","fire_launch_02.png","fire_trail_overlay_01.png","fire_travel_01.png","fire_travel_02.png"].map(file=>`${paths.combatEffects}/fire/${file.replaceAll("_","-")}`)),frameDurationMs:78,alt:"A fireball launches from the attacker, travels to its target, and explodes"})})}),
     equipment:Object.freeze({hat:Object.freeze({helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"}})}),
     ui:Object.freeze({icons:Object.freeze({chest:{image:`${paths.campInteractions}/chest.png`,alt:"Treasure chest"},coins:{image:`${paths.uiCurrencies}/coins.png`,alt:"Coins"},troll:{image:`${paths.normalEnemyBattle}/troll.png`,alt:"Troll"},helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"},quickdraw:powerups.quickdraw,heavyPurse:powerups.heavyPurse,bandit:{image:`${paths.normalEnemyBattle}/bandit.png`,alt:"Bandit"},gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"},glassNeedle:powerups.glassNeedle})}),
     audio:Object.freeze({sfx:Object.freeze(Object.fromEntries(["roll","step","hit","crit","coin","heal","lose","level","win","holy"].map(x=>[x,{customBase:x,alt:x}])) )})
@@ -80,7 +83,7 @@
   const resolveEnemyModeAura=mode=>ENEMY_MODE_AURAS[normalizeEnemyMode(mode)];
   const resolveGuardianArt=id=>manifest.minibosses[String(id)]||manifest.bosses[String(id)]||manifest.secretBosses[String(id)]||null;
   const resolveMarkerByName=name=>{const normal=resolveEnemyMarker(name);if(normal)return normal;const m=GUARDIAN_MARKER_MATCHERS.find(x=>x.test.test(String(name)));if(!m)return null;const e=resolveGuardianArt(m.key);return e?Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)}):null};
-  const resolveClassArt=id=>manifest.classes[String(id)]||manifest.classes.ranger; const resolvePetArt=id=>manifest.pets[String(id)]||manifest.pets.neutral;
+  const resolveClassArt=id=>manifest.classes[String(id)]||manifest.classes.ranger; const resolveRandomClassArt=()=>manifest.randomClass; const resolvePetArt=id=>manifest.pets[String(id)]||manifest.pets.neutral;
   const resolveCampObject=key=>manifest.camp.objects[key]||null; const resolveCampBackground=key=>manifest.camp.backgrounds[key]||manifest.camp.backgrounds.campsite;
   const resolveUiIcon=key=>manifest.ui.icons[key]||manifest.powerups[key]||null; const resolvePowerupArt=key=>manifest.powerups[key]||manifest.ui.icons[key]||null;
   const resolveBoardBackground=level=>manifest.board.backgrounds[String(Number(level)||1)]||manifest.board.backgrounds["1"];
@@ -92,7 +95,7 @@
     return identity?.art?Object.freeze({key:identity.id,image:identity.art.image,alt:identity.art.alt||identity.displayName,visual:identity.visual||null}):null;
   };
   const resolveSoundEffect=(name,pack="custom")=>{const e=manifest.audio.sfx[name];return !e||pack!=="custom"?null:Object.freeze({key:name,pack,candidates:buildSoundCandidates(e.customBase),alt:e.alt||String(name)})};
-  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveCombatEffect,resolveEquipmentArt,resolveSoundEffect});
+  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolveRandomClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveCombatEffect,resolveEquipmentArt,resolveSoundEffect});
 
   // Art bridge for the recovered monolith's closure-owned powerup objects.
   // It decorates rendered powerup choices from the authoritative registry,

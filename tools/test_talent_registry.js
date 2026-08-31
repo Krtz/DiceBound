@@ -29,18 +29,18 @@ const expectedIds = [
   "element_attunement", "element_power", "element_weakness", "element_echo",
   "element_conduit", "element_prismatic", "companion_element_proc",
   "fortune_powerup_rerolls", "monk_flow_ceiling", "turtle_guard_element",
-  "fortune_extra_choice", "legacy_storage",
+  "fortune_extra_choice", "dragoon_aerial_discipline", "legacy_storage",
 ];
 assert.deepEqual(Array.from(talents.ids), expectedIds);
 
 const registry = talents.createRegistry();
-assert.equal(registry.length, 45);
+assert.equal(registry.length, 46);
 assert.deepEqual(Array.from(registry, (talent) => talent.id), expectedIds);
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 10269, "canonical talent registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 10511, "canonical talent registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "1776e21d156f68ec177a659c11bff09cd33bb0d9c54c59a70401cd69bfea0a0c",
+  "58a925aeec792473bb3288055704c276c5891757180bdcb4a1be1dbe7f279853",
   "canonical talent registry data drifted",
 );
 
@@ -90,4 +90,4 @@ assert.match(monolith, /window\.DiceboundTalents\?\.createRegistry\(\)/);
 assert.match(monolith, /const talents=db317Readonly\(DB317_TALENTS_RAW\)/);
 assert.match(monolith, /DiceboundTalents must load before dicebound\.js/);
 
-console.log("Talent registry preserved: exact 45-node snapshot, valid acyclic prerequisites and isolated clones pass");
+console.log("Talent registry preserved: exact 46-node snapshot, valid acyclic prerequisites and isolated clones pass");

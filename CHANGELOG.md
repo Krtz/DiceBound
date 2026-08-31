@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.29
+
+### Friends Patch — Camp, combat, companions and staged art (#97, #162, #187, #211, #233, #234, #235, #236)
+- Camp returns now restore current HP to the authoritative effective maximum, hide locked Hell and locked Heirloom Storage objects, retain the accepted responsive scene composition, and keep Class/Storage destinations centered.
+- Pet combat art and the Companion feed controls now use the authoritative selected-pet state and feeding transaction; Prestige confirmation and ordinary Moon purchases remain on the Moon.
+- Added the playable Dragoon class, unlocked by a Board 4 miniboss victory, with a real one-response Airborne Jump, a landing strike, a rank-scaled cooldown talent and approved Camp/battle/marker artwork.
+- Successful dodges use a short shared backflip presentation. Combat boundaries now cancel stale VFX work, while approved Fire and Gun projectiles travel between the actual attacker and target.
+- Integrated approved Random Class, Wraith progression, Dragoon, Fire, Gun and Nullstar Hydra artwork. Combat tints now leave authored battle backgrounds more visible without sacrificing the combat UI.
+
 ## Beta 0.6.4.28
 
 ### Persistent sound preference (#205)

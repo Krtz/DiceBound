@@ -52,8 +52,9 @@ const liveDefaults=api.createMetaService({
   saveService:null,
 }).defaultMeta();
 const liveSerialized=JSON.stringify(liveDefaults);
-assert.equal(Buffer.byteLength(liveSerialized),2004,"full live default-career byte snapshot drifted");
-assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"c8e65e07e8045c3d06e9c188fcb3546bdde2111e91c5de70077dfbfcca26188e","full live default-career data drifted");
+assert.equal(Buffer.byteLength(liveSerialized),2020,"full live default-career byte snapshot drifted");
+assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"d382cbea9df4ab2c77c7ef935631e1e0ef26af4b609bad485776eaae8c1ed317","full live default-career data drifted");
+assert.equal(liveDefaults.unlocks.dragoon,false,"Dragoon must start locked on a fresh career");
 
 const result=service.load(),meta=result.meta;
 assert.equal(result.source,"primary");
