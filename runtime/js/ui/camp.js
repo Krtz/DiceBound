@@ -68,22 +68,22 @@
     campNightmareBtn:Object.freeze({x:.89,y:.28,w:120}),
     campHellBtn:Object.freeze({x:.80,y:.28,w:118}),
     campClassBtn:Object.freeze({x:.39,y:.45,w:235}),
-    campInfoBtn:Object.freeze({x:.445,y:.68,w:145}),
-    campBonfire:Object.freeze({x:.52,y:.60,w:170}),
-    campGoBtn:Object.freeze({x:.82,y:.72,w:340,h:190}),
-    campChestBtn:Object.freeze({x:.60,y:.74,w:245,h:150}),
-    campAchievementBtn:Object.freeze({x:.10,y:.80,w:165}),
+    campInfoBtn:Object.freeze({x:.26,y:.78,w:145}),
+    campBonfire:Object.freeze({x:.50,y:.72,w:170}),
+    campGoBtn:Object.freeze({x:.85,y:.74,w:440,h:250}),
+    campChestBtn:Object.freeze({x:.64,y:.76,w:245,h:150}),
+    campAchievementBtn:Object.freeze({x:.10,y:.83,w:165}),
     campPetBtn:Object.freeze({x:.39,y:.70,w:220})
   });
   const CAMP_STAGE_REFINEMENTS=Object.freeze({
     'wide-desktop':Object.freeze({
-      campInfoBtn:Object.freeze({x:.445,y:.68}),campBonfire:Object.freeze({y:.60}),
-      campChestBtn:Object.freeze({x:.60,y:.74}),campAchievementBtn:Object.freeze({x:.10,y:.80}),
+      campInfoBtn:Object.freeze({x:.26,y:.78}),campBonfire:Object.freeze({x:.50,y:.72}),
+      campChestBtn:Object.freeze({x:.64,y:.76}),campAchievementBtn:Object.freeze({x:.10,y:.83}),
       campPetBtn:Object.freeze({x:.39,y:.70})
     }),
     'compact-desktop':Object.freeze({
-      campInfoBtn:Object.freeze({x:.435,y:.66}),campBonfire:Object.freeze({y:.60}),
-      campChestBtn:Object.freeze({x:.60,y:.74}),campAchievementBtn:Object.freeze({x:.12,y:.80}),
+      campInfoBtn:Object.freeze({x:.26,y:.78}),campBonfire:Object.freeze({x:.50,y:.72}),
+      campChestBtn:Object.freeze({x:.64,y:.76}),campAchievementBtn:Object.freeze({x:.10,y:.83}),
       campPetBtn:Object.freeze({x:.39,y:.70})
     }),
     'stacked-or-short':Object.freeze({})
@@ -114,9 +114,9 @@
     .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}.set-tier{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(245,241,232,.62)}.set-tier.active{color:var(--ink);border-color:rgba(245,200,91,.42);background:linear-gradient(180deg,rgba(245,200,91,.12),rgba(255,255,255,.03));box-shadow:inset 0 0 0 1px rgba(245,200,91,.08)}.set-tier b{display:block;margin-bottom:4px;font-size:12px}.camp-heirloom-card{padding:12px;border-radius:14px;background:rgba(181,140,255,.08);border:1px solid rgba(181,140,255,.16);font-size:11px;line-height:1.5;margin-bottom:10px}.camp-note-line{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}.camp-hidden{display:none !important}
     .camp-art-frame{display:flex;align-items:center;justify-content:center;overflow:visible}.camp-bonfire .camp-icon{width:96px;height:96px;font-size:0;line-height:0}.camp-bonfire-art{display:block;max-width:92px;max-height:92px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,162,77,.28)) drop-shadow(0 0 26px rgba(255,120,40,.18))}
     #startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-areas:". trophy ." "class fire go" "pet chest ."!important;align-items:center!important;gap:18px!important}#startOverlay.camp-fullscreen .camp-bonfire{grid-area:fire!important;min-height:160px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;pointer-events:none!important}#startOverlay.camp-fullscreen .camp-bonfire .camp-icon{width:150px!important;height:150px!important;background:transparent!important;border:0!important;border-radius:0!important;overflow:visible!important}#startOverlay.camp-fullscreen .camp-bonfire-art{max-width:148px!important;max-height:148px!important}
-    #startOverlay.camp-fullscreen #campGoBtn.camp-journey-control{min-height:132px!important;padding:4px!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible}#startOverlay.camp-fullscreen #campGoBtn.camp-journey-control:hover{transform:translateY(-3px) scale(1.025)!important;border:0!important;box-shadow:none!important;background:transparent!important}.camp-journey-art-frame{width:min(100%,230px);height:104px;display:flex;align-items:center;justify-content:center;overflow:visible;pointer-events:none}.camp-journey-art{display:block;max-width:100%;max-height:104px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 9px 9px rgba(0,0,0,.42));transition:filter .15s ease}#campGoBtn:hover .camp-journey-art{filter:drop-shadow(0 10px 10px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(98,215,154,.18))}.camp-journey-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#dff7e9;text-shadow:0 2px 6px rgba(0,0,0,.65);pointer-events:none}
+    #startOverlay.camp-fullscreen #campGoBtn.camp-journey-control{min-height:132px!important;padding:4px!important;border:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible}#startOverlay.camp-fullscreen #campGoBtn.camp-journey-control:hover{transform:translateY(-3px) scale(1.025)!important;border:0!important;box-shadow:none!important;background:transparent!important}.camp-journey-art-frame{width:min(100%,340px);height:160px;display:flex;align-items:center;justify-content:center;overflow:visible;pointer-events:none}.camp-journey-art{display:block;max-width:100%;max-height:160px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 9px 9px rgba(0,0,0,.42));transition:filter .15s ease}#campGoBtn:hover .camp-journey-art{filter:drop-shadow(0 10px 10px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(98,215,154,.18))}.camp-journey-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#dff7e9;text-shadow:0 2px 6px rgba(0,0,0,.65);pointer-events:none}
     @media(max-width:860px){.camp-ground{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"trophy trophy" "class fire" "pet chest" "go go"}.camp-spot.class-picker,.camp-spot.go-spot{min-height:116px}.camp-sky{min-height:88px}#startOverlay.camp-fullscreen .camp-ground{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"trophy trophy" "class fire" "pet chest" "go go"!important}.camp-journey-art-frame{height:90px}.camp-journey-art{max-height:90px}}
-    #startOverlay.camp-fullscreen{position:fixed;inset:0;z-index:50;padding:0;display:block;overflow-y:auto;overflow-x:hidden;background:linear-gradient(180deg,#08101f,#0d182a 42%,#101b20 70%,#16251a);backdrop-filter:none;scrollbar-color:#53647f transparent}#startOverlay.camp-fullscreen.hidden{display:none}#startOverlay.camp-fullscreen .start-modal,#startOverlay.camp-fullscreen .legacy-camp-modal{width:100%;max-width:none;min-height:100vh;max-height:none;overflow:visible;margin:0;padding:22px clamp(14px,3vw,42px) 48px;border:0;border-radius:0;box-shadow:none;background:transparent}#startOverlay.camp-fullscreen .camp-help{max-width:1160px;margin:0 auto 12px;text-align:center;background:transparent!important;border:0!important;box-shadow:none!important}#startOverlay.camp-fullscreen .camp-popup-layer{display:block;margin-top:18px}#startOverlay.camp-fullscreen .camp-panel{max-height:none;overflow:visible}#startOverlay.camp-fullscreen .camp-panel.active{display:block}#startOverlay.camp-fullscreen #campClassPanel,#startOverlay.camp-fullscreen #campChestPanel{scroll-margin-top:18px}#startOverlay.camp-fullscreen .camp-ground{margin-top:8px}#startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon{width:78px;height:78px;font-size:50px;border-radius:18px;overflow:hidden}#startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon svg{width:100%;height:100%;display:block}#startOverlay.camp-fullscreen .camp-spot.active{border-color:rgba(245,200,91,.78);box-shadow:0 0 0 2px rgba(245,200,91,.12) inset,0 0 24px rgba(245,200,91,.16)}#startOverlay.camp-fullscreen .nightmare-spot.active{border-color:#b58cff;box-shadow:0 0 24px rgba(181,140,255,.30),inset 0 0 26px rgba(181,140,255,.12)}#startOverlay.camp-fullscreen .hell-spot.active{border-color:#ef5a63;box-shadow:0 0 25px rgba(239,90,99,.34),inset 0 0 28px rgba(239,90,99,.13)}.camp-mode-state{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:900;margin-top:2px;background:rgba(255,255,255,.08)}.camp-heirloom-card{overflow-wrap:anywhere}.camp-topline{justify-content:center}#campPetLine{display:none!important}.set-tier:not(.active){display:none!important}
+    #startOverlay.camp-fullscreen{position:fixed;inset:0;z-index:50;padding:0;display:block;overflow-y:auto;overflow-x:hidden;background:linear-gradient(180deg,#08101f,#0d182a 42%,#101b20 70%,#16251a);backdrop-filter:none;scrollbar-color:#53647f transparent}#startOverlay.camp-fullscreen.hidden{display:none}#startOverlay.camp-fullscreen .start-modal,#startOverlay.camp-fullscreen .legacy-camp-modal{width:100%;max-width:none;min-height:100vh;max-height:none;overflow:visible;margin:0;padding:22px clamp(14px,3vw,42px) 48px;border:0;border-radius:0;box-shadow:none;background:transparent}#startOverlay.camp-fullscreen .camp-help{max-width:1160px;margin:0 auto 12px;text-align:center;background:transparent!important;border:0!important;box-shadow:none!important}#startOverlay.camp-fullscreen .camp-popup-layer{display:block;margin-top:18px}#startOverlay.camp-fullscreen .camp-panel{max-height:none;overflow:visible}#startOverlay.camp-fullscreen .camp-panel.active{display:block}#startOverlay.camp-fullscreen #campClassPanel,#startOverlay.camp-fullscreen #campChestPanel{scroll-margin-top:18px}#startOverlay.camp-fullscreen .camp-ground{margin-top:8px}#startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon{width:78px;height:78px;font-size:50px;border-radius:18px;overflow:hidden}#startOverlay.camp-fullscreen .camp-spot.class-picker .camp-icon svg{width:100%;height:100%;display:block}#startOverlay.camp-fullscreen .camp-spot.active{border-color:rgba(245,200,91,.78);box-shadow:0 0 0 2px rgba(245,200,91,.12) inset,0 0 24px rgba(245,200,91,.16)}#startOverlay.camp-fullscreen .nightmare-spot.active{border-color:#b58cff;box-shadow:0 0 24px rgba(181,140,255,.30),inset 0 0 26px rgba(181,140,255,.12)}#startOverlay.camp-fullscreen .hell-spot.active{border-color:#ef5a63;box-shadow:0 0 25px rgba(239,90,99,.34),inset 0 0 28px rgba(239,90,99,.13)}#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox,#startOverlay.camp-fullscreen #startHeirloom{display:none!important}.camp-mode-state{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:900;margin-top:2px;background:rgba(255,255,255,.08)}.camp-heirloom-card{overflow-wrap:anywhere}.camp-topline{justify-content:center}#campPetLine{display:none!important}.set-tier:not(.active){display:none!important}
     #startOverlay.camp-fullscreen .camp-scene{width:min(96vw,1380px)!important;max-width:1380px!important;min-height:calc(100dvh - 150px)!important;margin:0 auto!important;padding:10px clamp(8px,2vw,22px) 32px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}#startOverlay.camp-fullscreen .camp-scene::before{display:none!important}#startOverlay.camp-fullscreen .camp-label,#startOverlay.camp-fullscreen .camp-bonfire .camp-label{color:#fff!important;font-weight:900;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 3px #000}
     #startOverlay.camp-fullscreen #campChestBtn{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;min-height:auto!important;padding:0 6px 2px!important}#startOverlay.camp-fullscreen #campChestBtn:hover{transform:translateY(-2px) scale(1.01);box-shadow:none!important;border-color:transparent!important}#startOverlay.camp-fullscreen #campChestBtn .camp-icon{font-size:48px}#startOverlay.camp-fullscreen #campChestBtn .camp-label{margin-top:2px}#startOverlay.camp-fullscreen #campChestBtn .camp-sub{max-width:140px}
     @media(max-width:799px){#startOverlay.camp-fullscreen .camp-scene{min-height:auto}.camp-sky{flex-direction:column;gap:12px}.camp-stars{flex-wrap:wrap}.camp-ground{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}.camp-topline,.camp-sky,.camp-ground,.camp-popup-layer{max-width:none}}
@@ -128,7 +128,7 @@
       #startOverlay.camp-fullscreen .camp-scene{position:absolute!important;margin:0!important;padding:0!important;overflow:visible!important;transform:none!important;transform-origin:center!important;background:linear-gradient(rgba(3,8,20,.08),rgba(3,7,16,.14)),url("assets/camp/background/campsite.png") center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important}
       #startOverlay.camp-fullscreen .camp-sky,#startOverlay.camp-fullscreen .camp-stars,#startOverlay.camp-fullscreen .camp-ground{display:contents!important}
       #startOverlay.camp-fullscreen .camp-spot,#startOverlay.camp-fullscreen .camp-bonfire{position:absolute!important;right:auto!important;bottom:auto!important;margin:0!important}
-      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:92%!important;max-width:none!important;height:72%!important;min-height:0!important}
+      #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:100%!important;max-width:none!important;height:90%!important;min-height:0!important}
       #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:100%!important;max-height:100%!important}
       #startOverlay.camp-fullscreen .camp-popup-layer{position:absolute!important;left:50%!important;bottom:2.5vh!important;width:min(88vw,1380px)!important;max-height:64vh!important;transform:translateX(-50%)!important}
     }
@@ -202,10 +202,19 @@
     return button;
   }
 
+  // The legacy mode/storage controls are source inputs for the Camp scene, not
+  // sibling presentation. They can be recreated by older runtime paths after
+  // Camp initially opens, so hide them every Camp refresh as well as at scene
+  // construction. The canonical Camp controls are their only visible
+  // destination-level representation.
+  function hideLegacyCampDestinations(){
+    ['nightmareBox','hellBox','startHeirloom'].forEach(id=>find(id)?.classList.add('camp-hidden'));
+  }
+
   function campTemplate(){
     return `<div class="camp-topline"><span id="campLegacyLine"></span><span id="campPetLine"></span></div>
-      <div class="camp-sky"><div class="camp-stars"><button class="camp-spot camp-art-button talent-art-button" id="campTalentBtn"><div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${asset('talentStar','assets/camp/objects/talent-star.png')}" alt="${assetAlt('talentStar','Northern star of talents')}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div></button><button class="camp-spot camp-art-button info-art-button" id="campInfoBtn"><div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-info-art" src="${asset('infoBooks','assets/camp/objects/info-books.png')}" alt="${assetAlt('infoBooks','Stack of books and scrolls')}"></div><div class="camp-label">Info</div><div class="camp-sub">Rules &amp; systems</div></button><button class="camp-spot" id="campMoonBtn"><div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige &amp; reset</div></button></div><div class="camp-stars"><button class="camp-spot nightmare-spot" id="campNightmareBtn"><div class="camp-icon">🕴️</div><div class="camp-label">Nightmare</div><div class="camp-sub">Locked</div></button><button class="camp-spot hell-spot" id="campHellBtn"><div class="camp-icon">😈🤝🕴️</div><div class="camp-label">Hell</div><div class="camp-sub">Locked</div></button></div></div>
-      <div class="camp-ground"><button class="camp-spot" id="campPetBtn"><div class="camp-icon" id="campPetIcon">🎲</div><div class="camp-label">Pet</div><div class="camp-sub">Choose companion</div></button><button class="camp-spot class-picker" id="campClassBtn"><div class="camp-icon" id="campClassIcon">🏹</div><div class="camp-label">Class</div><div class="camp-sub" id="campClassSub">Select class</div></button><div class="camp-bonfire" aria-label="Bonfire"><div class="camp-icon camp-art-frame"><img class="camp-art camp-bonfire-art" src="${asset('bonfire','assets/camp/objects/bonfire.png')}" alt="${assetAlt('bonfire','Bonfire')}"></div></div><button class="camp-spot go-spot camp-journey-control" id="campGoBtn" aria-label="Start next run" title="Start next run"><div class="camp-journey-art-frame"><img class="camp-journey-art" src="${asset('roadCaravan','assets/camp/objects/road-caravan.png')}" alt="${assetAlt('roadCaravan','Horse pulling a modern caravan')}"></div><div class="camp-journey-label">Start run</div></button><button class="camp-spot" id="campChestBtn"><div class="camp-icon">🪙📦</div><div class="camp-label">Chest</div><div class="camp-sub">Heirlooms &amp; set</div></button><button class="camp-spot" id="campAchievementBtn"><div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div></button></div>
+      <div class="camp-sky"><div class="camp-stars"><button class="camp-spot camp-art-button talent-art-button" id="campTalentBtn"><div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${asset('talentStar','assets/camp/interactions/talent-star.png')}" alt="${assetAlt('talentStar','Northern star of talents')}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div></button><button class="camp-spot camp-art-button info-art-button" id="campInfoBtn"><div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-info-art" src="${asset('infoBooks','assets/camp/interactions/info-books.png')}" alt="${assetAlt('infoBooks','Stack of books and scrolls')}"></div><div class="camp-label">Info</div><div class="camp-sub">Rules &amp; systems</div></button><button class="camp-spot" id="campMoonBtn"><div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige &amp; reset</div></button></div><div class="camp-stars"><button class="camp-spot nightmare-spot" id="campNightmareBtn"><div class="camp-icon">🕴️</div><div class="camp-label">Nightmare</div><div class="camp-sub">Locked</div></button><button class="camp-spot hell-spot" id="campHellBtn"><div class="camp-icon">😈🤝🕴️</div><div class="camp-label">Hell</div><div class="camp-sub">Locked</div></button></div></div>
+      <div class="camp-ground"><button class="camp-spot" id="campPetBtn"><div class="camp-icon" id="campPetIcon">🎲</div><div class="camp-label">Pet</div><div class="camp-sub">Choose companion</div></button><button class="camp-spot class-picker" id="campClassBtn"><div class="camp-icon" id="campClassIcon">🏹</div><div class="camp-label">Class</div><div class="camp-sub" id="campClassSub">Select class</div></button><div class="camp-bonfire" aria-label="Bonfire"><div class="camp-icon camp-art-frame"><img class="camp-art camp-bonfire-art" src="${asset('bonfire','assets/camp/decorations/bonfire.png')}" alt="${assetAlt('bonfire','Bonfire')}"></div></div><button class="camp-spot go-spot camp-journey-control" id="campGoBtn" aria-label="Start next run" title="Start next run"><div class="camp-journey-art-frame"><img class="camp-journey-art" src="${asset('roadCaravan','assets/camp/interactions/road-caravan.png')}" alt="${assetAlt('roadCaravan','Horse pulling a modern caravan')}"></div><div class="camp-journey-label">Start run</div></button><button class="camp-spot" id="campChestBtn"><div class="camp-icon">🪙📦</div><div class="camp-label">Chest</div><div class="camp-sub">Heirlooms &amp; set</div></button><button class="camp-spot" id="campAchievementBtn"><div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div></button></div>
       <div class="camp-popup-layer" id="campPopupLayer">
         <div class="camp-panel" id="campClassPanel"><div class="camp-panel-head"><h3>Classes</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div class="camp-note-line">Select a class for the next expedition. When you return to camp, the figure in the clearing updates to the new choice.</div><div id="campClassHost"></div></div>
         <div class="camp-panel" id="campChestPanel"><div class="camp-panel-head"><h3>Heirlooms &amp; Impossible Road</h3><button class="small-btn camp-close-btn" data-close-camp-panel>Done</button></div><div id="campHeirloomSummary"></div><div id="campChestSet"></div></div>
@@ -259,7 +268,7 @@
 
   function progressionObjectMarkup(id){
     if(id==='campAchievementBtn')return '<div class="camp-icon">🏆</div><div class="camp-label">Trophy</div><div class="camp-sub">Achievements</div>';
-    if(id==='campTalentBtn')return `<div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${asset('talentStar','assets/camp/objects/talent-star.png')}" alt="${assetAlt('talentStar','Northern star of talents')}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div>`;
+    if(id==='campTalentBtn')return `<div class="camp-icon camp-special-art-frame"><img class="camp-special-art camp-talent-art" src="${asset('talentStar','assets/camp/interactions/talent-star.png')}" alt="${assetAlt('talentStar','Northern star of talents')}"></div><div class="camp-label">Talents</div><div class="camp-sub">Spend Legacy points</div>`;
     if(id==='campMoonBtn')return '<div class="camp-icon">🌙</div><div class="camp-label">Prestige</div><div class="camp-sub">Prestige &amp; reset</div>';
     return '';
   }
@@ -297,14 +306,13 @@
   function ensure(){
     const documentRef=doc(),modal=find('startOverlay')?.querySelector('.start-modal');
     if(!documentRef||!modal)return null;
-    installLayoutStyles();
+    installLayoutStyles();hideLegacyCampDestinations();
     let scene=find('campScene');
     if(scene){wireScene();ensureOptionsButton();return scene;}
     modal.classList.add('legacy-camp-modal');
     find('betweenRunsHub')?.remove();modal.querySelector('.start-art')?.remove();modal.querySelector('h2')?.remove();
     const subtitle=modal.querySelector('.subtitle');
     if(subtitle)subtitle.innerHTML='Between runs, gather at camp. Assign talents, swap companions, inspect heirlooms, toggle difficulties and then head back onto the road.';
-    ['nightmareBox','hellBox','startHeirloom'].forEach(id=>find(id)?.classList.add('camp-hidden'));
     const classGrid=find('classGrid'),startButton=find('startBtn');classGrid?.classList.add('camp-hidden');startButton?.classList.add('camp-hidden');
     const help=documentRef.createElement('div');help.className='camp-help';help.textContent='Click the camp features to open their popups. Your selected class and companion remain visible in camp so the hub feels like a literal place between expeditions.';
     modal.insertBefore(help,classGrid||startButton||modal.lastElementChild);
@@ -335,12 +343,12 @@
       icon.replaceChildren(image);icon.dataset.campFullbodyClass='random';return;
     }
     const art=runtime.resolveClassArt?.(view.classId)||root.DiceboundAssets?.resolveClassArt?.(view.classId);
-    const src=art?.campsite||art?.battle||`assets/ui/class-art/${view.classId}.png`;
+    const src=art?.campFigure||art?.battle||art?.campsite||art?.headshot||null;
     if(icon.dataset.campFullbodyClass===String(view.classId)&&icon.querySelector('img.db058-camp-class-fullbody')?.getAttribute('src')===src)return;
     icon.classList.remove('class-portrait','combat-portrait','db054-art-frame');
     delete icon.dataset.portraitClass;
     const image=doc()?.createElement('img');
-    if(!image){icon.textContent=view.classIcon||'';return;}
+    if(!image||!src){icon.textContent=view.classIcon||'';return;}
     image.className='db058-camp-class-fullbody';image.src=src;image.alt=view.className||String(view.classId);image.draggable=false;
     icon.replaceChildren(image);icon.dataset.campFullbodyClass=String(view.classId);
   }
@@ -360,12 +368,12 @@
 
   function refreshArt(view=runtime.getViewModel?.()||{}){
     if(!find('campScene'))return;
-    setObjectArt('campMoonBtn','prestigeMoon','db058-prestige-moon','Prestige moon','assets/camp/objects/prestige-moon.png');
-    setObjectArt('campAchievementBtn','achievementKeg','db058-achievement-keg','Ale keg and trophy cup','assets/camp/objects/achievement-keg.png');
-    setObjectArt('campOptionsBtn','optionsCog','db058-options-cog','Options cog','assets/camp/objects/options-cog.png');
+    setObjectArt('campMoonBtn','prestigeMoon','db058-prestige-moon','Prestige moon','assets/camp/interactions/prestige-moon.png');
+    setObjectArt('campAchievementBtn','achievementKeg','db058-achievement-keg','Ale keg and trophy cup','assets/camp/interactions/achievement-keg.png');
+    setObjectArt('campOptionsBtn','optionsCog','db058-options-cog','Options cog','assets/camp/interactions/options-cog.png');
     setObjectArt('campChestBtn','chest','db-art-camp db058-chest','Treasure chest','assets/camp/interactions/chest.png');
     find('campChestBtn')?.classList.add('camp-chest-bare');
-    setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/objects/nightmare-on.png':'assets/camp/objects/nightmare-off.png');
+    setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/mode-toggles/nightmare/on.png':'assets/camp/mode-toggles/nightmare/off.png');
     const journey=find('campGoBtn')?.querySelector('.camp-journey-art');
     if(journey){const src=asset('roadCaravan','assets/camp/interactions/road-caravan.png');if(journey.getAttribute('src')!==src)journey.src=src;journey.hidden=false;}
     renderClassFigure(find('campClassIcon'),view);
@@ -403,6 +411,10 @@
   function syncHitTargets(){
     let changed=false;
     for(const id of CAMP_OBJECT_IDS){
+      // The caravan is a deliberately large stage object.  Its authored Camp
+      // bounds own both the painted frame and its semantic target; measuring
+      // it before the stage pass would otherwise lock in the old tiny image.
+      if(id==='campGoBtn'&&(root.innerWidth||0)>=800)continue;
       const button=find(id),painted=button&&paintedBounds(button),buttonRect=button?.getBoundingClientRect();
       if(!button||!painted||!buttonRect)continue;
       const width=Math.ceil(painted.right-painted.left),height=Math.ceil(painted.bottom-painted.top);if(width<1||height<1)continue;
@@ -468,12 +480,15 @@
       const node=id==='campBonfire'?scene.querySelector('.camp-bonfire'):find(id),spec=stageSpec(id,layout);
       if(!node||!spec)continue;
       for(const [property,value] of Object.entries({position:'absolute',left:`${(spec.x*100).toFixed(3)}%`,top:`${(spec.y*100).toFixed(3)}%`,right:'auto',bottom:'auto',transform:'translate(-50%,-50%)',translate:'none'}))important(node,property,value);
-      if(node.dataset.db064HitTarget!=='painted-object'){
+      if(id==='campGoBtn'){
+        const width=Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08)),height=Math.round(clamp((spec.h||spec.w)*frame.scale,(spec.h||spec.w)*.72,(spec.h||spec.w)*1.08));
+        for(const [property,value] of Object.entries({width:`${width}px`,height:`${height}px`,'min-width':`${width}px`,'min-height':`${height}px`,'max-width':`${width}px`,'max-height':`${height}px`,padding:'0'}))important(node,property,value);
+      }else if(node.dataset.db064HitTarget!=='painted-object'){
         important(node,'width',`${Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08))}px`);
         if(spec.h)important(node,'min-height',`${Math.round(clamp(spec.h*frame.scale,spec.h*.72,spec.h*1.08))}px`);
       }
     }
-    const journey=scene.querySelector('#campGoBtn .camp-journey-art-frame');if(journey){important(journey,'width','92%');important(journey,'height','72%');important(journey,'max-width','none');}
+    const journey=scene.querySelector('#campGoBtn .camp-journey-art-frame');if(journey){important(journey,'width','100%');important(journey,'height','90%');important(journey,'max-width','none');}
     scene.dataset.dbCampStage=`${Math.round(frame.width)}x${Math.round(frame.height)}`;
     scene.dataset.dbCampLayout=layout.id;
     return true;

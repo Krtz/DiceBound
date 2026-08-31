@@ -197,9 +197,12 @@ def main() -> int:
         "CAMP_STAGE_ANCHORS",
         "const CAMP_BASE_STYLE=",
         "function syncProgressionReveals(",
+        "function hideLegacyCampDestinations(",
     ]:
         if required_camp_stage_owner not in camp_source:
             errors.append("ui-camp is missing authoritative Camp stage ownership: " + required_camp_stage_owner)
+    if "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox,#startOverlay.camp-fullscreen #startHeirloom{display:none!important}" not in camp_source:
+        errors.append("ui-camp must suppress legacy mode/storage presentation at the Camp destination layer")
     for retired_reward_policy_camp_owner in ["campAnchors", "function scaleCamp(", "#startOverlay.camp-fullscreen", "#campScene .camp-spot"]:
         if retired_reward_policy_camp_owner in reward_policy_source:
             errors.append("event-rewards retains Camp presentation ownership: " + retired_reward_policy_camp_owner)

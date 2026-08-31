@@ -44,7 +44,7 @@
     })[char]);
   }
   function classImage(entry,kind,extraClass=''){
-    const art=classArt(entry.id),src=kind==='battle'?(art?.battle||art?.campsite||art?.headshot):(art?.campsite||art?.headshot||art?.battle);
+    const art=classArt(entry.id),src=kind==='battle'?(art?.battle||art?.campsite||art?.headshot):(art?.headshot||art?.campsite||art?.battle);
     return src?`<img class="class-chooser-art class-chooser-art-${kind} ${extraClass}" src="${escapeHtml(src)}" alt="${escapeHtml(art?.alt||entry.name)}" draggable="false">`:`<span class="class-chooser-emoji" aria-hidden="true">${escapeHtml(entry.icon||'🎲')}</span>`;
   }
   function tagHtml(entry){return runtime.tagChips?.(entry.tags||[],'class')||'';}

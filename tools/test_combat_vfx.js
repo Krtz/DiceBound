@@ -18,8 +18,7 @@ const vfx = api.create({ getEnemies: () => [defeated, living], getPlayer: () => 
 assert.ok(Object.isFrozen(vfx));
 assert.equal(vfx.natureEffect().frameDurationMs, 75);
 assert.equal(vfx.donutEffect().durationMs, 1450);
-assert.equal(vfx.donutFramePosition(0, 6), "0% 0%");
-assert.equal(vfx.donutFramePosition(5, 6), "100% 0%");
+assert.equal(vfx.donutEffect().frames.length, 6);
 assert.deepEqual(JSON.parse(JSON.stringify(vfx.livingNatureTargets())), [living]);
 assert.equal(vfx.suppressLegacyElementAnimation("nature"), false);
 const result = vfx.withNatureLegacyPresentation("nature", () => {
@@ -83,13 +82,14 @@ const donutEnemy = { hp: 10 };
 const renderedDonuts = donutContext.window.DiceboundCombatVfx.create({ getEnemies: () => [donutEnemy] });
 assert.equal(renderedDonuts.playDonutRain({ origin: "player", enemy: donutEnemy }), true);
 assert.deepEqual(JSON.parse(JSON.stringify(renderedDonuts.donutEntries())), [
-  { src: "assets/combat/effects/donut/donut-proc-rain-spritesheet.png", effect: "donutProcRain", target: "player", origin: "player", frame: 0 },
-  { src: "assets/combat/effects/donut/donut-proc-rain-spritesheet.png", effect: "donutProcRain", target: "enemy", origin: "player", frame: 0 },
+  { src: "assets/combat/effects/donut/donut-proc-rain-01.png", effect: "donutProcRain", target: "player", origin: "player", frame: 0 },
+  { src: "assets/combat/effects/donut/donut-proc-rain-01.png", effect: "donutProcRain", target: "enemy", origin: "player", frame: 0 },
 ]);
-assert.equal(donutDom.player.children[0].style.backgroundSize, "600% 100%");
-assert.equal(donutDom.enemy.children[0].style.backgroundImage, 'url("assets/combat/effects/donut/donut-proc-rain-spritesheet.png")');
+assert.equal(donutDom.player.children[0].children[0].src, "assets/combat/effects/donut/donut-proc-rain-01.png");
+assert.equal(donutDom.enemy.children[0].children[0].src, "assets/combat/effects/donut/donut-proc-rain-01.png");
 donutTimers[0]();
 assert.deepEqual(JSON.parse(JSON.stringify(renderedDonuts.donutEntries())).map(entry => entry.frame), [1, 1]);
+assert.deepEqual(JSON.parse(JSON.stringify(renderedDonuts.donutEntries())).map(entry => entry.src), ["assets/combat/effects/donut/donut-proc-rain-02.png", "assets/combat/effects/donut/donut-proc-rain-02.png"]);
 assert.equal(renderedDonuts.playDonutRain({ origin: "enemy", enemy: donutEnemy }), true);
 assert.ok(renderedDonuts.donutEntries().every(entry => entry.origin === "enemy"));
 
@@ -150,6 +150,7 @@ assert.match(monolith, /const db064DonutEnemyElementProcBase=enemyElementProc;/,
 assert.match(monolith, /if\(isDonut&&result\)dbCombatVfx\.playDonutRain\(\{origin:'enemy',enemy\}\);/, "Enemy-origin Donut proc must play the authored rain after a real completed proc");
 assert.doesNotMatch(monolith, /function dbPlayNatureVfx/, "Nature DOM presentation remained duplicated in the monolith");
 assert.doesNotMatch(monolith, /function db064PlayDonutRain/, "Donut DOM presentation remained duplicated in the monolith");
+assert.doesNotMatch(fs.readFileSync(path.join(root, "runtime", "js", "combat", "vfx.js"), "utf8"), /backgroundPosition: donutFramePosition/, "Donut must use its whole authored frames rather than CSS spritesheet cropping");
 assert.match(monolith, /dbCombatVfx\.clearTransient\?\.\(\)/, "Combat transitions must explicitly clear authored transient VFX");
 assert.match(monolith, /dbCombatVfx\.playProjectileProc\?\.\(key,\{origin:'player',enemy:target\}\)/, "Player Fire/Gun procs must use the authored projectile owner");
 

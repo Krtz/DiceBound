@@ -26,7 +26,7 @@ Runtime sequencing is owned by `runtime/js/combat/vfx.js`.
 
 ## Donut: Healing Rain of Donuts — implemented
 
-Donut uses `donut/donut-proc-rain-spritesheet.png`. Runtime animation crops the authored spritesheet into falling donut particles.
+Donut uses six transparent authored frames under `donut/`. Runtime sequencing swaps the whole frame image, which works consistently in direct Edge and native WebView2 without fragile CSS spritesheet cropping.
 
 ## Gun — artwork staged, implementation pending
 
