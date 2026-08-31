@@ -1420,23 +1420,6 @@
     await petTurn();if(!livingEnemies().length)return winCombat();applyPoisonTick();await delay(260);if(!livingEnemies().length)return winCombat();if(player.hasteTurns>0){player.hasteTurns--;combatBusy=false;setCombatText("☕ Haste! You act again before the enemy pack can respond.");updateCombatUI();return;}const allFrozen=livingEnemies().every(e=>(e.skipTurns||0)>0);if(allFrozen){livingEnemies().forEach(e=>e.skipTurns--);combatBusy=false;setCombatText("❄️ The entire enemy pack is frozen and loses its turn.");updateCombatUI();return;}await enemyTurn(guarded,extraGuardPower);
   }
 
-  function renderAchievements(){
-    const classAchievements=Object.values(CLASSES).filter(cls=>cls.id!=="ranger").map(cls=>{const done=isClassUnlocked(cls.id),hidden=!!cls.secret&&!done;return {id:`class_${cls.id}`,name:hidden?"???":`${cls.icon} ${cls.name} Unlocked`,desc:hidden?"A secret achievement. Its condition is hidden until discovered.":cls.unlock,done,hidden};});
-    const milestones=[
-      {id:"first_step",name:"First Footfall",desc:"Begin any run",done:meta.runs>0||gameStarted},
-      {id:"road1",name:"Dragon Down",desc:"Defeat the Board 1 dragon",done:isClassUnlocked("fighter")},
-      {id:"road2",name:"Astral Collapse",desc:"Defeat the Board 2 dragon · unlocks Godslayer powerups",done:isClassUnlocked("clown")},
-      {id:"road3",name:"Nightmare Key",desc:"Defeat the Board 3 boss · unlocks Immortal Crown powerups",done:meta.nightmareUnlocked},
-      {id:"road4",name:"Fourth Road Conqueror",desc:"Defeat the Board 4 boss · unlocks Chaos Engine powerups",done:(meta.board4Clears||0)>0},
-      {id:"nature_master",name:"Green Plague Scholar",desc:`Deal/heal ${PET_UNLOCK_REQUIREMENT} Nature points · unlocks Crown of the Green Plague`,done:(meta.elementProgress?.nature||0)>=PET_UNLOCK_REQUIREMENT},
-      {id:"menagerie",name:"Full Menagerie",desc:"Unlock every elemental pet",done:ELEMENT_KEYS.every(k=>meta.pets?.[k]?.unlocked)},
-      {id:"prestige10",name:"Red Horizon",desc:"Reach 10 Prestige · unlocks Dice of Destiny powerups",done:(meta.prestige?.count||0)>=10},
-      {id:"prestige20",name:"Double Legacy",desc:"Reach 20 Prestige",done:(meta.prestige?.count||0)>=20},
-      {id:"merchant1",name:(meta.merchantKills||0)>=1?"Hostile Customer":"???",desc:(meta.merchantKills||0)>=1?"Defeat the hidden Road Merchant":"A secret achievement.",done:(meta.merchantKills||0)>=1,hidden:(meta.merchantKills||0)<1},
-      {id:"mythic5",name:"Impossible Wardrobe",desc:"Equip five Impossible Road pieces in one run",done:gameStarted&&mythicalSetCount()>=5}
-    ];const defs=[...classAchievements,...milestones],grid=$("achievementGrid");grid.innerHTML=defs.map(a=>`<div class="achievement${a.done?" done":""}${a.hidden?" secret-locked":""}"><b>${a.done?"✅":"⬜"} ${a.name}</b><span>${a.desc}</span></div>`).join("");
-  }
-
   function resetPlayer(classId=selectedClassId){const cls=CLASSES[classId]||CLASSES.ranger;Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0});applyTalentBonuses();(meta.heirlooms||[]).slice(0,getHeirloomSlots()).forEach(item=>equipItem(item,true));boardLevel=1;rolls=0;tilesMovedThisRun=0;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentMerchantItems=[];runFinalized=false;lastLegacyAward=0;lastGoldLegacyAward=0;merchantBossBattle=false;}
 
   function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;resolveTile();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
@@ -1592,27 +1575,6 @@
   renderInfo=function(){const sections=$("infoSections"),classes=Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id));const classRows=classes.map(c=>`<div class="info-class"><b>${c.icon} ${c.name}</b><br>${c.desc}<br><span style="color:var(--gold)">Scaling:</span> ${c.scaleNotes||"Attack raises ordinary damage; Crit and Echo multiply the number and size of successful strikes. Its ultimate scales primarily from Attack and class-specific bonuses."}<br><span style="color:var(--muted)">Start: ${c.stats} · Ultimate: ${c.ultimate.name}</span></div>`).join("");sections.innerHTML=`<details class="info-section" open><summary>🎲 Travel & boards</summary><div class="info-body"><p>Roll 1–6 and travel that many tiles. Natural high rolls grant Fast Travel XP; some powers can add an extra step or let you choose the die. The halfway guardian intercepts rolls that would skip past it.</p><p>Boards 1–3 have 100 tiles. Board 4 has 64 tiles but its enemies receive a severe Alpha v1 stat multiplier. Enemy packs become more common later in each board.</p></div></details><details class="info-section"><summary>⚔️ Combat & scaling</summary><div class="info-body"><p>Attack is the main damage stat. Defense reduces ordinary incoming hits. Crit above 100% creates guaranteed critical tiers; Echo above 100% creates guaranteed extra strikes plus a remainder chance.</p><p>Boss Damage multiplies damage against minibosses, final guardians and the hidden Merchant fight. Guardian specials occur every five enemy responses and ignore Dodge/barriers, although Guard still reduces them.</p><p>Combat intentionally pauses about 0.2 seconds longer after actions in Alpha v1 so hits, pet attacks and elemental effects are easier to read.</p></div></details><details class="info-section"><summary>🧙 Classes & how they scale</summary><div class="info-body"><div class="info-class-grid">${classRows}</div></div></details><details class="info-section"><summary>🌳 Legacy talents</summary><div class="info-body"><p>Legacy XP grants talent points. <b>Any talent rank purchased during a run is queued: the current run keeps the talent snapshot it started with, and the new rank activates when the next run begins.</b></p><p>Prismatic Birthright now correctly creates an Uncommon elemental class weapon at the start of a run unless an heirloom weapon already occupies the weapon slot.</p></div></details><details class="info-section"><summary>🧰 Equipment, shops & heirlooms</summary><div class="info-body"><p>Equipment occupies eight slots and is replaced immediately when you equip a new item. Merchant gear includes a comparison against your current slot.</p><p>Merchant tiles remain on the board after shopping, so you can reopen them later. The Board 4 Sovereign Relic now lets you choose one of three Legendary powers instead of secretly rolling one for you.</p></div></details><details class="info-section"><summary>🐾 Companions</summary><div class="info-body"><p>Your active companion attacks after player actions. Elemental pets unlock by accumulating 500 damage or healing of their element. Companion level and Legacy talents raise pet damage; Beastmaster pushes this scaling much further.</p></div></details><details class="info-section"><summary>♻️ Prestige & Nightmare</summary><div class="info-body"><p>Prestige converts allocated Legacy talent points into permanent random stats, resets the tree and ends the current run. Nightmare doubles enemy HP, Attack and Defense, halves ordinary reward flow and multiplies final Legacy XP.</p></div></details><details class="info-section"><summary>❔ Secrets</summary><div class="info-body"><p>Some classes, bosses, interactions, Mythic drops and achievement-gated Legendary powers are intentionally not documented until you discover the relevant condition. The guide will not spoil those routes.</p></div></details>`;const guide=$("elementGuide");guide.innerHTML=Object.entries(ELEMENTS).map(([k,e])=>`<div class="element-row"><b>${e.icon} ${e.name} — ${e.spell}</b><br>${e.description}<br><span style="color:var(--muted)">Power scales with Element Power. Matching weaknesses increase activation/effect strength. Prismatic Echo can repeat it.${k==="ice"?" Guardians gain temporary freeze resistance after Ice Nova, preventing permanent freeze loops.":""}</span></div>`).join("");renderLifetimeStats();};
   const openInfoV15=openInfo;openInfo=function(){openInfoV15();activateInfoTab("guide");};
 
-  renderAchievements=function(){ensureAlphaMeta();const s=meta.stats,classAchievements=Object.values(CLASSES).filter(cls=>cls.id!=="ranger").map(cls=>{const done=isClassUnlocked(cls.id),hidden=!!cls.secret&&!done;return {id:`class_${cls.id}`,name:hidden?"???":`${cls.icon} ${cls.name} Unlocked`,desc:hidden?"A secret achievement. Its condition is hidden until discovered.":cls.unlock,done,hidden};});const milestones=[
-    {id:"first_step",name:"First Footfall",desc:"Begin any run",done:s.runsStarted>0||gameStarted},
-    {id:"ranger_b1",name:"Green Road Hunter",desc:"Defeat Board 1 as Ranger · unlocks Crownshot Legendary",done:hasBoardClear("ranger",1)},
-    {id:"sorcerer_b2",name:"Astral Graduate",desc:"Defeat Board 2 as Sorcerer · unlocks Star Covenant Legendary",done:hasBoardClear("sorcerer",2)},
-    {id:"slime_lvl5",name:"Blob With Ambition",desc:"Reach run level 5 as Slime · unlocks Royal Jelly Legendary",done:(s.classMaxLevel.slime||0)>=5},
-    {id:"heal1000",name:"Thousand Wounds Mended",desc:"Heal 1,000 HP across all runs · unlocks Cleric and a Legendary Cleric power",done:s.healingDone>=1000},
-    {id:"gold1500",name:"Walking Bank Vault",desc:"Hold 4,000 gold at once · unlocks Rogue",done:s.highestGold>=4000},
-    {id:"fighter_b3",name:"Iron Through the Fracture",desc:"Defeat Board 3 as Fighter · one half of the Paladin oath",done:hasBoardClear("fighter",3)},
-    {id:"cleric_b3",name:"Faith Through the Fracture",desc:"Defeat Board 3 as Cleric · one half of the Paladin oath",done:hasBoardClear("cleric",3)},
-    {id:"road1",name:"Dragon Down",desc:"Defeat the Board 1 dragon",done:isClassUnlocked("fighter")},
-    {id:"road2",name:"Astral Collapse",desc:"Defeat the Board 2 dragon · unlocks Godslayer powerups",done:isClassUnlocked("clown")},
-    {id:"road3",name:"Nightmare Key",desc:"Defeat the Board 3 boss · unlocks Immortal Crown powerups",done:meta.nightmareUnlocked},
-    {id:"road4",name:"Fourth Road Conqueror",desc:"Defeat the Board 4 boss · unlocks Chaos Engine powerups",done:(meta.board4Clears||0)>0},
-    {id:"nature_master",name:"Green Plague Scholar",desc:`Deal/heal ${PET_UNLOCK_REQUIREMENT} Nature points · unlocks Crown of the Green Plague`,done:(meta.elementProgress?.nature||0)>=PET_UNLOCK_REQUIREMENT},
-    {id:"menagerie",name:"Full Menagerie",desc:"Unlock every companion · unlocks Beastmaster and Alpha of Every Road",done:Object.values(meta.pets||{}).every(p=>p.unlocked)},
-    {id:"prestige10",name:"Red Horizon",desc:"Reach 10 Prestige · unlocks Dice of Destiny powerups",done:(meta.prestige?.count||0)>=10},
-    {id:"prestige20",name:"Double Legacy",desc:"Reach 20 Prestige",done:(meta.prestige?.count||0)>=20},
-    {id:"merchant1",name:(meta.merchantKills||0)>=1?"Hostile Customer":"???",desc:(meta.merchantKills||0)>=1?"Defeat the hidden Road Merchant · unlocks Golden Law":"A secret achievement.",done:(meta.merchantKills||0)>=1,hidden:(meta.merchantKills||0)<1},
-    {id:"mythic5",name:"Impossible Wardrobe",desc:"Equip five Impossible Road pieces in one run",done:gameStarted&&mythicalSetCount()>=5}
-  ];const defs=[...classAchievements,...milestones],grid=$("achievementGrid");grid.innerHTML=defs.map(a=>`<div class="achievement${a.done?" done":""}${a.hidden?" secret-locked":""}"><b>${a.done?"✅":"⬜"} ${a.name}</b><span>${a.desc}</span></div>`).join("");};
-
   // Imported Alpha saves also get the stats schema immediately.
   importSave=function(){try{const raw=$("saveTransferText").value.trim();if(!raw)throw new Error("empty");meta=window.DiceboundSave.importText(raw,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});ensureAlphaMeta();saveMeta();repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast("Save imported");$("infoOverlay").classList.add("hidden");openStartScreen();}catch(e){window.DiceboundPlatform.alert("That save string could not be imported.");}};
 
@@ -1642,7 +1604,6 @@
 
 
   $("infoBtn").addEventListener("click",openInfo);$("infoCloseBtn").addEventListener("click",()=>$("infoOverlay").classList.add("hidden"));$("exportSaveBtn").addEventListener("click",exportSave);$("importSaveBtn").addEventListener("click",importSave);
-  $("achievementBtn").addEventListener("click",()=>{renderAchievements();$("achievementOverlay").classList.remove("hidden");});$("achievementCloseBtn").addEventListener("click",()=>$("achievementOverlay").classList.add("hidden"));
   $("bloodwellLeaveBtn").addEventListener("click",()=>{tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);$("bloodwellOverlay").classList.add("hidden");returnToRoad();});
   $("gamblerLeaveBtn").addEventListener("click",()=>{$("gamblerOverlay").classList.add("hidden");tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);returnToRoad();});
 
@@ -1814,7 +1775,6 @@
   advanceToNextBoard=function(){boardLevel++;player.position=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;rollLocked=true;applyRunTheme();generateBoard();buildBoard();const heal=boardLevel===5?.20:boardLevel===4?.22:boardLevel===3?.28:.35,pots=boardLevel===5?3:boardLevel===4?3:boardLevel===3?2:1;player.hp=Math.min(player.maxHp,player.hp+Math.ceil(player.maxHp*heal));player.potions+=pots;const name=boardLevel===5?"Oblivion Ringroad":boardLevel===4?"Crown Road":boardLevel===3?"Fractured Road":"Astral Road";addLog(`<b>Board Level ${boardLevel}: ${name}</b> opens.`);showToast(`Board ${boardLevel}: ${name}`);sfx.holy();updateHUD();setTimeout(()=>{placePawn(false);rollLocked=false;updateHUD();},350);};
   winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,all=currentEnemies.length?[...currentEnemies]:defeated?[defeated]:[],tileIndex=currentEnemyTile,board=boardLevel,classId=player.classId;if(defeated){const s=ensureAlphaMeta();s.enemiesDefeated+=all.length;if(defeated.boss)s.bossesDefeated++;if(defeated.miniBoss)s.minibossesDefeated++;if(defeated.finalBoss)recordBoardClear(board,classId);}if(player.bloodOverhealBonus)clearBloodOverhealTemp();const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);let cookies=defeated.finalBoss?(boardLevel===5?10:boardLevel===4?8:boardLevel===3?6:boardLevel===2?4:2):defeated.miniBoss?(boardLevel===6?10:boardLevel===5?8:boardLevel===4?7:boardLevel===3?5:boardLevel===2?3:1):0;if(cookies){meta.petCookies+=cookies;saveMeta();showToast(`🍪 +${cookies} cookies`);}if(defeated.merchantBoss){merchantBossBattle=false;merchantBossPrimed=false;merchantBossDefeatedThisBoard=true;player.freeMerchantRun=true;meta.merchantKills=(meta.merchantKills||0)+1;saveMeta();checkDynamicClassUnlocks();addLog("<b>The Road Merchant is defeated.</b> Every merchant item is free for the rest of this run.");showToast("🧔 All shops are free!");}if(defeated.bloodmageBoss){meta.bloodmageKills=(meta.bloodmageKills||0)+1;unlockClass("bloodmage");saveMeta();addLog("<b>The Bloodmage is defeated.</b> Forbidden hemomancy bends the knee.");showToast("🩸 Bloodmage unlocked");}if(defeated.miniBoss&&boardLevel===1)unlockClass("sorcerer");if(defeated.finalBoss&&boardLevel===1)unlockClass("fighter");if(defeated.miniBoss&&boardLevel===2)unlockClass("monk");if(defeated.finalBoss&&boardLevel===2)unlockClass("clown");if(tiles[currentEnemyTile]){tiles[currentEnemyTile].cleared=true;if(!defeated.finalBoss&&!defeated.merchantBoss){tiles[currentEnemyTile].type="empty";delete tiles[currentEnemyTile].enemyBase;refreshTile(currentEnemyTile);}}setCombatText(`Victory! +${rewardXp} XP, +${rewardGold} gold${cookies?`, +${cookies} cookies`:""}.`);sfx.win();addLog(`Defeated <b>${all.map(e=>e.name).join(", ")}</b>: +${rewardXp} XP, +${rewardGold} gold.`);updateHUD();await delay(320);await BattleVictoryUI.present(BattleVictoryState.create({title:'Victory!',defeatedNames:all.map(e=>e.name),xp:rewardXp,gold:rewardGold,cookies,board}));$("combatOverlay").classList.add("hidden");BattleVictoryUI.reset();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);updateHUD();const after=()=>{if(defeated.finalBoss){if(boardLevel===3&&!meta.nightmareUnlocked){meta.nightmareUnlocked=true;saveMeta();showToast("🌑 Nightmare Mode unlocked");addLog("<b>Nightmare Mode unlocked!</b> You may enable it from class selection on future runs.");}if(boardLevel===4&&nightmareMode&&!meta.hellUnlocked){meta.hellUnlocked=true;saveMeta();showToast("🔥 Hell Mode unlocked");addLog("<b>Hell Mode unlocked!</b> Future runs may enable it from class selection.");renderClassChoices();}if(boardLevel<5)advanceToNextBoard();else{meta.board5Clears=(meta.board5Clears||0)+1;saveMeta();showEnd(true);}}else returnToRoad();},cont=()=>pendingLevelUps>0?openLevelUp(after):after(),loot=()=>openCombatLootChain(defeated,cont);if(defeated.miniBoss){showLegendaryChoice("Miniboss Legendary Reward",loot);}else loot();if(defeated?.merchantBoss&&tiles[tileIndex]){tiles[tileIndex].type="merchant";tiles[tileIndex].cleared=false;delete tiles[tileIndex].enemyBase;refreshTile(tileIndex);}saveMeta();};
 
-  const renderAchievementsV11=renderAchievements;renderAchievements=function(){renderAchievementsV11();const grid=$("achievementGrid");if(!grid)return;[{done:meta.hellUnlocked,name:meta.hellUnlocked?"🔥 Through Hell's Gate":"???",desc:meta.hellUnlocked?"Defeat Board 4 in Nightmare Mode to unlock Hell Mode.":"A secret achievement."},{done:isClassUnlocked("bloodmage"),name:isClassUnlocked("bloodmage")?"🩸 Blood in the Well":"???",desc:isClassUnlocked("bloodmage")?"Defeat the Bloodmage hidden in a Bloodwell.":"A secret achievement."}].forEach(a=>{const div=document.createElement("div");div.className=`achievement${a.done?" done":""}${a.name==="???"?" secret-locked":""}`;div.innerHTML=`<b>${a.done?"✅":"⬜"} ${a.name}</b><span>${a.desc}</span>`;grid.appendChild(div);});};
   const openBloodwellV11=openBloodwell;openBloodwell=function(){openBloodwellV11();if((meta.merchantKills||0)>=1){const grid=$("bloodwellGrid");if(grid&&!grid.querySelector("[data-bloodmage]")){const b=document.createElement("button");b.className="choice-btn legendary";b.dataset.bloodmage="1";b.innerHTML=`<span class="choice-icon">🩸</span><span class="choice-name">Challenge the hidden Bloodmage</span><span class="choice-desc">The blood icon trembles. Begin a secret boss fight. A 5% Omega drop may await.</span>`;b.addEventListener("click",()=>{$("bloodwellOverlay").classList.add("hidden");startCombat("bloodmage");});grid.prepend(b);}}};
 
   refreshDebugButtons();
@@ -1945,17 +1905,6 @@
       <details class="info-section"><summary>🌑 Nightmare & Hell</summary><div class="info-body"><p>Nightmare massively strengthens enemies and changes reward scaling. Defeating Board 4 in Nightmare unlocks Hell Mode. In Hell Mode every enemy has an elemental affinity and enemies are dramatically stronger.</p></div></details>
       <details class="info-section"><summary>❔ Secrets</summary><div class="info-body"><p>Some classes, bosses, interactions, drops and achievement-gated powers are deliberately undocumented until discovered. Suspicious icons remain suspicious.</p></div></details>`;
     const guide=$("elementGuide");guide.innerHTML=Object.entries(ELEMENTS).map(([k,e])=>`<div class="element-row"><b>${e.icon} ${e.name} — ${e.spell}</b><br>${e.description}<br><span style="color:var(--muted)">Matching weakness strengthens it. Matching enemy affinity halves its elemental damage.${k==="ice"?" Guardians gain temporary freeze resistance after Ice Nova.":""}${k==="electric"?" Electricity also has a small stun chance.":""}${k==="donut"?" Donut Rain now damages the pack and heals you.":""}</span></div>`).join("");renderLifetimeStats();
-  };
-
-  renderAchievements=function(){ensureAlphaMeta();const s=meta.stats,grid=$("achievementGrid");const cat=(name,arr)=>`<div class="achievement-category">${name}</div>${arr.map(a=>`<div class="achievement${a.done?" done":""}${a.hidden?" secret-locked":""}"><b>${a.done?"✅":"⬜"} ${a.name}</b><span>${a.desc}</span></div>`).join("")}`;
-    const classItems=Object.values(CLASSES).filter(c=>c.id!=="ranger").map(c=>{const done=isClassUnlocked(c.id),hidden=!!c.secret&&!done;return {done,hidden,name:hidden?"???":`${c.icon} ${c.name}`,desc:hidden?"A secret class unlock.":c.unlock};});
-    const roads=[
-      {name:"First Footfall",desc:"Begin any run",done:s.runsStarted>0||gameStarted},{name:"Green Road Hunter",desc:"Defeat Board 1 as Ranger · unlocks Crownshot",done:hasBoardClear("ranger",1)},{name:"Astral Graduate",desc:"Defeat Board 2 as Sorcerer · unlocks Star Covenant",done:hasBoardClear("sorcerer",2)},{name:"Dragon Down",desc:"Defeat the Board 1 final guardian",done:isClassUnlocked("fighter")},{name:"Astral Collapse",desc:"Defeat the Board 2 final guardian",done:isClassUnlocked("clown")},{name:"Nightmare Key",desc:"Defeat the Board 3 final guardian",done:meta.nightmareUnlocked},{name:"Fourth Road Conqueror",desc:"Defeat the Board 4 final guardian",done:(meta.board4Clears||0)>0},{name:"Fifth Road Conqueror",desc:"Defeat the Board 5 final guardian",done:(meta.board5Clears||0)>0}
-    ];
-    const builds=[{name:"Blob With Ambition",desc:"Reach run level 5 as Slime",done:(s.classMaxLevel.slime||0)>=5},{name:"Thousand Wounds Mended",desc:"Heal 1,000 HP across all runs",done:s.healingDone>=1000},{name:"Walking Bank Vault",desc:"Hold 4,000 gold at once",done:s.highestGold>=4000},{name:"Iron Through the Fracture",desc:"Defeat Board 3 as Fighter",done:hasBoardClear("fighter",3)},{name:"Faith Through the Fracture",desc:"Defeat Board 3 as Cleric",done:hasBoardClear("cleric",3)}];
-    const collection=[{name:"Green Plague Scholar",desc:`Reach ${PET_UNLOCK_REQUIREMENT} Nature progress`,done:(meta.elementProgress?.nature||0)>=PET_UNLOCK_REQUIREMENT},{name:"Full Menagerie",desc:"Unlock every companion",done:Object.values(meta.pets||{}).every(p=>p.unlocked)},{name:"Red Horizon",desc:"Reach 10 Prestige",done:(meta.prestige?.count||0)>=10},{name:"Double Legacy",desc:"Reach 20 Prestige",done:(meta.prestige?.count||0)>=20},{name:"Impossible Wardrobe",desc:"Equip five Impossible Road pieces in one run",done:gameStarted&&mythicalSetCount()>=5},{name:"The Complete Impossible Road",desc:"Equip all seven Impossible Road pieces in one run",done:gameStarted&&mythicalSetCount()>=7}];
-    const secrets=[{name:(meta.merchantKills||0)>=1?"Hostile Customer":"???",desc:(meta.merchantKills||0)>=1?"Defeat a hidden merchant encounter.":"A secret achievement.",done:(meta.merchantKills||0)>=1,hidden:(meta.merchantKills||0)<1},{name:meta.hellUnlocked?"Through Hell's Gate":"???",desc:meta.hellUnlocked?"Defeat Board 4 in Nightmare Mode.":"A secret achievement.",done:meta.hellUnlocked,hidden:!meta.hellUnlocked},{name:isClassUnlocked("bloodmage")?"Blood in the Well":"???",desc:isClassUnlocked("bloodmage")?"Defeat the Bloodmage hidden in a Bloodwell.":"A secret achievement.",done:isClassUnlocked("bloodmage"),hidden:!isClassUnlocked("bloodmage")}];
-    grid.innerHTML=cat("🧙 Class Unlocks",classItems)+cat("🛣️ Road & Board Feats",roads)+cat("⚔️ Build Milestones",builds)+cat("🏺 Collection & Legacy",collection)+cat("❔ Secrets",secrets);
   };
 
   // Re-render once so the updated class order/portraits are immediately visible.
@@ -3314,14 +3263,6 @@
     if(potion)potion.dataset.tip=v18PotionTooltip();
   };
 
-  // ---- Achievements explicitly state their rewards -------------------------
-  const renderAchievementsV18Base=renderAchievements;
-  renderAchievements=function(){
-    renderAchievementsV18Base();const cards=[...$("achievementGrid").querySelectorAll('.achievement')];
-    const rewardMap={"Green Road Hunter":"Unlock: Crownshot Legendary power.","Astral Graduate":"Unlock: Star Covenant Legendary power.","Thousand Wounds Mended":"Unlock: Cleric class and its healing achievement reward.","Walking Bank Vault":"Unlock: Rogue class.","Nightmare Key":"Unlock: Nightmare Mode and Immortal Crown power pool.","Fourth Road Conqueror":"Unlock: Chaos Engine power pool.","Green Plague Scholar":"Unlock: Crown of the Green Plague.","Full Menagerie":"Unlock: Beastmaster class and menagerie reward.","Red Horizon":"Unlock: Dice of Destiny power pool."};
-    cards.forEach(card=>{const title=card.querySelector('b')?.textContent||"",body=card.querySelector('span');if(!body||title.includes('???'))return;let reward="";for(const cls of Object.values(CLASSES)){if(cls.id!=="ranger"&&title.includes(cls.name)){reward=`Unlock: ${cls.name} class.`;break;}}for(const [name,text] of Object.entries(rewardMap))if(title.includes(name))reward=text;if(reward&&!body.querySelector?.('.achievement-reward'))body.insertAdjacentHTML('beforeend',`<span class="achievement-reward">${reward}</span>`);});
-  };
-
   // ---- Info/documentation updates ------------------------------------------
   const renderInfoV18Base=renderInfo;
   renderInfo=function(){
@@ -3720,9 +3661,7 @@
   function v19AddDebugButton(action,label){const grid=$("debugOverlay")?.querySelector(".debug-grid");if(!grid||grid.querySelector(`[data-v19-action="${action}"]`))return;const b=document.createElement("button");b.className="small-btn";b.dataset.v19Action=action;b.textContent=label;b.addEventListener("click",()=>debugAction(action));grid.appendChild(b);}
   v19AddDebugButton("board6","Board 6");v19AddDebugButton("mythic_offhand","Artifact offhand");v19AddDebugButton("double_dice","Unlock 2d6");
 
-  // ---- Info / achievements / visual polish --------------------------------
-  const renderAchievementsV19Base=renderAchievements;
-  renderAchievements=function(){renderAchievementsV19Base();const grid=$("achievementGrid");if(!grid)return;const mastery=document.createElement("div");mastery.className="achievement-category-head";mastery.textContent="Class Mastery Powerups";grid.appendChild(mastery);Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id)).forEach(c=>{const locked=upgrades.filter(u=>(u.classId===c.id||(u.classIds||[]).includes(c.id))&&typeof u.achievementGate==="string"&&u.achievementGate.startsWith("class_b"));if(!locked.length)return;const card=document.createElement("div");card.className=`achievement ${locked.every(u=>achievementGateUnlocked(u.achievementGate))?"done":""}`;card.innerHTML=`<b>${c.icon} ${c.name} mastery</b><span>${locked.map(u=>`${achievementGateUnlocked(u.achievementGate)?"✓":"○"} Board ${classMasteryGate[u.id]?.board||"?"}: unlocks ${u.name}`).join("<br>")}</span>`;grid.appendChild(card);});};
+  // ---- Info / visual polish ------------------------------------------------
   const renderInfoV19Base=renderInfo;
   renderInfo=function(){renderInfoV19Base();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>🧭 Alpha v1.9 progression</summary><div class="info-body"><p><b>Between runs:</b> the Campsite is the planning hub for talents, companions, achievements and class choice. Only pet-tagged classes may switch companions during a run.</p><p><b>Double Dice:</b> clearing Board 5 on any difficulty permanently unlocks the choice to roll 1d6 or 2d6. The Sixth Road then continues the expedition as the hardest current board.</p><p><b>Prestige:</b> every 9 total talent points becomes one Prestige point. Survivor capacity gains an additional permanent slot at 20 and again at 60 Prestige.</p><p><b>Impossible Road:</b> the set now has a small 2-piece effect, reduced 3/4-piece power and a major 7-piece payoff. Board 6 can drop the Artifact offhand needed for all seven.</p></div>`;sections.appendChild(d);};
 
@@ -4122,7 +4061,7 @@
       openTalents:()=>openTalentTree('startOverlay'),
       openPrestigeMoon:()=>openPrestigeMoon(),
       openInfo:()=>openInfo(),
-      openAchievements:()=>{renderAchievements();$('achievementOverlay')?.classList.remove('hidden');},
+      openAchievements:()=>window.DiceboundAchievementsUi?.open?.(),
       openPets:()=>window.DiceboundPetChooser?.open(),
       startRun:()=>startNewGame(),
       toggleNightmare:()=>{if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;renderClassChoices();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);},
@@ -4849,10 +4788,7 @@ function buildDiceboundHumanHarness235(){
   const updateMetaUIV24CampBase=updateMetaUI;updateMetaUI=function(){updateMetaUIV24CampBase();v24RefreshCamp();};const openStartScreenV24CampBase=openStartScreen;openStartScreen=function(){const r=openStartScreenV24CampBase();v24RefreshCamp();return r;};
   document.addEventListener('click',e=>{if(e.target.closest?.('#campHellBtn')&&!e.target.closest?.('#campHellBtn .camp-icon'))setTimeout(v24RefreshCamp,0);},true);
 
-  /* MODULE: achievements / info ------------------------------------------- */
-  const renderAchievementsV24Base=renderAchievements;renderAchievements=function(){renderAchievementsV24Base();const grid=$('achievementGrid');if(!grid)return;const storage=v24StorageUnlocked(),devil=(meta.devilBossKills||0)>0,horns=(meta.devilHornsFound||0)>0,legendaryCount=(meta.legendaryRelics||[]).length,extra=[
-    {done:storage,name:'🗄️ The Long Box',desc:'Unlock permanent Heirloom Storage.'},{done:(meta.board5Clears||0)>0,name:'🎲 Two Fists Full of Dice',desc:'Clear Board 5 and unlock Double Dice plus a Heirloom Storage expansion.'},{done:(meta.prestige?.count||0)>=5,name:'🌙 Five Lives Later',desc:'Reach 5 Prestige and expand Heirloom Storage.'},{done:(meta.prestige?.count||0)>=50,name:'🌙🌙 Deep Legacy',desc:'Reach 50 Prestige and expand Heirloom Storage again.'},{done:(meta.merchantKills||0)>=1,name:'🧔 Hostile Storage Acquisition',desc:'Defeat the secret Road Merchant at least once; Heirloom Storage gains another slot.'},{done:legendaryCount>=1,name:'🌟 Familiar Object',desc:'Find one handcrafted Legendary road relic.'},{done:legendaryCount>=3,name:'🎧☕🧥 Lost & Found',desc:'Discover all three handcrafted Legendary road relics.'},{done:devil,name:devil?'👿 Pale Moonlight':'???',desc:devil?'Defeat the Pale Devil after inviting it onto a Hell road.':'Some dances are not performed for an audience.',hidden:!devil},{done:horns,name:horns?"👿 The Horns Are Real":'???',desc:horns?"Find the Devil's Horns Omega hat.":'A secret achievement.',hidden:!horns},{done:(ensureAlphaMeta().potionsUsed||0)>=50,name:'⚗️ Roadside Pharmacist',desc:'Consume 50 potions across all runs, including potions used outside combat.'}
-  ];extra.forEach(a=>{const d=document.createElement('div');d.className=`achievement${a.done?' done':''}${a.hidden?' secret-locked':''}`;d.innerHTML=`<b>${a.done?'✅':'⬜'} ${a.name}</b><span>${a.desc}</span>`;grid.appendChild(d);});};
+  /* MODULE: info ----------------------------------------------------------- */
   const renderInfoV24Base=renderInfo;renderInfo=function(){renderInfoV24Base();const sections=$('infoSections');if(!sections)return;sections.querySelectorAll('details').forEach(d=>{const s=d.querySelector('summary')?.textContent||'';if(s.includes('Affixes, suffixes'))d.innerHTML=`<summary>🗡️ Equipment rarity & rolled quality</summary><div class="info-body"><p><b>Ordinary equipment tiers:</b> Poor (light grey) → Common (white) → Uncommon (light blue) → Rare (blue) → Epic (pale yellow). Ordinary generated gear stops at Epic.</p><p><b>Legendary</b> (gold) pieces are handcrafted oddities found through extremely rare/special discoveries. <b>Artifact</b> (orange) currently contains the Impossible Road set. <b>Mythical</b> (purple) and <b>Omega</b> sit above Artifact and remain handcrafted chase tiers.</p><p>Ordinary gear still uses hidden point budgets, prefixes and suffixes. Higher ordinary rarity raises the budget range; special Legendary/Artifact/Mythical/Omega items ignore those normal generation rules.</p></div>`;});const d=document.createElement('details');d.className='info-section';d.innerHTML=`<summary>🗄️ Heirloom Storage</summary><div class="info-body"><p>After Board 3, a one-rank talent appears beyond Living Legend. Buying it permanently unlocks the Campsite storage chest with eight storage slots—one for each equipment slot.</p><p>Storage expands by one after clearing Board 5, reaching Prestige 5, reaching Prestige 50, and defeating the secret Road Merchant once. Stored items survive Prestige; your normal heirloom-slot count still controls how many stored items may be equipped for the next run.</p></div>`;sections.appendChild(d);};
 
   /* MODULE: v2.4 smoke/regression helpers --------------------------------- */
@@ -5843,7 +5779,7 @@ function buildDiceboundHumanHarness235(){
     if(kind==="merchantKills")return `Defeat the Road Merchant ${p[1]} time${Number(p[1])===1?"":"s"}.`;
     if(kind==="hellUnlocked")return "Unlock Hell Mode.";
     if(kind==="heirloomStorageUnlocked")return "Unlock permanent Heirloom Storage.";
-    if(kind==="legendaryRelics")return `Discover ${p[1]} handcrafted Legendary relic${Number(p[1])===1?"":"s"}.`;
+    if(kind==="legendaryRelics")return `Discover ${p[1]} named Mythical road relic${Number(p[1])===1?"":"s"}.`;
     if(kind==="devilBossKills")return `Defeat the Pale Devil ${p[1]} time${Number(p[1])===1?"":"s"}.`;
     if(kind==="devilHornsFound")return "Find the Devil's Horns Omega hat.";
     if(kind==="potionsUsed")return `Consume ${p[1]} potions across all runs.`;
@@ -5855,16 +5791,6 @@ function buildDiceboundHumanHarness235(){
     if(type==="powerup")return ` · unlocks ${upgrades.find(u=>u.id===id)?.name||id}`;
     return "";
   }
-  renderAchievements=function(){
-    ensureAlphaMeta();const grid=$("achievementGrid");if(!grid)return;const order=["roads","builds","collection","secrets"],labels={roads:"🛣️ Roads",builds:"⚔️ Builds & feats",collection:"🏆 Legacy & collection",secrets:"❔ Secrets"};
-    const milestoneHtml=order.map(category=>{
-      const cards=ACHIEVEMENT_REGISTRY.filter(a=>a.category===category).map(a=>{const done=db317AchievementDone(a),hidden=!!a.secret&&!done,name=hidden?"???":a.name,desc=hidden?"A secret achievement.":db317AchievementConditionText(a)+db317AchievementRewardText(a);return `<div class="achievement${done?" done":""}${hidden?" secret-locked":""}"><b>${done?"✅":"⬜"} ${name}</b><span>${desc}</span></div>`;}).join("");
-      return `<div class="achievement-category">${labels[category]||category}</div>${cards}`;
-    }).join("");
-    const classCards=Object.values(CLASSES).filter(c=>c.id!=="ranger").map(c=>{const done=isClassUnlocked(c.id),hidden=!!c.secret&&!done;return `<div class="achievement${done?" done":""}${hidden?" secret-locked":""}"><b>${done?"✅":"⬜"} ${hidden?"???":`${c.icon} ${c.name} Unlocked`}</b><span>${hidden?"A secret achievement. Its condition is hidden until discovered.":c.unlock}</span></div>`;}).join("");
-    const masteryCards=Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id)).map(c=>{const gated=upgrades.filter(u=>(u.classId===c.id||(u.classIds||[]).includes(c.id))&&typeof u.achievementGate==="string"&&/^class_b[34]:/.test(u.achievementGate));if(!gated.length)return "";const done=gated.every(u=>achievementGateUnlocked(u.achievementGate));return `<div class="achievement${done?" done":""}"><b>${done?"✅":"⬜"} ${c.icon} ${c.name} mastery</b><span>${gated.map(u=>{const m=/^class_b([34]):/.exec(u.achievementGate);return `${achievementGateUnlocked(u.achievementGate)?"✓":"○"} Board ${m?.[1]||"?"}: unlocks ${u.name}`;}).join("<br>")}</span></div>`;}).join("");
-    grid.innerHTML=`${milestoneHtml}<div class="achievement-category">🧙 Class unlocks</div>${classCards}<div class="achievement-category">✨ Class mastery powerups</div>${masteryCards}`;
-  };
   /* ========================================================================
      Alpha v3.2.4 — touch/mobile UI contract
      ======================================================================== */
@@ -7607,26 +7533,13 @@ function buildDiceboundHumanHarness235(){
     return db0512AchievementGateBase(gate);
   };
 
-  // Existing milestone cards now tell the player which newly-gated powerups
-  // they unlock. This makes the progression discoverable instead of invisible.
+  // Achievement completion state also controls the newly-gated powerups.
   const db0512AchievementRewardBase=db317AchievementRewardText;
   db317AchievementRewardText=function(a){
     const base=db0512AchievementRewardBase(a),ids=db0512GateRewards[a?.id]||[];
     const names=ids.map(id=>upgrades.find(u=>u.id===id)?.name).filter(Boolean).filter(name=>!base.includes(name));
     if(!names.length)return base;
     return `${base}${base?' · also':' ·'} unlocks ${names.join(', ')}`;
-  };
-
-  const db0512RenderAchievementsBase=renderAchievements;
-  renderAchievements=function(){
-    db0512RenderAchievementsBase();const grid=$('achievementGrid');if(!grid)return;
-    const cards=Object.entries(db0512ClassMastery).map(([classId,entries])=>{
-      const cls=CLASSES[classId];if(!cls||(!isClassUnlocked(classId)&&cls.secret))return '';
-      const done=entries.every(x=>achievementGateUnlocked(`class_b${x.board}:${classId}`));
-      const lines=entries.map(x=>{const up=upgrades.find(u=>u.id===x.id),ok=achievementGateUnlocked(`class_b${x.board}:${classId}`);return `${ok?'✓':'○'} Clear Board ${x.board}: unlocks ${up?.name||x.id}`;}).join('<br>');
-      return `<div class="achievement${done?' done':''}"><b>${done?'✅':'⬜'} ${cls.icon} ${cls.name} extended mastery</b><span>${lines}</span></div>`;
-    }).join('');
-    if(cards)grid.insertAdjacentHTML('beforeend',`<div class="achievement-category">🌟 Extended powerup mastery</div>${cards}`);
   };
 
   window.DiceboundBeta0512Test=Object.freeze({
@@ -7955,9 +7868,6 @@ function buildDiceboundHumanHarness235(){
   // GUIDE / DEBUG -----------------------------------------------------------
   const db060RenderInfoBase=renderInfo;
   renderInfo=function(){const r=db060RenderInfoBase();const sections=$('infoSections');if(!sections)return r;sections.querySelector('#db060GearGuide')?.remove();const d=document.createElement('details');d.id='db060GearGuide';d.className='info-section';d.innerHTML=`<summary>💎 Beta 0.6 gear & guardian loot</summary><div class="info-body"><p><b>Generated gear:</b> Poor 11–25 · Common 26–45 · Uncommon 46–70 · Rare 71–105 · Epic 106–150 · Legendary 151–210. Legendary equipment also rolls one build-changing Legendary Effect.</p><p><b>Mythical:</b> named handcrafted relics such as Axel's Coffee Mug, Kratz Headphones and The Jean Jacket Lost at Kelly's. They are no longer generated Legendary gear.</p><p><b>Artifacts:</b> guardians make one difficulty/board-specific Artifact-table roll. If it succeeds, exactly one Impossible Road piece is selected from the weighted Artifact table—never several independent pieces from one kill.</p><p><b>Memory Cache:</b> Board 4+ Treasure can become a guaranteed generated Legendary: 1/450 Normal, 1/300 Nightmare, 1/200 Hell.</p></div>`;sections.prepend(d);return r;};
-  const db060RenderAchievementsBase=renderAchievements;
-  renderAchievements=function(){const r=db060RenderAchievementsBase();const grid=$('achievementGrid');if(grid)grid.querySelectorAll('.achievement').forEach(el=>{el.innerHTML=el.innerHTML.replace(/handcrafted Legendary road relics?/gi,'named Mythical road relics').replace(/Find one handcrafted Legendary road relic/gi,'Find one named Mythical road relic');});return r;};
-
   window.DiceboundBeta06Test=Object.freeze({
     budgets:()=>JSON.parse(JSON.stringify(V14_RARITY_BUDGETS)),
     legendaryEffects:()=>DB060_LEGENDARY_EFFECTS.map(e=>({id:e.id,name:e.name,classes:e.classes||null,desc:e.desc})),
@@ -8688,33 +8598,12 @@ function buildDiceboundHumanHarness235(){
     sources:()=>Object.keys(db064FriendsEventRewards.gold.sourceMultiplier)
   });
 
-  /* #78 — registry metadata drives a compact, keyboard-native hierarchy.
-     Class-specific talent cards derive from authoritative powerup gates, not
-     from card text or rendered DOM labels. */
-  const db064AchievementGroups=window.DiceboundAchievements?.groups||[];
+  /* #78 / #209 — achievement rules and mastery state remain here until their
+     domain moves. The Trophy destination itself is owned by ui/achievements. */
   function db064AchievementUiSettings(){
     if(!meta.settings||typeof meta.settings!=='object')meta.settings={};
     if(!meta.settings.achievementGroups||typeof meta.settings.achievementGroups!=='object')meta.settings.achievementGroups={};
     return meta.settings.achievementGroups;
-  }
-  function db064AchievementOpen(id,defaultOpen=false){
-    const value=db064AchievementUiSettings()[id];return value===undefined?defaultOpen:!!value;
-  }
-  function db064PersistAchievementOpen(details){
-    details.addEventListener('toggle',()=>{db064AchievementUiSettings()[details.dataset.achievementGroup]=details.open;saveMeta();});
-  }
-  function db064AchievementCard({name,description,done=false,hidden=false}){
-    const card=document.createElement('div'),heading=document.createElement('b'),body=document.createElement('span');
-    card.className=`achievement${done?' done':''}${hidden?' secret-locked':''}`;
-    heading.textContent=`${done?'✅':'⬜'} ${hidden?'???':name}`;
-    body.textContent=hidden?'A secret achievement.':description;
-    card.append(heading,body);return card;
-  }
-  function db064AchievementDetails(id,label,done,total,children,defaultOpen=false,className='achievement-group'){
-    const details=document.createElement('details'),summary=document.createElement('summary'),count=document.createElement('span'),body=document.createElement('div');
-    details.className=className;details.dataset.achievementGroup=id;details.open=db064AchievementOpen(id,defaultOpen);
-    summary.textContent=label;count.className='achievement-group-count';count.textContent=total?`${done}/${total}`:'—';summary.append(count);
-    body.className='achievement-group-body';children.forEach(child=>child&&body.append(child));details.append(summary,body);db064PersistAchievementOpen(details);return details;
   }
   function db064PowerupGateDone(gate){return achievementGateUnlocked(gate);}
   function db064HeroMasteryEntries(classId){
@@ -8725,37 +8614,20 @@ function buildDiceboundHumanHarness235(){
         return {id:`hero-talent:${classId}:${upgrade.id}`,name:`${upgrade.icon||'✨'} ${upgrade.name}`,description:`${condition} Unlocks this hero-specific talent.`,done:db064PowerupGateDone(gate)};
       });
   }
-  const db064RenderAchievementsBase=renderAchievements;
-  renderAchievements=function(){
-    /* Preserve any non-registry setup performed by the old renderer, then
-       replace only the list contents with the semantic hierarchy. */
-    db064RenderAchievementsBase();
-    const grid=$('achievementGrid');if(!grid)return;
-    grid.replaceChildren();
-    db064AchievementGroups.filter(group=>group.id!=='hero-mastery').forEach(group=>{
-      const entries=ACHIEVEMENT_REGISTRY.filter(achievement=>achievement.hierarchy?.group===group.id),cards=entries.map(achievement=>{
-        const done=db317AchievementDone(achievement),hidden=!!achievement.secret&&!done;
-        return db064AchievementCard({name:achievement.name,description:db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),done,hidden});
-      });
-      grid.append(db064AchievementDetails(`top:${group.id}`,group.label,entries.filter(db317AchievementDone).length,entries.length,cards,group.id==='roads'));
-    });
-    const heroGroups=Object.values(CLASSES).map(hero=>{
-      const hidden=!!hero.secret&&!isClassUnlocked(hero.id),milestones=ACHIEVEMENT_REGISTRY.filter(achievement=>achievement.hierarchy?.heroId===hero.id),talents=db064HeroMasteryEntries(hero.id),entries=[
-        ...milestones.map(achievement=>({id:`milestone:${achievement.id}`,name:achievement.name,description:db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),done:db317AchievementDone(achievement),hidden:!!achievement.secret&&!db317AchievementDone(achievement)})),
-        ...talents
-      ],cards=hidden?[]:entries.map(entry=>db064AchievementCard(entry));
-      if(!hidden&&!cards.length)cards.push(db064AchievementCard({name:'No authored mastery unlocks yet',description:'This hero has a reserved mastery subgroup for future authored unlocks.'}));
-      return db064AchievementDetails(`hero:${hero.id}`,hidden?'❔ Unrevealed hero':`${hero.icon} ${hero.name}`,entries.filter(entry=>entry.done).length,hidden?0:entries.length,cards,false,`achievement-subgroup${hidden?' secret-locked':''}`);
-    });
-    const heroDone=heroGroups.reduce((total,details)=>total+Number((details.querySelector('.achievement-group-count')?.textContent||'0').split('/')[0])||0,0),heroTotal=heroGroups.reduce((total,details)=>total+Number((details.querySelector('.achievement-group-count')?.textContent||'0').split('/')[1])||0,0);
-    grid.append(db064AchievementDetails('top:hero-mastery','✨ Hero Mastery',heroDone,heroTotal,heroGroups,false));
-  };
-  window.DiceboundAchievementHierarchyTest=Object.freeze({
-    groups:()=>ACHIEVEMENT_REGISTRY.map(achievement=>({id:achievement.id,hierarchy:achievement.hierarchy})),
-    heroTalents:classId=>db064HeroMasteryEntries(classId).map(entry=>({id:entry.id,done:entry.done})),
-    groupOpen:id=>db064AchievementOpen(id),
-    render:()=>{renderAchievements();return [...document.querySelectorAll('#achievementGrid>.achievement-group')].map(group=>({id:group.dataset.achievementGroup,label:group.querySelector('summary')?.textContent||'',subgroups:group.querySelectorAll('.achievement-subgroup').length}));}
+  const dbAchievementsUi=window.DiceboundAchievementsUi;
+  if(!dbAchievementsUi)throw new Error('DiceBound requires the Achievements UI module before dicebound.js');
+  dbAchievementsUi.configure({
+    find:$,
+    getRegistry:()=>ACHIEVEMENT_REGISTRY,
+    getClasses:()=>Object.values(CLASSES),
+    isClassUnlocked,
+    isDone:db317AchievementDone,
+    descriptionFor:achievement=>db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),
+    heroMasteryEntries:db064HeroMasteryEntries,
+    getOpenState:db064AchievementUiSettings,
+    setOpenState:(id,open)=>{db064AchievementUiSettings()[id]=!!open;saveMeta();}
   });
+  function renderAchievements(){return dbAchievementsUi.render();}
 
   /* #185: the extracted Camp owner consumes live domain data/actions without
      duplicating class, pet, progression, storage, save or mode ownership. */

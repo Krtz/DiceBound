@@ -326,6 +326,68 @@ def main() -> int:
                 "retired Pet chooser style remains in runtime/css/dicebound.css: "
                 + retired_pet_chooser_style
             )
+    achievements_module = by_id.get("ui-achievements")
+    achievements_owner_ok = False
+    if not achievements_module:
+        errors.append("Achievements presentation owner ui-achievements is missing from the runtime manifest")
+    else:
+        achievements_owner_ok = (
+            achievements_module.get("path") == "js/ui/achievements.js"
+            and {"progression-achievements", "ui-camp"}.issubset(
+                set(achievements_module.get("requires") or [])
+            )
+            and "DiceboundAchievementsUi" in (achievements_module.get("provides") or [])
+            and position.get("ui-achievements", -1) < position.get(str(monolith_id), -1)
+        )
+        if not achievements_owner_ok:
+            errors.append(
+                "ui-achievements must provide DiceboundAchievementsUi, require progression/Camp dependencies, "
+                "and load before the monolith"
+            )
+    achievements_source = sources.get("ui-achievements", "")
+    for required_achievements_behavior in [
+        "const OWNER='ui/achievements'",
+        "data-achievements-done",
+        "achievements-chrome{position:sticky",
+        "function viewModel(",
+        "function createDetails(",
+    ]:
+        if required_achievements_behavior not in achievements_source:
+            errors.append(
+                "Achievements owner is missing required presentation behavior: "
+                + required_achievements_behavior
+            )
+    if monolith_source:
+        expected_achievements_adapter = "function renderAchievements(){return dbAchievementsUi.render();}"
+        if expected_achievements_adapter not in monolith_source:
+            errors.append("dicebound.js must retain only the thin Achievements lifecycle adapter")
+        for retired_achievements_layer in [
+            "renderAchievements=function",
+            "renderAchievementsV",
+            "achievementGrid",
+            "achievementCloseBtn",
+            "DiceboundAchievementHierarchyTest",
+            "db064RenderAchievementsBase",
+            "db064AchievementCard",
+            "db064AchievementDetails",
+            "db0512RenderAchievementsBase",
+            "db060RenderAchievementsBase",
+        ]:
+            if retired_achievements_layer in monolith_source:
+                errors.append(
+                    "retired Achievements presentation implementation remains in dicebound.js: "
+                    + retired_achievements_layer
+                )
+    for retired_achievements_style in [
+        ".achievement-grid{",
+        ".achievement-group{",
+        ".achievement.secret-locked{",
+    ]:
+        if retired_achievements_style in stylesheet_source:
+            errors.append(
+                "retired Achievements style remains in runtime/css/dicebound.css: "
+                + retired_achievements_style
+            )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -374,6 +436,10 @@ def main() -> int:
         "petChooserOwner": {
             "id": "ui-pet-chooser",
             "configured": pet_chooser_owner_ok,
+        },
+        "achievementsOwner": {
+            "id": "ui-achievements",
+            "configured": achievements_owner_ok,
         },
         "monolith": {
             "id": monolith_id,

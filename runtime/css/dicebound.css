@@ -652,8 +652,8 @@
   .tile.gambler{background:linear-gradient(145deg,#214d44,#151d2c);border-color:rgba(105,255,207,.42)}
   .tile.merchant .tile-icon{cursor:pointer;pointer-events:auto}.tile.merchant .tile-icon:hover{transform:scale(1.22);filter:drop-shadow(0 0 8px #ffd77a)}
   .modal.mythic-modal,.overlay.mythic-found .modal{background:linear-gradient(145deg,#5d176d,#152f62)!important;border-color:#ff91ef!important;box-shadow:0 0 55px rgba(224,85,255,.35),0 30px 90px rgba(0,0,0,.6)!important}
-  .info-sections{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.info-section{padding:13px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);font-size:11px;line-height:1.5}.info-section h3{margin:0 0 7px;font-size:14px}.info-section p{margin:4px 0;color:#d8e0f0}.element-guide{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:8px}.element-row{padding:8px;border-radius:10px;background:rgba(0,0,0,.17);font-size:10px}.save-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.save-textarea{width:100%;height:120px;background:#080d17;color:#eaf0ff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;font:11px ui-monospace,monospace;resize:vertical}.achievement-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.achievement{padding:11px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}.achievement.done{border-color:rgba(98,215,154,.55);background:rgba(98,215,154,.08)}.achievement b,.achievement span{display:block}.achievement span{font-size:10px;color:var(--muted);margin-top:5px}.sacrifice-grid,.gamble-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.sacrifice-grid button,.gamble-grid button{min-height:82px}.unlock-toast{font-weight:900}.merchant-primed{animation:warningPulse .7s alternate infinite}.mythic-drop-title{color:#ffc1ff;text-shadow:0 0 15px #b268ff}.prestige-warning{padding:11px;border-radius:12px;background:rgba(239,90,99,.12);border:1px solid rgba(239,90,99,.34);font-size:11px;line-height:1.5;margin:10px 0}.board4-badge{color:#e5b9ff}
-  @media(max-width:700px){.info-sections,.element-guide,.achievement-grid,.sacrifice-grid,.gamble-grid{grid-template-columns:1fr}.save-tools{grid-template-columns:1fr}}
+  .info-sections{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.info-section{padding:13px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);font-size:11px;line-height:1.5}.info-section h3{margin:0 0 7px;font-size:14px}.info-section p{margin:4px 0;color:#d8e0f0}.element-guide{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:8px}.element-row{padding:8px;border-radius:10px;background:rgba(0,0,0,.17);font-size:10px}.save-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.save-textarea{width:100%;height:120px;background:#080d17;color:#eaf0ff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;font:11px ui-monospace,monospace;resize:vertical}.sacrifice-grid,.gamble-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.sacrifice-grid button,.gamble-grid button{min-height:82px}.unlock-toast{font-weight:900}.merchant-primed{animation:warningPulse .7s alternate infinite}.mythic-drop-title{color:#ffc1ff;text-shadow:0 0 15px #b268ff}.prestige-warning{padding:11px;border-radius:12px;background:rgba(239,90,99,.12);border:1px solid rgba(239,90,99,.34);font-size:11px;line-height:1.5;margin:10px 0}.board4-badge{color:#e5b9ff}
+  @media(max-width:700px){.info-sections,.element-guide,.sacrifice-grid,.gamble-grid{grid-template-columns:1fr}.save-tools{grid-template-columns:1fr}}
 
   /* v14 Chaos & Conviction */
   .toast{z-index:1000;bottom:28px;max-width:min(680px,92vw);text-align:center}
@@ -672,7 +672,6 @@
   .enemy-chip .enemy-card-icon,.enemy-chip .mini-hp{display:none!important}
   .enemy-chip span{margin:0!important;color:inherit!important}.enemy-chip strong{overflow:hidden;text-overflow:ellipsis}
   .enemy-chip.active{border-color:var(--gold)!important;background:linear-gradient(180deg,#5b4b29,#2c261a)!important;box-shadow:0 0 0 2px rgba(245,200,91,.16)!important}
-  .achievement.secret-locked{background:linear-gradient(145deg,rgba(80,45,105,.22),rgba(20,18,31,.55));border-color:rgba(181,140,255,.20)}
   @media(max-width:700px){.bloodwell-stats{grid-template-columns:repeat(2,1fr)}.stage-enemy{font-size:38px;min-width:44px}.enemy-stage-icons{gap:4px}.enemy-chip{min-width:48px!important;max-width:88px!important}}
 
   /* ---- v15 combat effects / pack stage ---- */
@@ -1084,13 +1083,3 @@ body[data-hud-flow="stacked"] .sidebar>.log-card{grid-column:1/-1}
 .slot-coin-art{width:1.08em;height:1.08em;object-fit:contain;vertical-align:-.14em;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 .sovereign-choice-modal{width:min(920px,calc(100vw - 28px))}
 .sovereign-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px;margin-top:14px}
-
-
-/* Beta 0.6.4.0 — semantic, keyboard-native achievement hierarchy. */
-.achievement-group{grid-column:1/-1;border:1px solid rgba(181,140,255,.28);border-radius:12px;background:rgba(20,29,51,.56);overflow:hidden}
-.achievement-group>summary,.achievement-subgroup>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:11px 13px;font-weight:900;letter-spacing:.04em;list-style:none}
-.achievement-group>summary::-webkit-details-marker,.achievement-subgroup>summary::-webkit-details-marker{display:none}
-.achievement-group>summary::before,.achievement-subgroup>summary::before{content:'▸';transition:transform .14s ease}.achievement-group[open]>summary::before,.achievement-subgroup[open]>summary::before{transform:rotate(90deg)}
-.achievement-group-count{margin-left:auto;color:#f6d881;font-size:11px;font-variant-numeric:tabular-nums}.achievement-group-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:0 10px 10px}
-.achievement-subgroup{grid-column:1/-1;border:1px solid rgba(255,255,255,.11);border-radius:9px;background:rgba(7,12,25,.34)}.achievement-subgroup>.achievement-group-body{grid-template-columns:repeat(auto-fit,minmax(205px,1fr));padding:0 8px 8px}.achievement-subgroup.secret-locked>summary{color:var(--muted)}
-.achievement-group:focus-within,.achievement-subgroup:focus-within{border-color:rgba(245,200,91,.55)}
