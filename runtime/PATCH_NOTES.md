@@ -1,5 +1,10 @@
 # Unreleased — Beta 0.6.4.27
 
+## Beta 0.6.4.28 persistent sound preference (#205)
+
+- Mute now persists with normal Options settings across browser and native WebView2 restarts.
+- Volume and sound-pack settings remain independent, including when volume changes while sound is muted.
+
 ## Prestige Moon ownership and permanent Prestige foundation (#178, #198, #209, #40)
 
 - Prestige now opens as a dedicated full-screen Moon destination with an always-visible Back control, live held-point stat tooltip, data-driven purchase nodes, and free Refund All.

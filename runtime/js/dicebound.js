@@ -240,9 +240,10 @@
     return result.meta;
   }
   let meta=loadMeta();
+  syncMutedFromSettings();
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
-  function saveMeta(){normalizePrestigeState();return DB_CORE_META.save(meta);}
+  function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
   function unlockClass(id){
     if(!CLASSES[id]||meta.unlocks?.[id])return false;
     meta.unlocks=meta.unlocks||{};meta.unlocks[id]=true;saveMeta();
@@ -475,6 +476,16 @@
   function ensureAudio(){
     if(audioCtx)return;
     try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  }
+  function syncMutedFromSettings(){
+    const settings=meta.settings=meta.settings||defaultSettings();
+    settings.muted=!!settings.muted;muted=settings.muted;
+    const muteButton=$("muteBtn");if(muteButton)muteButton.textContent=muted?"🔇":"🔊";
+    return muted;
+  }
+  function setMuted(next){
+    const settings=meta.settings=meta.settings||defaultSettings();
+    settings.muted=!!next;saveMeta();return muted;
   }
   function soundSettings(){
     const raw=meta?.settings||{};
@@ -1619,7 +1630,7 @@
   $("declineMysticBtn").addEventListener("click",()=>{addLog("You refuse the Mystic's bargain.");clearMysticTile();});
   $("merchantContinueBtn").addEventListener("click",()=>{tiles[player.position].cleared=false;refreshTile(player.position);$("merchantOverlay").classList.add("hidden");returnToRoad();});
   $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
-  $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>{muted=!muted;$("muteBtn").textContent=muted?"🔇":"🔊";});
+  $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
   $("talentBtn").addEventListener("click",()=>openTalentTree());$("startTalentBtn").addEventListener("click",()=>openTalentTree());$("endTalentBtn").addEventListener("click",()=>openTalentTree("endOverlay"));
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
   $("prestigeKeepConfirmBtn").addEventListener("click",()=>{if(pendingPrestige)completePrestige(pendingPrestige,[...pendingPrestigeKeepIds]);});$("prestigeCancelBtn").addEventListener("click",()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");});

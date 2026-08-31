@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.28
+
+### Persistent sound preference (#205)
+- Mute is now a normalized, durable Options setting shared by browser and native WebView2 storage rather than transient audio state.
+- Muting and unmuting save immediately; changing volume while muted retains that volume for the next unmute and restart.
+
 ## Beta 0.6.4.27
 
 ### Prestige Moon ownership and permanent Prestige foundation (#178, #198, #209, #40)
