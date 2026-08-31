@@ -9,7 +9,7 @@
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Friends Patch staging: Camp, combat, companions and Dragoon.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.4.29.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
