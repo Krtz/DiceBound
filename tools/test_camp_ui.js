@@ -24,6 +24,11 @@ assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable b
 assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
 assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.45,w:235},'Class must retain its approved full-body stage anchor');
+assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
+assert.deepStrictEqual({...camp.stageAnchors.campBonfire},{x:.50,y:.72,w:170},'Bonfire must remain grounded in the lower clearing');
+assert.deepStrictEqual({...camp.stageAnchors.campGoBtn},{x:.85,y:.74,w:440,h:250},'Start Run must remain a major lower-right scene anchor with a matching hit area');
+assert.deepStrictEqual({...camp.stageAnchors.campChestBtn},{x:.64,y:.76,w:245,h:150},'Chest must remain lower-middle/right without overlapping Start Run');
+assert.ok(camp.stageAnchors.campPetBtn.x>camp.stageAnchors.campInfoBtn.x&&camp.stageAnchors.campInfoBtn.x>camp.stageAnchors.campAchievementBtn.x,'Pet, Info and Trophy must retain their left-side visual flow');
 assert.deepStrictEqual({...camp.stageFrame(1360,800)},{left:0,top:17.5,width:1360,height:765,scale:.85},'wide Camp must fit the authored 16:9 stage without distortion');
 assert.deepStrictEqual({...camp.stageFrame(1200,540)},{left:120,top:0,width:960,height:540,scale:.68},'short/wide Camp must letterbox rather than eject objects off-screen');
 assert.deepStrictEqual({...camp.stageFrame(1120,760)},{left:0,top:65,width:1120,height:630,scale:.7},'compact Camp must preserve the stage center and scale');
@@ -44,6 +49,7 @@ assert.equal(typeof camp.clampShortViewportPositions,'function','Camp must keep 
 assert.equal(typeof camp.renderClassFigure,'function','Camp must own semantic selected-class figure rendering');
 assert.match(source,/db058-camp-class-fullbody/,'Camp selected class must use the approved full-body art class');
 assert.doesNotMatch(source,/renderClassPortrait/,'Camp must not use the portrait-card renderer');
+assert.doesNotMatch(source,/assets\/ui\/class-art/,'Camp must not fall back to the retired portrait-art compatibility path');
 assert.equal(typeof camp.renderPetFigure,'function','Camp must own semantic selected-pet figure rendering');
 assert.match(source,/camp-pet-portrait/,'Camp selected Pet must use Camp-owned semantic art');
 
@@ -58,6 +64,11 @@ assert.doesNotMatch(source,/data-db064-hit-target="painted-object"/,'Camp layout
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');
 const rewards=fs.readFileSync(path.join(root,'runtime/js/events/reward-policy.js'),'utf8');
 const stylesheet=fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),'utf8');
+const assets=fs.readFileSync(path.join(root,'runtime/js/assets.js'),'utf8');
+const chooser=fs.readFileSync(path.join(root,'runtime/js/ui/class-chooser.js'),'utf8');
+assert.match(assets,/campFigure:`\$\{paths\.classBattle\}\/\$\{id\}\.png/, 'the Camp class semantic must resolve full-body art');
+assert.match(assets,/headshot:`\$\{paths\.classCampsite\}\/\$\{id\}\.png/, 'chooser-card headshots must retain their own semantic path');
+assert.match(chooser,/art\?\.headshot\|\|art\?\.campsite\|\|art\?\.battle/, 'the Class chooser must preserve its compact headshot preference');
 assert(monolith.includes('const db064Camp=window.DiceboundCamp;'),'monolith should configure the extracted Camp owner');
 assert(!monolith.includes('function db064PaintedCampBounds('),'painted hit-target implementation must not remain in the monolith');
 assert(!monolith.includes('function db058SetArt('),'Camp authored-art implementation must not remain in the monolith');
@@ -74,6 +85,11 @@ assert.doesNotMatch(monolith,/#startOverlay\.camp-fullscreen/,'the monolith must
 assert.match(source,/function syncProgressionReveals\(/,'Camp must own progression-controlled object DOM lifecycle');
 assert.match(source,/function syncHeirloomStorageChest\(/,'Camp must remove the Chest entirely until Storage is unlocked');
 assert.match(source,/button\.hidden=!unlocked/,'locked modes must remove their painted control from layout and hit testing');
+assert.match(source,/function hideLegacyCampDestinations\(/,'Camp must own the hiding of legacy mode/storage inputs recreated by older paths');
+assert.match(source,/#startOverlay\.camp-fullscreen #nightmareBox,#startOverlay\.camp-fullscreen #hellBox,#startOverlay\.camp-fullscreen #startHeirloom\{display:none!important\}/,'Camp fullscreen must suppress all legacy mode/storage presentation at the destination layer');
+assert.match(source,/assets\/camp\/interactions\/talent-star\.png/,'Camp Talents must resolve the canonical interaction asset');
+assert.doesNotMatch(source,/assets\/camp\/objects\/talent-star\.png/,'Camp must not retain an obsolete Talent-object fallback pointer');
+assert.match(source,/campGoBtn:Object\.freeze\(\{x:\.85,y:\.74,w:440,h:250\}\)/,'Start Run must retain its minimum authored scene footprint');
 assert.match(source,/const CAMP_BASE_STYLE=/,'Camp must own its responsive base/grid presentation style');
 for(const retiredCampLayer of ['function beta043RefreshCampIcons(','function beta045RefreshCampLayout(','function db046RefreshCamp(','function db047RefreshCamp(','const db055Style=','const db057Style=','const db058Style=','const db0510Style=','const db0512Style=','const db060CampStyle='])assert(!monolith.includes(retiredCampLayer),`retired Camp style/wrapper remains in dicebound.js: ${retiredCampLayer}`);
 assert.doesNotMatch(monolith,/#startOverlay\.camp-fullscreen #camp(?:Options|Talent|Moon|Class|Info|Pet|Chest|Achievement|Go|Nightmare|Hell)Btn/,'monolith must not retain final Camp-object CSS ownership');

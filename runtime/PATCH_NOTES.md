@@ -1,5 +1,11 @@
 # Unreleased — Beta 0.6.4.27
 
+## Beta 0.6.5.0 Camp scene and Donut VFX repair (#17, #71, #145)
+- Camp keeps legacy Nightmare, Hell and Storage source controls hidden whenever the destination refreshes, preventing locked Hell presentation from leaking outside the authored 16:9 stage.
+- Start Run is a larger lower-right scene object with a synchronized painted hit target. Info now occupies the Pet-to-Trophy flow, while the bonfire sits lower in the clearing.
+- Camp resolves each selected Class through the full-body `campFigure` semantic. Class chooser cards retain their dedicated headshot semantic.
+- Donut proc presentation now uses the six approved transparent frame images through the shared VFX owner instead of CSS spritesheet cropping. No combat/RNG/save behavior changes.
+
 ## Beta 0.6.4.29 Friends Patch (#97, #162, #187, #211, #233, #234, #235, #236)
 
 - Camp fully restores current HP on arrival, hides locked Hell and Heirloom Storage scene objects, preserves the current responsive object composition, and uses shared centered destination positioning for Class and Storage.

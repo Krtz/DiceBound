@@ -7,12 +7,6 @@
   const NATURE_EFFECT_KEY = "naturePoisonVines";
   const DONUT_EFFECT_KEY = "donutProcRain";
 
-  function donutFramePosition(frame, frameCount) {
-    const count = Math.max(1, Math.floor(Number(frameCount) || 1));
-    const index = Math.max(0, Math.min(count - 1, Math.floor(Number(frame) || 0)));
-    return `${count === 1 ? 0 : Math.round(index * 100 / (count - 1))}% 0%`;
-  }
-
   function rootWindow() {
     return globalThis.window || globalThis;
   }
@@ -210,9 +204,10 @@
 
     function prepareDonut() {
       return ensureStyle("dicebound-donut-vfx-style", `
-        .db-donut-rain-vfx{position:absolute;z-index:32;left:50%;bottom:-12%;width:clamp(92px,175%,196px);aspect-ratio:1 / 2;pointer-events:none;transform:translateX(-50%);background-repeat:no-repeat;filter:drop-shadow(0 7px 9px rgba(28,8,35,.42));isolation:isolate}
+        .db-donut-rain-vfx{position:absolute;z-index:32;left:50%;bottom:-22%;width:clamp(132px,225%,340px);aspect-ratio:1 / 2;pointer-events:none;transform:translateX(-50%);filter:drop-shadow(0 7px 9px rgba(28,8,35,.42));isolation:isolate}
+        .db-donut-rain-vfx img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none}
         #combatPlayerIcon,.stage-enemy{position:relative;isolation:isolate}
-        @media(max-width:760px){.db-donut-rain-vfx{width:clamp(78px,145%,156px);bottom:-9%}}
+        @media(max-width:760px){.db-donut-rain-vfx{width:clamp(96px,190%,220px);bottom:-16%}}
         @media(prefers-reduced-motion:reduce){.db-donut-rain-vfx{filter:none}}
       `);
     }
@@ -223,53 +218,63 @@
 
     function mountDonutRain(host, target, origin, effect) {
       const document = documentRoot();
-      const frameCount = Math.max(1, Math.floor(Number(effect.frameCount) || 1));
+      const frames = (effect.frames || []).filter(Boolean);
+      if (!frames.length) return null;
       const frameWidth = Math.max(1, Math.floor(Number(effect.frameWidth) || 1));
       const frameHeight = Math.max(1, Math.floor(Number(effect.frameHeight) || 2));
       const node = document.createElement("span");
+      const image = document.createElement("img");
       node.className = "db-donut-rain-vfx";
       node.dataset.effect = DONUT_EFFECT_KEY;
-      node.dataset.source = effect.image;
+      node.dataset.source = frames[0];
       node.dataset.donutTarget = target;
       node.dataset.origin = origin;
       node.dataset.donutFrame = "0";
+      image.alt = "";
+      image.draggable = false;
+      image.src = frames[0];
       Object.assign(node.style, {
         aspectRatio: `${frameWidth} / ${frameHeight}`,
-        backgroundImage: `url("${effect.image}")`,
-        backgroundPosition: donutFramePosition(0, frameCount),
-        backgroundSize: `${frameCount * 100}% 100%`,
       });
+      node.append(image);
       host.append(node);
       return node;
     }
 
-    function setDonutFrame(node, frame, frameCount) {
+    function setDonutFrame(node, frame, frames) {
       if (!node) return;
-      node.dataset.donutFrame = String(frame);
-      node.style.backgroundPosition = donutFramePosition(frame, frameCount);
+      const sources = (frames || []).filter(Boolean);
+      if (!sources.length) return;
+      const index = Math.max(0, Math.min(sources.length - 1, Math.floor(Number(frame) || 0)));
+      const image = node.querySelector?.("img") || node.firstElementChild || node.children?.[0] || null;
+      node.dataset.donutFrame = String(index);
+      node.dataset.source = sources[index];
+      if (image) image.src = sources[index];
     }
 
     function playDonutRain({ origin = "player", enemy = null } = {}) {
       const document = documentRoot();
       const effect = donutEffect();
-      if (!document?.createElement || !effect?.image) return false;
+      const frames = (effect?.frames || []).filter(Boolean);
+      if (!document?.createElement || !frames.length) return false;
       prepareDonut();
       document.querySelectorAll?.(".db-donut-rain-vfx")?.forEach(node => node.remove());
       const normalizedOrigin = origin === "enemy" ? "enemy" : "player";
       const nodes = [
         [document.getElementById?.("combatPlayerIcon"), "player"],
         [donutHostForEnemy(enemy), "enemy"],
-      ].filter(([host]) => !!host).map(([host, target]) => mountDonutRain(host, target, normalizedOrigin, effect));
+      ].filter(([host]) => !!host).map(([host, target]) => mountDonutRain(host, target, normalizedOrigin, effect)).filter(Boolean);
       if (!nodes.length) return false;
       const reduced = !!rootWindow().matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-      const frameCount = Math.max(1, Math.floor(Number(effect.frameCount) || 1));
+      const frameCount = frames.length;
       const duration = Math.max(320, Number(effect.durationMs) || 1450);
+      const frameDuration = Math.max(40, Math.floor(Number(effect.frameDurationMs) || (duration / frameCount)));
       if (!reduced) {
         for (let frame = 1; frame < frameCount; frame += 1) {
-          schedule(() => nodes.forEach(node => setDonutFrame(node, frame, frameCount)), Math.round(duration * frame / frameCount));
+          schedule(() => nodes.forEach(node => setDonutFrame(node, frame, frames)), frameDuration * frame);
         }
       }
-      schedule(() => nodes.forEach(node => node.remove()), reduced ? 260 : duration);
+      schedule(() => nodes.forEach(node => node.remove()), reduced ? 260 : Math.max(duration, frameDuration * frameCount));
       return true;
     }
 
@@ -329,7 +334,6 @@
       withNatureLegacyPresentation,
       suppressLegacyElementAnimation,
       donutEntries,
-      donutFramePosition,
       playDonutRain,
       prepareProjectileEffects,
       playProjectileProc,

@@ -16,7 +16,7 @@ def main() -> int:
 
     for path in [
         "runtime/js/dicebound.js",
-        "runtime/assets/combat/effects/donut/donut-proc-rain-spritesheet.png",
+        "runtime/assets/combat/effects/donut/donut-proc-rain-01.png",
         "runtime/index.html",
         "wrapper-source/config/project.json",
         "wrapper-source/wrappers/webview2/native-go/main.go",

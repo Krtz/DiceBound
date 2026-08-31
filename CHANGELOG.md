@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.0
+
+### Camp scene and Donut VFX repair (#17, #71, #145)
+- Re-composed the authored Camp scene: the Start Run caravan is now a prominent lower-right anchor with a matching painted-object hit target; Info now sits in the Pet-to-Trophy flow; the bonfire is grounded lower in the clearing; and the Chest retains its lower-middle/right place.
+- Camp now continuously suppresses recreated legacy Nightmare/Hell/Storage panels at the destination layer, so locked Hell UI cannot leak around the aspect-locked scene on wide windows.
+- The selected Class figure in Camp resolves the semantic full-body artwork for every class, while compact Class chooser cards keep their dedicated headshot semantic.
+- Replaced fragile Donut CSS spritesheet cropping with the six approved transparent frame assets through the existing shared combat-VFX owner. Player- and enemy-origin routing, combat mechanics, RNG, saves and checkpoints are unchanged.
+
 ## Beta 0.6.4.29
 
 ### Friends Patch — Camp, combat, companions and staged art (#97, #162, #187, #211, #233, #234, #235, #236)
