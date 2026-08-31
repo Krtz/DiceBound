@@ -1603,11 +1603,9 @@
   window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
 
 
-  $("infoBtn").addEventListener("click",openInfo);$("infoCloseBtn").addEventListener("click",()=>$("infoOverlay").classList.add("hidden"));$("exportSaveBtn").addEventListener("click",exportSave);$("importSaveBtn").addEventListener("click",importSave);
   $("bloodwellLeaveBtn").addEventListener("click",()=>{tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);$("bloodwellOverlay").classList.add("hidden");returnToRoad();});
   $("gamblerLeaveBtn").addEventListener("click",()=>{$("gamblerOverlay").classList.add("hidden");tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);returnToRoad();});
 
-  $("infoTabs")?.addEventListener("click",e=>{const btn=e.target.closest("[data-info-tab]");if(btn)activateInfoTab(btn.dataset.infoTab);});
   generateBoard();buildBoard();renderClassChoices();renderEquipment();syncWheelIcons();updateHUD();updateMetaUI();
   if(!meta.infoSeen)setTimeout(openInfo,250);
 
@@ -1892,6 +1890,7 @@
 
   renderInfo=function(){
     const sections=$("infoSections"),classes=Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id));
+    if(!sections)return;
     const classRows=classes.map(c=>`<div class="info-class"><b>${c.icon} ${c.name}</b><div class="info-tag-row">${tagChips(c.tags||[],"class")}</div>${c.passive?`<div class="passive-line"><b>Innate — ${c.passive.name}:</b> ${c.passive.desc}</div>`:""}<p>${c.desc}</p><span style="color:var(--gold)">Scaling:</span> ${c.scaleNotes||"Attack drives direct damage; Crit and Echo multiply successful strikes."}<br><span style="color:var(--muted)">Start: ${c.stats} · Ultimate: ${c.ultimate.name}</span></div>`).join("");
     sections.innerHTML=`
       <details class="info-section" open><summary>🎲 Travel, boards & dice</summary><div class="info-body"><p>Roll 1–6 to move. A natural high roll grants Fast Travel XP. Extra Step can add one tile after a natural roll; deliberately chosen die results do not receive the normal chosen-roll bonus interactions unless a power explicitly says so.</p><p>Boards 1–3 have 100 tiles. Boards 4–5 have 64 tiles. Board 5 introduces the Mythic Ring drop table and completes the six-piece Impossible Road set.</p></div></details>
@@ -5477,7 +5476,6 @@ function buildDiceboundHumanHarness235(){
     .hpbar>i:not(.energy-shield-fill){z-index:2!important}
     .stage-mini-status .status-count{height:12px!important;min-width:18px!important;padding:0 3px!important;font-size:7px!important;margin:0 1px!important;line-height:12px!important}
     .status-count.poison-count{color:#baf3a5;background:rgba(56,118,48,.32)}.status-count.barrier-count{color:#a8dfff;background:rgba(44,97,151,.32)}
-    .rarity-guide-grid{display:grid;gap:6px;margin:10px 0}.rarity-guide-row{display:grid;grid-template-columns:14px 92px 1fr;gap:8px;align-items:center;padding:7px 8px;border-radius:9px;background:rgba(255,255,255,.035);font-size:10px;color:var(--muted)}.rarity-swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.35)}
   `;document.head.appendChild(v27Style);
 
   // Camp/Prestige presentation now has dedicated UI owners. This retained
@@ -5657,8 +5655,6 @@ function buildDiceboundHumanHarness235(){
   if(DB235?.modules?.balance?.board6)Object.assign(DB235.modules.balance.board6,db317Board(6).balance,{entryHeal:db317Board(6).entryHeal,entryPotions:db317Board(6).entryPotions});
 
   /* INFO POLISH ----------------------------------------------------------- */
-  const renderInfoV28Base=renderInfo;
-  renderInfo=function(){const r=renderInfoV28Base();const sections=$('infoSections');if(!sections)return r;const old=sections.querySelector('#v28IdentityNote');old?.remove();const d=document.createElement('details');d.id='v28IdentityNote';d.className='info-section';d.innerHTML='<summary>☠️ Poison identities & overflow resources</summary><div class="info-body"><p>Classes tagged <b>Poison</b> receive the full Poison-damage bonus from Throne of Venom; other classes receive half of that damage bonus. Frog, Ouroboros, Ninja, Slime and the secret red Slime are Poison-tagged.</p><p>Ninja Smoke counts <b>critical tiers</b>, not merely critical attacks: double crit = 2 Smoke, triple crit = 3, including Echo Strikes. Very high Echo also accelerates Croak Cascade and Ouroboros attack animations so extreme endgame chains remain playable.</p></div>';sections.appendChild(d);return r;};
 
   setTimeout(()=>{renderClassChoices();renderInfo();updateHUD();},0);
 
@@ -7866,8 +7862,6 @@ function buildDiceboundHumanHarness235(){
   // (The literal formula is also replaced in the source packaging script.)
 
   // GUIDE / DEBUG -----------------------------------------------------------
-  const db060RenderInfoBase=renderInfo;
-  renderInfo=function(){const r=db060RenderInfoBase();const sections=$('infoSections');if(!sections)return r;sections.querySelector('#db060GearGuide')?.remove();const d=document.createElement('details');d.id='db060GearGuide';d.className='info-section';d.innerHTML=`<summary>💎 Beta 0.6 gear & guardian loot</summary><div class="info-body"><p><b>Generated gear:</b> Poor 11–25 · Common 26–45 · Uncommon 46–70 · Rare 71–105 · Epic 106–150 · Legendary 151–210. Legendary equipment also rolls one build-changing Legendary Effect.</p><p><b>Mythical:</b> named handcrafted relics such as Axel's Coffee Mug, Kratz Headphones and The Jean Jacket Lost at Kelly's. They are no longer generated Legendary gear.</p><p><b>Artifacts:</b> guardians make one difficulty/board-specific Artifact-table roll. If it succeeds, exactly one Impossible Road piece is selected from the weighted Artifact table—never several independent pieces from one kill.</p><p><b>Memory Cache:</b> Board 4+ Treasure can become a guaranteed generated Legendary: 1/450 Normal, 1/300 Nightmare, 1/200 Hell.</p></div>`;sections.prepend(d);return r;};
   window.DiceboundBeta06Test=Object.freeze({
     budgets:()=>JSON.parse(JSON.stringify(V14_RARITY_BUDGETS)),
     legendaryEffects:()=>DB060_LEGENDARY_EFFECTS.map(e=>({id:e.id,name:e.name,classes:e.classes||null,desc:e.desc})),
@@ -8926,5 +8920,44 @@ function buildDiceboundHumanHarness235(){
     feedPet:count=>feedActivePet(count),
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
   });
+
+  /* INFO / ROADKEEPER'S GUIDE ------------------------------------------------
+     Presentation is owned by ui/info-guide.js. Runtime facts, save transfer and
+     progression state remain here as injected callbacks. */
+  const dbInfoGuide=window.DiceboundInfoGuide;
+  if(!dbInfoGuide)throw new Error('DiceBound requires the Info Guide UI module before dicebound.js');
+  function dbInfoExportSave(){
+    const data=window.DiceboundSave.exportText(v13NormalizeMeta(meta));
+    window.DiceboundPlatform.copyText(data).then(ok=>showToast(ok?'Save copied to clipboard':'Save placed in text box')).catch(()=>showToast('Save placed in text box'));
+    return data;
+  }
+  function dbInfoImportSave(raw){
+    try{
+      const text=String(raw||'').trim();if(!text)throw new Error('empty');
+      meta=window.DiceboundSave.importText(text,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});
+      ensureAlphaMeta();saveMeta();repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
+    }catch(error){window.DiceboundPlatform.alert('That save string could not be imported.');return false;}
+  }
+  dbInfoGuide.configure({
+    find:$,
+    getClasses:()=>Object.values(CLASSES),
+    isClassUnlocked,
+    getElements:()=>ELEMENTS,
+    getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
+    getLifetimeStats:()=>ensureAlphaMeta(),
+    getMetaDamageTaken:()=>meta.damageTaken||0,
+    getGoldSnapshot:currentGoldSnapshot,
+    isGameStarted:()=>gameStarted,
+    exportSave:dbInfoExportSave,
+    importSave:dbInfoImportSave,
+    onOpen:()=>{meta.infoSeen=true;saveMeta();}
+  });
+  renderInfo=function(){return dbInfoGuide.render();};
+  renderLifetimeStats=function(){return dbInfoGuide.renderStats();};
+  activateInfoTab=function(name='guide'){return dbInfoGuide.activateTab(name);};
+  openInfo=function(){return dbInfoGuide.open();};
+  exportSave=dbInfoExportSave;
+  importSave=dbInfoImportSave;
+  DB25.modules.guide={render:renderInfo};
 
 })();

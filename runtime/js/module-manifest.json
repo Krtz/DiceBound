@@ -44,6 +44,7 @@
     "ui-talent-tree",
     "ui-prestige-moon",
     "ui-achievements",
+    "ui-info-guide",
     "dicebound-monolith"
   ],
   "modules": [
@@ -522,6 +523,21 @@
       ]
     },
     {
+      "id": "ui-info-guide",
+      "path": "js/ui/info-guide.js",
+      "domain": "ui/info-roadkeeper-guide-stats-elements-save-transfer-and-persistent-dismissal-chrome",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "classes-registry",
+        "progression-achievements",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundInfoGuide"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -564,7 +580,8 @@
         "ui-pet-chooser",
         "ui-talent-tree",
         "ui-prestige-moon",
-        "ui-achievements"
+        "ui-achievements",
+        "ui-info-guide"
       ],
       "provides": []
     }

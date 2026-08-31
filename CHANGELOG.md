@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.2
+
+### Info / Roadkeeper's Guide presentation ownership (#40, #76, #198, #209)
+- Replaced the static Info popup, shared Guide CSS, direct listeners and final renderer layers with `runtime/js/ui/info-guide.js`, the single responsive Guide/Stats/Elements/Save destination owner.
+- The Guide now has persistent top-right Done chrome while retaining the existing Camp entrypoint, player-safe class/element visibility, lifetime-stat, effective-Gold and portable-save behavior.
+- Rules, counters, class unlocks, Artifact data, save mechanics, gameplay, RNG and checkpoints remain in their existing domain owners.
+
 ## Beta 0.6.5.1
 
 ### Achievements / Trophy presentation ownership (#40, #78, #198, #209)

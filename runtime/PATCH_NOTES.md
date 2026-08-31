@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.1
+# Unreleased — Beta 0.6.5.2
+
+## Beta 0.6.5.2 Info / Roadkeeper's Guide presentation ownership (#40, #76, #198, #209)
+- Info now opens one responsive Guide destination owned by `ui/info-guide.js`, with Guide, Stats, Elements and Save views plus a persistent top-right Done control.
+- The old static popup markup, shared Info styles, direct listeners and final renderer layers are retired. Existing player-facing facts, lifetime stats, effective Gold and portable save behavior remain intact.
+- Gameplay, RNG, checkpoints and save rules are unchanged.
 
 ## Beta 0.6.5.1 Achievements / Trophy presentation ownership (#40, #78, #198, #209)
 - Achievements now open in one responsive Trophy destination owned by `ui/achievements.js`, with a persistent top-right Done control across wide, compact and short-wide windows.
