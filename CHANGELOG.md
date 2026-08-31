@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.4.27
+
+### Prestige Moon ownership and permanent Prestige foundation (#178, #198, #209, #40)
+- Added `progression/prestige.js` as the single owner for persisted Prestige currency, exact random-stat purchase bundles, held-point totals, and the free Refund All transaction.
+- Replaced the old live Prestige presentation path with the full-screen `ui/prestige-moon.js` destination, including live held-bonus details, data-driven nodes and persistent Back chrome across wide, compact and short-wide layouts.
+- The Moon Forge is visibly represented but deliberately remains `Cost TBD` until its balance value is approved; this release does not invent a cost or add crafting.
+
 ## Beta 0.6.4.26
 
 ### Talent constellation presentation ownership (#186, #198, #209, #40)

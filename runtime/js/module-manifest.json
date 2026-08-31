@@ -30,6 +30,7 @@
     "item-rarities",
     "item-equipment",
     "progression-talents",
+    "progression-prestige",
     "progression-achievements",
     "event-rewards",
     "merchant-transactions",
@@ -41,6 +42,7 @@
     "ui-class-chooser",
     "ui-pet-chooser",
     "ui-talent-tree",
+    "ui-prestige-moon",
     "dicebound-monolith"
   ],
   "modules": [
@@ -329,6 +331,18 @@
       ]
     },
     {
+      "id": "progression-prestige",
+      "path": "js/progression/prestige.js",
+      "domain": "progression/prestige-currency-moon-purchases-held-bonuses-and-refunds",
+      "status": "extracted",
+      "requires": [
+        "core-state"
+      ],
+      "provides": [
+        "DiceboundPrestige"
+      ]
+    },
+    {
       "id": "progression-achievements",
       "path": "js/progression/achievements.js",
       "domain": "progression/achievements-registry",
@@ -481,6 +495,19 @@
       ]
     },
     {
+      "id": "ui-prestige-moon",
+      "path": "js/ui/prestige-moon.js",
+      "domain": "ui/prestige-moon-destination-and-persistent-dismissal-chrome",
+      "status": "extracted",
+      "requires": [
+        "progression-prestige",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundPrestigeMoon"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -509,6 +536,7 @@
         "item-rarities",
         "item-equipment",
         "progression-talents",
+        "progression-prestige",
         "progression-achievements",
         "event-rewards",
         "artifacts",
@@ -520,7 +548,8 @@
         "ui-camp",
         "ui-class-chooser",
         "ui-pet-chooser",
-        "ui-talent-tree"
+        "ui-talent-tree",
+        "ui-prestige-moon"
       ],
       "provides": []
     }

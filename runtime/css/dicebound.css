@@ -514,8 +514,7 @@
   .equipment-slot.rare{border-color:rgba(101,169,255,.58)}.equipment-slot.epic{border-color:rgba(181,140,255,.65)}
   .equipment-slot.legendary{border-color:rgba(245,200,91,.78);box-shadow:inset 0 0 18px rgba(245,200,91,.05)}
   .equipment-slot.mythical{border-color:#ff78dc;box-shadow:0 0 16px rgba(255,120,220,.2),inset 0 0 20px rgba(101,220,255,.08)}
-  .prestige-box{margin:14px 0;padding:13px;border-radius:15px;background:linear-gradient(145deg,rgba(255,110,220,.10),rgba(101,220,255,.07));border:1px solid rgba(255,140,225,.25);font-size:11px;line-height:1.5;color:#dce5f7}
-  .prestige-box strong{color:#ffb3ec}.prestige-stats{margin-top:7px;color:#9fe5ff}.outside-potion{width:100%;margin-top:9px}
+  .outside-potion{width:100%;margin-top:9px}
 
   .loot-card{border:1px solid rgba(255,255,255,.11);border-radius:18px;padding:16px;background:rgba(0,0,0,.16);margin:14px 0}
   .loot-card.mythical{border-color:#ff78dc;background:linear-gradient(145deg,rgba(100,35,130,.45),rgba(20,80,110,.42));box-shadow:0 0 28px rgba(255,120,220,.18),inset 0 0 28px rgba(101,220,255,.08)}

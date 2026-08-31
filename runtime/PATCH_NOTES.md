@@ -1,4 +1,15 @@
-# Unreleased — Beta 0.6.4.26
+# Unreleased — Beta 0.6.4.27
+
+## Prestige Moon ownership and permanent Prestige foundation (#178, #198, #209, #40)
+
+- Prestige now opens as a dedicated full-screen Moon destination with an always-visible Back control, live held-point stat tooltip, data-driven purchase nodes, and free Refund All.
+- `progression/prestige.js` owns persisted Prestige currency, exact five-stat purchase bundles, held bonuses and refund transactions; `ui/prestige-moon.js` owns the scene only.
+- The Moon Forge is visible as a deliberately unavailable `Cost TBD` upgrade until its balance value is approved. Crafting is not implemented by this release.
+- Talent no longer presents a second Prestige action; Camp/shared CSS no longer carries the retired Prestige popup layout.
+
+---
+
+# Beta 0.6.4.26
 
 ## Beta 0.6.4.26 Talent constellation ownership and full-screen atlas (#186, #198, #209, #40)
 
