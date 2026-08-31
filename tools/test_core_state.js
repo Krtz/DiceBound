@@ -22,7 +22,7 @@ const persisted={
   heirlooms:[{id:"test",slot:"ring",bonuses:{luck:.2}}],
   pets:{fire:{level:7,xp:3}},elementProgress:{fire:500},
   prestige:{count:4,attack:2},unlocks:{sorcerer:true},
-  settings:{masterVolume:2,soundPack:"custom"},
+  settings:{masterVolume:2,soundPack:"custom",muted:true},
   classUnlockFacts:{board3BossDefeated:true,manaSpenderCasts:12},
 };
 const saveService={
@@ -34,8 +34,8 @@ assert.ok(Object.isFrozen(service),"configured meta service is mutable");
 
 assert.deepEqual([1,10,11,25,26,50,51,100,101].map(service.legacyXpForLevel),[10,28,32,88,93,213,221,613,624]);
 const defaults=service.defaultMeta(),serialized=JSON.stringify(defaults);
-assert.equal(Buffer.byteLength(serialized),850,"default career byte snapshot drifted");
-assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"),"945cee45c3177da078830d153f05a1a19500ac7143e15a636b381e9a6db175e9","default career data drifted");
+assert.equal(Buffer.byteLength(serialized),864,"default career byte snapshot drifted");
+assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"),"d22ff6b1fe8d7021faede28d594d512650b4049f95098109dca984ff14bbcf2f","default career data drifted");
 assert.equal(defaults.pets.neutral.unlocked,true);
 assert.equal(defaults.pets.fire.unlocked,false);
 assert.deepEqual({...defaults.unlocks},{ranger:true,sorcerer:false,fighter:false});
@@ -52,8 +52,8 @@ const liveDefaults=api.createMetaService({
   saveService:null,
 }).defaultMeta();
 const liveSerialized=JSON.stringify(liveDefaults);
-assert.equal(Buffer.byteLength(liveSerialized),1990,"full live default-career byte snapshot drifted");
-assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"d1e85287c8214b27493e6f17811481c4a58a5bcd048fd351257aaf3b0bda7733","full live default-career data drifted");
+assert.equal(Buffer.byteLength(liveSerialized),2004,"full live default-career byte snapshot drifted");
+assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"c8e65e07e8045c3d06e9c188fcb3546bdde2111e91c5de70077dfbfcca26188e","full live default-career data drifted");
 
 const result=service.load(),meta=result.meta;
 assert.equal(result.source,"primary");
@@ -71,6 +71,8 @@ assert.equal(meta.unlocks.sorcerer,true);
 assert.equal(meta.unlocks.fighter,false);
 assert.equal(meta.settings.masterVolume,1);
 assert.equal(meta.settings.soundPack,"custom");
+assert.equal(meta.settings.muted,true,"persisted mute preference was not normalized");
+assert.equal(defaults.settings.muted,false,"new careers must start with sound enabled");
 assert.equal(meta.classUnlockFacts.board3BossDefeated,true);
 assert.equal(meta.classUnlockFacts.board3MinibossDefeated,false);
 assert.equal(meta.classUnlockFacts.manaSpenderCasts,12);
