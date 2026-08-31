@@ -91,7 +91,7 @@ assert.equal(raritiesApi.createInfoRegistry().common.weight, 25);
 
 const classes = context.window.DiceboundClasses.createRegistry();
 const derivedTags = Object.fromEntries(Object.entries(classes).map(([id, value]) => [id, value.tags]));
-snapshot(derivedTags, 1122, "b5eb3c11a7d0d8c8a3c846d0682dd9d063b4a8ef22aa01a47256378f29735159", "derived class tags");
+snapshot(derivedTags, 1172, "4fa5e8944fd9078219a946b16b853a9e93107df1db538c2898f939d9bcd6fa49", "derived class tags");
 
 const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js");
 const monolith = fs.readFileSync(monolithPath, "utf8");

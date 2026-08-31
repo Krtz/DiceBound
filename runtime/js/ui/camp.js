@@ -29,18 +29,18 @@
       id:'wide-desktop',query:'(min-width:1360px) and (min-height:650px)',
       rules:Object.freeze([
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
-        ['#campTalentBtn','left:31.5%;top:12.5%;translate:none'],
-        ['#campMoonBtn','left:42.5%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:22.5%;top:40.5%;translate:none']
+        ['#campTalentBtn','left:30.5%;top:12.5%;translate:none'],
+        ['#campMoonBtn','left:48%;top:11.5%;translate:none'],
+        ['#campClassBtn','left:39%;top:45%;translate:none']
       ])
     }),
     Object.freeze({
       id:'compact-desktop',query:'(min-width:1000px) and (max-width:1359px) and (min-height:650px)',
       rules:Object.freeze([
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
-        ['#campTalentBtn','left:31.5%;top:12.5%;translate:none'],
-        ['#campMoonBtn','left:42.5%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:22.5%;top:40.5%;translate:none']
+        ['#campTalentBtn','left:30.5%;top:12.5%;translate:none'],
+        ['#campMoonBtn','left:48%;top:11.5%;translate:none'],
+        ['#campClassBtn','left:39%;top:45%;translate:none']
       ])
     }),
     Object.freeze({
@@ -49,9 +49,9 @@
         // Preserve the same anchored composition in a short desktop viewport,
         // while allowing the tall moon/class artwork to remain wholly onscreen.
         ['#campOptionsBtn','left:8.5%;top:16%;translate:none'],
-        ['#campTalentBtn','left:31.5%;top:18%;translate:none'],
-        ['#campMoonBtn','left:42.5%;top:24%;translate:none'],
-        ['#campClassBtn','left:22.5%;top:58%;translate:none']
+        ['#campTalentBtn','left:30.5%;top:18%;translate:none'],
+        ['#campMoonBtn','left:48%;top:20%;translate:none'],
+        ['#campClassBtn','left:39%;top:58%;translate:none']
       ])
     })
   ]);
@@ -63,28 +63,28 @@
   const CAMP_STAGE_ASPECT=16/9;
   const CAMP_STAGE_ANCHORS=Object.freeze({
     campOptionsBtn:Object.freeze({x:.085,y:.105,w:110}),
-    campTalentBtn:Object.freeze({x:.315,y:.125,w:165}),
-    campMoonBtn:Object.freeze({x:.425,y:.115,w:165}),
-    campNightmareBtn:Object.freeze({x:.905,y:.205,w:120}),
-    campHellBtn:Object.freeze({x:.805,y:.175,w:118}),
-    campClassBtn:Object.freeze({x:.225,y:.405,w:235}),
-    campInfoBtn:Object.freeze({x:.345,y:.405,w:145}),
-    campBonfire:Object.freeze({x:.505,y:.505,w:170}),
-    campGoBtn:Object.freeze({x:.765,y:.505,w:340,h:190}),
-    campChestBtn:Object.freeze({x:.785,y:.685,w:245,h:150}),
-    campAchievementBtn:Object.freeze({x:.445,y:.805,w:165}),
-    campPetBtn:Object.freeze({x:.555,y:.805,w:220})
+    campTalentBtn:Object.freeze({x:.305,y:.125,w:165}),
+    campMoonBtn:Object.freeze({x:.48,y:.115,w:165}),
+    campNightmareBtn:Object.freeze({x:.89,y:.28,w:120}),
+    campHellBtn:Object.freeze({x:.80,y:.28,w:118}),
+    campClassBtn:Object.freeze({x:.39,y:.45,w:235}),
+    campInfoBtn:Object.freeze({x:.445,y:.68,w:145}),
+    campBonfire:Object.freeze({x:.52,y:.60,w:170}),
+    campGoBtn:Object.freeze({x:.82,y:.72,w:340,h:190}),
+    campChestBtn:Object.freeze({x:.60,y:.74,w:245,h:150}),
+    campAchievementBtn:Object.freeze({x:.10,y:.80,w:165}),
+    campPetBtn:Object.freeze({x:.39,y:.70,w:220})
   });
   const CAMP_STAGE_REFINEMENTS=Object.freeze({
     'wide-desktop':Object.freeze({
-      campInfoBtn:Object.freeze({x:.445,y:.655}),campBonfire:Object.freeze({y:.545}),
-      campChestBtn:Object.freeze({x:.565,y:.765}),campAchievementBtn:Object.freeze({x:.095}),
-      campPetBtn:Object.freeze({x:.245,y:.765})
+      campInfoBtn:Object.freeze({x:.445,y:.68}),campBonfire:Object.freeze({y:.60}),
+      campChestBtn:Object.freeze({x:.60,y:.74}),campAchievementBtn:Object.freeze({x:.10,y:.80}),
+      campPetBtn:Object.freeze({x:.39,y:.70})
     }),
     'compact-desktop':Object.freeze({
-      campInfoBtn:Object.freeze({x:.435,y:.635}),campBonfire:Object.freeze({y:.545}),
-      campChestBtn:Object.freeze({x:.585,y:.755}),campAchievementBtn:Object.freeze({x:.125}),
-      campPetBtn:Object.freeze({x:.275,y:.765})
+      campInfoBtn:Object.freeze({x:.435,y:.66}),campBonfire:Object.freeze({y:.60}),
+      campChestBtn:Object.freeze({x:.60,y:.74}),campAchievementBtn:Object.freeze({x:.12,y:.80}),
+      campPetBtn:Object.freeze({x:.39,y:.70})
     }),
     'stacked-or-short':Object.freeze({})
   });
@@ -130,7 +130,7 @@
       #startOverlay.camp-fullscreen .camp-spot,#startOverlay.camp-fullscreen .camp-bonfire{position:absolute!important;right:auto!important;bottom:auto!important;margin:0!important}
       #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art-frame{width:92%!important;max-width:none!important;height:72%!important;min-height:0!important}
       #startOverlay.camp-fullscreen #campGoBtn .camp-journey-art{max-width:100%!important;max-height:100%!important}
-      #startOverlay.camp-fullscreen .camp-popup-layer{left:50%!important;bottom:2.5vh!important;width:min(88vw,1380px)!important;max-height:64vh!important;transform:translateX(-50%)!important}
+      #startOverlay.camp-fullscreen .camp-popup-layer{position:absolute!important;left:50%!important;bottom:2.5vh!important;width:min(88vw,1380px)!important;max-height:64vh!important;transform:translateX(-50%)!important}
     }
     #startOverlay.camp-fullscreen .start-art,#startOverlay.camp-fullscreen .start-modal>h2,#startOverlay.camp-fullscreen .hub-class-heading,#startOverlay.camp-fullscreen .start-modal>.subtitle,#startOverlay.camp-fullscreen .camp-help,#startOverlay.camp-fullscreen .camp-topline{display:none!important}
     #startOverlay.camp-fullscreen .camp-art-button,#startOverlay.camp-fullscreen #campTalentBtn,#startOverlay.camp-fullscreen #campInfoBtn,#startOverlay.camp-fullscreen #campMoonBtn,#startOverlay.camp-fullscreen #campAchievementBtn,#startOverlay.camp-fullscreen #campOptionsBtn,#startOverlay.camp-fullscreen #campNightmareBtn,#startOverlay.camp-fullscreen #campClassBtn,#startOverlay.camp-fullscreen #campPetBtn,#startOverlay.camp-fullscreen #campChestBtn{background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important;overflow:visible!important}
@@ -234,6 +234,19 @@
     });
   }
 
+  // Heirloom Storage is an earned Camp destination.  Keep its physical art
+  // and semantic hit target out of the scene entirely until progression says
+  // it exists; a hidden button is still a bug-prone button.
+  function chestMarkup(){return '<div class="camp-icon">🪙📦</div><div class="camp-label">Chest</div><div class="camp-sub">Heirlooms &amp; set</div>';}
+  function syncHeirloomStorageChest(unlocked){
+    const existing=find('campChestBtn');
+    if(!unlocked){existing?.remove();find('campChestPanel')?.classList.remove('active');return null;}
+    if(existing)return existing;
+    const ground=find('campScene')?.querySelector('.camp-ground'),button=doc()?.createElement('button');
+    if(!ground||!button)return null;
+    button.type='button';button.id='campChestBtn';button.className='camp-spot';button.innerHTML=chestMarkup();ground.appendChild(button);wireScene();return button;
+  }
+
   function ensureOptionsButton(){
     const scene=find('campScene');if(!scene||find('campOptionsBtn'))return find('campOptionsBtn')||null;
     const host=scene.querySelectorAll('.camp-sky .camp-stars')[0]||scene.querySelector('.camp-sky');
@@ -315,14 +328,14 @@
       if(icon.dataset.campFullbodyClass==='random')return;
       icon.classList.remove('class-portrait','combat-portrait','db054-art-frame');
       delete icon.dataset.portraitClass;
-      const placeholder=doc()?.createElement('div');
-      if(!placeholder){icon.textContent='🎲';return;}
-      placeholder.className='camp-random-class-placeholder';placeholder.setAttribute('aria-label','Random class');
-      placeholder.innerHTML='<span>🎲</span><i>?</i>';
-      icon.replaceChildren(placeholder);icon.dataset.campFullbodyClass='random';return;
+      const art=runtime.resolveRandomClassArt?.()||root.DiceboundAssets?.resolveRandomClassArt?.(),src=art?.campsite||art?.image;
+      const image=doc()?.createElement('img');
+      if(!image||!src){icon.textContent='🎲';return;}
+      image.className='db058-camp-class-fullbody';image.src=src;image.alt=art?.alt||'Random class';image.draggable=false;
+      icon.replaceChildren(image);icon.dataset.campFullbodyClass='random';return;
     }
     const art=runtime.resolveClassArt?.(view.classId)||root.DiceboundAssets?.resolveClassArt?.(view.classId);
-    const src=art?.battle||`assets/ui/class-art/battle/${view.classId}.png`;
+    const src=art?.campsite||art?.battle||`assets/ui/class-art/${view.classId}.png`;
     if(icon.dataset.campFullbodyClass===String(view.classId)&&icon.querySelector('img.db058-camp-class-fullbody')?.getAttribute('src')===src)return;
     icon.classList.remove('class-portrait','combat-portrait','db054-art-frame');
     delete icon.dataset.portraitClass;
@@ -353,6 +366,8 @@
     setObjectArt('campChestBtn','chest','db-art-camp db058-chest','Treasure chest','assets/camp/interactions/chest.png');
     find('campChestBtn')?.classList.add('camp-chest-bare');
     setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/objects/nightmare-on.png':'assets/camp/objects/nightmare-off.png');
+    const journey=find('campGoBtn')?.querySelector('.camp-journey-art');
+    if(journey){const src=asset('roadCaravan','assets/camp/interactions/road-caravan.png');if(journey.getAttribute('src')!==src)journey.src=src;journey.hidden=false;}
     renderClassFigure(find('campClassIcon'),view);
     renderPetFigure(find('campPetIcon'),view);
   }
@@ -362,6 +377,7 @@
     const scene=ensure();if(!scene)return null;
     const view=runtime.getViewModel?.()||{};
     syncProgressionReveals(view.reveals);
+    syncHeirloomStorageChest(!!view.heirloomStorageUnlocked);
     const classSub=find('campClassSub');if(classSub)classSub.textContent=view.className?`${view.className} selected · click to change`:'Select class';
     const petLine=find('campPetLine');if(petLine)petLine.textContent=view.petLine||'';
     const legacy=find('campLegacyLine');if(legacy)legacy.textContent=view.summary||'';
@@ -374,7 +390,7 @@
 
   function setMode(id,unlocked,enabled,label){
     const button=find(id);if(!button)return;
-    button.style.visibility=unlocked?'visible':'hidden';button.classList.toggle('active',!!enabled);button.setAttribute('aria-pressed',String(!!enabled));
+    button.hidden=!unlocked;button.disabled=!unlocked;button.setAttribute('aria-hidden',String(!unlocked));button.classList.toggle('active',!!enabled);button.setAttribute('aria-pressed',String(!!enabled));
     const sub=button.querySelector('.camp-sub');if(sub)sub.innerHTML=`${enabled?`${label} ON`:`${label} OFF`} <span class="camp-mode-state">${enabled?'ON':'OFF'}</span>`;
   }
 

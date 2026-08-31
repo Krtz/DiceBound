@@ -686,6 +686,21 @@
       ]
     },
     {
+      "id": "dragoon_aerial_discipline",
+      "branch": "Power",
+      "icon": "🐉🪂",
+      "name": "Aerial Discipline",
+      "cost": 1,
+      "maxRank": 4,
+      "desc": "Each rank reduces Dragoon Jump cooldown by 1 turn (base 6, minimum 2).",
+      "requires": [
+        {
+          "id": "power_attack",
+          "rank": 1
+        }
+      ]
+    },
+    {
       "id": "legacy_storage",
       "branch": "Heirlooms",
       "icon": "🗄️",

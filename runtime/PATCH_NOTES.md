@@ -1,5 +1,16 @@
 # Unreleased — Beta 0.6.4.27
 
+## Beta 0.6.4.29 Friends Patch (#97, #162, #187, #211, #233, #234, #235, #236)
+
+- Camp fully restores current HP on arrival, hides locked Hell and Heirloom Storage scene objects, preserves the current responsive object composition, and uses shared centered destination positioning for Class and Storage.
+- Companion feeding now calls its canonical transaction, selected Pets appear using their semantic full-body battle art, and normal Prestige transactions stay on the Moon instead of returning to Camp.
+- Dragoon is playable after a Board 4 miniboss victory: Jump creates one real Airborne enemy-response window, then resolves a single landing strike. Its new class Talent reduces Jump cooldown without changing ordinary class mechanics.
+- Successful player dodges trigger a short shared backflip, and a new-combat boundary cancels stale attack/VFX timers before presentation begins.
+- Approved Dragoon, Random Class, Wraith board-tier, Fire, Gun and Nullstar Hydra artwork are wired through the semantic asset registry. Fire and Gun proc effects travel from their actual source to their actual target.
+- Combat overlay opacity was reduced moderately so authored Board backgrounds read more clearly while combat information remains legible.
+
+---
+
 ## Beta 0.6.4.28 persistent sound preference (#205)
 
 - Mute now persists with normal Options settings across browser and native WebView2 restarts.

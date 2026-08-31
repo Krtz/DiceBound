@@ -20,11 +20,16 @@ assert(F.reasonFor("paladin")==="You cleared Board 3 with both Fighter and Cleri
 assert(F.reasonFor("pokemontrainer")==="You raised every companion to level 10 and cleared Board 5 with Beastmaster.","Pokemon Trainer compound reason drifted");
 assert(F.reasonFor("vampire")==="You exceeded 100% Lifesteal and defeated the Board 3 boss.","Vampire compound reason drifted");
 assert(F.reasonFor("slimerouge")==="You unlocked Slime and cleared Board 6 with the Random class.","Slime Rouge reason drifted");
+assert(F.reasonFor("dragoon")==="You defeated the Board 4 miniboss.","Dragoon fact-based unlock reason drifted");
+assert(w.DiceboundClassUnlockRules.isEligible("dragoon",{facts:{board4MinibossDefeated:false}})===false,"Dragoon must remain locked before the Board 4 miniboss fact");
+assert(w.DiceboundClassUnlockRules.isEligible("dragoon",{facts:{board4MinibossDefeated:true}})===true,"Dragoon must unlock from the authoritative Board 4 miniboss fact");
 const cleric=F.revealFor("cleric");
 assert(cleric&&cleric.name==="Cleric","Cleric reveal missing");
 assert(cleric.art&&cleric.art.endsWith("/characters/classes/campsite/cleric.png"),"Cleric reveal does not use canonical class art");
 assert(cleric.identity&&cleric.identity.length>20,"Cleric identity copy missing");
 assert(cleric.howItPlays&&cleric.howItPlays.length>20,"Cleric gameplay copy missing");
+const dragoon=F.revealFor("dragoon");
+assert(dragoon&&dragoon.art&&dragoon.art.endsWith("/characters/classes/campsite/dragoon.png"),"Dragoon reveal must use its canonical full-body Camp art");
 const secret=F.revealFor("bloodmage");
 assert(secret.secret===true,"secret marker should be preserved after unlock");
 assert(F.reasonFor("bloodmage").startsWith("You defeated"),"secret condition should only become player-facing through the post-unlock feedback path");

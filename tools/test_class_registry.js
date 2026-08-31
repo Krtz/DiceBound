@@ -22,7 +22,7 @@ const expectedIds = [
   "ranger", "sorcerer", "fighter", "monk", "clown", "rouge", "berserker",
   "turtle", "frog", "d20", "slime", "vampire", "ninja", "ceo", "merchant",
   "cleric", "paladin", "beastmaster", "rogue", "bloodmage", "summoner",
-  "pokemontrainer", "alchemist", "ouroboros", "slimerouge",
+  "pokemontrainer", "alchemist", "ouroboros", "dragoon", "slimerouge",
 ];
 assert.deepEqual(Array.from(classes.ids), expectedIds);
 
@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 25853, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 26777, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "126347bd57778940a13b2fb167244a329e799b3f608e8d0134c5be3276e2f337",
+  "11d70956c5f8a306a12f8e946e9b241919958200c97f145481f7ff4e6f9f2696",
   "canonical class registry data drifted",
 );
 
@@ -49,6 +49,7 @@ assert.equal(registry.ranger.base.crit, 0.15);
 assert.equal(registry.rogue.name, "Rogue");
 assert.equal(registry.rouge.name, "Rouge");
 assert.equal(registry.ouroboros.base.doubleStrike, 1.2);
+assert.equal(registry.dragoon.ultimate.name, "Dragon Dive");
 assert.equal(registry.slimerouge.ultimate.name, "Stolen Finale");
 
 function snapshot(value, bytes, sha256, label) {
@@ -61,7 +62,7 @@ const passives = classes.createPassiveRegistry();
 const unlocks = classes.createUnlockRegistry();
 const mechanics = classes.createMechanicsRegistry();
 const ultimateSupport = classes.createUltimateSupportRegistry();
-assert.equal(Object.keys(passives).length, 23);
+assert.equal(Object.keys(passives).length, 24);
 assert.deepEqual(expectedIds.filter((id) => !passives[id]), ["ouroboros", "slimerouge"]);
 assert.deepEqual(Object.keys(unlocks), expectedIds);
 assert.deepEqual(Object.keys(mechanics), expectedIds);
@@ -75,15 +76,18 @@ assert.equal(unlocks.rogue.requirements[1].board,3);
 assert.equal(unlocks.vampire.requirements[0].stat,"maxLifesteal");
 assert.equal(unlocks.vampire.requirements[0].greaterThan,1);
 assert.equal(unlocks.vampire.requirements[1].board,3);
+assert.equal(unlocks.dragoon.type,"guardianDefeat");
+assert.equal(unlocks.dragoon.board,4);
+assert.equal(unlocks.dragoon.guardian,"miniboss");
 assert.equal(unlocks.pokemontrainer.requirements[1].board,5);
 assert.equal(Object.hasOwn(unlocks.pokemontrainer.requirements[1],"difficulty"),false);
 assert.deepEqual(Array.from(mechanics.ranger), ["marks", "crit", "evasion", "ranged"]);
 assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
-snapshot(passives, 3630, "f7242b22f9ae8a85c7e8d7f428c7b3de21d2f5f4672afbe80b1b53bd5f8b5419", "class passive registry");
-snapshot(Array.from(classes.tagVocabulary), 313, "c2ca5574c84743aec2e8a25632dde27cb8cb2dc7bfb7c4fa63e2fd472c065a4b", "class tag vocabulary");
-snapshot(unlocks, 1918, "a94413edf14977874b93ff79144fb74426af5880d4ce38dbffb0a7c6a7947af6", "class unlock registry");
-snapshot(mechanics, 1273, "d3d4a386c6a7108fe7ec2924a1b5e6c9caa0e9aa6013a8d74f16d6316f956299", "class mechanics registry");
+snapshot(passives, 3832, "bf6889c2730b552c7592f0194719a3c49ded2fa826318f2da3907dfa23559e97", "class passive registry");
+snapshot(Array.from(classes.tagVocabulary), 324, "69c32f490683a7bb3e2f3858af62440b3784c1eeeffa853ba1929076b588f945", "class tag vocabulary");
+snapshot(unlocks, 1986, "28ddba44d2a4beb7a00ae5009be23f676b1b877a6a5c4d93c037a6f96ad50f7e", "class unlock registry");
+snapshot(mechanics, 1321, "a12b11c7cecd3bcb4bec1a322b0f7f85a32e7b4edef4c58e1644b5e073c57c9d", "class mechanics registry");
 snapshot(ultimateSupport, 307, "3d6a941f90c1609e96473d6de9f454e2e8fe99b9915620728ef7243946d425e2", "ultimate support registry");
 
 const second = classes.createRegistry();

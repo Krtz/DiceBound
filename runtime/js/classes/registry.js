@@ -906,6 +906,40 @@
         "dodgy"
       ]
     },
+    "dragoon": {
+      "id": "dragoon",
+      "name": "Dragoon",
+      "icon": "🐉",
+      "attackIcon": "🗡️",
+      "fxIcon": "🪂💥",
+      "unlock": "Defeat the Board 4 miniboss once",
+      "desc": "A lance fighter who uses Jump to become Airborne through one enemy response, then spends the following action on a powerful landing strike.",
+      "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT · JUMP",
+      "scaleNotes": "Attack drives both ordinary strikes and the landing hit. Crit and elemental effects use their normal combat policies on a landing, while Aerial Discipline shortens Jump's six-turn cooldown.",
+      "ultimate": {
+        "name": "Dragon Dive",
+        "icon": "🐉💥",
+        "desc": "A direct, decisive aerial dive against the selected target that uses the normal Ultimate and elemental rules."
+      },
+      "base": {
+        "maxHp": 56,
+        "attack": 11,
+        "defense": 3,
+        "crit": 0.10,
+        "dodge": 0.04,
+        "luck": 0.04,
+        "doubleStrike": 0.04,
+        "guardPower": 0.60,
+        "classBurst": 0.12,
+        "lifeSteal": 0.02
+      },
+      "tags": [
+        "melee",
+        "precision",
+        "evasive",
+        "burst"
+      ]
+    },
     "slimerouge": {
       "id": "slimerouge",
       "secret": true,
@@ -1036,10 +1070,14 @@
     "alchemist": {
       "name": "Combat Distillery",
       "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+    },
+    "dragoon": {
+      "name": "Aerial Discipline",
+      "desc": "Jump is a real Airborne state: ordinary attacks cannot hit through one enemy response, then the next player action lands exactly once for a heavy strike."
     }
   };
 
-  const CLASS_TAG_VOCABULARY=["ranged","precision","evasive","occult","elemental","mana","melee","armored","guardian","combo","disciplined","weird","chaotic","burst","artful","vampiric","reckless","slow","dodgy","echo","poison","lucky","sticky","durable","sustain","wealth","holy","pet","pack","blood-fuel","strong","alchemy","secret","flex"];
+  const CLASS_TAG_VOCABULARY=["ranged","precision","evasive","occult","elemental","mana","melee","armored","guardian","combo","disciplined","weird","chaotic","burst","artful","vampiric","reckless","slow","dodgy","echo","poison","lucky","sticky","durable","sustain","wealth","holy","pet","pack","blood-fuel","strong","alchemy","secret","flex","airborne"];
 
   const CLASS_UNLOCK_DATA={
     ranger:{type:"always"},
@@ -1066,6 +1104,7 @@
     pokemontrainer:{type:"compound",requirements:[{type:"allPetsAtLevel",level:10},{type:"boardClear",classId:"beastmaster",board:5}]},
     alchemist:{type:"lifetimeStat",stat:"potionsUsed",minimum:25},
     ouroboros:{type:"runStat",stat:"doubleStrike",minimum:4},
+    dragoon:{type:"guardianDefeat",board:4,guardian:"miniboss"},
     slimerouge:{type:"compound",requirements:[{type:"classUnlocked",classId:"slime"},{type:"randomRunBoardClear",board:6}]}
   };
 
@@ -1094,6 +1133,7 @@
     pokemontrainer:["pet","pack","roster","trainer-assist"],
     alchemist:["alchemy","flasks","potions","sustain"],
     ouroboros:["echo","poison","elemental","ouroboros-conversion"],
+    dragoon:["airborne","jump","landing","melee"],
     slimerouge:["randomizer","flex","poison","generic-borrowing"]
   };
 

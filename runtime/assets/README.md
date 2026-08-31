@@ -15,7 +15,7 @@ This directory is organized by **gameplay role and rendering context**, not by f
 
 ## Canonical top-level map
 
-- `characters/` — class campsite/battle/marker art; pet portraits/markers; Random Class future art.
+- `characters/` — class campsite/battle/marker art; Pet portrait/battle art; Random Class future art.
 - `enemies/` — normal enemies, minibosses, final bosses and secret bosses, each separated by rendering context.
 - `equipment/` — item art by slot plus sets/special/placeholder documentation.
 - `powerups/` — powerup art by rarity, shared tier families and class-specific art.

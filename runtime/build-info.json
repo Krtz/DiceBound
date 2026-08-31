@@ -1,15 +1,15 @@
 {
-  "assetCount": 372,
-  "browserContentHash": "14729ec06ee676f2e5d50b6d4ee01125efdf2ab1fb2f46e38666a9306618bab3",
-  "buildId": "dicebound-0.6.4.28-dev-14729ec06ee676f2",
+  "assetCount": 404,
+  "browserContentHash": "7c36a2edf71274390ba3c2c050dcfdf1eb27b31e8a23d8edf66ae278b306a152",
+  "buildId": "dicebound-0.6.4.29-dev-7c36a2edf7127439",
   "channel": "Beta",
-  "contentFileCount": 416,
+  "contentFileCount": 448,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.4.28.",
+  "notes": "Friends Patch staging: Camp, combat, companions and Dragoon.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -55,9 +55,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "14729ec06ee676f2e5d50b6d4ee01125efdf2ab1fb2f46e38666a9306618bab3",
+  "sourceHash": "7c36a2edf71274390ba3c2c050dcfdf1eb27b31e8a23d8edf66ae278b306a152",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.4.28",
+  "version": "0.6.4.29",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
