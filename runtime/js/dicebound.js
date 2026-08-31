@@ -8938,9 +8938,10 @@ function buildDiceboundHumanHarness235(){
   };
   function dbFriendClearCombatPresentation(){
     dbCombatVfx.clearTransient?.();
+    clearTimeout(dbFriendDragoonLandingTimer);
     document.querySelectorAll('.element-proc-fx,.enemy-proc-fx,.db-combat-projectile-vfx').forEach(node=>node.remove());
     const fx=$('attackFx');if(fx){fx.className='attack-fx';fx.replaceChildren();}
-    $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip');
+    $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
   }
   const dbFriendStartCombatBase=startCombat;
   startCombat=function(...args){dbFriendClearCombatPresentation();const result=dbFriendStartCombatBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
@@ -8975,7 +8976,10 @@ function buildDiceboundHumanHarness235(){
   const dbFriendDragoonTalentId='dragoon_aerial_discipline';
   const dbFriendDragoonActive=()=>player?.classId==='dragoon';
   const dbFriendDragoonCooldown=()=>Math.max(2,6-gameplayTalentRank(dbFriendDragoonTalentId));
-  function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});}
+  let dbFriendDragoonLandingTimer=0;
+  function dbFriendSyncDragoonPresentation(){const icon=$('combatPlayerIcon'),airborne=dbFriendDragoonActive()&&(player.dragoonAirborneResponses>0||player.dragoonLandingReady);if(icon){if(airborne)icon.classList.remove('db-dragoon-landing');icon.classList.toggle('db-dragoon-airborne',airborne);}}
+  function dbFriendDragoonLandPresentation(){const icon=$('combatPlayerIcon');if(!icon)return;icon.classList.remove('db-dragoon-airborne');icon.classList.add('db-dragoon-landing');clearTimeout(dbFriendDragoonLandingTimer);dbFriendDragoonLandingTimer=setTimeout(()=>icon.classList.remove('db-dragoon-landing'),240);}
+  function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
   const dbFriendResetPlayerBase=resetPlayer;
   resetPlayer=function(...args){const result=dbFriendResetPlayerBase.apply(this,args);dbFriendResetDragoonState();return result;};
   function dbFriendEnsureDragoonJumpButton(){
@@ -8985,7 +8989,7 @@ function buildDiceboundHumanHarness235(){
   }
   async function dbFriendDragoonLanding(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
-    combatBusy=true;player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;
+    combatBusy=true;player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;dbFriendDragoonLandPresentation();
     const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target){combatBusy=false;return false;}
     const critTiers=rollTieredProc(player.crit),base=Math.max(1,Math.round((player.attack+rand(2,6))*2.45)),damage=Math.round(base*(1+critTiers)*(currentEncounterLead?.boss?1+player.bossDamage:1)),dealt=damageEnemy(target,damage);
     player.combatAttackCount++;chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*critTiers);await animateClassAttack(critTiers?'crit':'normal');
@@ -8995,14 +8999,14 @@ function buildDiceboundHumanHarness235(){
   }
   async function dbFriendDragoonJump(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
-    combatBusy=true;player.guardCooldown=0;player.dragoonJumpCooldown=dbFriendDragoonCooldown();player.dragoonAirborneResponses=1;
+    combatBusy=true;player.guardCooldown=0;player.dragoonJumpCooldown=dbFriendDragoonCooldown();player.dragoonAirborneResponses=1;dbFriendSyncDragoonPresentation();
     setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await resolveEnemyResponse(false);
     if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
   }
   const dbFriendEnemyTurnBase=enemyTurn;
   enemyTurn=async function(...args){
     if(dbFriendDragoonActive()&&player.dragoonAirborneResponses>0&&!livingEnemies().some(enemy=>enemy.canHitAirborne===true)){
-      player.dragoonAirborneResponses-=1;currentEncounterTurn++;setCombatText('🐉 Dragoon is Airborne — ordinary attacks cannot reach the landing zone.');await delay(420);combatBusy=false;updateCombatUI();return;
+      player.dragoonAirborneResponses-=1;if(player.dragoonAirborneResponses===0)player.dragoonLandingReady=true;currentEncounterTurn++;setCombatText('🐉 Dragoon is Airborne — ordinary attacks cannot reach the landing zone.');await delay(420);combatBusy=false;updateCombatUI();return;
     }
     return dbFriendEnemyTurnBase.apply(this,args);
   };
@@ -9023,7 +9027,7 @@ function buildDiceboundHumanHarness235(){
   useUltimate=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive())return dbFriendDragonDive();dbFriendTickDragoonCooldown();return dbFriendUltimateBase.apply(this,args);};
   const dbFriendUpdateCombatUiBase=updateCombatUI;
   updateCombatUI=function(...args){
-    const result=dbFriendUpdateCombatUiBase.apply(this,args),jump=dbFriendEnsureDragoonJumpButton(),active=dbFriendDragoonActive(),landing=active&&player.dragoonLandingReady;
+    const result=dbFriendUpdateCombatUiBase.apply(this,args),jump=dbFriendEnsureDragoonJumpButton(),active=dbFriendDragoonActive(),landing=active&&player.dragoonLandingReady;dbFriendSyncDragoonPresentation();
     if(jump){jump.hidden=!active;jump.disabled=!active||combatBusy||landing||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0;jump.textContent=player.dragoonAirborneResponses>0?'🐉 Airborne':player.dragoonJumpCooldown>0?`🐉 Jump (${player.dragoonJumpCooldown})`:'🐉 Jump';}
     if(active){const attack=$('attackBtn'),guard=$('guardBtn'),potion=$('potionBtn'),ultimate=$('ultimateBtn');if(attack)attack.textContent=landing?'🐉 Land':'⚔️ Attack';[guard,potion,ultimate].forEach(button=>{if(button&&landing)button.disabled=true;});}
     return result;
@@ -9034,9 +9038,9 @@ function buildDiceboundHumanHarness235(){
       resetPlayer('dragoon');gameStarted=true;rollLocked=false;combatBusy=false;currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEnemyTile=null;currentEncounterTurn=Math.max(0,GUARDIAN_SPECIAL_INTERVAL-1);
       $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();updateCombatUI();
       const hpBefore=player.hp,jumpButton=$('dragoonJumpBtn'),jumpVisible=!!jumpButton&&!jumpButton.hidden,jumped=await dbFriendDragoonJump();
-      const airborne={hp:player.hp,cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,airborneResponses:player.dragoonAirborneResponses,turn:currentEncounterTurn};
+      const airborne={hp:player.hp,cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,airborneResponses:player.dragoonAirborneResponses,turn:currentEncounterTurn,artRaised:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===true};
       const enemyHpBeforeLanding=enemy.hp,landed=await playerAttack();
-      return Object.freeze({jumped,jumpVisible,hpBefore,airborne,landed:!!landed,landingDamage:Math.max(0,enemyHpBeforeLanding-enemy.hp),cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady});
+      return Object.freeze({jumped,jumpVisible,hpBefore,airborne,landed:!!landed,landingDamage:Math.max(0,enemyHpBeforeLanding-enemy.hp),cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,artRestored:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===false});
     }finally{
       dbFriendClearCombatPresentation();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;combatBusy=false;gameStarted=false;rollLocked=true;openStartScreen();
     }

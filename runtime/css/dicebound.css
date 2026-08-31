@@ -546,6 +546,8 @@
   .attack-fx.ultimate-rouge{opacity:1;animation:ultimateRouge .9s ease-in forwards;font-size:76px}
   .fighter-icon.attack-lunge{animation:heroLunge .48s ease}.enemy-hit{animation:enemyHit .34s ease}
   .fighter-icon.db-dodge-backflip{animation:dbDodgeBackflip .38s cubic-bezier(.25,.85,.32,1)}@keyframes dbDodgeBackflip{0%{transform:translateX(0) rotate(0) scale(1)}42%{transform:translateX(-28px) translateY(-14px) rotate(-155deg) scale(.97)}74%{transform:translateX(-34px) translateY(0) rotate(-310deg) scale(1)}100%{transform:translateX(0) rotate(-360deg) scale(1)}}
+  .fighter-icon.db-dragoon-airborne{transform:translateY(-58px) scale(.94);filter:drop-shadow(0 22px 16px rgba(0,0,0,.5));transition:transform .18s ease-out,filter .18s ease-out}
+  .fighter-icon.db-dragoon-landing{transform:translateY(0) scale(1);filter:none;transition:transform .2s ease-in,filter .2s ease-in}
   @keyframes heroLunge{45%{transform:translateX(27px) scale(1.12)}100%{transform:none}}
   @keyframes fighterSlash{0%{transform:translate(0,18px) rotate(-70deg) scale(.6)}45%{opacity:1}100%{transform:translate(250px,-30px) rotate(48deg) scale(1.45);opacity:0}}
   @keyframes rangerArrow{0%{transform:translate(0,0) rotate(-7deg)}80%{opacity:1}100%{transform:translate(285px,-8px) rotate(-7deg);opacity:0}}

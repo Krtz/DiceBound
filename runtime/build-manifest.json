@@ -3,15 +3,15 @@
   "version": "0.6.4.29",
   "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6.4.29-dev-7c36a2edf7127439",
-  "browserContentHash": "7c36a2edf71274390ba3c2c050dcfdf1eb27b31e8a23d8edf66ae278b306a152",
+  "buildId": "dicebound-0.6.4.29-dev-3b7ca6d53c18de29",
+  "browserContentHash": "3b7ca6d53c18de2934db953b4fed9868a6d30a68b14cc2545bbbfd49a9d24a4b",
   "assetRegistryVersion": 19,
   "payloadFileCount": 447,
   "assetPayloadCount": 404,
   "files": {
-    "build-info.json": "67a4144bdf5044998618c86d478d4a8c18c0da4b131e363ca3592d89a05a2644",
+    "build-info.json": "f10239908dfb4cbc559c5227f41d24e3e6983a42e9a6a141997f9c38435d6c0c",
     "index.html": "8843d119657c2d0637002994d02df4f24e26a09f08feb96dc7cff88c53d144b6",
-    "css/dicebound.css": "52e4363d17751316257139d1353cb185da039871d6182407d6014cb44b8fe9f6",
+    "css/dicebound.css": "aef859c5c3f032e9b00a4d3b193fab4973ca3d8b00d1094a181fde715e0bd698",
     "js/version.js": "00477ce18d1e91acf84c6dec3abe759b63a6fec4240b8acf7bc1b63ab829d6fe",
     "js/assets.js": "21c0b7ef914f03115259d25cb4b7b789f20b78b97ccc9d8292b3f16d36f62215",
     "js/rng.js": "3a10ec9b4eb589795906d55bab2f6ab3f88bfe73cd4a3a5a7eea71605a96a8f2",
@@ -52,7 +52,7 @@
     "js/ui/pet-chooser.js": "d12542276edecfc154b010dbf1922e434de2bf4b9235a257dfea05cdefc22f40",
     "js/ui/talent-tree.js": "0e17550e844063c01cf0ff91e272ab6dc52b8eb334b464ef07db3fedba003d26",
     "js/ui/prestige-moon.js": "06f04c4c0f79dd18ae054884e5f21efe357642d2cc5b51d1c2e077c68177671e",
-    "js/dicebound.js": "2d6c9fa5bab587347e5ead9f93cdc9a9b48dbe6b3cd6628321c4584b5e99ce1c"
+    "js/dicebound.js": "317cba79820d7b7cfac5127d14b9d61f01f21503a7926ec83b54b2961b2a331a"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
