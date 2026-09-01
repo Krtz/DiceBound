@@ -6,7 +6,7 @@ on:
       - fix/0.6.5.8-heirloom-art-sizing
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   materialize:
@@ -64,17 +64,37 @@ jobs:
           node tools/test_equipment_heirloom_ui.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload generated metadata
+      - name: Create generated Git blobs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $paths = @(
+            'CHANGELOG.md',
+            'runtime/PATCH_NOTES.md',
+            'runtime/index.html',
+            'runtime/js/version.js',
+            'runtime/build-info.json',
+            'runtime/build-manifest.json',
+            'wrapper-source/config/project.json',
+            'wrapper-source/wrappers/webview2/native-go/main.go'
+          )
+          $result = [ordered]@{}
+          foreach ($path in $paths) {
+            $bytes = [IO.File]::ReadAllBytes((Resolve-Path $path))
+            $encoded = [Convert]::ToBase64String($bytes)
+            $payload = @{content=$encoded;encoding='base64'} | ConvertTo-Json -Compress
+            $payloadPath = Join-Path $env:RUNNER_TEMP 'blob-payload.json'
+            [IO.File]::WriteAllText($payloadPath,$payload,[Text.UTF8Encoding]::new($false))
+            $response = gh api --method POST repos/Krtz/DiceBound/git/blobs --input $payloadPath | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($response.sha)) { throw "Failed to create blob for $path" }
+            $result[$path] = $response.sha
+          }
+          $result | ConvertTo-Json | Set-Content -Encoding UTF8 blob-shas.json
+
+      - name: Upload generated blob map
         uses: actions/upload-artifact@v4
         with:
-          name: beta-0.6.5.8-generated-metadata
+          name: beta-0.6.5.8-blob-shas
           if-no-files-found: error
-          path: |
-            CHANGELOG.md
-            runtime/PATCH_NOTES.md
-            runtime/index.html
-            runtime/js/version.js
-            runtime/build-info.json
-            runtime/build-manifest.json
-            wrapper-source/config/project.json
-            wrapper-source/wrappers/webview2/native-go/main.go
+          path: blob-shas.json
