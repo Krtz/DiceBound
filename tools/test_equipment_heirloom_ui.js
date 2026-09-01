@@ -91,12 +91,19 @@ assert.equal(document.getElementById("sellLootBtn").textContent,"Sell for 42 gol
 const storage=ui.renderCampStorage();
 assert.equal(storage.unlocked,true);
 assert.equal(document.getElementById("campHeirloomStorage").storageGrid.children.length,2);
+assert.match(document.getElementById("campHeirloomStorage").storageGrid.children[0].innerHTML,/db-equipment-card-art/,"Camp storage authored art must use bounded card sizing");
 assert.ok(storageSyncs>0,"storage synchronization must remain a domain callback");
 
 const end=ui.renderEndGear();
 assert.equal(end.storage,true);
 assert.equal(document.getElementById("endGearGrid").children.length,2);
+assert.match(document.getElementById("endGearGrid").children[0].innerHTML,/db-equipment-card-art/,"end-of-run Heirloom choice art must use bounded card sizing");
 assert.ok(document.getElementById("endOverlay").modal.children.some(child=>child.id==="endStorageManager"),"end storage manager must remain owned by the UI module");
+const endStorage=document.getElementById("endStorageManager");
+assert.match(endStorage.endStorageGrid.children[0].innerHTML,/db-equipment-card-art/,"end storage manager art must use bounded card sizing");
+const ownerStyle=document.getElementById("dicebound-equipment-heirloom-ui-owner");
+assert.match(ownerStyle.textContent,/\.db-equipment-card-art\{width:48px;height:48px;max-width:48px;max-height:48px;/,"Heirloom card art must have explicit maximum dimensions");
+assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderers must not fall back to unbounded semantic art");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
@@ -106,4 +113,4 @@ for(const adapter of [
 ])assert.ok(monolith.includes(adapter),`missing thin equipment/Heirloom UI adapter: ${adapter}`);
 for(const retired of ["renderEquipment=function","renderEndGear=function","openLoot=function","renderEquipmentV110Base","renderEquipmentV23Base","renderEquipmentV24Base","v24RenderHeirloomStorage","v25RenderEndStorageManager","db06314RenderEquipmentBase","db06314OpenLootBase","dicebound-06314-equipment-identity-style"])assert.ok(!monolith.includes(retired),`retired equipment/Heirloom UI layer remains: ${retired}`);
 
-console.log("Equipment/Heirloom UI owner PASS: semantic art, loot, Camp storage, end-run storage and monolith drain guards");
+console.log("Equipment/Heirloom UI owner PASS: semantic art, bounded card thumbnails, loot, Camp storage, end-run storage and monolith drain guards");
