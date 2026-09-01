@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.10
+
+### Board movement ownership (#40, #209)
+- Replaced the live movement implementation and the Loaded Road, Pale Devil and Loaded Sixes wrapper chain with `runtime/js/board/movement.js`.
+- The new owner preserves guardian/devil interception, per-step movement, Fast Travel XP, board events and the existing tile-dispatch handoff; board generation, tile routing, combat, saves/checkpoints, gameplay values and RNG remain in their current owners.
+- `dicebound.js` keeps only injected live callbacks and direct callers; architecture guards prevent the retired movement chain from returning.
+
 ## Beta 0.6.5.9
 
 ### Options / settings presentation ownership (#40, #198, #209)

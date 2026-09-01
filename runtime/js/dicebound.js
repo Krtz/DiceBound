@@ -286,11 +286,26 @@
   });
   const ProgressionUI=Object.freeze({render(result){updateHUD?.();return result;}});
 
-  const BoardState=Object.freeze({
-    planMove(steps,naturalRoll=steps){const start=player.position,originalDestination=Math.min(currentTileCount()-1,player.position+steps),minibossIndex=currentMinibossTile()-1;let destination=originalDestination,intercepted=false;if(player.position<minibossIndex&&originalDestination>minibossIndex&&!tiles[minibossIndex]?.cleared){destination=minibossIndex;intercepted=true;}return {domain:'board',type:'move-plan',start,steps,naturalRoll,originalDestination,destination,intercepted,actualSteps:destination-start};},
-    advanceStep(){const from=player.position;player.position++;tilesMovedThisRun++;return DiceboundStateEvents.emit('board:step',{domain:'board',type:'step',from,to:player.position,tilesMovedThisRun});}
+  const dbBoardMovement=window.DiceboundBoardMovement?.configure({
+    getRoad:()=>({player,tiles,boardLevel,hellMode,devilPrimed:!!meta.devilPrimed}),
+    currentTileCount:()=>currentTileCount(),
+    currentMinibossTile:()=>currentMinibossTile(),
+    incrementTilesMoved:()=>++tilesMovedThisRun,
+    emit:(name,payload)=>DiceboundStateEvents.emit(name,payload),
+    hasEffect:id=>db060HasEffect(id),
+    clamp,
+    modifiedGold,
+    grantXp,
+    log:addLog,
+    toast:showToast,
+    playStep:()=>sfx.step(),
+    refreshBoardHighlights,
+    placePawn,
+    updateHud:updateHUD,
+    delay,
+    resolveTile:()=>resolveTile()
   });
-  const BoardUI=Object.freeze({renderStep(result){sfx.step();refreshBoardHighlights();placePawn(true);updateHUD();return result;},renderPlan(plan){if(plan.intercepted)addLog(`<b>${tiles[plan.destination]?.enemyBase?.name||'The miniboss'} intercepts your roll!</b> Movement stops at tile ${plan.destination+1}.`);return plan;}});
+  if(!dbBoardMovement)throw new Error('DiceboundBoardMovement must load before dicebound.js');
 
   const CombatUI=Object.freeze({
     renderStrike(result){const critNote=result.critTiers?` · Critical ×${result.critTiers+1}`:'',execNote=result.executed?' · EXECUTION':'';setCombatText(`${result.burst||''}${result.label}${critNote}: ${result.dealt} damage${execNote}${result.heal?` · ${result.heal} lifesteal`:''}.${result.elementMessage?` ${result.elementMessage}`:''}`);result.critTiers?sfx.crit():sfx.hit();updateCombatUI();return result;}
@@ -322,7 +337,7 @@
       return result;
     }
   });
-  Object.defineProperty(window,'DiceboundStateArchitecture',{value:Object.freeze({events:DiceboundStateEvents,progression:ProgressionState,board:BoardState,victory:BattleVictoryState,victoryUI:BattleVictoryUI,identity:Object.freeze({id:classIdentityId,active:classIdentityActive,hasMechanic:classHasMechanic,capabilities:slimeRougeCapabilities})}),configurable:false});
+  Object.defineProperty(window,'DiceboundStateArchitecture',{value:Object.freeze({events:DiceboundStateEvents,progression:ProgressionState,board:dbBoardMovement.state,victory:BattleVictoryState,victoryUI:BattleVictoryUI,identity:Object.freeze({id:classIdentityId,active:classIdentityActive,hasMechanic:classHasMechanic,capabilities:slimeRougeCapabilities})}),configurable:false});
   const player = {
     classId:"ranger",position:0,level:1,xp:0,xpNext:20,hp:32,maxHp:32,attack:6,defense:1,
     gold:0,potions:1,crit:.15,luck:0,postFightHeal:0,goldBonus:0,
@@ -686,13 +701,6 @@
 
   function chooseDieResult(){
     return new Promise(resolve=>{pendingDiceChoiceResolve=resolve;const grid=$("diceChoiceGrid");grid.innerHTML="";diceFaces.forEach((face,i)=>{const b=document.createElement("button");b.textContent=face;b.addEventListener("click",()=>{pendingDiceChoiceResolve=null;$("diceChoiceOverlay").classList.add("hidden");resolve(i+1);});grid.appendChild(b);});$("diceChoiceOverlay").classList.remove("hidden");});
-  }
-  async function movePlayer(steps,naturalRoll=steps,extraStep=false,chosen=false){
-    const plan=BoardState.planMove(steps,naturalRoll);BoardUI.renderPlan(plan);
-    while(player.position<plan.destination){const stepResult=BoardState.advanceStep();BoardUI.renderStep(stepResult);await delay(180);}
-    let fast=naturalRoll>=4?(naturalRoll-3)*3+player.fastTravelBonus:0;if(extraStep)fast+=naturalRoll===6?9:3;if(extraStep&&naturalRoll===6&&player.loadedSix)fast+=15;
-    const travel=plan.actualSteps+fast;if(travel>0){const xpResult=grantXp(travel);addLog(`Travel grants <b>${xpResult.applied} XP</b>${fast?` including <b>${fast} Fast Travel XP</b>${extraStep&&naturalRoll===6?" for a six-powered extra step":""}`:""}.`);}
-    if(plan.intercepted)showToast("👑 Miniboss intercept!");DiceboundStateEvents.emit("board:move-complete",{...plan,domain:"board",type:"move-complete",fastTravelXp:fast,travelXp:travel,chosen,extraStep});await delay(150);resolveTile();
   }
   function returnToRoad(){
     if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}
@@ -1246,7 +1254,7 @@
     const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;$("rollBtn").disabled=rollLocked||!gameStarted;$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
   }
   async function rollDice(){
-    if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await movePlayer(value+bonus,value,bonus>0,chosen);
+    if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbBoardMovement.move(value+bonus,value,bonus>0,chosen);
   }
   function resolveTile(){const tile=tiles[player.position];if(!tile){rollLocked=false;updateHUD();return;}if(tile.cleared||tile.type==="empty"||tile.type==="start"){addLog("The road is quiet. For now.");returnToRoad();return;}if(tile.type==="enemy")return startCombat("normal");if(tile.type==="miniboss")return startCombat("miniboss");if(tile.type==="boss")return startCombat("final");if(tile.type==="event")return openEvent();if(tile.type==="wheel")return openWheelEvent();if(tile.type==="powerup")return openFreePowerup();if(tile.type==="treasure")return openTreasure();if(tile.type==="camp")return useCamp();if(tile.type==="merchant")return merchantBossPrimed&&!merchantBossDefeatedThisBoard?startCombat("merchant"):openMerchant();if(tile.type==="blessing")return openBlessing();if(tile.type==="mystic")return openMystic();if(tile.type==="bloodwell")return openBloodwell();if(tile.type==="gambler")return openGambler();}
   function startCombat(kind="normal"){
@@ -1790,7 +1798,7 @@
   $("guardBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageReplenish();}},true);
   $("ultimateBtn").addEventListener("click",e=>{if(player.classId==="bloodmage"){e.preventDefault();e.stopImmediatePropagation();useUltimate();}},true);
 
-  const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await movePlayer(value,value,false,true);};
+  const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbBoardMovement.move(value,value,false,true);};
   $("rollBtn").addEventListener("click",e=>{if(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked){e.preventDefault();e.stopImmediatePropagation();rollDice();}},true);
 
   function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
@@ -3550,7 +3558,7 @@
     if($("roll2Btn"))return;const one=$("rollBtn");if(!one)return;one.textContent="🎲 Roll 1d6";const two=document.createElement("button");two.id="roll2Btn";two.className="main-btn double-dice-btn";two.textContent="🎲🎲 Roll 2d6";two.addEventListener("click",rollTwoDice);one.parentElement.insertBefore(two,one.nextSibling);
   }
   async function rollTwoDice(){
-    if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling","double-mode");for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}let a=rand(1,6),b=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){a=await chooseDieResult();b=await chooseDieResult();chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;if(hasMythicPiece("boots")&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast("🥾 Titanstep!");}const total=a+b;addLog(`${chosen?"Fate bends. You choose":"Double Dice rolls"} <b>${a} + ${b} = ${total}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.`);await movePlayer(total+bonus,total,bonus>0,chosen);
+    if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling","double-mode");for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}let a=rand(1,6),b=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){a=await chooseDieResult();b=await chooseDieResult();chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;if(hasMythicPiece("boots")&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast("🥾 Titanstep!");}const total=a+b;addLog(`${chosen?"Fate bends. You choose":"Double Dice rolls"} <b>${a} + ${b} = ${total}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.`);await dbBoardMovement.move(total+bonus,total,bonus>0,chosen);
   }
   v19EnsureDoubleDiceButton();
   const updateHUDV19Base=updateHUD;
@@ -4204,7 +4212,7 @@
     let a=rand(1,6),b=rand(1,6),chosen=false;if(v22ShouldChooseRoll()){[a,b]=await v22ChooseDice(2,meta.debugAlwaysChooseRolls?'Debug fate':'Fate');chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}
     let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;
     if(hasMythicPiece('boots')&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast('🥾 Titanstep!');}
-    const total=a+b;addLog(`${chosen?(meta.debugAlwaysChooseRolls?'Debug fate chooses':'Fate bends. You choose'):'Double Dice rolls'} <b>${a} + ${b} = ${total}</b>${bonus?' and Long Stride adds <b>+1</b>':''}.`);await movePlayer(total+bonus,total,bonus>0,chosen);
+    const total=a+b;addLog(`${chosen?(meta.debugAlwaysChooseRolls?'Debug fate chooses':'Fate bends. You choose'):'Double Dice rolls'} <b>${a} + ${b} = ${total}</b>${bonus?' and Long Stride adds <b>+1</b>':''}.`);await dbBoardMovement.move(total+bonus,total,bonus>0,chosen);
   }
   function v22WireDoubleDice(){
     const old=$('roll2Btn');if(!old||old.dataset.v22Wired)return;const fresh=old.cloneNode(true);fresh.dataset.v22Wired='1';old.replaceWith(fresh);fresh.addEventListener('click',v22RollTwoDice);
@@ -4860,14 +4868,6 @@ function buildDiceboundHumanHarness235(){
   const pack=v25Upgrade('legendary_packbreaker');if(pack){pack.desc='Deal +50% damage while two or more enemies remain alive and gain +5% Echo Strike.';pack.apply=function(){player.packDamageBonus=(player.packDamageBonus||0)+.50;player.doubleStrike+=.05;};}
   const loaded=v25Upgrade('legendary_loaded_road');if(loaded){loaded.desc='Natural sixes grant +30 Fast Travel XP, +30 Ultimate charge and 25 bonus gold this run.';loaded.apply=function(){player.loadedSix=true;player.loadedSixBonusXp=30;player.loadedSixUltimate=30;player.loadedSixGold=25;};}
 
-  // Loaded Road used to describe Ultimate it never actually granted. Make the
-  // entire effect authoritative here while preserving old save/build objects.
-  const movePlayerV25LoadedBase=movePlayer;
-  movePlayer=async function(steps,naturalRoll=steps,extraStep=false,chosen=false){
-    if(player.loadedSix&&naturalRoll===6&&!chosen){const wanted=player.loadedSixBonusXp||30,already=extraStep?15:0,extra=Math.max(0,wanted-already);if(extra)grantXp(extra);const ult=player.loadedSixUltimate||30,gold=modifiedGold(player.loadedSixGold||25);player.ultimateCharge=clamp(player.ultimateCharge+ult,0,100);player.gold+=gold;addLog(`🎲✨ The Road Is Loaded: +${wanted} bonus travel XP, +${ult} Ultimate and +${gold} gold.`);}
-    return movePlayerV25LoadedBase(steps,naturalRoll,extraStep,chosen);
-  };
-
   // Poison chance now uses the same overflow model as Crit/Echo: 125% means
   // one guaranteed stack plus a 25% chance for a second; 240% means two
   // guaranteed stacks plus a 40% chance for a third.
@@ -5230,7 +5230,7 @@ function buildDiceboundHumanHarness235(){
   // it with a capture handler that never grants Long Stride on chosen results.
   $('rollBtn')?.addEventListener('click',async e=>{
     if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return;
-    e.preventDefault();e.stopImmediatePropagation();ensureAudio();rollLocked=true;updateHUD();const die=$('dice');die.classList.add('rolling');for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await movePlayer(value,value,false,true);
+    e.preventDefault();e.stopImmediatePropagation();ensureAudio();rollLocked=true;updateHUD();const die=$('dice');die.classList.add('rolling');for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbBoardMovement.move(value,value,false,true);
   },true);
 
   /* POISON AS A FIRST-CLASS VISIBLE STAT ---------------------------------- */
@@ -5240,9 +5240,6 @@ function buildDiceboundHumanHarness235(){
 
   /* LEGENDARY REWARD EXHAUSTION ------------------------------------------- */
   showLegendaryChoice=function(source,onComplete=()=>{}){const pool=eligibleUpgrades(u=>u.rarity==='legendary');if(!pool.length){const gold=modifiedGold(250);player.gold+=gold;player.potions+=2;addLog(`<b>${source}:</b> every eligible Legendary power is already owned this run. The guardian converts the exhausted boon into <b>${gold} gold</b> and <b>2 potions</b>.`);showToast(`👑 Legendary pool exhausted · +${gold} gold · +2 potions`,3000,true);updateHUD();setTimeout(()=>onComplete(false),0);return;}showPowerupChoice(source,onComplete,u=>u.rarity==='legendary','The guardian yields. Choose one guaranteed Legendary powerup.');};
-
-  /* DETERMINISTIC PALE DEVIL INTERCEPT ------------------------------------ */
-  const movePlayerV26DevilBase=movePlayer;movePlayer=async function(steps,naturalRoll=steps,extraStep=false,chosen=false){if(hellMode&&meta.devilPrimed&&boardLevel===2){const idx=tiles.findIndex((t,i)=>i>player.position&&t?.type==='devilboss'&&!t.cleared);const destination=Math.min(currentTileCount()-1,player.position+steps);if(idx>=0&&destination>=idx){steps=idx-player.position;extraStep=false;addLog('<b>👿 The Pale Devil steps onto the road.</b> Your movement is intercepted; once invited, he cannot be accidentally skipped.');showToast('👿 The dance has an answer');}}return movePlayerV26DevilBase(steps,naturalRoll,extraStep,chosen);};
 
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
   v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros'))return;const delta=(Number(player.attack)||0)-10;if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}};
@@ -7679,10 +7676,6 @@ function buildDiceboundHumanHarness235(){
   };
   const db060TriggerWeaponBase=triggerWeaponElement;
   triggerWeaponElement=function(target=currentEnemy){const r=db060TriggerWeaponBase(target);if(r&&db060HasEffect('prismatic_weapon')&&!player._db060PrismaticWeapon){player._db060PrismaticWeapon=true;const old=player.elementDamageBonus||0;try{player.elementDamageBonus=(1+old)*.40-1;for(const key of DIBO_ELEMENTS){const t=target?.hp>0?target:(livingEnemies()[0]||target);if(!t)break;triggerElementEffect(key,t,{forced:true,source:'Prismatic Weapon'});}}finally{player.elementDamageBonus=old;player._db060PrismaticWeapon=false;}}return r;};
-
-  // Movement sixes.
-  const db060MovePlayerBase=movePlayer;
-  movePlayer=async function(steps,naturalRoll=steps,extraStep=false,chosen=false){if(db060HasEffect('loaded_sixes')&&Number(naturalRoll)===6){steps+=6;addLog('<b>🎲 Loaded Sixes:</b> the six counts twice for movement (+6).');showToast('🎲6️⃣ Loaded Sixes · +6 movement');}return db060MovePlayerBase(steps,naturalRoll,extraStep,chosen);};
 
   // Poison recursion.
   const db060PoisonTickBase=applyPoisonTick;

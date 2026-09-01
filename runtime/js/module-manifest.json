@@ -25,6 +25,7 @@
     "progression-class-unlock-feedback",
     "pets-registry",
     "board-registry",
+    "board-movement",
     "combat-enemies",
     "combat-guardians",
     "item-rarities",
@@ -276,6 +277,18 @@
       "requires": [],
       "provides": [
         "DiceboundBoards"
+      ]
+    },
+    {
+      "id": "board-movement",
+      "path": "js/board/movement.js",
+      "domain": "board/movement-planning-interception-step-progression-and-tile-handoff",
+      "status": "extracted",
+      "requires": [
+        "board-registry"
+      ],
+      "provides": [
+        "DiceboundBoardMovement"
       ]
     },
     {
@@ -587,6 +600,7 @@
         "classes-registry",
         "pets-registry",
         "board-registry",
+        "board-movement",
         "combat-enemies",
         "combat-guardians",
         "item-rarities",
