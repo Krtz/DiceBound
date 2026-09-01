@@ -39,6 +39,7 @@
     "powerup-registry",
     "powerup-borrowing",
     "ui-camp",
+    "ui-options",
     "ui-equipment-heirlooms",
     "ui-class-chooser",
     "ui-pet-chooser",
@@ -455,6 +456,16 @@
       ]
     },
     {
+      "id": "ui-options",
+      "path": "js/ui/options.js",
+      "domain": "ui/options-settings-presentation-and-persistent-dismissal-chrome",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundOptionsUi"
+      ]
+    },
+    {
       "id": "ui-equipment-heirlooms",
       "path": "js/ui/equipment-heirlooms.js",
       "domain": "ui/equipment-hud-loot-heirloom-storage-and-semantic-art-presentation",
@@ -591,6 +602,7 @@
         "progression-class-unlock-feedback",
         "powerup-borrowing",
         "ui-camp",
+        "ui-options",
         "ui-equipment-heirlooms",
         "ui-class-chooser",
         "ui-pet-chooser",
