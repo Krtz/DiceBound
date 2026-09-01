@@ -1,0 +1,89 @@
+name: Temporary 0.6.5.8 materializer
+
+on:
+  push:
+    branches:
+      - fix/0.6.5.8-heirloom-art-sizing
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Materialize final hotfix metadata
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.5.8 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          @'
+          from pathlib import Path
+
+          root = Path('.')
+          changelog = root / 'CHANGELOG.md'
+          text = changelog.read_text(encoding='utf-8')
+          marker = '## Beta 0.6.5.8'
+          if marker not in text:
+              anchor = 'This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.\n'
+              section = '\n## Beta 0.6.5.8\n\n### Heirloom choice artwork sizing (#252)\n- Bounded authored equipment thumbnails in Camp Heirloom Storage, end-of-run Heirloom choices, and the end-of-run storage manager so semantic art can no longer render at native image dimensions.\n- Added regression coverage for the shared 48px card-art contract; HUD and loot artwork sizing remain unchanged.\n'
+              text = text.replace(anchor, anchor + section, 1)
+              changelog.write_text(text, encoding='utf-8')
+
+          notes = root / 'runtime' / 'PATCH_NOTES.md'
+          text = notes.read_text(encoding='utf-8')
+          text = text.replace('# Unreleased — Beta 0.6.5.7', '# Unreleased — Beta 0.6.5.8', 1)
+          marker = '## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)'
+          if marker not in text:
+              heading = '# Unreleased — Beta 0.6.5.8\n'
+              section = '\n## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)\n- Heirloom and storage cards now constrain authored equipment art to compact 48px thumbnails instead of allowing full/native image dimensions to blow out the Journey End and Camp layouts.\n- This is presentation-only; item, storage, RNG, save and checkpoint behavior is unchanged.\n'
+              text = text.replace(heading, heading + section, 1)
+          notes.write_text(text, encoding='utf-8')
+
+          version = root / 'runtime' / 'js' / 'version.js'
+          text = version.read_text(encoding='utf-8')
+          text = text.replace('const RELEASE_SUMMARY="Equipment and Heirloom UI ownership.";', 'const RELEASE_SUMMARY="Heirloom choice artwork sizing hotfix.";', 1)
+          version.write_text(text, encoding='utf-8')
+
+          index = root / 'runtime' / 'index.html'
+          text = index.read_text(encoding='utf-8')
+          text = text.replace('Beta v0.6.5.8 · Equipment and Heirloom UI ownership.', 'Beta v0.6.5.8 · Heirloom choice artwork sizing hotfix.', 1)
+          index.write_text(text, encoding='utf-8')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/refresh_runtime_manifest.py --version 0.6.5.8 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/ui/equipment-heirlooms.js
+          node tools/test_equipment_heirloom_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Emit generated files
+        shell: pwsh
+        run: |
+          @'
+          import base64
+          from pathlib import Path
+
+          files = [
+              'CHANGELOG.md',
+              'runtime/PATCH_NOTES.md',
+              'runtime/index.html',
+              'runtime/js/version.js',
+              'runtime/build-info.json',
+              'runtime/build-manifest.json',
+              'wrapper-source/config/project.json',
+              'wrapper-source/wrappers/webview2/native-go/main.go',
+          ]
+          for rel in files:
+              data = Path(rel).read_bytes()
+              print(f'@@BEGIN:{rel}@@')
+              print(base64.b64encode(data).decode('ascii'))
+              print(f'@@END:{rel}@@')
+          '@ | python -
