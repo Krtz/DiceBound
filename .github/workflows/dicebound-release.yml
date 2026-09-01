@@ -92,6 +92,7 @@ jobs:
           if ($installationRepositoryNames -notcontains "Krtz/DiceBound") {
             throw "DiceBound manifest App token installation does not include Krtz/DiceBound. Select only that repository when installing the App."
           }
+          Write-Host "DiceBound manifest App token preflight: installation includes Krtz/DiceBound; requested permission contents=write."
 
           gh api "repos/Krtz/DiceBound/contents/distribution/latest.json?ref=main" *> $null
           if ($LASTEXITCODE -ne 0) {
@@ -205,6 +206,69 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.manifest_app_token.outputs.token }}
         run: |
+          function Write-ManifestPutFailureDiagnostic {
+            param(
+              [int]$CurlExitCode,
+              [string]$HttpStatus,
+              [string]$ResponseBody,
+              [string]$CurlStderr
+            )
+
+            $diagnostic = [ordered]@{
+              context = "distribution/latest.json protected-main Contents PUT"
+              curlExitCode = $CurlExitCode
+              httpStatus = $HttpStatus
+            }
+            if (-not [string]::IsNullOrWhiteSpace($ResponseBody)) {
+              try {
+                $response = $ResponseBody | ConvertFrom-Json
+                foreach ($field in @("message", "documentation_url", "status", "errors")) {
+                  if ($null -ne $response.PSObject.Properties[$field]) {
+                    $diagnostic[$field] = $response.$field
+                  }
+                }
+              } catch {
+                $diagnostic.responseBodyPreview = $ResponseBody.Substring(0, [Math]::Min($ResponseBody.Length, 4096))
+              }
+            }
+            if (-not [string]::IsNullOrWhiteSpace($CurlStderr)) {
+              $redactedStderr = $CurlStderr.Replace($env:GH_TOKEN, "[redacted]").Trim()
+              $diagnostic.curlStderr = $redactedStderr.Substring(0, [Math]::Min($redactedStderr.Length, 4096))
+            }
+            Write-Host ("GitHub API failure diagnostic: " + ($diagnostic | ConvertTo-Json -Depth 8 -Compress))
+          }
+
+          function Write-ReleaseRulesetDiagnostic {
+            $responsePath = Join-Path $env:RUNNER_TEMP "dicebound-start-rule-$env:GITHUB_RUN_ID.json"
+            $stderrPath = Join-Path $env:RUNNER_TEMP "dicebound-start-rule-$env:GITHUB_RUN_ID.stderr"
+            try {
+              $httpStatus = & curl.exe --silent --show-error --output $responsePath --write-out "%{http_code}" --header "Accept: application/vnd.github+json" --header "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/Krtz/DiceBound/rulesets/21007166" 2>$stderrPath
+              $curlExitCode = $LASTEXITCODE
+              if ($curlExitCode -ne 0 -or $httpStatus -ne "200") {
+                Write-Host "Release ruleset diagnostic unavailable: curl exit $curlExitCode; HTTP $httpStatus."
+                return
+              }
+
+              $ruleset = Get-Content $responsePath -Raw | ConvertFrom-Json
+              $summary = [ordered]@{
+                id = $ruleset.id
+                name = $ruleset.name
+                enforcement = $ruleset.enforcement
+                refInclude = @($ruleset.conditions.ref_name.include)
+                refExclude = @($ruleset.conditions.ref_name.exclude)
+                ruleTypes = @($ruleset.rules | ForEach-Object { $_.type })
+                bypassActors = if ($null -ne $ruleset.PSObject.Properties["bypass_actors"]) {
+                  @($ruleset.bypass_actors | ForEach-Object { "$($_.actor_type):$($_.actor_id)" })
+                } else {
+                  @("not exposed by the public ruleset response; no Administration permission requested")
+                }
+              }
+              Write-Host ("Release ruleset diagnostic: " + ($summary | ConvertTo-Json -Compress))
+            } finally {
+              Remove-Item $responsePath, $stderrPath -Force -ErrorAction SilentlyContinue
+            }
+          }
+
           python tools/write_distribution_manifest.py `
             --release-metadata wrapper-source/release/release-metadata.json `
             --output distribution/latest.json `
@@ -221,6 +285,18 @@ jobs:
           $manifestPath = "distribution/latest.json"
           $current = gh api "repos/Krtz/DiceBound/contents/$manifestPath?ref=main" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $manifestBytes = (Get-Item $manifestPath).Length
+          Write-Host ("Launcher manifest PUT diagnostic: " + (([ordered]@{
+            appInstallationRepository = "Krtz/DiceBound"
+            targetBranch = "main"
+            currentBlobSha = $current.sha
+            localManifestBytes = $manifestBytes
+            currentMainHeadSha = $env:RELEASE_SOURCE_SHA
+            requestedAppTokenPermission = "contents=write"
+          }) | ConvertTo-Json -Compress))
+          Write-ReleaseRulesetDiagnostic
+          Write-Host "Manifest App comparative branch diagnostic omitted: active StartRule applies to ~ALL refs, so a genuinely non-protected branch would require changing protection."
+
           $encoded = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path $manifestPath)))
           $payload = @{
             message = "distribution: point launcher at ${{ steps.release.outputs.version }}"
@@ -228,8 +304,22 @@ jobs:
             sha = $current.sha
             branch = "main"
           } | ConvertTo-Json -Compress
-          $payload | gh api --method PUT "repos/Krtz/DiceBound/contents/$manifestPath" --input - *> $null
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $payloadPath = Join-Path $env:RUNNER_TEMP "dicebound-manifest-payload-$env:GITHUB_RUN_ID.json"
+          $responsePath = Join-Path $env:RUNNER_TEMP "dicebound-manifest-put-response-$env:GITHUB_RUN_ID.json"
+          $stderrPath = Join-Path $env:RUNNER_TEMP "dicebound-manifest-put-$env:GITHUB_RUN_ID.stderr"
+          [IO.File]::WriteAllText($payloadPath, $payload, [Text.UTF8Encoding]::new($false))
+          try {
+            $httpStatus = & curl.exe --silent --show-error --output $responsePath --write-out "%{http_code}" --request PUT --header "Accept: application/vnd.github+json" --header "Authorization: Bearer $env:GH_TOKEN" --header "X-GitHub-Api-Version: 2022-11-28" --header "Content-Type: application/json" --data-binary "@$payloadPath" "https://api.github.com/repos/Krtz/DiceBound/contents/$manifestPath" 2>$stderrPath
+            $curlExitCode = $LASTEXITCODE
+            $responseBody = if (Test-Path $responsePath) { Get-Content $responsePath -Raw } else { "" }
+            $curlStderr = if (Test-Path $stderrPath) { Get-Content $stderrPath -Raw } else { "" }
+            if ($curlExitCode -ne 0 -or $httpStatus -notin @("200", "201")) {
+              Write-ManifestPutFailureDiagnostic -CurlExitCode $curlExitCode -HttpStatus $httpStatus -ResponseBody $responseBody -CurlStderr $curlStderr
+              throw "Protected launcher-manifest PUT failed: curl exit $curlExitCode; HTTP $httpStatus."
+            }
+          } finally {
+            Remove-Item $payloadPath, $responsePath, $stderrPath -Force -ErrorAction SilentlyContinue
+          }
 
           $remote = gh api "repos/Krtz/DiceBound/contents/$manifestPath?ref=main" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

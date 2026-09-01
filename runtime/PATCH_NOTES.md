@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.4
+# Unreleased — Beta 0.6.5.5
+
+## Beta 0.6.5.5 Protected-manifest PUT diagnostics (#120)
+- Main-only release publication now logs safe protected-Contents-PUT evidence: branch, prior blob SHA, local byte count, release SHA, public StartRule summary, HTTP status and parsed GitHub error fields on failure.
+- The exact verified payload and endpoint remain unchanged; credentials, headers, private keys and payload content never enter logs. A non-protected comparison branch is not created because StartRule covers all refs.
 
 ## Beta 0.6.5.4 GitHub App manifest publisher (#120)
 - Protected-main launcher-manifest publication now mints a short-lived installation token from the dedicated DiceBound GitHub App rather than using the personal release token.
