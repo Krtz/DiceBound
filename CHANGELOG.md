@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.8
+
+### Heirloom choice artwork sizing (#252)
+- Bounded authored equipment thumbnails in Camp Heirloom Storage, end-of-run Heirloom choices, and the end-of-run storage manager so semantic art can no longer render at native image dimensions.
+- Added regression coverage for the shared 48px card-art contract; HUD and loot artwork sizing remain unchanged.
+
 ## Beta 0.6.5.7
 
 ### Equipment / Heirloom presentation ownership (#40, #209)

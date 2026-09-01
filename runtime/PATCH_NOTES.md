@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.7
+# Unreleased — Beta 0.6.5.8
+
+## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)
+- Heirloom and storage cards now constrain authored equipment art to compact 48px thumbnails instead of allowing full/native image dimensions to blow out the Journey End and Camp layouts.
+- This is presentation-only; item, storage, RNG, save and checkpoint behavior is unchanged.
 
 ## Beta 0.6.5.7 Equipment / Heirloom presentation ownership (#40, #209)
 - Equipment HUD slots, loot cards, semantic authored-equipment art, Camp chest/Heirloom Storage, and end-of-run storage/loadout controls now have one presentation owner: `ui/equipment-heirlooms.js`.
