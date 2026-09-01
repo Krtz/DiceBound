@@ -510,6 +510,56 @@ def main() -> int:
                     "retired equipment/Heirloom presentation implementation remains in dicebound.js: "
                     + retired_equipment_ui_layer
                 )
+    options_module = by_id.get("ui-options")
+    options_owner_ok = False
+    if not options_module:
+        errors.append("Options/settings presentation owner ui-options is missing from the runtime manifest")
+    else:
+        options_owner_ok = (
+            options_module.get("path") == "js/ui/options.js"
+            and "DiceboundOptionsUi" in (options_module.get("provides") or [])
+            and position.get("ui-options", -1) < position.get(str(monolith_id), -1)
+        )
+        if not options_owner_ok:
+            errors.append(
+                "ui-options must provide DiceboundOptionsUi and load before the monolith"
+            )
+    options_source = sources.get("ui-options", "")
+    for required_options_behavior in [
+        "const OWNER='ui/options'",
+        "data-options-done",
+        "options-chrome{position:sticky",
+        "function ensureTopAction(",
+        "function sync(",
+    ]:
+        if required_options_behavior not in options_source:
+            errors.append(
+                "Options/settings owner is missing required presentation behavior: "
+                + required_options_behavior
+            )
+    if monolith_source:
+        for expected_options_adapter in [
+            "const dbOptionsUi=window.DiceboundOptionsUi?.configure({",
+            "dbOptionsUi?.ensureTopAction?.();",
+            "dbOptionsUi?.sync?.();",
+            "function beta042EnsureCampOptions(){return window.DiceboundCamp?.ensureOptionsButton();}",
+        ]:
+            if expected_options_adapter not in monolith_source:
+                errors.append("dicebound.js must retain only the documented Options/settings lifecycle adapters")
+        for retired_options_layer in [
+            "function beta042EnsureOptionsOverlay(",
+            "function beta042SyncOptionsMenu(",
+            "function beta042OpenOptions(",
+            "function beta042CloseOptions(",
+            "function beta042EnsureTopOptions(",
+            ".options-grid{display:grid",
+            ".options-actions{display:flex",
+        ]:
+            if retired_options_layer in monolith_source:
+                errors.append(
+                    "retired Options/settings presentation implementation remains in dicebound.js: "
+                    + retired_options_layer
+                )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -570,6 +620,10 @@ def main() -> int:
         "equipmentHeirloomUiOwner": {
             "id": "ui-equipment-heirlooms",
             "configured": equipment_ui_owner_ok,
+        },
+        "optionsOwner": {
+            "id": "ui-options",
+            "configured": options_owner_ok,
         },
         "monolith": {
             "id": monolith_id,

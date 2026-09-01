@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.7
+# Unreleased — Beta 0.6.5.8
+
+## Beta 0.6.5.8 Options / settings presentation ownership (#40, #198, #209)
+- Options now has one responsive UI owner: `ui/options.js`, including the top action, native save-folder affordance, audio controls, reset entry point and persistent Done chrome.
+- The old overlay renderer, direct listeners and Options styles are retired. Audio, persistence, native platform behavior, reset confirmation, gameplay, saves, checkpoints and RNG remain unchanged.
 
 ## Beta 0.6.5.7 Equipment / Heirloom presentation ownership (#40, #209)
 - Equipment HUD slots, loot cards, semantic authored-equipment art, Camp chest/Heirloom Storage, and end-of-run storage/loadout controls now have one presentation owner: `ui/equipment-heirlooms.js`.

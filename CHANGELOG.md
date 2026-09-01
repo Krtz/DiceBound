@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.8
+
+### Options / settings presentation ownership (#40, #198, #209)
+- Replaced the live Options overlay, styling, direct listeners and top-action wiring with `runtime/js/ui/options.js`.
+- Options now owns its responsive destination and persistent top-right Done chrome; audio state, volume/sound-pack persistence, native save-folder support, reset confirmation, saves, checkpoints and gameplay remain in their existing owners.
+- `dicebound.js` keeps only narrow callbacks, the existing semantic Camp trigger and refresh forwarding, with architecture guards rejecting the retired Options renderer chain.
+
 ## Beta 0.6.5.7
 
 ### Equipment / Heirloom presentation ownership (#40, #209)
