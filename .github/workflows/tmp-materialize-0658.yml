@@ -14,12 +14,24 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Materialize final hotfix metadata
         shell: bash
         run: |
+          git checkout origin/main -- \
+            CHANGELOG.md \
+            runtime/PATCH_NOTES.md \
+            runtime/index.html \
+            runtime/js/version.js \
+            runtime/build-info.json \
+            runtime/build-manifest.json \
+            wrapper-source/config/project.json \
+            wrapper-source/wrappers/webview2/native-go/main.go
+
           python tools/set_project_version.py --version 0.6.5.8 --channel Beta
           python - <<'PY'
           from pathlib import Path
@@ -27,20 +39,18 @@ jobs:
           root = Path('.')
           changelog = root / 'CHANGELOG.md'
           text = changelog.read_text(encoding='utf-8')
-          marker = '## Beta 0.6.5.8'
-          if marker not in text:
-              anchor = 'This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.\n'
-              section = '\n## Beta 0.6.5.8\n\n### Heirloom choice artwork sizing (#252)\n- Bounded authored equipment thumbnails in Camp Heirloom Storage, end-of-run Heirloom choices, and the end-of-run storage manager so semantic art can no longer render at native image dimensions.\n- Added regression coverage for the shared 48px card-art contract; HUD and loot artwork sizing remain unchanged.\n'
+          anchor = 'This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.\n'
+          section = '\n## Beta 0.6.5.8\n\n### Heirloom choice artwork sizing (#252)\n- Bounded authored equipment thumbnails in Camp Heirloom Storage, end-of-run Heirloom choices, and the end-of-run storage manager so semantic art can no longer render at native image dimensions.\n- Added regression coverage for the shared 48px card-art contract; HUD and loot artwork sizing remain unchanged.\n'
+          if '## Beta 0.6.5.8' not in text:
               text = text.replace(anchor, anchor + section, 1)
-              changelog.write_text(text, encoding='utf-8', newline='\n')
+          changelog.write_text(text, encoding='utf-8', newline='\n')
 
           notes = root / 'runtime' / 'PATCH_NOTES.md'
           text = notes.read_text(encoding='utf-8')
           text = text.replace('# Unreleased — Beta 0.6.5.7', '# Unreleased — Beta 0.6.5.8', 1)
-          marker = '## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)'
-          if marker not in text:
-              heading = '# Unreleased — Beta 0.6.5.8\n'
-              section = '\n## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)\n- Heirloom and storage cards now constrain authored equipment art to compact 48px thumbnails instead of allowing full/native image dimensions to blow out the Journey End and Camp layouts.\n- This is presentation-only; item, storage, RNG, save and checkpoint behavior is unchanged.\n'
+          heading = '# Unreleased — Beta 0.6.5.8\n'
+          section = '\n## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)\n- Heirloom and storage cards now constrain authored equipment art to compact 48px thumbnails instead of allowing full/native image dimensions to blow out the Journey End and Camp layouts.\n- This is presentation-only; item, storage, RNG, save and checkpoint behavior is unchanged.\n'
+          if '## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)' not in text:
               text = text.replace(heading, heading + section, 1)
           notes.write_text(text, encoding='utf-8', newline='\n')
 
@@ -102,6 +112,6 @@ jobs:
       - name: Upload generated blob map
         uses: actions/upload-artifact@v4
         with:
-          name: beta-0.6.5.8-canonical-blob-shas
+          name: beta-0.6.5.8-clean-main-blob-shas
           if-no-files-found: error
           path: blob-shas.json
