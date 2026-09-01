@@ -451,6 +451,65 @@ def main() -> int:
                 "runtime/index.html retains static Info/Guide presentation markup: "
                 + retired_info_guide_markup
             )
+    equipment_ui_module = by_id.get("ui-equipment-heirlooms")
+    equipment_ui_owner_ok = False
+    if not equipment_ui_module:
+        errors.append("equipment/Heirloom presentation owner ui-equipment-heirlooms is missing from the runtime manifest")
+    else:
+        equipment_ui_owner_ok = (
+            equipment_ui_module.get("path") == "js/ui/equipment-heirlooms.js"
+            and {"assets", "item-equipment", "ui-camp"}.issubset(
+                set(equipment_ui_module.get("requires") or [])
+            )
+            and "DiceboundEquipmentHeirlooms" in (equipment_ui_module.get("provides") or [])
+            and position.get("ui-equipment-heirlooms", -1) < position.get(str(monolith_id), -1)
+        )
+        if not equipment_ui_owner_ok:
+            errors.append(
+                "ui-equipment-heirlooms must provide DiceboundEquipmentHeirlooms, require its item/Camp dependencies, "
+                "and load before the monolith"
+            )
+    equipment_ui_source = sources.get("ui-equipment-heirlooms", "")
+    for required_equipment_ui_behavior in [
+        "const OWNER='ui/equipment-heirlooms'",
+        "function renderEquipment()",
+        "function renderLoot(item)",
+        "function renderCampStorage()",
+        "function renderEndGear()",
+        "db-equipment-slot-art",
+        "db-equipment-loot-art",
+    ]:
+        if required_equipment_ui_behavior not in equipment_ui_source:
+            errors.append(
+                "equipment/Heirloom UI owner is missing required presentation behavior: "
+                + required_equipment_ui_behavior
+            )
+    if monolith_source:
+        for expected_equipment_ui_adapter in [
+            "function renderEquipment(){\n    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();\n  }",
+            "function renderEndGear(){\n    return dbEquipmentUi.renderEndGear();\n  }",
+            "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}",
+        ]:
+            if expected_equipment_ui_adapter not in monolith_source:
+                errors.append("dicebound.js must retain only the thin equipment/Heirloom UI lifecycle adapters")
+        for retired_equipment_ui_layer in [
+            "renderEquipment=function",
+            "renderEndGear=function",
+            "openLoot=function",
+            "renderEquipmentV110Base",
+            "renderEquipmentV23Base",
+            "renderEquipmentV24Base",
+            "v24RenderHeirloomStorage",
+            "v25RenderEndStorageManager",
+            "db06314RenderEquipmentBase",
+            "db06314OpenLootBase",
+            "dicebound-06314-equipment-identity-style",
+        ]:
+            if retired_equipment_ui_layer in monolith_source:
+                errors.append(
+                    "retired equipment/Heirloom presentation implementation remains in dicebound.js: "
+                    + retired_equipment_ui_layer
+                )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -507,6 +566,10 @@ def main() -> int:
         "infoGuideOwner": {
             "id": "ui-info-guide",
             "configured": info_guide_owner_ok,
+        },
+        "equipmentHeirloomUiOwner": {
+            "id": "ui-equipment-heirlooms",
+            "configured": equipment_ui_owner_ok,
         },
         "monolith": {
             "id": monolith_id,

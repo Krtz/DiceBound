@@ -39,6 +39,7 @@
     "powerup-registry",
     "powerup-borrowing",
     "ui-camp",
+    "ui-equipment-heirlooms",
     "ui-class-chooser",
     "ui-pet-chooser",
     "ui-talent-tree",
@@ -454,6 +455,20 @@
       ]
     },
     {
+      "id": "ui-equipment-heirlooms",
+      "path": "js/ui/equipment-heirlooms.js",
+      "domain": "ui/equipment-hud-loot-heirloom-storage-and-semantic-art-presentation",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "item-equipment",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundEquipmentHeirlooms"
+      ]
+    },
+    {
       "id": "ui-class-chooser",
       "path": "js/ui/class-chooser.js",
       "domain": "ui/class-chooser-presentation-and-random-selection",
@@ -576,6 +591,7 @@
         "progression-class-unlock-feedback",
         "powerup-borrowing",
         "ui-camp",
+        "ui-equipment-heirlooms",
         "ui-class-chooser",
         "ui-pet-chooser",
         "ui-talent-tree",
