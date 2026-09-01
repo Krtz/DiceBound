@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.12
+
+### Board transition ownership (#40, #209)
+- Replaced the historical `advanceToNextBoard` reassignment chain with `runtime/js/board/transition.js`, the single owner for completed-Board transition orchestration.
+- The owner preserves encounter reset, Board increment, road rebuild, published entry recovery, Board announcement and the 350 ms movement unlock, including the exact legacy Board 5 -> 6 pre-transition HP/potion result.
+- Board generation, combat victory resolution, final-run completion, saves/checkpoints, UI and RNG remain in their existing owners; `dicebound.js` keeps only the narrow composition contract and historical forwarding name.
+
 ## Beta 0.6.5.11
 
 ### Board tile-dispatch ownership (#40, #209)
