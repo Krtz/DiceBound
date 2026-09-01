@@ -63,6 +63,27 @@ jobs:
             throw "DICEBOUND_RELEASE_TOKEN is required to advance distribution/latest.json on protected main."
           }
 
+      - name: Verify protected-main release credential access
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}
+        run: |
+          gh api user *> $null
+          if ($LASTEXITCODE -ne 0) {
+            throw "DICEBOUND_RELEASE_TOKEN authentication failed. Replace it with a fine-grained PAT owned by Krtz."
+          }
+
+          gh api repos/Krtz/DiceBound *> $null
+          if ($LASTEXITCODE -ne 0) {
+            throw "DICEBOUND_RELEASE_TOKEN cannot access Krtz/DiceBound. Check fine-grained PAT resource owner and repository selection."
+          }
+
+          gh api "repos/Krtz/DiceBound/contents/distribution/latest.json?ref=main" *> $null
+          if ($LASTEXITCODE -ne 0) {
+            throw "DICEBOUND_RELEASE_TOKEN cannot read distribution/latest.json. Check fine-grained PAT Contents read/write permission."
+          }
+
       - name: Enforce unique four-component PR version
         if: github.event_name == 'pull_request'
         shell: pwsh
