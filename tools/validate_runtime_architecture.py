@@ -661,6 +661,55 @@ def main() -> int:
                     "retired board tile-dispatch implementation remains in dicebound.js: "
                     + retired_board_tile_dispatch_layer
                 )
+    board_transition_module = by_id.get("board-transition")
+    board_transition_owner_ok = False
+    if not board_transition_module:
+        errors.append("Board transition owner board-transition is missing from the runtime manifest")
+    else:
+        board_transition_owner_ok = (
+            board_transition_module.get("path") == "js/board/transition.js"
+            and "board-registry" in (board_transition_module.get("requires") or [])
+            and "DiceboundBoardTransition" in (board_transition_module.get("provides") or [])
+            and position.get("board-transition", -1) < position.get(str(monolith_id), -1)
+        )
+        if not board_transition_owner_ok:
+            errors.append(
+                "board-transition must provide DiceboundBoardTransition, require board-registry, and load before the monolith"
+            )
+    board_transition_source = sources.get("board-transition", "")
+    for required_board_transition_behavior in [
+        "const OWNER='board/transition'",
+        "function entryRecovery(",
+        "function advance()",
+        "definition?.id===6",
+        "runtime.completeFinalRoad?.()",
+        "runtime.schedule?.(unlockMovement,350)",
+    ]:
+        if required_board_transition_behavior not in board_transition_source:
+            errors.append(
+                "Board transition owner is missing required behavior: "
+                + required_board_transition_behavior
+            )
+    if monolith_source:
+        for expected_board_transition_adapter in [
+            "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",
+            "function advanceToNextBoard(){return dbBoardTransition.advance();}",
+            "completeFinalRoad:()=>completeSixthRoadV19()",
+        ]:
+            if expected_board_transition_adapter not in monolith_source:
+                errors.append("dicebound.js must use the board-transition composition owner")
+        for retired_board_transition_layer in [
+            "advanceToNextBoard=function",
+            "const advanceToNextBoardV15Patch=advanceToNextBoard;",
+            "const advanceToNextBoardV16Base=advanceToNextBoard;",
+            "const v235AdvanceBase=advanceToNextBoard;",
+            "function v19BoardName(",
+        ]:
+            if retired_board_transition_layer in monolith_source:
+                errors.append(
+                    "retired board-transition implementation remains in dicebound.js: "
+                    + retired_board_transition_layer
+                )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0

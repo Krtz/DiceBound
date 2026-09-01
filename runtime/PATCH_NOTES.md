@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.11
+# Unreleased — Beta 0.6.5.12
+
+## Beta 0.6.5.12 Board transition ownership (#40, #209)
+- Board-to-board advancement now has one owner: `board/transition.js` resets encounter state, advances and rebuilds the road, applies published entry recovery, announces the next Board and performs the existing delayed movement unlock.
+- The exact Board 5 -> 6 pre-transition HP/potion result is preserved. Board generation, combat victory, final-run completion, saves/checkpoints, UI, gameplay values and RNG remain unchanged, and the historical transition reassignment chain is retired.
+
 
 ## Beta 0.6.5.11 Board tile-dispatch ownership (#40, #209)
 - Board arrival now has one owner: `board/tile-dispatch.js` validates the current tile, retains Pale Devil and corrupt-tile recovery behavior, then selects the existing combat/event/reward/merchant/road destination.

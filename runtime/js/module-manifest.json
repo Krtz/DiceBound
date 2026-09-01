@@ -27,6 +27,7 @@
     "board-registry",
     "board-movement",
     "board-tile-dispatch",
+    "board-transition",
     "combat-enemies",
     "combat-guardians",
     "item-rarities",
@@ -302,6 +303,18 @@
       ],
       "provides": [
         "DiceboundBoardTileDispatch"
+      ]
+    },
+    {
+      "id": "board-transition",
+      "path": "js/board/transition.js",
+      "domain": "board/next-board-transition-rebuild-entry-recovery-and-delayed-movement-unlock",
+      "status": "extracted",
+      "requires": [
+        "board-registry"
+      ],
+      "provides": [
+        "DiceboundBoardTransition"
       ]
     },
     {
@@ -615,6 +628,7 @@
         "board-registry",
         "board-movement",
         "board-tile-dispatch",
+        "board-transition",
         "combat-enemies",
         "combat-guardians",
         "item-rarities",
