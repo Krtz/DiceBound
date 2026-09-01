@@ -64,26 +64,17 @@ jobs:
           node tools/test_equipment_heirloom_ui.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Emit generated files
-        shell: pwsh
-        run: |
-          @'
-          import base64
-          from pathlib import Path
-
-          files = [
-              'CHANGELOG.md',
-              'runtime/PATCH_NOTES.md',
-              'runtime/index.html',
-              'runtime/js/version.js',
-              'runtime/build-info.json',
-              'runtime/build-manifest.json',
-              'wrapper-source/config/project.json',
-              'wrapper-source/wrappers/webview2/native-go/main.go',
-          ]
-          for rel in files:
-              data = Path(rel).read_bytes()
-              print(f'@@BEGIN:{rel}@@')
-              print(base64.b64encode(data).decode('ascii'))
-              print(f'@@END:{rel}@@')
-          '@ | python -
+      - name: Upload generated metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-0.6.5.8-generated-metadata
+          if-no-files-found: error
+          path: |
+            CHANGELOG.md
+            runtime/PATCH_NOTES.md
+            runtime/index.html
+            runtime/js/version.js
+            runtime/build-info.json
+            runtime/build-manifest.json
+            wrapper-source/config/project.json
+            wrapper-source/wrappers/webview2/native-go/main.go
