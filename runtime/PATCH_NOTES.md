@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.9
+# Unreleased — Beta 0.6.5.10
+
+## Beta 0.6.5.10 Board movement ownership (#40, #209)
+- Board movement now has one owner: `board/movement.js` handles guardian/devil interception, Loaded Sixes, per-step progression, Fast Travel XP, board movement events and the existing tile handoff.
+- Board generation, tile routing, combat, saves/checkpoints, gameplay values and RNG are unchanged. The old movement wrappers are retired instead of remaining beneath the new owner.
 
 ## Beta 0.6.5.9 Options / settings presentation ownership (#40, #198, #209)
 - Options now has one responsive UI owner: `ui/options.js`, including the top action, native save-folder affordance, audio controls, reset entry point and persistent Done chrome.

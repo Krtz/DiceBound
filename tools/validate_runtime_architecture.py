@@ -560,6 +560,56 @@ def main() -> int:
                     "retired Options/settings presentation implementation remains in dicebound.js: "
                     + retired_options_layer
                 )
+    board_movement_module = by_id.get("board-movement")
+    board_movement_owner_ok = False
+    if not board_movement_module:
+        errors.append("Board movement owner board-movement is missing from the runtime manifest")
+    else:
+        board_movement_owner_ok = (
+            board_movement_module.get("path") == "js/board/movement.js"
+            and "board-registry" in (board_movement_module.get("requires") or [])
+            and "DiceboundBoardMovement" in (board_movement_module.get("provides") or [])
+            and position.get("board-movement", -1) < position.get(str(monolith_id), -1)
+        )
+        if not board_movement_owner_ok:
+            errors.append(
+                "board-movement must provide DiceboundBoardMovement, require board-registry, and load before the monolith"
+            )
+    board_movement_source = sources.get("board-movement", "")
+    for required_board_movement_behavior in [
+        "const OWNER='board/movement'",
+        "function planMove(",
+        "async function move(",
+        "Loaded Sixes",
+        "Pale Devil",
+        "runtime.resolveTile?.()",
+    ]:
+        if required_board_movement_behavior not in board_movement_source:
+            errors.append(
+                "Board movement owner is missing required behavior: "
+                + required_board_movement_behavior
+            )
+    if monolith_source:
+        for expected_board_movement_adapter in [
+            "const dbBoardMovement=window.DiceboundBoardMovement?.configure({",
+            "board:dbBoardMovement.state",
+            "await dbBoardMovement.move(",
+        ]:
+            if expected_board_movement_adapter not in monolith_source:
+                errors.append("dicebound.js must use the board-movement composition owner")
+        for retired_board_movement_layer in [
+            "const BoardState=Object.freeze({",
+            "const BoardUI=Object.freeze({",
+            "async function movePlayer(",
+            "const movePlayerV25LoadedBase=movePlayer;",
+            "const movePlayerV26DevilBase=movePlayer;",
+            "const db060MovePlayerBase=movePlayer;",
+        ]:
+            if retired_board_movement_layer in monolith_source:
+                errors.append(
+                    "retired board movement implementation remains in dicebound.js: "
+                    + retired_board_movement_layer
+                )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -624,6 +674,10 @@ def main() -> int:
         "optionsOwner": {
             "id": "ui-options",
             "configured": options_owner_ok,
+        },
+        "boardMovementOwner": {
+            "id": "board-movement",
+            "configured": board_movement_owner_ok,
         },
         "monolith": {
             "id": monolith_id,
