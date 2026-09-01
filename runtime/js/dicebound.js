@@ -430,15 +430,7 @@
     renderEquipment();updateHUD();
   }
   function renderEquipment(){
-    const grid=$("equipmentGrid");if(!grid)return;grid.innerHTML="";
-    EQUIPMENT_SLOTS.forEach(slot=>{
-      const item=player.equipment[slot],el=document.createElement("div");
-      el.className=`equipment-slot ${item?item.rarity:"empty"}`;
-      el.title=item?`${item.name}: ${formatBonuses(item)}`:`Empty ${SLOT_LABELS[slot]} slot`;
-      el.innerHTML=`<span class="slot-label">${SLOT_LABELS[slot]}</span><span class="slot-item">${item?item.icon+" "+item.name:"— Empty —"}</span>`;
-      grid.appendChild(el);
-    });
-    const setBox=$("mythicSetStatus");if(setBox){const count=mythicalSetCount();setBox.hidden=count<1;setBox.innerHTML=`<strong>🌈 Impossible Road set</strong><br>${mythicalSetSummary()}`;}
+    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();
   }
   function itemSellValue(item){return 10+rarityValues[item.rarity]*14+Math.floor(player.position/5);}
   function closeLoot(){
@@ -459,6 +451,61 @@
     });
     return `<b>Equipped:</b> ${current.icon} ${current.name}<br>${formatBonuses(current)}<br><b>Change:</b> ${deltas.length?deltas.join(" · "):'<span class="same">No numerical change</span>'}`;
   }
+
+  /* #209 / #40: equipment and Heirloom presentation is owned by
+     ui/equipment-heirlooms.js. The monolith supplies runtime facts and the
+     existing storage/persistence transactions only. */
+  const dbEquipmentUi=window.DiceboundEquipmentHeirlooms;
+  if(!dbEquipmentUi)throw new Error('DiceBound requires the equipment and Heirloom UI module before dicebound.js');
+  function dbEquipmentUiState(){return {
+    equipment:player.equipment||{},heirlooms:meta.heirlooms||[],storage:meta.heirloomStorage||[],
+    storageUnlocked:!!v24StorageUnlocked?.(),storageCapacity:v24StorageCapacity?.()||0,
+    activeCapacity:getHeirloomSlots(),storageMilestones:v24StorageMilestones?.()||[]
+  };}
+  function dbEquipmentUiToggleStoredActive(item){
+    let hs=[...(meta.heirlooms||[])],index=hs.findIndex(entry=>entry.id===item.id);
+    if(index>=0)hs.splice(index,1);
+    else{const same=hs.findIndex(entry=>entry.slot===item.slot);if(same>=0)hs.splice(same,1);if(hs.length>=getHeirloomSlots()){showToast(`Active heirloom loadout is full (${getHeirloomSlots()})`);return false;}hs.push(normalizeSavedItem(item));}
+    meta.heirlooms=hs;saveMeta();return true;
+  }
+  function dbEquipmentUiDiscardStored(item){meta.heirloomStorage=(meta.heirloomStorage||[]).filter(entry=>entry.id!==item.id);meta.heirlooms=(meta.heirlooms||[]).filter(entry=>entry.id!==item.id);saveMeta();showToast(`${item.name} removed from Heirloom Storage`);return true;}
+  function dbEquipmentUiToggleRunStorage(item){
+    let storage=[...(meta.heirloomStorage||[])],index=storage.findIndex(entry=>entry.id===item.id);
+    if(index>=0){storage.splice(index,1);meta.heirlooms=(meta.heirlooms||[]).filter(entry=>entry.id!==item.id);}
+    else{if(storage.length>=v24StorageCapacity()){showToast('Heirloom Storage is full');return false;}storage.push(normalizeSavedItem(item));}
+    meta.heirloomStorage=storage;saveMeta();return true;
+  }
+  function dbEquipmentUiToggleLegacyHeirloom(item){
+    if(!window.DiceboundEquipment.isHeirloomEligible(item)){showToast(`${item.name} cannot become an heirloom`);return false;}
+    let heirlooms=[...(meta.heirlooms||[])],index=heirlooms.findIndex(entry=>entry.id===item.id);
+    if(index>=0)heirlooms.splice(index,1);
+    else{const same=heirlooms.findIndex(entry=>entry.slot===item.slot);if(same>=0)heirlooms.splice(same,1);if(heirlooms.length>=getHeirloomSlots())heirlooms.shift();heirlooms.push(JSON.parse(JSON.stringify(item)));sfx.holy();showToast(`${item.name} bound as heirloom`);}
+    meta.heirlooms=heirlooms;saveMeta();return true;
+  }
+  function dbEquipmentUiLootCopy(item){
+    if(item?.rarity==='legendary')return {title:'LEGENDARY ITEM FOUND!',subtitle:'A 151–210 point generated item carrying one build-changing Legendary Effect.'};
+    if(item?.rarity==='mythical'&&db060NamedMythicals?.has?.(item.name))return {subtitle:'A named Mythical relic. Prestige crafting will become its long-term reconstruction path.'};
+    return null;
+  }
+  function dbEquipmentPrepareLoot(item,callback){
+    if(!item||typeof item!=='object'||!EQUIPMENT_SLOTS.includes(item.slot)){
+      v25Log?.('errors','loot','Invalid loot reward skipped',{item:item?String(item):null,state:v25State?.()});
+      if(typeof callback==='function')setTimeout(()=>{try{callback();}catch(error){v25Log?.('errors','loot','Loot continuation failed',{error:String(error),stack:error?.stack||'',state:v25State?.()});}},0);
+      return false;
+    }
+    if(item.specialLegendary&&!meta.legendaryRelics.includes(item.name)){meta.legendaryRelics.push(item.name);saveMeta();}
+    if(item.legendaryEffectId&&!meta.legendaryEffectsDiscovered.includes(item.legendaryEffectId)){meta.legendaryEffectsDiscovered.push(item.legendaryEffectId);saveMeta();}
+    db060MythicalizeNamed?.(item);return true;
+  }
+  dbEquipmentUi.configure({
+    find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,
+    getState:dbEquipmentUiState,getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
+    resolveEquipmentArt:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item),itemSellValue,
+    syncStorage:()=>v24SyncStorage?.(),toggleStoredActive:dbEquipmentUiToggleStoredActive,discardStored:dbEquipmentUiDiscardStored,
+    toggleRunStorage:dbEquipmentUiToggleRunStorage,toggleLegacyHeirloom:dbEquipmentUiToggleLegacyHeirloom,
+    isHeirloomEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),confirm:diceboundConfirm,
+    afterStorageChange:()=>updateMetaUI(),lootCopy:dbEquipmentUiLootCopy
+  });
 
   const req=(id,rank=1)=>({id,rank});
   const talentRank=id=>Math.max(0,Number(meta.purchased[id])||0);
@@ -982,7 +1029,7 @@
     const t=talents.find(node=>node.id===id),rank=talentRank(id);
     if(!t||rank>=t.maxRank||!talentAvailable(t)||meta.points<t.cost)return false;
     meta.points-=t.cost;meta.purchased[t.id]=rank+1;saveMeta();sfx.level();showToast(`${t.name} rank ${rank+1} · activates next run`);
-    if(t.id==='legacy_storage'&&talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();saveMeta();showToast('🗄️ Heirloom Storage permanently unlocked!',3000,true);v24RenderHeirloomStorage();}
+    if(t.id==='legacy_storage'&&talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();saveMeta();showToast('🗄️ Heirloom Storage permanently unlocked!',3000,true);dbEquipmentUi.renderCampStorage();}
     renderTalents();return true;
   }
   // The extracted owner renders and navigates the Talent destination. These
@@ -1017,23 +1064,7 @@
 
 
   function renderEndGear(){
-    const grid=$("endGearGrid");grid.innerHTML="";const items=EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)),capacity=getHeirloomSlots(),bound=meta.heirlooms||[];
-    $("endHeirloomStatus").innerHTML=`Bound heirlooms: <strong>${bound.length} / ${capacity}</strong>. Click equipped items to bind or unbind them. A new item in the same slot replaces the old one.`;
-    if(!items.length){grid.innerHTML='<div class="hint">No equipment survived this run. Your existing heirlooms remain bound.</div>';return;}
-    items.forEach(item=>{
-      const btn=document.createElement("button"),isKept=bound.some(h=>h.id===item.id);btn.className=`gear-keep-btn${isKept?" kept":""} ${item.rarity||""}`.trim();
-      btn.innerHTML=`<strong>${item.icon} <span class="journey-gear-name ${item.rarity||""}">${item.name}</span></strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;
-      btn.addEventListener("click",()=>{
-        if(!window.DiceboundEquipment.isHeirloomEligible(item)){showToast(`${item.name} cannot become an heirloom`);return;}
-        let hs=[...(meta.heirlooms||[])],index=hs.findIndex(h=>h.id===item.id);
-        if(index>=0)hs.splice(index,1);
-        else{
-          const sameSlot=hs.findIndex(h=>h.slot===item.slot);if(sameSlot>=0)hs.splice(sameSlot,1);
-          if(hs.length>=capacity)hs.shift();hs.push(JSON.parse(JSON.stringify(item)));sfx.holy();showToast(`${item.name} bound as heirloom`);
-        }
-        meta.heirlooms=hs;saveMeta();renderEndGear();updateMetaUI();
-      });grid.appendChild(btn);
-    });
+    return dbEquipmentUi.renderEndGear();
   }
   function openDebugMenu(){$("debugOverlay").classList.remove("hidden");}
 
@@ -1233,7 +1264,7 @@
     else if(defeated.finalBoss){if(boardLevel===1)weapon=.05;else if(boardLevel===2){weapon=.10;boots=.05;amulet=.001;}else if(boardLevel===3){weapon=.10;boots=.05;pants=.02;amulet=.001;}else{weapon=.18;boots=.10;pants=.06;amulet=.01;hat=.02;}}
     const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>MYTHIC ITEM!</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
   }
-  function openLoot(item,callback){pendingLootItem=item;pendingLootCallback=callback;const current=player.equipment[item.slot],myth=item.rarity==="mythical";$("lootTitle").textContent=myth?"MYTHIC ITEM FOUND!":"Equipment found";$("lootTitle").className=myth?"mythic-drop-title":"";$("lootSubtitle").textContent=myth?"An ultra-rare Mythic item tears its way out of the road.":"Equip it now or sell it. Only equipped items can become heirlooms.";$("lootOverlay").classList.toggle("mythic-found",myth);$("lootCard").className=`loot-card ${item.rarity}`;$("lootCard").innerHTML=`<div class="loot-top"><div class="loot-icon">${item.icon}</div><div><div class="rarity-badge">${rarityInfo[item.rarity].label}</div><div class="loot-name">${item.name}</div><div class="loot-slot">${SLOT_LABELS[item.slot]}</div></div></div><div class="loot-bonuses">${formatBonuses(item)}</div><div class="loot-current">${current?`Currently equipped: <b>${current.name}</b> — ${formatBonuses(current)}`:`The ${SLOT_LABELS[item.slot]} slot is empty.`}</div>`;$("sellLootBtn").textContent=`Sell for ${itemSellValue(item)} gold`;$("lootOverlay").classList.remove("hidden");}
+  function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
   async function winCombat(){
     const defeated=currentEncounterLead||currentEnemy,all=currentEnemies.length?currentEnemies:[defeated],rewardGold=modifiedGold(all.reduce((s,e)=>s+e.gold,0)),rewardXp=Math.max(1,Math.round(all.reduce((s,e)=>s+e.xp,0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);let cookies=defeated.finalBoss?(boardLevel===4?8:boardLevel===3?6:boardLevel===2?4:2):defeated.miniBoss?(boardLevel===4?7:boardLevel===3?5:boardLevel===2?3:1):0;if(cookies){meta.petCookies+=cookies;saveMeta();showToast(`🍪 +${cookies} cookies`);}if(defeated.merchantBoss){merchantBossBattle=false;merchantBossPrimed=false;merchantBossDefeatedThisBoard=true;player.freeMerchantRun=true;meta.merchantKills=(meta.merchantKills||0)+1;saveMeta();checkDynamicClassUnlocks();addLog("<b>The Road Merchant is defeated.</b> Every merchant item is free for the rest of this run.");showToast("🧔 All shops are free!");}
@@ -1741,7 +1772,6 @@
   // v1.9: the former six-piece +25% strike multiplier was removed. Damage now comes
   // exclusively from the graduated 2/3/4/7-piece set table below.
 
-  openLoot=function(item,callback){pendingLootItem=item;pendingLootCallback=callback;const current=player.equipment[item.slot],myth=item.rarity==="mythical"||item.rarity==="omega";$("lootTitle").textContent=item.rarity==="omega"?"OMEGA ITEM FOUND!":myth?"MYTHIC ITEM FOUND!":"Equipment found";$("lootTitle").className=item.rarity==="omega"?"omega-title":myth?"mythic-drop-title":"";$("lootSubtitle").textContent=item.rarity==="omega"?"A near-impossible Omega item claws its way into reality.":myth?"An ultra-rare Mythic item tears its way out of the road.":"Equip it now or sell it. Only equipped items can become heirlooms.";$("lootOverlay").classList.toggle("mythic-found",myth);$("lootCard").className=`loot-card ${item.rarity}`;$("lootCard").innerHTML=`<div class="loot-top"><div class="loot-icon">${item.icon}</div><div><div class="rarity-badge">${rarityInfo[item.rarity].label}</div><div class="loot-name">${item.name}</div><div class="loot-slot">${SLOT_LABELS[item.slot]}</div></div></div><div class="loot-bonuses">${formatBonuses(item)}</div><div class="loot-current">${current?`Currently equipped: <b>${current.name}</b> — ${formatBonuses(current)}`:`The ${SLOT_LABELS[item.slot]} slot is empty.`}</div>`;$("sellLootBtn").textContent=`Sell for ${itemSellValue(item)} gold`;$("lootOverlay").classList.remove("hidden");};
   openCombatLootChain=function(defeated,done){const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?pick(["epic","legendary"]):defeated.miniBoss?pick(["rare","epic"]):null;openLoot(generateEquipment(rarity),done);}else done();};const specials=[];let weapon=0,boots=0,amulet=0,pants=0,hat=0,ring=0;if(defeated.merchantBoss){if(random()<.05*(nightmareMode?2:1)){specials.push(generateMerchantWeapon());meta.merchantOmegaDrops++;saveMeta();}}else if(defeated.bloodmageBoss){if(random()<.05*(nightmareMode?2:1)){specials.push(generatePhilosophersStone());meta.bloodmageOmegaDrops++;saveMeta();}}else if(defeated.miniBoss){if(boardLevel===1)weapon=.005;else if(boardLevel===2){weapon=.075;boots=.01;}else if(boardLevel===3){weapon=.075;boots=.01;pants=.005;}else if(boardLevel===4){weapon=.12;boots=.075;pants=.04;amulet=.005;hat=.005;}else{weapon=.14;boots=.09;pants=.05;amulet=.01;hat=.01;ring=.04;}}else if(defeated.finalBoss){if(boardLevel===1)weapon=.05;else if(boardLevel===2){weapon=.10;boots=.05;amulet=.001;}else if(boardLevel===3){weapon=.10;boots=.05;pants=.02;amulet=.001;}else if(boardLevel===4){weapon=.18;boots=.10;pants=.06;amulet=.01;hat=.02;}else{weapon=.20;boots=.12;pants=.08;amulet=.02;hat=.03;ring=.10;}}const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());if(ring&&random()<ring*mult)specials.push(generateMythicalRing());const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${item.rarity==="omega"?"OMEGA ITEM!":"MYTHIC ITEM!"}</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();};
 
   const enemyForPositionV11=enemyForPosition;enemyForPosition=function(index){const e={...enemyForPositionV11(index)};if(boardLevel===5){e.name=`Ringbound ${e.name}`;e.hp=Math.round(e.hp*1.35);e.attack=Math.round(e.attack*1.25);e.defenseBias=(e.defenseBias||0)+2;e.weakness=e.weakness||pick(ELEMENT_KEYS);}return e;};
@@ -2559,8 +2589,6 @@
   const equipItemV15Patch=equipItem;
   equipItem=function(item,silent=false){const old=player.equipment?.[item.slot],willSell=!silent&&old&&old.id!==item.id,sale=willSell?itemSellValue(old):0;equipItemV15Patch(item,silent);if(willSell){player.gold+=sale;ensureAlphaMeta().goldEarned+=sale;statsLastGold=player.gold;sfx.coin();addLog(`Auto-sold replaced <b>${old.name}</b> for <b>${sale} gold</b>.`);showToast(`Equipped ${item.name} · old gear +${sale}g`);updateHUD();}};
   {const oldBtn=$("equipLootBtn");if(oldBtn){const neo=oldBtn.cloneNode(true);oldBtn.replaceWith(neo);neo.addEventListener("click",async()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot],delta=current?gearPowerScore(pendingLootItem)-gearPowerScore(current):999;if(current&&delta<0&&!(await diceboundConfirm(`${pendingLootItem.name} rolls lower overall quality than ${current.name} after considering its hidden quality budget and visible stats. Replace it anyway? ${current.name} will automatically be sold for ${itemSellValue(current)} gold.`,{title:"Replace stronger gear?",confirmLabel:"Replace anyway",danger:true})))return;equipItem(pendingLootItem);closeLoot();});}}
-  const openLootV15Patch=openLoot;
-  openLoot=function(item,callback){openLootV15Patch(item,callback);if(item?.seedCode){const card=$("lootCard");if(card){const seed=document.createElement("div");seed.className="seed-code";seed.textContent=`Item seed: ${item.seedCode}`;card.appendChild(seed);}}};
 
   openTreasure=function(){const progress=player.position/Math.max(1,currentTileCount()-1),mult=[0,1,1.35,1.72,2.12,2.58][boardLevel]||2.58,base=rand(18,36)+Math.round(progress*16),gold=modifiedGold(Math.round(base*mult));player.gold+=gold;let extras=[];const potionChance=.28+(boardLevel-1)*.055;if(random()<potionChance){const count=boardLevel>=4&&random()<.20?2:1;player.potions+=count;extras.push(`${count} potion${count===1?"":"s"}`);}tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.coin();addLog(`Board ${boardLevel} treasure yields <b>${gold} gold</b>${extras.length?` and ${extras.join(", ")}`:""}.`);showToast(`Treasure: +${gold} gold${extras.length?` · ${extras.join(", ")}`:""}`);updateHUD();const gearChance=clamp(.68+(boardLevel-1)*.055,0,.92),done=()=>returnToRoad();if(random()<gearChance){const rarity=rollGearRarity(.05+(boardLevel-1)*.10+progress*.06);openLoot(generateEquipment(rarity),done);}else done();};
 
@@ -3721,23 +3749,6 @@
     {pieces:4,text:'+10% all damage, +8% elemental proc chance, begin battles with 35 Ultimate, one Barrier, +12% pet double-attack chance, and guardian specials deal 10% less damage.'},
     {pieces:7,text:'+28% all damage, +18% elemental proc chance, +22% elemental power, +20% pet double-attack chance, guardian specials deal 28% less damage, and once per battle at ≤25% HP restore 25% max HP + gain 1 Barrier.'}
   ];}
-  function impossibleRoadPanelHtml(count){
-    return `<strong>🌈 Impossible Road set</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${impossibleRoadTierData().map(t=>`<div class="set-tier ${count>=t.pieces?'active':''}"><b>${t.pieces}-piece bonus</b><span>${t.text}</span></div>`).join('')}</div>`;
-  }
-
-  const renderEquipmentV110Base=renderEquipment;
-  renderEquipment=function(){
-    renderEquipmentV110Base();
-    const setBox=$("mythicSetStatus");
-    if(setBox){
-      const count=mythicalSetCount();
-      setBox.hidden=count<1;
-      if(count>=1)setBox.innerHTML=impossibleRoadPanelHtml(count);
-    }
-    if($("campHeirloomSummary"))$("campHeirloomSummary").innerHTML=campHeirloomHtml();
-    if($("campChestSet"))$("campChestSet").innerHTML=impossibleRoadPanelHtml((meta.heirlooms||[]).filter(i=>i?.setName==="Impossible Road").length);
-  };
-
   const occultSpellAttackV110Base=occultSpellAttack;
   occultSpellAttack=async function(){
     if(player.classId!=="rouge")return occultSpellAttackV110Base();
@@ -3758,10 +3769,6 @@
     return result;
   };
 
-  function campHeirloomHtml(){
-    const hs=(meta.heirlooms||[]),capacity=getHeirloomSlots();
-    return hs.length?`<div class="camp-heirloom-card"><strong>Bound heirlooms (${hs.length}/${capacity})</strong><br>${hs.map(h=>`<strong>${h.icon} ${h.name}</strong> — ${formatBonuses(h)}`).join('<br>')}</div>`:`<div class="camp-heirloom-card">No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?'':'s'}.</div>`;
-  }
   function campSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
   function setCampMode(button,on,labelOn,labelOff){if(!button)return;button.classList.toggle('active',!!on);const sub=button.querySelector('.camp-sub');if(sub)sub.textContent=on?labelOn:labelOff;}
 
@@ -4009,17 +4016,7 @@
   v19SetStartUltimate=function(){const n=mythicalSetCount();return n>=7?50:n>=6?45:n>=5?40:n>=4?35:0;};
   v19SetGuardianSpecialMult=function(){const n=mythicalSetCount();return n>=7?.72:n>=6?.79:n>=5?.85:n>=4?.90:1;};
   mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Impossible Road pieces · 2: +3% all damage · 3: +7% all damage and +6% elemental proc chance · 4: +10% damage, +8% proc, 35 starting Ultimate, 1 Barrier, +12% pet double chance, 10% less guardian-special damage · 5: +14% damage, +10% proc, +8% elemental power, 40 starting Ultimate, +14% pet double chance, 15% less guardian-special damage · 6: +19% damage, +14% proc, +14% elemental power, 45 starting Ultimate, +17% pet double chance, 21% less guardian-special damage · 7: +28% damage, +18% proc, +22% elemental power, 50 starting Ultimate, +20% pet double chance, 28% less guardian-special damage, plus the low-HP recovery/barrier effect.`;};
-  function v22ImpossibleRoadTierData(){return [
-    {pieces:2,text:'+3% all damage.'},
-    {pieces:3,text:'+7% all damage and +6% elemental proc chance.'},
-    {pieces:4,text:'+10% all damage, +8% elemental proc chance, 35 starting Ultimate, one Barrier, +12% pet double-attack chance, and 10% less Guardian-special damage.'},
-    {pieces:5,text:'+14% all damage, +10% elemental proc chance, +8% elemental power, 40 starting Ultimate, +14% pet double-attack chance, and 15% less Guardian-special damage.'},
-    {pieces:6,text:'+19% all damage, +14% elemental proc chance, +14% elemental power, 45 starting Ultimate, +17% pet double-attack chance, and 21% less Guardian-special damage.'},
-    {pieces:7,text:'+28% all damage, +18% elemental proc chance, +22% elemental power, 50 starting Ultimate, +20% pet double-attack chance, 28% less Guardian-special damage, and once per battle at ≤25% HP restore 25% max HP + gain 1 Barrier.'}
-  ];}
-  function v22ImpossibleRoadPanelHtml(count){return `<strong>🌈 Impossible Road set</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${v22ImpossibleRoadTierData().map(t=>`<div class="set-tier ${count>=t.pieces?'active':''}"><b>${t.pieces}-piece bonus</b><span>${t.text}</span></div>`).join('')}</div>`;}
   function v22CampSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
-  function v22CampHeirloomHtml(){const hs=(meta.heirlooms||[]),capacity=getHeirloomSlots();return hs.length?`<div class="camp-heirloom-card"><strong>Bound heirlooms (${hs.length}/${capacity})</strong><br>${hs.map(h=>`<strong>${h.icon} ${h.name}</strong> — ${formatBonuses(h)}`).join('<br>')}</div>`:`<div class="camp-heirloom-card">No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?'':'s'}.</div>`;}
   // Camp presentation stays behind the existing names while its DOM, layout,
   // art and click-target ownership live in DiceboundCamp.
   function v22OpenCampPanel(id){return window.DiceboundCamp?.openPanel(id);}
@@ -4046,8 +4043,7 @@
         petId:pet.id,petName:pet.name,petIcon:pet.icon,petLine:`${pet.icon} ${pet.name} · Bond Lv ${state.level}`,
         summary:v22CampSummaryText(),
         prestigeSummary:`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
-        heirloomHtml:v22CampHeirloomHtml(),
-        setHtml:v22ImpossibleRoadPanelHtml((meta.heirlooms||[]).filter(item=>item?.setName==='Impossible Road').length),
+        ...dbEquipmentUi.campView(),
         reveals:{...(meta.campReveals||{})},heirloomStorageUnlocked:!!meta.heirloomStorageUnlocked||!!v24StorageUnlocked?.(),
         nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
         hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
@@ -4223,7 +4219,7 @@
   window.DiceboundV22Test=Object.freeze({
     campFullscreen:()=>$('startOverlay')?.classList.contains('camp-fullscreen'),
     classCampName:()=>$('campClassSub')?.textContent||'',
-    setTiers:()=>v22ImpossibleRoadTierData().map(x=>x.pieces),
+    setTiers:()=>v24SetTierData().map(x=>x.pieces),
     setCurve:()=>[2,3,4,5,6,7].map(n=>{const old=player.equipment;player.equipment={};for(let i=0;i<n;i++){const slot=EQUIPMENT_SLOTS[i];player.equipment[slot]={setName:'Impossible Road'};}const out={n,damage:v19SetDamageBonus(),proc:v19SetProcBonus(),element:v19SetElementPower(),pet:v19SetPetDoubleBonus(),ult:v19SetStartUltimate(),guardian:v19SetGuardianSpecialMult()};player.equipment=old;return out;}),
     modes:()=>({nightmareMode,hellMode,nightmareUnlocked:!!meta.nightmareUnlocked,hellUnlocked:!!meta.hellUnlocked}),
     unlockModes:()=>{meta.nightmareUnlocked=true;meta.hellUnlocked=true;renderClassChoices();return {nightmareMode,hellMode};},
@@ -4266,15 +4262,6 @@
   function v23SetPanelHtml(count){return `<strong>🌈 Impossible Road set</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${v23SetTierData().map(t=>`<div class="set-tier ${count>=t.pieces?'active':''}"><b>${t.pieces}-piece bonus</b><span>${t.text}</span></div>`).join('')}</div>`;}
   mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Impossible Road pieces · 2: +3% damage · 3: +7% damage and +6% proc · 4: +10% damage, +8% proc, 35 starting Ultimate, +12% pet double chance, 10% less Guardian-special damage · 5: +14% damage, +10% proc, +8% elemental power, 40 starting Ultimate, 1 Barrier, +14% pet double chance, 15% less Guardian-special damage · 6: +19% damage, +14% proc, +14% elemental power, 45 starting Ultimate, 1 Barrier, +17% pet double chance, 21% less Guardian-special damage · 7: +28% damage, +18% proc, +22% elemental power, 50 starting Ultimate, 1 Barrier, +20% pet double chance, 28% less Guardian-special damage and the emergency heal/barrier effect.`;};
   v19SetStartBarrier=function(){return mythicalSetCount()>=5?1:0;};
-
-  // Board/sidebar equipment info must use the same readable tier cards as camp.
-  const renderEquipmentV23Base=renderEquipment;
-  renderEquipment=function(){
-    renderEquipmentV23Base();
-    const count=mythicalSetCount(),box=$('mythicSetStatus');
-    if(box){box.hidden=count<1;if(count>=1)box.innerHTML=v23SetPanelHtml(count);}
-    if($('campChestSet'))$('campChestSet').innerHTML=v23SetPanelHtml((meta.heirlooms||[]).filter(i=>i?.setName==='Impossible Road').length);
-  };
 
   // ----- Road Wisdom and talent prerequisite clarity. -----------------------
   const roadWisdom=talents.find(t=>t.id==='legacy_travel');
@@ -4523,13 +4510,6 @@ function buildDiceboundHumanHarness235(){
     .gear-keep-btn.omega .journey-gear-name{color:#fff;text-shadow:0 0 8px rgba(168,71,255,.55)}
     .energy-shield-fill{position:absolute!important;left:0;top:0;bottom:0;height:100%;background:linear-gradient(90deg,rgba(78,171,255,.94),rgba(105,211,255,.82));box-shadow:0 0 14px rgba(73,173,255,.65);z-index:3;pointer-events:none;transition:width .18s ease;border-radius:inherit}
     .hpbar{position:relative;overflow:hidden}.hpbar>i:not(.energy-shield-fill){position:relative;z-index:2}
-    .heirloom-storage-wrap{margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,.11);border-radius:16px;background:rgba(0,0,0,.13)}
-    .heirloom-storage-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-    .heirloom-storage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}
-    .heirloom-storage-item{padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:13px;background:rgba(255,255,255,.035);color:var(--ink);text-align:left}
-    .heirloom-storage-item.active{border-color:var(--gold);box-shadow:inset 0 0 20px rgba(245,200,91,.08)}
-    .heirloom-storage-item b,.heirloom-storage-item span{display:block}.heirloom-storage-item span{font-size:9px;color:var(--muted);margin-top:4px;line-height:1.4}
-    .heirloom-storage-item button{margin-top:8px}.heirloom-storage-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:stretch}.heirloom-storage-actions .small-btn{width:auto}.heirloom-storage-actions .danger{border-color:rgba(255,92,112,.35);color:#ffd2d9;background:rgba(112,25,43,.25)}
     .storage-locked{padding:12px;border-radius:13px;background:rgba(255,255,255,.04);color:var(--muted);line-height:1.5}
     .devil-ritual-armed{animation:v24DevilPulse .7s ease-in-out infinite alternate}@keyframes v24DevilPulse{from{filter:drop-shadow(0 0 4px #f44)}to{filter:drop-shadow(0 0 18px #ff4422) brightness(1.35)}}
   `;
@@ -4666,14 +4646,6 @@ function buildDiceboundHumanHarness235(){
     const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${rarityInfo[item.rarity]?.label?.toUpperCase()||'SPECIAL'} ITEM!</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
   };
 
-  /* MODULE: loot presentation --------------------------------------------- */
-  openLoot=function(item,callback){
-    pendingLootItem=item;pendingLootCallback=callback;const current=player.equipment[item.slot],rar=item.rarity,label=rarityInfo[rar]?.label||rar;
-    const special=['legendary','artifact','mythical','omega'].includes(rar);$('lootTitle').textContent=rar==='omega'?'OMEGA ITEM FOUND!':rar==='mythical'?'MYTHICAL ITEM FOUND!':rar==='artifact'?'ARTIFACT ITEM FOUND!':rar==='legendary'?'LEGENDARY RELIC FOUND!':'Equipment found';$('lootTitle').className=rar==='omega'?'omega-title':rar==='artifact'?'artifact-title':rar==='legendary'?'legendary-title':rar==='mythical'?'mythic-drop-title':'';
-    $('lootSubtitle').textContent=rar==='omega'?'A near-impossible Omega item claws its way into reality.':rar==='artifact'?'An Artifact-tier relic of the Impossible Road refuses to obey ordinary item rules.':rar==='legendary'?'This handcrafted Legendary cannot roll from ordinary equipment tables.':rar==='mythical'?'A Mythical item tears its way out of the road.':'Equip it now or sell it. Stored heirlooms can be managed at the Campsite.';
-    $('lootOverlay').classList.toggle('mythic-found',special);$('lootCard').className=`loot-card ${rar}`;$('lootCard').innerHTML=`<div class="loot-top"><div class="loot-icon">${item.icon}</div><div><div class="rarity-badge">${label}</div><div class="loot-name">${item.name}</div><div class="loot-slot">${SLOT_LABELS[item.slot]}</div></div></div><div class="loot-bonuses">${formatBonuses(item)}</div><div class="loot-current">${current?`Currently equipped: <b>${current.name}</b> — ${formatBonuses(current)}`:`The ${SLOT_LABELS[item.slot]} slot is empty.`}</div>${item.seedCode?`<div class="seed-code">Item seed: ${item.seedCode}</div>`:''}`;$('sellLootBtn').textContent=`Sell for ${itemSellValue(item)} gold`;$('lootOverlay').classList.remove('hidden');
-    if(item.specialLegendary&&!meta.legendaryRelics.includes(item.name)){meta.legendaryRelics.push(item.name);saveMeta();}
-  };
   const unboundPreciousGearV24Base=unboundPreciousGearV16;
   unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
 
@@ -4695,18 +4667,8 @@ function buildDiceboundHumanHarness235(){
   const storageTalent={id:'legacy_storage',branch:'Heirlooms',icon:'🗄️',name:'Heirloom Storage',cost:3,maxRank:1,desc:'Permanently unlock Heirloom Storage at the Campsite. It begins with one storage slot per equipment slot; major milestones add more.',requires:[req('legacy_xp',1)]};
   if(!talents.some(t=>t.id===storageTalent.id))talents.push(storageTalent);
   function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:(meta.prestige?.count||0)>=5,text:'Prestige 5'},{on:(meta.prestige?.count||0)>=50,text:'Prestige 50'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
-  function v24RenderHeirloomStorage(){
-    const panel=$('campChestPanel');if(!panel)return;let host=$('campHeirloomStorage');if(!host){host=document.createElement('div');host.id='campHeirloomStorage';host.className='heirloom-storage-wrap';panel.appendChild(host);}if(!v24StorageUnlocked()){host.innerHTML=`<div class="storage-locked"><b>🗄️ Heirloom Storage locked</b><br>After defeating Board 3, a one-rank talent appears beyond Living Legend. Purchase it once to permanently unlock storage.</div>`;return;}
-    v24SyncStorage();const storage=meta.heirloomStorage||[],active=meta.heirlooms||[],cap=v24StorageCapacity(),activeCap=getHeirloomSlots(),milestones=v24StorageMilestones();host.innerHTML=`<div class="heirloom-storage-head"><div><b>🗄️ Heirloom Storage</b><br><span style="color:var(--muted)">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run</span></div><div style="font-size:9px;color:var(--muted)">Base 8 · ${milestones.map(x=>`${x.on?'✅':'⬜'} ${x.text}`).join(' · ')}</div></div><div class="heirloom-storage-grid" id="v24StorageGrid"></div>`;
-    const grid=$('v24StorageGrid');storage.forEach(item=>{const on=active.some(x=>x.id===item.id),card=document.createElement('div');card.className=`heirloom-storage-item ${on?'active':''} ${item.rarity||''}`;card.innerHTML=`<b>${item.icon} ${item.name}</b><span>${rarityInfo[item.rarity]?.label||item.rarity} · ${SLOT_LABELS[item.slot]}<br>${formatBonuses(item)}</span><div class="heirloom-storage-actions"><button class="small-btn" data-storage-action="toggle">${on?'Remove from active loadout':'Use next run'}</button><button class="small-btn danger" data-storage-action="discard">Remove from chest</button></div>`;card.querySelector('[data-storage-action="toggle"]').addEventListener('click',()=>{let hs=[...(meta.heirlooms||[])];if(on)hs=hs.filter(x=>x.id!==item.id);else{const same=hs.findIndex(x=>x.slot===item.slot);if(same>=0)hs.splice(same,1);if(hs.length>=getHeirloomSlots()){showToast(`Active heirloom loadout is full (${getHeirloomSlots()})`);return;}hs.push(normalizeSavedItem(item));}meta.heirlooms=hs;saveMeta();v24RenderHeirloomStorage();updateMetaUI();});card.querySelector('[data-storage-action="discard"]').addEventListener('click',async()=>{if(!(await diceboundConfirm(`Remove ${item.name} from Heirloom Storage?`,{title:'Remove stored heirloom?',confirmLabel:'Remove',danger:true})))return;meta.heirloomStorage=(meta.heirloomStorage||[]).filter(x=>x.id!==item.id);meta.heirlooms=(meta.heirlooms||[]).filter(x=>x.id!==item.id);saveMeta();v24RenderHeirloomStorage();renderEquipment();updateMetaUI();showToast(`${item.name} removed from Heirloom Storage`);});grid.appendChild(card);});
-  }
-  const renderEndGearV24Base=renderEndGear;
-  renderEndGear=function(){
-    if(!v24StorageUnlocked())return renderEndGearV24Base();v24SyncStorage();const grid=$('endGearGrid');grid.innerHTML='';const items=EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean),cap=v24StorageCapacity(),storage=meta.heirloomStorage||[];$('endHeirloomStatus').innerHTML=`Heirloom Storage: <strong>${storage.length}/${cap}</strong>. Click surviving run gear to store it. Choose the active next-run loadout from the Campsite chest.`;
-    if(!items.length){grid.innerHTML='<div class="hint">No equipment survived this run. Stored heirlooms remain safe.</div>';return;}items.forEach(item=>{const stored=storage.some(h=>h.id===item.id),b=document.createElement('button');b.className=`gear-keep-btn${stored?' kept':''} ${item.rarity||''}`;b.innerHTML=`<strong>${stored?'✓ STORED · ':''}${item.icon} <span class="journey-gear-name ${item.rarity||''}">${item.name}</span></strong><span>${rarityInfo[item.rarity]?.label||item.rarity} · ${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener('click',()=>{let st=[...(meta.heirloomStorage||[])];const idx=st.findIndex(x=>x.id===item.id);if(idx>=0){st.splice(idx,1);meta.heirlooms=(meta.heirlooms||[]).filter(x=>x.id!==item.id);}else{if(st.length>=v24StorageCapacity()){showToast('Heirloom Storage is full');return;}st.push(normalizeSavedItem(item));}meta.heirloomStorage=st;saveMeta();renderEndGear();v24RenderHeirloomStorage();});grid.appendChild(b);});
-  };
   const completePrestigeV24Base=completePrestige;
-  completePrestige=function(data,keepIds=[]){const unlocked=v24StorageUnlocked(),before=(meta.heirloomStorage||[]).map(normalizeSavedItem),chosen=(data?.candidates||[]).filter(i=>keepIds.includes(i.id)).map(normalizeSavedItem);const result=completePrestigeV24Base(data,keepIds);if(unlocked){meta.heirloomStorageUnlocked=true;const map=new Map([...before,...chosen].map(i=>[i.id,i]));meta.heirloomStorage=[...map.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();v24RenderHeirloomStorage();updateMetaUI();}return result;};
+  completePrestige=function(data,keepIds=[]){const unlocked=v24StorageUnlocked(),before=(meta.heirloomStorage||[]).map(normalizeSavedItem),chosen=(data?.candidates||[]).filter(i=>keepIds.includes(i.id)).map(normalizeSavedItem);const result=completePrestigeV24Base(data,keepIds);if(unlocked){meta.heirloomStorageUnlocked=true;const map=new Map([...before,...chosen].map(i=>[i.id,i]));meta.heirloomStorage=[...map.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();}return result;};
 
   /* MODULE: Pale Devil ritual / secret boss ------------------------------- */
   function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
@@ -4781,7 +4743,7 @@ function buildDiceboundHumanHarness235(){
   function v24RefreshCamp(){
     const overlay=$('startOverlay'),modal=overlay?.querySelector('.start-modal');if(modal){const h=modal.querySelector('h2');if(h)h.textContent='Campsite';const sub=modal.querySelector('.subtitle');if(sub)sub.innerHTML='Between expeditions. Choose who leaves camp, what they carry, and which terrible idea to enable next.';}overlay?.querySelector('.camp-help')?.remove();
     const hell=$('campHellBtn');if(hell){const icon=hell.querySelector('.camp-icon'),sub=hell.querySelector('.camp-sub');if(icon)icon.textContent=hellMode?'👿':'😈';if(sub&&meta.hellUnlocked)sub.innerHTML=`${hellMode?'HELL ON':'HELL OFF'} <span class="camp-mode-state">${hellMode?'ON':'OFF'}</span>`;hell.setAttribute('aria-pressed',String(!!hellMode));}
-    if($('campChestSet'))$('campChestSet').innerHTML=v24SetPanelHtml((meta.heirlooms||[]).filter(i=>i?.setName==='Impossible Road').length);v24RenderHeirloomStorage();
+    dbEquipmentUi.renderEquipment();
   }
   DB24.modules.camp={refresh:v24RefreshCamp,armDevil:v24ArmDance};
   const updateMetaUIV24CampBase=updateMetaUI;updateMetaUI=function(){updateMetaUIV24CampBase();v24RefreshCamp();};const openStartScreenV24CampBase=openStartScreen;openStartScreen=function(){const r=openStartScreenV24CampBase();v24RefreshCamp();return r;};
@@ -4805,7 +4767,7 @@ function buildDiceboundHumanHarness235(){
     hornOverheal:()=>{resetPlayer('ranger');player.equipment.hat=generateDevilsHorns();player.hp=player.maxHp-2;player.energyShield=0;healPlayer(12);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};},
     legendaryItems:()=>V24_LEGENDARY_RELICS.map(fn=>{const x=fn();return {name:x.name,slot:x.slot,rarity:x.rarity,effect:x.uniqueEffect};})
   });
-  DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:v24RenderHeirloomStorage},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
+  DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
   setTimeout(()=>{if(talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();}v24RefreshCamp();renderTalents();renderEquipment();v24EnsureShieldBars();},0);
 
@@ -4819,9 +4781,6 @@ function buildDiceboundHumanHarness235(){
     return generateEquipmentV24OrdinaryBase(forceRarity,forcedSlot);
   };
   itemSellValue=function(item){const base=v14RawSellValue(item);return classIdentityActive('merchant')?Math.round(base*2):base;};
-  const renderEquipmentV24Base=renderEquipment;
-  renderEquipment=function(){renderEquipmentV24Base();const setBox=$('mythicSetStatus');if(setBox){const count=mythicalSetCount();setBox.hidden=count<1;if(count)setBox.innerHTML=v24SetPanelHtml(count);}v24RenderHeirloomStorage();};
-
 
   /* v2.4 final presentation consistency ----------------------------------- */
   function v24RefreshDebugLabels(){
@@ -4857,13 +4816,6 @@ function buildDiceboundHumanHarness235(){
     #endOverlay .modal{width:min(1120px,96vw);max-height:92vh;overflow:auto;padding:24px}
     #endOverlay .gear-keep-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));max-height:none}
     #endTalentBtn{display:none!important}
-    .end-storage-manager{margin:16px 0;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(0,0,0,.13)}
-    .end-storage-manager h3{margin:0 0 6px}.end-storage-summary{font-size:11px;color:var(--muted);margin-bottom:10px}
-    .end-storage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:9px;max-height:400px;overflow:auto;padding-right:4px}
-    .end-storage-card{padding:10px;border-radius:13px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035)}
-    .end-storage-card.active{border-color:var(--gold);box-shadow:inset 0 0 18px rgba(245,200,91,.08)}
-    .end-storage-card b,.end-storage-card span{display:block}.end-storage-card span{font-size:9px;color:var(--muted);line-height:1.4;margin-top:4px}
-    .end-storage-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
     .debug-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.debug-tabs .small-btn.active{border-color:var(--gold);color:#fff;background:rgba(245,200,91,.13)}
     #debugGrid{display:block}.debug-tab-panel{display:none}.debug-tab-panel.active{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
     .debug-log-panel{display:none}.debug-log-panel.active{display:block}
@@ -4986,14 +4938,6 @@ function buildDiceboundHumanHarness235(){
 
   /* JOURNEY END: larger storage-focused management ------------------------ */
   const endTalent=$('endTalentBtn');if(endTalent)endTalent.remove();if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';
-  function v25RenderEndStorageManager(){
-    const overlay=$('endOverlay'),modal=overlay?.querySelector('.modal');if(!modal)return;let host=$('endStorageManager');if(!host){host=document.createElement('div');host.id='endStorageManager';host.className='end-storage-manager';const restart=$('endRestartBtn');modal.insertBefore(host,restart);}
-    if(!v24StorageUnlocked()){host.innerHTML='<h3>🗄️ Heirloom Storage</h3><div class="storage-locked">Storage is not unlocked yet. Surviving equipment can still be handled with your normal heirloom slots.</div>';return;}
-    v24SyncStorage();const storage=meta.heirloomStorage||[],active=meta.heirlooms||[],cap=v24StorageCapacity(),activeCap=getHeirloomSlots();host.innerHTML=`<h3>🗄️ Heirloom Storage</h3><div class="end-storage-summary">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run. Store surviving gear above, then manage the next-run loadout here before returning to camp.</div><div class="end-storage-grid" id="endStorageGrid"></div>`;
-    const grid=$('endStorageGrid');storage.forEach(item=>{const on=active.some(x=>x.id===item.id),card=document.createElement('div');card.className=`end-storage-card ${on?'active':''} ${item.rarity||''}`;card.innerHTML=`<b>${item.icon} ${item.name}</b><span>${rarityInfo[item.rarity]?.label||item.rarity} · ${SLOT_LABELS[item.slot]}<br>${formatBonuses(item)}</span><div class="end-storage-actions"><button class="small-btn" data-end-storage="toggle">${on?'Unequip':'Use next run'}</button><button class="small-btn" data-end-storage="discard">Discard</button></div>`;card.querySelector('[data-end-storage="toggle"]').addEventListener('click',()=>{let hs=[...(meta.heirlooms||[])];if(on)hs=hs.filter(x=>x.id!==item.id);else{const same=hs.findIndex(x=>x.slot===item.slot);if(same>=0)hs.splice(same,1);if(hs.length>=activeCap){showToast(`Active heirloom loadout is full (${activeCap})`);return;}hs.push(normalizeSavedItem(item));}meta.heirlooms=hs;saveMeta();v25RenderEndStorageManager();updateMetaUI();});card.querySelector('[data-end-storage="discard"]').addEventListener('click',async()=>{if(!(await diceboundConfirm(`Discard ${item.name} from Heirloom Storage?`,{title:'Discard stored heirloom?',confirmLabel:'Discard',danger:true})))return;meta.heirloomStorage=(meta.heirloomStorage||[]).filter(x=>x.id!==item.id);meta.heirlooms=(meta.heirlooms||[]).filter(x=>x.id!==item.id);saveMeta();v25RenderEndStorageManager();renderEndGear();updateMetaUI();});grid.appendChild(card);});
-  }
-  const renderEndGearV25Base=renderEndGear;renderEndGear=function(){const r=renderEndGearV25Base();v25RenderEndStorageManager();return r;};
-
   /* ROADKEEPER'S GUIDE: one current source of truth, no patch archaeology -- */
   renderInfo=function(){
     const subtitle=$('infoOverlay')?.querySelector('.subtitle');if(subtitle)subtitle.textContent='Current rules, progression, equipment, classes, elements and save tools. Secrets remain deliberately vague until discovered.';
@@ -5161,16 +5105,6 @@ function buildDiceboundHumanHarness235(){
 
   // Loot UI is also defensive now. Invalid rewards are skipped and their
   // continuation callback still fires so victory resolution can finish.
-  const openLootV251Base=openLoot;
-  openLoot=function(item,callback){
-    if(!item||typeof item!=='object'||!EQUIPMENT_SLOTS.includes(item.slot)){
-      v25Log('errors','loot','Invalid loot reward skipped',{item:item?String(item):null,state:v25State()});
-      if(typeof callback==='function')setTimeout(()=>{try{callback();}catch(e){v25Log('errors','loot','Loot continuation failed',{error:String(e),stack:e?.stack||'',state:v25State()});}},0);
-      return;
-    }
-    return openLootV251Base(item,callback);
-  };
-
   // Returning to the board is, by definition, no longer combat. Older layers
   // only unlocked the dice and left combatBusy=true. That stale bit prevented
   // the v2.5 watchdog from recognising the exact soft-lock seen in the log.
@@ -6229,8 +6163,6 @@ function buildDiceboundHumanHarness235(){
     $('gamblerOverlay').classList.remove('hidden');
   };
 
-  const renderEquipmentBeta043Base=renderEquipment;
-  renderEquipment=function(){beta043RefreshEquipmentArt();return renderEquipmentBeta043Base();};
 
 
 
@@ -6992,9 +6924,6 @@ function buildDiceboundHumanHarness235(){
     }
 
     /* --- Camp heirloom actions ---------------------------------------- */
-    .heirloom-storage-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:8px}
-    .heirloom-storage-actions .small-btn{margin-top:0!important;width:auto!important;min-height:34px}
-    .heirloom-storage-actions .danger{border-color:rgba(255,100,118,.34)!important;background:rgba(106,24,42,.28)!important;color:#ffd3da!important}
 
   `;
   document.head.appendChild(db050Style);
@@ -7702,16 +7631,6 @@ function buildDiceboundHumanHarness235(){
     }
     return db060OpenTreasureBase();
   };
-  const db060OpenLootBase=openLoot;
-  openLoot=function(item,callback){
-    if(item?.legendaryEffectId&&!meta.legendaryEffectsDiscovered.includes(item.legendaryEffectId)){meta.legendaryEffectsDiscovered.push(item.legendaryEffectId);saveMeta();}
-    if(item)db060MythicalizeNamed(item);
-    const r=db060OpenLootBase(item,callback);
-    if(item?.rarity==='legendary'){$('lootTitle').textContent='LEGENDARY ITEM FOUND!';$('lootSubtitle').textContent='A 151–210 point generated item carrying one build-changing Legendary Effect.';}
-    if(item?.rarity==='mythical'&&db060NamedMythicals.has(item.name)){$('lootSubtitle').textContent='A named Mythical relic. Prestige crafting will become its long-term reconstruction path.';}
-    return r;
-  };
-
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
   // weighted set piece from this table; independent slot rolls are retired.
@@ -8254,12 +8173,6 @@ function buildDiceboundHumanHarness235(){
     const values=Object.entries(bonuses).map(([key,value])=>db06314BonusLabel(key,value));
     return identity&&values.length?{identity,values}:null;
   }
-  function db06314EquipmentArtMarkup(item,klass='db06314-equipment-art'){
-    const entry=window.DiceboundAssets?.resolveEquipmentArt?.(item);
-    if(!entry?.image)return '';
-    const alt=String(entry.alt||item?.name||'Equipment').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-    return `<img class="${klass}" src="${entry.image}" alt="${alt}" draggable="false">`;
-  }
   applyItemStats=function(item,sign){
     const oldMax=player.maxHp;
     Object.entries(db06314Equipment.allBonusesForItem(item)).forEach(([key,value])=>{if(typeof player[key]==='number')player[key]+=value*sign;});
@@ -8290,26 +8203,6 @@ function buildDiceboundHumanHarness235(){
     const quality=score>12?'<span class="better">Overall quality: stronger</span>':score<-12?'<span class="worse">Overall quality: weaker</span>':'<span class="same">Overall quality: similar</span>';
     return `${quality}<br>${deltas.length?deltas.join(' · '):'<span class="same">No numerical stat change</span>'}`;
   };
-  const db06314RenderEquipmentBase=renderEquipment;
-  renderEquipment=function(...args){
-    const result=db06314RenderEquipmentBase.apply(this,args);
-    document.querySelectorAll('#equipmentGrid .equipment-slot').forEach(slotNode=>{
-      const slot=EQUIPMENT_SLOTS.find(candidate=>slotNode.querySelector('.slot-label')?.textContent===SLOT_LABELS[candidate]),item=slot&&player.equipment?.[slot],target=slotNode.querySelector('.slot-item');
-      if(item&&target){const art=db06314EquipmentArtMarkup(item,'db06314-equipment-art db06314-slot-art');if(art)target.innerHTML=`${art}<span>${item.name}</span>`;}
-    });
-    return result;
-  };
-  const db06314OpenLootBase=openLoot;
-  openLoot=function(item,callback){
-    const result=db06314OpenLootBase(item,callback),icon=$('lootCard')?.querySelector('.loot-icon'),art=db06314EquipmentArtMarkup(item,'db06314-equipment-art db06314-loot-art');
-    if(icon&&art)icon.innerHTML=art;
-    return result;
-  };
-  if(!document.getElementById('dicebound-06314-equipment-identity-style')){
-    const style=document.createElement('style');style.id='dicebound-06314-equipment-identity-style';style.textContent=`
-      .db06314-equipment-art{display:block;object-fit:contain}.slot-item:has(.db06314-slot-art){display:flex;align-items:center;gap:4px}.db06314-slot-art{width:20px;height:20px;flex:0 0 20px}.loot-icon:has(.db06314-loot-art){width:58px;height:58px}.db06314-loot-art{width:58px;height:58px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42))}
-    `;document.head.appendChild(style);
-  }
   window.DiceboundEquipmentIdentityTest=Object.freeze({
     identity:id=>db06314Equipment.equipmentIdentity(id),
     art:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item)||null,

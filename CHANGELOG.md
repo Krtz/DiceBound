@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.7
+
+### Equipment / Heirloom presentation ownership (#40, #209)
+- Replaced the final HUD-equipment, loot-card, Camp chest/storage and end-of-run Heirloom renderer/wrapper/style chain with `runtime/js/ui/equipment-heirlooms.js`.
+- Semantic authored-equipment art, storage/loadout controls and Artifact-set presentation now have one UI owner; equipment generation, rarity, storage capacity, saves, combat effects, RNG and item transactions remain in their existing domains.
+- `dicebound.js` keeps narrow lifecycle forwarding plus state/action callbacks only, with architecture guards preventing the retired renderer chain from returning.
+
 ## Beta 0.6.5.6
 
 ### Protected-manifest URI repair (#120)

@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.6
+# Unreleased — Beta 0.6.5.7
+
+## Beta 0.6.5.7 Equipment / Heirloom presentation ownership (#40, #209)
+- Equipment HUD slots, loot cards, semantic authored-equipment art, Camp chest/Heirloom Storage, and end-of-run storage/loadout controls now have one presentation owner: `ui/equipment-heirlooms.js`.
+- The historical renderer override/style chain is retired rather than retained beneath the new owner. Equipment generation, rarity, storage capacity, saves, combat mechanics and RNG remain unchanged.
 
 ## Beta 0.6.5.6 Protected-manifest URI repair (#120)
 - The release workflow now braces both dynamic `manifestPath` Contents GET URLs before `?ref=main`, so PowerShell cannot absorb the query delimiter into the variable name.
