@@ -22,6 +22,12 @@ for marker in [
     "tools/write_distribution_manifest.py",
     "DICEBOUND_RELEASE_TOKEN",
     "GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}",
+    "Verify protected-main release credential access",
+    "gh api user *> $null",
+    "gh api repos/Krtz/DiceBound *> $null",
+    "repos/Krtz/DiceBound/contents/distribution/latest.json?ref=main",
+    "DICEBOUND_RELEASE_TOKEN cannot access Krtz/DiceBound.",
+    "DICEBOUND_RELEASE_TOKEN cannot read distribution/latest.json.",
     "gh api --method PUT",
     "contents/$manifestPath",
     "Published distribution/latest.json differs from the verified local manifest.",
@@ -30,11 +36,11 @@ for marker in [
 
 assert source.count("workflow_dispatch:") == 1
 assert source.count("pull_request:") == 1
-assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 3
-assert source.count("secrets.DICEBOUND_RELEASE_TOKEN") == 2
+assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 4
+assert source.count("secrets.DICEBOUND_RELEASE_TOKEN") == 3
 assert "paths-ignore:" in source and "distribution/latest.json" in source
 assert "git push origin" not in source, "protected main must not be updated with the default checkout token"
 assert "release/beta-" not in source
 assert ".release/beta-" not in source
 
-print("Generic release workflow source PASS: Version/Channel-derived PR validation, protected-main publication credential, release asset verification and Contents-API distribution update with remote reconciliation")
+print("Generic release workflow source PASS: Version/Channel-derived PR validation, early protected-main token read preflight, release asset verification and Contents-API distribution update with remote reconciliation")

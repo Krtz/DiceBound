@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.2
+# Unreleased — Beta 0.6.5.3
+
+## Beta 0.6.5.3 Release-token Contents preflight (#120)
+- Protected-main publication now checks that the release token authenticates, sees DiceBound and can read the launcher manifest before native build work starts.
+- It keeps the verified-artifact and protected-main manifest safety sequence unchanged. A release after the replacement fine-grained PAT will provide the final proof.
 
 ## Beta 0.6.5.2 Info / Roadkeeper's Guide presentation ownership (#40, #76, #198, #209)
 - Info now opens one responsive Guide destination owned by `ui/info-guide.js`, with Guide, Stats, Elements and Save views plus a persistent top-right Done control.
