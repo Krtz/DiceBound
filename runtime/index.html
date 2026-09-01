@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.5.1</title>
+<title>Dicebound: Beta v0.6.5.2</title>
 <link rel="stylesheet" href="css/dicebound.css">
 <style id="db-boot-gate">
   html.db-booting body{background:#050912}
@@ -19,8 +19,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.5.1</h1>
-        <p>Beta v0.6.5.1 · Camp scene repairs and reliable Donut VFX.</p>
+        <h1>Dicebound: Beta v0.6.5.2</h1>
+        <p>Beta v0.6.5.2 · Roadkeeper's Guide presentation ownership.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -356,27 +356,7 @@
 </div>
 
 
-<div class="overlay hidden" id="infoOverlay">
-  <div class="modal wide">
-    <h2>ℹ️ Roadkeeper's Guide</h2>
-    <p class="subtitle">Rules, class scaling, progression, equipment and portable saves. Expand only the categories you care about.</p>
-    <div class="info-tabs" id="infoTabs">
-      <button class="small-btn active" data-info-tab="guide">📖 Guide</button>
-      <button class="small-btn" data-info-tab="stats">📊 Stats</button>
-      <button class="small-btn" data-info-tab="elements">🌈 Elements</button>
-      <button class="small-btn" data-info-tab="save">💾 Save</button>
-    </div>
-    <div class="info-tab-panel active" data-info-panel="guide"><div class="info-sections" id="infoSections"></div></div>
-    <div class="info-tab-panel" data-info-panel="stats"><div class="lifetime-stats" id="lifetimeStats"></div></div>
-    <div class="info-tab-panel" data-info-panel="elements"><div class="element-guide" id="elementGuide"></div></div>
-    <div class="info-tab-panel" data-info-panel="save">
-      <h3 style="margin:4px 0 8px">Transfer save</h3>
-      <textarea class="save-textarea" id="saveTransferText" placeholder="Exported save data appears here. Paste save data here to import."></textarea>
-      <div class="save-tools"><button class="small-btn" id="exportSaveBtn">Export save</button><button class="small-btn" id="importSaveBtn">Import save</button></div>
-    </div>
-    <button class="main-btn" id="infoCloseBtn" style="margin-top:12px">Close guide</button>
-  </div>
-</div>
+<div class="overlay hidden" id="infoOverlay"></div>
 
 <div class="overlay hidden" id="achievementOverlay">
 </div>
@@ -457,6 +437,7 @@
 <script src="js/ui/talent-tree.js"></script>
 <script src="js/ui/prestige-moon.js"></script>
 <script src="js/ui/achievements.js"></script>
+<script src="js/ui/info-guide.js"></script>
 <script src="js/dicebound.js"></script>
 <script id="db-boot-reveal">document.documentElement.classList.remove("db-booting");</script>
 </body>

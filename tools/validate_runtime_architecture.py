@@ -388,6 +388,69 @@ def main() -> int:
                 "retired Achievements style remains in runtime/css/dicebound.css: "
                 + retired_achievements_style
             )
+    info_guide_module = by_id.get("ui-info-guide")
+    info_guide_owner_ok = False
+    if not info_guide_module:
+        errors.append("Info/Guide presentation owner ui-info-guide is missing from the runtime manifest")
+    else:
+        info_guide_owner_ok = (
+            info_guide_module.get("path") == "js/ui/info-guide.js"
+            and {"assets", "classes-registry", "ui-camp"}.issubset(
+                set(info_guide_module.get("requires") or [])
+            )
+            and "DiceboundInfoGuide" in (info_guide_module.get("provides") or [])
+            and position.get("ui-info-guide", -1) < position.get(str(monolith_id), -1)
+        )
+        if not info_guide_owner_ok:
+            errors.append(
+                "ui-info-guide must provide DiceboundInfoGuide, require its UI dependencies, "
+                "and load before the monolith"
+            )
+    info_guide_source = sources.get("ui-info-guide", "")
+    for required_info_guide_behavior in [
+        "const OWNER='ui/info-guide'",
+        "data-info-done",
+        "info-guide-chrome{position:sticky",
+        "function guideHtml(",
+        "function lifetimeModel(",
+    ]:
+        if required_info_guide_behavior not in info_guide_source:
+            errors.append(
+                "Info/Guide owner is missing required presentation behavior: "
+                + required_info_guide_behavior
+            )
+    if monolith_source:
+        for expected_info_guide_adapter in [
+            "renderInfo=function(){return dbInfoGuide.render();};",
+            "renderLifetimeStats=function(){return dbInfoGuide.renderStats();};",
+            "activateInfoTab=function(name='guide'){return dbInfoGuide.activateTab(name);};",
+            "openInfo=function(){return dbInfoGuide.open();};",
+        ]:
+            if expected_info_guide_adapter not in monolith_source:
+                errors.append("dicebound.js must retain only the thin Info/Guide lifecycle adapter")
+        for retired_info_guide_layer in ["db060RenderInfoBase", "renderInfoV28Base"]:
+            if retired_info_guide_layer in monolith_source:
+                errors.append(
+                    "retired final Info/Guide renderer remains in dicebound.js: "
+                    + retired_info_guide_layer
+                )
+    for retired_info_guide_style in [
+        ".info-tabs{display:grid",
+        ".info-tab-panel{display:none}",
+        ".lifetime-stats{display:grid",
+        ".info-sections{display:grid",
+    ]:
+        if retired_info_guide_style in stylesheet_source:
+            errors.append(
+                "retired Info/Guide style remains in runtime/css/dicebound.css: "
+                + retired_info_guide_style
+            )
+    for retired_info_guide_markup in ["id=\"infoCloseBtn\"", "id=\"infoSections\"", "id=\"infoTabs\""]:
+        if retired_info_guide_markup in index_source:
+            errors.append(
+                "runtime/index.html retains static Info/Guide presentation markup: "
+                + retired_info_guide_markup
+            )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
@@ -440,6 +503,10 @@ def main() -> int:
         "achievementsOwner": {
             "id": "ui-achievements",
             "configured": achievements_owner_ok,
+        },
+        "infoGuideOwner": {
+            "id": "ui-info-guide",
+            "configured": info_guide_owner_ok,
         },
         "monolith": {
             "id": monolith_id,

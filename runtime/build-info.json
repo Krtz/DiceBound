@@ -1,15 +1,15 @@
 {
   "assetCount": 409,
-  "browserContentHash": "833fdd7ab4243c8ea8b79988908d5f2a6db9104f12fe9d974f9f0895fc8ff60c",
-  "buildId": "dicebound-0.6.5.1-dev-833fdd7ab4243c8e",
+  "browserContentHash": "d12e88e7ed90150a7eba08f5d44833df89a0c98628adc02429a57d1201fe1a63",
+  "buildId": "dicebound-0.6.5.2-dev-d12e88e7ed90150a",
   "channel": "Beta",
-  "contentFileCount": 454,
+  "contentFileCount": 455,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.5.1.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.5.2.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -53,12 +53,13 @@
     "js/ui/talent-tree.js",
     "js/ui/prestige-moon.js",
     "js/ui/achievements.js",
+    "js/ui/info-guide.js",
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "833fdd7ab4243c8ea8b79988908d5f2a6db9104f12fe9d974f9f0895fc8ff60c",
+  "sourceHash": "d12e88e7ed90150a7eba08f5d44833df89a0c98628adc02429a57d1201fe1a63",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.5.1",
+  "version": "0.6.5.2",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
