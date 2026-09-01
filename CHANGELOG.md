@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.4
+
+### GitHub App manifest publisher (#120)
+- Protected-main launcher-manifest publication now mints a short-lived installation token from the dedicated DiceBound GitHub App instead of using a personal access token.
+- The token is narrowed to `Krtz/DiceBound` with only Contents write permission, exists only in publish runs, and performs an installation-scope plus exact-manifest-read preflight before the native build.
+- The verified artifact, manifest generation, validation, protected Contents PUT, reread and exact comparison sequence remains unchanged; a real main release is the final proof required to close #120.
+
 ## Beta 0.6.5.3
 
 ### Release-token Contents preflight (#120)

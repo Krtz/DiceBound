@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.3
+# Unreleased — Beta 0.6.5.4
+
+## Beta 0.6.5.4 GitHub App manifest publisher (#120)
+- Protected-main launcher-manifest publication now mints a short-lived installation token from the dedicated DiceBound GitHub App rather than using the personal release token.
+- The token is restricted to DiceBound Contents publication and remains absent from pull-request runs. The generated-and-validated manifest still receives the same verified PUT, reread and exact-comparison sequence.
 
 ## Beta 0.6.5.3 Release-token Contents preflight (#120)
 - Protected-main publication now checks that the release token authenticates, sees DiceBound and can read the launcher manifest before native build work starts.

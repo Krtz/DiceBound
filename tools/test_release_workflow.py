@@ -20,14 +20,21 @@ for marker in [
     "steps.release.outputs.notes_path",
     "github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))",
     "tools/write_distribution_manifest.py",
-    "DICEBOUND_RELEASE_TOKEN",
-    "GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}",
-    "Verify protected-main release credential access",
-    "gh api user *> $null",
-    "gh api repos/Krtz/DiceBound *> $null",
+    "DICEBOUND_RELEASE_APP_ID",
+    "DICEBOUND_RELEASE_APP_PRIVATE_KEY",
+    "actions/create-github-app-token@v3",
+    "id: manifest_app_token",
+    "app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}",
+    "private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}",
+    "owner: Krtz",
+    "repositories: DiceBound",
+    "permission-contents: write",
+    "Verify protected-main manifest App token access",
+    "installation/repositories?per_page=100",
+    "DiceBound manifest App token installation does not include Krtz/DiceBound.",
     "repos/Krtz/DiceBound/contents/distribution/latest.json?ref=main",
-    "DICEBOUND_RELEASE_TOKEN cannot access Krtz/DiceBound.",
-    "DICEBOUND_RELEASE_TOKEN cannot read distribution/latest.json.",
+    "DiceBound manifest App token cannot read distribution/latest.json.",
+    "GH_TOKEN: ${{ steps.manifest_app_token.outputs.token }}",
     "gh api --method PUT",
     "contents/$manifestPath",
     "Published distribution/latest.json differs from the verified local manifest.",
@@ -36,11 +43,29 @@ for marker in [
 
 assert source.count("workflow_dispatch:") == 1
 assert source.count("pull_request:") == 1
-assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 4
-assert source.count("secrets.DICEBOUND_RELEASE_TOKEN") == 3
+assert source.count("github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))") == 5
+assert source.count("secrets.DICEBOUND_RELEASE_APP_ID") == 2
+assert source.count("secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY") == 2
+assert "DICEBOUND_RELEASE_TOKEN" not in source
+assert source.count("steps.manifest_app_token.outputs.token") == 2
+publish_if = "github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))"
+assert f"""- name: Mint protected-main manifest App token
+        id: manifest_app_token
+        if: {publish_if}
+        uses: actions/create-github-app-token@v3""" in source
+assert f"""- name: Verify protected-main manifest App token access
+        if: {publish_if}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{{{ steps.manifest_app_token.outputs.token }}}}""" in source
+assert f"""- name: Point launcher manifest at verified release
+        if: {publish_if}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{{{ steps.manifest_app_token.outputs.token }}}}""" in source
 assert "paths-ignore:" in source and "distribution/latest.json" in source
 assert "git push origin" not in source, "protected main must not be updated with the default checkout token"
 assert "release/beta-" not in source
 assert ".release/beta-" not in source
 
-print("Generic release workflow source PASS: Version/Channel-derived PR validation, early protected-main token read preflight, release asset verification and Contents-API distribution update with remote reconciliation")
+print("Generic release workflow source PASS: Version/Channel-derived PR validation, main-only GitHub App manifest-token preflight, release asset verification and Contents-API distribution update with remote reconciliation")
