@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.5
+
+### Protected-manifest PUT diagnostics (#120)
+- The main-only release publisher now preserves the verified Contents API request while capturing a non-secret HTTP status and GitHub error fields (`message`, `documentation_url`, `status`, and `errors`) if the protected `distribution/latest.json` PUT fails.
+- It records the verified target branch, current manifest blob SHA, local manifest byte count, release source SHA and read-only StartRule metadata before the request. No credentials, headers, private keys or payload contents are logged.
+- The proposed branch comparison is deliberately omitted: StartRule currently targets all refs, and creating an actually unprotected comparison branch would require changing repository protection.
+
 ## Beta 0.6.5.4
 
 ### GitHub App manifest publisher (#120)
