@@ -53,35 +53,49 @@ jobs:
             --github-output $env:GITHUB_OUTPUT
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Require protected-main release credential
+      - name: Require protected-main manifest App credentials
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
         shell: pwsh
         env:
-          DICEBOUND_RELEASE_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}
+          DICEBOUND_RELEASE_APP_ID: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          DICEBOUND_RELEASE_APP_PRIVATE_KEY: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:DICEBOUND_RELEASE_TOKEN)) {
-            throw "DICEBOUND_RELEASE_TOKEN is required to advance distribution/latest.json on protected main."
+          if ([string]::IsNullOrWhiteSpace($env:DICEBOUND_RELEASE_APP_ID)) {
+            throw "DICEBOUND_RELEASE_APP_ID is required to advance distribution/latest.json on protected main."
+          }
+          if ([string]::IsNullOrWhiteSpace($env:DICEBOUND_RELEASE_APP_PRIVATE_KEY)) {
+            throw "DICEBOUND_RELEASE_APP_PRIVATE_KEY is required to advance distribution/latest.json on protected main."
           }
 
-      - name: Verify protected-main release credential access
+      - name: Mint protected-main manifest App token
+        id: manifest_app_token
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Verify protected-main manifest App token access
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ steps.manifest_app_token.outputs.token }}
         run: |
-          gh api user *> $null
+          $installation = gh api "installation/repositories?per_page=100" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) {
-            throw "DICEBOUND_RELEASE_TOKEN authentication failed. Replace it with a fine-grained PAT owned by Krtz."
+            throw "DiceBound manifest App token authentication failed. Check the App ID, private key, and installation."
           }
-
-          gh api repos/Krtz/DiceBound *> $null
-          if ($LASTEXITCODE -ne 0) {
-            throw "DICEBOUND_RELEASE_TOKEN cannot access Krtz/DiceBound. Check fine-grained PAT resource owner and repository selection."
+          $installationRepositoryNames = @($installation.repositories | ForEach-Object { $_.full_name })
+          if ($installationRepositoryNames -notcontains "Krtz/DiceBound") {
+            throw "DiceBound manifest App token installation does not include Krtz/DiceBound. Select only that repository when installing the App."
           }
 
           gh api "repos/Krtz/DiceBound/contents/distribution/latest.json?ref=main" *> $null
           if ($LASTEXITCODE -ne 0) {
-            throw "DICEBOUND_RELEASE_TOKEN cannot read distribution/latest.json. Check fine-grained PAT Contents read/write permission."
+            throw "DiceBound manifest App token cannot read distribution/latest.json. Check the App's Contents Read and write permission."
           }
 
       - name: Enforce unique four-component PR version
@@ -189,7 +203,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.DICEBOUND_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ steps.manifest_app_token.outputs.token }}
         run: |
           python tools/write_distribution_manifest.py `
             --release-metadata wrapper-source/release/release-metadata.json `
