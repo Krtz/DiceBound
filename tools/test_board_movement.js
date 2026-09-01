@@ -37,7 +37,7 @@ function makeRuntime(road,{loadedSixes=false,modifier=value=>value}={}){
       placePawn:hop=>calls.push(["pawn",hop]),
       updateHud:()=>calls.push(["hud"]),
       delay:async ms=>calls.push(["delay",ms]),
-      resolveTile:()=>calls.push(["resolve"])
+      dispatchTile:()=>calls.push(["resolve"])
     },
     tilesMoved:()=>moved
   };

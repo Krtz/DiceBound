@@ -63,7 +63,7 @@
     if(plan.intercepted)runtime.toast?.('👑 Miniboss intercept!');
     runtime.emit?.('board:move-complete',{...plan,domain:'board',type:'move-complete',fastTravelXp:fast,travelXp:travel,chosen,extraStep});
     await runtime.delay?.(150);
-    runtime.resolveTile?.();
+    runtime.dispatchTile?.();
   }
   function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};return api;}
   function inspect(){return Object.freeze({owner:OWNER,configured:typeof runtime.getRoad==='function'});}

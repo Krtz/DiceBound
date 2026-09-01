@@ -26,6 +26,7 @@
     "pets-registry",
     "board-registry",
     "board-movement",
+    "board-tile-dispatch",
     "combat-enemies",
     "combat-guardians",
     "item-rarities",
@@ -289,6 +290,18 @@
       ],
       "provides": [
         "DiceboundBoardMovement"
+      ]
+    },
+    {
+      "id": "board-tile-dispatch",
+      "path": "js/board/tile-dispatch.js",
+      "domain": "board/arrival-tile-routing-safety-and-destination-selection",
+      "status": "extracted",
+      "requires": [
+        "board-registry"
+      ],
+      "provides": [
+        "DiceboundBoardTileDispatch"
       ]
     },
     {
@@ -601,6 +614,7 @@
         "pets-registry",
         "board-registry",
         "board-movement",
+        "board-tile-dispatch",
         "combat-enemies",
         "combat-guardians",
         "item-rarities",
