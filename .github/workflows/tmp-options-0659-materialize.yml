@@ -1,0 +1,123 @@
+name: Temporary 0.6.5.9 Options materializer
+
+on:
+  push:
+    branches:
+      - refactor/0.6.5.9-options-ui-rescue
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    if: github.actor != 'dicebound-manifest-publisher[bot]'
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out rescue branch
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/0.6.5.9-options-ui-rescue
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Mint DiceBound App token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Materialize canonical 0.6.5.9 identity
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          section = """## Beta 0.6.5.9
+
+          ### Options / settings presentation ownership (#40, #198, #209)
+          - Replaced the live Options overlay, styling, direct listeners and top-action wiring with `runtime/js/ui/options.js`.
+          - Options now owns its responsive destination and persistent top-right Done chrome; audio state, volume/sound-pack persistence, native save-folder support, reset confirmation, saves, checkpoints and gameplay remain in their existing owners.
+          - `dicebound.js` keeps only narrow callbacks, the existing semantic Camp trigger and refresh forwarding, with architecture guards rejecting the retired Options renderer chain.
+
+          """
+          if "## Beta 0.6.5.9" not in text:
+              marker = "## Beta 0.6.5.8"
+              if marker not in text:
+                  raise SystemExit("CHANGELOG 0.6.5.8 insertion marker not found")
+              text = text.replace(marker, section + marker, 1)
+              changelog.write_text(text, encoding="utf-8", newline="\n")
+
+          patch = Path("runtime/PATCH_NOTES.md")
+          text = patch.read_text(encoding="utf-8")
+          first = "# Unreleased — Beta 0.6.5.8"
+          if text.startswith(first):
+              text = "# Unreleased — Beta 0.6.5.9" + text[len(first):]
+          elif not text.startswith("# Unreleased — Beta 0.6.5.9"):
+              raise SystemExit("PATCH_NOTES unreleased heading is not 0.6.5.8/0.6.5.9")
+          section = """## Beta 0.6.5.9 Options / settings presentation ownership (#40, #198, #209)
+          - Options now has one responsive UI owner: `ui/options.js`, including the top action, native save-folder affordance, audio controls, reset entry point and persistent Done chrome.
+          - The old overlay renderer, direct listeners and Options styles are retired. Audio, persistence, native platform behavior, reset confirmation, gameplay, saves, checkpoints and RNG remain unchanged.
+
+          """
+          if "## Beta 0.6.5.9 Options / settings presentation ownership" not in text:
+              marker = "## Beta 0.6.5.8 Heirloom choice artwork sizing"
+              if marker not in text:
+                  raise SystemExit("PATCH_NOTES 0.6.5.8 insertion marker not found")
+              text = text.replace(marker, section + marker, 1)
+          patch.write_text(text, encoding="utf-8", newline="\n")
+
+          version_file = Path("runtime/js/version.js")
+          text = version_file.read_text(encoding="utf-8")
+          old = 'const RELEASE_SUMMARY="Heirloom choice artwork sizing hotfix.";'
+          new = 'const RELEASE_SUMMARY="Options/settings UI ownership.";'
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit("runtime/js/version.js release summary was unexpected")
+          version_file.write_text(text, encoding="utf-8", newline="\n")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          python tools/set_project_version.py --version 0.6.5.9 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.5.9 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          node --check runtime/js/ui/options.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_options_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          Remove-Item .github/workflows/tmp-options-0659-materialize.yml
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git status --short
+
+      - name: Commit canonical materialization
+        shell: pwsh
+        env:
+          APP_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git commit -m "chore: materialize Beta 0.6.5.9 identity"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git remote set-url origin "https://x-access-token:$env:APP_TOKEN@github.com/Krtz/DiceBound.git"
+          git push origin HEAD:refs/heads/refactor/0.6.5.9-options-ui-rescue
