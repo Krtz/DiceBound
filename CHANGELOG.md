@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.6
+
+### Protected-manifest URI repair (#120)
+- Corrected both dynamic Contents GET URIs to delimit `$manifestPath` before `?ref=main`, preventing PowerShell from treating the query delimiter as part of the expandable variable name.
+- The GitHub App, permissions, StartRule, branch protection, verified artifact/manifest sequence and `paths-ignore` behavior are unchanged. A real main release remains the proof that the GET, PUT and reread complete unattended.
+
 ## Beta 0.6.5.5
 
 ### Protected-manifest PUT diagnostics (#120)
