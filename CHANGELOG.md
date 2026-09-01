@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.3
+
+### Release-token Contents preflight (#120)
+- Protected-main publication now authenticates the release token and verifies repository visibility plus read access to `distribution/latest.json` before the expensive native build begins.
+- The final artifact verification and generate/validate/write/reread/compare manifest sequence remains unchanged; a real release after the replacement fine-grained PAT is required to prove unattended publication.
+
 ## Beta 0.6.5.2
 
 ### Info / Roadkeeper's Guide presentation ownership (#40, #76, #198, #209)
