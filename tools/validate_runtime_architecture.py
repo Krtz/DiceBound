@@ -582,7 +582,7 @@ def main() -> int:
         "async function move(",
         "Loaded Sixes",
         "Pale Devil",
-        "runtime.resolveTile?.()",
+        "runtime.dispatchTile?.()",
     ]:
         if required_board_movement_behavior not in board_movement_source:
             errors.append(
@@ -609,6 +609,57 @@ def main() -> int:
                 errors.append(
                     "retired board movement implementation remains in dicebound.js: "
                     + retired_board_movement_layer
+                )
+    board_tile_dispatch_module = by_id.get("board-tile-dispatch")
+    board_tile_dispatch_owner_ok = False
+    if not board_tile_dispatch_module:
+        errors.append("Board tile-dispatch owner board-tile-dispatch is missing from the runtime manifest")
+    else:
+        board_tile_dispatch_owner_ok = (
+            board_tile_dispatch_module.get("path") == "js/board/tile-dispatch.js"
+            and "board-registry" in (board_tile_dispatch_module.get("requires") or [])
+            and "DiceboundBoardTileDispatch" in (board_tile_dispatch_module.get("provides") or [])
+            and position.get("board-tile-dispatch", -1) < position.get(str(monolith_id), -1)
+        )
+        if not board_tile_dispatch_owner_ok:
+            errors.append(
+                "board-tile-dispatch must provide DiceboundBoardTileDispatch, require board-registry, and load before the monolith"
+            )
+    board_tile_dispatch_source = sources.get("board-tile-dispatch", "")
+    for required_board_tile_dispatch_behavior in [
+        "const OWNER='board/tile-dispatch'",
+        "const KNOWN_TILE_TYPES=Object.freeze(",
+        "function recoverUnknown(",
+        "function dispatchKnown(",
+        "function dispatch()",
+        "devilboss",
+        "merchantBossPrimed",
+    ]:
+        if required_board_tile_dispatch_behavior not in board_tile_dispatch_source:
+            errors.append(
+                "Board tile-dispatch owner is missing required behavior: "
+                + required_board_tile_dispatch_behavior
+            )
+    if monolith_source:
+        for expected_board_tile_dispatch_adapter in [
+            "const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({",
+            "dispatchTile:()=>dbBoardTileDispatch.dispatch()",
+            "dbBoardTileDispatch.dispatch()",
+            "trace:(name,work)=>v25TraceCommand(name,work,'detailed')",
+        ]:
+            if expected_board_tile_dispatch_adapter not in monolith_source:
+                errors.append("dicebound.js must use the board-tile-dispatch composition owner")
+        for retired_board_tile_dispatch_layer in [
+            "function resolveTile(",
+            "const resolveTileV24Base=resolveTile;",
+            "const resolveTileV25SafetyBase=resolveTile;",
+            "else if(name==='resolveTile')resolveTile=wrapped;",
+            "['rollDice','rollTwoDice','resolveTile','returnToRoad'",
+        ]:
+            if retired_board_tile_dispatch_layer in monolith_source:
+                errors.append(
+                    "retired board tile-dispatch implementation remains in dicebound.js: "
+                    + retired_board_tile_dispatch_layer
                 )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
@@ -678,6 +729,10 @@ def main() -> int:
         "boardMovementOwner": {
             "id": "board-movement",
             "configured": board_movement_owner_ok,
+        },
+        "boardTileDispatchOwner": {
+            "id": "board-tile-dispatch",
+            "configured": board_tile_dispatch_owner_ok,
         },
         "monolith": {
             "id": monolith_id,

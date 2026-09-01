@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.11
+
+### Board tile-dispatch ownership (#40, #209)
+- Replaced the live arrival dispatcher plus its Pale Devil and corrupt-tile recovery wrapper chain with `runtime/js/board/tile-dispatch.js`.
+- The new owner selects existing combat, event, merchant, reward and quiet-road destinations without owning their implementations; board generation/completion, combat, saves/checkpoints, gameplay values and RNG remain in their current owners.
+- `dicebound.js` retains only injected live callbacks and direct callers, while deterministic and architecture guards reject the retired dispatcher chain.
+
 ## Beta 0.6.5.10
 
 ### Board movement ownership (#40, #209)

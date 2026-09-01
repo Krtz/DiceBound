@@ -1,15 +1,15 @@
 {
   "assetCount": 409,
-  "browserContentHash": "f028b7082ffa0596a9ed98e10f2221e23874c81f2ba84b07c502c0bce9a85f9a",
-  "buildId": "dicebound-0.6.5.10-dev-f028b7082ffa0596",
+  "browserContentHash": "fd291d73172d84ab2ceb261936d2fdface9aec74f09d268288df8097b237958f",
+  "buildId": "dicebound-0.6.5.11-dev-fd291d73172d84ab",
   "channel": "Beta",
-  "contentFileCount": 458,
+  "contentFileCount": 459,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.5.10.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.5.11.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -35,6 +35,7 @@
     "js/pets/registry.js",
     "js/board/registry.js",
     "js/board/movement.js",
+    "js/board/tile-dispatch.js",
     "js/combat/enemies.js",
     "js/combat/guardians.js",
     "js/items/rarities.js",
@@ -60,9 +61,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "f028b7082ffa0596a9ed98e10f2221e23874c81f2ba84b07c502c0bce9a85f9a",
+  "sourceHash": "fd291d73172d84ab2ceb261936d2fdface9aec74f09d268288df8097b237958f",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.5.10",
+  "version": "0.6.5.11",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

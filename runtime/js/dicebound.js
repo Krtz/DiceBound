@@ -286,6 +286,33 @@
   });
   const ProgressionUI=Object.freeze({render(result){updateHUD?.();return result;}});
 
+  const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({
+    getRoad:()=>({player,tiles,boardLevel,merchantBossPrimed,merchantBossDefeatedThisBoard}),
+    setRollLocked:value=>{rollLocked=!!value;},
+    setCombatBusy:value=>{combatBusy=!!value;},
+    refreshTile,
+    updateHud:updateHUD,
+    log:addLog,
+    toast:showToast,
+    returnToRoad:()=>returnToRoad(),
+    startCombat:kind=>startCombat(kind),
+    openEvent:()=>openEvent(),
+    openWheelEvent:()=>openWheelEvent(),
+    openFreePowerup:()=>openFreePowerup(),
+    openTreasure:()=>openTreasure(),
+    useCamp:()=>useCamp(),
+    openMerchant:()=>openMerchant(),
+    openBlessing:()=>openBlessing(),
+    openMystic:()=>openMystic(),
+    openBloodwell:()=>openBloodwell(),
+    openGambler:()=>openGambler(),
+    clearDevilPrimed:()=>{meta.devilPrimed=false;saveMeta();},
+    logDiagnostic:(level,category,message,data)=>v25Log(level,category,message,data),
+    debugState:()=>v25State(),
+    trace:(name,work)=>v25TraceCommand(name,work,'detailed')
+  });
+  if(!dbBoardTileDispatch)throw new Error('DiceboundBoardTileDispatch must load before dicebound.js');
+
   const dbBoardMovement=window.DiceboundBoardMovement?.configure({
     getRoad:()=>({player,tiles,boardLevel,hellMode,devilPrimed:!!meta.devilPrimed}),
     currentTileCount:()=>currentTileCount(),
@@ -303,7 +330,7 @@
     placePawn,
     updateHud:updateHUD,
     delay,
-    resolveTile:()=>resolveTile()
+    dispatchTile:()=>dbBoardTileDispatch.dispatch()
   });
   if(!dbBoardMovement)throw new Error('DiceboundBoardMovement must load before dicebound.js');
 
@@ -1256,7 +1283,6 @@
   async function rollDice(){
     if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbBoardMovement.move(value+bonus,value,bonus>0,chosen);
   }
-  function resolveTile(){const tile=tiles[player.position];if(!tile){rollLocked=false;updateHUD();return;}if(tile.cleared||tile.type==="empty"||tile.type==="start"){addLog("The road is quiet. For now.");returnToRoad();return;}if(tile.type==="enemy")return startCombat("normal");if(tile.type==="miniboss")return startCombat("miniboss");if(tile.type==="boss")return startCombat("final");if(tile.type==="event")return openEvent();if(tile.type==="wheel")return openWheelEvent();if(tile.type==="powerup")return openFreePowerup();if(tile.type==="treasure")return openTreasure();if(tile.type==="camp")return useCamp();if(tile.type==="merchant")return merchantBossPrimed&&!merchantBossDefeatedThisBoard?startCombat("merchant"):openMerchant();if(tile.type==="blessing")return openBlessing();if(tile.type==="mystic")return openMystic();if(tile.type==="bloodwell")return openBloodwell();if(tile.type==="gambler")return openGambler();}
   function startCombat(kind="normal"){
     const tile=tiles[player.position];let bases=[];merchantBossBattle=kind==="merchant";
     if(kind==="merchant")bases=[{name:"The Road Merchant",icon:"🧔💰",hp:185+boardLevel*60,attack:28+boardLevel*5,xp:260,gold:500,weakness:"nature",specialName:"Hostile Acquisition",enemyBarrier:4}];
@@ -1461,7 +1487,7 @@
 
   function resetPlayer(classId=selectedClassId){const cls=CLASSES[classId]||CLASSES.ranger;Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0});applyTalentBonuses();(meta.heirlooms||[]).slice(0,getHeirloomSlots()).forEach(item=>equipItem(item,true));boardLevel=1;rolls=0;tilesMovedThisRun=0;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentMerchantItems=[];runFinalized=false;lastLegacyAward=0;lastGoldLegacyAward=0;merchantBossBattle=false;}
 
-  function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;resolveTile();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
+  function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbBoardTileDispatch.dispatch();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
 
   /* SEMANTIC OWNER — Progression, achievements, board expansion and early run lifecycle. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1: achievements, classes, stats and combat polish ---------- */
@@ -4691,7 +4717,6 @@ function buildDiceboundHumanHarness235(){
   const generateBoardV24Base=generateBoard;
   generateBoard=function(){const out=generateBoardV24Base();if(hellMode&&meta.devilPrimed&&boardLevel===1){let idx=tiles.findIndex((t,i)=>i>=28&&i<=42&&['enemy','event','treasure','empty'].includes(t.type));if(idx<0)idx=Math.min(34,tiles.length-2);tiles[idx]={type:'devilboss',cleared:false,packSize:1,enemyBase:db317Enemy('pale-devil')};}return out;};
   const tileMetaV24Base=tileMeta;tileMeta=function(tile){if(tile?.type==='devilboss')return ['👿🌙','???'];return tileMetaV24Base(tile);};
-  const resolveTileV24Base=resolveTile;resolveTile=function(){const tile=tiles[player.position];if(tile?.type==='devilboss'){meta.devilPrimed=false;saveMeta();return startCombat('devil');}return resolveTileV24Base();};
   const startCombatV24Base=startCombat;
   startCombat=function(kind='normal'){const out=startCombatV24Base(kind);if(kind==='devil'&&currentEnemy){currentEnemies.forEach(e=>{e.devilBoss=true;e.boss=true;e.guardian=true;e.specialName='Pale Moon Waltz';e.hp=Math.round(e.hp*1.75);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.35);e.defense=(e.defense||0)+8;});currentEncounterLead=currentEnemies[0];currentEnemy=currentEnemies[currentEnemyIndex]||currentEnemies[0];$('combatTitle').textContent='Secret Boss: The Pale Devil';$('combatSubtitle').textContent='You danced around the fire. Something accepted the invitation.';updateBossSpecialIndicator();updateCombatUI();}return out;};
   const winCombatV24Base=winCombat;winCombat=async function(){const defeated=currentEncounterLead||currentEnemy;if(defeated?.devilBoss){meta.devilBossKills=(meta.devilBossKills||0)+1;saveMeta();showToast('👿 The Pale Devil bows.',3000,true);}return winCombatV24Base();};
@@ -5019,31 +5044,22 @@ function buildDiceboundHumanHarness235(){
     const die=$('dice');if(die?.classList.contains('rolling'))return false;
     v25Recoveries++;v25LastRecovery=Date.now();v25Log('errors','recovery','Recovering stuck road state',{reason,tile:tiles[player.position],state:v25State()});
     if(pendingLevelUps>0){openLevelUp();return true;}
-    const tile=tiles[player.position];if(tile&&!tile.cleared&&!['empty','start'].includes(tile.type)){rollLocked=true;try{resolveTile();}catch(e){v25Log('errors','recovery','resolveTile failed during recovery',{error:String(e),state:v25State()});rollLocked=false;updateHUD();}return true;}
+    const tile=tiles[player.position];if(tile&&!tile.cleared&&!['empty','start'].includes(tile.type)){rollLocked=true;try{dbBoardTileDispatch.dispatch();}catch(e){v25Log('errors','recovery','resolveTile failed during recovery',{error:String(e),state:v25State()});rollLocked=false;updateHUD();}return true;}
     rollLocked=false;updateHUD();$('rollBtn')?.classList.add('debug-recovered');setTimeout(()=>$('rollBtn')?.classList.remove('debug-recovered'),900);showToast('🛠️ Road state recovered');return true;
   }
   setInterval(()=>{if(!gameStarted||!rollLocked||combatBusy||currentEnemy||v25VisibleBlocker()||$('dice')?.classList.contains('rolling')){v25StuckSince=0;return;}if(!v25StuckSince)v25StuckSince=Date.now();if(Date.now()-v25StuckSince>4200&&Date.now()-v25LastRecovery>5000){v25RecoverRoadState('automatic watchdog');v25StuckSince=0;}},1000);
   window.DiceboundRoadRecovery=Object.freeze({recover:()=>v25RecoverRoadState('console/manual'),status:()=>({recoveries:v25Recoveries,stuckSince:v25StuckSince,state:v25State()})});
 
   // Install logging around high-level commands after all gameplay overrides.
-  function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,resolveTile,returnToRoad,startCombat,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat,identityGuardAction})[name];if(typeof fn!=='function')return;
-    const wrapped=function(...args){v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(this,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='resolveTile')resolveTile=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='startCombat')startCombat=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;else if(name==='identityGuardAction')identityGuardAction=wrapped;
+  function v25TraceCommand(name,fn,level='detailed',args=[],thisArg=undefined){
+    v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
-  ['rollDice','rollTwoDice','resolveTile','returnToRoad','startCombat','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat','identityGuardAction'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='startCombat'||n==='winCombat'?'events':'detailed'));
-
-
-  // Unknown/corrupt tile types were one plausible source of a road lock: older
-  // resolveTile implementations simply fell off the end without releasing the
-  // dice. Validate the tile before routing it, log the corruption and recover
-  // the road instead of stranding the run.
-  const resolveTileV25SafetyBase=resolveTile;
-  resolveTile=function(){
-    const tile=tiles[player.position],known=new Set(['start','empty','enemy','miniboss','boss','event','wheel','powerup','treasure','camp','merchant','blessing','mystic','bloodwell','gambler','devilboss']);
-    if(tile&&!known.has(tile.type)){v25Log('errors','road',`Unknown tile type: ${tile.type}`,{position:player.position,board:boardLevel,tile});tile.type='empty';tile.cleared=true;refreshTile(player.position);rollLocked=false;combatBusy=false;updateHUD();showToast('🛠️ Corrupt road tile repaired');return;}
-    try{return resolveTileV25SafetyBase();}catch(e){v25Log('errors','road','resolveTile threw',{error:String(e),state:v25State(),tile});rollLocked=false;combatBusy=false;updateHUD();showToast('🛠️ Road recovered after tile error');}
-  };
+  function v25WrapCommand(name,level='detailed'){
+    const fn=({rollDice,rollTwoDice,returnToRoad,startCombat,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat,identityGuardAction})[name];if(typeof fn!=='function')return;
+    const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
+    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='startCombat')startCombat=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;else if(name==='identityGuardAction')identityGuardAction=wrapped;
+  }
+  ['rollDice','rollTwoDice','returnToRoad','startCombat','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat','identityGuardAction'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='startCombat'||n==='winCombat'?'events':'detailed'));
 
   /* Final UI sync / tests -------------------------------------------------- */
   const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
@@ -7037,7 +7053,7 @@ function buildDiceboundHumanHarness235(){
     finally{eligibleUpgrades=original;}
   }
   function v319RoadLockRecovery(){
-    v319ResetCareer();resetPlayer('ranger');gameStarted=true;generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;resolveTile();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
+    v319ResetCareer();resetPlayer('ranger');gameStarted=true;generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;dbBoardTileDispatch.dispatch();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
   }
   function v319PoorItems(n=500){v319ResetCareer();resetPlayer('ranger');let nulls=0,badSlots=0,wrongRarity=0;for(let i=0;i<n;i++){const item=generateEquipment('poor');if(!item)nulls++;else{if(!EQUIPMENT_SLOTS.includes(item.slot))badSlots++;if(item.rarity!=='poor')wrongRarity++;}}return {n,nulls,badSlots,wrongRarity};}
   function v319EnergyShield(){

@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.10
+# Unreleased — Beta 0.6.5.11
+
+## Beta 0.6.5.11 Board tile-dispatch ownership (#40, #209)
+- Board arrival now has one owner: `board/tile-dispatch.js` validates the current tile, retains Pale Devil and corrupt-tile recovery behavior, then selects the existing combat/event/reward/merchant/road destination.
+- Destination implementations, board generation/completion, combat, saves/checkpoints, gameplay values and RNG are unchanged. The historical dispatcher/wrapper chain is retired rather than left beneath the new owner.
 
 ## Beta 0.6.5.10 Board movement ownership (#40, #209)
 - Board movement now has one owner: `board/movement.js` handles guardian/devil interception, Loaded Sixes, per-step progression, Fast Travel XP, board movement events and the existing tile handoff.
