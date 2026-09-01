@@ -283,7 +283,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           $manifestPath = "distribution/latest.json"
-          $current = gh api "repos/Krtz/DiceBound/contents/$manifestPath?ref=main" | ConvertFrom-Json
+          $current = gh api "repos/Krtz/DiceBound/contents/${manifestPath}?ref=main" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $manifestBytes = (Get-Item $manifestPath).Length
           Write-Host ("Launcher manifest PUT diagnostic: " + (([ordered]@{
@@ -321,7 +321,7 @@ jobs:
             Remove-Item $payloadPath, $responsePath, $stderrPath -Force -ErrorAction SilentlyContinue
           }
 
-          $remote = gh api "repos/Krtz/DiceBound/contents/$manifestPath?ref=main" | ConvertFrom-Json
+          $remote = gh api "repos/Krtz/DiceBound/contents/${manifestPath}?ref=main" | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $remoteText = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($remote.content -replace '\s', '')))
           $localText = Get-Content $manifestPath -Raw

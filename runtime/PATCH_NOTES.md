@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.5
+# Unreleased — Beta 0.6.5.6
+
+## Beta 0.6.5.6 Protected-manifest URI repair (#120)
+- The release workflow now braces both dynamic `manifestPath` Contents GET URLs before `?ref=main`, so PowerShell cannot absorb the query delimiter into the variable name.
+- GitHub App credentials/permissions, StartRule, protected-main policy, asset verification and launcher-manifest reread contracts are unchanged. A real main release will prove the full unattended sequence.
 
 ## Beta 0.6.5.5 Protected-manifest PUT diagnostics (#120)
 - Main-only release publication now logs safe protected-Contents-PUT evidence: branch, prior blob SHA, local byte count, release SHA, public StartRule summary, HTTP status and parsed GitHub error fields on failure.
