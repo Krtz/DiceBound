@@ -5951,19 +5951,6 @@ function buildDiceboundHumanHarness235(){
 
   const beta042Style=document.createElement('style');
   beta042Style.textContent=`
-    #muteBtn,#saveFolderBtn{display:none!important}
-    #campResetProgressBtn{display:none!important}
-    #optionsBtn{min-width:132px}
-    .options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
-    .options-card{padding:12px 13px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);display:grid;gap:8px}
-    .options-card b{font-size:12px}.options-card span{font-size:10px;color:var(--muted);line-height:1.45}
-    .options-note{margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5}
-    .options-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
-    .options-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .options-inline strong{font-size:11px}
-    .options-volume{width:100%}
-    .options-range{width:100%;accent-color:#d8b36a}
-    .options-select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(9,14,24,.88);color:var(--ink);font:inherit}
     body[data-run-mode="nightmare"] .world-atmosphere-layer{opacity:.21!important}
     body[data-run-mode="hell"] .world-atmosphere-layer{opacity:.24!important}
     body[data-hud-flow="expanded"] .sidebar>.card:first-child{grid-column:1;grid-row:1}
@@ -5992,64 +5979,21 @@ function buildDiceboundHumanHarness235(){
     document.body?.setAttribute('data-sidebar-companion',hasSet?'below':'adjacent');
     return hasSet;
   }
-  function beta042EnsureOptionsOverlay(){
-    if($('optionsOverlay'))return $('optionsOverlay');
-    const overlay=document.createElement('div');
-    overlay.className='overlay hidden';
-    overlay.id='optionsOverlay';
-    overlay.innerHTML=`<div class="modal"><h2>⚙️ Options</h2><p class="subtitle">Runtime helpers, audio controls and permanent-progress utilities.</p><div class="options-grid"><div class="options-card"><b>Native save tools</b><span>Open the real save-folder location when you are running the Windows wrapper.</span><button class="small-btn" id="optionsOpenSaveBtn">📂 Open Save Folder</button></div><div class="options-card"><b>Audio</b><span>Toggle sound effects, choose the active sound pack, and set the global SFX volume.</span><button class="small-btn" id="optionsSoundBtn">🔊 Sound: On</button><div class="options-volume"><div class="options-inline"><strong>Volume</strong><span id="optionsVolumeValue">70%</span></div><input class="options-range" id="optionsVolumeSlider" type="range" min="0" max="100" step="1" value="70"></div><div><strong style="font-size:11px">Sound Pack</strong><select class="options-select" id="optionsSoundPackSelect"><option value="synth">Built-in synth</option><option value="custom">Custom asset pack (auto fallback)</option></select></div></div><div class="options-card"><b>Permanent progress</b><span>Reset legacy progress, unlocks, heirlooms, pets and achievements. This uses the same confirmation flow as the old reset button.</span><button class="small-btn danger" id="optionsResetBtn">Reset all progress</button></div></div><div class="options-note" id="optionsRuntimeNote"></div><div class="options-actions"><button class="main-btn" id="optionsCloseBtn">Close options</button></div></div>`;
-    document.body.appendChild(overlay);
-    $('optionsOpenSaveBtn')?.addEventListener('click',()=>{$('saveFolderBtn')?.click();setTimeout(beta042SyncOptionsMenu,0);});
-    $('optionsSoundBtn')?.addEventListener('click',()=>{$('muteBtn')?.click();beta042SyncOptionsMenu();});
-    $('optionsVolumeSlider')?.addEventListener('input',e=>{meta.settings=meta.settings||{};meta.settings.masterVolume=clamp(Number(e.target.value)/100,0,1);saveMeta();beta042SyncOptionsMenu(false);});
-    $('optionsVolumeSlider')?.addEventListener('change',()=>{try{sfx.coin();}catch(_){}});
-    $('optionsSoundPackSelect')?.addEventListener('change',e=>{meta.settings=meta.settings||{};meta.settings.soundPack=e.target.value==='custom'?'custom':'synth';saveMeta();beta042SyncOptionsMenu();try{sfx.coin();}catch(_){}});
-    $('optionsResetBtn')?.addEventListener('click',()=>{window.DiceboundTalentTree?.resetProgress?.();beta042CloseOptions();});
-    $('optionsCloseBtn')?.addEventListener('click',beta042CloseOptions);
-    overlay.addEventListener('click',e=>{if(e.target===overlay)beta042CloseOptions();});
-    return overlay;
-  }
-  function beta042SyncOptionsMenu(playNote=true){
-    const supported=!!window.DiceboundPlatform?.capabilities?.openSaveFolder;
-    const soundBtn=$('optionsSoundBtn'),saveBtn=$('optionsOpenSaveBtn'),note=$('optionsRuntimeNote');
-    const slider=$('optionsVolumeSlider'),volumeValue=$('optionsVolumeValue'),packSelect=$('optionsSoundPackSelect');
-    const settings=meta.settings=meta.settings||{masterVolume:.70,soundPack:'synth'};
-    const volume=clamp(Number(settings.masterVolume),0,1),pack=settings.soundPack==='custom'?'custom':'synth';
-    settings.masterVolume=volume;settings.soundPack=pack;
-    if(soundBtn)soundBtn.textContent=muted?'🔇 Sound: Off':'🔊 Sound: On';
-    if(slider)slider.value=String(Math.round(volume*100));
-    if(volumeValue)volumeValue.textContent=`${Math.round(volume*100)}%`;
-    if(packSelect)packSelect.value=pack;
-    if(saveBtn){saveBtn.disabled=!supported;saveBtn.textContent=supported?'📂 Open Save Folder':'📂 Open Save Folder (native only)';}
-    if(note){
-      const runtime=supported?'Native wrapper detected. Saves live in %LOCALAPPDATA%\\Dicebound\\saves and the Options menu can open that folder directly.':'Browser build detected. Save-folder opening is only available in the native Windows wrapper; sound and reset controls still work here.';
-      note.textContent=`${runtime} Custom SFX are now prepared: drop files named roll, step, hit, crit, coin, heal, lose, level, win and holy into assets/sounds/custom as .ogg, .mp3, .wav or .webm, then switch Sound Pack to Custom. Missing files automatically fall back to the built-in synth.`;
-    }
-  }
-  function beta042OpenOptions(){beta042EnsureTopOptions();beta042EnsureOptionsOverlay();beta042SyncOptionsMenu();$('optionsOverlay')?.classList.remove('hidden');}
-  function beta042CloseOptions(){$('optionsOverlay')?.classList.add('hidden');}
-  function beta042EnsureTopOptions(){
-    const topActions=document.querySelector('.top-actions');
-    if(!topActions)return;
-    const saveBtn=$('saveFolderBtn'),muteBtn=$('muteBtn');
-    if(saveBtn)saveBtn.hidden=true;
-    if(muteBtn)muteBtn.hidden=true;
-    let btn=$('optionsBtn');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.className='small-btn';
-      btn.id='optionsBtn';
-      btn.textContent='⚙️ Options';
-      topActions.insertBefore(btn,$('restartBtn')||null);
-      btn.addEventListener('click',beta042OpenOptions);
-    }
-    beta042EnsureOptionsOverlay();
-  }
+  const dbOptionsUi=window.DiceboundOptionsUi?.configure({
+    find:$,
+    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth'}),
+    nativeSaveSupported:()=>!!window.DiceboundPlatform?.capabilities?.openSaveFolder,
+    openSaveFolder:()=>{const button=$('saveFolderBtn');button?.click();return !!button;},
+    toggleMuted:()=>{$('muteBtn')?.click();return muted;},
+    setVolume:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.masterVolume=clamp(Number(value),0,1);saveMeta();return meta.settings.masterVolume;},
+    setSoundPack:pack=>{meta.settings=meta.settings||defaultSettings();meta.settings.soundPack=pack==='custom'?'custom':'synth';saveMeta();return meta.settings.soundPack;},
+    playPreview:()=>{try{sfx.coin();}catch(_){}},
+    resetProgress:()=>window.DiceboundTalentTree?.resetProgress?.()
+  });
   function beta042EnsureCampOptions(){return window.DiceboundCamp?.ensureOptionsButton();}
   function beta042RefreshCampAndHud(){
-    beta042EnsureTopOptions();
-    beta042EnsureOptionsOverlay();
-    beta042SyncOptionsMenu();
+    dbOptionsUi?.ensureTopAction?.();
+    dbOptionsUi?.sync?.();
     beta042SyncSidebarLayout();
     const scene=$('campScene');
     if(scene){

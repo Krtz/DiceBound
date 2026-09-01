@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.8
+# Unreleased — Beta 0.6.5.9
+
+## Beta 0.6.5.9 Options / settings presentation ownership (#40, #198, #209)
+- Options now has one responsive UI owner: `ui/options.js`, including the top action, native save-folder affordance, audio controls, reset entry point and persistent Done chrome.
+- The old overlay renderer, direct listeners and Options styles are retired. Audio, persistence, native platform behavior, reset confirmation, gameplay, saves, checkpoints and RNG remain unchanged.
 
 ## Beta 0.6.5.8 Heirloom choice artwork sizing (#252)
 - Heirloom and storage cards now constrain authored equipment art to compact 48px thumbnails instead of allowing full/native image dimensions to blow out the Journey End and Camp layouts.
