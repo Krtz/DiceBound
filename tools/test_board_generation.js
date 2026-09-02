@@ -14,6 +14,7 @@ vm.runInNewContext(source,{window,console,Math},{filename:"runtime/js/board/gene
 const generation=window.DiceboundBoardGeneration;
 assert.ok(generation,"Board generation owner is not public");
 assert.equal(generation.owner,"board/generation");
+assert.equal(generation.inspect().finalRulesActive,false,"final Board rules must stay dormant before the compatibility preview is generated");
 assert.doesNotMatch(source,/\bMath\.random\b/,"Board generation must use the injected RNG only");
 assert.doesNotMatch(source,/function (buildBoard|startCombat|movePlayer|resolveTile|advanceToNextBoard)\b/,"Board generation must not absorb UI, combat, movement, dispatch, or transition ownership");
 
@@ -70,6 +71,19 @@ function scenario({boardLevel,seed=1,hellMode=false,devilPrimed=false,withSnapsh
   generation.generate();
   return {calls,random,result,digest:digest(result.tiles)};
 }
+
+// The compatibility monolith historically builds one Board 1 preview before
+// the later generation patch chain exists. Seed 1 deliberately places Mystic
+// only after the miniboss in the base generator, so this proves the preview is
+// not accidentally receiving the later Board 1 placement guarantee.
+const preview= scenario({boardLevel:1,seed:1});
+assert.deepEqual(preview.calls,[['snapshot',false],['setRoad',3]],"preview generation must publish road state exactly once through the snapshot boundary");
+assert.equal(preview.result.tiles.slice(3,11).some(tile=>tile.type==="mystic"),false,"bootstrap preview must remain base-only before final Board 1 placement rules activate");
+assert.equal(generation.inspect().finalRulesActive,true,"a successful compatibility preview must activate final rules for all subsequent generations");
+
+const finalBoard1SameSeed=scenario({boardLevel:1,seed:1,withSnapshot:true});
+assert.ok(finalBoard1SameSeed.result.tiles.slice(3,11).some(tile=>tile.type==="mystic"),"the first real Board 1 generation must apply the published early-Mystic guarantee");
+assert.equal(finalBoard1SameSeed.random.draws(),preview.random.draws(),"activating final Board 1 placement rules must not consume extra RNG");
 
 const board1=scenario({boardLevel:1,seed:11,withSnapshot:true});
 assert.deepEqual(board1.calls,[['snapshot',true],['setRoad',3]],"generation must retain its run-talent snapshot boundary and then publish road state once");
@@ -135,4 +149,4 @@ for(const retired of [
   "generateBoard=function"
 ])assert.ok(!monolith.includes(retired),`retired Board-generation chain remains: ${retired}`);
 
-console.log("Board generation owner PASS: Board 1/5/6 construction, Pale Devil placement, exact fixture RNG cursors and retired-chain guards are deterministic");
+console.log("Board generation owner PASS: bootstrap preview, Board 1/5/6 construction, Pale Devil placement, exact fixture RNG cursors and retired-chain guards are deterministic");
