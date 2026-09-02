@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.5.12",
+  "version": "0.6.5.13",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -34,6 +34,7 @@
     "js/board/registry.js",
     "js/board/movement.js",
     "js/board/tile-dispatch.js",
+    "js/board/generation.js",
     "js/board/transition.js",
     "js/combat/enemies.js",
     "js/combat/guardians.js",

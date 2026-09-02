@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.13
+
+### Board generation ownership (#40, #209)
+- Replaced the historical `generateBoard` reassignment chain with `runtime/js/board/generation.js`, the single owner for deterministic road construction, special-tile placement, enemy/pack creation, Board 1 guarantees, Board 5/6 overlays, Board 4/5 final pack passes and Board 2 Pale Devil placement.
+- The owner preserves injected RNG order, talent-snapshot behavior, merchant road state and the published legacy Board 1 Devil cleanup result; DOM tile rendering, movement, arrival dispatch, combat, saves/checkpoints and UI remain in their existing owners.
+- `dicebound.js` keeps only narrow generation/enemy forwarding adapters, while deterministic fixtures and architecture guards reject the retired V11/V12/V15/V19/V24/V25/DB046/DB047 ownership chain.
+
 ## Beta 0.6.5.12
 
 ### Board transition ownership (#40, #209)

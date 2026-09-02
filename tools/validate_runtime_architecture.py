@@ -661,6 +661,63 @@ def main() -> int:
                     "retired board tile-dispatch implementation remains in dicebound.js: "
                     + retired_board_tile_dispatch_layer
                 )
+    board_generation_module = by_id.get("board-generation")
+    board_generation_owner_ok = False
+    if not board_generation_module:
+        errors.append("Board generation owner board-generation is missing from the runtime manifest")
+    else:
+        board_generation_owner_ok = (
+            board_generation_module.get("path") == "js/board/generation.js"
+            and "board-registry" in (board_generation_module.get("requires") or [])
+            and "DiceboundBoardGeneration" in (board_generation_module.get("provides") or [])
+            and position.get("board-generation", -1) < position.get(str(monolith_id), -1)
+        )
+        if not board_generation_owner_ok:
+            errors.append(
+                "board-generation must provide DiceboundBoardGeneration, require board-registry, and load before the monolith"
+            )
+    board_generation_source = sources.get("board-generation", "")
+    for required_board_generation_behavior in [
+        "const OWNER='board/generation'",
+        "function buildRoad(",
+        "function applyBoardSixFirstPass(",
+        "function applyPaleDevil(",
+        "function applyBoardFourFivePass046(",
+        "function applyBoardFourFivePass047(",
+        "function generate()",
+    ]:
+        if required_board_generation_behavior not in board_generation_source:
+            errors.append(
+                "Board generation owner is missing required behavior: "
+                + required_board_generation_behavior
+            )
+    if monolith_source:
+        for expected_board_generation_adapter in [
+            "const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({",
+            "function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}",
+            "function generateBoard(){return dbBoardGeneration.generate();}",
+        ]:
+            if expected_board_generation_adapter not in monolith_source:
+                errors.append("dicebound.js must use the board-generation composition owner")
+        for retired_board_generation_layer in [
+            "function drawSpecialIndexes(",
+            "function plannedPackSize(",
+            "const generateBoardV15=generateBoard;",
+            "const generateBoardV11=generateBoard;",
+            "const generateBoardV12=generateBoard;",
+            "const generateBoardV19Base=generateBoard;",
+            "const v235GenerateBoardBase=generateBoard;",
+            "const generateBoardV24Base=generateBoard;",
+            "const generateBoardV25DevilBase=generateBoard;",
+            "const db046GenerateBoardBase=generateBoard;",
+            "const db047GenerateBoardBase=generateBoard;",
+            "generateBoard=function",
+        ]:
+            if retired_board_generation_layer in monolith_source:
+                errors.append(
+                    "retired board generation implementation remains in dicebound.js: "
+                    + retired_board_generation_layer
+                )
     board_transition_module = by_id.get("board-transition")
     board_transition_owner_ok = False
     if not board_transition_module:
