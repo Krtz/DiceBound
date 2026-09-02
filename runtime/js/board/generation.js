@@ -192,10 +192,10 @@
       ?buildRoad({boardLevel:5,bloodwells:1,gamblers:1,minibossLevel:5})
       :buildRoad({boardLevel:current.boardLevel,bloodwells:current.boardLevel===4?1:2,gamblers:current.boardLevel===4?1:2});
     const tiles=road.tiles;
-    // The compatibility monolith first built its preview Board 1 before the
-    // later Board-specific patches were defined.  Keep that startup phase
-    // base-only, then activate the final published rule set at the precise
-    // former DB047 boundary for all actual runs and later rebuilds.
+    // The compatibility monolith builds one preview Board 1 before its later
+    // Board-generation patches exist. Keep that first successful generation
+    // base-only; generate() activates the final published rules immediately
+    // afterward so every real run, resume and later rebuild uses the final set.
     if(finalRulesActive){
       if(current.boardLevel===1)forceBoardOnePlacement(tiles);
       retainRetiredBoardOneDevilCleanup(tiles,current);
@@ -208,7 +208,9 @@
   }
   function generate(){
     const work=()=>build();
-    return runtime.withRunTalentSnapshot?runtime.withRunTalentSnapshot(work):work();
+    const result=runtime.withRunTalentSnapshot?runtime.withRunTalentSnapshot(work):work();
+    if(!finalRulesActive)finalRulesActive=true;
+    return result;
   }
   function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};return api;}
   function activateFinalRules(){finalRulesActive=true;return api;}
