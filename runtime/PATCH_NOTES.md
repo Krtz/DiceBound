@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.5.12
+# Unreleased — Beta 0.6.5.13
+
+## Beta 0.6.5.13 Board generation ownership (#40, #209)
+- Road generation now has one owner: `board/generation.js` constructs the road, places specials, generates ordinary packs, applies the published Board 1/5/6 overlays, preserves the Board 4/5 late pack passes and makes the Board 2 Pale Devil placement.
+- RNG cursor/order, run-Talent snapshots, merchant state, Board behavior, saves/checkpoints, combat, DOM rendering and UI remain unchanged. The prior `generateBoard` wrapper chain is retired rather than left alive under the new owner.
 
 ## Beta 0.6.5.12 Board transition ownership (#40, #209)
 - Board-to-board advancement now has one owner: `board/transition.js` resets encounter state, advances and rebuilds the road, applies published entry recovery, announces the next Board and performs the existing delayed movement unlock.

@@ -27,6 +27,7 @@
     "board-registry",
     "board-movement",
     "board-tile-dispatch",
+    "board-generation",
     "board-transition",
     "combat-enemies",
     "combat-guardians",
@@ -303,6 +304,18 @@
       ],
       "provides": [
         "DiceboundBoardTileDispatch"
+      ]
+    },
+    {
+      "id": "board-generation",
+      "path": "js/board/generation.js",
+      "domain": "board/road-tile-construction-enemy-pack-generation-board-overlays-and-pale-devil-placement",
+      "status": "extracted",
+      "requires": [
+        "board-registry"
+      ],
+      "provides": [
+        "DiceboundBoardGeneration"
       ]
     },
     {
@@ -628,6 +641,7 @@
         "board-registry",
         "board-movement",
         "board-tile-dispatch",
+        "board-generation",
         "board-transition",
         "combat-enemies",
         "combat-guardians",
