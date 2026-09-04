@@ -29,6 +29,7 @@
     "board-tile-dispatch",
     "board-generation",
     "board-transition",
+    "run-lifecycle",
     "combat-enemies",
     "combat-guardians",
     "item-rarities",
@@ -328,6 +329,20 @@
       ],
       "provides": [
         "DiceboundBoardTransition"
+      ]
+    },
+    {
+      "id": "run-lifecycle",
+      "path": "js/run/lifecycle.js",
+      "domain": "run/fresh-run-checkpoint-seed-player-board-and-entry-orchestration",
+      "status": "extracted",
+      "requires": [
+        "run-checkpoint",
+        "board-generation",
+        "board-transition"
+      ],
+      "provides": [
+        "DiceboundRunLifecycle"
       ]
     },
     {
@@ -643,6 +658,7 @@
         "board-tile-dispatch",
         "board-generation",
         "board-transition",
+        "run-lifecycle",
         "combat-enemies",
         "combat-guardians",
         "item-rarities",

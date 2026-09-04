@@ -767,6 +767,68 @@ def main() -> int:
                     "retired board-transition implementation remains in dicebound.js: "
                     + retired_board_transition_layer
                 )
+    run_lifecycle_module = by_id.get("run-lifecycle")
+    run_lifecycle_owner_ok = False
+    if not run_lifecycle_module:
+        errors.append("Run lifecycle owner run-lifecycle is missing from the runtime manifest")
+    else:
+        run_lifecycle_owner_ok = (
+            run_lifecycle_module.get("path") == "js/run/lifecycle.js"
+            and {"run-checkpoint", "board-generation", "board-transition"}.issubset(
+                set(run_lifecycle_module.get("requires") or [])
+            )
+            and "DiceboundRunLifecycle" in (run_lifecycle_module.get("provides") or [])
+            and position.get("run-lifecycle", -1) < position.get(str(monolith_id), -1)
+        )
+        if not run_lifecycle_owner_ok:
+            errors.append(
+                "run-lifecycle must provide DiceboundRunLifecycle, require checkpoint/generation/transition, and load before the monolith"
+            )
+    run_lifecycle_source = sources.get("run-lifecycle", "")
+    for required_run_lifecycle_behavior in [
+        "const OWNER='run/lifecycle'",
+        "const FRESH_RUN_SURFACES=Object.freeze(",
+        "function startFreshRun(options={})",
+        "runtime.clearCheckpoint?.();runtime.seedNewRun?.();",
+        "runtime.generateBoard?.();runtime.buildBoard?.();",
+        "runtime.recordFreshRunStarted?.();runtime.updateHud?.();",
+        "runtime.afterClassStart?.({wasRandom,chosen,context});runtime.scheduleCheckpoint?.();",
+    ]:
+        if required_run_lifecycle_behavior not in run_lifecycle_source:
+            errors.append(
+                "Run lifecycle owner is missing required behavior: "
+                + required_run_lifecycle_behavior
+            )
+    if "Math.random" in run_lifecycle_source:
+        errors.append("run-lifecycle must not consume RNG through Math.random")
+    for forbidden_run_lifecycle_behavior in ["function restore", "function resume", "function resetPlayer("]:
+        if forbidden_run_lifecycle_behavior in run_lifecycle_source:
+            errors.append(
+                "run-lifecycle must not absorb checkpoint restore or player-mechanics ownership: "
+                + forbidden_run_lifecycle_behavior
+            )
+    if monolith_source:
+        for expected_run_lifecycle_adapter in [
+            "const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({",
+            "function startNewGame(){return dbRunLifecycle.startFreshRun();}",
+            "dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{",
+        ]:
+            if expected_run_lifecycle_adapter not in monolith_source:
+                errors.append("dicebound.js must use the run-lifecycle composition owner")
+        for retired_run_lifecycle_layer in [
+            "const startNewGameV15=startNewGame;",
+            "const startNewGameV16GuardReset=startNewGame;",
+            "const startNewGameV19Base=startNewGame;",
+            "const startNewGameV27Base=startNewGame;",
+            "const startNewGameV28Base=startNewGame;",
+            "const dbRunStartBase=startNewGame;",
+            "startNewGame=function",
+        ]:
+            if retired_run_lifecycle_layer in monolith_source:
+                errors.append(
+                    "retired run-lifecycle implementation remains in dicebound.js: "
+                    + retired_run_lifecycle_layer
+                )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []
     monolith_bytes = 0
