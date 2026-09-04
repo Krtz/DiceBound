@@ -1,0 +1,134 @@
+name: Package validated Beta 0.6.5.19 cleanup candidate
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.19-shadow-ownership-drain
+    paths:
+      - .github/workflows/materialize-0.6.5.19-candidate-artifact.yml
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-2022
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Reproduce exact proven spring-clean transform
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import subprocess, re
+          workflow=Path('.github/workflows/materialize-0.6.5.19-shadow-drain-v4.yml').read_text(encoding='utf-8')
+          start="          @'\n          from pathlib import Path\n          import re, subprocess, tempfile\n"
+          end="          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\\spring_clean.py"
+          a=workflow.find(start); b=workflow.find(end,a+len(start))
+          if a<0 or b<0: raise SystemExit('Could not extract proven v4 transform')
+          payload=workflow[a+len("          @'\n"):b]
+          payload='\n'.join(line[10:] if line.startswith('          ') else line for line in payload.splitlines())+'\n'
+          temp=Path('_spring_clean_v4.py'); temp.write_text(payload,encoding='utf-8')
+          try: subprocess.run(['python',str(temp)],check=True)
+          finally: temp.unlink(missing_ok=True)
+          p=Path('runtime/js/dicebound.js'); raw=p.read_bytes(); crlf=b'\r\n' in raw
+          text=raw.decode('utf-8').replace('\r\n','\n')
+          text=re.sub(r'(?m)^[ \t]+$','',text)
+          p.write_bytes((text.replace('\n','\r\n') if crlf else text).encode('utf-8'))
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\reuse.py
+          python $env:RUNNER_TEMP\reuse.py
+
+      - name: Add permanent guard and stamp Beta 0.6.5.19
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re
+          root=Path(__file__).resolve().parents[1]
+          mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
+          assert re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',mono)
+          for name in ['renderInfoBase','renderInfoV13','renderInfoV14Base','renderInfoV15Patch','renderInfoV16Base','renderInfoV18Base','renderInfoV19Base','renderInfoV24Base','renderInfoV24PresentationBase','renderInfoV27Base','buildAISim','DiceboundAITest']:
+              assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono),name
+          print('Monolith spring-clean guard PASS')
+          '@ | Set-Content -Encoding UTF8 tools\test_shadow_ownership_drain.py
+          python tools/set_project_version.py --version 0.6.5.19 --channel Beta
+          @'
+          from pathlib import Path
+          p=Path('runtime/PATCH_NOTES.md'); t=p.read_text(encoding='utf-8'); old='# Unreleased — Beta 0.6.5.18\n\n'
+          if old not in t: raise SystemExit('patch-note anchor drifted')
+          sec='''# Unreleased — Beta 0.6.5.19\n\n## Beta 0.6.5.19 Monolith spring clean (#40, #209)\n- Drained the historical Info/Guide renderer ladder beneath `ui/info-guide.js`, leaving only hoist-safe compatibility shims before the extracted owner takes over.\n- Removed the production-embedded AI simulation harness, unconsumed historical test/debug exports, and newly orphaned declaration-only helpers. Current browser/native smoke hooks remain.\n- The internally coupled DB235 Career harness is deliberately deferred to its own follow-up instead of weakening the safety gates. Gameplay, balance, RNG order, saves/checkpoints and current UI ownership are unchanged.\n\n'''
+          p.write_text(t.replace(old,sec,1),encoding='utf-8')
+          p=Path('CHANGELOG.md'); t=p.read_text(encoding='utf-8'); anchor='## Beta 0.6.5.18\n'
+          if anchor not in t: raise SystemExit('changelog anchor drifted')
+          sec='''## Beta 0.6.5.19\n\n### Monolith spring clean (#40, #209)\n- Removed the shadowed Info renderer stack, obsolete embedded AI simulator, unconsumed historical runtime test/debug exports and newly orphaned helpers. Current smoke hooks and extracted owners remain intact.\n\n'''
+          p.write_text(t.replace(anchor,sec+anchor,1),encoding='utf-8')
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\notes.py
+          python $env:RUNNER_TEMP\notes.py
+          python tools/refresh_runtime_manifest.py --version 0.6.5.19 --channel Beta --development-state Unreleased
+
+      - name: Remove temporary materializer workflows from candidate
+        shell: pwsh
+        run: |
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v2.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v3.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v4.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v5.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-candidate-artifact.yml -Force -ErrorAction SilentlyContinue
+
+      - name: Validate exact candidate
+        shell: pwsh
+        run: |
+          node --check runtime/js/dicebound.js
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.19 --channel Beta
+          git diff --check
+          node tools/test_file_startup_browser.js
+          node tools/smoke_run_resume_browser.js
+
+      - name: Package exact changed files, patch and hashes
+        shell: pwsh
+        run: |
+          $base='a45e820317280c98449ef91bf2ca0bd9b84138ff'
+          git diff --binary $base -- . ':(exclude)distribution/latest.json' | Out-File -FilePath candidate.patch -Encoding utf8
+          git diff --name-status $base -- . ':(exclude)distribution/latest.json' | Out-File -FilePath candidate-name-status.txt -Encoding utf8
+          $stage=Join-Path $env:RUNNER_TEMP 'candidate-files'
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          $files = git diff --name-only --diff-filter=ACMR $base -- . ':(exclude)distribution/latest.json'
+          foreach($f in $files){
+            $dest=Join-Path $stage $f
+            New-Item -ItemType Directory -Force -Path (Split-Path $dest -Parent) | Out-Null
+            Copy-Item $f $dest
+          }
+          Copy-Item candidate.patch (Join-Path $stage 'candidate.patch')
+          Copy-Item candidate-name-status.txt (Join-Path $stage 'candidate-name-status.txt')
+          Get-ChildItem $stage -Recurse -File | ForEach-Object {
+            $rel=$_.FullName.Substring($stage.Length+1).Replace('\','/')
+            $hash=(Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $rel"
+          } | Set-Content -Encoding ascii (Join-Path $stage 'sha256.txt')
+          Write-Host '=== candidate name-status ==='
+          Get-Content candidate-name-status.txt
+          Write-Host '=== candidate hashes ==='
+          Get-Content (Join-Path $stage 'sha256.txt')
+          "base=$base" | Set-Content -Encoding ascii (Join-Path $stage 'candidate-base.txt')
+          "source_branch_head=${{ github.sha }}" | Add-Content -Encoding ascii (Join-Path $stage 'candidate-base.txt')
+
+      - name: Upload validated candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-0.6.5.19-validated-candidate
+          path: ${{ runner.temp }}/candidate-files
+          if-no-files-found: error
+          retention-days: 7
