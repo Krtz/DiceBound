@@ -21,14 +21,14 @@ jobs:
       - name: Check out exact PR head
         uses: actions/checkout@v4
         with:
-          ref: 90c597b99f6c1eb183146c2621c8926a2300db49
+          ref: 1bec021dc14916da588006c392a7012571cd1f9a
           fetch-depth: 0
 
       - name: Verify exact source
         shell: pwsh
         run: |
           $actual = git rev-parse HEAD
-          if ($actual -ne "90c597b99f6c1eb183146c2621c8926a2300db49") { throw "Expected exact PR head; got $actual" }
+          if ($actual -ne "1bec021dc14916da588006c392a7012571cd1f9a") { throw "Expected exact PR head; got $actual" }
 
       - name: Set up Python
         uses: actions/setup-python@v5
