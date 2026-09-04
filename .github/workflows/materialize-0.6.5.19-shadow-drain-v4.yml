@@ -1,0 +1,302 @@
+name: Materialize Beta 0.6.5.19 split spring clean
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.19-shadow-ownership-drain
+    paths:
+      - .github/workflows/materialize-0.6.5.19-shadow-drain-v4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Drain proven shadows and obsolete test-only surfaces
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re, subprocess, tempfile
+
+          mono=Path('runtime/js/dicebound.js')
+          raw=mono.read_bytes(); crlf=b'\r\n' in raw
+          src=raw.decode('utf-8').replace('\r\n','\n')
+          before_lines=len(src.splitlines()); before_bytes=len(raw)
+
+          def mask(text):
+              out=list(text); i=0; n=len(text)
+              while i<n:
+                  if text.startswith('//',i):
+                      j=text.find('\n',i+2); j=n if j<0 else j
+                      for k in range(i,j): out[k]=' '
+                      i=j; continue
+                  if text.startswith('/*',i):
+                      j=text.find('*/',i+2); j=n-2 if j<0 else j
+                      for k in range(i,j+2):
+                          if text[k]!='\n': out[k]=' '
+                      i=j+2; continue
+                  if text[i] in "'\"`":
+                      q=text[i]; j=i+1; esc=False
+                      while j<n:
+                          c=text[j]
+                          if esc: esc=False
+                          elif c=='\\': esc=True
+                          elif c==q: j+=1; break
+                          j+=1
+                      for k in range(i,min(j,n)):
+                          if text[k]!='\n': out[k]=' '
+                      i=j; continue
+                  i+=1
+              return ''.join(out)
+
+          def close(code,pos,left,right):
+              d=0
+              for j in range(pos,len(code)):
+                  if code[j]==left: d+=1
+                  elif code[j]==right:
+                      d-=1
+                      if d==0: return j
+              raise ValueError(f'unterminated {left}{right} at {pos}')
+
+          def fn_span(text,name):
+              code=mask(text)
+              hits=list(re.finditer(rf'\bfunction\s+{re.escape(name)}\s*\([^)]*\)\s*\{{',code))
+              if len(hits)!=1: raise ValueError(f'{name}: declarations={len(hits)}')
+              m=hits[0]; op=code.find('{',m.start(),m.end())
+              return m.start(),close(code,op,'{','}')+1
+
+          def syntax_ok(text):
+              fd,path=tempfile.mkstemp(suffix='.js')
+              try:
+                  Path(path).write_text(text,encoding='utf-8')
+                  return subprocess.run(['node','--check',path],capture_output=True,text=True).returncode==0
+              finally:
+                  try: Path(path).unlink()
+                  except: pass
+
+          # 1) Historical Info renderer stack is fully shadowed by ui/info-guide.js.
+          marker='const dbInfoGuide=window.DiceboundInfoGuide;'
+          if src.count(marker)!=1: raise SystemExit('Info owner marker drifted')
+          mp=src.index(marker); pre,post=src[:mp],src[mp:]
+          if not re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',post):
+              raise SystemExit('extracted Info owner missing')
+
+          for name,repl in [
+              ('renderInfo','function renderInfo(){return undefined;}'),
+              ('renderLifetimeStats','function renderLifetimeStats(){return undefined;}'),
+              ('activateInfoTab',"function activateInfoTab(name='guide'){return undefined;}"),
+              ('openInfo','function openInfo(){return undefined;}')]:
+              try:
+                  a,b=fn_span(pre,name); pre=pre[:a]+repl+pre[b:]
+              except ValueError:
+                  pass
+
+          def remove_assignments(text,target):
+              removed=0
+              while True:
+                  code=mask(text)
+                  m=re.search(rf'(?<![\w$]){re.escape(target)}\s*=\s*function\s*\([^)]*\)\s*\{{',code)
+                  if not m: break
+                  op=code.find('{',m.start(),m.end()); cl=close(code,op,'{','}'); end=cl+1
+                  while end<len(text) and text[end] in ' \t': end+=1
+                  if end<len(text) and text[end]==';': end+=1
+                  text=text[:m.start()]+text[end:]; removed+=1
+              return text,removed
+
+          pre,info_removed=remove_assignments(pre,'renderInfo')
+          if info_removed<10: raise SystemExit(f'Info ladder unexpectedly small: {info_removed}')
+          snapshot_pat=re.compile(r'\s*const\s+(renderInfo[A-Za-z0-9_$]*)\s*=\s*renderInfo\s*;')
+          snapshots=snapshot_pat.findall(pre); pre=snapshot_pat.sub('',pre)
+          if len(snapshots)<8: raise SystemExit(f'Info snapshots unexpectedly small: {snapshots}')
+          src=pre+post
+          src=src.replace('DB25.modules.guide={render:renderInfo};','DB25.modules.guide={render:()=>dbInfoGuide.render()};')
+          if not syntax_ok(src): raise SystemExit('Info drain failed syntax gate')
+
+          # Executable external consumers only. Docs and temporary workflows do not count.
+          parts=[]
+          for root in [Path('runtime'),Path('tools'),Path('wrapper-source')]:
+              if not root.exists(): continue
+              for p in root.rglob('*'):
+                  if not p.is_file() or p==mono or p.suffix.lower() not in {'.js','.py','.html','.ps1','.json','.go'}: continue
+                  try: parts.append(p.read_text(encoding='utf-8',errors='ignore'))
+                  except: pass
+          external='\n'.join(parts)
+
+          # 2) Remove old AI simulator: audit proved it has zero executable consumers.
+          ai_removed=False
+          if 'DiceboundAITest' not in external and 'buildAISim' not in external:
+              a,b=fn_span(src,'buildAISim'); trial=src[:a]+src[b:]
+              trial=re.sub(r'\s*try\s*\{\s*Object\.defineProperty\(window,["\']DiceboundAITest["\'].*?\}\s*catch\s*\([^)]*\)\s*\{.*?\}','',trial,count=1,flags=re.S)
+              if 'buildAISim' in trial or 'DiceboundAITest' in trial or not syntax_ok(trial):
+                  raise SystemExit('AI harness removal failed syntax/ownership gate')
+              src=trial; ai_removed=True
+
+          # Career harness is intentionally NOT removed in this batch: it is internally coupled
+          # to the old DB235 testing manifest. It gets its own next-pass surgery instead of
+          # blocking all independently provable deletions.
+
+          # 3) Remove unconsumed historical runtime Test/Regression/Debug exports. Each is
+          # isolated and syntax-tested independently; failures are skipped, never guessed through.
+          candidates=['DiceboundBeta021Test','DiceboundBeta03Test','DiceboundBeta044Test','DiceboundBeta045Debug','DiceboundBeta046Debug','DiceboundBeta047Debug','DiceboundBeta04Test','DiceboundBeta0511Test','DiceboundBeta0512Test','DiceboundBeta06Test','DiceboundCombatUiTest','DiceboundDebug','DiceboundEchoStrikeTest','DiceboundEnemyMechanicsTest','DiceboundEquipmentIdentityTest','DiceboundEventRewardTest','DiceboundV16Debug','DiceboundV16Regression','DiceboundV17Regression','DiceboundV18Regression','DiceboundV19Regression','DiceboundV21Test','DiceboundV22Test','DiceboundV23Test','DiceboundV251Test','DiceboundV25Test','DiceboundV26Test','DiceboundV28Test','DiceboundV319Test','DiceboundV322Test','DiceboundV32Test']
+
+          def remove_global(text,name):
+              if name in external: return text,False,'external consumer'
+              q=re.escape(name); code=mask(text)
+              # Try/catch Object.defineProperty wrapper.
+              m=re.search(rf'try\s*\{{\s*Object\.defineProperty\(\s*window\s*,\s*["\']{q}["\']',code)
+              if m:
+                  try:
+                      op=code.find('{',m.start(),m.end()); tc=close(code,op,'{','}'); k=tc+1
+                      while k<len(code) and code[k].isspace(): k+=1
+                      cm=re.match(r'catch\s*\([^)]*\)\s*\{',code[k:])
+                      if cm:
+                          cop=code.find('{',k,k+cm.end()); cc=close(code,cop,'{','}')
+                          trial=text[:m.start()]+text[cc+1:]
+                          if name not in trial and syntax_ok(trial): return trial,True,'try/catch'
+                  except ValueError: pass
+              # Plain defineProperty.
+              code=mask(text); m=re.search(rf'Object\.defineProperty\(\s*window\s*,\s*["\']{q}["\']',code)
+              if m:
+                  try:
+                      op=code.find('(',m.start()); cl=close(code,op,'(',')'); end=cl+1
+                      while end<len(text) and text[end] in ' \t': end+=1
+                      if end<len(text) and text[end]==';': end+=1
+                      trial=text[:m.start()]+text[end:]
+                      if name not in trial and syntax_ok(trial): return trial,True,'defineProperty'
+                  except ValueError: pass
+              # Direct window.Name assignment.
+              code=mask(text); m=re.search(rf'window\.{q}\s*=',code)
+              if m:
+                  par=br=cur=0; j=m.start()
+                  while j<len(code):
+                      c=code[j]
+                      if c=='(': par+=1
+                      elif c==')': par-=1
+                      elif c=='[': br+=1
+                      elif c==']': br-=1
+                      elif c=='{': cur+=1
+                      elif c=='}': cur-=1
+                      elif c==';' and par==0 and br==0 and cur==0:
+                          trial=text[:m.start()]+text[j+1:]
+                          if name not in trial and syntax_ok(trial): return trial,True,'window assignment'
+                          break
+                      j+=1
+              return text,False,'coupled/unrecognized'
+
+          removed=[]; skipped=[]
+          for name in candidates:
+              trial,ok,why=remove_global(src,name)
+              if ok:
+                  src=trial; removed.append(name)
+              else:
+                  skipped.append((name,why,src.count(name)))
+
+          # 4) Cascade only the strongest possible dead-code proof: named declaration appears
+          # literally once in the entire source. Every removal is syntax-gated.
+          decl_removed=[]
+          while True:
+              code=mask(src); victim=None
+              for m in re.finditer(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{',code):
+                  name=m.group(1)
+                  if len(re.findall(rf'(?<![\w$]){re.escape(name)}(?![\w$])',src))!=1: continue
+                  try: a,b=fn_span(src,name)
+                  except ValueError: continue
+                  trial=src[:a]+src[b:]
+                  if syntax_ok(trial): victim=(name,trial); break
+              if not victim: break
+              name,src=victim; decl_removed.append(name)
+
+          if not syntax_ok(src): raise SystemExit('final source failed syntax gate')
+          if not re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',src): raise SystemExit('Info owner lost')
+          for snapshot in snapshots:
+              if re.search(rf'(?<![\w$]){re.escape(snapshot)}(?![\w$])',mask(src)): raise SystemExit(f'Info snapshot survived: {snapshot}')
+          if 'buildAISim' in src or 'DiceboundAITest' in src: raise SystemExit('AI harness survived')
+
+          data=src.replace('\n','\r\n') if crlf else src
+          mono.write_bytes(data.encode('utf-8'))
+          after_lines=len(src.splitlines()); after_bytes=len(data.encode('utf-8'))
+          print(f'MONOLITH BEFORE {before_lines:,} lines / {before_bytes:,} bytes')
+          print(f'MONOLITH AFTER  {after_lines:,} lines / {after_bytes:,} bytes')
+          print(f'REDUCTION      {before_lines-after_lines:,} lines / {before_bytes-after_bytes:,} bytes')
+          print('Info assignments removed:',info_removed)
+          print('Info snapshots removed:',snapshots)
+          print('AI harness removed:',ai_removed)
+          print('Unused test/debug globals removed:',len(removed),removed)
+          print('Skipped test/debug surfaces:',skipped)
+          print('Cascading declaration-only helpers removed:',len(decl_removed),decl_removed)
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\spring_clean.py
+          python $env:RUNNER_TEMP\spring_clean.py
+
+      - name: Add permanent cleanup guard and stamp Beta 0.6.5.19
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re
+          root=Path(__file__).resolve().parents[1]
+          mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
+          assert re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',mono)
+          for name in ['renderInfoBase','renderInfoV13','renderInfoV14Base','renderInfoV15Patch','renderInfoV16Base','renderInfoV18Base','renderInfoV19Base','renderInfoV24Base','renderInfoV24PresentationBase','renderInfoV27Base','buildAISim','DiceboundAITest']:
+              assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono),name
+          print('Monolith spring-clean guard PASS')
+          '@ | Set-Content -Encoding UTF8 tools\test_shadow_ownership_drain.py
+          python tools/set_project_version.py --version 0.6.5.19 --channel Beta
+          @'
+          from pathlib import Path
+          p=Path('runtime/PATCH_NOTES.md'); t=p.read_text(encoding='utf-8'); old='# Unreleased — Beta 0.6.5.18\n\n'
+          if old not in t: raise SystemExit('patch-note anchor drifted')
+          sec='''# Unreleased — Beta 0.6.5.19\n\n## Beta 0.6.5.19 Monolith spring clean (#40, #209)\n- Drained the historical Info/Guide renderer ladder beneath `ui/info-guide.js`, leaving only hoist-safe compatibility shims before the extracted owner takes over.\n- Removed the production-embedded AI simulation harness, unconsumed historical test/debug exports, and newly orphaned declaration-only helpers. Current browser/native smoke hooks remain.\n- The internally coupled DB235 Career harness is deliberately deferred to its own follow-up instead of weakening the safety gates. Gameplay, balance, RNG order, saves/checkpoints and current UI ownership are unchanged.\n\n'''
+          p.write_text(t.replace(old,sec,1),encoding='utf-8')
+          p=Path('CHANGELOG.md'); t=p.read_text(encoding='utf-8'); anchor='## Beta 0.6.5.18\n'
+          if anchor not in t: raise SystemExit('changelog anchor drifted')
+          sec='''## Beta 0.6.5.19\n\n### Monolith spring clean (#40, #209)\n- Removed the shadowed Info renderer stack, obsolete embedded AI simulator, unconsumed historical runtime test/debug exports and newly orphaned helpers. Current smoke hooks and extracted owners remain intact.\n\n'''
+          p.write_text(t.replace(anchor,sec+anchor,1),encoding='utf-8')
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\notes.py
+          python $env:RUNNER_TEMP\notes.py
+          python tools/refresh_runtime_manifest.py --version 0.6.5.19 --channel Beta --development-state Unreleased
+
+      - name: Validate syntax architecture and full test suite
+        shell: pwsh
+        run: |
+          node --check runtime/js/dicebound.js
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.19 --channel Beta
+          git diff --check
+
+      - name: Validate exact Windows Edge file startup
+        shell: pwsh
+        run: node tools/test_file_startup_browser.js
+
+      - name: Validate broad Edge run and resume smoke
+        shell: pwsh
+        run: node tools/smoke_run_resume_browser.js
+
+      - name: Commit exact validated candidate
+        shell: pwsh
+        run: |
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v2.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v3.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v4.yml -Force -ErrorAction SilentlyContinue
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "cleanup(runtime): aggressively drain monolith shadows"
+          git push origin HEAD:cleanup/0.6.5.19-shadow-ownership-drain
+          git rev-parse HEAD
