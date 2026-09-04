@@ -751,7 +751,7 @@ def main() -> int:
         for expected_board_transition_adapter in [
             "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",
             "function advanceToNextBoard(){return dbBoardTransition.advance();}",
-            "completeFinalRoad:()=>completeSixthRoadV19()",
+            "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",
         ]:
             if expected_board_transition_adapter not in monolith_source:
                 errors.append("dicebound.js must use the board-transition composition owner")
@@ -828,6 +828,74 @@ def main() -> int:
                 errors.append(
                     "retired run-lifecycle implementation remains in dicebound.js: "
                     + retired_run_lifecycle_layer
+                )
+    run_completion_module = by_id.get("run-completion")
+    run_completion_owner_ok = False
+    if not run_completion_module:
+        errors.append("Run completion owner run-completion is missing from the runtime manifest")
+    else:
+        run_completion_owner_ok = (
+            run_completion_module.get("path") == "js/run/completion.js"
+            and {"run-checkpoint", "run-lifecycle", "board-transition"}.issubset(
+                set(run_completion_module.get("requires") or [])
+            )
+            and "DiceboundRunCompletion" in (run_completion_module.get("provides") or [])
+            and position.get("run-completion", -1) < position.get(str(monolith_id), -1)
+        )
+        if not run_completion_owner_ok:
+            errors.append(
+                "run-completion must provide DiceboundRunCompletion, require checkpoint/lifecycle/transition, and load before the monolith"
+            )
+    run_completion_source = sources.get("run-completion", "")
+    for required_run_completion_behavior in [
+        "const OWNER='run/completion'",
+        "function completeFinalRoad()",
+        "runtime.clearCheckpoint?.();",
+        "if(runtime.isCompleting?.())",
+        "runtime.setRunState?.({gameStarted:false,rollLocked:true});",
+        "const earned=Number(runtime.finalizeRun?.())||0;",
+        "runtime.presentTerminalEnd?.(detail);",
+        "if(first)runtime.recordFirstCompletion?.(detail);",
+        "runtime.afterCompletion?.(detail);",
+    ]:
+        if required_run_completion_behavior not in run_completion_source:
+            errors.append(
+                "Run completion owner is missing required behavior: "
+                + required_run_completion_behavior
+            )
+    if "Math.random" in run_completion_source:
+        errors.append("run-completion must not consume RNG through Math.random")
+    for forbidden_run_completion_behavior in [
+        "function finalizeRun(",
+        "function dbRunRestore(",
+        "function openCombatLootChain(",
+        "function renderEndGear(",
+    ]:
+        if forbidden_run_completion_behavior in run_completion_source:
+            errors.append(
+                "run-completion must coordinate existing owners rather than absorb "
+                + forbidden_run_completion_behavior
+            )
+    if monolith_source:
+        for expected_run_completion_adapter in [
+            "const dbRunCompletion=window.DiceboundRunCompletion?.configure({",
+            "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",
+            "function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}",
+        ]:
+            if expected_run_completion_adapter not in monolith_source:
+                errors.append("dicebound.js must use the run-completion composition owner")
+        for retired_run_completion_layer in [
+            "const showEndV15Patch=showEnd;",
+            "function completeFifthRoadV16()",
+            "v16FifthRoadCompleting",
+            "const completeSixthRoadV28Base=completeSixthRoadV19;",
+            "const dbRunCompleteFifthBase=completeFifthRoadV16;",
+            "const dbRunCompleteSixthBase=completeSixthRoadV19;",
+        ]:
+            if retired_run_completion_layer in monolith_source:
+                errors.append(
+                    "retired run-completion implementation remains in dicebound.js: "
+                    + retired_run_completion_layer
                 )
     duplicate_functions: list[str] = []
     duplicate_top_level_functions: list[str] = []

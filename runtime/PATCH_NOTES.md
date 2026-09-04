@@ -1,4 +1,13 @@
-# Unreleased — Beta 0.6.5.16
+# Unreleased — Beta 0.6.5.17
+
+## Beta 0.6.5.17 Sixth-Road completion ownership (#40, #209)
+- Terminal Board 6 completion now has one owner: `run/completion.js` coordinates checkpoint retirement, exactly-once terminal state, existing final accounting, the existing end screen/gear handoff, first-clear accounting and the established post-completion hook.
+- Board 5 remains non-terminal: its existing reward, loot and level-up chain continues through `board/transition.js` into Board 6. Combat rewards, end gear, saves/checkpoints, achievements, Camp, Prestige and RNG are unchanged.
+- Retired the historical Board-5 terminal, late terminal `showEnd`, Sixth-Road checkpoint-wrapper and secret-class reassignment layers. Deterministic and architecture guards cover Normal/Nightmare/Hell ordering, duplicate final signals, Board 5 continuation, checkpoint/reload separation and RNG preservation.
+
+## File-startup smoke reliability
+- The isolated Edge `file://` startup test now gives CDP a short stabilization period, uses a 30-second command deadline and retries only the initial Runtime/Log handshake through a reconnect.
+- Its temporary headless test profile disables browser/GPU sandboxing to accommodate the observed local Windows sandbox access denial that crashed the renderer. This changes only the test launch; shipped WebView2 behavior is unchanged.
 
 ## Beta 0.6.5.16 Local Camp startup hotfix
 - Fixed the 0.6.5.15 local-file startup crash caused by Heirloom Storage purchase IDs being read before initialization.
