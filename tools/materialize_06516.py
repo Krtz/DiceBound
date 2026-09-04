@@ -97,11 +97,19 @@ test=test.replace(old_state,new_state)
 test=test.replace('try{require("node:fs").rmSync(profile,{recursive:true,force:true});}catch(_){}','try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}')
 write(test_path,test)
 
+# .15 expanded the data-driven Prestige Moon from two nodes to five. Keep the
+# real Edge smoke aligned with the released progression contract.
+replace_exact(
+    'tools/smoke_run_resume_browser.js',
+    "assert.equal(sample.nodeCount,2,`${label} Prestige Moon node registry drifted`);",
+    "assert.equal(sample.nodeCount,5,`${label} Prestige Moon node registry drifted`);"
+)
+
 # 4) Release notes/version.
 replace_exact(
     'CHANGELOG.md',
     '## Beta 0.6.5.15\n',
-    '''## Beta 0.6.5.16\n\n### Local Camp startup hotfix\n- Fixed a startup TDZ crash introduced in 0.6.5.15 where early equipment/Camp state could call the new Heirloom Storage purchase ID before that constant had initialized.\n- Deleted the obsolete visible Alpha-v1 setup/start screen from `runtime/index.html`; `startOverlay` is now only a Camp host with hidden compatibility state targets.\n- Camp now creates the Class chooser host itself, and the Class chooser no longer writes labels/state into the retired Begin screen.\n- Added a Windows Edge regression test that opens `runtime/index.html` directly through `file://`, requires the full-screen Camp to appear, rejects the retired Alpha/Begin presentation, and fails on browser runtime exceptions.\n\n## Beta 0.6.5.15\n'''
+    '''## Beta 0.6.5.16\n\n### Local Camp startup hotfix\n- Fixed a startup TDZ crash introduced in 0.6.5.15 where early equipment/Camp state could call the new Heirloom Storage purchase ID before that constant had initialized.\n- Deleted the obsolete visible Alpha-v1 setup/start screen from `runtime/index.html`; `startOverlay` is now only a Camp host with hidden compatibility state targets.\n- Camp now creates the Class chooser host itself, and the Class chooser no longer writes labels/state into the retired Begin screen.\n- Added a Windows Edge regression test that opens `runtime/index.html` directly through `file://`, requires the full-screen Camp to appear, rejects the retired Alpha/Begin presentation, and fails on browser runtime exceptions.\n- Updated the existing browser smoke to the five-node Prestige Moon introduced in 0.6.5.15.\n\n## Beta 0.6.5.15\n'''
 )
 replace_exact(
     'runtime/PATCH_NOTES.md',
@@ -111,7 +119,7 @@ replace_exact(
 replace_exact(
     'runtime/PATCH_NOTES.md',
     '## Beta 0.6.5.15 Prestige Heirlooms and Camp layout\n',
-    '''## Beta 0.6.5.16 Local Camp startup hotfix\n- Fixed the 0.6.5.15 local-file startup crash caused by Heirloom Storage purchase IDs being read before initialization.\n- Removed the obsolete visible Alpha-v1 setup/Begin screen. Camp owns the between-runs destination; only hidden compatibility state targets remain while older adapters are drained.\n- Added a real Windows Edge `file://` startup regression check so opening `runtime/index.html` directly must build Camp without browser exceptions.\n\n## Beta 0.6.5.15 Prestige Heirlooms and Camp layout\n'''
+    '''## Beta 0.6.5.16 Local Camp startup hotfix\n- Fixed the 0.6.5.15 local-file startup crash caused by Heirloom Storage purchase IDs being read before initialization.\n- Removed the obsolete visible Alpha-v1 setup/Begin screen. Camp owns the between-runs destination; only hidden compatibility state targets remain while older adapters are drained.\n- Added a real Windows Edge `file://` startup regression check so opening `runtime/index.html` directly must build Camp without browser exceptions.\n- Updated the normal browser smoke to expect the five-node Prestige Moon shipped in 0.6.5.15.\n\n## Beta 0.6.5.15 Prestige Heirlooms and Camp layout\n'''
 )
 
 subprocess.run(['python','tools/set_project_version.py','--version','0.6.5.16','--channel','Beta'],cwd=ROOT,check=True)
