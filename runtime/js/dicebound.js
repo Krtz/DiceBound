@@ -3,27 +3,14 @@
 
   const APP_IDENTITY=window.DiceboundVersion;
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
-  const ROWS = 10;
-  const COLS = 10;
-  const TILE_COUNT = ROWS * COLS;
   const MERCHANT_SPACING = 12;
   const STATIC_CAMP_TILES = [10,30,55,70,90];
-  const MINIBOSS_TILE = 50;
   const POWERUP_TILE_COUNT = 5;
   const WHEEL_TILE_COUNT = 5;
-  const META_KEY = window.DiceboundSave?.primaryKey || "dicebound.save.primary";
   const DB_EQUIPMENT_CONFIG=window.DiceboundEquipment?.createRegistry?.();
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
   const EQUIPMENT_SLOTS=[...DB_EQUIPMENT_CONFIG.slots];
   const SLOT_LABELS={...DB_EQUIPMENT_CONFIG.labels};
-  const RUN_THEMES = [
-    {bg1:"#071b24",bg2:"#061016",glow1:"rgba(51,214,196,.18)",glow2:"rgba(87,138,255,.14)",board1:"#12313a",board2:"#0a1d26"},
-    {bg1:"#21100b",bg2:"#100706",glow1:"rgba(255,137,74,.18)",glow2:"rgba(245,200,91,.12)",board1:"#3a2118",board2:"#21120e"},
-    {bg1:"#170b25",bg2:"#0b0613",glow1:"rgba(181,140,255,.21)",glow2:"rgba(255,91,184,.12)",board1:"#2d1a42",board2:"#170d25"},
-    {bg1:"#0c2111",bg2:"#061009",glow1:"rgba(98,215,154,.19)",glow2:"rgba(204,236,112,.10)",board1:"#183821",board2:"#0c2112"},
-    {bg1:"#0d1530",bg2:"#070b18",glow1:"rgba(91,137,255,.20)",glow2:"rgba(86,223,255,.10)",board1:"#1a2b56",board2:"#0d1731"},
-    {bg1:"#26161d",bg2:"#10090d",glow1:"rgba(239,90,99,.18)",glow2:"rgba(255,185,108,.11)",board1:"#40242f",board2:"#23131a"}
-  ];
   const ELEMENTS={
     fire:{icon:"🔥",name:"Fire",spell:"Fireball",description:"Deals a burst of bonus damage."},
     ice:{icon:"❄️",name:"Ice",spell:"Ice Nova",description:"Deals damage and freezes the enemy for one turn."},
@@ -657,7 +644,6 @@
   }
   repairTalentPrerequisites();
 
-  const SOUND_KEY_ORDER=Object.freeze(["roll","step","hit","crit","coin","heal","lose","level","win","holy"]);
   const customSoundState={};
   function ensureAudio(){
     if(audioCtx)return;
@@ -797,11 +783,10 @@
   function petDamage(){const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
   function updateMetaUI(){
     const pet=activePetState(),def=activePetDef();
-    $("talentPointTop").textContent=meta.points;$("startLegacyLevel").textContent=meta.level;$("startLegacyXp").textContent=`${meta.xp} / ${meta.xpNext} XP`;
+    $("talentPointTop").textContent=meta.points;
     $("petAvatar").textContent=def.icon;$("petName").textContent=def.name;$("combatPet").textContent=def.icon;$("petCookies").textContent=meta.petCookies;
     $("petStats").textContent=`Level ${pet.level} · ${petDamage()} ${def.id==="neutral"?"random core-element":def.element?ELEMENTS[def.element].name:"neutral"} damage · ${pet.xp} / ${pet.xpNext} bond`;
     $("feedPetBtn").disabled=meta.petCookies<=0;$("feedAllPetBtn").disabled=meta.petCookies<=0;
-    const hs=(meta.heirlooms||[]),capacity=getHeirloomSlots();$("startHeirloom").innerHTML=hs.length?`Bound heirlooms (${hs.length}/${capacity}):<br>${hs.map(h=>`<strong>${h.icon} ${h.name}</strong> — ${formatBonuses(h)}`).join("<br>")}`:`No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?"":"s"}.`;
   }
   function rawDodgeChance(){return Math.max(0,player.dodge+player.defense*player.defenseDodgeScale);}
   function effectiveDodgeChance(){const raw=rawDodgeChance();return raw/(1+raw);}
@@ -922,11 +907,6 @@
 
   function currentGoldSnapshot(){return DB_EFFECTIVE_STATS.goldSnapshot(player,{nightmare:nightmareMode});}
   function modifiedGold(base){return DB_EFFECTIVE_STATS.scaleGold(base,player,{nightmare:nightmareMode});}
-  function refreshEffectiveGoldDisplays(){
-    const snapshot=currentGoldSnapshot();
-    document.querySelectorAll("[data-effective-gold]").forEach(el=>el.textContent=gameStarted?snapshot.label:"Start a run");
-    document.querySelectorAll("[data-effective-gold-container]").forEach(el=>{el.dataset.tip=snapshot.description;el.title=snapshot.description;});
-  }
   function renderCurrentGoldStat(){
     const grid=$("lifetimeStats");if(!grid)return;const snapshot=currentGoldSnapshot(),card=document.createElement("div");
     card.className="lifetime-stat effective-gold-card";card.tabIndex=0;card.dataset.effectiveGoldContainer="";card.dataset.tip=snapshot.description;card.title=snapshot.description;
@@ -1125,7 +1105,6 @@
     $("blessingOverlay").classList.remove("hidden");addLog("You step into a <b>Blessing from God</b>.");
   }
 
-  function applyRandomLegendary(){const pool=eligibleUpgrades(u=>u.rarity==="legendary");const up=pick(pool);return applyUpgrade(up,"Legendary Reward");}
   function clearMysticTile(){tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);$("mysticOverlay").classList.add("hidden");currentMysticBuff=null;returnToRoad();}
   function openMystic(){
     currentMysticBuff=pick(eligibleUpgrades(u=>u.rarity==="legendary"));
@@ -1157,7 +1136,6 @@
   // the historical function names.
   function renderTalents(){return window.DiceboundTalentTree?.render?.()||null;}
   function openTalentTree(returnOverlay=null){return window.DiceboundTalentTree?.open?.(returnOverlay)||null;}
-  function closeTalentTree(){return window.DiceboundTalentTree?.close?.()||null;}
 
   // #206 / #209: Pet chooser DOM, portrait presentation and persistent Done
   // chrome live in ui/pet-chooser.js. Historical lifecycle callers retain this
@@ -1406,7 +1384,6 @@
   function completePrestige(data,keepIds=[]){const {rewards,remainder}=data,keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"],gained=[];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;gained.push(key);}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder+(data.unspent||0);pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();}
   function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
 
-  function applyRunThemeV13(){applyRunTheme();}
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
   function startNewGame(){return dbRunLifecycle.startFreshRun();}
   function showEnd(victory){rollLocked=true;gameStarted=false;const earned=finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
@@ -1735,7 +1712,7 @@
   $("merchantContinueBtn").addEventListener("click",()=>{tiles[player.position].cleared=false;refreshTile(player.position);$("merchantOverlay").classList.add("hidden");returnToRoad();});
   $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
-  $("talentBtn").addEventListener("click",()=>openTalentTree());$("startTalentBtn").addEventListener("click",()=>openTalentTree());$("endTalentBtn").addEventListener("click",()=>openTalentTree("endOverlay"));
+  $("talentBtn").addEventListener("click",()=>openTalentTree());
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
   $("prestigeKeepConfirmBtn").addEventListener("click",()=>{if(pendingPrestige)completePrestige(pendingPrestige,[...pendingPrestigeKeepIds]);});$("prestigeCancelBtn").addEventListener("click",()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");});
   window.addEventListener("resize",()=>placePawn(false));
@@ -2195,7 +2172,7 @@
   };
 
   // ---- identity resource UI --------------------------------------------------
-  const combatModal=document.querySelector("#combatOverlay .modal"),ultimateWrap=document.querySelector("#combatOverlay .ultimate-wrap"),combatActions=document.querySelector("#combatOverlay .combat-actions");
+  const ultimateWrap=document.querySelector("#combatOverlay .ultimate-wrap"),combatActions=document.querySelector("#combatOverlay .combat-actions");
   let classResourceWrap=$("classResourceWrap");
   if(!classResourceWrap&&ultimateWrap){classResourceWrap=document.createElement("div");classResourceWrap.id="classResourceWrap";classResourceWrap.className="class-resource-wrap hidden";classResourceWrap.innerHTML=`<div class="class-resource-label"><span id="classResourceName">Class resource</span><span id="classResourceText">0 / 100</span></div><div class="class-resource-bar"><i id="classResourceFill"></i></div><div class="class-resource-note" id="classResourceNote"></div>`;ultimateWrap.parentNode.insertBefore(classResourceWrap,ultimateWrap);}
   let specialAttackBtn=$("specialAttackBtn");
@@ -3058,7 +3035,6 @@
   };
 
   // Status-dot rendering itself knows how to collapse double-digit poison counts.
-  const statusDotsHTMLV17Base=statusDotsHTML;
   statusDotsHTML=function(barriers=0,poison=0,affinity=null){
     let html="";
     for(let i=0;i<Math.min(12,barriers||0);i++)html+='<i class="status-dot barrier" title="Barrier"></i>';
@@ -3820,12 +3796,6 @@
 
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"omega",mythical:true,bloodmageStone:true,icon:"🜂",name:"Philosopher's Stone",uniqueEffect:"Scarlet Transmutation: healing beyond full grants +2 attack for the rest of the battle and blood-fuelled abilities cost less life.",bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
 
-  function impossibleRoadTierData(){return [
-    {pieces:2,text:'+3% all damage.'},
-    {pieces:3,text:'+7% all damage and +6% elemental proc chance.'},
-    {pieces:4,text:'+10% all damage, +8% elemental proc chance, begin battles with 35 Ultimate, one Barrier, +12% pet double-attack chance, and guardian specials deal 10% less damage.'},
-    {pieces:7,text:'+28% all damage, +18% elemental proc chance, +22% elemental power, +20% pet double-attack chance, guardian specials deal 28% less damage, and once per battle at ≤25% HP restore 25% max HP + gain 1 Barrier.'}
-  ];}
   const occultSpellAttackV110Base=occultSpellAttack;
   occultSpellAttack=async function(){
     if(player.classId!=="rouge")return occultSpellAttackV110Base();
@@ -3846,13 +3816,9 @@
     return result;
   };
 
-  function campSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
-  function setCampMode(button,on,labelOn,labelOff){if(!button)return;button.classList.toggle('active',!!on);const sub=button.querySelector('.camp-sub');if(sub)sub.textContent=on?labelOn:labelOff;}
 
   // Camp DOM/presentation ownership moved to runtime/js/ui/camp.js.  These
   // compatibility-shaped callers preserve current lifecycle order only.
-  function v110CloseCampPanels(){return window.DiceboundCamp?.closePanels();}
-  function v110OpenCampPanel(id){return window.DiceboundCamp?.openPanel(id);}
   function v110EnsureCampScene(){return window.DiceboundCamp?.ensure();}
   function v110UpdateCampScene(){return window.DiceboundCamp?.refresh();}
 
@@ -4096,9 +4062,6 @@
   function v22CampSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
   // Camp presentation stays behind the existing names while its DOM, layout,
   // art and click-target ownership live in DiceboundCamp.
-  function v22OpenCampPanel(id){return window.DiceboundCamp?.openPanel(id);}
-  function v22MovePrestigeControls(){return window.DiceboundCamp?.refresh();}
-  function v22ScrollPanel(id){return window.DiceboundCamp?.scrollPanel(id);}
   function v22UpdateCamp(){return window.DiceboundCamp?.refresh();}
   function v22EnsureCompatStartBtn(){return window.DiceboundCamp?.ensureCompatStartButton();}
   function openPrestigeMoon(){return window.DiceboundPrestigeMoon?.open?.()||null;}
@@ -4331,15 +4294,6 @@
   document.head.appendChild(style);
 
   // ----- Impossible Road: 4-piece no longer grants the starting Barrier. ----
-  function v23SetTierData(){return [
-    {pieces:2,text:'+3% all damage.'},
-    {pieces:3,text:'+7% all damage and +6% elemental proc chance.'},
-    {pieces:4,text:'+10% all damage, +8% elemental proc chance, 35 starting Ultimate, +12% pet double-attack chance, and 10% less Guardian-special damage.'},
-    {pieces:5,text:'+14% all damage, +10% elemental proc chance, +8% elemental power, 40 starting Ultimate, 1 starting Barrier, +14% pet double-attack chance, and 15% less Guardian-special damage.'},
-    {pieces:6,text:'+19% all damage, +14% elemental proc chance, +14% elemental power, 45 starting Ultimate, 1 starting Barrier, +17% pet double-attack chance, and 21% less Guardian-special damage.'},
-    {pieces:7,text:'+28% all damage, +18% elemental proc chance, +22% elemental power, 50 starting Ultimate, 1 starting Barrier, +20% pet double-attack chance, 28% less Guardian-special damage, and once per battle at ≤25% HP restore 25% max HP + gain 1 Barrier.'}
-  ];}
-  function v23SetPanelHtml(count){return `<strong>🌈 Impossible Road set</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${v23SetTierData().map(t=>`<div class="set-tier ${count>=t.pieces?'active':''}"><b>${t.pieces}-piece bonus</b><span>${t.text}</span></div>`).join('')}</div>`;}
   mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Impossible Road pieces · 2: +3% damage · 3: +7% damage and +6% proc · 4: +10% damage, +8% proc, 35 starting Ultimate, +12% pet double chance, 10% less Guardian-special damage · 5: +14% damage, +10% proc, +8% elemental power, 40 starting Ultimate, 1 Barrier, +14% pet double chance, 15% less Guardian-special damage · 6: +19% damage, +14% proc, +14% elemental power, 45 starting Ultimate, 1 Barrier, +17% pet double chance, 21% less Guardian-special damage · 7: +28% damage, +18% proc, +22% elemental power, 50 starting Ultimate, 1 Barrier, +20% pet double chance, 28% less Guardian-special damage and the emergency heal/barrier effect.`;};
   v19SetStartBarrier=function(){return mythicalSetCount()>=5?1:0;};
 
@@ -4711,7 +4665,6 @@ function buildDiceboundHumanHarness235(){
     const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${rarityInfo[item.rarity]?.label?.toUpperCase()||'SPECIAL'} ITEM!</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
   };
 
-  const unboundPreciousGearV24Base=unboundPreciousGearV16;
   unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
 
   /* MODULE: class tuning / Alchemist counter ------------------------------- */
@@ -4990,7 +4943,7 @@ function buildDiceboundHumanHarness235(){
   updateCombatUI=function(){updateCombatUIV25BurnBase();if($('playerStatusDots')&&(player.devilBurnStacks||0)>0)$('playerStatusDots').insertAdjacentHTML('beforeend',`<span class="burn-status" title="${player.devilBurnStacks} Hellfire stacks · uncapped · 1% max HP each">🔥×${player.devilBurnStacks}</span>`);};
 
   /* JOURNEY END: larger storage-focused management ------------------------ */
-  const endTalent=$('endTalentBtn');if(endTalent)endTalent.remove();if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';
+  if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';
   /* ROADKEEPER'S GUIDE: one current source of truth, no patch archaeology -- */
   renderInfo=function(){
     const subtitle=$('infoOverlay')?.querySelector('.subtitle');if(subtitle)subtitle.textContent='Current rules, progression, equipment, classes, elements and save tools. Secrets remain deliberately vague until discovered.';
@@ -5217,7 +5170,6 @@ function buildDiceboundHumanHarness235(){
   /* ========================================================================
      Alpha v2.6 — progression reliability, poison visibility and secret polish
      ======================================================================== */
-  const DB26={version:'2.6'};
   document.title='Dicebound: Alpha v2.6';
   const v26Brand=document.querySelector('.brand h1');if(v26Brand)v26Brand.textContent='Dicebound: Alpha v2.6';
   const v26Sub=document.querySelector('.brand p');if(v26Sub)v26Sub.textContent='The road grows stranger: sturdier talents, clearer poison, sharper secrets and cleaner debug tools.';
@@ -5330,7 +5282,6 @@ function buildDiceboundHumanHarness235(){
   /* ========================================================================
      Alpha v2.7 — rarity rewards, nightmare defenses, Ouroboros & UI polish
      ======================================================================== */
-  const DB27={version:'2.7'};
   document.title='Dicebound: Alpha v2.7';
   const v27Brand=document.querySelector('.brand h1');if(v27Brand)v27Brand.textContent='Dicebound: Alpha v2.7';
   const v27Sub=document.querySelector('.brand p');if(v27Sub)v27Sub.textContent='The road fights back: smarter rewards, tougher difficulties, cleaner shields and faster impossible snakes.';
@@ -5479,7 +5430,6 @@ function buildDiceboundHumanHarness235(){
   /* ========================================================================
      Alpha v3.1.3 — caravan camp control and wrapper-ready platform boundary
      ======================================================================== */
-  const DB30={version:'3.0'};
   document.title='Dicebound: Beta v0.4';
   const v28Brand=document.querySelector('.brand h1');if(v28Brand)v28Brand.textContent='Dicebound: Beta v0.4';
   const v28Sub=document.querySelector('.brand p');if(v28Sub)v28Sub.textContent='Split development source · stable Edge bundle · campsite gathered around the bonfire.';
@@ -6893,11 +6843,6 @@ function buildDiceboundHumanHarness235(){
       try{el.innerHTML=db054LegacyPortraitSVG(cls.id);}catch(_){el.textContent=cls.icon||'🎲';}
     },{once:true});
   };
-  function db054ApplyBoardMarker(){
-    const el=$('pawn');if(!el)return;
-    const cls=CLASSES[player?.classId]||CLASSES.ranger,art=db054ClassArt(cls.id);
-    el.innerHTML=`<img class="db054-board-marker" src="${art.marker}" alt="${cls.name} board marker" draggable="false">`;
-  }
   // Existing HUD and combat owners already call classPortraitSVG/applyClassPortrait.
   // Keeping the art swap below those owner boundaries prevents another late-patch ownership fight.
   const db054Style=document.createElement('style');
@@ -8429,7 +8374,6 @@ function buildDiceboundHumanHarness235(){
     getOpenState:db064AchievementUiSettings,
     setOpenState:(id,open)=>{db064AchievementUiSettings()[id]=!!open;saveMeta();}
   });
-  function renderAchievements(){return dbAchievementsUi.render();}
 
   /* #185: the extracted Camp owner consumes live domain data/actions without
      duplicating class, pet, progression, storage, save or mode ownership. */

@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.18
+
+### Compatibility-monolith sediment cleanup (#40, #209)
+- Audited the compatibility monolith and removed proven declaration-only helpers/data plus one dead helper island whose only consumer was itself dead. Active wrapper chains, gameplay owners and compatibility boundaries were deliberately left intact.
+- Removed retired hidden Begin-era mirrors (`startLegacyLevel`, `startLegacyXp`, `startHeirloom`, `nightmareText`, `startTalentBtn`) and the obsolete Journey End Talent button that old runtime code created only to remove again during startup.
+- Added a static sediment regression test so these retired declarations and DOM targets cannot quietly return. Gameplay, balance, RNG order, saves/checkpoints and current Camp/difficulty behavior are unchanged.
+
 ## Beta 0.6.5.17
 
 ### Sixth-Road completion ownership (#40, #209)

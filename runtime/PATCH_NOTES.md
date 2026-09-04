@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.17
+# Unreleased — Beta 0.6.5.18
+
+## Beta 0.6.5.18 Compatibility-monolith sediment cleanup (#40, #209)
+- Removed proven declaration-only helpers/data and one dead helper island from the compatibility monolith; active wrapper chains and live compatibility boundaries remain intact.
+- Removed retired hidden Begin-era mirrors and the obsolete Journey End Talent button that old runtime code created only to remove again during startup.
+- Added sediment regression coverage and aligned architecture guards with current Camp/Achievements ownership. Gameplay, balance, RNG order, saves/checkpoints and current Camp/difficulty behavior are unchanged.
 
 ## Beta 0.6.5.17 Sixth-Road completion ownership (#40, #209)
 - Terminal Board 6 completion now has one owner: `run/completion.js` coordinates checkpoint retirement, exactly-once terminal state, existing final accounting, the existing end screen/gear handoff, first-clear accounting and the established post-completion hook.
