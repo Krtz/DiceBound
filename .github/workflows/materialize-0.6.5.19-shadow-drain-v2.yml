@@ -1,0 +1,367 @@
+name: Materialize Beta 0.6.5.19 aggressive shadow drain
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.19-shadow-ownership-drain
+    paths:
+      - .github/workflows/materialize-0.6.5.19-shadow-drain-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 55
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Aggressively drain shadowed and test-only monolith code
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re
+
+          mono=Path('runtime/js/dicebound.js')
+          raw=mono.read_bytes(); crlf=b'\r\n' in raw
+          src=raw.decode('utf-8').replace('\r\n','\n')
+          before_lines=len(src.splitlines()); before_bytes=len(raw)
+
+          def masked(text):
+              out=list(text);i=0;n=len(text)
+              while i<n:
+                  if text.startswith('//',i):
+                      j=text.find('\n',i+2);j=n if j<0 else j
+                      for k in range(i,j):out[k]=' '
+                      i=j;continue
+                  if text.startswith('/*',i):
+                      j=text.find('*/',i+2);j=n-2 if j<0 else j
+                      for k in range(i,j+2):
+                          if text[k]!='\n':out[k]=' '
+                      i=j+2;continue
+                  if text[i] in "'\"`":
+                      q=text[i];j=i+1;esc=False
+                      while j<n:
+                          c=text[j]
+                          if esc:esc=False
+                          elif c=='\\':esc=True
+                          elif c==q:j+=1;break
+                          j+=1
+                      for k in range(i,min(j,n)):
+                          if text[k]!='\n':out[k]=' '
+                      i=j;continue
+                  i+=1
+              return ''.join(out)
+
+          def match_close(code,open_pos,left,right):
+              depth=0
+              for j in range(open_pos,len(code)):
+                  if code[j]==left:depth+=1
+                  elif code[j]==right:
+                      depth-=1
+                      if depth==0:return j
+              raise SystemExit(f'unterminated {left}{right} at {open_pos}')
+
+          def function_spans(text,name=None):
+              code=masked(text);out=[]
+              pat=r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{'
+              for m in re.finditer(pat,code):
+                  nm=m.group(1)
+                  if name is not None and nm!=name:continue
+                  op=code.find('{',m.start(),m.end());cl=match_close(code,op,'{','}')
+                  out.append((m.start(),cl+1,nm))
+              return out
+
+          def unique_function_span(text,name):
+              hits=function_spans(text,name)
+              if len(hits)!=1:raise SystemExit(f'{name}: expected one declaration, found {len(hits)}')
+              return hits[0][0],hits[0][1]
+
+          def replace_function(text,name,replacement):
+              a,b=unique_function_span(text,name)
+              return text[:a]+replacement+text[b:]
+
+          # ---- 1. Drain the historical Info/Guide patch ladder. -----------------
+          marker='const dbInfoGuide=window.DiceboundInfoGuide;'
+          if src.count(marker)!=1:raise SystemExit(f'Info owner marker drifted: {src.count(marker)}')
+          marker_pos=src.index(marker)
+          prefix,suffix=src[:marker_pos],src[marker_pos:]
+
+          final_owner=re.search(r'(?<![\w$])renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)\s*;?\s*\}\s*;',suffix)
+          if not final_owner:raise SystemExit('final extracted Info owner assignment not found')
+          final_stats=re.search(r'(?<![\w$])renderLifetimeStats\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.renderStats\(\)\s*;?\s*\}\s*;',suffix)
+          final_tab=re.search(r'(?<![\w$])activateInfoTab\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.activateTab\(',suffix)
+          final_open=re.search(r'(?<![\w$])openInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.open\(\)\s*;?\s*\}\s*;',suffix)
+
+          # Preserve hoisted symbols for old listeners/startup ordering; their historical
+          # bodies no longer own presentation and can collapse to harmless shims.
+          prefix=replace_function(prefix,'renderInfo','function renderInfo(){return undefined;}')
+          if function_spans(prefix,'renderLifetimeStats') and final_stats:
+              prefix=replace_function(prefix,'renderLifetimeStats','function renderLifetimeStats(){return undefined;}')
+          if function_spans(prefix,'activateInfoTab') and final_tab:
+              prefix=replace_function(prefix,'activateInfoTab',"function activateInfoTab(name='guide'){return undefined;}")
+          if function_spans(prefix,'openInfo') and final_open:
+              prefix=replace_function(prefix,'openInfo','function openInfo(){return undefined;}')
+
+          def remove_function_assignments(text,target):
+              removed=0
+              while True:
+                  code=masked(text)
+                  m=re.search(rf'(?<![\w$]){re.escape(target)}\s*=\s*function\s*\([^)]*\)\s*\{{',code)
+                  if not m:break
+                  op=code.find('{',m.start(),m.end());cl=match_close(code,op,'{','}')
+                  end=cl+1
+                  while end<len(text) and text[end] in ' \t':end+=1
+                  if end<len(text) and text[end]==';':end+=1
+                  text=text[:m.start()]+text[end:];removed+=1
+              return text,removed
+
+          prefix,info_assignments=remove_function_assignments(prefix,'renderInfo')
+          if info_assignments<10:raise SystemExit(f'expected mature Info ladder, removed only {info_assignments}')
+          snap_pat=re.compile(r'\s*const\s+(renderInfo[A-Za-z0-9_$]*)\s*=\s*renderInfo\s*;')
+          snapshots=snap_pat.findall(prefix);prefix=snap_pat.sub('',prefix)
+          if len(snapshots)<8:raise SystemExit(f'expected Info snapshots, found {snapshots}')
+          src=prefix+suffix
+
+          # DB25 guide compatibility must point at the extracted owner, not capture a
+          # historical renderer by value.
+          src=src.replace('DB25.modules.guide={render:renderInfo};','DB25.modules.guide={render:()=>dbInfoGuide.render()};')
+
+          # ---- 2. Remove production-embedded harnesses with zero repo consumers. ----
+          external_parts=[]
+          for root in [Path('runtime'),Path('tools'),Path('wrapper-source')]:
+              if not root.exists():continue
+              for p in root.rglob('*'):
+                  if not p.is_file() or p==mono or p.suffix.lower() not in {'.js','.py','.html','.ps1','.json','.go'}:continue
+                  try:external_parts.append(p.read_text(encoding='utf-8',errors='ignore'))
+                  except Exception:pass
+          external='\n'.join(external_parts)
+          harness_removed=[]
+          if 'DiceboundAITest' not in external and 'buildAISim' not in external:
+              a,b=unique_function_span(src,'buildAISim');src=src[:a]+src[b:]
+              pat=re.compile(r'try\s*\{\s*Object\.defineProperty\(window,["\']DiceboundAITest["\'].*?\}\s*catch\s*\([^)]*\)\s*\{.*?\}',re.S)
+              src,n=pat.subn('',src,count=1)
+              if n!=1:raise SystemExit('could not remove DiceboundAITest installer')
+              harness_removed.append('DiceboundAITest')
+
+          if not any(x in external for x in ['DiceboundCareerTest','buildDiceboundHumanHarness235','v235HumanHarness']):
+              a,b=unique_function_span(src,'buildDiceboundHumanHarness235');src=src[:a]+src[b:]
+              src,n1=re.subn(r'\s*const\s+v235HumanHarness\s*=\s*buildDiceboundHumanHarness235\(\)\s*;','',src,count=1)
+              src,n2=re.subn(r'\s*try\s*\{\s*Object\.defineProperty\(window,["\']DiceboundCareerTest["\'].*?\}\s*catch\s*\([^)]*\)\s*\{.*?\}','',src,count=1,flags=re.S)
+              src=src.replace('DB235.modules.testing={career:v235HumanHarness,legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:()=>window.DiceboundTalentTree?.layoutAudit?.()};','DB235.modules.testing={legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:()=>window.DiceboundTalentTree?.layoutAudit?.()};')
+              if n1!=1 or n2!=1:raise SystemExit(f'career harness removal drifted n1={n1} n2={n2}')
+              harness_removed.append('DiceboundCareerTest')
+
+          # ---- 3. Delete obsolete test/debug globals that nothing outside the ----
+          # monolith consumes. Current browser/native smoke globals are preserved.
+          candidate_globals=[
+            'DiceboundBeta021Test','DiceboundBeta03Test','DiceboundBeta044Test','DiceboundBeta045Debug','DiceboundBeta046Debug','DiceboundBeta047Debug','DiceboundBeta04Test','DiceboundBeta0511Test','DiceboundBeta0512Test','DiceboundBeta06Test',
+            'DiceboundCombatUiTest','DiceboundDebug','DiceboundEchoStrikeTest','DiceboundEnemyMechanicsTest','DiceboundEquipmentIdentityTest','DiceboundEventRewardTest','DiceboundV16Debug','DiceboundV16Regression','DiceboundV17Regression','DiceboundV18Regression','DiceboundV19Regression','DiceboundV21Test','DiceboundV22Test','DiceboundV23Test','DiceboundV251Test','DiceboundV25Test','DiceboundV26Test','DiceboundV28Test','DiceboundV319Test','DiceboundV322Test','DiceboundV32Test'
+          ]
+
+          def remove_balanced_call_statement(text,name):
+              code=masked(text)
+              # Prefer a whole try/catch wrapper when it exists.
+              q=re.escape(name)
+              tm=re.search(rf'try\s*\{{\s*Object\.defineProperty\(\s*window\s*,\s*["\']{q}["\']',code)
+              if tm:
+                  try_open=code.find('{',tm.start(),tm.end());try_close=match_close(code,try_open,'{','}')
+                  k=try_close+1
+                  while k<len(code) and code[k].isspace():k+=1
+                  cm=re.match(r'catch\s*\([^)]*\)\s*\{',code[k:])
+                  if cm:
+                      catch_open=code.find('{',k,k+cm.end());catch_close=match_close(code,catch_open,'{','}')
+                      return text[:tm.start()]+text[catch_close+1:],True
+              # Plain Object.defineProperty call.
+              dm=re.search(rf'Object\.defineProperty\(\s*window\s*,\s*["\']{q}["\']',code)
+              if dm:
+                  op=code.find('(',dm.start());cl=match_close(code,op,'(',')');end=cl+1
+                  while end<len(text) and text[end] in ' \t':end+=1
+                  if end<len(text) and text[end]==';':end+=1
+                  return text[:dm.start()]+text[end:],True
+              # Direct window.Name assignment.
+              wm=re.search(rf'window\.{q}\s*=',code)
+              if wm:
+                  i=wm.start();par=br=cur=0;j=i
+                  while j<len(code):
+                      c=code[j]
+                      if c=='(':par+=1
+                      elif c==')':par-=1
+                      elif c=='[':br+=1
+                      elif c==']':br-=1
+                      elif c=='{':cur+=1
+                      elif c=='}':cur-=1
+                      elif c==';' and par==0 and br==0 and cur==0:
+                          return text[:i]+text[j+1:],True
+                      j+=1
+              return text,False
+
+          globals_removed=[];globals_skipped=[]
+          for name in candidate_globals:
+              if name in external:
+                  globals_skipped.append((name,'external consumer'));continue
+              before=src.count(name)
+              if before==0:continue
+              # Only attack self-contained surfaces with at most the normal define/fallback
+              # pair. Multi-generation globals are left for a dedicated extraction pass.
+              if before>2:
+                  globals_skipped.append((name,f'{before} monolith refs'));continue
+              new_src,ok=remove_balanced_call_statement(src,name)
+              if ok and name not in new_src:
+                  src=new_src;globals_removed.append(name)
+              else:globals_skipped.append((name,'shape not safely recognized'))
+
+          # ---- 4. Graph-prune closed named-function islands. ---------------------
+          # This is more aggressive than declaration-only counting: a mutually-referencing
+          # helper island is dead when no live top-level/external path reaches the island.
+          # Any name appearing in a string/comment is conservatively rooted.
+          def prune_closed_named_functions(text):
+              code=masked(text)
+              spans=function_spans(text)
+              by_name={}
+              for a,b,nm in spans:by_name.setdefault(nm,[]).append((a,b))
+              unique={nm:v[0] for nm,v in by_name.items() if len(v)==1}
+              duplicate=set(by_name)-set(unique)
+              roots=set(duplicate);edges={nm:set() for nm in unique}
+              external_roots=set()
+              for nm in unique:
+                  if re.search(rf'(?<![\w$]){re.escape(nm)}(?![\w$])',external):external_roots.add(nm)
+                  code_count=len(re.findall(rf'(?<![\w$]){re.escape(nm)}(?![\w$])',code))
+                  raw_count=len(re.findall(rf'(?<![\w$]){re.escape(nm)}(?![\w$])',text))
+                  if raw_count>code_count:roots.add(nm)
+              roots|=external_roots
+              span_items=[(a,b,nm) for nm,(a,b) in unique.items()]
+              for target in unique:
+                  pat=re.compile(rf'(?<![\w$]){re.escape(target)}(?![\w$])')
+                  decl_a=unique[target][0]
+                  for m in pat.finditer(code):
+                      pos=m.start()
+                      if pos==decl_a+len('function '):continue
+                      owners=[(b-a,nm) for a,b,nm in span_items if a<pos<b]
+                      if not owners:roots.add(target);continue
+                      owner=min(owners)[1]
+                      if owner in edges:edges[owner].add(target)
+                      else:roots.add(target)
+              reachable=set(roots);stack=list(roots)
+              while stack:
+                  owner=stack.pop()
+                  for dep in edges.get(owner,()):
+                      if dep not in reachable:reachable.add(dep);stack.append(dep)
+              dead=set(unique)-reachable
+              # Remove maximal dead spans only; nested dead declarations disappear with parent.
+              spans_dead=[(a,b,nm) for nm,(a,b) in unique.items() if nm in dead]
+              maximal=[]
+              for a,b,nm in spans_dead:
+                  if any(oa<a and b<=ob for oa,ob,onm in spans_dead):continue
+                  maximal.append((a,b,nm))
+              for a,b,nm in sorted(maximal,reverse=True):text=text[:a]+text[b:]
+              return text,sorted(dead),sorted(nm for _,_,nm in maximal)
+
+          src,dead_names,dead_maximal=prune_closed_named_functions(src)
+
+          # Current extracted owner must remain the only mature Info renderer.
+          if not re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',src):raise SystemExit('extracted Info owner lost')
+          for snap in snapshots:
+              if re.search(rf'(?<![\w$]){re.escape(snap)}(?![\w$])',masked(src)):raise SystemExit(f'Info snapshot survived: {snap}')
+          if 'buildAISim' in src or 'buildDiceboundHumanHarness235' in src:raise SystemExit('obsolete embedded harness survived')
+
+          data=src.replace('\n','\r\n') if crlf else src
+          mono.write_bytes(data.encode('utf-8'))
+          after_lines=len(src.splitlines());after_bytes=len(data.encode('utf-8'))
+          print(f'MONOLITH BEFORE {before_lines:,} lines / {before_bytes:,} bytes')
+          print(f'MONOLITH AFTER  {after_lines:,} lines / {after_bytes:,} bytes')
+          print(f'REDUCTION      {before_lines-after_lines:,} lines / {before_bytes-after_bytes:,} bytes')
+          print('Info assignments removed:',info_assignments)
+          print('Info snapshots removed:',snapshots)
+          print('Harnesses removed:',harness_removed)
+          print('Unused globals removed:',globals_removed)
+          print('Unused globals skipped:',globals_skipped)
+          print('Closed named functions dead:',len(dead_names),dead_names)
+          print('Closed maximal blocks removed:',dead_maximal)
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\spring_clean.py
+          python $env:RUNNER_TEMP\spring_clean.py
+
+      - name: Add aggressive cleanup regression guard
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re
+          ROOT=Path(__file__).resolve().parents[1]
+          mono=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')
+          assert 'const dbInfoGuide=window.DiceboundInfoGuide;' in mono
+          assert re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',mono)
+          for name in ['renderInfoBase','renderInfoV13','renderInfoV14Base','renderInfoV15Patch','renderInfoV16Base','renderInfoV18Base','renderInfoV19Base','renderInfoV24Base','renderInfoV24PresentationBase','renderInfoV27Base','buildAISim','buildDiceboundHumanHarness235','DiceboundAITest','DiceboundCareerTest']:
+              assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono), f'obsolete shadow/test surface returned: {name}'
+          assert 'DB25.modules.guide={render:()=>dbInfoGuide.render()};' in mono
+          print('Aggressive shadow/test cleanup guard PASS')
+          '@ | Set-Content -Encoding UTF8 tools\test_shadow_ownership_drain.py
+
+      - name: Stamp Beta 0.6.5.19
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.5.19 --channel Beta
+          @'
+          from pathlib import Path
+          index=Path('runtime/index.html');text=index.read_text(encoding='utf-8')
+          text=text.replace('Beta v0.6.5.18 · Compatibility-monolith sediment cleanup.','Beta v0.6.5.19 · Monolith spring clean.')
+          text=text.replace('Beta v0.6.5.18 · Monolith sediment cleanup.','Beta v0.6.5.19 · Monolith spring clean.')
+          index.write_text(text,encoding='utf-8')
+
+          notes=Path('runtime/PATCH_NOTES.md');text=notes.read_text(encoding='utf-8')
+          old='# Unreleased — Beta 0.6.5.18\n\n'
+          if old not in text:raise SystemExit('patch-note anchor drifted')
+          section='''# Unreleased — Beta 0.6.5.19\n\n## Beta 0.6.5.19 Monolith spring clean (#40, #209)\n- Drained the historical Info/Guide renderer wrapper ladder beneath `ui/info-guide.js`, retaining only hoist-safe compatibility shims before the extracted owner takes over.\n- Removed production-embedded AI/career harnesses and obsolete test/debug globals with no repository consumers, then graph-pruned closed named-function islands that had no live top-level or external path.\n- Current browser/native smoke surfaces remain intact. Gameplay, balance, RNG order, saves/checkpoints and current UI ownership are unchanged; aggressive regression and startup/smoke coverage guard the cleanup.\n\n'''
+          notes.write_text(text.replace(old,section,1),encoding='utf-8')
+
+          change=Path('CHANGELOG.md');text=change.read_text(encoding='utf-8')
+          anchor='## Beta 0.6.5.18\n'
+          if anchor not in text:raise SystemExit('changelog anchor drifted')
+          section='''## Beta 0.6.5.19\n\n### Monolith spring clean (#40, #209)\n- Removed the shadowed Info renderer patch stack, obsolete embedded simulation/career harnesses, unconsumed historical test/debug globals and closed helper islands with no live entry path.\n- Retained current smoke-test surfaces and extracted runtime owners. No gameplay, balance, RNG, save or checkpoint changes are intended.\n\n'''
+          change.write_text(text.replace(anchor,section+anchor,1),encoding='utf-8')
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\notes.py
+          python $env:RUNNER_TEMP\notes.py
+          python tools/refresh_runtime_manifest.py --version 0.6.5.19 --channel Beta --development-state Unreleased
+
+      - name: Validate syntax architecture and all tests
+        shell: pwsh
+        run: |
+          node --check runtime/js/dicebound.js
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.19 --channel Beta
+          git diff --check
+
+      - name: Validate exact local-file Edge startup
+        shell: pwsh
+        run: node tools/test_file_startup_browser.js
+
+      - name: Validate broad Edge run/resume smoke
+        shell: pwsh
+        run: node tools/smoke_run_resume_browser.js
+
+      - name: Commit exact validated spring-clean candidate
+        shell: pwsh
+        run: |
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain.yml -Force -ErrorAction SilentlyContinue
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain-v2.yml -Force -ErrorAction SilentlyContinue
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "cleanup(runtime): aggressively drain monolith shadows"
+          git push origin HEAD:cleanup/0.6.5.19-shadow-ownership-drain
+          git rev-parse HEAD
