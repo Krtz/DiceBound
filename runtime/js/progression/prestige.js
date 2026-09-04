@@ -14,12 +14,45 @@
   const NODES = Object.freeze([
     Object.freeze({
       id: 'five-random-stats',
-      label: 'Spend 1 Prestige Point',
-      detail: 'Gain 5 permanent random stat points.',
+      label: 'Buy Stats',
+      detail: 'Spend 1 Prestige Point to gain 5 permanent random stat points.',
       cost: 1,
       repeatable: true,
+      refundable: true,
       kind: 'random-stat-bundle',
       placement: 'top'
+    }),
+    Object.freeze({
+      id: 'heirloom-storage',
+      label: 'Unlock Heirloom Storage',
+      detail: 'Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.',
+      cost: 1,
+      repeatable: false,
+      refundable: false,
+      kind: 'heirloom-storage',
+      placement: 'right-upper'
+    }),
+    Object.freeze({
+      id: 'heirloom-slot-i',
+      label: 'Heirloom Storage Slot I',
+      detail: 'Permanently add one extra Heirloom Storage slot.',
+      cost: 2,
+      repeatable: false,
+      refundable: false,
+      requires: 'heirloom-storage',
+      kind: 'heirloom-storage-slot',
+      placement: 'right-middle'
+    }),
+    Object.freeze({
+      id: 'heirloom-slot-ii',
+      label: 'Heirloom Storage Slot II',
+      detail: 'Permanently add one more Heirloom Storage slot.',
+      cost: 5,
+      repeatable: false,
+      refundable: false,
+      requires: 'heirloom-storage',
+      kind: 'heirloom-storage-slot',
+      placement: 'right-lower'
     }),
     Object.freeze({
       id: 'moon-forge',
@@ -27,6 +60,7 @@
       detail: 'A persistent lunar smithy will become the home of Prestige crafting.',
       cost: null,
       repeatable: false,
+      refundable: false,
       kind: 'structure',
       placement: 'left',
       unavailableReason: 'Moon Forge cost is awaiting balance approval.'
@@ -75,6 +109,19 @@
     return Math.max(0, state.count - spent(state));
   }
 
+  function hasPurchase(prestige, id) {
+    const state = normalize(prestige);
+    return state.moon.purchases.some(purchase => purchase.nodeId === id);
+  }
+
+  function refundableSpent(prestige) {
+    const state = normalize(prestige);
+    return state.moon.purchases.reduce((total, purchase) => {
+      const node = nodeFor(purchase.nodeId);
+      return total + (node?.refundable === false ? 0 : finite(purchase.cost));
+    }, 0);
+  }
+
   function heldStats(prestige) {
     const stats = blankStats();
     // Held Prestige Points are intentionally deterministic rather than rolled:
@@ -118,6 +165,7 @@
       owner: OWNER,
       count: state.count,
       spent: spent(state),
+      refundableSpent: refundableSpent(state),
       unspent: unspent(state),
       held: Object.freeze(held),
       purchased: Object.freeze(purchased),
@@ -126,7 +174,10 @@
       permanent: Object.freeze(permanent),
       permanentSummary: formatStats(permanent) || 'No permanent Prestige stats yet.',
       purchasedNodes: Object.freeze(purchasedNodes),
-      nodes: Object.freeze(NODES.map(node => ({...node, purchased: purchasedNodes.includes(node.id), affordable: node.cost !== null && unspent(state) >= node.cost})))
+      nodes: Object.freeze(NODES.map(node => {
+        const available = !node.requires || purchasedNodes.includes(node.requires);
+        return {...node, purchased: purchasedNodes.includes(node.id), available, affordable: available && node.cost !== null && unspent(state) >= node.cost, unavailableReason: available ? node.unavailableReason : `Requires ${nodeFor(node.requires)?.label || node.requires}.`};
+      }))
     });
   }
 
@@ -150,6 +201,7 @@
     const state = normalize(prestige), node = nodeFor(id);
     if (!node) return Object.freeze({ok: false, reason: 'Unknown Prestige Moon node.', prestige: state});
     if (node.cost === null) return Object.freeze({ok: false, reason: node.unavailableReason || 'This node is not available yet.', prestige: state});
+    if (node.requires && !hasPurchase(state, node.requires)) return Object.freeze({ok: false, reason: `Requires ${nodeFor(node.requires)?.label || node.requires}.`, prestige: state});
     if (!node.repeatable && state.moon.purchases.some(entry => entry.nodeId === id)) return Object.freeze({ok: false, reason: 'Already purchased.', prestige: state});
     if (unspent(state) < node.cost) return Object.freeze({ok: false, reason: 'Not enough unspent Prestige Points.', prestige: state});
     const stats = node.kind === 'random-stat-bundle' ? rollBundle(random) : blankStats();
@@ -157,9 +209,22 @@
     return Object.freeze({ok: true, node, prestige: state, stats: Object.freeze(stats)});
   }
 
+  function grantLegacyPurchase(prestige, id) {
+    const state = normalize(prestige), node = nodeFor(id);
+    if (!node || node.repeatable || hasPurchase(state, id)) return state;
+    state.moon.purchases.push({nodeId: id, cost: 0, stats: blankStats()});
+    return state;
+  }
+
   function refundAll(prestige) {
-    const state = normalize(prestige), refunded = state.moon.purchases.reduce((total, purchase) => total + finite(purchase.cost), 0);
-    state.moon.purchases = [];
+    const state = normalize(prestige);
+    let refunded = 0;
+    state.moon.purchases = state.moon.purchases.filter(purchase => {
+      const node = nodeFor(purchase.nodeId);
+      if (node?.refundable === false) return true;
+      refunded += finite(purchase.cost);
+      return false;
+    });
     return Object.freeze({prestige: state, refunded});
   }
 
@@ -171,6 +236,8 @@
     normalize,
     inspect,
     unspent,
+    hasPurchase,
+    refundableSpent,
     statTotals,
     heldStats,
     purchasedStats,
@@ -178,6 +245,7 @@
     formatStats,
     award,
     purchase,
+    grantLegacyPurchase,
     refundAll,
     clone
   });

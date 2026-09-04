@@ -62,9 +62,42 @@ assert.equal(view.unspent,5,'refunded points must immediately become held curren
 assert.deepEqual({...view.purchased},{maxHp:0,attack:0,defense:0,crit:0,dodge:0,luck:0,lifeSteal:0});
 assert.deepEqual({...prestige.permanentStats(refund.prestige)},{maxHp:1,attack:1,defense:0,crit:0,dodge:0,luck:0,lifeSteal:0},'refund must retain pre-Moon permanent progression');
 
+let heirloomState=prestige.normalize({count:20,moon:{legacySpent:0,purchases:[]}});
+let noRngCalls=0;
+let lockedSlot=prestige.purchase(heirloomState,'heirloom-slot-i',()=>{noRngCalls++;return 0;});
+assert.equal(lockedSlot.ok,false,'slot purchases must require Heirloom Storage first');
+assert.match(lockedSlot.reason,/requires unlock heirloom storage/i);
+let storage=prestige.purchase(heirloomState,'heirloom-storage',()=>{noRngCalls++;return 0;});
+assert.equal(storage.ok,true);
+assert.equal(storage.node.cost,1);
+assert.equal(noRngCalls,0,'non-stat Prestige purchases must not consume RNG');
+heirloomState=storage.prestige;
+let slotOne=prestige.purchase(heirloomState,'heirloom-slot-i',()=>{noRngCalls++;return 0;});
+assert.equal(slotOne.ok,true);assert.equal(slotOne.node.cost,2);heirloomState=slotOne.prestige;
+let slotTwo=prestige.purchase(heirloomState,'heirloom-slot-ii',()=>{noRngCalls++;return 0;});
+assert.equal(slotTwo.ok,true);assert.equal(slotTwo.node.cost,5);heirloomState=slotTwo.prestige;
+assert.equal(noRngCalls,0);
+assert.equal(prestige.inspect(heirloomState).unspent,12,'1 + 2 + 5 PP permanent Heirloom purchases must spend exactly 8 PP');
+assert.equal(prestige.inspect(heirloomState).refundableSpent,0,'permanent Heirloom purchases are not refundable');
+let statAfterStorage=prestige.purchase(heirloomState,'five-random-stats',()=>0);
+assert.equal(statAfterStorage.ok,true);heirloomState=statAfterStorage.prestige;
+assert.equal(prestige.inspect(heirloomState).refundableSpent,1);
+const permanentRefund=prestige.refundAll(heirloomState);
+assert.equal(permanentRefund.refunded,1,'Refund Stats must refund only refundable stat bundles');
+assert.equal(prestige.hasPurchase(permanentRefund.prestige,'heirloom-storage'),true);
+assert.equal(prestige.hasPurchase(permanentRefund.prestige,'heirloom-slot-i'),true);
+assert.equal(prestige.hasPurchase(permanentRefund.prestige,'heirloom-slot-ii'),true);
+assert.equal(prestige.inspect(permanentRefund.prestige).unspent,12,'permanent Heirloom spend must remain after a stat refund');
+let grandfathered=prestige.normalize({count:50,moon:{legacySpent:0,purchases:[]}});
+grandfathered=prestige.grantLegacyPurchase(grandfathered,'heirloom-storage');
+grandfathered=prestige.grantLegacyPurchase(grandfathered,'heirloom-slot-i');
+grandfathered=prestige.grantLegacyPurchase(grandfathered,'heirloom-slot-ii');
+assert.equal(prestige.inspect(grandfathered).spent,0,'grandfathered legacy purchases must preserve earned capacity without retroactively charging PP');
+assert.equal(prestige.hasPurchase(grandfathered,'heirloom-slot-ii'),true);
+
 const forge=prestige.purchase(refund.prestige,'moon-forge',()=>0);
 assert.equal(forge.ok,false);
 assert.match(forge.reason,/cost is awaiting balance approval/i,'the Forge must remain explicitly unavailable until a real cost is approved');
 assert.equal(prestige.nodes.find(node=>node.id==='moon-forge').cost,null,'Forge cost must not be a hidden UI magic number');
 
-console.log('Prestige progression owner PASS: currency, held stats, purchase bundles, refund and Forge TBD contract');
+console.log('Prestige progression owner PASS: currency, held stats, permanent Heirloom purchases, selective refund, migration and Forge TBD contract');

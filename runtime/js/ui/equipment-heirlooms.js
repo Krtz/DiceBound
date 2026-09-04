@@ -94,7 +94,7 @@
     if(!host){host=doc()?.createElement('div');if(!host)return null;host.id='campHeirloomStorage';host.className='heirloom-storage-wrap';panel.appendChild(host);}
     runtime.syncStorage?.();
     const current=state();
-    if(!current.storageUnlocked){host.innerHTML='<div class=\"storage-locked\"><b>🗄️ Heirloom Storage locked</b><br>After defeating Board 3, a one-rank talent appears beyond Living Legend. Purchase it once to permanently unlock storage.</div>';return Object.freeze({owner:OWNER,unlocked:false});}
+    if(!current.storageUnlocked){host.innerHTML='<div class=\"storage-locked\"><b>🗄️ Heirloom Storage locked</b><br>Purchase Heirloom Storage on the Prestige Moon for 1 Prestige Point. It begins with one slot per equipment slot; Board 5, two permanent Moon slot purchases, and the Road Merchant can expand it.</div>';return Object.freeze({owner:OWNER,unlocked:false});}
     const storage=current.storage||[],active=current.heirlooms||[],cap=Math.max(0,Number(current.storageCapacity)||0),activeCap=Math.max(0,Number(current.activeCapacity)||0),milestones=current.storageMilestones||[];
     host.innerHTML=`<div class=\"heirloom-storage-head\"><div><b>🗄️ Heirloom Storage</b><br><span style=\"color:var(--muted)\">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run</span></div><div style=\"font-size:9px;color:var(--muted)\">Base 8 · ${milestones.map(entry=>`${entry.on?'✅':'⬜'} ${escapeHtml(entry.text)}`).join(' · ')}</div></div><div class=\"heirloom-storage-grid\" data-heirloom-storage-grid></div>`;
     const grid=host.querySelector('[data-heirloom-storage-grid]');
