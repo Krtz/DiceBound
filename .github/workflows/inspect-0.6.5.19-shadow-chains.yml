@@ -1,0 +1,83 @@
+name: Inspect 0.6.5.19 shadow chains
+
+on:
+  push:
+    branches:
+      - validation/0.6.5.19-shadow-audit
+    paths:
+      - .github/workflows/inspect-0.6.5.19-shadow-chains.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e8be2e856b452c1eb72bf9268974bf6a94207251
+          fetch-depth: 0
+      - name: Print targeted shadow chains
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          mono=Path('runtime/js/dicebound.js').read_text(encoding='utf-8').splitlines()
+          targets=[
+            'renderInfo','openStartScreen','updateMetaUI','renderTalents','openTalentTree',
+            'renderPetCollection','renderClassChoices','generateBoard','enemyForPosition',
+            'startNewGame','advanceToNextBoard','completeSixthRoadV19',
+            'v110EnsureCampScene','v110UpdateCampScene','v22UpdateCamp','v22EnsureCompatStartBtn',
+            'openPrestigeMoon','beta042EnsureCampOptions',
+          ]
+          print('=== TOP-LEVEL TARGET OCCURRENCES WITH CONTEXT ===')
+          seen=set()
+          for target in targets:
+            print(f'\n### {target}')
+            pat=re.compile(rf'(?<![\w$]){re.escape(target)}(?![\w$])')
+            hits=[]
+            for i,line in enumerate(mono,1):
+              if pat.search(line): hits.append(i)
+            print('hits:',hits)
+            for i in hits:
+              lo=max(1,i-2);hi=min(len(mono),i+4)
+              key=(lo,hi)
+              if key in seen: continue
+              seen.add(key)
+              for n in range(lo,hi+1): print(f'{n:5}: {mono[n-1]}')
+              print('---')
+
+          print('\n=== CLOSED ISLAND SOURCE BLOCKS ===')
+          islands=['v24SetPanelHtml','enemyPortraitSVG','beta03MinibossOddsText','db317AchievementRewardText','db046UiArt','describeCurrentUltimate','beta043Art','db317AchievementDone','db317AchievementConditionText']
+          text='\n'.join(mono)
+          for name in islands:
+            print(f'\n### {name}')
+            for i,line in enumerate(mono,1):
+              if re.search(rf'\bfunction\s+{re.escape(name)}\s*\(',line):
+                # Print until brace balance closes, capped to 90 lines.
+                bal=0;started=False
+                for n in range(i,min(len(mono),i+90)+1):
+                  s=mono[n-1]
+                  print(f'{n:5}: {s}')
+                  # adequate for these blocks; strings may contain braces, this is inspection only
+                  bal += s.count('{')-s.count('}')
+                  if '{' in s: started=True
+                  if started and bal<=0: break
+                break
+
+          print('\n=== EMBEDDED HARNESS WINDOWS ===')
+          for lo,hi,label in [(2360,2425,'AI harness'),(4378,4465,'human/career harness')]:
+            print(f'\n### {label} L{lo}-{hi}')
+            for n in range(lo,min(hi,len(mono))+1): print(f'{n:5}: {mono[n-1]}')
+
+          print('\n=== EXTRACTED OWNER PUBLIC SURFACES ===')
+          for p in ['runtime/js/ui/info-guide.js','runtime/js/ui/camp.js','runtime/js/ui/talent-tree.js','runtime/js/ui/class-chooser.js','runtime/js/ui/pet-chooser.js','runtime/js/board/generation.js','runtime/js/run/lifecycle.js','runtime/js/board/transition.js','runtime/js/run/completion.js']:
+            print(f'\n### {p}')
+            lines=Path(p).read_text(encoding='utf-8').splitlines()
+            for i,line in enumerate(lines,1):
+              if re.search(r'window\.Dicebound|Object\.freeze|return\s*\{|\b(open|render|refresh|generate|advance|startFreshRun|completeFinalRoad)\s*:',line):
+                print(f'{i:4}: {line}')
+          PY
