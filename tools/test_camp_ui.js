@@ -88,7 +88,8 @@ assert.match(source,/function syncProgressionReveals\(/,'Camp must own progressi
 assert.match(source,/function syncHeirloomStorageChest\(/,'Camp must remove the Chest entirely until Storage is unlocked');
 assert.match(source,/button\.hidden=!unlocked/,'locked modes must remove their painted control from layout and hit testing');
 assert.match(source,/function hideLegacyCampDestinations\(/,'Camp must own the hiding of legacy mode/storage inputs recreated by older paths');
-assert.match(source,/#startOverlay\.camp-fullscreen #nightmareBox,#startOverlay\.camp-fullscreen #hellBox,#startOverlay\.camp-fullscreen #startHeirloom\{display:none!important\}/,'Camp fullscreen must suppress all legacy mode/storage presentation at the destination layer');
+assert.match(source,/#startOverlay\.camp-fullscreen #nightmareBox,#startOverlay\.camp-fullscreen #hellBox\{display:none!important\}/,'Camp fullscreen must suppress the live legacy difficulty anchors at the destination layer');
+assert.doesNotMatch(source,/#startHeirloom/,'Camp owner must not retain the retired hidden start-Heirloom presentation target');
 assert.match(source,/assets\/camp\/interactions\/talent-star\.png/,'Camp Talents must resolve the canonical interaction asset');
 assert.doesNotMatch(source,/assets\/camp\/objects\/talent-star\.png/,'Camp must not retain an obsolete Talent-object fallback pointer');
 assert.match(source,/campGoBtn:Object\.freeze\(\{x:\.85,y:\.74,w:440,h:250\}\)/,'Start Run must retain its minimum authored scene footprint');
