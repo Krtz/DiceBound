@@ -24,8 +24,8 @@ def replace_exact(path:str,old:str,new:str,count:int=1)->None:
 # can ever be exposed by an early Camp/equipment render.
 replace_exact(
     'runtime/js/dicebound.js',
-    '  const GUARDIAN_SPECIAL_INTERVAL = 5;\n',
-    "  const GUARDIAN_SPECIAL_INTERVAL = 5;\n  const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';\n  const DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i';\n  const DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';\n"
+    '  const GUARDIAN_SPECIAL_INTERVAL=5;\n',
+    "  const GUARDIAN_SPECIAL_INTERVAL=5;\n  const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';\n  const DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i';\n  const DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';\n"
 )
 replace_exact(
     'runtime/js/dicebound.js',
