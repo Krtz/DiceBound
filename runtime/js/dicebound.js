@@ -380,6 +380,38 @@
   });
   if(!dbBoardMovement)throw new Error('DiceboundBoardMovement must load before dicebound.js');
 
+  const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({
+    clearCheckpoint:()=>dbRunClearCheckpoint(),
+    seedNewRun:()=>dbRunSeedNewRun(),
+    beforeFreshRun:options=>options?.beforeFreshRun?.(),
+    selectedClassId:()=>selectedClassId,
+    isRandomClassMode:()=>window.DiceboundClassChooser?.isRandomMode?.(),
+    resolveRandomForRun:()=>window.DiceboundClassChooser?.resolveRandomForRun?.(),
+    prepareFreshRun:()=>{
+      v19CompletingSixth=false;meta.doubleDiceUnlocked=!!(meta.doubleDiceUnlocked||(meta.board5Clears||0)>0);
+      v16FifthRoadCompleting=false;v16CombatKind=null;
+    },
+    ensureAudio,
+    initializePlayer:classId=>resetPlayer(classId),
+    setBoardLevel:value=>{boardLevel=value;},
+    applyRunTheme:()=>applyRunTheme(),
+    generateBoard:()=>generateBoard(),
+    buildBoard:()=>buildBoard(),
+    setRunState:next=>{gameStarted=!!next.gameStarted;rollLocked=!!next.rollLocked;combatBusy=!!next.combatBusy;},
+    clearLog:()=>{const log=$('log');if(log)log.innerHTML='';},
+    setDice:value=>{const dice=$('dice');if(dice)dice.textContent=value;},
+    hideSurface:id=>$(id)?.classList.add('hidden'),
+    getFreshContext:()=>({classId:player.classId,className:CLASSES[player.classId]?.name||player.classId,nightmareMode}),
+    log:addLog,
+    updateHud:updateHUD,
+    schedulePawn:ms=>setTimeout(()=>placePawn(false),ms),
+    recordFreshRunStarted:()=>{ensureAlphaMeta().runsStarted++;statsLastHp=player.hp;statsLastGold=player.gold;saveMeta();},
+    announceRandomClass:chosen=>addLog(`🎲 Random class selected <b>${chosen.icon} ${chosen.name}</b> for this run.`),
+    afterClassStart:detail=>dbRunApplyClassStartEffects(detail),
+    scheduleCheckpoint:()=>dbRunScheduleCheckpoint()
+  });
+  if(!dbRunLifecycle)throw new Error('DiceboundRunLifecycle must load before dicebound.js');
+
   const CombatUI=Object.freeze({
     renderStrike(result){const critNote=result.critTiers?` · Critical ×${result.critTiers+1}`:'',execNote=result.executed?' · EXECUTION':'';setCombatText(`${result.burst||''}${result.label}${critNote}: ${result.dealt} damage${execNote}${result.heal?` · ${result.heal} lifesteal`:''}.${result.elementMessage?` ${result.elementMessage}`:''}`);result.critTiers?sfx.crit():sfx.hit();updateCombatUI();return result;}
   });
@@ -1358,7 +1390,7 @@
 
   function applyRunThemeV13(){applyRunTheme();}
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
-  function startNewGame(){ensureAudio();resetPlayer(selectedClassId);boardLevel=1;applyRunTheme();generateBoard();buildBoard();gameStarted=true;rollLocked=false;combatBusy=false;$("log").innerHTML="";$("dice").textContent="⚀";["startOverlay","combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay","infoOverlay"].forEach(id=>$(id)?.classList.add("hidden"));addLog(`<b>${CLASSES[player.classId].name}</b> begins the ${nightmareMode?"Nightmare ":""}four-road adventure.`);updateHUD();setTimeout(()=>placePawn(false),60);}
+  function startNewGame(){return dbRunLifecycle.startFreshRun();}
   function showEnd(victory){rollLocked=true;gameStarted=false;const earned=finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
 
 
@@ -1649,7 +1681,6 @@
   // Stats hooks around existing run lifecycle.
   const finalizeRunV15=finalizeRun;finalizeRun=function(){const was=runFinalized,result=finalizeRunV15();if(!was){const s=ensureAlphaMeta();s.runsFinished++;s.rolls+=rolls;s.tilesTraveled+=tilesMovedThisRun;s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);s.highestGold=Math.max(s.highestGold,player.gold);saveMeta();}return result;};
   const showEndV15=showEnd;showEnd=function(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}return showEndV15(victory);};
-  const startNewGameV15=startNewGame;startNewGame=function(){const result=startNewGameV15();ensureAlphaMeta().runsStarted++;statsLastHp=player.hp;statsLastGold=player.gold;saveMeta();return result;};
   const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);checkDynamicClassUnlocks();saveMeta();return r;};
 
   // Alpha Info: expandable guide categories plus a lifetime stats tab.
@@ -2886,8 +2917,6 @@
   const winCombatV16Base=winCombat;
   winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,isFifthFinal=boardLevel===5&&(v16CombatKind==="final"||defeated?.finalBoss||tiles[currentEnemyTile]?.type==="boss");if(!isFifthFinal){const r=await winCombatV16Base();restoreRadiationDefenseV16();return r;}if(v16FifthRoadCompleting)return;
     const all=currentEnemies.length?[...currentEnemies]:defeated?[defeated]:[],tileIndex=currentEnemyTile,classId=player.classId,wasNightmare=nightmareMode;const s=ensureAlphaMeta();s.enemiesDefeated+=all.length;s.bossesDefeated++;recordBoardClear(5,classId);if(classId==="beastmaster"&&wasNightmare)meta.beastmasterNightmareBoard5=true;const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);meta.petCookies+=10;meta.board5Clears=(meta.board5Clears||0)+1;saveMeta();checkDynamicClassUnlocks();if(tiles[tileIndex])tiles[tileIndex].cleared=true;setCombatText(`Fifth Road victory! +${rewardXp} XP, +${rewardGold} gold, +10 cookies.`);sfx.win();addLog(`<b>Ring Tyrant defeated.</b> The fifth road is complete: +${rewardXp} XP, +${rewardGold} gold and +10 cookies.`);showToast("🏆 Fifth Road conquered");updateHUD();await delay(900);$("combatOverlay").classList.add("hidden");currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);restoreRadiationDefenseV16();updateHUD();const finish=()=>completeFifthRoadV16(),afterLevels=()=>pendingLevelUps>0?openLevelUp(finish):finish();openCombatLootChain(defeated,afterLevels);};
-  const startNewGameV16GuardReset=startNewGame;startNewGame=function(){v16FifthRoadCompleting=false;v16CombatKind=null;return startNewGameV16GuardReset();};
-
   // ---- Info additions -------------------------------------------------------
   const renderInfoV16Base=renderInfo;renderInfo=function(){renderInfoV16Base();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>⚗️ v1.6 combat refinements</summary><div class="info-body"><p><b>Potions:</b> baseline healing is now <b>10 + 10% of max HP</b>, multiplied by Potion Healing bonuses. The Alchemist unlocks after 100 lifetime potion uses and can turn that same healing potency into offensive flask damage.</p><p><b>Companions:</b> every elemental companion deals slightly more base damage than DiBo and grants a small active stat bonus, giving pet switching a mechanical purpose. <b>Radiation</b> ☢️ lowers Defense when it procs.</p><p><b>Powerup Rerolls:</b> the Second Opinion talent grants up to five rerolls per run. <b>Turtle</b> now rewards consecutive guarding through Shell Momentum rather than copying Fighter's single-guard counter pattern.</p><p><b>Defense:</b> hover the Defense number in the HUD to see its current diminishing percentage reduction. Enemy Attack is now visible in combat, which makes Brain Hack and other Attack reductions readable.</p></div>`;sections.appendChild(d);};
 
@@ -3686,9 +3715,6 @@
     const all=currentEnemies.length?[...currentEnemies]:[defeated],tileIndex=currentEnemyTile,classId=player.classId,s=ensureAlphaMeta();s.enemiesDefeated+=all.length;s.bossesDefeated++;recordBoardClear(boardAtWin,classId);const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);const cookies=boardAtWin===6?15:10;meta.petCookies+=cookies;if(boardAtWin===5){meta.board5Clears=(meta.board5Clears||0)+1;meta.doubleDiceUnlocked=true;if(classId==="beastmaster"&&nightmareMode)meta.beastmasterNightmareBoard5=true;showToast("🎲🎲 Double Dice unlocked!",2600,true);}saveMeta();checkDynamicClassUnlocks();if(tiles[tileIndex])tiles[tileIndex].cleared=true;setCombatText(`${boardAtWin===6?"Sixth":"Fifth"} Road victory! +${rewardXp} XP, +${rewardGold} gold, +${cookies} cookies.`);sfx.win();addLog(`<b>${defeated.name} defeated.</b> +${rewardXp} XP, +${rewardGold} gold and +${cookies} cookies.`);updateHUD();await delay(320);await BattleVictoryUI.present(BattleVictoryState.create({title:`${boardAtWin===6?'Sixth':'Fifth'} Road Victory!`,defeatedNames:all.map(e=>e.name),xp:rewardXp,gold:rewardGold,cookies,board:boardAtWin}));$("combatOverlay").classList.add("hidden");BattleVictoryUI.reset();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);updateHUD();const finish=()=>boardAtWin===6?completeSixthRoadV19():advanceToNextBoard(),afterLevels=()=>pendingLevelUps>0?openLevelUp(finish):finish();openCombatLootChain(defeated,afterLevels);
   }
   winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,isFinal=!!defeated?.finalBoss||v16CombatKind==="final"||tiles[currentEnemyTile]?.type==="boss";if(isFinal&&(boardLevel===5||boardLevel===6))return v19ResolveLateFinal(defeated,boardLevel);return winCombatV19Base();};
-  const startNewGameV19Base=startNewGame;
-  startNewGame=function(){v19CompletingSixth=false;meta.doubleDiceUnlocked=!!(meta.doubleDiceUnlocked||(meta.board5Clears||0)>0);const r=startNewGameV19Base();updateHUD();return r;};
-
   // Board-6 guardian labels in the road HUD.
   const updateHUDV19RoadBase=updateHUD;
   updateHUD=function(){updateHUDV19RoadBase();if(boardLevel===6&&gameStarted){const count=currentTileCount(),mini=currentMinibossTile();$("floorText").textContent=`Board 6 · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Abyssal Custodian · tile ${mini}`:`The Last Equation · tile ${count}`;}};
@@ -5377,9 +5403,6 @@ function buildDiceboundHumanHarness235(){
   if(ELEMENTS.radiation)ELEMENTS.radiation.description='Deals light elemental damage and shreds Defense. At 0 Defense or below it keeps pushing Defense negative, making later hits deal more damage.';
 
   /* RANDOM CLASS ----------------------------------------------------------- */
-  // Random mode is stateful chooser behavior, not a start-screen wrapper.
-  const startNewGameV27Base=startNewGame;startNewGame=function(){const chosen=window.DiceboundClassChooser?.resolveRandomForRun?.();const r=startNewGameV27Base();if(chosen)addLog(`🎲 Random class selected <b>${chosen.icon} ${chosen.name}</b> for this run.`);return r;};
-
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
   function v27CompletePrestigeNoChoice(total){const rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;meta.prestige=DB_PRESTIGE.award(meta.prestige,rewards);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$('prestigeHeirloomOverlay')?.classList.add('hidden');if(v24StorageUnlocked?.()){v24SyncStorage?.();const cap=getHeirloomSlots();meta.heirlooms=(meta.heirlooms||[]).slice(0,cap).map(normalizeSavedItem);}else meta.heirlooms=(meta.heirlooms||[]).slice(0,getHeirloomSlots()).map(normalizeSavedItem);saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);renderTalents();updateMetaUI();openStartScreen();return true;}
   prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
@@ -5563,8 +5586,15 @@ function buildDiceboundHumanHarness235(){
   updateCombatUI=function(){const r=updateCombatUIV28RougeBase();if(player.classId==='slimerouge'&&(player.slimeRougeUltimateClass||player.v28BorrowedUltimateClass)){const d=CLASSES[player.slimeRougeUltimateClass||player.v28BorrowedUltimateClass];if($('ultimateName'))$('ultimateName').textContent=`${d.icon} ${d.ultimate.name}`;if($('ultimateBtn')){$('ultimateBtn').textContent=`${d.ultimate.icon} ${d.ultimate.name}`;$('ultimateBtn').dataset.tip=`Borrowed ${d.name} ultimate — ${describeCurrentUltimate(d.id)}`;}}if(classIdentityActive('berserker')){const rage=Math.round(DB_EFFECTIVE_STATS.berserkerRageBonus(player)*100);setResourceUI('rage','Rage',rage,100,`Every 1% missing HP grants +1% damage. Current Rage bonus: +${rage}% damage.`);}return r;};
 
   /* RANDOM -> BOARD 6 -> SLIME ROUGE SECRET ------------------------------- */
-  const startNewGameV28Base=startNewGame;
-  startNewGame=function(){const wasRandom=!!window.DiceboundClassChooser?.isRandomMode?.(),r=startNewGameV28Base();player.v28StartedRandom=wasRandom;if(player.classId==='slimerouge'&&player.slimeRougeRunSummary){const identity=CLASSES[player.slimeRougeIdentityClass],ultimate=CLASSES[player.slimeRougeUltimateClass];addLog(`<b>${player.slimeRougeRunSummary}</b>. Identity mechanics and the borrowed ultimate are both active for this run.`);showToast(player.slimeRougeRunSummary,5200,true);if(identity&&ultimate)recordRunBuff?.('🎲','This run',`${identity.icon} ${identity.name} identity · ${ultimate.ultimate.icon} ${ultimate.ultimate.name} ultimate`,'class','Slime Rouge');}return r;};
+  function dbRunApplyClassStartEffects({wasRandom}){
+    player.v28StartedRandom=!!wasRandom;
+    if(player.classId==='slimerouge'&&player.slimeRougeRunSummary){
+      const identity=CLASSES[player.slimeRougeIdentityClass],ultimate=CLASSES[player.slimeRougeUltimateClass];
+      addLog(`<b>${player.slimeRougeRunSummary}</b>. Identity mechanics and the borrowed ultimate are both active for this run.`);
+      showToast(player.slimeRougeRunSummary,5200,true);
+      if(identity&&ultimate)recordRunBuff?.('🎲','This run',`${identity.icon} ${identity.name} identity · ${ultimate.ultimate.icon} ${ultimate.ultimate.name} ultimate`,'class','Slime Rouge');
+    }
+  }
   const completeSixthRoadV28Base=completeSixthRoadV19;
   completeSixthRoadV19=function(){const unlockRouge=!!player.v28StartedRandom&&isClassUnlocked('slime')&&!meta.unlocks?.slimerouge,r=completeSixthRoadV28Base();if(unlockRouge){unlockClass('slimerouge');addLog('<b>🔴 Something red crawls out of the random road.</b> Slime Rouge has been unlocked.');showToast('🔴 SECRET CLASS UNLOCKED · Slime Rouge',3800,true);}return r;};
 
@@ -7738,13 +7768,12 @@ function buildDiceboundHumanHarness235(){
   }
 
   const dbRunUpdateHudBase=updateHUD;updateHUD=function(...args){const result=dbRunUpdateHudBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
-  const dbRunStartBase=startNewGame;startNewGame=function(...args){dbRunClearCheckpoint();dbRunSeedNewRun();const result=dbRunStartBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
   const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
   const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
   const dbRunCompleteFifthBase=completeFifthRoadV16;completeFifthRoadV16=function(...args){dbRunClearCheckpoint();return dbRunCompleteFifthBase.apply(this,args);};
   const dbRunCompleteSixthBase=completeSixthRoadV19;completeSixthRoadV19=function(...args){dbRunClearCheckpoint();return dbRunCompleteSixthBase.apply(this,args);};
   const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
-  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRunClearCheckpoint();dbRunSeedNewRun();$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));dbRunStartBase();}})();},true);
+  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
   // Test-only exercise of the live final-boss path. It deliberately resets the
   // ephemeral test session after each capture; it is never exposed to player UI.

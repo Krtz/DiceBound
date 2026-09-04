@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.13
+# Unreleased — Beta 0.6.5.14
+
+## Beta 0.6.5.14 Fresh-run lifecycle ownership (#40, #209)
+- Fresh expedition startup now has one owner: `run/lifecycle.js` coordinates checkpoint replacement/seeding, Random Class, injected player initialization, Board 1 construction, entry presentation, run accounting and checkpoint scheduling in the published order.
+- The existing player initializer still owns Talent snapshots and class/pet/equipment startup mechanics. Board generation, movement, tile routing, transition, persistence and checkpoint restore remain separate; resume cannot call the fresh-start owner.
+- Gameplay, difficulty, RNG cursor/order, checkpoint timing, save semantics, UI/log/HUD timing and class behavior are unchanged. The old V15/V16/V19/V27/V28 and checkpoint start wrappers are retired rather than left shadowing the owner.
 
 ## Beta 0.6.5.13 Board generation ownership (#40, #209)
 - Road generation now has one owner: `board/generation.js` constructs the road, places specials, generates ordinary packs, applies the published Board 1/5/6 overlays, preserves the Board 4/5 late pack passes and makes the Board 2 Pale Devil placement.

@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.14
+
+### Fresh-run lifecycle ownership (#40, #209)
+- Replaced the historical `startNewGame` reassignment chain with `runtime/js/run/lifecycle.js`, the single coordinator for checkpoint replacement and seeding, Random Class handoff, player initialization, Board 1 construction, entry presentation, run accounting and checkpoint scheduling.
+- The coordinator injects the existing `resetPlayer()` mechanics rather than absorbing class, pet, Talent or equipment behavior. Board generation, movement, dispatch, transition, persistence and checkpoint restore remain in their established owners.
+- `dicebound.js` now keeps one named forwarding adapter plus narrow callbacks; architecture and deterministic tests reject the retired V15/V16/V19/V27/V28/checkpoint wrapper chain and fresh-start access from resume.
+
 ## Beta 0.6.5.13
 
 ### Board generation ownership (#40, #209)
