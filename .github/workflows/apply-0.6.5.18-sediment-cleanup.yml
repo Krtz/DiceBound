@@ -1,0 +1,191 @@
+name: Apply Beta 0.6.5.18 sediment cleanup
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.18-monolith-sediment
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out cleanup branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove proven compatibility sediment
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          mono_path=Path('runtime/js/dicebound.js')
+          index_path=Path('runtime/index.html')
+          camp_path=Path('runtime/js/ui/camp.js')
+          changelog_path=Path('CHANGELOG.md')
+
+          def read_normalized(path):
+              raw=path.read_bytes()
+              crlf=b'\r\n' in raw
+              return raw.decode('utf-8').replace('\r\n','\n'),crlf
+
+          def write_preserved(path,text,crlf):
+              data=text.replace('\n','\r\n') if crlf else text
+              path.write_bytes(data.encode('utf-8'))
+
+          mono,mono_crlf=read_normalized(mono_path)
+          original_mono=mono
+          lines=mono.splitlines(keepends=True)
+
+          def symbol_count(name):
+              return len(re.findall(rf'(?<![\w$]){re.escape(name)}(?![\w$])', original_mono))
+
+          expected_counts={
+              'ROWS':2,'COLS':2,'TILE_COUNT':1,'MINIBOSS_TILE':1,'META_KEY':1,'RUN_THEMES':1,
+              'SOUND_KEY_ORDER':1,'combatModal':1,'statusDotsHTMLV17Base':1,
+              'unboundPreciousGearV24Base':1,'DB26':1,'DB27':1,'DB30':1,
+          }
+          for name,count in expected_counts.items():
+              actual=symbol_count(name)
+              if actual!=count:
+                  raise SystemExit(f'{name}: expected {count} exact symbol occurrences before cleanup, found {actual}')
+
+          removals=[
+              (8432,8432,'function renderAchievements'),
+              (6896,6900,'function db054ApplyBoardMarker'),
+              (5482,5482,"const DB30={version:'3.0'}"),
+              (5333,5333,"const DB27={version:'2.7'}"),
+              (5220,5220,"const DB26={version:'2.6'}"),
+              (4714,4714,'const unboundPreciousGearV24Base='),
+              (4334,4342,'function v23SetTierData'),
+              (4099,4101,'function v22OpenCampPanel'),
+              (3854,3855,'function v110CloseCampPanels'),
+              (3849,3850,'function campSummaryText'),
+              (3823,3828,'function impossibleRoadTierData'),
+              (3061,3061,'const statusDotsHTMLV17Base='),
+              (1409,1409,'function applyRunThemeV13'),
+              (1160,1160,'function closeTalentTree'),
+              (1128,1128,'function applyRandomLegendary'),
+              (925,929,'function refreshEffectiveGoldDisplays'),
+              (660,660,'const SOUND_KEY_ORDER='),
+              (19,26,'const RUN_THEMES = ['),
+              (14,14,'const META_KEY ='),
+              (11,11,'const MINIBOSS_TILE ='),
+              (6,8,'const ROWS ='),
+          ]
+          for start,end,marker in sorted(removals,reverse=True):
+              block=''.join(lines[start-1:end])
+              if marker not in block:
+                  raise SystemExit(f'line-range guard failed for L{start}-L{end}: {marker}')
+              if start==4334 and 'function v23SetPanelHtml' not in block:
+                  raise SystemExit('v23 set-panel dead-island guard failed')
+              del lines[start-1:end]
+          mono=''.join(lines)
+
+          def replace_once(text,old,new,label):
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return text.replace(old,new,1)
+
+          mono=replace_once(
+              mono,
+              '  const combatModal=document.querySelector("#combatOverlay .modal"),ultimateWrap=document.querySelector("#combatOverlay .ultimate-wrap"),combatActions=document.querySelector("#combatOverlay .combat-actions");',
+              '  const ultimateWrap=document.querySelector("#combatOverlay .ultimate-wrap"),combatActions=document.querySelector("#combatOverlay .combat-actions");',
+              'unused combatModal declarator'
+          )
+          mono=replace_once(
+              mono,
+              '    $("talentPointTop").textContent=meta.points;$("startLegacyLevel").textContent=meta.level;$("startLegacyXp").textContent=`${meta.xp} / ${meta.xpNext} XP`;',
+              '    $("talentPointTop").textContent=meta.points;',
+              'retired start Legacy mirrors'
+          )
+          mono=replace_once(
+              mono,
+              '    const hs=(meta.heirlooms||[]),capacity=getHeirloomSlots();$("startHeirloom").innerHTML=hs.length?`Bound heirlooms (${hs.length}/${capacity}):<br>${hs.map(h=>`<strong>${h.icon} ${h.name}</strong> — ${formatBonuses(h)}`).join("<br>")}`:`No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?"":"s"}.`;\n',
+              '',
+              'retired start heirloom mirror'
+          )
+          mono=replace_once(
+              mono,
+              '  $("talentBtn").addEventListener("click",()=>openTalentTree());$("startTalentBtn").addEventListener("click",()=>openTalentTree());$("endTalentBtn").addEventListener("click",()=>openTalentTree("endOverlay"));',
+              '  $("talentBtn").addEventListener("click",()=>openTalentTree());',
+              'retired start/end Talent listeners'
+          )
+          mono=replace_once(
+              mono,
+              "  const endTalent=$('endTalentBtn');if(endTalent)endTalent.remove();if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';",
+              "  if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';",
+              'runtime removal of retired end Talent button'
+          )
+          write_preserved(mono_path,mono,mono_crlf)
+
+          index,index_crlf=read_normalized(index_path)
+          old_compat='''    <!-- Compatibility-only state targets for historical runtime adapters.\n         ui/camp.js owns every visible between-runs control and destination. -->\n    <div id="startCompatibilityState" hidden aria-hidden="true">\n      <span id="startLegacyLevel"></span>\n      <span id="startLegacyXp"></span>\n      <div id="startHeirloom"></div>\n      <div id="nightmareBox"><span id="nightmareText"></span><button id="nightmareToggle" type="button"></button></div>\n      <button id="startTalentBtn" type="button"></button>\n    </div>\n'''
+          new_compat='''    <!-- The hidden Nightmare anchor remains only because current legacy difficulty\n         adapters still create Hell state beside it. Camp owns all visible controls. -->\n    <div id="startCompatibilityState" hidden aria-hidden="true">\n      <div id="nightmareBox"><button id="nightmareToggle" type="button"></button></div>\n    </div>\n'''
+          index=replace_once(index,old_compat,new_compat,'start compatibility skeleton')
+          index=replace_once(index,'    <button class="small-btn" id="endTalentBtn" style="width:100%;margin-top:9px">Open talent tree</button>\n','', 'retired Journey End Talent button')
+          write_preserved(index_path,index,index_crlf)
+
+          camp,camp_crlf=read_normalized(camp_path)
+          camp=replace_once(
+              camp,
+              "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox,#startOverlay.camp-fullscreen #startHeirloom{display:none!important}",
+              "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox{display:none!important}",
+              'retired startHeirloom Camp style'
+          )
+          camp=replace_once(camp,"['nightmareBox','hellBox','startHeirloom']","['nightmareBox','hellBox']",'retired startHeirloom Camp hide list')
+          write_preserved(camp_path,camp,camp_crlf)
+
+          changelog,changelog_crlf=read_normalized(changelog_path)
+          anchor='## Beta 0.6.5.17\n'
+          if anchor not in changelog:
+              raise SystemExit('0.6.5.17 changelog anchor missing')
+          section='''## Beta 0.6.5.18\n\n### Compatibility-monolith sediment cleanup (#40, #209)\n- Audited the compatibility monolith and removed proven declaration-only helpers/data plus one dead helper island whose only consumer was itself dead. Active wrapper chains, gameplay owners and compatibility boundaries were deliberately left intact.\n- Removed retired hidden Begin-era mirrors (`startLegacyLevel`, `startLegacyXp`, `startHeirloom`, `nightmareText`, `startTalentBtn`) and the obsolete Journey End Talent button that old runtime code created only to remove again during startup.\n- Added a static sediment regression test so these retired symbols and DOM targets cannot quietly return. Gameplay, balance, RNG order, saves/checkpoints and current Camp/difficulty behavior are unchanged.\n\n'''
+          changelog=changelog.replace(anchor,section+anchor,1)
+          write_preserved(changelog_path,changelog,changelog_crlf)
+
+          test=Path('tools/test_monolith_sediment.py')
+          test.write_text('''from pathlib import Path\nimport re\n\nROOT=Path(__file__).resolve().parents[1]\nmono=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')\nindex=(ROOT/'runtime/index.html').read_text(encoding='utf-8')\ncamp=(ROOT/'runtime/js/ui/camp.js').read_text(encoding='utf-8')\n\nretired_symbols=[\n    'ROWS','COLS','TILE_COUNT','MINIBOSS_TILE','META_KEY','RUN_THEMES','SOUND_KEY_ORDER',\n    'refreshEffectiveGoldDisplays','applyRandomLegendary','closeTalentTree','applyRunThemeV13',\n    'impossibleRoadTierData','campSummaryText','setCampMode','v110CloseCampPanels','v110OpenCampPanel',\n    'v22OpenCampPanel','v22MovePrestigeControls','v22ScrollPanel','v23SetTierData','v23SetPanelHtml',\n    'combatModal','statusDotsHTMLV17Base','unboundPreciousGearV24Base','DB26','DB27','DB30',\n    'db054ApplyBoardMarker','renderAchievements',\n]\nfor name in retired_symbols:\n    if re.search(rf'(?<![\\w$]){re.escape(name)}(?![\\w$])',mono):\n        raise SystemExit(f'retired monolith symbol returned: {name}')\n\nfor dom_id in ['startLegacyLevel','startLegacyXp','startHeirloom','nightmareText','startTalentBtn']:\n    if dom_id in index or dom_id in mono or dom_id in camp:\n        raise SystemExit(f'retired start compatibility target returned: {dom_id}')\n\nif 'id="endTalentBtn"' in index:\n    raise SystemExit('retired Journey End Talent button returned to static markup')\nif "const endTalent=$('endTalentBtn')" in mono:\n    raise SystemExit('retired Journey End runtime-removal shim returned')\n\nfor live_id in ['startCompatibilityState','nightmareBox','nightmareToggle','startBtn']:\n    if f'id="{live_id}"' not in index:\n        raise SystemExit(f'required live compatibility target missing: {live_id}')\nif 'v22EnsureCompatStartBtn' not in mono:\n    raise SystemExit('live start-button compatibility adapter was removed accidentally')\nif "['nightmareBox','hellBox']" not in camp:\n    raise SystemExit('Camp no longer suppresses live legacy difficulty anchors')\n\nprint('Monolith sediment cleanup PASS: retired helpers and UI fossils are absent; live compatibility anchors remain.')\n''',encoding='utf-8')
+          PY
+
+      - name: Stamp Beta 0.6.5.18 and materialize runtime metadata
+        shell: bash
+        run: |
+          python tools/set_project_version.py --version 0.6.5.18 --channel Beta
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('runtime/index.html')
+          text=path.read_text(encoding='utf-8')
+          old='Beta v0.6.5.18 · Camp startup hotfix.'
+          if text.count(old)!=1:
+              raise SystemExit(f'expected one stale subtitle after version stamp, found {text.count(old)}')
+          path.write_text(text.replace(old,'Beta v0.6.5.18 · Monolith sediment cleanup.',1),encoding='utf-8')
+          PY
+          python tools/refresh_runtime_manifest.py --version 0.6.5.18 --channel Beta --development-state Unreleased
+
+      - name: Validate cleanup before commit
+        shell: bash
+        run: |
+          node --check runtime/js/dicebound.js
+          python tools/test_monolith_sediment.py
+          python tools/validate_runtime_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.18 --channel Beta
+          git diff --check
+
+      - name: Commit cleanup branch
+        shell: bash
+        run: |
+          rm .github/workflows/apply-0.6.5.18-sediment-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "cleanup(runtime): remove proven monolith sediment"
+          git push origin HEAD:cleanup/0.6.5.18-monolith-sediment
