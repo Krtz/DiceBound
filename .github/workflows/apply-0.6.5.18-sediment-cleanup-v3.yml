@@ -1,0 +1,99 @@
+name: Apply Beta 0.6.5.18 sediment cleanup v3
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.18-monolith-sediment
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out cleanup branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply inspected cleanup from v2 recipe
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          recipe = Path('.github/workflows/apply-0.6.5.18-sediment-cleanup-v2.yml').read_text(encoding='utf-8')
+          start_marker = "          python - <<'PY'\n"
+          end_marker = "\n          PY\n\n      - name: Stamp Beta 0.6.5.18"
+          start = recipe.index(start_marker) + len(start_marker)
+          end = recipe.index(end_marker, start)
+          code = textwrap.dedent(recipe[start:end])
+          exec(compile(code, 'sediment-cleanup-v2-recipe', 'exec'), {})
+          PY
+
+      - name: Align architecture guards with current ownership
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tools/validate_runtime_architecture.py')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              '    if "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox,#startOverlay.camp-fullscreen #startHeirloom{display:none!important}" not in camp_source:\n        errors.append("ui-camp must suppress legacy mode/storage presentation at the Camp destination layer")',
+              '    if "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox{display:none!important}" not in camp_source:\n        errors.append("ui-camp must suppress live legacy difficulty anchors at the Camp destination layer")',
+              'Camp legacy-anchor architecture guard',
+          )
+          replace_once(
+              '        expected_achievements_adapter = "function renderAchievements(){return dbAchievementsUi.render();}"\n        if expected_achievements_adapter not in monolith_source:\n            errors.append("dicebound.js must retain only the thin Achievements lifecycle adapter")',
+              '        if re.search(r"\\bfunction\\s+renderAchievements\\s*\\(", monolith_source):\n            errors.append("dicebound.js retains an obsolete Achievements lifecycle adapter after ui-achievements extraction")',
+              'Achievements obsolete-adapter architecture guard',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Stamp Beta 0.6.5.18 and materialize runtime metadata
+        shell: bash
+        run: |
+          python tools/set_project_version.py --version 0.6.5.18 --channel Beta
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('runtime/index.html')
+          text=path.read_text(encoding='utf-8')
+          old='Beta v0.6.5.18 · Camp startup hotfix.'
+          if text.count(old)!=1:
+              raise SystemExit(f'expected one stale subtitle after version stamp, found {text.count(old)}')
+          path.write_text(text.replace(old,'Beta v0.6.5.18 · Monolith sediment cleanup.',1),encoding='utf-8')
+          PY
+          python tools/refresh_runtime_manifest.py --version 0.6.5.18 --channel Beta --development-state Unreleased
+
+      - name: Validate cleanup before commit
+        shell: bash
+        run: |
+          node --check runtime/js/dicebound.js
+          python tools/test_monolith_sediment.py
+          python tools/validate_runtime_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.18 --channel Beta
+          git diff --check
+
+      - name: Commit cleanup branch
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-0.6.5.18-sediment-cleanup.yml
+          rm -f .github/workflows/apply-0.6.5.18-sediment-cleanup-v2.yml
+          rm -f .github/workflows/apply-0.6.5.18-sediment-cleanup-v3.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "cleanup(runtime): remove proven monolith sediment"
+          git push origin HEAD:cleanup/0.6.5.18-monolith-sediment
