@@ -1,0 +1,76 @@
+name: Inspect monolith sediment candidates
+
+on:
+  push:
+    branches:
+      - validation/monolith-sediment-audit
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Print candidate source and contexts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          mono_path = Path('runtime/js/dicebound.js')
+          index_path = Path('runtime/index.html')
+          mono = mono_path.read_text(encoding='utf-8')
+          lines = mono.splitlines()
+          index = index_path.read_text(encoding='utf-8')
+          index_lines = index.splitlines()
+
+          ranges = [
+              (1,35), (900,945), (1110,1188), (1388,1425),
+              (3805,3880), (4070,4125), (4325,4355),
+              (4700,4730), (5205,5232), (5320,5345), (5470,5495),
+              (6880,6910), (7928,7950), (8415,8450), (8625,8650),
+          ]
+          print('=== SELECTED MONOLITH RANGES ===')
+          for start,end in ranges:
+              print(f'\n--- L{start}-L{end} ---')
+              for n in range(start, min(end, len(lines))+1):
+                  print(f'{n:5d}: {lines[n-1]}')
+
+          terms = [
+              'refreshEffectiveGoldDisplays','applyRandomLegendary','closeTalentTree','applyRunThemeV13',
+              'impossibleRoadTierData','campSummaryText','setCampMode','v110CloseCampPanels','v110OpenCampPanel',
+              'v22OpenCampPanel','v22MovePrestigeControls','v22ScrollPanel','v23SetPanelHtml',
+              'db054ApplyBoardMarker','renderAchievements','TILE_COUNT','MINIBOSS_TILE','META_KEY','RUN_THEMES',
+              'SOUND_KEY_ORDER','combatModal','statusDotsHTMLV17Base','unboundPreciousGearV24Base','DB26','DB27','DB30',
+              'startLegacyLevel','startLegacyXp','startHeirloom','nightmareBox','nightmareText','nightmareToggle',
+              'startTalentBtn','startBtn','startCompatibilityState','appConfirmOverlay','campScene','classGrid','debugTabs',
+              'v27RarityGuide','dicebound-0636-slime-battle-art-style','v22EnsureCompatStartBtn','openStartScreen'
+          ]
+          print('\n=== TERM CONTEXTS ===')
+          for term in terms:
+              hits=[i+1 for i,line in enumerate(lines) if term in line]
+              if not hits:
+                  continue
+              print(f'\n### {term}: {hits}')
+              for h in hits:
+                  for n in range(max(1,h-2), min(len(lines),h+2)+1):
+                      print(f'{n:5d}: {lines[n-1]}')
+                  print('  ...')
+
+          print('\n=== INDEX START COMPATIBILITY BLOCK ===')
+          for i,line in enumerate(index_lines,1):
+              if any(t in line for t in ['startCompatibilityState','startLegacyLevel','startLegacyXp','startHeirloom','nightmareBox','nightmareText','nightmareToggle','startTalentBtn','startBtn']):
+                  for n in range(max(1,i-2), min(len(index_lines),i+2)+1):
+                      print(f'{n:5d}: {index_lines[n-1]}')
+                  print('  ...')
+
+          print('\n=== INDEX appConfirmOverlay CONTEXT ===')
+          for i,line in enumerate(index_lines,1):
+              if 'appConfirmOverlay' in line:
+                  for n in range(max(1,i-8), min(len(index_lines),i+20)+1):
+                      print(f'{n:5d}: {index_lines[n-1]}')
+          PY
