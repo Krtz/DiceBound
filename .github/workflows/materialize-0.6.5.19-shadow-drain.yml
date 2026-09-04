@@ -1,0 +1,268 @@
+name: Materialize Beta 0.6.5.19 shadow ownership drain
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.19-shadow-ownership-drain
+    paths:
+      - .github/workflows/materialize-0.6.5.19-shadow-drain.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.7"
+
+      - name: Drain proven shadow ownership
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re
+
+          mono_path=Path('runtime/js/dicebound.js')
+          raw=mono_path.read_bytes(); crlf=b'\r\n' in raw
+          src=raw.decode('utf-8').replace('\r\n','\n')
+          before_lines=len(src.splitlines()); before_bytes=len(raw)
+
+          def masked(text):
+              out=list(text);i=0;n=len(text)
+              while i<n:
+                  if text.startswith('//',i):
+                      j=text.find('\n',i+2);j=n if j<0 else j
+                      for k in range(i,j): out[k]=' '
+                      i=j;continue
+                  if text.startswith('/*',i):
+                      j=text.find('*/',i+2);j=n-2 if j<0 else j
+                      for k in range(i,j+2):
+                          if text[k]!='\n':out[k]=' '
+                      i=j+2;continue
+                  if text[i] in "'\"`":
+                      q=text[i];j=i+1;esc=False
+                      while j<n:
+                          c=text[j]
+                          if esc:esc=False
+                          elif c=='\\':esc=True
+                          elif c==q:j+=1;break
+                          j+=1
+                      for k in range(i,min(j,n)):
+                          if text[k]!='\n':out[k]=' '
+                      i=j;continue
+                  i+=1
+              return ''.join(out)
+
+          def function_span(text,name):
+              code=masked(text)
+              matches=list(re.finditer(rf'\bfunction\s+{re.escape(name)}\s*\([^)]*\)\s*\{{',code))
+              if len(matches)!=1:
+                  raise SystemExit(f'{name}: expected one named declaration, found {len(matches)}')
+              m=matches[0];open_pos=code.find('{',m.start(),m.end());d=0;j=open_pos
+              while j<len(code):
+                  if code[j]=='{':d+=1
+                  elif code[j]=='}':
+                      d-=1
+                      if d==0:return m.start(),j+1
+                  j+=1
+              raise SystemExit(f'{name}: unterminated function')
+
+          def replace_named_function(text,name,replacement):
+              a,b=function_span(text,name)
+              return text[:a]+replacement+text[b:]
+
+          marker='const dbInfoGuide=window.DiceboundInfoGuide;'
+          if src.count(marker)!=1:raise SystemExit(f'Info owner marker drifted: {src.count(marker)}')
+          marker_pos=src.index(marker)
+          prefix,suffix=src[:marker_pos],src[marker_pos:]
+
+          # The old renderInfo declaration must remain hoist-compatible for a handful
+          # of synchronous historical startup calls, but it no longer owns presentation.
+          a,b=function_span(prefix,'renderInfo')
+          old_render=prefix[a:b]
+          prefix=prefix[:a]+'function renderInfo(){return undefined;}'+prefix[b:]
+
+          def remove_render_assignments(text):
+              removed=0
+              while True:
+                  code=masked(text)
+                  m=re.search(r'(?<![\w$])renderInfo\s*=\s*function\s*\([^)]*\)\s*\{',code)
+                  if not m:break
+                  open_pos=code.find('{',m.start(),m.end());d=0;j=open_pos
+                  while j<len(code):
+                      if code[j]=='{':d+=1
+                      elif code[j]=='}':
+                          d-=1
+                          if d==0:break
+                      j+=1
+                  if d:raise SystemExit('unterminated renderInfo assignment')
+                  end=j+1
+                  while end<len(text) and text[end] in ' \t':end+=1
+                  if end<len(text) and text[end]==';':end+=1
+                  text=text[:m.start()]+text[end:];removed+=1
+              return text,removed
+
+          prefix,assignments_removed=remove_render_assignments(prefix)
+          if assignments_removed<10:
+              raise SystemExit(f'expected mature renderInfo shadow ladder, removed only {assignments_removed} assignments')
+
+          # Every historical renderInfo snapshot exists only to feed the removed ladder.
+          snapshot_pat=re.compile(r'\s*const\s+(renderInfo[A-Za-z0-9_$]*)\s*=\s*renderInfo\s*;')
+          snapshots=snapshot_pat.findall(prefix)
+          prefix=snapshot_pat.sub('',prefix)
+          if len(snapshots)<8:raise SystemExit(f'expected renderInfo snapshots, found {len(snapshots)}: {snapshots}')
+
+          src=prefix+suffix
+
+          # DB25 used to capture whichever historical renderInfo happened to exist at
+          # construction time. Make this compatibility surface late-bind the extracted owner.
+          old='DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};'
+          new='DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:()=>window.DiceboundInfoGuide?.render?.()}};'
+          if src.count(old)!=1:raise SystemExit(f'DB25 guide capture drifted: {src.count(old)}')
+          src=src.replace(old,new,1)
+
+          # Remove named declarations only when they are genuinely declaration-only after
+          # the Info ladder drain. This is deliberately stricter than the earlier SCC audit.
+          declaration_only=[]
+          candidates=['v24SetPanelHtml','enemyPortraitSVG','beta03MinibossOddsText','db317AchievementRewardText','db046UiArt','describeCurrentUltimate','beta043Art','db317AchievementDone','db317AchievementConditionText','activateInfoTab','renderLifetimeStats']
+          for name in candidates:
+              code=masked(src)
+              count=len(re.findall(rf'(?<![\w$]){re.escape(name)}(?![\w$])',code))
+              if count==1 and re.search(rf'\bfunction\s+{re.escape(name)}\s*\(',code):
+                  a,b=function_span(src,name);src=src[:a]+src[b:];declaration_only.append(name)
+
+          # Production-only harnesses: remove only if the repository has no consumer
+          # outside the compatibility monolith. Browser/tool tests therefore veto removal.
+          other=[]
+          for p in Path('.').rglob('*'):
+              if not p.is_file() or p==mono_path or '.git' in p.parts:continue
+              if p.suffix.lower() not in {'.js','.py','.html','.ps1','.md','.json'}:continue
+              try:other.append(p.read_text(encoding='utf-8',errors='ignore'))
+              except Exception:pass
+          external='\n'.join(other)
+          harness_removed=[]
+          if 'DiceboundAITest' not in external and 'buildAISim' not in external:
+              a,b=function_span(src,'buildAISim');src=src[:a]+src[b:]
+              installer='try{Object.defineProperty(window,"DiceboundAITest",{value:buildAISim(),enumerable:false,configurable:false,writable:false});}catch(e){window.DiceboundAITest=buildAISim();}'
+              if src.count(installer)!=1:raise SystemExit(f'AI harness installer drifted: {src.count(installer)}')
+              src=src.replace(installer,'',1);harness_removed.append('DiceboundAITest')
+
+          career_external=any(token in external for token in ['DiceboundCareerTest','buildDiceboundHumanHarness235','v235HumanHarness'])
+          if not career_external:
+              a,b=function_span(src,'buildDiceboundHumanHarness235');src=src[:a]+src[b:]
+              for old in [
+                  'const v235HumanHarness=buildDiceboundHumanHarness235();',
+                  "try{Object.defineProperty(window,'DiceboundCareerTest',{value:v235HumanHarness,enumerable:false,configurable:false,writable:false});}catch(e){window.DiceboundCareerTest=v235HumanHarness;}",
+              ]:
+                  if src.count(old)!=1:raise SystemExit(f'career harness statement drifted: {old[:48]} count={src.count(old)}')
+                  src=src.replace(old,'',1)
+              old="DB235.modules.testing={career:v235HumanHarness,legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:()=>window.DiceboundTalentTree?.layoutAudit?.()};"
+              new="DB235.modules.testing={legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:()=>window.DiceboundTalentTree?.layoutAudit?.()};"
+              if src.count(old)!=1:raise SystemExit(f'career module capture drifted: {src.count(old)}')
+              src=src.replace(old,new,1);harness_removed.append('DiceboundCareerTest')
+
+          # Strong invariants: only the hoist-compatible no-op plus the final extracted
+          # owner assignment may remain. Historical snapshots/patch renderers are forbidden.
+          code=masked(src)
+          if 'function renderInfo(){return undefined;}' not in src:raise SystemExit('renderInfo compatibility shim missing')
+          for old_name in snapshots:
+              if re.search(rf'(?<![\w$]){re.escape(old_name)}(?![\w$])',code):raise SystemExit(f'historical Info snapshot remains: {old_name}')
+          owner_assign='renderInfo=()=>dbInfoGuide.render();'
+          if src.count(owner_assign)!=1:raise SystemExit(f'final extracted Info assignment count={src.count(owner_assign)}')
+          if src.index(owner_assign)<src.index(marker):raise SystemExit('Info owner assignment ordering drifted')
+
+          data=src.replace('\n','\r\n') if crlf else src
+          mono_path.write_bytes(data.encode('utf-8'))
+          after_lines=len(src.splitlines());after_bytes=len(data.encode('utf-8'))
+          print(f'Monolith before: {before_lines:,} lines / {before_bytes:,} bytes')
+          print(f'Monolith after : {after_lines:,} lines / {after_bytes:,} bytes')
+          print(f'Removed renderInfo assignments: {assignments_removed}; snapshots: {snapshots}')
+          print(f'Removed declaration-only functions: {declaration_only}')
+          print(f'Removed production harnesses: {harness_removed}')
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\drain.py
+          python $env:RUNNER_TEMP\drain.py
+
+      - name: Add shadow-drain regression guard
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          import re
+          ROOT=Path(__file__).resolve().parents[1]
+          mono=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')
+          assert 'function renderInfo(){return undefined;}' in mono, 'pre-owner Info compatibility shim drifted'
+          assert mono.count('renderInfo=()=>dbInfoGuide.render();')==1, 'Info must end at one extracted-owner assignment'
+          forbidden=['renderInfoBase','renderInfoV13','renderInfoV14Base','renderInfoV15Patch','renderInfoV16Base','renderInfoV18Base','renderInfoV19Base','renderInfoV24Base','renderInfoV24PresentationBase','renderInfoV27Base']
+          for name in forbidden:
+              assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono), f'historical Info shadow snapshot returned: {name}'
+          assert 'guide:{render:()=>window.DiceboundInfoGuide?.render?.()}' in mono, 'DB25 guide compatibility surface must late-bind extracted Info owner'
+          assert "const dbInfoGuide=window.DiceboundInfoGuide;" in mono, 'extracted Info owner wiring missing'
+          print('Shadow ownership drain PASS: historical Info renderer ladder is gone and compatibility late-binds the extracted owner.')
+          '@ | Set-Content -Encoding UTF8 tools\test_shadow_ownership_drain.py
+
+      - name: Stamp Beta 0.6.5.19
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.5.19 --channel Beta
+          @'
+          from pathlib import Path
+          index=Path('runtime/index.html');text=index.read_text(encoding='utf-8')
+          text=text.replace('Beta v0.6.5.19 · Monolith sediment cleanup.','Beta v0.6.5.19 · Shadow ownership drain.')
+          index.write_text(text,encoding='utf-8')
+
+          notes=Path('runtime/PATCH_NOTES.md');text=notes.read_text(encoding='utf-8')
+          old='# Unreleased — Beta 0.6.5.18\n\n'
+          if text.count(old)!=1:raise SystemExit(f'patch notes header drifted: {text.count(old)}')
+          section='''# Unreleased — Beta 0.6.5.19\n\n## Beta 0.6.5.19 Shadow-ownership drain (#40, #209)\n- Removed the historical Info/Guide renderer patch ladder that remained executable beneath `ui/info-guide.js`; pre-owner startup calls are now harmless and the mature compatibility surface late-binds the extracted Guide owner.\n- Removed additional declaration-only monolith fossils proven unreachable after the drain. Production-only simulation harnesses are removed only when no repository consumer exists.\n- Gameplay, balance, RNG order, saves/checkpoints, current Guide content and Camp behavior are unchanged. Static shadow-ownership guards prevent the retired renderer ladder from returning.\n\n'''
+          notes.write_text(text.replace(old,section,1),encoding='utf-8')
+
+          change=Path('CHANGELOG.md');text=change.read_text(encoding='utf-8')
+          anchor='## Beta 0.6.5.18\n'
+          if text.count(anchor)!=1:raise SystemExit(f'changelog anchor drifted: {text.count(anchor)}')
+          section='''## Beta 0.6.5.19\n\n### Shadow-ownership drain (#40, #209)\n- Drained the obsolete Info/Guide renderer wrapper ladder beneath the extracted `ui/info-guide.js` owner and converted the remaining compatibility capture to late binding.\n- Removed newly proven declaration-only fossils and, where unreferenced outside the monolith, production-embedded simulation harnesses. No gameplay, balance, RNG, save or checkpoint changes are intended.\n\n'''
+          change.write_text(text.replace(anchor,section+anchor,1),encoding='utf-8')
+          '@ | Set-Content -Encoding UTF8 $env:RUNNER_TEMP\notes.py
+          python $env:RUNNER_TEMP\notes.py
+          python tools/refresh_runtime_manifest.py --version 0.6.5.19 --channel Beta --development-state Unreleased
+
+      - name: Validate full source and browser behavior
+        shell: pwsh
+        run: |
+          node --check runtime/js/dicebound.js
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.19 --channel Beta
+          node tools/test_file_startup_browser.js
+          node tools/smoke_run_resume_browser.js
+          git diff --check
+
+      - name: Commit exact validated candidate
+        shell: pwsh
+        run: |
+          Remove-Item .github/workflows/materialize-0.6.5.19-shadow-drain.yml -Force
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "cleanup(runtime): drain shadowed Info ownership"
+          $sha = git rev-parse HEAD
+          Write-Host "MATERIALIZED_COMMIT=$sha"
+          git push origin HEAD:cleanup/0.6.5.19-shadow-ownership-drain
