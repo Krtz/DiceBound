@@ -1,0 +1,219 @@
+name: Audit 0.6.5.19 shadow ownership
+
+on:
+  push:
+    branches:
+      - validation/0.6.5.19-shadow-audit
+    paths:
+      - .github/workflows/audit-0.6.5.19-shadow-ownership.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8af26883b10d04b5b18490a96db3a6539764b6cb
+          fetch-depth: 0
+      - name: Static call and shadow-ownership census
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          from collections import Counter, defaultdict
+
+          root=Path('.')
+          mono_path=root/'runtime/js/dicebound.js'
+          src=mono_path.read_text(encoding='utf-8')
+          lines=[0]
+          for m in re.finditer('\n',src): lines.append(m.end())
+          def line_of(pos):
+              import bisect
+              return bisect.bisect_right(lines,pos)
+
+          # Mask comments and quoted/template literals while preserving offsets/newlines.
+          chars=list(src)
+          masked=list(src)
+          i=0;n=len(src)
+          while i<n:
+              c=src[i]
+              if c=='/' and i+1<n and src[i+1]=='/':
+                  j=src.find('\n',i+2); j=n if j<0 else j
+                  for k in range(i,j): masked[k]=' '
+                  i=j; continue
+              if c=='/' and i+1<n and src[i+1]=='*':
+                  j=src.find('*/',i+2); j=n-2 if j<0 else j
+                  for k in range(i,j+2):
+                      if src[k]!='\n': masked[k]=' '
+                  i=j+2; continue
+              if c in "'\"`":
+                  q=c;j=i+1;esc=False
+                  while j<n:
+                      d=src[j]
+                      if esc: esc=False
+                      elif d=='\\': esc=True
+                      elif d==q: j+=1; break
+                      j+=1
+                  for k in range(i,min(j,n)):
+                      if src[k]!='\n': masked[k]=' '
+                  i=j; continue
+              i+=1
+          code=''.join(masked)
+
+          # Named function declarations and brace intervals.
+          funcs=[]
+          fpat=re.compile(r'\bfunction\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{')
+          for m in fpat.finditer(code):
+              name=m.group(1); open_pos=code.find('{',m.start(),m.end())
+              depth=0;j=open_pos
+              while j<n:
+                  if code[j]=='{': depth+=1
+                  elif code[j]=='}':
+                      depth-=1
+                      if depth==0: break
+                  j+=1
+              if depth==0:
+                  funcs.append({'name':name,'decl':m.start(),'start':open_pos+1,'end':j,'line':line_of(m.start())})
+          by_name=defaultdict(list)
+          for f in funcs: by_name[f['name']].append(f)
+          names=set(by_name)
+
+          # Identify smallest containing named function for each occurrence.
+          def container(pos):
+              candidates=[f for f in funcs if f['start']<=pos<f['end']]
+              if not candidates:return None
+              return min(candidates,key=lambda f:f['end']-f['start'])['name']
+
+          occurrences=defaultdict(list)
+          for name in names:
+              pat=re.compile(rf'(?<![\w$]){re.escape(name)}(?![\w$])')
+              occurrences[name]=[m.start() for m in pat.finditer(code)]
+
+          calls=defaultdict(set)
+          top_refs=Counter()
+          for name,poses in occurrences.items():
+              decls={f['decl']+fpat.match(code,f['decl']).group(0).find(name) for f in by_name[name] if fpat.match(code,f['decl'])}
+              for p in poses:
+                  # declaration token is not a reference
+                  if any(abs(p-d)<1 for d in decls): continue
+                  owner=container(p)
+                  if owner and owner!=name: calls[owner].add(name)
+                  elif owner is None: top_refs[name]+=1
+
+          # Other runtime files/index can act as external roots for global/string-hook names.
+          external='\n'.join(p.read_text(encoding='utf-8',errors='ignore') for p in (root/'runtime').rglob('*') if p.is_file() and p!=mono_path and p.suffix in {'.js','.html'})
+          external_refs={name:len(re.findall(rf'(?<![\w$]){re.escape(name)}(?![\w$])',external)) for name in names}
+
+          # Tarjan SCC over named-function call graph; flag components with no inbound/top/external roots.
+          index=0;stack=[];on=set();idx={};low={};sccs=[]
+          def strong(v):
+              nonlocal_dummy=None
+              global index
+              idx[v]=low[v]=len(idx);stack.append(v);on.add(v)
+              for w in calls.get(v,()):
+                  if w not in idx: strong(w);low[v]=min(low[v],low[w])
+                  elif w in on: low[v]=min(low[v],idx[w])
+              if low[v]==idx[v]:
+                  comp=[]
+                  while True:
+                      w=stack.pop();on.remove(w);comp.append(w)
+                      if w==v:break
+                  sccs.append(comp)
+          for v in names:
+              if v not in idx: strong(v)
+          incoming=defaultdict(set)
+          for a,bs in calls.items():
+              for b in bs: incoming[b].add(a)
+          islands=[]
+          for comp in sccs:
+              S=set(comp)
+              inbound={a for b in S for a in incoming[b] if a not in S}
+              roots=sum(top_refs[x]+external_refs[x] for x in S)
+              if not inbound and roots==0:
+                  islands.append(sorted(comp,key=lambda x:by_name[x][0]['line']))
+
+          # Thin wrappers, especially those forwarding to extracted owners.
+          wrappers=[]
+          for f in funcs:
+              body=src[f['start']:f['end']].strip()
+              compact=' '.join(body.split())
+              if len(compact)<=360 and not re.search(r'\b(if|for|while|switch|try|catch)\b',compact):
+                  owner_refs=sorted(set(re.findall(r'(?:window\.)?(Dicebound[A-Za-z0-9_$]+)',compact)))
+                  calltargets=re.findall(r'([A-Za-z_$][\w$]*(?:\?\.|\.)[A-Za-z_$][\w$]*)\s*\(',compact)
+                  if owner_refs or (compact.startswith('return ') and len(calltargets)<=2):
+                      wrappers.append((f['line'],f['name'],len(occurrences[f['name']]),owner_refs,compact[:260]))
+
+          # Assignment/reassignment timeline for identifiers (patch-stack shadowing).
+          assignments=defaultdict(list)
+          apat=re.compile(r'(?<![.\w$])([A-Za-z_$][\w$]*)\s*=\s*(?!(?:=|>))')
+          for m in apat.finditer(code):
+              name=m.group(1)
+              if name in {'let','const','var','return','this'}:continue
+              assignments[name].append(line_of(m.start()))
+          multi=[(name,ls) for name,ls in assignments.items() if len(ls)>=2]
+          multi.sort(key=lambda x:(-len(x[1]),x[0]))
+
+          # Historical base snapshots: const X = Y; / let X = Y; where Y is callable-looking.
+          bases=[]
+          bpat=re.compile(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*(?:Base|Prev|Old|Original|Legacy)[A-Za-z0-9_$]*)\s*=\s*([A-Za-z_$][\w$]*)\s*;')
+          for m in bpat.finditer(code):
+              lhs,rhs=m.group(1),m.group(2)
+              lhs_count=len(re.findall(rf'(?<![\w$]){re.escape(lhs)}(?![\w$])',code))
+              bases.append((line_of(m.start()),lhs,rhs,lhs_count))
+
+          # Low-reference functions that are not trivially declaration-only.
+          lowrefs=[]
+          for name,decls in by_name.items():
+              occ=len(occurrences[name])
+              if 2<=occ<=4:
+                  lowrefs.append((occ,decls[0]['line'],name,top_refs[name],external_refs[name],sorted(incoming[name])))
+          lowrefs.sort()
+
+          # Extracted-owner references from monolith.
+          owners=Counter(re.findall(r'window\.(Dicebound[A-Za-z0-9_$]+)',code))
+
+          print('=== DICEBOUND SHADOW-OWNERSHIP AUDIT ===')
+          print(f'monolith: {len(src.splitlines()):,} lines / {len(src.encode()):,} bytes')
+          print(f'named function declarations: {len(funcs)} ({len(names)} unique)')
+          print(f'reassignment identifiers with >=2 writes: {len(multi)}')
+          print(f'closed named-function SCCs with no top/module refs: {len(islands)}')
+          print(f'thin wrapper candidates: {len(wrappers)}')
+          print(f'low-reference functions (2-4 mentions): {len(lowrefs)}')
+          print()
+
+          print('--- CLOSED / TRANSITIVELY DEAD FUNCTION ISLAND CANDIDATES ---')
+          for comp in islands[:80]:
+              desc=', '.join(f'{x}@L{by_name[x][0]["line"]}' for x in comp)
+              print(desc)
+          print()
+
+          print('--- THIN WRAPPERS / EXTRACTED-OWNER FORWARDERS ---')
+          for line,name,occ,owner_refs,body in wrappers[:140]:
+              tag=(' owners='+','.join(owner_refs)) if owner_refs else ''
+              print(f'L{line} {name} refs={occ}{tag} :: {body}')
+          print()
+
+          print('--- MULTI-WRITE / REASSIGNMENT CHAINS (top 120) ---')
+          for name,ls in multi[:120]:
+              print(f'{name}: writes={len(ls)} lines={ls[:18]}'+(' ...' if len(ls)>18 else ''))
+          print()
+
+          print('--- BASE/PREV/OLD SNAPSHOTS ---')
+          for line,lhs,rhs,cnt in bases[:160]:
+              print(f'L{line} {lhs} <- {rhs}; lhs_refs={cnt}')
+          print()
+
+          print('--- LOW-REFERENCE NAMED FUNCTIONS ---')
+          for occ,line,name,top,ext,inc in lowrefs[:180]:
+              print(f'L{line} {name}: refs={occ} top={top} external={ext} callers={inc}')
+          print()
+
+          print('--- EXTRACTED OWNERS REFERENCED BY MONOLITH ---')
+          for owner,count in owners.most_common():
+              print(f'{owner}: {count}')
+          PY
