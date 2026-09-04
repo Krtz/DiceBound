@@ -55,7 +55,7 @@ assert.doesNotMatch(source,/achievementGrid|achievementCloseBtn|MutationObserver
 
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');
 const stylesheet=fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),'utf8');
-assert.match(monolith,/function renderAchievements\(\)\{return dbAchievementsUi\.render\(\);\}/,'monolith must retain only the thin Achievements lifecycle adapter');
+assert.doesNotMatch(monolith,/function renderAchievements\s*\(/,'retired Achievements lifecycle adapter must stay out of the monolith');
 for(const retired of ['renderAchievements=function','renderAchievementsV','achievementGrid','achievementCloseBtn','DiceboundAchievementHierarchyTest','db064RenderAchievementsBase'])assert(!monolith.includes(retired),`retired Achievements chain remains in dicebound.js: ${retired}`);
 for(const retiredStyle of ['.achievement-grid{','.achievement-group{','.achievement.secret-locked{'])assert(!stylesheet.includes(retiredStyle),`retired Achievements style remains in shared CSS: ${retiredStyle}`);
 

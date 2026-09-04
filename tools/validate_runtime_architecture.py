@@ -201,8 +201,8 @@ def main() -> int:
     ]:
         if required_camp_stage_owner not in camp_source:
             errors.append("ui-camp is missing authoritative Camp stage ownership: " + required_camp_stage_owner)
-    if "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox,#startOverlay.camp-fullscreen #startHeirloom{display:none!important}" not in camp_source:
-        errors.append("ui-camp must suppress legacy mode/storage presentation at the Camp destination layer")
+    if "#startOverlay.camp-fullscreen #nightmareBox,#startOverlay.camp-fullscreen #hellBox{display:none!important}" not in camp_source:
+        errors.append("ui-camp must suppress live legacy difficulty anchors at the Camp destination layer")
     for retired_reward_policy_camp_owner in ["campAnchors", "function scaleCamp(", "#startOverlay.camp-fullscreen", "#campScene .camp-spot"]:
         if retired_reward_policy_camp_owner in reward_policy_source:
             errors.append("event-rewards retains Camp presentation ownership: " + retired_reward_policy_camp_owner)
@@ -358,9 +358,8 @@ def main() -> int:
                 + required_achievements_behavior
             )
     if monolith_source:
-        expected_achievements_adapter = "function renderAchievements(){return dbAchievementsUi.render();}"
-        if expected_achievements_adapter not in monolith_source:
-            errors.append("dicebound.js must retain only the thin Achievements lifecycle adapter")
+        if re.search(r"\bfunction\s+renderAchievements\s*\(", monolith_source):
+            errors.append("dicebound.js retains an obsolete Achievements lifecycle adapter after ui-achievements extraction")
         for retired_achievements_layer in [
             "renderAchievements=function",
             "renderAchievementsV",
