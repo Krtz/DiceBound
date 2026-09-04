@@ -30,6 +30,7 @@
     "board-generation",
     "board-transition",
     "run-lifecycle",
+    "run-completion",
     "combat-enemies",
     "combat-guardians",
     "item-rarities",
@@ -346,6 +347,20 @@
       ]
     },
     {
+      "id": "run-completion",
+      "path": "js/run/completion.js",
+      "domain": "run/terminal-sixth-road-completion-idempotence-and-end-handoff",
+      "status": "extracted",
+      "requires": [
+        "run-checkpoint",
+        "run-lifecycle",
+        "board-transition"
+      ],
+      "provides": [
+        "DiceboundRunCompletion"
+      ]
+    },
+    {
       "id": "combat-enemies",
       "path": "js/combat/enemies.js",
       "domain": "combat/enemies",
@@ -659,6 +674,7 @@
         "board-generation",
         "board-transition",
         "run-lifecycle",
+        "run-completion",
         "combat-enemies",
         "combat-guardians",
         "item-rarities",

@@ -69,7 +69,7 @@ const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8")
 for(const adapter of [
   "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",
   "function advanceToNextBoard(){return dbBoardTransition.advance();}",
-  "completeFinalRoad:()=>completeSixthRoadV19()"
+  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()"
 ])assert.ok(monolith.includes(adapter),`missing board-transition composition adapter: ${adapter}`);
 for(const retired of [
   "advanceToNextBoard=function",

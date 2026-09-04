@@ -43,7 +43,10 @@ async function connectPage(expectedUrl){
   return {socket,send,evaluate,events};
 }
 async function launch(profile,url){
-  const child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
+  // The isolated temporary smoke profile must also tolerate local Windows
+  // sandbox denials in Chromium child processes; this never affects the
+  // shipped WebView2 wrapper or a player-facing Edge session.
+  const child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--disable-gpu-sandbox","--no-sandbox","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
   const page=await connectPage(url);await page.send('Runtime.enable');await page.send('Log.enable');
   const deadline=Date.now()+20000;
   while(Date.now()<deadline){if(await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest"))return {child,...page};await sleep(100);}

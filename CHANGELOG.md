@@ -2,6 +2,17 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.17
+
+### Sixth-Road completion ownership (#40, #209)
+- Extracted terminal Board 6 completion orchestration into `runtime/js/run/completion.js`. It owns checkpoint retirement, terminal-state idempotence, final-accounting/end-screen handoff, first-clear accounting and the existing post-completion hook.
+- Board 5 remains non-terminal and continues through the existing reward, loot and level-up chain into `board/transition.js` for Board 6. Combat rewards, end-gear rendering, saves/checkpoints, achievements, Camp, Prestige and RNG remain in their existing owners.
+- Retired the obsolete Board-5 terminal, late `showEnd`, Sixth-Road checkpoint-wrapper and secret-class reassignment layers. Deterministic and architecture tests now guard Sixth-Road ordering, duplicate final signals, Board 5 continuation, checkpoint separation and RNG preservation.
+
+### File-startup smoke reliability
+- Hardened the isolated Edge `file://` startup harness with a target-stabilization delay, 30-second CDP command deadline, bounded reconnect handshake and explicit CDP socket diagnostics.
+- The headless harness now disables its own browser/GPU sandboxes only for its temporary local test profile, preventing this machine's Windows sandbox denial from crashing the renderer. The shipped WebView2 wrapper is unchanged.
+
 ## Beta 0.6.5.16
 
 ### Local Camp startup hotfix

@@ -344,6 +344,22 @@
   });
   if(!dbBoardGeneration)throw new Error('DiceboundBoardGeneration must load before dicebound.js');
 
+  const dbRunCompletion=window.DiceboundRunCompletion?.configure({
+    clearCheckpoint:()=>dbRunClearCheckpoint(),
+    isCompleting:()=>v19CompletingSixth,
+    beforeCompletion:()=>({unlockSlimeRouge:!!player.v28StartedRandom&&isClassUnlocked('slime')&&!meta.unlocks?.slimerouge}),
+    setCompleting:value=>{v19CompletingSixth=!!value;},
+    setRunState:next=>{gameStarted=!!next.gameStarted;rollLocked=!!next.rollLocked;},
+    isRunFinalized:()=>runFinalized,
+    finalizeRun,
+    getCompletionContext:()=>({mode:hellMode?'Hell':nightmareMode?'Nightmare':'Normal',level:player.level,gold:player.gold,rolls,legacyAward:lastLegacyAward,goldLegacyAward:lastGoldLegacyAward}),
+    updateHud:updateHUD,
+    presentTerminalEnd:detail=>dbRunPresentFinalEnd(detail),
+    recordFirstCompletion:()=>{ensureAlphaMeta().fullVictories++;meta.board6Clears=(meta.board6Clears||0)+1;saveMeta();},
+    afterCompletion:detail=>dbRunApplySixthRoadCompletion(detail)
+  });
+  if(!dbRunCompletion)throw new Error('DiceboundRunCompletion must load before dicebound.js');
+
   const dbBoardTransition=window.DiceboundBoardTransition?.configure({
     getRoad:()=>({player,boardLevel}),
     setBoardLevel:value=>{boardLevel=value;},
@@ -352,7 +368,7 @@
     applyTheme:()=>applyRunTheme(),
     rebuildBoard:()=>{generateBoard();buildBoard();},
     getBoardDefinition:level=>db317Board(level),
-    completeFinalRoad:()=>completeSixthRoadV19(),
+    completeFinalRoad:()=>dbRunCompletion.completeFinalRoad(),
     log:addLog,
     toast:showToast,
     playHoly:()=>sfx.holy(),
@@ -392,7 +408,7 @@
     resolveRandomForRun:()=>window.DiceboundClassChooser?.resolveRandomForRun?.(),
     prepareFreshRun:()=>{
       v19CompletingSixth=false;meta.doubleDiceUnlocked=!!(meta.doubleDiceUnlocked||(meta.board5Clears||0)>0);
-      v16FifthRoadCompleting=false;v16CombatKind=null;
+      v16CombatKind=null;
     },
     ensureAudio,
     initializePlayer:classId=>resetPlayer(classId),
@@ -2711,15 +2727,6 @@
   const rollD20ChaosV15Patch=rollD20Chaos;
   rollD20Chaos=async function(action){const out=await rollD20ChaosV15Patch(action);if(classIdentityActive("d20")&&out?.roll){const title=d20ResultTitle(out.roll);identityFlash(`🎲 ${out.roll}/20 — ${title}`);addCombatHistory(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${title}. ${out.notes||""}`);setCombatText(`🎲 Twenty-Sider ${action}: ${out.roll}/20 — ${title}. ${out.notes||""}`);showToast(`🎲 ${out.roll}/20: ${title}`);await delay(260);}return out;};
 
-  // ---- Board 5 completion is terminal and banks progression ----------------
-  const showEndV15Patch=showEnd;
-  showEnd=function(victory){
-    const first=!runFinalized;
-    if(victory&&boardLevel>=5){
-      rollLocked=true;gameStarted=false;const earned=finalizeRun();updateHUD();$("startOverlay")?.classList.add("hidden");$("endArt").textContent="🏆💍";$("endTitle").textContent="The Fifth Road Falls!";$("endTitle").className="victory-title";$("endText").textContent=`You conquered all six ${nightmareMode?"Nightmare ":hellMode?"Hell ":""}roads. ${earned} Legacy XP has been banked and you now have ${meta.points||0} unspent talent point${(meta.points||0)===1?"":"s"}. Your run equipment stays here until you choose which pieces to bind as heirlooms.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();const status=$("endHeirloomStatus");if(status)status.innerHTML+=`<br><strong>${meta.points||0} talent point${(meta.points||0)===1?"":"s"} available.</strong> Spend them now if you like; newly purchased talents apply next run.`;$("endOverlay").classList.remove("hidden");if(first){ensureAlphaMeta().fullVictories++;saveMeta();}return;
-    }
-    return showEndV15Patch(victory);
-  };
   const winCombatV15Patch=winCombat;
   winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,boardAtWin=boardLevel,classAtWin=player.classId,wasNightmare=nightmareMode,isFinal=!!defeated?.finalBoss;if(isFinal&&boardAtWin===5&&classAtWin==="beastmaster"&&wasNightmare){meta.beastmasterNightmareBoard5=true;saveMeta();}const result=await winCombatV15Patch();checkDynamicClassUnlocks();return result;};
 
@@ -2839,7 +2846,7 @@
 
   // ---- Per-run identity state ----------------------------------------------
   const resetPlayerV16Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){resetPlayerV16Base(classId);v16FifthRoadCompleting=false;v16CombatKind=null;player.powerupRerolls=gameplayTalentRank("fortune_powerup_rerolls");player.rangerMarkMax=3+gameplayTalentRank("ranger_deep_marks");player.monkComboMax=5+gameplayTalentRank("monk_flow_ceiling");player.fighterCounterStacks=0;player.fighterCounterMax=1+Math.min(1,gameplayTalentRank("fighter_counter_reserve"));player.fighterCounterReady=false;player.turtleCrushReady=false;player.turtleGuardChain=0;player.turtleGuardMax=5;player.secondSun=false;player.secondSunUsedBoards={};player.radiationDefenseLost=0;player.alchemistBrewCounter=0;player.alchemistBrewNeed=3;player.alchemistFlaskBonus=0;player.alchemistElementChance=0;player.alchemistFreeFlask=0;player._activePetBonusId=null;if(classIdentityActive("alchemist")){player.potions+=2;if(player.classId!=="alchemist")player.potionPower+=.50;}syncActivePetBonusV16(true);};
+  resetPlayer=function(classId=selectedClassId){resetPlayerV16Base(classId);v16CombatKind=null;player.powerupRerolls=gameplayTalentRank("fortune_powerup_rerolls");player.rangerMarkMax=3+gameplayTalentRank("ranger_deep_marks");player.monkComboMax=5+gameplayTalentRank("monk_flow_ceiling");player.fighterCounterStacks=0;player.fighterCounterMax=1+Math.min(1,gameplayTalentRank("fighter_counter_reserve"));player.fighterCounterReady=false;player.turtleCrushReady=false;player.turtleGuardChain=0;player.turtleGuardMax=5;player.secondSun=false;player.secondSunUsedBoards={};player.radiationDefenseLost=0;player.alchemistBrewCounter=0;player.alchemistBrewNeed=3;player.alchemistFlaskBonus=0;player.alchemistElementChance=0;player.alchemistFreeFlask=0;player._activePetBonusId=null;if(classIdentityActive("alchemist")){player.potions+=2;if(player.classId!=="alchemist")player.potionPower+=.50;}syncActivePetBonusV16(true);};
 
   // ---- Companion differentiation -------------------------------------------
   const PET_STAT_BONUSES={
@@ -2912,13 +2919,12 @@
   // ---- Alchemist art and class ordering ------------------------------------
   const classPortraitV16Base=classPortraitSVG;classPortraitSVG=function(classId){if(classId!=="alchemist")return classPortraitV16Base(classId);return `<svg viewBox="0 0 64 64" role="img" aria-label="Alchemist portrait"><defs><linearGradient id="alc16" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#193d2b"/><stop offset="1" stop-color="#713c82"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#08120d"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#alc16)"/><circle cx="31" cy="25" r="11" fill="#d8a97f"/><path d="M17 20c6-12 28-13 34 0l-8-2H23z" fill="#292133"/><circle cx="27" cy="25" r="2" fill="#8cff9d"/><circle cx="36" cy="25" r="2" fill="#8cff9d"/><path d="M16 58c2-14 9-20 16-20s14 6 17 20" fill="#243d30"/><path d="M44 37l7 17H38z" fill="#b9ff73" opacity=".75" stroke="#efffcf"/><path d="M43 36h6v5h-6z" fill="#dfe8e4"/><circle cx="12" cy="15" r="4" fill="#db69ff" opacity=".8"/><circle cx="54" cy="19" r="3" fill="#77ffab" opacity=".9"/></svg>`;};
 
-  // ---- Fifth Road: dedicated terminal path, no board/reset wrapper allowed --
-  let v16CombatKind=null,v16FifthRoadCompleting=false;
+  // Combat-kind metadata remains available to existing final-combat routing.
+  // Board 5 terminal ownership was retired: Board 5 advances into Board 6.
+  let v16CombatKind=null;
   const startCombatV16Base=startCombat;startCombat=function(kind="normal"){v16CombatKind=kind;return startCombatV16Base(kind);};
-  function completeFifthRoadV16(){if(v16FifthRoadCompleting)return;v16FifthRoadCompleting=true;restoreRadiationDefenseV16();rollLocked=true;gameStarted=false;const first=!runFinalized,earned=finalizeRun();updateHUD();$("startOverlay")?.classList.add("hidden");$("combatOverlay")?.classList.add("hidden");$("endArt").textContent="🏆💍";$("endTitle").textContent="The Fifth Road Falls!";$("endTitle").className="victory-title";$("endText").textContent=`You conquered all six ${hellMode?"Hell ":nightmareMode?"Nightmare ":""}roads. ${earned} Legacy XP is banked. Your equipped gear remains available below for heirloom binding — the game will not start another run until you choose to.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");if(first){ensureAlphaMeta().fullVictories++;saveMeta();}v16CombatKind=null;}
   const winCombatV16Base=winCombat;
-  winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,isFifthFinal=boardLevel===5&&(v16CombatKind==="final"||defeated?.finalBoss||tiles[currentEnemyTile]?.type==="boss");if(!isFifthFinal){const r=await winCombatV16Base();restoreRadiationDefenseV16();return r;}if(v16FifthRoadCompleting)return;
-    const all=currentEnemies.length?[...currentEnemies]:defeated?[defeated]:[],tileIndex=currentEnemyTile,classId=player.classId,wasNightmare=nightmareMode;const s=ensureAlphaMeta();s.enemiesDefeated+=all.length;s.bossesDefeated++;recordBoardClear(5,classId);if(classId==="beastmaster"&&wasNightmare)meta.beastmasterNightmareBoard5=true;const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);meta.petCookies+=10;meta.board5Clears=(meta.board5Clears||0)+1;saveMeta();checkDynamicClassUnlocks();if(tiles[tileIndex])tiles[tileIndex].cleared=true;setCombatText(`Fifth Road victory! +${rewardXp} XP, +${rewardGold} gold, +10 cookies.`);sfx.win();addLog(`<b>Ring Tyrant defeated.</b> The fifth road is complete: +${rewardXp} XP, +${rewardGold} gold and +10 cookies.`);showToast("🏆 Fifth Road conquered");updateHUD();await delay(900);$("combatOverlay").classList.add("hidden");currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);restoreRadiationDefenseV16();updateHUD();const finish=()=>completeFifthRoadV16(),afterLevels=()=>pendingLevelUps>0?openLevelUp(finish):finish();openCombatLootChain(defeated,afterLevels);};
+  winCombat=async function(){const result=await winCombatV16Base();restoreRadiationDefenseV16();return result;};
   // ---- Info additions -------------------------------------------------------
   const renderInfoV16Base=renderInfo;renderInfo=function(){renderInfoV16Base();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>⚗️ v1.6 combat refinements</summary><div class="info-body"><p><b>Potions:</b> baseline healing is now <b>10 + 10% of max HP</b>, multiplied by Potion Healing bonuses. The Alchemist unlocks after 100 lifetime potion uses and can turn that same healing potency into offensive flask damage.</p><p><b>Companions:</b> every elemental companion deals slightly more base damage than DiBo and grants a small active stat bonus, giving pet switching a mechanical purpose. <b>Radiation</b> ☢️ lowers Defense when it procs.</p><p><b>Powerup Rerolls:</b> the Second Opinion talent grants up to five rerolls per run. <b>Turtle</b> now rewards consecutive guarding through Shell Momentum rather than copying Fighter's single-guard counter pattern.</p><p><b>Defense:</b> hover the Defense number in the HUD to see its current diminishing percentage reduction. Enemy Attack is now visible in combat, which makes Brain Hack and other Attack reductions readable.</p></div>`;sections.appendChild(d);};
 
@@ -2926,8 +2932,7 @@
     state:()=>({boardLevel,gameStarted,runFinalized,playerClass:player.classId,gold:player.gold,gear:EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]?.name).filter(Boolean),endVisible:!$("endOverlay").classList.contains("hidden"),powerVisible:!$("powerupOverlay").classList.contains("hidden")}),
     prepareSovereign:()=>{boardLevel=4;gameStarted=true;player.gold=99999;currentMerchantNotice="";currentMerchantItems=[{id:"relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one of three random Legendary powerups.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");renderMerchant();return true;},
     prepareAlchemist:()=>{meta.stats.potionsUsed=100;checkDynamicClassUnlocks();renderClassChoices();return isClassUnlocked("alchemist");},
-    forceFifthEnd:()=>{gameStarted=true;runFinalized=false;v16FifthRoadCompleting=false;boardLevel=5;player.gold=123;player.level=9;player.equipment=player.equipment||{};player.equipment.ring=generateMythicalRing();completeFifthRoadV16();return {boardLevel,runFinalized,gear:player.equipment.ring?.name,endVisible:!$("endOverlay").classList.contains("hidden")};},
-    forceFifthWin:async()=>{gameStarted=true;runFinalized=false;v16FifthRoadCompleting=false;boardLevel=5;player.position=0;player.gold=0;player.level=1;player.xp=0;player.xpNext=20;player.equipment=player.equipment||{};player.equipment.ring=generateMythicalRing();generateBoard();player.position=tiles.length-1;currentEnemyTile=tiles.length-1;const e={name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,finalBoss:true,boss:true,guardian:true};currentEnemies=[e];currentEncounterLead=e;currentEnemy=e;v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await winCombat();await new Promise(r=>setTimeout(r,80));return {boardLevel,gameStarted,runFinalized,gear:player.equipment.ring?.name,endVisible:!$("endOverlay").classList.contains("hidden")};}finally{Math.random=oldRandom;}}
+    forceFifthWin:async()=>{gameStarted=true;runFinalized=false;boardLevel=5;player.position=0;player.gold=0;player.level=1;player.xp=0;player.xpNext=20;player.equipment=player.equipment||{};player.equipment.ring=generateMythicalRing();generateBoard();player.position=tiles.length-1;currentEnemyTile=tiles.length-1;const e={name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,finalBoss:true,boss:true,guardian:true};currentEnemies=[e];currentEncounterLead=e;currentEnemy=e;v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await winCombat();await new Promise(r=>setTimeout(r,80));return {boardLevel,gameStarted,runFinalized,gear:player.equipment.ring?.name,endVisible:!$("endOverlay").classList.contains("hidden")};}finally{Math.random=oldRandom;}}
   },enumerable:false,configurable:false,writable:false});}catch(e){}
 
   saveMeta();checkDynamicClassUnlocks();renderClassChoices();renderInfo();refreshDebugButtons();updateHUD();
@@ -3705,9 +3710,19 @@
   // owns the complete Board 5 -> 6 / final-road transition contract.
   function advanceToNextBoard(){return dbBoardTransition.advance();}
   let v19CompletingSixth=false;
-  function completeSixthRoadV19(){
-    if(v19CompletingSixth)return;v19CompletingSixth=true;rollLocked=true;gameStarted=false;const first=!runFinalized,earned=finalizeRun();updateHUD();$("startOverlay")?.classList.add("hidden");$("combatOverlay")?.classList.add("hidden");$("endArt").textContent="♾️🏆";$("endTitle").textContent="The Sixth Road Falls!";$("endTitle").className="victory-title";$("endText").textContent=`You conquered all six ${hellMode?"Hell ":nightmareMode?"Nightmare ":""}roads. ${earned} Legacy XP is banked. Your equipped gear remains available below for heirloom binding.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");if(first){ensureAlphaMeta().fullVictories++;meta.board6Clears=(meta.board6Clears||0)+1;saveMeta();}
+  function dbRunPresentFinalEnd({earned,context}){
+    const modePrefix=context.mode==='Normal'?'':`${context.mode} `;
+    $("startOverlay")?.classList.add("hidden");$("combatOverlay")?.classList.add("hidden");
+    $("endArt").textContent="♾️🏆";$("endTitle").textContent="The Sixth Road Falls!";$("endTitle").className="victory-title";
+    $("endText").textContent=`You conquered all six ${modePrefix}roads. ${earned} Legacy XP is banked. Your equipped gear remains available below for heirloom binding.`;
+    $("endLevel").textContent=context.level;$("endGold").textContent=context.gold;$("endTurns").textContent=context.rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=context.goldLegacyAward;
+    renderEndGear();$("endOverlay").classList.remove("hidden");
   }
+  function dbRunApplySixthRoadCompletion({before}){
+    if(!before?.unlockSlimeRouge)return;
+    unlockClass('slimerouge');addLog('<b>🔴 Something red crawls out of the random road.</b> Slime Rouge has been unlocked.');showToast('🔴 SECRET CLASS UNLOCKED · Slime Rouge',3800,true);
+  }
+  function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}
 
   // Custom final resolution for Boards 5 and 6 bypasses all historical v16
   // Board-5 terminal wrappers. Other encounters continue through the mature
@@ -5612,9 +5627,6 @@ function buildDiceboundHumanHarness235(){
       if(identity&&ultimate)recordRunBuff?.('🎲','This run',`${identity.icon} ${identity.name} identity · ${ultimate.ultimate.icon} ${ultimate.ultimate.name} ultimate`,'class','Slime Rouge');
     }
   }
-  const completeSixthRoadV28Base=completeSixthRoadV19;
-  completeSixthRoadV19=function(){const unlockRouge=!!player.v28StartedRandom&&isClassUnlocked('slime')&&!meta.unlocks?.slimerouge,r=completeSixthRoadV28Base();if(unlockRouge){unlockClass('slimerouge');addLog('<b>🔴 Something red crawls out of the random road.</b> Slime Rouge has been unlocked.');showToast('🔴 SECRET CLASS UNLOCKED · Slime Rouge',3800,true);}return r;};
-
   /* SIXTH ROAD: ACTUALLY LATER THAN THE FIFTH ----------------------------- */
   if(DB235?.modules?.balance?.board6)Object.assign(DB235.modules.balance.board6,db317Board(6).balance,{entryHeal:db317Board(6).entryHeal,entryPotions:db317Board(6).entryPotions});
 
@@ -7755,7 +7767,7 @@ function buildDiceboundHumanHarness235(){
       tiles=dbRunClone(run.tiles);boardLevel=Number(run.boardLevel)||1;selectedClassId=String(run.selectedClassId||player.classId||'ranger');nightmareMode=!!run.nightmareMode;hellMode=!!run.hellMode;
       rolls=Math.max(0,Number(run.rolls)||0);tilesMovedThisRun=Math.max(0,Number(run.tilesMovedThisRun)||0);runTalentSnapshot=dbRunClone(run.runTalentSnapshot);statsLastHp=run.statsLastHp??null;statsLastGold=run.statsLastGold??null;
       merchantFaceClicks=new Set(run.merchant?.faceClicks||[]);merchantFaceTotal=Math.max(0,Number(run.merchant?.faceTotal)||0);merchantBossPrimed=!!run.merchant?.bossPrimed;merchantBossDefeatedThisBoard=!!run.merchant?.bossDefeatedThisBoard;merchantBossBattle=false;
-      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMysticBuff=null;currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;wheelBusy=false;combatBusy=false;runFinalized=false;v16CombatKind=null;v16FifthRoadCompleting=false;v19CompletingSixth=false;
+      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMysticBuff=null;currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;wheelBusy=false;combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
       window.DiceboundRng.restore(checkpoint.rng);dbRunOwnedSeed=checkpoint.rng.seed;
       gameStarted=true;rollLocked=false;dbRunCloseOverlays();applyRunTheme();buildBoard();
       if($('log'))$('log').innerHTML=String(run.logHtml||'');
@@ -7787,8 +7799,6 @@ function buildDiceboundHumanHarness235(){
   const dbRunUpdateHudBase=updateHUD;updateHUD=function(...args){const result=dbRunUpdateHudBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
   const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
   const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
-  const dbRunCompleteFifthBase=completeFifthRoadV16;completeFifthRoadV16=function(...args){dbRunClearCheckpoint();return dbRunCompleteFifthBase.apply(this,args);};
-  const dbRunCompleteSixthBase=completeSixthRoadV19;completeSixthRoadV19=function(...args){dbRunClearCheckpoint();return dbRunCompleteSixthBase.apply(this,args);};
   const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
   document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
