@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.5.15</title>
+<title>Dicebound: Beta v0.6.5.16</title>
 <link rel="stylesheet" href="css/dicebound.css">
 <style id="db-boot-gate">
   html.db-booting body{background:#050912}
@@ -19,8 +19,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.5.15</h1>
-        <p>Beta v0.6.5.15 · Prestige Heirlooms & Camp layout.</p>
+        <h1>Dicebound: Beta v0.6.5.16</h1>
+        <p>Beta v0.6.5.16 · Camp startup hotfix.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -106,14 +106,16 @@
 
 <div class="overlay" id="startOverlay">
   <div class="modal wide start-modal">
-    <div class="start-art">🎲⚔️🌈🐉</div>
-    <h2>Dicebound</h2>
-    <p class="subtitle">Welcome to <b>Alpha v1</b>. Begin as the Ranger, unlock an increasingly unreasonable roster through permanent feats, conquer six escalating roads, and return in Nightmare Mode when you are feeling irresponsibly confident.</p>
-    <div class="legacy-strip"><span>Legacy level <strong id="startLegacyLevel">1</strong> · <strong id="startLegacyXp">0 / 20 XP</strong></span><button class="small-btn" id="startTalentBtn">Open talent tree</button></div>
-    <div class="heirloom-line" id="startHeirloom">No heirlooms are currently bound.</div>
-    <div class="nightmare-toggle locked" id="nightmareBox"><div><strong>🌑 Nightmare Mode</strong><span id="nightmareText">Defeat the Board 3 boss to unlock: enemies gain double HP, attack and defense; rewards are halved; Legacy XP is multiplied by five.</span></div><button class="small-btn" id="nightmareToggle">Locked</button></div>
-    <div class="class-grid" id="classGrid"></div>
-    <button class="main-btn" id="startBtn">Begin as Ranger</button>
+    <!-- Compatibility-only state targets for historical runtime adapters.
+         ui/camp.js owns every visible between-runs control and destination. -->
+    <div id="startCompatibilityState" hidden aria-hidden="true">
+      <span id="startLegacyLevel"></span>
+      <span id="startLegacyXp"></span>
+      <div id="startHeirloom"></div>
+      <div id="nightmareBox"><span id="nightmareText"></span><button id="nightmareToggle" type="button"></button></div>
+      <button id="startTalentBtn" type="button"></button>
+    </div>
+    <button id="startBtn" type="button" hidden aria-hidden="true"></button>
   </div>
 </div>
 

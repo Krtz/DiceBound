@@ -88,19 +88,6 @@
     const id=randomMode?'random':(runtime.inspectedClassId||current.selectedClassId);
     return id==='random'?null:classes.find(entry=>entry.id===id)||classes.find(entry=>entry.id===current.selectedClassId)||classes[0]||null;
   }
-  function updateLegacyControls(current){
-    const start=find('startBtn');
-    if(start){
-      const selected=(current.classes||[]).find(entry=>entry.id===current.selectedClassId);
-      start.textContent=randomMode?'Begin as a random unlocked class':`Begin as ${selected?.name||'Ranger'}`;
-    }
-    const box=find('nightmareBox'),toggle=find('nightmareToggle');
-    if(box&&toggle){
-      box.classList.toggle('locked',!current.nightmareUnlocked);toggle.disabled=!current.nightmareUnlocked;
-      toggle.textContent=!current.nightmareUnlocked?'Locked':current.nightmareMode?'Nightmare ON':'Nightmare OFF';
-      toggle.classList.toggle('active',!!current.nightmareMode);
-    }
-  }
   function selectClass(id){
     const current=state();
     if(id==='random'){
@@ -120,7 +107,6 @@
     if(!selected||!runtime.isUnlocked?.(selected.id))runtime.setSelectedClassId?.('ranger');
     const refreshed=state(),grid=find('classGrid');
     if(!grid)return null;
-    updateLegacyControls(refreshed);
     const classes=orderedClasses(refreshed.classes).filter(entry=>!(entry.secret&&!runtime.isUnlocked?.(entry.id)));
     const detail=currentDetailClass(refreshed),detailRandom=randomMode||runtime.inspectedClassId==='random';
     grid.className='class-chooser';

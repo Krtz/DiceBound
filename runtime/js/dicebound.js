@@ -40,6 +40,9 @@
   const DIBO_ELEMENTS=["fire","ice","electric","nature","light","void"];
   const PET_UNLOCK_REQUIREMENT=500;
   const GUARDIAN_SPECIAL_INTERVAL=5;
+  const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';
+  const DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i';
+  const DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';
   /* ========================================================================
      Alpha v3.1.7 — authoritative content registries
      Final definitions are canonical. Historical patch-era writes later in the
@@ -4706,7 +4709,6 @@ function buildDiceboundHumanHarness235(){
   usePotionOutsideCombat=function(){const beforePotions=player.potions,beforeUses=ensureAlphaMeta().potionsUsed||0,result=usePotionOutsideCombatV24Base();if(player.potions<beforePotions&&(ensureAlphaMeta().potionsUsed||0)===beforeUses){recordPotionUseV16();}return result;};
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
-  const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage',DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i',DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';
   function v24MigratePrestigeHeirloomPurchases(){
     if(meta.prestigeHeirloomPurchasesMigrated)return {changed:false,refundedTalentPoints:0};
     let prestige=DB_PRESTIGE.normalize(meta.prestige),refundedTalentPoints=0;
