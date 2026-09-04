@@ -17,67 +17,85 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: e8be2e856b452c1eb72bf9268974bf6a94207251
+          ref: a45e820317280c98449ef91bf2ca0bd9b84138ff
           fetch-depth: 0
-      - name: Print targeted shadow chains
+      - name: Print exact top-level statements for strong shadow candidates
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          mono=Path('runtime/js/dicebound.js').read_text(encoding='utf-8').splitlines()
-          targets=[
-            'renderInfo','openStartScreen','updateMetaUI','renderTalents','openTalentTree',
-            'renderPetCollection','renderClassChoices','generateBoard','enemyForPosition',
-            'startNewGame','advanceToNextBoard','completeSixthRoadV19',
-            'v110EnsureCampScene','v110UpdateCampScene','v22UpdateCamp','v22EnsureCompatStartBtn',
-            'openPrestigeMoon','beta042EnsureCampOptions',
-          ]
-          print('=== TOP-LEVEL TARGET OCCURRENCES WITH CONTEXT ===')
-          seen=set()
-          for target in targets:
+          src=Path('runtime/js/dicebound.js').read_text(encoding='utf-8')
+
+          # Build a comment/string masked copy so delimiter depth is structural.
+          masked=list(src); i=0; n=len(src)
+          while i<n:
+            if src.startswith('//',i):
+              j=src.find('\n',i+2); j=n if j<0 else j
+              for k in range(i,j): masked[k]=' '
+              i=j; continue
+            if src.startswith('/*',i):
+              j=src.find('*/',i+2); j=n-2 if j<0 else j
+              for k in range(i,j+2):
+                if src[k]!='\n': masked[k]=' '
+              i=j+2; continue
+            if src[i] in "'\"`":
+              q=src[i]; j=i+1; esc=False
+              while j<n:
+                c=src[j]
+                if esc: esc=False
+                elif c=='\\': esc=True
+                elif c==q: j+=1; break
+                j+=1
+              for k in range(i,min(j,n)):
+                if src[k]!='\n': masked[k]=' '
+              i=j; continue
+            i+=1
+          code=''.join(masked)
+
+          # top-level semicolon statements inside the outer IIFE body (depth curly=1)
+          stmts=[]; start=code.find('{')+1; curly=1; par=0;br=0
+          s=start; i=start
+          while i<n:
+            c=code[i]
+            if c=='{':curly+=1
+            elif c=='}':curly-=1
+            elif c=='(':par+=1
+            elif c==')':par-=1
+            elif c=='[':br+=1
+            elif c==']':br-=1
+            elif c==';' and curly==1 and par==0 and br==0:
+              stmts.append((s,i+1,src[s:i+1]));s=i+1
+            i+=1
+
+          def show(target):
             print(f'\n### {target}')
             pat=re.compile(rf'(?<![\w$]){re.escape(target)}(?![\w$])')
-            hits=[]
-            for i,line in enumerate(mono,1):
-              if pat.search(line): hits.append(i)
-            print('hits:',hits)
-            for i in hits:
-              lo=max(1,i-2);hi=min(len(mono),i+4)
-              key=(lo,hi)
-              if key in seen: continue
-              seen.add(key)
-              for n in range(lo,hi+1): print(f'{n:5}: {mono[n-1]}')
-              print('---')
+            for a,b,t in stmts:
+              if pat.search(t):
+                line=src.count('\n',0,a)+1
+                compact=' '.join(t.strip().split())
+                print(f'L{line}: {compact[:1800]}')
 
-          print('\n=== CLOSED ISLAND SOURCE BLOCKS ===')
-          islands=['v24SetPanelHtml','enemyPortraitSVG','beta03MinibossOddsText','db317AchievementRewardText','db046UiArt','describeCurrentUltimate','beta043Art','db317AchievementDone','db317AchievementConditionText']
-          text='\n'.join(mono)
-          for name in islands:
-            print(f'\n### {name}')
-            for i,line in enumerate(mono,1):
-              if re.search(rf'\bfunction\s+{re.escape(name)}\s*\(',line):
-                # Print until brace balance closes, capped to 90 lines.
-                bal=0;started=False
-                for n in range(i,min(len(mono),i+90)+1):
-                  s=mono[n-1]
-                  print(f'{n:5}: {s}')
-                  # adequate for these blocks; strings may contain braces, this is inspection only
-                  bal += s.count('{')-s.count('}')
-                  if '{' in s: started=True
-                  if started and bal<=0: break
-                break
+          for target in ['renderInfo','openStartScreen','updateMetaUI','renderTalents','openTalentTree','renderPetCollection','renderClassChoices','enemyForPosition','generateBoard','startNewGame','advanceToNextBoard','completeSixthRoadV19','v110EnsureCampScene','v110UpdateCampScene','v22UpdateCamp','v22EnsureCompatStartBtn','openPrestigeMoon','beta042EnsureCampOptions']:
+            show(target)
 
-          print('\n=== EMBEDDED HARNESS WINDOWS ===')
-          for lo,hi,label in [(2360,2425,'AI harness'),(4378,4465,'human/career harness')]:
-            print(f'\n### {label} L{lo}-{hi}')
-            for n in range(lo,min(hi,len(mono))+1): print(f'{n:5}: {mono[n-1]}')
+          print('\n### Harness globals')
+          for token in ['DiceboundAISim','DiceboundHuman','HumanHarness','buildAISim','buildDiceboundHumanHarness235']:
+            hits=[(i+1,l.strip()) for i,l in enumerate(src.splitlines()) if token in l]
+            print(token, hits[:20])
 
-          print('\n=== EXTRACTED OWNER PUBLIC SURFACES ===')
-          for p in ['runtime/js/ui/info-guide.js','runtime/js/ui/camp.js','runtime/js/ui/talent-tree.js','runtime/js/ui/class-chooser.js','runtime/js/ui/pet-chooser.js','runtime/js/board/generation.js','runtime/js/run/lifecycle.js','runtime/js/board/transition.js','runtime/js/run/completion.js']:
-            print(f'\n### {p}')
-            lines=Path(p).read_text(encoding='utf-8').splitlines()
-            for i,line in enumerate(lines,1):
-              if re.search(r'window\.Dicebound|Object\.freeze|return\s*\{|\b(open|render|refresh|generate|advance|startFreshRun|completeFinalRoad)\s*:',line):
-                print(f'{i:4}: {line}')
+          print('\n### Dead island line/block sizes')
+          names=['v24SetPanelHtml','enemyPortraitSVG','beta03MinibossOddsText','db317AchievementRewardText','db046UiArt','describeCurrentUltimate','beta043Art','db317AchievementDone','db317AchievementConditionText']
+          for name in names:
+            m=re.search(rf'\bfunction\s+{re.escape(name)}\s*\([^)]*\)\s*\{{',code)
+            if not m: print(name,'MISSING'); continue
+            p=code.find('{',m.start(),m.end());d=0;j=p
+            while j<n:
+              if code[j]=='{':d+=1
+              elif code[j]=='}':
+                d-=1
+                if d==0:break
+              j+=1
+            print(name, 'line',src.count('\n',0,m.start())+1,'chars',j+1-m.start(),'lines',src.count('\n',m.start(),j+1)+1)
           PY
