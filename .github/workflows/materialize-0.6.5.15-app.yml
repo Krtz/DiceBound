@@ -1,0 +1,75 @@
+name: Materialize Beta 0.6.5.15 with App
+
+on:
+  push:
+    branches:
+      - fix/0.6.5.15-prestige-heirlooms-camp
+    paths:
+      - .github/workflows/materialize-0.6.5.15-app.yml
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Mint protected-ref App token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app_token.outputs.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Tighten capacity regression guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/materialize_06515.py')
+          s=p.read_text(encoding='utf-8')
+          old="""assert.doesNotMatch(mono,/prestige\\?\\.count\\|\\|0\\)>=5/,'Prestige 5 must not auto-expand storage');
+          assert.doesNotMatch(mono,/prestige\\?\\.count\\|\\|0\\)>=50/,'Prestige 50 must not auto-expand storage');"""
+          new="""const capacity=(mono.match(/function v24StorageCapacity\\(\\)\\{[^}]+\\}/)||[''])[0];
+          assert.ok(capacity,'Storage capacity owner must exist');
+          assert.doesNotMatch(capacity,/prestige\\?\\.count/,'Storage capacity must not auto-expand from Prestige count');
+          assert.match(capacity,/DB_PRESTIGE\\.hasPurchase\\(meta\\.prestige,DB_HEIRLOOM_SLOT_I_NODE\\)/);
+          assert.match(capacity,/DB_PRESTIGE\\.hasPurchase\\(meta\\.prestige,DB_HEIRLOOM_SLOT_II_NODE\\)/);"""
+          if s.count(old)!=1:
+              raise SystemExit(f'expected one old regression guard, found {s.count(old)}')
+          p.write_text(s.replace(old,new),encoding='utf-8',newline='\n')
+          PY
+
+      - name: Materialize patch and run targeted tests
+        run: python tools/materialize_06515.py
+
+      - name: Remove temporary materializers
+        run: |
+          rm -f tools/materialize_06515.py
+          rm -f .github/workflows/materialize-0.6.5.15.yml
+          rm -f .github/workflows/materialize-0.6.5.15-retry.yml
+          rm -f .github/workflows/materialize-0.6.5.15-app.yml
+
+      - name: Commit and push exact tested patch
+        run: |
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: move Heirloom progression to Prestige Moon"
+          git push origin HEAD:fix/0.6.5.15-prestige-heirlooms-camp
