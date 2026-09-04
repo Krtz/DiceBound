@@ -123,7 +123,7 @@ for path in ['runtime/js/dicebound.js','runtime/js/ui/camp.js','runtime/js/ui/cl
     subprocess.run(['node','--check',path],cwd=ROOT,check=True)
 subprocess.run(['node','tools/test_file_startup_browser.js'],cwd=ROOT,check=True)
 subprocess.run(['node','tools/test_camp_ui.js'],cwd=ROOT,check=True)
-subprocess.run(['node','tools/test_class_chooser_ui.js'],cwd=ROOT,check=True)
+subprocess.run(['node','tools/test_class_chooser.js'],cwd=ROOT,check=True)
 subprocess.run(['node','tools/smoke_run_resume_browser.js'],cwd=ROOT,check=True)
 
 print('Beta 0.6.5.16 Camp startup hotfix materialized and browser-smoked successfully')
