@@ -1,0 +1,58 @@
+name: Normalize Beta 0.6.5.15 runtime metadata
+
+on:
+  push:
+    branches:
+      - fix/0.6.5.15-prestige-heirlooms-camp
+    paths:
+      - .github/workflows/materialize-0.6.5.15-windows.yml
+
+permissions:
+  contents: read
+
+jobs:
+  normalize:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Mint protected-ref App token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app_token.outputs.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate committed runtime metadata on release OS
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.5.15 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.5.15 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Remove temporary workflow
+        shell: pwsh
+        run: Remove-Item .github/workflows/materialize-0.6.5.15-windows.yml -Force
+
+      - name: Commit and push normalized metadata
+        shell: pwsh
+        run: |
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "chore: normalize Beta 0.6.5.15 runtime metadata"
+          git push origin HEAD:fix/0.6.5.15-prestige-heirlooms-camp
