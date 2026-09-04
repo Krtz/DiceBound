@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+const assert=require('assert'),fs=require('fs');
+const read=p=>fs.readFileSync(p,'utf8');
+const mono=read('runtime/js/dicebound.js'), prestige=read('runtime/js/progression/prestige.js'), camp=read('runtime/js/ui/camp.js'), moon=read('runtime/js/ui/prestige-moon.js'), classes=read('runtime/js/classes/registry.js'), equipment=read('runtime/js/ui/equipment-heirlooms.js');
+assert.doesNotMatch(mono,/const storageTalent=\{id:'legacy_storage'/,'Heirloom Storage Talent owner must be retired');
+const capacity=(mono.match(/function v24StorageCapacity\(\)\{[^}]+\}/)||[''])[0];
+assert.ok(capacity,'Storage capacity owner must exist');
+assert.doesNotMatch(capacity,/prestige\?\.count/,'Storage capacity must not auto-expand from Prestige count');
+assert.match(capacity,/DB_PRESTIGE\.hasPurchase\(meta\.prestige,DB_HEIRLOOM_SLOT_I_NODE\)/);
+assert.match(capacity,/DB_PRESTIGE\.hasPurchase\(meta\.prestige,DB_HEIRLOOM_SLOT_II_NODE\)/);
+assert.match(prestige,/id: 'heirloom-storage'[\s\S]*?cost: 1/);
+assert.match(prestige,/id: 'heirloom-slot-i'[\s\S]*?cost: 2/);
+assert.match(prestige,/id: 'heirloom-slot-ii'[\s\S]*?cost: 5/);
+assert.match(prestige,/refundable: false/);
+assert.match(classes,/rouge:\{type:"prestige",count:1\}/);
+assert.match(classes,/"unlock": "Prestige once"/);
+assert.match(camp,/campClassBtn:Object\.freeze\(\{x:\.39,y:\.55,w:235\}\)/);
+assert.match(camp,/campPetBtn:Object\.freeze\(\{x:\.39,y:\.80,w:220\}\)/);
+assert.match(moon,/prestige-moon-intro\{[^}]*left:clamp\(14px,2\.6vw,40px\)[^}]*text-align:left/);
+assert.match(equipment,/Purchase Heirloom Storage on the Prestige Moon for 1 Prestige Point/);
+assert.match(mono,/prestigeHeirloomPurchasesMigrated/,'old saves need a one-time Heirloom migration');
+assert.match(mono,/oldStorageRank\*3/,'retired Storage Talent must refund its 3 Talent Points');
+console.log('Beta 0.6.5.15 requested progression/UI patch contract PASS');

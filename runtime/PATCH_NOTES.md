@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.14
+# Unreleased — Beta 0.6.5.15
+
+## Beta 0.6.5.15 Prestige Heirlooms and Camp layout
+- Heirloom Storage now costs 1 Prestige Point on the Prestige Moon; the retired Legacy Talent is removed, existing owners keep Storage, and its old 3 Talent Point cost is refunded once.
+- The former Prestige 5 and Prestige 50 automatic Storage slots are now permanent 2 PP and 5 PP purchases. Board 5 and Road Merchant slot rewards remain automatic.
+- Rouge unlocks after one Prestige. The Prestige Moon title moves away from Buy Stats, while Camp Class Choice and Pet Choice move 10% downward.
 
 ## Beta 0.6.5.14 Fresh-run lifecycle ownership (#40, #209)
 - Fresh expedition startup now has one owner: `run/lifecycle.js` coordinates checkpoint replacement/seeding, Random Class, injected player initialization, Board 1 construction, entry presentation, run accounting and checkpoint scheduling in the published order.

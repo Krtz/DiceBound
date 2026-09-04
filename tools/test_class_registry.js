@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 26777, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 26766, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "11d70956c5f8a306a12f8e946e9b241919958200c97f145481f7ff4e6f9f2696",
+  "f8d57255793d657f70d2517a41e7c97ac7cdcd8fc045dc82d37e78d9e15ef96a",
   "canonical class registry data drifted",
 );
 
@@ -48,6 +48,7 @@ assert.equal(registry.ranger.base.maxHp, 37);
 assert.equal(registry.ranger.base.crit, 0.15);
 assert.equal(registry.rogue.name, "Rogue");
 assert.equal(registry.rouge.name, "Rouge");
+assert.equal(registry.rouge.unlock, "Prestige once");
 assert.equal(registry.ouroboros.base.doubleStrike, 1.2);
 assert.equal(registry.dragoon.ultimate.name, "Dragon Dive");
 assert.equal(registry.slimerouge.ultimate.name, "Stolen Finale");
@@ -70,6 +71,8 @@ assert.equal(unlocks.sorcerer.guardian, "miniboss");
 assert.equal(unlocks.slimerouge.requirements[1].board, 6);
 assert.equal(unlocks.slime.type,"unlockedClassCount");
 assert.equal(unlocks.slime.minimum,10);
+assert.equal(unlocks.rouge.type,"prestige");
+assert.equal(unlocks.rouge.count,1);
 assert.equal(unlocks.merchant.minimum,1);
 assert.equal(unlocks.rogue.requirements[0].minimum,5000);
 assert.equal(unlocks.rogue.requirements[1].board,3);
@@ -86,7 +89,7 @@ assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
 snapshot(passives, 3832, "bf6889c2730b552c7592f0194719a3c49ded2fa826318f2da3907dfa23559e97", "class passive registry");
 snapshot(Array.from(classes.tagVocabulary), 324, "69c32f490683a7bb3e2f3858af62440b3784c1eeeffa853ba1929076b588f945", "class tag vocabulary");
-snapshot(unlocks, 1986, "28ddba44d2a4beb7a00ae5009be23f676b1b877a6a5c4d93c037a6f96ad50f7e", "class unlock registry");
+snapshot(unlocks, 1985, "44568ac564b5b2cd952aaa141d4f0452098a8fb20143bfccdcbe8b8026966984", "class unlock registry");
 snapshot(mechanics, 1321, "a12b11c7cecd3bcb4bec1a322b0f7f85a32e7b4edef4c58e1644b5e073c57c9d", "class mechanics registry");
 snapshot(ultimateSupport, 307, "3d6a941f90c1609e96473d6de9f454e2e8fe99b9915620728ef7243946d425e2", "ultimate support registry");
 

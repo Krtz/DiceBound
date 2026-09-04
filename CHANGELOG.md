@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.15
+
+### Prestige Heirlooms and Camp layout
+- Heirloom Storage is now a permanent 1-Prestige-Point Moon purchase instead of a Legacy Talent; existing Storage owners are grandfathered and the retired 3 Talent Point purchase is refunded once.
+- The former automatic Prestige 5/50 Storage slots are permanent Moon purchases costing 2 and 5 Prestige Points. Board 5 and Road Merchant slot rewards remain unchanged.
+- Rouge now unlocks after the first Prestige. Prestige Moon title placement no longer collides with Buy Stats, and the Camp Class/Pet choice controls move 10% lower.
+
 ## Beta 0.6.5.14
 
 ### Fresh-run lifecycle ownership (#40, #209)

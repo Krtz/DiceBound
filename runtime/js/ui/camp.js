@@ -31,7 +31,7 @@
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
         ['#campTalentBtn','left:30.5%;top:12.5%;translate:none'],
         ['#campMoonBtn','left:48%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:39%;top:45%;translate:none']
+        ['#campClassBtn','left:39%;top:55%;translate:none']
       ])
     }),
     Object.freeze({
@@ -40,7 +40,7 @@
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
         ['#campTalentBtn','left:30.5%;top:12.5%;translate:none'],
         ['#campMoonBtn','left:48%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:39%;top:45%;translate:none']
+        ['#campClassBtn','left:39%;top:55%;translate:none']
       ])
     }),
     Object.freeze({
@@ -51,7 +51,7 @@
         ['#campOptionsBtn','left:8.5%;top:16%;translate:none'],
         ['#campTalentBtn','left:30.5%;top:18%;translate:none'],
         ['#campMoonBtn','left:48%;top:20%;translate:none'],
-        ['#campClassBtn','left:39%;top:58%;translate:none']
+        ['#campClassBtn','left:39%;top:68%;translate:none']
       ])
     })
   ]);
@@ -67,24 +67,24 @@
     campMoonBtn:Object.freeze({x:.48,y:.115,w:165}),
     campNightmareBtn:Object.freeze({x:.89,y:.28,w:120}),
     campHellBtn:Object.freeze({x:.80,y:.28,w:118}),
-    campClassBtn:Object.freeze({x:.39,y:.45,w:235}),
+    campClassBtn:Object.freeze({x:.39,y:.55,w:235}),
     campInfoBtn:Object.freeze({x:.26,y:.78,w:145}),
     campBonfire:Object.freeze({x:.50,y:.72,w:170}),
     campGoBtn:Object.freeze({x:.85,y:.74,w:440,h:250}),
     campChestBtn:Object.freeze({x:.64,y:.76,w:245,h:150}),
     campAchievementBtn:Object.freeze({x:.10,y:.83,w:165}),
-    campPetBtn:Object.freeze({x:.39,y:.70,w:220})
+    campPetBtn:Object.freeze({x:.39,y:.80,w:220})
   });
   const CAMP_STAGE_REFINEMENTS=Object.freeze({
     'wide-desktop':Object.freeze({
       campInfoBtn:Object.freeze({x:.26,y:.78}),campBonfire:Object.freeze({x:.50,y:.72}),
       campChestBtn:Object.freeze({x:.64,y:.76}),campAchievementBtn:Object.freeze({x:.10,y:.83}),
-      campPetBtn:Object.freeze({x:.39,y:.70})
+      campPetBtn:Object.freeze({x:.39,y:.80})
     }),
     'compact-desktop':Object.freeze({
       campInfoBtn:Object.freeze({x:.26,y:.78}),campBonfire:Object.freeze({x:.50,y:.72}),
       campChestBtn:Object.freeze({x:.64,y:.76}),campAchievementBtn:Object.freeze({x:.10,y:.83}),
-      campPetBtn:Object.freeze({x:.39,y:.70})
+      campPetBtn:Object.freeze({x:.39,y:.80})
     }),
     'stacked-or-short':Object.freeze({})
   });

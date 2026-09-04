@@ -194,7 +194,7 @@
       "icon": "🟥",
       "attackIcon": "🖌️",
       "fxIcon": "🩸",
-      "unlock": "Reach 10 Prestige points",
+      "unlock": "Prestige once",
       "desc": "Rouge—the colour, not the thief—is a crimson battle artist whose occult brushwork builds Mana for Scarlet Hex.",
       "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT",
       "ultimate": {
@@ -1085,7 +1085,7 @@
     fighter:{type:"guardianDefeat",board:1,guardian:"boss"},
     monk:{type:"guardianDefeat",board:2,guardian:"miniboss"},
     clown:{type:"guardianDefeat",board:2,guardian:"boss"},
-    rouge:{type:"prestige",count:10},
+    rouge:{type:"prestige",count:1},
     berserker:{type:"lifetimeStat",stat:"damageTaken",minimum:1000},
     turtle:{type:"runStat",stat:"defense",greaterThan:40},
     frog:{type:"runStat",stat:"doubleStrike",greaterThan:1.499999},

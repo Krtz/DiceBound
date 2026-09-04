@@ -1131,7 +1131,6 @@
     const t=talents.find(node=>node.id===id),rank=talentRank(id);
     if(!t||rank>=t.maxRank||!talentAvailable(t)||meta.points<t.cost)return false;
     meta.points-=t.cost;meta.purchased[t.id]=rank+1;saveMeta();sfx.level();showToast(`${t.name} rank ${rank+1} · activates next run`);
-    if(t.id==='legacy_storage'&&talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();saveMeta();showToast('🗄️ Heirloom Storage permanently unlocked!',3000,true);dbEquipmentUi.renderCampStorage();}
     renderTalents();return true;
   }
   // The extracted owner renders and navigates the Talent destination. These
@@ -4202,7 +4201,7 @@
     rankFor:talentRank,
     isAvailable:talentAvailable,
     canPurchase:t=>talentRank(t.id)<t.maxRank&&talentAvailable(t)&&meta.points>=t.cost,
-    isVisible:t=>t.id!=='legacy_storage'||meta.nightmareUnlocked||meta.heirloomStorageUnlocked,
+    isVisible:()=>true,
     requirementText,
     purchase:id=>purchaseTalentNode(id),
     resetProgress:async()=>{if(await diceboundConfirm('Reset all Legacy XP, talents, elemental pet progress, cookies, unlocks and heirlooms?',{title:'Reset Legacy progress?',confirmLabel:'Reset',danger:true})){window.DiceboundSave.reset();meta=defaultMeta();saveMeta();renderTalents();showToast('Legacy progress reset');}},
@@ -4224,13 +4223,16 @@
       if(gameStarted){showToast('Spend Prestige Points between runs.');return Object.freeze({ok:false,reason:'Prestige Moon purchases are available between runs.'});}
       const result=DB_PRESTIGE.purchase(meta.prestige,id,random);
       if(!result.ok){showToast(result.reason);return result;}
-      meta.prestige=result.prestige;saveMeta();updateMetaUI();showToast(`${result.node.label}: ${DB_PRESTIGE.formatStats(result.stats)}.`);return result;
+      meta.prestige=result.prestige;
+      const storagePurchase=[DB_HEIRLOOM_STORAGE_NODE,DB_HEIRLOOM_SLOT_I_NODE,DB_HEIRLOOM_SLOT_II_NODE].includes(id);
+      if(storagePurchase){if(id===DB_HEIRLOOM_STORAGE_NODE)meta.heirloomStorageUnlocked=true;v24SyncStorage();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} purchased.`);}else showToast(`${result.node.label}: ${DB_PRESTIGE.formatStats(result.stats)}.`);
+      saveMeta();updateMetaUI();return result;
     },
     refundAll:async()=>{
       if(gameStarted){showToast('Refund Prestige Points between runs.');return false;}
       const current=DB_PRESTIGE.inspect(meta.prestige);
-      if(!current.spent)return false;
-      if(!(await diceboundConfirm(`Refund ${current.spent} spent Prestige Point${current.spent===1?'':'s'}? Their purchased bonuses and structures will be removed.`,{title:'Refund all Prestige Points?',confirmLabel:'Refund all',danger:true})))return false;
+      if(!current.refundableSpent)return false;
+      if(!(await diceboundConfirm(`Refund ${current.refundableSpent} refundable Prestige Point${current.refundableSpent===1?'':'s'}? Permanent Heirloom purchases stay unlocked.`,{title:'Refund Prestige stats?',confirmLabel:'Refund stats',danger:true})))return false;
       const result=DB_PRESTIGE.refundAll(meta.prestige);meta.prestige=result.prestige;saveMeta();updateMetaUI();showToast(`Refunded ${result.refunded} Prestige Point${result.refunded===1?'':'s'}.`);return true;
     },
     afterClose:()=>v22UpdateCamp()
@@ -4704,14 +4706,27 @@ function buildDiceboundHumanHarness235(){
   usePotionOutsideCombat=function(){const beforePotions=player.potions,beforeUses=ensureAlphaMeta().potionsUsed||0,result=usePotionOutsideCombatV24Base();if(player.potions<beforePotions&&(ensureAlphaMeta().potionsUsed||0)===beforeUses){recordPotionUseV16();}return result;};
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
-  function v24StorageUnlocked(){return !!meta.heirloomStorageUnlocked;}
-  function v24StorageCapacity(){if(!v24StorageUnlocked())return 0;let n=EQUIPMENT_SLOTS.length;if((meta.board5Clears||0)>0)n++;if((meta.prestige?.count||0)>=5)n++;if((meta.prestige?.count||0)>=50)n++;if((meta.merchantKills||0)>=1)n++;return n;}
+  const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage',DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i',DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';
+  function v24MigratePrestigeHeirloomPurchases(){
+    if(meta.prestigeHeirloomPurchasesMigrated)return {changed:false,refundedTalentPoints:0};
+    let prestige=DB_PRESTIGE.normalize(meta.prestige),refundedTalentPoints=0;
+    const oldStorageRank=Math.max(0,Math.floor(Number(meta.purchased?.legacy_storage)||0));
+    if(meta.heirloomStorageUnlocked||oldStorageRank>0){
+      prestige=DB_PRESTIGE.grantLegacyPurchase(prestige,DB_HEIRLOOM_STORAGE_NODE);
+      if((meta.prestige?.count||0)>=5)prestige=DB_PRESTIGE.grantLegacyPurchase(prestige,DB_HEIRLOOM_SLOT_I_NODE);
+      if((meta.prestige?.count||0)>=50)prestige=DB_PRESTIGE.grantLegacyPurchase(prestige,DB_HEIRLOOM_SLOT_II_NODE);
+      meta.heirloomStorageUnlocked=true;
+    }
+    if(oldStorageRank>0){refundedTalentPoints=oldStorageRank*3;meta.points=(meta.points||0)+refundedTalentPoints;delete meta.purchased.legacy_storage;}
+    meta.prestige=prestige;meta.prestigeHeirloomPurchasesMigrated=1;
+    return {changed:true,refundedTalentPoints};
+  }
+  function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
+  function v24StorageCapacity(){if(!v24StorageUnlocked())return 0;let n=EQUIPMENT_SLOTS.length;if((meta.board5Clears||0)>0)n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE))n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE))n++;if((meta.merchantKills||0)>=1)n++;return n;}
   function v24SyncStorage(){
     if(!v24StorageUnlocked())return;const byId=new Map((meta.heirloomStorage||[]).map(i=>[i.id,normalizeSavedItem(i)]));(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));meta.heirloomStorage=[...byId.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();
   }
-  const storageTalent={id:'legacy_storage',branch:'Heirlooms',icon:'🗄️',name:'Heirloom Storage',cost:3,maxRank:1,desc:'Permanently unlock Heirloom Storage at the Campsite. It begins with one storage slot per equipment slot; major milestones add more.',requires:[req('legacy_xp',1)]};
-  if(!talents.some(t=>t.id===storageTalent.id))talents.push(storageTalent);
-  function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:(meta.prestige?.count||0)>=5,text:'Prestige 5'},{on:(meta.prestige?.count||0)>=50,text:'Prestige 50'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
+  function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE),text:'Storage Slot I purchased'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE),text:'Storage Slot II purchased'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
   const completePrestigeV24Base=completePrestige;
   completePrestige=function(data,keepIds=[]){const unlocked=v24StorageUnlocked(),before=(meta.heirloomStorage||[]).map(normalizeSavedItem),chosen=(data?.candidates||[]).filter(i=>keepIds.includes(i.id)).map(normalizeSavedItem);const result=completePrestigeV24Base(data,keepIds);if(unlocked){meta.heirloomStorageUnlocked=true;const map=new Map([...before,...chosen].map(i=>[i.id,i]));meta.heirloomStorage=[...map.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();}return result;};
 
@@ -4799,10 +4814,10 @@ function buildDiceboundHumanHarness235(){
   window.DiceboundV24Test=Object.freeze({
     rarity:()=>({labels:Object.fromEntries(['poor','common','uncommon','rare','epic','legendary','artifact','mythical','omega'].map(k=>[k,rarityInfo[k]?.label])),ordinary:Object.keys(V14_RARITY_BUDGETS),powerups:Object.fromEntries(['poor','common','uncommon','rare','epic','legendary','artifact','mythical','omega'].map(k=>[k,upgrades.filter(u=>u.rarity===k).length]))}),
     storage:()=>({unlocked:v24StorageUnlocked(),capacity:v24StorageCapacity(),stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length}),
-    storageTalentGate:()=>{const oldN=meta.nightmareUnlocked,oldU=meta.heirloomStorageUnlocked;meta.nightmareUnlocked=false;meta.heirloomStorageUnlocked=false;renderTalents();const before=!!document.querySelector('[data-talent-id="legacy_storage"]');meta.nightmareUnlocked=true;renderTalents();const after=!!document.querySelector('[data-talent-id="legacy_storage"]');meta.nightmareUnlocked=oldN;meta.heirloomStorageUnlocked=oldU;renderTalents();return {beforeBoard3:before,afterBoard3:after};},
+    storageTalentGate:()=>({beforeBoard3:false,afterBoard3:false,retired:true}),
     devilRitual:()=>{const oldH=meta.hellUnlocked,oldMode=hellMode,oldPrime=meta.devilPrimed;meta.hellUnlocked=true;hellMode=true;meta.devilPrimed=false;v24RefreshCamp();v24ArmDance();const fire=document.querySelector('#campScene .camp-bonfire'),r=fire.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,rad=Math.max(70,Math.min(130,Math.max(r.width,r.height)));for(let a=0;a<=Math.PI*6.4;a+=.18)v24TrackDance({clientX:cx+Math.cos(a)*rad,clientY:cy+Math.sin(a)*rad});const primed=meta.devilPrimed,icon=$('campHellBtn')?.querySelector('.camp-icon')?.textContent;meta.hellUnlocked=oldH;hellMode=oldMode;meta.devilPrimed=oldPrime;v24CancelDance();v24RefreshCamp();return {primed,hellOnIcon:icon};},
     classTuning:()=>({fighter:{...CLASSES.fighter.base},paladin:{...CLASSES.paladin.base},beastmaster:{...CLASSES.beastmaster.base}}),
-    storageMilestones:()=>{const old={u:meta.heirloomStorageUnlocked,b5:meta.board5Clears,p:meta.prestige.count,m:meta.merchantKills};meta.heirloomStorageUnlocked=true;const vals=[];meta.board5Clears=0;meta.prestige.count=0;meta.merchantKills=0;vals.push(v24StorageCapacity());meta.board5Clears=1;vals.push(v24StorageCapacity());meta.prestige.count=5;vals.push(v24StorageCapacity());meta.prestige.count=50;vals.push(v24StorageCapacity());meta.merchantKills=1;vals.push(v24StorageCapacity());Object.assign(meta,{heirloomStorageUnlocked:old.u,board5Clears:old.b5,merchantKills:old.m});meta.prestige.count=old.p;return vals;},
+    storageMilestones:()=>{const old={u:meta.heirloomStorageUnlocked,b5:meta.board5Clears,p:DB_PRESTIGE.clone(meta.prestige),m:meta.merchantKills};let test=DB_PRESTIGE.normalize({count:20,moon:{legacySpent:0,purchases:[]}});test=DB_PRESTIGE.grantLegacyPurchase(test,DB_HEIRLOOM_STORAGE_NODE);meta.prestige=test;meta.heirloomStorageUnlocked=true;const vals=[];meta.board5Clears=0;meta.merchantKills=0;vals.push(v24StorageCapacity());meta.board5Clears=1;vals.push(v24StorageCapacity());meta.prestige=DB_PRESTIGE.grantLegacyPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE);vals.push(v24StorageCapacity());meta.prestige=DB_PRESTIGE.grantLegacyPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE);vals.push(v24StorageCapacity());meta.merchantKills=1;vals.push(v24StorageCapacity());Object.assign(meta,{heirloomStorageUnlocked:old.u,board5Clears:old.b5,merchantKills:old.m});meta.prestige=old.p;return vals;},
     talentAudit:v24TalentAudit,
     alchemistOutside:()=>{resetPlayer('ranger');gameStarted=true;rollLocked=false;currentEnemy=null;player.potions=1;player.hp=Math.max(1,player.maxHp-10);const b=ensureAlphaMeta().potionsUsed||0;usePotionOutsideCombat();return (ensureAlphaMeta().potionsUsed||0)-b;},
     setBonuses:()=>[2,3,4,5,6,7].map(n=>({n,damage:(()=>{const old=player.equipment;player.equipment={};EQUIPMENT_SLOTS.slice(0,n).forEach((s,i)=>player.equipment[s]={slot:s,setName:'Impossible Road',rarity:'artifact',bonuses:{},id:`x${i}`});const v=v19SetDamageBonus();player.equipment=old;return v;})()})),
@@ -4811,7 +4826,7 @@ function buildDiceboundHumanHarness235(){
   });
   DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
-  setTimeout(()=>{if(talentRank('legacy_storage')>0&&!meta.heirloomStorageUnlocked){meta.heirloomStorageUnlocked=true;v24SyncStorage();}v24RefreshCamp();renderTalents();renderEquipment();v24EnsureShieldBars();},0);
+  setTimeout(()=>{const migration=v24MigratePrestigeHeirloomPurchases();if(migration.changed){saveMeta();if(migration.refundedTalentPoints)showToast(`🗄️ Heirloom Storage moved to the Prestige Moon · ${migration.refundedTalentPoints} Talent Points refunded.`,3600,true);}if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();renderTalents();renderEquipment();v24EnsureShieldBars();},0);
 
 
   /* v2.4 compatibility hardening: old callers cannot generate random
@@ -5405,7 +5420,7 @@ function buildDiceboundHumanHarness235(){
   /* RANDOM CLASS ----------------------------------------------------------- */
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
   function v27CompletePrestigeNoChoice(total){const rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;meta.prestige=DB_PRESTIGE.award(meta.prestige,rewards);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$('prestigeHeirloomOverlay')?.classList.add('hidden');if(v24StorageUnlocked?.()){v24SyncStorage?.();const cap=getHeirloomSlots();meta.heirlooms=(meta.heirlooms||[]).slice(0,cap).map(normalizeSavedItem);}else meta.heirlooms=(meta.heirlooms||[]).slice(0,getHeirloomSlots()).map(normalizeSavedItem);saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);renderTalents();updateMetaUI();openStartScreen();return true;}
-  prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
+  prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
   const renderInfoV27Base=renderInfo;renderInfo=function(){const r=renderInfoV27Base();const sections=$('infoSections');if(!sections)return r;sections.querySelectorAll('details').forEach(x=>{const title=x.querySelector('summary')?.textContent||'';if(title.includes('Legacy, Talents & Prestige'))x.innerHTML='<summary>🌳 Legacy, Talents & Prestige</summary><div class="info-body"><p>Run distance and banked gold become Legacy XP. Legacy levels grant talent points. Talents purchased during a run activate on the <b>next</b> run.</p><p>Prestige converts every 9 total talent points into unspent Prestige Points, then resets Legacy level and the talent tree. Each unspent point grants one held stat point; the Prestige Moon can convert a point into a persisted five-stat random bundle. <b>Heirloom Storage and everything stored inside it survive automatically; Prestige no longer asks you to choose survivor heirlooms.</b> Your active heirloom-slot limit still determines what enters the next run.</p></div>';if(title.includes('Nightmare & Hell'))x.innerHTML='<summary>🌑 Nightmare & Hell</summary><div class="info-body"><p>Nightmare dramatically strengthens enemies. Nightmare guardians begin with a Barrier and enemies gain a small amount of Dodge.</p><p>Hell is harsher again: from Board 2 onward every enemy begins with at least one Barrier, enemy Dodge is slightly higher, and later combat patterns become increasingly hostile.</p><p>The Campsite may react differently as progression systems unlock. Not every unusual interaction is explained in this guide.</p></div>';});sections.querySelector('#v27RarityGuide')?.remove();const d=document.createElement('details');d.id='v27RarityGuide';d.className='info-section';const tiers=[['poor','Poor','#c4c8cf','light grey','lowest ordinary tier'],['common','Common','#ffffff','white','reliable ordinary rewards'],['uncommon','Uncommon','#a9dbff','light blue','stronger ordinary rewards'],['rare','Rare','#438bd8','blue','high ordinary tier'],['epic','Epic','#f5e9a8','pale yellow','top ordinary generated gear and powerful powers'],['legendary','Legendary','#ffd45f','gold','very rare powers and handcrafted equipment'],['artifact','Artifact','#ff9c38','orange','Impossible Road chase set'],['mythical','Mythical','#bd83ff','purple','extreme handcrafted chase tier'],['omega','Omega','#ffffff','white/purple','highest secret equipment tier']];d.innerHTML=`<summary>🌈 Rarity tiers & colours</summary><div class="info-body"><p>Equipment and powerups use the same rarity language. Ordinary generated equipment stops at <b>Epic</b>; Legendary and above are special/chase tiers.</p><div class="rarity-guide-grid">${tiers.map(([id,name,color,label,note])=>`<div class="rarity-guide-row"><span class="rarity-swatch" style="background:${color};${id==='omega'?'box-shadow:0 0 8px #b56cff':''}"></span><b style="color:${color}">${name}</b><span>${label} · ${note}</span></div>`).join('')}</div><p><b>Unique</b> is separate from rarity. A Unique power changes a rule or cannot safely stack; most ordinary Legendary stat powers can appear more than once.</p></div>`;sections.prepend(d);return r;};
