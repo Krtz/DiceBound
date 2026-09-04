@@ -1,0 +1,60 @@
+name: Validate Beta 0.6.5.17 native smoke
+
+on:
+  push:
+    branches:
+      - validation/0.6.5.17-native-smoke
+    paths:
+      - .github/workflows/validate-0.6.5.17-native-smoke.yml
+
+permissions:
+  contents: read
+
+env:
+  WEBVIEW2_SDK_VERSION: "1.0.4129.50"
+
+jobs:
+  native-smoke:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out validation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.7"
+
+      - name: Stage official WebView2 loader
+        shell: pwsh
+        run: |
+          $probe = Join-Path $env:RUNNER_TEMP "dicebound-webview2-sdk"
+          dotnet new classlib -n LoaderProbe -o $probe --force | Out-Host
+          dotnet add (Join-Path $probe "LoaderProbe.csproj") package Microsoft.Web.WebView2 --version $env:WEBVIEW2_SDK_VERSION | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "Could not restore Microsoft.Web.WebView2." }
+          $package = Get-Item (Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2\$env:WEBVIEW2_SDK_VERSION")
+          $loader = Join-Path $package.FullName "build\native\x64\WebView2Loader.dll"
+          if (-not (Test-Path $loader)) { throw "Official x64 WebView2Loader.dll was not found at $loader" }
+          $sig = Get-AuthenticodeSignature $loader
+          if ($sig.Status -ne "Valid") { throw "WebView2Loader.dll signature is not valid: $($sig.Status)" }
+          "WEBVIEW2_LOADER_DLL=$loader" >> $env:GITHUB_ENV
+
+      - name: Rebuild exact Beta 0.6.5.17 candidate
+        shell: pwsh
+        run: |
+          .\Build-DiceBoundRelease.ps1 -Version "0.6.5.17" -Channel "Beta" -SkipSourceStamp -RequireSignedLoader
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run full native WebView2 smoke
+        shell: pwsh
+        run: |
+          node tools/smoke_run_resume_native.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
