@@ -1,0 +1,255 @@
+name: Audit compatibility monolith sediment
+
+on:
+  push:
+    branches:
+      - validation/monolith-sediment-audit
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Audit compatibility monolith
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          import re
+          from collections import Counter, defaultdict
+          from pathlib import Path
+
+          root = Path('.')
+          runtime = root / 'runtime'
+          mono_path = runtime / 'js' / 'dicebound.js'
+          index_path = runtime / 'index.html'
+          style_path = runtime / 'css' / 'dicebound.css'
+          mono = mono_path.read_text(encoding='utf-8')
+          index = index_path.read_text(encoding='utf-8')
+          css = style_path.read_text(encoding='utf-8')
+          js_paths = sorted((runtime / 'js').rglob('*.js'))
+          js_sources = {p.as_posix(): p.read_text(encoding='utf-8') for p in js_paths}
+          all_js = '\n'.join(js_sources.values())
+          all_runtime_text = all_js + '\n' + index + '\n' + css
+          mono_lines = mono.splitlines()
+
+          def line_for_offset(source: str, offset: int) -> int:
+              return source.count('\n', 0, offset) + 1
+
+          def symbol_occurrences(symbol: str):
+              rx = re.compile(rf'(?<![A-Za-z0-9_$]){re.escape(symbol)}(?![A-Za-z0-9_$])')
+              by_file = {}
+              for path, src in js_sources.items():
+                  n = len(rx.findall(src))
+                  if n:
+                      by_file[path] = n
+              html_n = len(rx.findall(index))
+              css_n = len(rx.findall(css))
+              if html_n:
+                  by_file['runtime/index.html'] = html_n
+              if css_n:
+                  by_file['runtime/css/dicebound.css'] = css_n
+              return by_file
+
+          top_functions = []
+          fn_re = re.compile(r'(?m)^  (?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(')
+          for m in fn_re.finditer(mono):
+              name = m.group(1)
+              occ = symbol_occurrences(name)
+              top_functions.append({
+                  'name': name,
+                  'line': line_for_offset(mono, m.start()),
+                  'occurrences': sum(occ.values()),
+                  'files': occ,
+              })
+
+          dead_functions = [x for x in top_functions if x['occurrences'] == 1]
+          low_functions = [x for x in top_functions if 1 < x['occurrences'] <= 2]
+
+          top_vars = []
+          var_re = re.compile(r'(?m)^  (?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=')
+          for m in var_re.finditer(mono):
+              name = m.group(1)
+              occ = symbol_occurrences(name)
+              top_vars.append({
+                  'name': name,
+                  'line': line_for_offset(mono, m.start()),
+                  'occurrences': sum(occ.values()),
+                  'files': occ,
+              })
+          dead_vars = [x for x in top_vars if x['occurrences'] == 1]
+
+          # Function/wrapper reassignment sediment. These are not automatically dead,
+          # but repeated writes are prime audit targets in the old patch-stack monolith.
+          writes = defaultdict(list)
+          patterns = [
+              re.compile(r'(?m)^  ([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?function\b'),
+              re.compile(r'(?m)^  window\.([A-Za-z_$][\w$]*)\s*='),
+          ]
+          for rx in patterns:
+              for m in rx.finditer(mono):
+                  writes[m.group(1)].append(line_for_offset(mono, m.start()))
+          repeated_writes = [
+              {'name': name, 'lines': lines, 'count': len(lines)}
+              for name, lines in sorted(writes.items()) if len(lines) > 1
+          ]
+
+          # Static DOM IDs and compatibility-only startup state.
+          index_ids = set(re.findall(r'\bid=["\']([^"\']+)["\']', index))
+          compat_match = re.search(
+              r'<div id="startCompatibilityState".*?</div>\s*<button id="startBtn"',
+              index,
+              flags=re.S,
+          )
+          compat_ids = []
+          if compat_match:
+              compat_ids = re.findall(r'\bid=["\']([^"\']+)["\']', compat_match.group(0))
+              if 'startBtn' not in compat_ids:
+                  compat_ids.append('startBtn')
+          else:
+              compat_ids = [
+                  'startCompatibilityState','startLegacyLevel','startLegacyXp','startHeirloom',
+                  'nightmareBox','nightmareText','nightmareToggle','startTalentBtn','startBtn'
+              ]
+
+          def literal_count(text: str, token: str) -> int:
+              return text.count(token)
+
+          compatibility = []
+          for dom_id in compat_ids:
+              mono_n = literal_count(mono, dom_id)
+              module_hits = {}
+              for path, src in js_sources.items():
+                  if path == mono_path.as_posix():
+                      continue
+                  n = literal_count(src, dom_id)
+                  if n:
+                      module_hits[path] = n
+              compatibility.append({
+                  'id': dom_id,
+                  'monolith_mentions': mono_n,
+                  'module_mentions': module_hits,
+                  'index_mentions': literal_count(index, dom_id),
+              })
+
+          dom_refs = set(re.findall(r'getElementById\(\s*["\']([^"\']+)["\']\s*\)', mono))
+          dom_refs.update(re.findall(r'querySelector\(\s*["\']#([A-Za-z0-9_-]+)', mono))
+          missing_static_ids = sorted(x for x in dom_refs if x not in index_ids)
+
+          # Old-version / menu-shaped markers, with exact line numbers for human review.
+          sediment_terms = [
+              'startOverlay','startBtn','startLegacyLevel','startLegacyXp','startHeirloom',
+              'nightmareBox','nightmareText','nightmareToggle','startTalentBtn',
+              'setup','Setup','Begin','begin','Alpha','alpha','legacy','Legacy',
+              'popup','Popup','modal','Modal','screen','Screen'
+          ]
+          term_hits = {}
+          for term in sediment_terms:
+              lines = [i + 1 for i, line in enumerate(mono_lines) if term in line]
+              if lines:
+                  term_hits[term] = {'count': len(lines), 'lines': lines[:120]}
+
+          version_comment_hits = []
+          version_rx = re.compile(r'(?i)(alpha|beta|v\d{1,2}|0\.\d+(?:\.\d+){0,3})')
+          for i, line in enumerate(mono_lines, 1):
+              stripped = line.strip()
+              if ('//' in stripped or '/*' in stripped or stripped.startswith('*')) and version_rx.search(stripped):
+                  version_comment_hits.append({'line': i, 'text': stripped[:220]})
+
+          # Overlay inventory and how much the compatibility monolith still knows about each.
+          overlays = re.findall(r'<div class="overlay[^"\']*" id="([^"]+)"', index)
+          overlay_inventory = []
+          for oid in overlays:
+              module_hits = {}
+              for path, src in js_sources.items():
+                  if path == mono_path.as_posix():
+                      continue
+                  n = src.count(oid)
+                  if n:
+                      module_hits[path] = n
+              overlay_inventory.append({
+                  'id': oid,
+                  'monolith_mentions': mono.count(oid),
+                  'module_mentions': module_hits,
+              })
+
+          report = {
+              'monolith': {
+                  'lines': len(mono_lines),
+                  'bytes_utf8': len(mono.encode('utf-8')),
+                  'top_level_functions': len(top_functions),
+                  'top_level_variables': len(top_vars),
+              },
+              'strong_dead_function_candidates': dead_functions,
+              'low_reference_function_candidates': low_functions,
+              'strong_dead_variable_candidates': dead_vars,
+              'repeated_function_or_global_writes': repeated_writes,
+              'startup_compatibility_targets': compatibility,
+              'monolith_dom_refs_missing_from_static_index': missing_static_ids,
+              'overlay_inventory': overlay_inventory,
+              'sediment_term_hits': term_hits,
+              'historical_version_comments': version_comment_hits,
+          }
+
+          Path('monolith-sediment-report.json').write_text(
+              json.dumps(report, indent=2, sort_keys=True), encoding='utf-8'
+          )
+
+          print('=== DiceBound compatibility-monolith sediment census ===')
+          print(f"monolith: {report['monolith']['lines']} lines / {report['monolith']['bytes_utf8']} bytes")
+          print(f"top-level functions: {len(top_functions)}; declaration-only candidates: {len(dead_functions)}; <=2 refs: {len(low_functions)}")
+          print(f"top-level vars: {len(top_vars)}; declaration-only candidates: {len(dead_vars)}")
+          print(f"repeated function/global writes: {len(repeated_writes)}")
+          print()
+
+          print('--- STRONG declaration-only function candidates ---')
+          for item in dead_functions:
+              print(f"L{item['line']}: {item['name']}")
+          print()
+
+          print('--- LOW-REFERENCE function candidates (2 total occurrences) ---')
+          for item in low_functions:
+              print(f"L{item['line']}: {item['name']} -> {item['files']}")
+          print()
+
+          print('--- STRONG declaration-only top-level variable candidates ---')
+          for item in dead_vars:
+              print(f"L{item['line']}: {item['name']}")
+          print()
+
+          print('--- Repeated function/global writes ---')
+          for item in repeated_writes:
+              print(f"{item['name']}: {item['lines']}")
+          print()
+
+          print('--- Startup compatibility targets ---')
+          for item in compatibility:
+              print(f"{item['id']}: monolith={item['monolith_mentions']} modules={item['module_mentions']} index={item['index_mentions']}")
+          print()
+
+          print('--- Static index overlays ---')
+          for item in overlay_inventory:
+              print(f"{item['id']}: monolith={item['monolith_mentions']} modules={item['module_mentions']}")
+          print()
+
+          print('--- Monolith DOM refs absent from static index (dynamic or stale; audit manually) ---')
+          print(', '.join(missing_static_ids) if missing_static_ids else '(none)')
+          print()
+
+          print('--- Historical/version comment count ---')
+          print(len(version_comment_hits))
+          for item in version_comment_hits[:160]:
+              print(f"L{item['line']}: {item['text']}")
+          PY
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: monolith-sediment-report
+          path: monolith-sediment-report.json
