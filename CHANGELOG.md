@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.16
+
+### Local Camp startup hotfix
+- Fixed a startup TDZ crash introduced in 0.6.5.15 where early equipment/Camp state could call the new Heirloom Storage purchase ID before that constant had initialized.
+- Deleted the obsolete visible Alpha-v1 setup/start screen from `runtime/index.html`; `startOverlay` is now only a Camp host with hidden compatibility state targets.
+- Camp now creates the Class chooser host itself, and the Class chooser no longer writes labels/state into the retired Begin screen.
+- Added a Windows Edge regression test that opens `runtime/index.html` directly through `file://`, requires the full-screen Camp to appear, rejects the retired Alpha/Begin presentation, and fails on browser runtime exceptions.
+- Updated existing Edge smoke contracts for the five-node Prestige Moon and the approved lower Class/Pet Camp anchors introduced in 0.6.5.15.
+
 ## Beta 0.6.5.15
 
 ### Prestige Heirlooms and Camp layout

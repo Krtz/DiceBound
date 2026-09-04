@@ -2,6 +2,7 @@
 
 const assert=require("node:assert/strict");
 const childProcess=require("node:child_process");
+const fs=require("node:fs");
 const os=require("node:os");
 const path=require("node:path");
 const {pathToFileURL}=require("node:url");
@@ -9,7 +10,13 @@ const {pathToFileURL}=require("node:url");
 const ROOT=path.join(__dirname,"..");
 const EDGE=process.env.DICEBOUND_EDGE||"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const DEBUG_PORT=Number(process.env.DICEBOUND_EDGE_DEBUG_PORT||19359);
-const URL=pathToFileURL(path.join(ROOT,"runtime","index.html")).href;
+const INDEX_PATH=path.join(ROOT,"runtime","index.html");
+const URL=pathToFileURL(INDEX_PATH).href;
+const indexSource=fs.readFileSync(INDEX_PATH,"utf8");
+const chooserSource=fs.readFileSync(path.join(ROOT,"runtime","js","ui","class-chooser.js"),"utf8");
+assert.doesNotMatch(indexSource,/Welcome to <b>Alpha v1<\/b>/,"obsolete Alpha-v1 setup copy must be deleted from runtime/index.html");
+assert.doesNotMatch(indexSource,/Begin as Ranger/,"obsolete Begin-as-Ranger CTA must be deleted from runtime/index.html");
+assert.doesNotMatch(chooserSource,/updateLegacyControls|Begin as a random unlocked class|Begin as \$/, "Class chooser must not write to the retired setup CTA");
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 async function json(url){const response=await fetch(url);if(!response.ok)throw new Error(`${response.status} ${response.statusText}`);return response.json();}
@@ -33,7 +40,7 @@ async function connect(){
     page=await connect();await page.send("Runtime.enable");await page.send("Log.enable");
     const deadline=Date.now()+18000;let state;
     while(Date.now()<deadline){
-      state=await page.evaluate(`(()=>{const overlay=document.getElementById('startOverlay'),scene=document.getElementById('campScene'),legacy=document.querySelector('#startOverlay .start-art'),begin=document.getElementById('startBtn');return {ready:document.readyState,campApi:!!window.DiceboundCamp,scene:!!scene,campFullscreen:!!overlay?.classList.contains('camp-fullscreen'),overlayHidden:!!overlay?.classList.contains('hidden'),legacyVisible:!!legacy&&getComputedStyle(legacy).display!=='none'&&getComputedStyle(legacy).visibility!=='hidden',beginVisible:!!begin&&getComputedStyle(begin).display!=='none'&&getComputedStyle(begin).visibility!=='hidden',bodyText:(overlay?.innerText||'').slice(0,500)};})()`);
+      state=await page.evaluate(`(()=>{const overlay=document.getElementById('startOverlay'),scene=document.getElementById('campScene'),legacy=document.querySelector('#startOverlay .start-art'),begin=document.getElementById('startBtn'),visible=node=>!!node&&node.getClientRects().length>0&&getComputedStyle(node).display!=='none'&&getComputedStyle(node).visibility!=='hidden';return {ready:document.readyState,campApi:!!window.DiceboundCamp,scene:!!scene,campFullscreen:!!overlay?.classList.contains('camp-fullscreen'),overlayHidden:!!overlay?.classList.contains('hidden'),legacyVisible:visible(legacy),beginVisible:visible(begin),bodyText:(overlay?.innerText||'').slice(0,500)};})()`);
       if(state.scene&&state.campFullscreen)break;
       await sleep(150);
     }
@@ -49,6 +56,6 @@ async function connect(){
     try{if(page)await page.send("Browser.close");}catch(_){}
     try{page?.socket.close();}catch(_){}
     if(child.exitCode===null)child.kill();
-    try{require("node:fs").rmSync(profile,{recursive:true,force:true});}catch(_){}
+    try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }
 })().catch(error=>{console.error(error.stack||error);process.exitCode=1;});

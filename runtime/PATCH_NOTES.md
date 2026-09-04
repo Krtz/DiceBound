@@ -1,4 +1,10 @@
-# Unreleased — Beta 0.6.5.15
+# Unreleased — Beta 0.6.5.16
+
+## Beta 0.6.5.16 Local Camp startup hotfix
+- Fixed the 0.6.5.15 local-file startup crash caused by Heirloom Storage purchase IDs being read before initialization.
+- Removed the obsolete visible Alpha-v1 setup/Begin screen. Camp owns the between-runs destination; only hidden compatibility state targets remain while older adapters are drained.
+- Added a real Windows Edge `file://` startup regression check so opening `runtime/index.html` directly must build Camp without browser exceptions.
+- Updated normal Edge smoke expectations for the five-node Prestige Moon and the approved 0.6.5.15 Class/Pet Camp positions.
 
 ## Beta 0.6.5.15 Prestige Heirlooms and Camp layout
 - Heirloom Storage now costs 1 Prestige Point on the Prestige Moon; the retired Legacy Talent is removed, existing owners keep Storage, and its old 3 Talent Point cost is refunded once.
