@@ -1,0 +1,43 @@
+name: Audit Beta 0.6.5.19 embedded test globals
+
+on:
+  push:
+    branches:
+      - validation/0.6.5.19-shadow-audit-v2b
+    paths:
+      - .github/workflows/audit-0.6.5.19-test-globals.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a45e820317280c98449ef91bf2ca0bd9b84138ff
+          fetch-depth: 0
+      - name: Inspect embedded runtime test surfaces
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          mono=Path('runtime/js/dicebound.js')
+          src=mono.read_text(encoding='utf-8')
+          names=sorted(set(re.findall(r'Dicebound[A-Za-z0-9_$]*(?:Test|Regression|Debug|Harness)',src)))
+          print('globals',len(names))
+          for name in names:
+              mono_hits=[i+1 for i,l in enumerate(src.splitlines()) if name in l]
+              external=[]
+              for root in [Path('runtime'),Path('tools'),Path('wrapper-source')]:
+                  if not root.exists():continue
+                  for p in root.rglob('*'):
+                      if not p.is_file() or p==mono or p.suffix.lower() not in {'.js','.py','.html','.ps1','.json','.go'}:continue
+                      try:t=p.read_text(encoding='utf-8',errors='ignore')
+                      except:continue
+                      if name in t:external.append(str(p))
+              print(name,'mono_lines',mono_hits[:12],'external',sorted(set(external)))
+          PY
