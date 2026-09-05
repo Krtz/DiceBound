@@ -87,5 +87,6 @@ jobs:
           git add -A
           if ((git status --porcelain).Length -eq 0) { throw 'Materializer produced no changes.' }
           git commit -m "Beta 0.6.6.4: extract Ultimate resolution [materialized-0664]"
+          git config --local --unset-all http.https://github.com/.extraheader 2>$null
           git remote set-url origin "https://x-access-token:$env:APP_TOKEN@github.com/Krtz/DiceBound.git"
           git push origin HEAD:arch/0.6.6.4-ultimate-resolution
