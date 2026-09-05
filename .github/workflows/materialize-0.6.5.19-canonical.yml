@@ -1,0 +1,127 @@
+name: Materialize canonical Beta 0.6.5.19 candidate
+
+on:
+  push:
+    branches:
+      - validation/0.6.5.19-canonical-materialize
+    paths:
+      - .github/workflows/materialize-0.6.5.19-canonical.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a45e820317280c98449ef91bf2ca0bd9b84138ff
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore exact validated candidate patch
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config core.autocrlf true
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" }
+          Invoke-WebRequest -Headers $headers -Uri "https://api.github.com/repos/Krtz/DiceBound/actions/artifacts/9958168497/zip" -OutFile "$env:RUNNER_TEMP\candidate.zip" -MaximumRedirection 10
+          Expand-Archive -Path "$env:RUNNER_TEMP\candidate.zip" -DestinationPath "$env:RUNNER_TEMP\candidate" -Force
+          git apply --whitespace=fix "$env:RUNNER_TEMP\candidate\candidate.patch"
+          @'
+          from pathlib import Path
+          import re
+          root=Path(__file__).resolve().parents[1]
+          mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
+          assert re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',mono)
+          for name in ['renderInfoBase','renderInfoV13','renderInfoV14Base','renderInfoV15Patch','renderInfoV16Base','renderInfoV18Base','renderInfoV19Base','renderInfoV24Base','renderInfoV24PresentationBase','renderInfoV27Base','buildAISim','DiceboundAITest']:
+              assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono),name
+          print('Monolith spring-clean guard PASS')
+          '@ | Set-Content -Encoding UTF8 tools\test_shadow_ownership_drain.py
+          git add -A
+          git diff --cached --check
+          git diff --cached --stat
+          git diff --cached --name-status
+
+      - name: Validate exact canonical candidate
+        shell: pwsh
+        run: |
+          node --check runtime/js/dicebound.js
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_version_identity.py --version 0.6.5.19 --channel Beta
+          node tools/test_file_startup_browser.js
+          node tools/smoke_run_resume_browser.js
+          git diff --cached --check
+
+      - name: Create canonical server commit without moving refs
+        id: server_commit
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          @'
+          import base64, json, os, subprocess, urllib.request
+          api='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']
+          token=os.environ['GH_TOKEN']
+          def request(method,url,data=None):
+              body=None if data is None else json.dumps(data).encode()
+              req=urllib.request.Request(url,data=body,method=method,headers={
+                  'Authorization':'Bearer '+token,
+                  'Accept':'application/vnd.github+json',
+                  'X-GitHub-Api-Version':'2022-11-28',
+                  'User-Agent':'dicebound-canonical-materializer'})
+              with urllib.request.urlopen(req) as r:return json.load(r)
+          parent=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          base_tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+          raw=subprocess.check_output(['git','diff','--cached','--name-status','-z'])
+          parts=raw.split(b'\0'); entries=[]; changed=[]; i=0
+          while i<len(parts) and parts[i]:
+              status=parts[i].decode(); i+=1
+              if status[0] in 'RC':
+                  old=parts[i].decode(); new=parts[i+1].decode(); i+=2; path=new; changed.append((status,old,new))
+              else:
+                  path=parts[i].decode(); i+=1; changed.append((status,path))
+              if status.startswith('D'):
+                  entries.append({'path':path,'mode':'100644','type':'blob','sha':None}); continue
+              # Read from the Git index, not the Windows working tree. This preserves canonical LF blobs.
+              data=subprocess.check_output(['git','show',':'+path])
+              blob=request('POST',api+'/git/blobs',{'content':base64.b64encode(data).decode(),'encoding':'base64'})
+              mode=subprocess.check_output(['git','ls-files','-s','--',path],text=True).split()[0]
+              entries.append({'path':path,'mode':mode,'type':'blob','sha':blob['sha']})
+          tree=request('POST',api+'/git/trees',{'base_tree':base_tree,'tree':entries})
+          commit=request('POST',api+'/git/commits',{'message':'cleanup(runtime): aggressively drain monolith shadows','tree':tree['sha'],'parents':[parent]})
+          print('PARENT='+parent)
+          print('TREE='+tree['sha'])
+          print('COMMIT='+commit['sha'])
+          print('CHANGED='+json.dumps(changed,separators=(',',':')))
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as f:
+              f.write('sha='+commit['sha']+'\n')
+              f.write('tree='+tree['sha']+'\n')
+          '@ | Set-Content -Encoding UTF8 "$env:RUNNER_TEMP\server_commit.py"
+          python "$env:RUNNER_TEMP\server_commit.py"
+
+      - name: Record canonical commit identity
+        shell: pwsh
+        run: |
+          "candidate_commit=${{ steps.server_commit.outputs.sha }}" | Set-Content -Encoding ascii canonical-candidate.txt
+          "candidate_tree=${{ steps.server_commit.outputs.tree }}" | Add-Content -Encoding ascii canonical-candidate.txt
+          "parent=a45e820317280c98449ef91bf2ca0bd9b84138ff" | Add-Content -Encoding ascii canonical-candidate.txt
+          Get-Content canonical-candidate.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beta-0.6.5.19-canonical-server-commit
+          path: canonical-candidate.txt
+          if-no-files-found: error
+          retention-days: 7
