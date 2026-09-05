@@ -5,20 +5,25 @@ materializer_path = Path(__file__).with_name('materialize_0664_ultimate.py')
 owner_path = root / 'runtime/js/combat/ultimate-resolution.js'
 test_path = root / 'tools/test_combat_ultimate_resolution.js'
 
-# 1) Replace the brittle live-generic regex with exact audited source markers.
 s = materializer_path.read_text(encoding='utf-8')
-old = '''# The later full generic owner is the semantically live base beneath the wrapper tower.\nmono = remove_once(\n    mono,\n    r'\\n  useUltimate=async function\\(\\)\\{\\n    if\\(combatBusy\\|\\|!currentEnemy\\|\\|player\\.ultimateCharge<100\\)[\\s\\S]*?\\n  \\};(?=\\n\\n\\n  async function bloodmageExsanguinate)',\n    'remove later generic Ultimate base',\n)\n'''
-new = '''# The later full generic owner is the semantically live base beneath the wrapper tower.\n# Use audited source markers rather than a body regex: class-body details are intentionally\n# allowed to be dense, while both section boundaries must still match exactly once.\ngeneric_start = '\\n  useUltimate=async function(){\\n'\ngeneric_end = '\\n  // Board 4 is now intentionally cruel.'\nstart_at = mono.find(generic_start)\nif start_at < 0:\n    raise RuntimeError('remove later generic Ultimate base: start marker missing')\nend_at = mono.find(generic_end, start_at)\nif end_at < 0:\n    raise RuntimeError('remove later generic Ultimate base: end marker missing')\nif mono.find(generic_start, start_at + len(generic_start), end_at) >= 0:\n    raise RuntimeError('remove later generic Ultimate base: ambiguous nested start marker')\nmono = mono[:start_at] + mono[end_at:]\n'''
-if old not in s:
-    # The earlier temporary patch may have changed only the regex literal in a runner.
-    # Repository source should normally take this branch only once; fail rather than guess.
-    start = s.find('# The later full generic owner is the semantically live base beneath the wrapper tower.\n')
-    end = s.find('\n# V11 Bloodmage intercept.', start)
-    if start < 0 or end < 0:
-        raise SystemExit('audited generic Ultimate materializer section not found')
-    s = s[:start] + new + s[end+1:]
-else:
-    s = s.replace(old, new, 1)
+
+# 1) The first declared useUltimate sits immediately before rollTieredProc and the
+# already-extracted strike adapters/playerAttack. Replace only that declaration;
+# never span forward to guardAction, or we'd erase another owner's boundary.
+first_section_start = s.find('# Earliest callable becomes the one compatibility adapter.')
+first_section_end = s.find('\n# The later full generic owner is the semantically live base beneath the wrapper tower.', first_section_start)
+if first_section_start < 0 or first_section_end < 0:
+    raise SystemExit('audited first Ultimate adapter materializer section not found')
+first_replacement = '''# Earliest callable becomes the one compatibility adapter. The later full generic\n# implementation and every historical wrapper layer are deleted below. The end\n# marker deliberately stops before rollTieredProc so strike ownership survives.\nfirst_start = '\\n  async function useUltimate(){\\n'\nfirst_end = '\\n\n  function rollTieredProc('\nstart_at = mono.find(first_start)\nif start_at < 0:\n    raise RuntimeError('replace original useUltimate with adapter: start marker missing')\nend_at = mono.find(first_end, start_at)\nif end_at < 0:\n    raise RuntimeError('replace original useUltimate with adapter: end marker missing')\nadapter = "\\n  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}"\nmono = mono[:start_at] + adapter + mono[end_at:]\n'''
+s = s[:first_section_start] + first_replacement + s[first_section_end+1:]
+
+# 2) Replace the brittle later live-generic regex with exact audited source markers.
+generic_section_start = s.find('# The later full generic owner is the semantically live base beneath the wrapper tower.')
+generic_section_end = s.find('\n# V11 Bloodmage intercept.', generic_section_start)
+if generic_section_start < 0 or generic_section_end < 0:
+    raise SystemExit('audited generic Ultimate materializer section not found')
+generic_replacement = '''# The later full generic owner is the semantically live base beneath the wrapper tower.\n# Use audited source markers rather than a body regex: class-body details are intentionally\n# allowed to be dense, while both section boundaries must still match exactly once.\ngeneric_start = '\\n  useUltimate=async function(){\\n'\ngeneric_end = '\\n  // Board 4 is now intentionally cruel.'\nstart_at = mono.find(generic_start)\nif start_at < 0:\n    raise RuntimeError('remove later generic Ultimate base: start marker missing')\nend_at = mono.find(generic_end, start_at)\nif end_at < 0:\n    raise RuntimeError('remove later generic Ultimate base: end marker missing')\nif mono.find(generic_start, start_at + len(generic_start), end_at) >= 0:\n    raise RuntimeError('remove later generic Ultimate base: ambiguous nested start marker')\nmono = mono[:start_at] + mono[end_at:]\n'''
+s = s[:generic_section_start] + generic_replacement + s[generic_section_end+1:]
 
 # Compose the old ALPHA_COMBAT_DELAY through the new owner.
 needle = '    delay:ms=>delay(ms),\n'
@@ -28,7 +33,7 @@ if 'getCombatActionDelay:()=>ALPHA_COMBAT_DELAY' not in s:
     s = s.replace(needle, needle + '    getCombatActionDelay:()=>ALPHA_COMBAT_DELAY,\n', 1)
 materializer_path.write_text(s, encoding='utf-8', newline='\n')
 
-# 2) Make the owner consume lexical combatBusy and preserve the historical per-hit pause
+# 3) Make the owner consume lexical combatBusy and preserve the historical per-hit pause
 # in Frog/Ninja generic Ultimates.
 o = owner_path.read_text(encoding='utf-8')
 if '"getCombatBusy"' not in o:
@@ -52,7 +57,7 @@ if ninja_new not in o:
     o = o.replace(ninja_old, ninja_new, 1)
 owner_path.write_text(o, encoding='utf-8', newline='\n')
 
-# 3) Pin those pauses in deterministic tests so they cannot vanish in a later cleanup.
+# 4) Pin those pauses in deterministic tests so they cannot vanish in a later cleanup.
 t = test_path.read_text(encoding='utf-8')
 if 'getCombatActionDelay: () => 200' not in t:
     anchor = "    delay: async ms => trace.push(['delay', ms]), winCombat: async () => { trace.push(['win']); return 'win'; },\n"
@@ -60,7 +65,6 @@ if 'getCombatActionDelay: () => 200' not in t:
         raise SystemExit('Ultimate test delay runtime anchor missing')
     t = t.replace(anchor, "    delay: async ms => trace.push(['delay', ms]), getCombatActionDelay: () => 200, winCombat: async () => { trace.push(['win']); return 'win'; },\n", 1)
 
-# Add a charged Ninja timing fixture immediately before the Ouroboros fixture.
 if 'Ninja charged Ultimate preserves five 200ms per-hit pauses' not in t:
     anchor = "  // Ouroboros bypasses lower generic/D20 logic, picks only after its first target, rolls once per hit, then calls petTurn.\n"
     fixture = '''  // Ninja charged Ultimate preserves five 200ms per-hit pauses before the final 850ms handoff.\n  {\n    const h = makeHarness({ classId: 'ninja', player: { ultimateCharge: 100, ninjaSmoke: 0, ninjaSmokeNeed: 3 }, critValues: [0,0,0,0,0] });\n    await owner.start();\n    const delays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]);\n    assert.deepStrictEqual(delays, [200,200,200,200,200,850], 'Ninja charged Ultimate preserves five 200ms per-hit pauses');\n  }\n\n'''
@@ -68,7 +72,6 @@ if 'Ninja charged Ultimate preserves five 200ms per-hit pauses' not in t:
         raise SystemExit('Ultimate Ninja timing fixture anchor missing')
     t = t.replace(anchor, fixture + anchor, 1)
 
-# Strengthen the existing Frog fixture with its exact 10 per-hit pauses at 100% Echo.
 if 'Frog charged Ultimate preserves ten 200ms per-hit pauses' not in t:
     anchor = "    const packets = h.trace.filter(x => x[0] === 'damageEnemy'); assert(packets.length > 0 && packets.every(x => x[4] > 0), 'Croak hit lifetime must surround damage calls'); assert.strictEqual(h.player._v25CroakHitsRemaining, 0);\n"
     addition = anchor + "    const frogDelays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]); assert.deepStrictEqual(frogDelays, [...Array(10).fill(200),850], 'Frog charged Ultimate preserves ten 200ms per-hit pauses');\n"
@@ -77,4 +80,4 @@ if 'Frog charged Ultimate preserves ten 200ms per-hit pauses' not in t:
     t = t.replace(anchor, addition, 1)
 
 test_path.write_text(t, encoding='utf-8', newline='\n')
-print('Patched 0.6.6.4 Ultimate materializer markers, combatBusy ownership and per-hit delay contract')
+print('Patched 0.6.6.4 Ultimate materializer boundaries, combatBusy ownership and per-hit delay contract')
