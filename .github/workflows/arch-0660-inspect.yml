@@ -1,0 +1,46 @@
+name: 0.6.6.0 combat chain inspection
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.0-combat-turn-resolution
+    paths:
+      - .github/workflows/arch-0660-inspect.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory combat reassignment chain
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('runtime/js/dicebound.js')
+          lines=p.read_text(encoding='utf-8').splitlines()
+          names=['resolveEnemyResponse','enemyTurn','v24ResolveNormalHits','v24AttackPattern','performStrike','startCombat','useUltimate','updateCombatUI']
+          print(f'dicebound.js lines={len(lines)} bytes={p.stat().st_size}')
+          for name in names:
+              print('\n===',name,'===')
+              rx=re.compile(rf'\b{re.escape(name)}\b')
+              for i,line in enumerate(lines,1):
+                  if rx.search(line) and (f'{name}=' in line or f'function {name}' in line or f'const {name}' in line):
+                      print(f'{i}: {line[:500]}')
+          print('\n=== Base captures touching response/turn ===')
+          for i,line in enumerate(lines,1):
+              if re.search(r'const\s+\w*(?:ResolveEnemy|EnemyTurn|Response|NormalHits)\w*Base\s*=',line):
+                  print(f'{i}: {line[:500]}')
+          print('\n=== Section markers around matching lines ===')
+          hits=[]
+          for i,line in enumerate(lines,1):
+              if any(n in line for n in ['resolveEnemyResponse','enemyTurn','v24ResolveNormalHits','v24AttackPattern']): hits.append(i)
+          for i in hits:
+              lo=max(1,i-3); hi=min(len(lines),i+3)
+              print(f'--- {lo}-{hi} ---')
+              for j in range(lo,hi+1): print(f'{j}: {lines[j-1][:700]}')
+          PY
