@@ -31,10 +31,14 @@ jobs:
               raise SystemExit('expected stale materializer shadow-guard anchor was not found')
           t=t.replace(stale_anchor,current_anchor,1)
           stale_guard='assert "dbCombatTurns=window.DiceboundCombatTurnResolution.configure({" in monolith, "combat turn owner is not configured by the compatibility composition root"'
-          current_guard='assert "dbCombatTurns=dbCombatTurnOwner.configure({" in monolith, "combat turn owner is not configured by the compatibility composition root"'
+          current_guard='assert "dbCombatTurns=dbCombatTurnOwner.configure({" in mono, "combat turn owner is not configured by the compatibility composition root"'
           if stale_guard not in t:
               raise SystemExit('expected stale materializer composition guard was not found')
-          materializer.write_text(t.replace(stale_guard,current_guard,1),encoding='utf-8')
+          t=t.replace(stale_guard,current_guard,1)
+          t=t.replace('assert symbol not in monolith, f"retired combat turn owner returned to compatibility monolith: {symbol}"','assert symbol not in mono, f"retired combat turn owner returned to compatibility monolith: {symbol}"',1)
+          t=t.replace('assert monolith.count("async function enemyTurn(") == 1','assert mono.count("async function enemyTurn(") == 1',1)
+          t=t.replace('assert monolith.count("async function resolveEnemyResponse(") == 1','assert mono.count("async function resolveEnemyResponse(") == 1',1)
+          materializer.write_text(t,encoding='utf-8')
 
           test=Path('tools/test_combat_turn_resolution.js')
           s=test.read_text(encoding='utf-8')
