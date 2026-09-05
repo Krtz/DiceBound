@@ -17,18 +17,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Repair current shadow-guard anchor
+      - name: Repair one-shot materializer and permanent proof markers
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('tools/materialize_0660.py')
-          t=p.read_text(encoding='utf-8')
-          old='anchor=\'print("Monolith spring-clean guard PASS: DB235/Career harness and retired patch sediment stay deleted")\''
-          new='anchor="print(\'Monolith spring-clean guard PASS\')"'
-          if old not in t:
-              raise SystemExit('expected stale materializer anchor was not found')
-          p.write_text(t.replace(old,new,1),encoding='utf-8')
+
+          materializer=Path('tools/materialize_0660.py')
+          t=materializer.read_text(encoding='utf-8')
+          stale_anchor='anchor=\'print("Monolith spring-clean guard PASS: DB235/Career harness and retired patch sediment stay deleted")\''
+          current_anchor='anchor="print(\'Monolith spring-clean guard PASS\')"'
+          if stale_anchor not in t:
+              raise SystemExit('expected stale materializer shadow-guard anchor was not found')
+          t=t.replace(stale_anchor,current_anchor,1)
+          stale_guard='assert "dbCombatTurns=window.DiceboundCombatTurnResolution.configure({" in monolith, "combat turn owner is not configured by the compatibility composition root"'
+          current_guard='assert "dbCombatTurns=dbCombatTurnOwner.configure({" in monolith, "combat turn owner is not configured by the compatibility composition root"'
+          if stale_guard not in t:
+              raise SystemExit('expected stale materializer composition guard was not found')
+          materializer.write_text(t.replace(stale_guard,current_guard,1),encoding='utf-8')
+
+          test=Path('tools/test_combat_turn_resolution.js')
+          s=test.read_text(encoding='utf-8')
+          stale='  "dbCombatTurns=window.DiceboundCombatTurnResolution.configure({"\n'
+          current='  "const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;",\n  "dbCombatTurns=dbCombatTurnOwner.configure({"\n'
+          if stale not in s:
+              raise SystemExit('expected stale Node composition marker was not found')
+          test.write_text(s.replace(stale,current,1),encoding='utf-8')
           PY
       - name: Materialize authoritative turn owner
         run: python tools/materialize_0660.py
