@@ -868,11 +868,7 @@
     if(!hasMythicPiece("legs"))return "";player.mythicActionCount++;if(player.mythicActionCount%3)return "";
     const heal=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.06)));player.hp+=heal;player.ultimateCharge=clamp(player.ultimateCharge+15,0,100);const note=`👖 Paradox Loop restores ${heal} HP and grants 15 ultimate.`;addCombatHistory(note);showToast("👖 Paradox Loop");return note;
   }
-  async function useUltimate(){
-    if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;const chaos=await rollD20Chaos("ultimate");updateCombatUI();await animateUltimate();let damage=0,text="",aoe=["ranger","sorcerer","clown","berserker","turtle","slime","vampire","ceo","merchant"].includes(player.classId),twoTarget=false;
-    if(player.classId==="fighter"){damage=Math.round(player.attack*2.6)+rand(2,5);player.combatShield+=1+(player.titanCleaveBarrierBonus||0);twoTarget=true;text=`Titan Cleave hits up to two enemies for {DAMAGE} total damage and raises ${1+(player.titanCleaveBarrierBonus||0)} barrier${(1+(player.titanCleaveBarrierBonus||0))===1?"":"s"}.`;}else if(player.classId==="ranger"){damage=Math.round(player.attack*3.4)+rand(3,7);text="Arrow Storm sweeps the pack for {DAMAGE}.";}else if(player.classId==="sorcerer"){damage=Math.round(player.attack*3)+rand(4,8);text="Starfall crashes across the pack for {DAMAGE}.";}else if(player.classId==="monk"){damage=Math.round(player.attack*3.25)+rand(3,7);const h=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*.10));player.hp+=h;text=`Hundred Fists deals {DAMAGE} and restores ${h} HP.`;}else if(player.classId==="clown"){damage=Math.round(player.attack*(rand(240,420)/100))+rand(2,10);text="Final Punchline devastates the pack for {DAMAGE}.";}else if(player.classId==="berserker"){damage=DB_EFFECTIVE_STATS.ultimateBaseDamage("berserker",player,rand(5,10));text="Ragequake shatters the pack for {DAMAGE}.";}else if(player.classId==="turtle"){damage=Math.round((player.attack+player.defense)*2.4)+rand(4,8);player.combatShield+=2;text="Shellquake deals {DAMAGE} and grants two barriers.";}else if(player.classId==="frog"){const jumps=6+Math.floor(player.doubleStrike*4),scale=.75+player.doubleStrike*.55;let dealt=0;for(let i=0;i<jumps&&livingEnemies().length;i++){const t=pick(livingEnemies());dealt+=damageEnemy(t,(player.attack+rand(0,2))*scale);await animateClassAttack(i?"echo":"normal");}text=`Croak Cascade converts ${Math.round(player.doubleStrike*100)}% Echo into ${jumps} jumps for ${dealt} total damage.`;damage=0;}else if(player.classId==="d20"){damage=Math.round(player.attack*(2.1+chaos.roll*.12))+rand(1,chaos.roll||1);aoe=chaos.roll>=15;text="Natural Twenty warps probability for {DAMAGE}.";}else if(player.classId==="slime"){damage=Math.round(player.attack*2.7)+rand(3,8);text="Ooze Everything washes over the pack for {DAMAGE}.";}else if(player.classId==="vampire"){damage=Math.round(player.attack*3.15)+rand(4,9);text="Crimson Eclipse drains the pack for {DAMAGE}.";}else if(player.classId==="ninja"){let dealt=0;for(let i=0;i<5&&livingEnemies().length;i++){const t=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],crit=rollTieredProc(player.crit)+1,d=Math.round(player.attack*.85*(1+crit));dealt+=damageEnemy(t,d);await animateClassAttack("crit");}text=`Thousand Shadows lands five guaranteed critical strikes for ${dealt} total damage.`;damage=0;}else if(player.classId==="ceo"){damage=Math.round(player.attack*2.8+player.gold*.10)*(1+player.bossDamage);text="Quarterly Annihilation liquidates the pack for {DAMAGE}.";}else if(player.classId==="merchant"){damage=Math.round(player.attack*3+player.gold*.20);player.gold+=50;player.combatShield+=2;text="Market Monopoly deals {DAMAGE}, grants 50 gold and raises two barriers.";}else{damage=Math.round(player.attack*3.1)+rand(4,8);text="Crimson Deluge paints the battlefield for {DAMAGE}.";}
-    damage=DB_EFFECTIVE_STATS.scaleUltimateDamage(damage,player,{chaosMultiplier:chaos.mult||1,setDamageBonus:v19SetDamageBonus()});if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));let dealt=0;if(twoTarget){[currentEnemy,...livingEnemies().filter(e=>e!==currentEnemy)].slice(0,2).forEach((e,i)=>dealt+=damageEnemy(e,damage*(i?.85:1)));}else if(!["frog","ninja"].includes(player.classId))dealt=aoe?damageAll(damage,.78):damageEnemy(currentEnemy,damage);const proc=livingEnemies().length?triggerStrikeElements(currentEnemy,chaos):{totalDamage:0,message:""},drain=player.lifeSteal+(player.classId==="sorcerer"?.20:0)+(player.classId==="rouge"?.25:0)+(player.classId==="vampire"?.50:0),healed=drain>0&&(dealt+proc.totalDamage)>0?Math.min(player.maxHp-player.hp,Math.max(1,Math.floor((dealt+proc.totalDamage)*drain))):0;player.hp+=healed;const pants=applyMythicPantsPulse();text=text.replace("{DAMAGE}",dealt)+(proc.message?` ${proc.message}`:"")+(healed?` Lifesteal restores ${healed} HP.`:"")+(pants?` ${pants}`:"");setCombatText(text);sfx.crit();updateCombatUI();await delay(850);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  }
+  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}
 
   function rollTieredProc(chance){const guaranteed=Math.floor(Math.max(0,chance)),fraction=Math.max(0,chance-guaranteed);return guaranteed+(random()<fraction?1:0);}
   function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
@@ -1494,6 +1490,7 @@
   // existing regression hooks can temporarily replace them without creating
   // a second production owner.
   let dbCombatStrikes=null;
+  let dbCombatUltimateResolution=null;
   let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatTurns=null;
@@ -1614,12 +1611,6 @@
 
   // Custom ultimate art for the new classes.
   animateUltimate=async function(){const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️",cleric:"☀️✝️",paladin:"⚜️🛡️",beastmaster:"🐺🐾🐺",rogue:"💎🗡️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760,cleric:720,paladin:720,beastmaster:760,rogue:690}[player.classId]||620)+ALPHA_COMBAT_DELAY);enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");};
-
-  useUltimate=async function(){
-    if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;const chaos=await rollD20Chaos("ultimate");updateCombatUI();await animateUltimate();let damage=0,text="",aoe=["ranger","sorcerer","clown","berserker","turtle","slime","vampire","ceo","merchant","cleric","paladin","beastmaster"].includes(player.classId),twoTarget=false;
-    if(player.classId==="fighter"){damage=Math.round(player.attack*2.6)+rand(2,5);player.combatShield+=1+(player.titanCleaveBarrierBonus||0);twoTarget=true;text=`Titan Cleave hits up to two enemies for {DAMAGE} total damage and raises ${1+(player.titanCleaveBarrierBonus||0)} barrier${(1+(player.titanCleaveBarrierBonus||0))===1?"":"s"}.`;}else if(player.classId==="ranger"){damage=Math.round(player.attack*3.4)+rand(3,7);text="Arrow Storm sweeps the pack for {DAMAGE}.";}else if(player.classId==="sorcerer"){damage=Math.round(player.attack*3)+rand(4,8);text="Starfall crashes across the pack for {DAMAGE}.";}else if(player.classId==="monk"){damage=Math.round(player.attack*3.25)+rand(3,7);const h=healPlayer(Math.ceil(player.maxHp*.10));text=`Hundred Fists deals {DAMAGE} and restores ${h} HP.`;}else if(player.classId==="clown"){damage=Math.round(player.attack*(rand(240,420)/100))+rand(2,10);text="Final Punchline devastates the pack for {DAMAGE}.";}else if(player.classId==="berserker"){damage=Math.round(player.attack*2.8)+rand(5,10);text="Ragequake shatters the pack for {DAMAGE}.";}else if(player.classId==="turtle"){damage=Math.round((player.attack+player.defense)*2.4)+rand(4,8);player.combatShield+=2;text="Shellquake deals {DAMAGE} and grants two barriers.";}else if(player.classId==="frog"){const jumps=6+Math.floor(player.doubleStrike*4),scale=.75+player.doubleStrike*.55;let dealt=0;for(let i=0;i<jumps&&livingEnemies().length;i++){const t=pick(livingEnemies());dealt+=damageEnemy(t,(player.attack+rand(0,2))*scale);await animateClassAttack(i?"echo":"normal");await delay(ALPHA_COMBAT_DELAY);}text=`Croak Cascade converts ${Math.round(player.doubleStrike*100)}% Echo into ${jumps} jumps for ${dealt} total damage.`;damage=0;}else if(player.classId==="d20"){damage=Math.round(player.attack*(2.1+chaos.roll*.12))+rand(1,chaos.roll||1);aoe=chaos.roll>=15;text="Natural Twenty warps probability for {DAMAGE}.";}else if(player.classId==="slime"){damage=Math.round(player.attack*2.7)+rand(3,8);text="Ooze Everything washes over the pack for {DAMAGE}.";}else if(player.classId==="vampire"){damage=Math.round(player.attack*3.15)+rand(4,9);text="Crimson Eclipse drains the pack for {DAMAGE}.";}else if(player.classId==="ninja"){let dealt=0;for(let i=0;i<5&&livingEnemies().length;i++){const t=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],crit=rollTieredProc(player.crit)+1,d=Math.round(player.attack*.85*(1+crit));dealt+=damageEnemy(t,d);await animateClassAttack("crit");await delay(ALPHA_COMBAT_DELAY);}text=`Thousand Shadows lands five guaranteed critical strikes for ${dealt} total damage.`;damage=0;}else if(player.classId==="ceo"){damage=Math.round(player.attack*2.8+player.gold*.10)*(1+player.bossDamage);text="Quarterly Annihilation liquidates the pack for {DAMAGE}.";}else if(player.classId==="merchant"){damage=Math.round(player.attack*3+player.gold*.20);player.gold+=50;player.combatShield+=2;text="Market Monopoly deals {DAMAGE}, grants 50 gold and raises two barriers.";}else if(player.classId==="cleric"){damage=Math.round(player.attack*2.45+player.maxHp*.16)+rand(3,7);const h=healPlayer(Math.ceil(player.maxHp*.28));text=`Divine Reckoning deals {DAMAGE} and restores ${h} HP.`;}else if(player.classId==="paladin"){damage=Math.round((player.attack+player.defense*.9)*2.65)+rand(3,8);player.combatShield+=2;const h=healPlayer(Math.ceil(player.maxHp*.15));text=`Aegis Judgment deals {DAMAGE}, restores ${h} HP and raises two barriers.`;}else if(classIdentityActive("beastmaster")){damage=Math.round(player.attack*2+petDamage()*5.5)+rand(4,9);text="Call of the Pack tears through every enemy for {DAMAGE}.";}else if(player.classId==="rogue"){damage=Math.round(player.attack*4.1+player.gold*.025)+rand(4,10);const stolen=75+Math.floor(player.level*5);player.gold+=stolen;text=`Grand Larceny strikes for {DAMAGE} and steals ${stolen} gold.`;}else{damage=Math.round(player.attack*3.1)+rand(4,8);text="Crimson Deluge paints the battlefield for {DAMAGE}.";}
-    damage=Math.round(damage*(chaos.mult||1)*(1+player.classUltimateBonus)*(1+player.ultimateDamageBonus)*(1+player.damageBonus+(v19SetDamageBonus())));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));let dealt=0;if(twoTarget){[currentEnemy,...livingEnemies().filter(e=>e!==currentEnemy)].slice(0,2).forEach((e,i)=>dealt+=damageEnemy(e,damage*(i?.85:1)));}else if(!["frog","ninja"].includes(player.classId))dealt=aoe?damageAll(damage,.78):damageEnemy(currentEnemy,damage);const proc=livingEnemies().length?triggerStrikeElements(currentEnemy,chaos):{totalDamage:0,message:""},drain=player.lifeSteal+(player.classId==="sorcerer"?.20:0)+(player.classId==="rouge"?.25:0)+(player.classId==="vampire"?.50:0),healAmount=drain>0&&(dealt+proc.totalDamage)>0?Math.max(1,Math.floor((dealt+proc.totalDamage)*drain)):0,healed=healPlayer(healAmount);const pants=applyMythicPantsPulse();text=text.replace("{DAMAGE}",dealt)+(proc.message?` ${proc.message}`:"")+(healed?` Lifesteal restores ${healed} HP.`:"")+(pants?` ${pants}`:"");setCombatText(text);sfx.crit();updateCombatUI();await delay(850);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  };
 
   // Board 4 is now intentionally cruel.
   const scaleEnemyV15=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV15(base,kind,packSize);if(boardLevel===4){e.hp=Math.round(e.hp*1.45);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.35);e.defense+=e.guardian?6:3;if(e.finalBoss){e.hp=Math.round(e.hp*1.12);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.10);}}return e;};
@@ -1815,7 +1806,6 @@
 
   async function bloodmageExsanguinate(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;const paid=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos("attack");updateCombatUI();await animateClassAttack("crit");let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(currentEnemy,damage);const ring=applyMythicRingPulse();setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${dealt} damage.${ring?` ${ring}`:""}`);sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);} 
   async function bloodmageReplenish(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.combatActionCount++;const selfHeal=healPlayer(Math.ceil(player.maxHp*.16));const enemyHeal=Math.min(currentEnemy.maxHp-currentEnemy.hp,Math.ceil(currentEnemy.maxHp*.14));currentEnemy.hp+=enemyHeal;player.ultimateCharge=clamp(player.ultimateCharge+20,0,100);const ring=applyMythicRingPulse();setCombatText(`💉 Replenish restores ${selfHeal} HP to you and ${enemyHeal} HP to ${currentEnemy.name}.${ring?` ${ring}`:""}`);updateCombatUI();await delay(700);await resolveEnemyResponse(false);} 
-  const useUltimateV11=useUltimate;useUltimate=async function(){if(player.classId!=="bloodmage")return useUltimateV11();if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;player.combatActionCount++;const chaos=await rollD20Chaos("ultimate");updateCombatUI();await animateUltimate();let damage=Math.round((player.attack*3.4+Math.max(0,player.maxHp-player.hp)*1.4)*(chaos.mult||1)*(1+player.classUltimateBonus)*(1+player.ultimateDamageBonus)*(1+player.damageBonus+(v19SetDamageBonus())));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageAll(damage,.82),healed=healPlayer(Math.max(1,Math.floor(dealt*.30)));const ring=applyMythicRingPulse();setCombatText(`🩸☄️ Sanguine Cataclysm drenches the field for ${dealt} total damage and restores ${healed} HP.${ring?` ${ring}`:""}`);sfx.crit();updateCombatUI();await delay(850);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);};
   $("attackBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageExsanguinate();}},true);
   $("guardBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageReplenish();}},true);
   $("ultimateBtn").addEventListener("click",e=>{if(player.classId==="bloodmage"){e.preventDefault();e.stopImmediatePropagation();useUltimate();}},true);
@@ -2211,12 +2201,6 @@
   async function identityGuardAction(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("fighter"))player.fighterCounterReady=true;if(classIdentityActive("turtle"))player.turtleCrushReady=true;return guardAction();}
   async function identityPotionAction(){if(classIdentityActive("monk"))player.monkCombo=0;return usePotion();}
 
-  const useUltimateV13=useUltimate;
-  useUltimate=async function(){
-    if(!classIdentityActive("ranger"))return useUltimateV13();
-    const marks=currentEnemies.reduce((n,e)=>n+(e.rangerMarks||0),0),bonus=Math.min(.75,marks*.12);if(bonus)player.classUltimateBonus+=bonus;
-    try{return await useUltimateV13();}finally{if(bonus)player.classUltimateBonus-=bonus;currentEnemies.forEach(e=>e.rangerMarks=0);updateCombatUI();}
-  };
 
   // Replace the four original action buttons once, removing old stacked listeners and giving class identity one clean dispatch path.
   function replaceCombatButton(id,handler){const old=$(id);if(!old)return null;const neo=old.cloneNode(true);old.replaceWith(neo);neo.addEventListener("click",handler);return neo;}
@@ -2453,8 +2437,6 @@
   const petTurnV15Patch=petTurn;
   petTurn=async function(){if(classIdentityActive("pokemontrainer")){const targets=livingEnemies();if(!targets.length)return;let target=currentEnemy?.hp>0?currentEnemy:targets[0],id=activeTrainerPetId();await trainerStrike(id,target,1.65,"leads the roster");if(target.hp<=0){target=livingEnemies()[0];if(target)setCurrentEnemy(currentEnemies.indexOf(target));}if(target&&random()<clamp(.28+(player.trainerAssistBonus||0),0,.80)){const others=(player.trainerRoster||[]).filter(x=>x!==id),assist=others.length?pick(others):id;await trainerStrike(assist,target,player.trainerAssistScale||.65,"jumps in to assist");}updateCombatUI();await delay(380);return;}await petTurnV15Patch();if(!livingEnemies().length)return;if(classIdentityActive("summoner")&&(player.summonerSpirits||[]).length){for(const id of [...player.summonerSpirits]){const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target)break;const scale=.62*(player.summonerSpiritScale||1),hits=random()<clamp(player.summonerSpiritDouble||0,0,.75)?2:1;for(let h=0;h<hits;h++){await trainerStrike(id,target,scale,hits>1?"answers the pact twice":"answers the pact");if(!target.hp)break;}if(target.hp<=0&&livingEnemies().length)setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));}}else{const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(target)await maybePetElementProc(meta.activePet||"neutral",target);}updateCombatUI();};
 
-  const useUltimateV15Patch=useUltimate;
-  useUltimate=async function(){if(!classIdentityActive("summoner")&&!classIdentityActive("pokemontrainer"))return useUltimateV15Patch();if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;player.combatActionCount++;await animateUltimate();let dealt=0;if(classIdentityActive("summoner")){let ids=[...(player.summonerSpirits||[])],pool=Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked);while(ids.length<3&&pool.length){const id=pick(pool);if(!ids.includes(id)||pool.length<=ids.length)ids.push(id);else pool=pool.filter(x=>x!==id);}const per=Math.round((player.attack*1.25+petDamage()*1.7)*(1+player.classUltimateBonus));dealt=damageAll(per+ids.length*petDamage(),.82);setCombatText(`🌌 Grand Convergence calls ${Math.max(1,ids.length)} spirits through the pact for ${dealt} total damage.`);}else{const ids=player.trainerRoster||[],rosterPower=ids.reduce((sum,id)=>sum+trainerPetDamage(id),0),per=Math.round((player.attack*1.2+rosterPower*1.25)*(1+(player.trainerUltimateBonus||0))*(1+player.classUltimateBonus));dealt=damageAll(per,.88);setCombatText(`🌈🐾 Six-Pack Stampede sends ${ids.map(id=>PETS[id]?.icon||"🐾").join("")} across the battlefield for ${dealt} total damage.`);}sfx.crit();updateCombatUI();await delay(900);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);};
 
 
   if(!talents.some(t=>t.id==="companion_element_proc"))talents.push({id:"companion_element_proc",branch:"Companion",icon:"🌈🐾",name:"Primal Spark",cost:3,maxRank:3,desc:"Each rank gives companion and summoned-creature hits a 2.5% chance to trigger their element's full proc.",requires:[req("companion_ascendant",1),req("element_attunement",1)]});
@@ -2603,16 +2585,7 @@
 
   // ---- Clown gag continuity -------------------------------------------------
   const GAG_INFO={"Big Shoes":"+12% Dodge while active. Final Punchline raises extra barriers.","Rubber Chicken":"Basic attacks gain +20% Echo chance. Final Punchline hits harder.","Exploding Pie":"Your next basic attack deals +55% damage. Final Punchline becomes an enormous explosion.","Safety Net":"Opening the gag grants a Barrier. Final Punchline reinforces the net with more barriers.","Standing Ovation":"Opening the gag grants +25 Ultimate. Final Punchline leaves applause behind as 45 Ultimate."};
-  function rerollClownGagV16(){const old=player.clownGimmick,pool=Object.keys(GAG_INFO).filter(x=>x!==old);player.clownGimmick=pick(pool.length?pool:Object.keys(GAG_INFO));player.clownPieReady=player.clownGimmick==="Exploding Pie";if(player.clownGimmick==="Safety Net")player.combatShield++;if(player.clownGimmick==="Standing Ovation")player.ultimateCharge=clamp(player.ultimateCharge+25,0,100);identityFlash(`🤡 New gag: ${player.clownGimmick}`);addCombatHistory(`Opening Gag rerolled: ${player.clownGimmick} — ${GAG_INFO[player.clownGimmick]}`);}
 
-  // ---- Ultimate extensions --------------------------------------------------
-  const useUltimateV16Base=useUltimate;
-  useUltimate=async function(){
-    if(classIdentityActive("alchemist")){if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;player.combatActionCount++;await animateUltimate();player.potions+=3;const healing=v16PotionHealValue(.65),heal=healPlayer(healing),damage=damageAll(Math.round(v16PotionHealValue()*1.55+player.attack*1.4),.86);sfx.holy();setCombatText(`⚗️ Grand Distillation brews 3 potions, restores ${heal} HP and detonates restorative chemistry for ${damage} total damage.`);updateCombatUI();await delay(850);if(!livingEnemies().length)return winCombat();return resolveEnemyResponse(false);}
-    let extra=0,gag=null,ovation=false,turtleUltimateBonus=0;if(classIdentityActive("clown")){gag=player.clownGimmick;if(gag==="Big Shoes"){player.combatShield+=2;extra=.10;}if(gag==="Rubber Chicken")extra=.35;if(gag==="Exploding Pie")extra=.65;if(gag==="Safety Net"){player.combatShield+=3;extra=.10;}if(gag==="Standing Ovation"){extra=.22;ovation=true;}player.classUltimateBonus+=extra;}if(classIdentityActive("turtle")&&(player.turtleGuardChain||0)>0){turtleUltimateBonus=Math.min(.75,player.turtleGuardChain*.12);player.classUltimateBonus+=turtleUltimateBonus;}
-    if(classIdentityActive("ranger")){const marks=currentEnemies.reduce((n,e)=>n+(e.rangerMarks||0),0),old=Math.min(.75,marks*.12),desired=Math.min(1.20,marks*.12),bonus=Math.max(0,desired-old);if(bonus)player.classUltimateBonus+=bonus;try{return await useUltimateV16Base();}finally{if(bonus)player.classUltimateBonus-=bonus;}}
-    try{const r=await useUltimateV16Base();if(gag&&currentEnemy&&player.hp>0){if(ovation)player.ultimateCharge=clamp(player.ultimateCharge+45,0,100);rerollClownGagV16();updateCombatUI();}if(turtleUltimateBonus){player.turtleGuardChain=0;identityFlash("🐢 Shell Momentum released!");updateCombatUI();}return r;}finally{if(extra)player.classUltimateBonus-=extra;if(turtleUltimateBonus)player.classUltimateBonus-=turtleUltimateBonus;}
-  };
 
   // ---- Combat UI clarity ----------------------------------------------------
   $("specialAttackBtn")?.addEventListener("click",e=>{if(!classIdentityActive("alchemist"))return;e.preventDefault();e.stopImmediatePropagation();alchemistVolatileFlaskV16();},true);
@@ -2725,7 +2698,6 @@
   // ---- Ninja Smoke ---------------------------------------------------------
   if(!upgrades.some(u=>u.id==="ninja_smoke_step"))upgrades.push({id:"ninja_smoke_step",classId:"ninja",rarity:"epic",unique:true,icon:"🌫️🥷",name:"Vanishing Point",desc:"Unique: Smoke Execution needs one fewer Smoke stack.",tags:["dodgy","precision","unique"],apply(){player.ninjaSmokeNeed=2;player.ninjaSmoke=Math.min(player.ninjaSmoke||0,2);}});
   const resetPlayerV17Base=resetPlayer;resetPlayer=function(classId=selectedClassId){resetPlayerV17Base(classId);player.ninjaSmokeNeed=3;player.guardElementProcBonus=0;};
-    const useUltimateV17Base=useUltimate;useUltimate=async function(){const ninja=classIdentityActive("ninja"),before=ninja?(player.ninjaSmoke||0):0,r=await useUltimateV17Base();if(ninja){const need=player.ninjaSmokeNeed||3;player.ninjaSmoke=Math.min(need,before+5);addCombatHistory(`🌘 Thousand Shadows' five guaranteed critical strikes build Smoke to ${player.ninjaSmoke}/${need}.`);updateCombatUI();}return r;};
 
   // ---- Prismatic Birthright runtime migration -----------------------------
   const prismaticTalent=talents.find(t=>t.id==="element_prismatic");if(prismaticTalent){prismaticTalent.cost=2;prismaticTalent.maxRank=3;prismaticTalent.desc="Start each run with an elemental class weapon unless an heirloom weapon replaces it. Rank 1 Common · Rank 2 Uncommon · Rank 3 Rare.";prismaticTalent.requires=[req("element_attunement",2)];}
@@ -3011,13 +2983,6 @@
   // Older logic grants the first barrier at 1,000 gold. These are additive
   // thresholds: a CEO entering combat with 25k starts with three total.
   // ---- Ouroboros ultimate ---------------------------------------------------
-  const useUltimateV18Base=useUltimate;
-  useUltimate=async function(){
-    if(!classIdentityActive("ouroboros"))return useUltimateV18Base();
-    if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;player.combatActionCount++;v18SyncOuroborosAttack();await animateUltimate();
-    const hits=Math.min(14,4+Math.floor((player.doubleStrike||0)*1.5));let total=0;for(let i=0;i<hits&&livingEnemies().length;i++){const target=(i===0&&currentEnemy?.hp>0)?currentEnemy:pick(livingEnemies()),raw=Math.round(player.attack*(1.15+(player.doubleStrike||0)*.08)+rand(1,4));total+=damageEnemy(target,raw);target.poisonStacks=(target.poisonStacks||0)+1;await animateClassAttack(i?"echo":"normal");}
-    setCombatText(`♾️☠️ Infinite Return loops ${hits} times for ${total} total damage and leaves one Poison stack per bite.`);sfx.crit();updateCombatUI();await petTurn();await delay(500);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  };
 
   const animateUltimateV18Base=animateUltimate;
   animateUltimate=async function(){
@@ -4318,8 +4283,6 @@
     if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
     return dealt;
   };
-  const useUltimateV25CroakBase=useUltimate;
-  useUltimate=async function(){if(!classIdentityActive("frog"))return useUltimateV25CroakBase();player._v25CroakHitsRemaining=Math.max(0,6+Math.floor((player.doubleStrike||0)*4));try{return await useUltimateV25CroakBase();}finally{player._v25CroakHitsRemaining=0;}};
 
   /* PALE DEVIL: later Hell encounter, barriers, varied attacks and Hellfire ---- */
 
@@ -4680,7 +4643,6 @@
   // delay() reads this cap. Normal Ouroboros attacks become faster above
   // 1,000% Echo and dramatically faster above 5,000%, while other classes
   // keep the normal readable action cadence.
-    const useUltimateV27SpeedBase=useUltimate;useUltimate=async function(){if(player.classId!=='ouroboros')return useUltimateV27SpeedBase();const oldCap=window.__DB_FAST_ECHO_CAP__||0,echo=player.doubleStrike||0;window.__DB_FAST_ECHO_CAP__=echo>=50?8:echo>=10?28:90;try{return await useUltimateV27SpeedBase();}finally{window.__DB_FAST_ECHO_CAP__=oldCap;}};
 
   /* ENERGY SHIELD ---------------------------------------------------------- */
   const healPlayerV27AegisBase=healPlayer;healPlayer=function(amount,opts){const raw=Math.max(0,Math.round(amount||0)),beforeHp=player.hp,beforeMax=player.maxHp,room=Math.max(0,beforeMax-beforeHp),r=healPlayerV27AegisBase(amount,opts),rate=player.legendaryOverhealShieldRate||0;if(rate>0&&raw>room){const growth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-room-growth);if(over>0){const gain=over*rate;player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+gain);if(currentEnemy)addCombatHistory(`🩸🔵 Crimson Aegis turns ${over} overheal into +${gain.toFixed(1)} Energy Shield.`);}}v24UpdateShieldBars?.();return r;};
@@ -4866,14 +4828,6 @@
 
   /* FROG / OUROBOROS EXTREME SPEED ---------------------------------------- */
   function v28FrogEchoCap(echo){echo=Math.max(0,Number(echo)||0);return echo>=50?8:echo>=10?20:echo>=5?34:echo>=2?58:echo>=1?85:0;}
-  const useUltimateV28Base=useUltimate;
-  useUltimate=async function(){
-    if(player.classId==='slimerouge')return v318UseSlimeRougeUltimate();
-    if(player.classId!=='frog')return useUltimateV28Base();
-    const oldCap=window.__DB_FAST_ECHO_CAP__||0,cap=v28FrogEchoCap(player.doubleStrike||0);
-    if(cap)window.__DB_FAST_ECHO_CAP__=cap;
-    try{return await useUltimateV28Base();}finally{window.__DB_FAST_ECHO_CAP__=oldCap;}
-  };
 
   /* RANDOM -> BOARD 6 -> SLIME ROUGE SECRET ------------------------------- */
   function dbRunApplyClassStartEffects({wasRandom}){
@@ -6792,8 +6746,6 @@
   // Defense doubling during actual incoming attacks.
 
   // Unstable Ultimate: 70 charge threshold, 75% damage.
-  const db060UseUltimateBase=useUltimate;
-  useUltimate=async function(){if(!db060HasEffect('unstable_ultimate'))return db060UseUltimateBase();if(combatBusy||!currentEnemy||player.ultimateCharge<70)return;const actual=player.ultimateCharge,oldBonus=player.classUltimateBonus||0;player.ultimateCharge=100;player.classUltimateBonus=oldBonus-.25;try{return await db060UseUltimateBase();}finally{player.classUltimateBonus=oldBonus;player.ultimateCharge=Math.max(0,player.ultimateCharge);}};
 
   // Pet Mirror.
   const db060PetTurnBase=petTurn;
@@ -7752,14 +7704,6 @@
   guardAction=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.guardCooldown<=0)dbFriendTickDragoonCooldown();return dbFriendGuardActionBase.apply(this,args);};
   const dbFriendPotionBase=usePotion;
   usePotion=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.potions>0&&player.hp<player.maxHp)dbFriendTickDragoonCooldown();return dbFriendPotionBase.apply(this,args);};
-  async function dbFriendDragonDive(){
-    if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.ultimateCharge<100)return false;
-    combatBusy=true;player.guardCooldown=0;player.ultimateCharge=0;const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],critTiers=rollTieredProc(player.crit),damage=Math.round((player.attack*4.4+rand(5,11))*(1+critTiers)*(currentEncounterLead?.boss?1+player.bossDamage:1)),dealt=damageEnemy(target,damage);
-    await animateUltimate();const proc=target?.hp>0?triggerStrikeElements(target):{message:''};setCombatText(`🐉 Dragon Dive deals ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?'':'s'}`:''}.${proc?.message?` ${proc.message}`:''}`);sfx.crit();updateCombatUI();await delay(720);
-    if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);return true;
-  }
-  const dbFriendUltimateBase=useUltimate;
-  useUltimate=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive())return dbFriendDragonDive();dbFriendTickDragoonCooldown();return dbFriendUltimateBase.apply(this,args);};
   async function dbFriendDragoonRegressionExercise(){
     const enemy={name:'Airborne Exercise Guardian',icon:'🐲',hp:999,maxHp:999,attack:999,defense:0,weakness:'ice',affinity:null,poisonStacks:0,guardian:true,finalBoss:true,specialName:'Exercise Skybreaker'};
     try{
@@ -7802,6 +7746,64 @@
     syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
     setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getV26FastEcho:()=>!!window.__DB_V26_FAST_ECHO__,
     setV26FastEcho:value=>{window.__DB_V26_FAST_ECHO__=!!value;},getElementKeys:()=>ELEMENT_KEYS
+  });
+
+  const dbCombatUltimateOwner=window.DiceboundCombatUltimateResolution;
+  if(!dbCombatUltimateOwner)throw new Error('DiceboundCombatUltimateResolution must load before dicebound.js');
+  dbCombatUltimateResolution=dbCombatUltimateOwner.configure({
+    getPlayer:()=>player,
+    getMeta:()=>meta,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    getEncounterLead:()=>currentEncounterLead,
+    livingEnemies:()=>livingEnemies(),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    selectEnemy:index=>setCurrentEnemy(index),
+    isClassActive:id=>classIdentityActive(id),
+    hasLegendaryEffect:id=>db060HasEffect(id),
+    random:()=>random(),
+    rand:(min,max)=>rand(min,max),
+    pick:list=>pick(list),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    getSetDamageBonus:()=>v19SetDamageBonus(),
+    ultimateBaseDamage:(classId,actor,bonus)=>DB_EFFECTIVE_STATS.ultimateBaseDamage(classId,actor,bonus),
+    scaleUltimateDamage:(damage,actor,opts)=>DB_EFFECTIVE_STATS.scaleUltimateDamage(damage,actor,opts),
+    damageEnemy:(enemy,amount,ignoreDefense)=>damageEnemy(enemy,amount,ignoreDefense),
+    damageAll:(amount,secondary)=>damageAll(amount,secondary),
+    healPlayer:(amount,opts)=>healPlayer(amount,opts),
+    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
+    petDamage:()=>petDamage(),
+    trainerPetDamage:id=>trainerPetDamage(id),
+    syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
+    rollD20Chaos:action=>rollD20Chaos(action),
+    updateCombatUI:()=>updateCombatUI(),
+    animateUltimate:()=>animateUltimate(),
+    animateClassAttack:mode=>animateClassAttack(mode),
+    setCombatText:text=>setCombatText(text),
+    addCombatHistory:text=>addCombatHistory(text),
+    identityFlash:text=>identityFlash(text),
+    playCritSfx:()=>sfx.crit(),
+    playHolySfx:()=>sfx.holy(),
+    delay:ms=>delay(ms),
+    getCombatActionDelay:()=>ALPHA_COMBAT_DELAY,
+    winCombat:()=>winCombat(),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    petTurn:(...args)=>petTurn(...args),
+    applyMythicPantsPulse:()=>applyMythicPantsPulse(),
+    applyMythicRingPulse:()=>applyMythicRingPulse(),
+    potionHealValue:fraction=>v16PotionHealValue(fraction),
+    getPets:()=>PETS,
+    getGagInfo:()=>GAG_INFO,
+    slimeRougeUltimate:()=>v318UseSlimeRougeUltimate(),
+    getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
+    setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},
+    frogEchoCap:echo=>v28FrogEchoCap(echo),
+    dragoonActive:()=>dbFriendDragoonActive(),
+    dragoonLandingReady:()=>!!player.dragoonLandingReady,
+    dragoonLanding:()=>dbFriendDragoonLanding(),
+    tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
   });
 
   const dbCombatPresentationOwner=window.DiceboundCombatPresentation;

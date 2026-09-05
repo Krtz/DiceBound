@@ -72,6 +72,8 @@ function makeHarness(options = {}) {
     clamp: (v, min, max) => Math.max(min, Math.min(max, v)),
     rollTieredProc: chance => { const value = critValues.length ? critValues.shift() : 0; trace.push(['crit', chance, value]); return value; },
     getSetDamageBonus: () => options.setDamageBonus || 0,
+    ultimateBaseDamage: (classId, actor, bonus) => { trace.push(['ultimateBaseDamage', classId, bonus]); return Math.round(actor.attack * 2.8) + bonus; },
+    scaleUltimateDamage: (damage, actor, opts) => { trace.push(['scaleUltimateDamage', damage, opts.chaosMultiplier, opts.setDamageBonus]); return Math.round(damage * (opts.chaosMultiplier || 1) * (1 + actor.classUltimateBonus) * (1 + actor.ultimateDamageBonus) * (1 + actor.damageBonus + (opts.setDamageBonus || 0))); },
     damageEnemy, damageAll, healPlayer,
     triggerStrikeElements: (target, incomingChaos) => { trace.push(['elements', target?.name, incomingChaos?.roll || null]); return options.elementResult || { totalDamage: 0, message: '' }; },
     petDamage: () => options.petDamage || 10,
@@ -82,7 +84,7 @@ function makeHarness(options = {}) {
     animateClassAttack: async mode => trace.push(['animateClass', mode]), setCombatText: text => trace.push(['text', text]),
     addCombatHistory: text => trace.push(['history', text]), identityFlash: text => trace.push(['flash', text]),
     playCritSfx: () => trace.push(['sfxCrit']), playHolySfx: () => trace.push(['sfxHoly']),
-    delay: async ms => trace.push(['delay', ms]), winCombat: async () => { trace.push(['win']); return 'win'; },
+    delay: async ms => trace.push(['delay', ms]), getCombatActionDelay: () => 200, winCombat: async () => { trace.push(['win']); return 'win'; },
     resolveEnemyResponse: async guard => { trace.push(['enemyResponse', guard]); combatBusy = false; player.combatBusy = false; return 'response'; },
     petTurn: async () => trace.push(['petTurn']), applyMythicPantsPulse: () => options.pants || '',
     applyMythicRingPulse: () => options.ring || '', potionHealValue: fraction => fraction == null ? 40 : Math.round(40 * fraction),
@@ -123,6 +125,14 @@ async function run() {
     assert.strictEqual(packets.length, 2); assert.strictEqual(packets[0][2], 262); assert.strictEqual(packets[1][2], 262 * .85);
   }
 
+  // Berserker generic Ultimate delegates base and final scaling to the effective-stat service.
+  {
+    const h = makeHarness({ classId: 'berserker', randValues: [5] });
+    await owner._test.genericUltimate();
+    assert(h.trace.some(x => x[0] === 'ultimateBaseDamage' && x[1] === 'berserker' && x[2] === 5));
+    assert(h.trace.some(x => x[0] === 'scaleUltimateDamage'));
+  }
+
   // D20 chaos is consumed before its class-specific rand.
   {
     const h = makeHarness({ classId: 'd20', chaos: { roll: 16, mult: 1 }, randValues: [5], enemies: [makeEnemy('A'), makeEnemy('B')] });
@@ -151,7 +161,7 @@ async function run() {
   {
     const h = makeHarness({ classId: 'summoner', player: { summonerSpirits: ['fire'] }, pickIndexes: [1, 1] });
     await owner._test.v15CompanionUltimate();
-    const picks = h.trace.filter(x => x[0] === 'pick'); assert.strictEqual(picks.length, 2); assert(h.trace.findIndex(x => x[0] === 'pick') < h.trace.findIndex(x => x[0] === 'damageAll'));
+    const picks = h.trace.filter(x => x[0] === 'pick'); assert.strictEqual(picks.length, 4, 'Summoner duplicate-spirit retries must preserve all four seeded pick RNG draws'); assert(h.trace.findIndex(x => x[0] === 'pick') < h.trace.findIndex(x => x[0] === 'damageAll'));
   }
 
   // Pokémon Trainer path uses roster power and does not consume pick RNG.
@@ -190,6 +200,14 @@ async function run() {
     await owner.start(); assert.strictEqual(h.player.ninjaSmoke, 3); assert(h.trace.some(x => x[0] === 'history' && /five guaranteed critical strikes/.test(x[1])));
   }
 
+  // Ninja charged Ultimate preserves five 200ms per-hit pauses before the final 850ms handoff.
+  {
+    const h = makeHarness({ classId: 'ninja', player: { ultimateCharge: 100, ninjaSmoke: 0, ninjaSmokeNeed: 3 }, critValues: [0,0,0,0,0] });
+    await owner.start();
+    const delays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]);
+    assert.deepStrictEqual(delays, [200,200,200,200,200,850], 'Ninja charged Ultimate preserves five 200ms per-hit pauses');
+  }
+
   // Ouroboros bypasses lower generic/D20 logic, picks only after its first target, rolls once per hit, then calls petTurn.
   {
     const h = makeHarness({ classId: 'ouroboros', enemies: [makeEnemy('A'), makeEnemy('B')], player: { doubleStrike: 0 }, randValues: [1,1,1,1], pickIndexes: [1,0,1] });
@@ -204,6 +222,7 @@ async function run() {
     await owner.start();
     assert.strictEqual(h.fastEchoCap, 77); const caps = h.trace.filter(x => x[0] === 'fastCap').map(x => x[1]); assert.deepStrictEqual(caps, [85, 77]);
     const packets = h.trace.filter(x => x[0] === 'damageEnemy'); assert(packets.length > 0 && packets.every(x => x[4] > 0), 'Croak hit lifetime must surround damage calls'); assert.strictEqual(h.player._v25CroakHitsRemaining, 0);
+    const frogDelays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]); assert.deepStrictEqual(frogDelays, [...Array(10).fill(200),850], 'Frog charged Ultimate preserves ten 200ms per-hit pauses');
   }
 
   // Unstable Ultimate promotes 70 charge to 100, applies -25% temporary class bonus, then restores state.

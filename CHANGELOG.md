@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.4
+
+### Ultimate resolution ownership (#40, #209, #277)
+- Extracted the final `useUltimate` resolution stack into `runtime/js/combat/ultimate-resolution.js`, replacing the generic class base plus Bloodmage/Ranger/Companion/Alchemist/Clown/Turtle/Ninja/Ouroboros/Frog/Slime Rouge/Unstable/Dragoon wrapper ladder with one explicit owner.
+- Preserved exact targeting, charge mutation, temporary bonus cleanup, RNG draw/order, speed-cap lifetimes, poison bookkeeping, Slime Rouge recursive donor casting and Dragoon's outermost bypass semantics.
+- Other player actions, enemy turns, encounter/presentation owners, victory/rewards, saves/checkpoints and gameplay values remain outside this slice.
+
 ## Beta 0.6.6.3
 
 ### Player strike / basic attack resolution ownership (#40, #209, #275)

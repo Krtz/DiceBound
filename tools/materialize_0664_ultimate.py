@@ -42,21 +42,32 @@ mono = MONO.read_text(encoding='utf-8')
 mono = mono.replace('  let dbCombatStrikes=null;\n', '  let dbCombatStrikes=null;\n  let dbCombatUltimateResolution=null;\n', 1)
 
 # Earliest callable becomes the one compatibility adapter. The later full generic
-# implementation and every historical wrapper layer are deleted below.
-mono = sub_once(
-    mono,
-    r'  async function useUltimate\(\)\{[\s\S]*?\n  \}\n  async function guardAction\(\)\{',
-    "  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}\n  async function guardAction(){",
-    'replace original useUltimate with adapter',
-)
-
+# implementation and every historical wrapper layer are deleted below. The end
+# marker deliberately stops before rollTieredProc so strike ownership survives.
+first_start = chr(10) + '  async function useUltimate(){' + chr(10)
+first_end = chr(10) * 2 + '  function rollTieredProc('
+start_at = mono.find(first_start)
+if start_at < 0:
+    raise RuntimeError('replace original useUltimate with adapter: start marker missing')
+end_at = mono.find(first_end, start_at)
+if end_at < 0:
+    raise RuntimeError('replace original useUltimate with adapter: end marker missing')
+adapter = chr(10) + "  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}"
+mono = mono[:start_at] + adapter + mono[end_at:]
 # The later full generic owner is the semantically live base beneath the wrapper tower.
-mono = remove_once(
-    mono,
-    r'\n  useUltimate=async function\(\)\{\n    if\(combatBusy\|\|!currentEnemy\|\|player\.ultimateCharge<100\)[\s\S]*?\n  \};(?=\n\n\n  async function bloodmageExsanguinate)',
-    'remove later generic Ultimate base',
-)
-
+# Use audited source markers rather than a body regex: class-body details are intentionally
+# allowed to be dense, while both section boundaries must still match exactly once.
+generic_start = chr(10) + '  useUltimate=async function(){' + chr(10)
+generic_end = chr(10) + '  // Board 4 is now intentionally cruel.'
+start_at = mono.find(generic_start)
+if start_at < 0:
+    raise RuntimeError('remove later generic Ultimate base: start marker missing')
+end_at = mono.find(generic_end, start_at)
+if end_at < 0:
+    raise RuntimeError('remove later generic Ultimate base: end marker missing')
+if mono.find(generic_start, start_at + len(generic_start), end_at) >= 0:
+    raise RuntimeError('remove later generic Ultimate base: ambiguous nested start marker')
+mono = mono[:start_at] + mono[end_at:]
 # V11 Bloodmage intercept.
 mono = remove_once(mono, r'\n  const useUltimateV11=useUltimate;useUltimate=async function\(\)\{[^\n]*\};', 'remove V11 Ultimate wrapper')
 # V13 Ranger mark wrapper.
@@ -106,6 +117,8 @@ composition = r'''  const dbCombatUltimateOwner=window.DiceboundCombatUltimateRe
     clamp:(value,min,max)=>clamp(value,min,max),
     rollTieredProc:chance=>rollTieredProc(chance),
     getSetDamageBonus:()=>v19SetDamageBonus(),
+    ultimateBaseDamage:(classId,actor,bonus)=>DB_EFFECTIVE_STATS.ultimateBaseDamage(classId,actor,bonus),
+    scaleUltimateDamage:(damage,actor,opts)=>DB_EFFECTIVE_STATS.scaleUltimateDamage(damage,actor,opts),
     damageEnemy:(enemy,amount,ignoreDefense)=>damageEnemy(enemy,amount,ignoreDefense),
     damageAll:(amount,secondary)=>damageAll(amount,secondary),
     healPlayer:(amount,opts)=>healPlayer(amount,opts),
@@ -123,6 +136,7 @@ composition = r'''  const dbCombatUltimateOwner=window.DiceboundCombatUltimateRe
     playCritSfx:()=>sfx.crit(),
     playHolySfx:()=>sfx.holy(),
     delay:ms=>delay(ms),
+    getCombatActionDelay:()=>ALPHA_COMBAT_DELAY,
     winCombat:()=>winCombat(),
     resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
     petTurn:(...args)=>petTurn(...args),

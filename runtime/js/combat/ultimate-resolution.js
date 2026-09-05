@@ -11,11 +11,11 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat Ultimate-resolution runtime is required.");
     const required = [
-      "getPlayer","getMeta","getCurrentEnemy","getCurrentEnemies","getEncounterLead","livingEnemies","setCombatBusy","selectEnemy",
-      "isClassActive","hasLegendaryEffect","random","rand","pick","clamp","rollTieredProc","getSetDamageBonus",
+      "getPlayer","getMeta","getCurrentEnemy","getCurrentEnemies","getEncounterLead","livingEnemies","getCombatBusy","setCombatBusy","selectEnemy",
+      "isClassActive","hasLegendaryEffect","random","rand","pick","clamp","rollTieredProc","getSetDamageBonus","ultimateBaseDamage","scaleUltimateDamage",
       "damageEnemy","damageAll","healPlayer","triggerStrikeElements","petDamage","trainerPetDamage","syncOuroborosAttack",
       "rollD20Chaos","updateCombatUI","animateUltimate","animateClassAttack","setCombatText","addCombatHistory","identityFlash",
-      "playCritSfx","playHolySfx","delay","winCombat","resolveEnemyResponse","petTurn","applyMythicPantsPulse","applyMythicRingPulse",
+      "playCritSfx","playHolySfx","delay","getCombatActionDelay","winCombat","resolveEnemyResponse","petTurn","applyMythicPantsPulse","applyMythicRingPulse",
       "potionHealValue","getPets","getGagInfo","slimeRougeUltimate","getFastEchoCap","setFastEchoCap","frogEchoCap",
       "dragoonActive","dragoonLandingReady","dragoonLanding","tickDragoonCooldown"
     ];
@@ -40,7 +40,7 @@
 
   async function genericUltimate() {
     const rt = requireRuntime(), p = player(), enemy = currentEnemy();
-    if (p.combatBusy || !enemy || p.ultimateCharge < 100) return;
+    if (rt.getCombatBusy() || !enemy || p.ultimateCharge < 100) return;
     rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0;
     const chaos = await rt.rollD20Chaos("ultimate");
     rt.updateCombatUI();
@@ -54,18 +54,18 @@
     } else if (p.classId === "sorcerer") { damage = Math.round(p.attack * 3) + rt.rand(4, 8); text = "Starfall crashes across the pack for {DAMAGE}.";
     } else if (p.classId === "monk") { damage = Math.round(p.attack * 3.25) + rt.rand(3, 7); const h = rt.healPlayer(Math.ceil(p.maxHp * .10)); text = `Hundred Fists deals {DAMAGE} and restores ${h} HP.`;
     } else if (p.classId === "clown") { damage = Math.round(p.attack * (rt.rand(240, 420) / 100)) + rt.rand(2, 10); text = "Final Punchline devastates the pack for {DAMAGE}.";
-    } else if (p.classId === "berserker") { damage = Math.round(p.attack * 2.8) + rt.rand(5, 10); text = "Ragequake shatters the pack for {DAMAGE}.";
+    } else if (p.classId === "berserker") { damage = rt.ultimateBaseDamage("berserker", p, rt.rand(5, 10)); text = "Ragequake shatters the pack for {DAMAGE}.";
     } else if (p.classId === "turtle") { damage = Math.round((p.attack + p.defense) * 2.4) + rt.rand(4, 8); p.combatShield += 2; text = "Shellquake deals {DAMAGE} and grants two barriers.";
     } else if (p.classId === "frog") {
       const jumps = 6 + Math.floor(p.doubleStrike * 4), scale = .75 + p.doubleStrike * .55; let dealt = 0;
-      for (let i = 0; i < jumps && livingEnemies().length; i++) { const t = rt.pick(livingEnemies()); dealt += rt.damageEnemy(t, (p.attack + rt.rand(0, 2)) * scale); await rt.animateClassAttack(i ? "echo" : "normal"); }
+      for (let i = 0; i < jumps && livingEnemies().length; i++) { const t = rt.pick(livingEnemies()); dealt += rt.damageEnemy(t, (p.attack + rt.rand(0, 2)) * scale); await rt.animateClassAttack(i ? "echo" : "normal"); await rt.delay(rt.getCombatActionDelay()); }
       text = `Croak Cascade converts ${Math.round(p.doubleStrike * 100)}% Echo into ${jumps} jumps for ${dealt} total damage.`; damage = 0;
     } else if (p.classId === "d20") { damage = Math.round(p.attack * (2.1 + chaos.roll * .12)) + rt.rand(1, chaos.roll || 1); aoe = chaos.roll >= 15; text = "Natural Twenty warps probability for {DAMAGE}.";
     } else if (p.classId === "slime") { damage = Math.round(p.attack * 2.7) + rt.rand(3, 8); text = "Ooze Everything washes over the pack for {DAMAGE}.";
     } else if (p.classId === "vampire") { damage = Math.round(p.attack * 3.15) + rt.rand(4, 9); text = "Crimson Eclipse drains the pack for {DAMAGE}.";
     } else if (p.classId === "ninja") {
       let dealt = 0;
-      for (let i = 0; i < 5 && livingEnemies().length; i++) { const t = currentEnemy()?.hp > 0 ? currentEnemy() : livingEnemies()[0], crit = rt.rollTieredProc(p.crit) + 1, d = Math.round(p.attack * .85 * (1 + crit)); dealt += rt.damageEnemy(t, d); await rt.animateClassAttack("crit"); }
+      for (let i = 0; i < 5 && livingEnemies().length; i++) { const t = currentEnemy()?.hp > 0 ? currentEnemy() : livingEnemies()[0], crit = rt.rollTieredProc(p.crit) + 1, d = Math.round(p.attack * .85 * (1 + crit)); dealt += rt.damageEnemy(t, d); await rt.animateClassAttack("crit"); await rt.delay(rt.getCombatActionDelay()); }
       text = `Thousand Shadows lands five guaranteed critical strikes for ${dealt} total damage.`; damage = 0;
     } else if (p.classId === "ceo") { damage = Math.round(p.attack * 2.8 + p.gold * .10) * (1 + p.bossDamage); text = "Quarterly Annihilation liquidates the pack for {DAMAGE}.";
     } else if (p.classId === "merchant") { damage = Math.round(p.attack * 3 + p.gold * .20); p.gold += 50; p.combatShield += 2; text = "Market Monopoly deals {DAMAGE}, grants 50 gold and raises two barriers.";
@@ -75,7 +75,7 @@
     } else if (p.classId === "rogue") { damage = Math.round(p.attack * 4.1 + p.gold * .025) + rt.rand(4, 10); const stolen = 75 + Math.floor(p.level * 5); p.gold += stolen; text = `Grand Larceny strikes for {DAMAGE} and steals ${stolen} gold.`;
     } else { damage = Math.round(p.attack * 3.1) + rt.rand(4, 8); text = "Crimson Deluge paints the battlefield for {DAMAGE}."; }
 
-    damage = Math.round(damage * (chaos.mult || 1) * (1 + p.classUltimateBonus) * (1 + p.ultimateDamageBonus) * (1 + p.damageBonus + rt.getSetDamageBonus()));
+    damage = rt.scaleUltimateDamage(damage, p, { chaosMultiplier: chaos.mult || 1, setDamageBonus: rt.getSetDamageBonus() });
     if (rt.getEncounterLead()?.boss) damage = Math.round(damage * (1 + p.bossDamage));
     let dealt = 0;
     if (twoTarget) [currentEnemy(), ...livingEnemies().filter(e => e !== currentEnemy())].slice(0, 2).forEach((e, i) => dealt += rt.damageEnemy(e, damage * (i ? .85 : 1)));
@@ -93,7 +93,7 @@
   async function v11BloodmageUltimate() {
     const rt = requireRuntime(), p = player();
     if (p.classId !== "bloodmage") return genericUltimate();
-    if (p.combatBusy || !currentEnemy() || p.ultimateCharge < 100) return;
+    if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 100) return;
     rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0; p.combatActionCount++;
     const chaos = await rt.rollD20Chaos("ultimate"); rt.updateCombatUI(); await rt.animateUltimate();
     let damage = Math.round((p.attack * 3.4 + Math.max(0, p.maxHp - p.hp) * 1.4) * (chaos.mult || 1) * (1 + p.classUltimateBonus) * (1 + p.ultimateDamageBonus) * (1 + p.damageBonus + rt.getSetDamageBonus()));
@@ -116,7 +116,7 @@
   async function v15CompanionUltimate() {
     const rt = requireRuntime(), p = player();
     if (!rt.isClassActive("summoner") && !rt.isClassActive("pokemontrainer")) return v13RangerUltimate();
-    if (p.combatBusy || !currentEnemy() || p.ultimateCharge < 100) return;
+    if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 100) return;
     rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0; p.combatActionCount++; await rt.animateUltimate();
     let dealt = 0;
     if (rt.isClassActive("summoner")) {
@@ -146,7 +146,7 @@
   async function v16IdentityUltimate() {
     const rt = requireRuntime(), p = player();
     if (rt.isClassActive("alchemist")) {
-      if (p.combatBusy || !currentEnemy() || p.ultimateCharge < 100) return;
+      if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 100) return;
       rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0; p.combatActionCount++; await rt.animateUltimate(); p.potions += 3;
       const healing = rt.potionHealValue(.65), heal = rt.healPlayer(healing), damage = rt.damageAll(Math.round(rt.potionHealValue() * 1.55 + p.attack * 1.4), .86);
       rt.playHolySfx(); rt.setCombatText(`⚗️ Grand Distillation brews 3 potions, restores ${heal} HP and detonates restorative chemistry for ${damage} total damage.`); rt.updateCombatUI();
@@ -189,7 +189,7 @@
   async function v18OuroborosUltimate() {
     const rt = requireRuntime(), p = player();
     if (!rt.isClassActive("ouroboros")) return v17NinjaUltimate();
-    if (p.combatBusy || !currentEnemy() || p.ultimateCharge < 100) return;
+    if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 100) return;
     rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0; p.combatActionCount++; rt.syncOuroborosAttack(); await rt.animateUltimate();
     const hits = Math.min(14, 4 + Math.floor((p.doubleStrike || 0) * 1.5)); let total = 0;
     for (let i = 0; i < hits && livingEnemies().length; i++) { const target = (i === 0 && currentEnemy()?.hp > 0) ? currentEnemy() : rt.pick(livingEnemies()), raw = Math.round(p.attack * (1.15 + (p.doubleStrike || 0) * .08) + rt.rand(1, 4)); total += rt.damageEnemy(target, raw); target.poisonStacks = (target.poisonStacks || 0) + 1; await rt.animateClassAttack(i ? "echo" : "normal"); }
@@ -225,7 +225,7 @@
   async function unstableUltimate() {
     const rt = requireRuntime(), p = player();
     if (!rt.hasLegendaryEffect("unstable_ultimate")) return v28FrogSpeedAndSlimeRouge();
-    if (p.combatBusy || !currentEnemy() || p.ultimateCharge < 70) return;
+    if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 70) return;
     const oldBonus = p.classUltimateBonus || 0; p.ultimateCharge = 100; p.classUltimateBonus = oldBonus - .25;
     try { return await v28FrogSpeedAndSlimeRouge(); }
     finally { p.classUltimateBonus = oldBonus; p.ultimateCharge = Math.max(0, p.ultimateCharge); }
@@ -233,7 +233,7 @@
 
   async function dragonDive() {
     const rt = requireRuntime(), p = player();
-    if (!rt.dragoonActive() || p.combatBusy || !currentEnemy() || p.ultimateCharge < 100) return false;
+    if (!rt.dragoonActive() || rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 100) return false;
     rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0;
     const target = currentEnemy()?.hp > 0 ? currentEnemy() : livingEnemies()[0], critTiers = rt.rollTieredProc(p.crit), damage = Math.round((p.attack * 4.4 + rt.rand(5, 11)) * (1 + critTiers) * (rt.getEncounterLead()?.boss ? 1 + p.bossDamage : 1)), dealt = rt.damageEnemy(target, damage);
     await rt.animateUltimate(); const proc = target?.hp > 0 ? rt.triggerStrikeElements(target) : { message: "" };
@@ -260,5 +260,5 @@
     _test: Object.freeze({ genericUltimate, v11BloodmageUltimate, v13RangerUltimate, v15CompanionUltimate, v16IdentityUltimate, v17NinjaUltimate, v18OuroborosUltimate, v25FrogPoisonLifetime, v27OuroborosSpeed, v28FrogSpeedAndSlimeRouge, unstableUltimate, dragonDive, friendsUltimate })
   });
 
-  Object.defineProperty(window, "DiceboundCombatUltimateResolution", { value: api, configurable: false, enumerable: true, writable: false });
+  window.DiceboundCombatUltimateResolution = api;
 })();
