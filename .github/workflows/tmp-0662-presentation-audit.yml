@@ -1,4 +1,4 @@
-name: Temporary 0.6.6.2 combat presentation audit
+name: Temporary 0.6.6.2 combat presentation materializer
 
 on:
   push:
@@ -6,25 +6,73 @@ on:
       - arch/0.6.6.2-combat-presentation
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
-    runs-on: ubuntu-24.04
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[materialized-0662]') }}
+    runs-on: windows-2022
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Mint repository App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - name: Check out branch
+        uses: actions/checkout@v4
         with:
           ref: arch/0.6.6.2-combat-presentation
-          fetch-depth: 1
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Check presentation module
+      - name: Materialize combat presentation owner
+        shell: pwsh
+        run: |
+          python tools/materialize_0662_presentation.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/set_project_version.py --version 0.6.6.2 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.2 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Focused presentation validation
+        shell: pwsh
         run: |
           node --check runtime/js/combat/presentation.js
+          node --check runtime/js/dicebound.js
           node tools/test_combat_presentation.js
-      - name: Audit combat presentation ownership
-        run: python tools/audit_combat_presentation.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_shadow_ownership_drain.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_06520_monolith_census.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/prepare_release.py --output-dir wrapper-source/release/generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.6.2 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit focused-validated materialization
+        shell: pwsh
+        run: |
+          git status --short
+          git add runtime wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go CHANGELOG.md tools/test_shadow_ownership_drain.py tools/validate_runtime_architecture.py
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (git diff --cached --quiet)) {
+            git config user.name "dicebound-manifest-publisher[bot]"
+            git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+            git commit -m "Beta 0.6.6.2: extract combat presentation ownership [materialized-0662]"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            git push origin HEAD:arch/0.6.6.2-combat-presentation
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
