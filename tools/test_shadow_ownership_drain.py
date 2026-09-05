@@ -10,6 +10,22 @@ for name in [
 ]:
     assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono),name
 assert re.search(r'function scaleEnemy\([\s\S]*?const scaled=\{[\s\S]*?if\(boardLevel===6\)\{const balance=db317Board\(6\)\.balance;[\s\S]*?return scaled;',mono), 'Board 6 scaling must survive inside the single scaleEnemy owner'
+presentation_retired = [
+    'updateCombatUIBase','updateCombatUIV12','updateCombatUIV13','updateCombatUIV15Patch','updateCombatUIV16Base',
+    'updateCombatUIV17Base','updateCombatUIV17SmokeBase','updateCombatUIV18Base','updateCombatUIV19Base','updateCombatUIV24Base',
+    'updateCombatUIV25BurnBase','updateCombatUIV27EnemyBase','updateCombatUIV28SmokeBase','updateCombatUIV28RougeBase',
+    'updateCombatUIBeta04Base','db0511UpdateCombatUIBase','db060UpdateCombatUIBase','dbFriendUpdateCombatUiBase',
+    'renderEnemyPartyV17Base','db0636RenderEnemyPartyBase','updateBossSpecialIndicatorV24Base',
+    'setResourceUI','hideResourceUI','v17RenderSummonerSpirits','v17CompactPoisonMarkers','v24EnsureShieldBars',
+]
+for symbol in presentation_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired combat presentation owner returned: {symbol}"
+assert mono.count('function updateCombatUI(') == 1, 'updateCombatUI must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*updateCombatUI\s*=', mono), 'updateCombatUI reassignment chain must not return'
+assert mono.count('function renderEnemyParty(') == 1, 'renderEnemyParty must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*renderEnemyParty\s*=', mono), 'renderEnemyParty reassignment chain must not return'
+assert "dbCombatPresentation=dbCombatPresentationOwner.configure({" in mono, 'combat presentation owner is not configured'
+
 encounter_retired = [
     'startCombatV13','startCombatV15Patch','startCombatV16Base','startCombatV17Base','startCombatV18Base','startCombatV19Base','startCombatV19SetBase',
     'startCombatV24Base','startCombatV25DevilBase','startCombatV26StoneBase','startCombatV27DifficultyBase','db0511StartCombatBase','db060StartCombatBase',

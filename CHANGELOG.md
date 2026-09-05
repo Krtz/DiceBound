@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.2
+
+### Combat presentation ownership (#40, #209, #273)
+- Extracted the combat HUD/battlefield renderer into `runtime/js/combat/presentation.js`, consolidating the historical `updateCombatUI` and `renderEnemyParty` presentation ladders behind one owner.
+- Preserved final class resources, statuses, Energy Shield, enemy art/target presentation, Unstable Ultimate and Dragoon controls while removing overwritten historical presentation layers.
+- Rendering is now explicitly zero-RNG and does not own gameplay/progression state; the compatibility adapter preserves the existing HUD refresh separately.
+
 ## Beta 0.6.6.1
 
 ### Combat encounter-lifecycle ownership (#40, #209, #269)
