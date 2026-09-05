@@ -80,11 +80,17 @@ jobs:
           python tools/validate_asset_architecture.py
           python tools/validate_launcher_assets.py
           git diff --check
-      - name: Full source regression suite
+      - name: Full cross-platform source regression suite
         shell: bash
         run: |
           set -euo pipefail
-          while IFS= read -r -d '' file; do node "$file"; done < <(find tools -maxdepth 1 -name 'test_*.js' -print0 | sort -z)
+          while IFS= read -r -d '' file; do
+            if [[ "$file" == "tools/test_file_startup_browser.js" ]]; then
+              echo "SKIP on Ubuntu materializer: $file (Windows Edge gate owns this smoke)"
+              continue
+            fi
+            node "$file"
+          done < <(find tools -maxdepth 1 -name 'test_*.js' -print0 | sort -z)
           while IFS= read -r -d '' file; do python "$file"; done < <(find tools -maxdepth 1 -name 'test_*.py' -print0 | sort -z)
       - name: Report extraction census
         run: |
