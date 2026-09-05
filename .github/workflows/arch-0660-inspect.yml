@@ -65,6 +65,34 @@ jobs:
               t=t.replace(anchor,anchor+line,1)
           p.write_text(t,encoding='utf-8')
           PY
+      - name: Add Beta 0.6.6.0 release notes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          changelog=Path('CHANGELOG.md')
+          c=changelog.read_text(encoding='utf-8')
+          entry='''## Beta 0.6.6.0\n\n### Combat turn-resolution ownership (#40, #209, #267)\n- Extracted enemy-response and enemy-turn orchestration into `runtime/js/combat/turn-resolution.js`, making it the single owner for incoming hit resolution, Guardian specials, response status ticks, Haste/freeze handling, forced-control repeats, Hellfire/enemy Burn follow-up, Glass Fortress, Wolf Echo follow-up and Dragoon Airborne response handling.\n- Retired the historical v1/v2/v24/v25/Beta 0.4.x/DB0511/DB060/DB064/Friends wrapper ladder instead of leaving a second live combat owner in `dicebound.js`; the monolith keeps only narrow forwarding/composition adapters.\n- Added deterministic turn-resolution regression coverage and permanent shadow-ownership guards. Existing gameplay values, RNG draw order, action/event ordering, save/checkpoint behavior and known legacy quirks are intentionally preserved.\n\n'''
+          marker='## Beta 0.6.5.20\n'
+          if '## Beta 0.6.6.0\n' not in c:
+              if c.count(marker)!=1:
+                  raise SystemExit(f'expected one changelog 0.6.5.20 marker, found {c.count(marker)}')
+              c=c.replace(marker,entry+marker,1)
+          changelog.write_text(c,encoding='utf-8')
+
+          notes=Path('runtime/PATCH_NOTES.md')
+          p=notes.read_text(encoding='utf-8')
+          p=p.replace('# Unreleased — Beta 0.6.5.20','# Unreleased — Beta 0.6.6.0',1)
+          entry2='''## Beta 0.6.6.0 Combat turn-resolution ownership (#40, #209, #267)\n- Enemy response/turn sequencing now has one authoritative owner in `combat/turn-resolution.js`, including ordinary incoming hits, Guardian specials, Freeze/Haste response handling, player/enemy status ticks, forced-control repeat turns, Hellfire, Glass Fortress, Wolf Echo follow-up and Dragoon Airborne response handling.\n- Removed the historical enemy-turn/response reassignment chain and retained only thin composition adapters in `dicebound.js`. Existing combat numbers, RNG consumption/order, action/event ordering, saves/checkpoints and intentional legacy behavior are preserved.\n- Added deterministic owner tests plus permanent anti-shadow guards so retired combat ownership cannot quietly return.\n\n'''
+          marker2='## Beta 0.6.5.20 Camp + monolith spring clean'
+          if '## Beta 0.6.6.0 Combat turn-resolution ownership' not in p:
+              idx=p.find(marker2)
+              if idx<0:
+                  raise SystemExit('expected runtime patch-notes 0.6.5.20 marker')
+              p=p[:idx]+entry2+p[idx:]
+          notes.write_text(p,encoding='utf-8')
+          PY
       - name: Stamp Beta 0.6.6.0 and refresh runtime metadata
         run: |
           python tools/set_project_version.py --version 0.6.6.0 --channel Beta
