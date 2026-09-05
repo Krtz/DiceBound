@@ -50,6 +50,21 @@ jobs:
           PY
       - name: Materialize authoritative turn owner
         run: python tools/materialize_0660.py
+      - name: Wire extracted owner into browser runtime load order
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('runtime/index.html')
+          t=p.read_text(encoding='utf-8')
+          anchor='<script src="js/combat/targeting.js"></script>\n'
+          line='<script src="js/combat/turn-resolution.js"></script>\n'
+          if line not in t:
+              if t.count(anchor)!=1:
+                  raise SystemExit(f'expected one targeting script anchor, found {t.count(anchor)}')
+              t=t.replace(anchor,anchor+line,1)
+          p.write_text(t,encoding='utf-8')
+          PY
       - name: Stamp Beta 0.6.6.0 and refresh runtime metadata
         run: |
           python tools/set_project_version.py --version 0.6.6.0 --channel Beta
