@@ -64,4 +64,16 @@ assert not re.search(r'(?m)^\s*strikeBaseDamage\s*=\s*function', mono), 'strikeB
 assert not re.search(r'(?m)^\s*performStrike\s*=\s*async function', mono), 'performStrike reassignment chain must not return'
 assert "dbCombatStrikes=dbCombatStrikeOwner.configure({" in mono, 'combat strike-resolution owner is not configured by the composition root'
 
+ultimate_retired = [
+    'useUltimateV11','useUltimateV13','useUltimateV15Patch','useUltimateV16Base','useUltimateV17Base','useUltimateV18Base',
+    'useUltimateV25CroakBase','useUltimateV27SpeedBase','useUltimateV28Base','db060UseUltimateBase','dbFriendUltimateBase',
+    'dbFriendDragonDive','rerollClownGagV16',
+]
+for symbol in ultimate_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Ultimate-resolution owner returned: {symbol}"
+assert mono.count('async function useUltimate(') == 1, 'useUltimate must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*useUltimate\s*=', mono), 'useUltimate reassignment chain must not return'
+assert "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" in mono, 'combat Ultimate-resolution owner is not configured by the composition root'
+assert "return dbCombatUltimateResolution.start(...args);" in mono, 'Ultimate thin adapter is missing'
+
 print('Monolith spring-clean guard PASS')

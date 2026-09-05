@@ -92,8 +92,11 @@ mana = stats.manaResourceSnapshot({ baseMaxMana: 0, currentMana: 9, usesMana: fa
 assert.deepEqual(JSON.parse(JSON.stringify(mana)), { baseMaxMana: 0, equipmentMana: 0, maxMana: 0, mana: 0 }, "non-Mana classes must not gain a hidden Mana resource from gear");
 
 const monolith = fs.readFileSync(path.join(__dirname, "..", "runtime", "js", "dicebound.js"), "utf8");
-assert.match(monolith, /DB_EFFECTIVE_STATS\.ultimateBaseDamage\("berserker"/);
-assert.match(monolith, /DB_EFFECTIVE_STATS\.scaleUltimateDamage/);
+const ultimateOwner = fs.readFileSync(path.join(__dirname, "..", "runtime", "js", "combat", "ultimate-resolution.js"), "utf8");
+assert.match(monolith, /ultimateBaseDamage:\(classId,actor,bonus\)=>DB_EFFECTIVE_STATS\.ultimateBaseDamage/);
+assert.match(monolith, /scaleUltimateDamage:\(damage,actor,opts\)=>DB_EFFECTIVE_STATS\.scaleUltimateDamage/);
+assert.match(ultimateOwner, /rt\.ultimateBaseDamage\("berserker", p, rt\.rand\(5, 10\)\)/);
+assert.match(ultimateOwner, /rt\.scaleUltimateDamage\(damage, p,/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.scaleBerserkerRageDamage/);
 assert.match(monolith, /DB_EFFECTIVE_STATS\.describeUltimate/);
 assert.match(monolith, /function modifiedGold\(base\)\{return DB_EFFECTIVE_STATS\.scaleGold\(base,player,\{nightmare:nightmareMode\}\);\}/);

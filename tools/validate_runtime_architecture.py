@@ -961,6 +961,25 @@ def main() -> int:
             if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
                 errors.append(f"retired combat encounter-lifecycle wrapper remains in dicebound.js: {symbol}")
 
+    ultimate_owner = next((m for m in modules if m.get("id") == "combat-ultimate-resolution"), None)
+    if not ultimate_owner or ultimate_owner.get("status") != "extracted":
+        errors.append("combat Ultimate-resolution owner is missing or not extracted")
+    else:
+        if ultimate_owner.get("path") != "js/combat/ultimate-resolution.js" or "DiceboundCombatUltimateResolution" not in (ultimate_owner.get("provides") or []):
+            errors.append("combat-ultimate-resolution must provide DiceboundCombatUltimateResolution from js/combat/ultimate-resolution.js")
+        if position.get("combat-ultimate-resolution", -1) >= position.get(str(monolith_id), -1):
+            errors.append("combat-ultimate-resolution must load before the compatibility monolith")
+    if monolith_source:
+        if "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" not in monolith_source:
+            errors.append("dicebound.js must configure the combat Ultimate-resolution owner")
+        if monolith_source.count("async function useUltimate(") != 1 or "return dbCombatUltimateResolution.start(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin useUltimate adapter")
+        if re.search(r"(?m)^\s*useUltimate\s*=", monolith_source):
+            errors.append("dicebound.js retains a useUltimate reassignment after Ultimate extraction")
+        for symbol in ("useUltimateV11","useUltimateV13","useUltimateV15Patch","useUltimateV16Base","useUltimateV17Base","useUltimateV18Base","useUltimateV25CroakBase","useUltimateV27SpeedBase","useUltimateV28Base","db060UseUltimateBase","dbFriendUltimateBase","dbFriendDragonDive","rerollClownGagV16"):
+            if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
+                errors.append(f"retired combat Ultimate-resolution wrapper remains in dicebound.js: {symbol}")
+
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
     if len(planned_domains) != len(set(planned_domains)):
         errors.append("plannedDomains contains duplicates")

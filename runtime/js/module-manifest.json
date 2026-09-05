@@ -18,6 +18,7 @@
     "combat-effective-stats",
     "combat-strike-policy",
     "combat-strike-resolution",
+    "combat-ultimate-resolution",
     "combat-enemy-policy",
     "combat-targeting",
     "combat-presentation",
@@ -236,6 +237,16 @@
       ],
       "provides": [
         "DiceboundCombatStrikeResolution"
+      ]
+    },
+    {
+      "id": "combat-ultimate-resolution",
+      "path": "js/combat/ultimate-resolution.js",
+      "domain": "combat/ultimate-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatUltimateResolution"
       ]
     },
     {
@@ -710,6 +721,7 @@
         "combat-effective-stats",
         "combat-strike-policy",
         "combat-strike-resolution",
+        "combat-ultimate-resolution",
         "combat-enemy-policy",
         "combat-targeting",
         "combat-presentation",

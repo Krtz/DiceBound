@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.4
+
+## Beta 0.6.6.4 Ultimate resolution ownership (#40, #209, #277)
+- Player Ultimates now resolve through one authoritative owner in `combat/ultimate-resolution.js`; the historical `useUltimate` wrapper tower is retired from `dicebound.js`.
+- Generic class Ultimates plus Bloodmage, Ranger Marks, Summoner/Trainer, Alchemist, Clown/Turtle/Ninja, Ouroboros, Frog, Slime Rouge recursion, Unstable Ultimate and Dragoon ordering retain their existing formulas, RNG draws and historical wrapper quirks.
+- Basic/Echo strikes, Guard, Potions, ordinary Pet turns, enemy response, encounter entry, combat presentation, saves/checkpoints and gameplay values are unchanged.
+
 # Unreleased — Beta 0.6.6.3
 
 ## Beta 0.6.6.3 Player strike / basic attack resolution ownership (#40, #209, #275)
