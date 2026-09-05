@@ -17,5 +17,23 @@ for pattern, label in patterns:
     if count != 1:
         raise SystemExit(f"{label}: expected one match, found {count}")
 
+replacements = [
+    (
+        "setTimeout(()=>{if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();renderTalents();renderEquipment();v24EnsureShieldBars();},0);",
+        "setTimeout(()=>{if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();renderTalents();renderEquipment();v24UpdateShieldBars();},0);",
+        "v24 storage bootstrap shield call",
+    ),
+    (
+        "setTimeout(()=>{v24EnsureShieldBars?.();v24UpdateShieldBars?.();renderInfo();},0);",
+        "setTimeout(()=>{v24UpdateShieldBars?.();renderInfo();},0);",
+        "v27 bootstrap shield call",
+    ),
+]
+for old, new, label in replacements:
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{label}: expected one literal, found {count}")
+    text = text.replace(old, new, 1)
+
 MONO.write_text(text, encoding="utf-8")
-print("0.6.6.2 final status presentation fossils drained")
+print("0.6.6.2 final presentation fossils drained")
