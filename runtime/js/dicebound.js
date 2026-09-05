@@ -907,11 +907,7 @@
 
   function currentGoldSnapshot(){return DB_EFFECTIVE_STATS.goldSnapshot(player,{nightmare:nightmareMode});}
   function modifiedGold(base){return DB_EFFECTIVE_STATS.scaleGold(base,player,{nightmare:nightmareMode});}
-  function renderCurrentGoldStat(){
-    const grid=$("lifetimeStats");if(!grid)return;const snapshot=currentGoldSnapshot(),card=document.createElement("div");
-    card.className="lifetime-stat effective-gold-card";card.tabIndex=0;card.dataset.effectiveGoldContainer="";card.dataset.tip=snapshot.description;card.title=snapshot.description;
-    card.innerHTML=`<span>Current-run Gold gain</span><strong data-effective-gold>${gameStarted?snapshot.label:"Start a run"}</strong>`;grid.prepend(card);
-  }
+
 
   function grantXp(amount){const result=ProgressionState.grantXp(amount);ProgressionUI.render(result);return result;}
   function forceLevels(count){const result=ProgressionState.forceLevels(count);ProgressionUI.render(result);return result;}
@@ -1374,8 +1370,8 @@
   function openGambler(){const grid=$("gambleGrid");grid.innerHTML="";$("gambleResult").textContent=`You carry ${player.gold} gold.`;[0,.25,.5,1].forEach(p=>{const wager=Math.floor(player.gold*p),b=document.createElement("button");b.className="choice-btn uncommon";b.innerHTML=`<span class="choice-icon">🪙</span><span class="choice-name">Bet ${Math.round(p*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;b.addEventListener("click",()=>{if(p===0){finishGambler("You politely decline.");return;}const actual=Math.floor(player.gold*p),win=random()<.5;if(win){player.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{player.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}});grid.appendChild(b);});$("gamblerOverlay").classList.remove("hidden");}
   function finishGambler(msg){$("gambleResult").textContent=msg;addLog(`<b>Gambler:</b> ${msg}`);showToast(msg);tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);updateHUD();setTimeout(()=>{$("gamblerOverlay").classList.add("hidden");returnToRoad();},700);}
 
-  function openInfo(){renderInfo();$("infoOverlay").classList.remove("hidden");meta.infoSeen=true;saveMeta();}
-  function renderInfo(){const sections=$("infoSections");sections.innerHTML=`<div class="info-section"><h3>🎲 Travel</h3><p>Chosen die results never trigger Extra Step. A natural six with Extra Step grants an enlarged Fast Travel XP bonus.</p><p>Boards 1–3 contain 100 tiles. Board 4 contains 64 much harder tiles.</p></div><div class="info-section"><h3>👑 Guardians</h3><p>Boss specials occur every five enemy responses. They ignore Dodge and barriers, but Guard still reduces them.</p><p>Nightmare doubles special Mythic drop chances and multiplies final Legacy XP by five.</p></div><div class="info-section"><h3>♻️ Prestige</h3><p>Prestige ends an active run and returns to class selection. Current equipment joins permanent heirlooms in the survivor choice.</p><p>Keep one item, or two once total Prestige reaches 20.</p></div><div class="info-section"><h3>❔ Secrets</h3><p>The road contains hidden classes, bosses and interactions that are not documented here. Suspicious icons and oddly specific milestones may reward experimentation.</p></div><div class="info-section"><h3>🩸 Bloodwell & Gambler</h3><p>Bloodwells exchange one stat or resource for a random different stat. Gamblers accept 0%, 25%, 50% or 100% of your current gold.</p></div><div class="info-section"><h3>💾 Portable saves</h3><p>Exports use the versioned Dicebound Save format. The game keeps a primary save plus an automatic previous-save backup, and future schema changes migrate through the save service.</p></div>`;const guide=$("elementGuide");guide.innerHTML=Object.entries(ELEMENTS).map(([k,e])=>`<div class="element-row"><b>${e.icon} ${e.name} — ${e.spell}</b><br>${e.description}<br><span style="color:var(--muted)">Power scales with Element Power. Matching weaknesses raise activation and effect strength. Prismatic Echo can repeat it.</span></div>`).join("");}
+  function openInfo(){return undefined;}
+  function renderInfo(){return undefined;}
   function exportSave(){const data=window.DiceboundSave.exportText(v13NormalizeMeta(meta));$("saveTransferText").value=data;window.DiceboundPlatform.copyText(data).then(ok=>showToast(ok?"Save copied to clipboard":"Save placed in text box")).catch(()=>showToast("Save placed in text box"));}
   function importSave(){try{const raw=$("saveTransferText").value.trim();if(!raw)throw new Error("empty");meta=window.DiceboundSave.importText(raw,{defaultFactory:defaultMeta,normalize:v13NormalizeMeta});repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast("Save imported");$("infoOverlay").classList.add("hidden");openStartScreen();}catch(e){window.DiceboundPlatform.alert("That save string could not be imported.");}}
 
@@ -1679,16 +1675,9 @@
   const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);checkDynamicClassUnlocks();saveMeta();return r;};
 
   // Alpha Info: expandable guide categories plus a lifetime stats tab.
-  function activateInfoTab(name="guide"){$("infoTabs")?.querySelectorAll("[data-info-tab]").forEach(b=>b.classList.toggle("active",b.dataset.infoTab===name));$("infoOverlay")?.querySelectorAll("[data-info-panel]").forEach(p=>p.classList.toggle("active",p.dataset.infoPanel===name));if(name==="stats")renderLifetimeStats();}
-  function renderLifetimeStats(){
-    const s=ensureAlphaMeta(),grid=$("lifetimeStats");if(!grid)return;
-    const fmt=n=>Math.round(Number(n)||0).toLocaleString();
-    const highest=new Map();Object.entries(s.boardClears).filter(([,value])=>Number(value)>0).forEach(([key])=>{const modern=key.match(/^([^:]+):(normal|nightmare|hell):b(\d+)$/),legacy=key.match(/^([^:]+):b(\d+)$/),classId=modern?.[1]||legacy?.[1],mode=modern?.[2]||'normal',board=Number(modern?.[3]||legacy?.[2]||0);if(!classId||!board)return;const group=`${classId}:${mode}`;highest.set(group,Math.max(highest.get(group)||0,board));});
-    const clears=[...highest.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([key,board])=>{const [cid,mode]=key.split(':'),cls=CLASSES[cid],label=mode[0].toUpperCase()+mode.slice(1);return `${cls?.icon||"•"} ${cls?.name||cid} — ${label}: Board ${board}`;});
-    grid.innerHTML=`<div class="lifetime-stat"><span>Runs started</span><strong>${fmt(s.runsStarted)}</strong></div><div class="lifetime-stat"><span>Runs finished</span><strong>${fmt(s.runsFinished)}</strong></div><div class="lifetime-stat"><span>Full victories</span><strong>${fmt(s.fullVictories)}</strong></div><div class="lifetime-stat"><span>Tiles traveled</span><strong>${fmt(s.tilesTraveled)}</strong></div><div class="lifetime-stat"><span>Dice rolls</span><strong>${fmt(s.rolls)}</strong></div><div class="lifetime-stat"><span>Highest run level</span><strong>${fmt(s.highestRunLevel)}</strong></div><div class="lifetime-stat"><span>Damage dealt</span><strong>${fmt(s.damageDealt)}</strong></div><div class="lifetime-stat"><span>Damage taken</span><strong>${fmt(Math.max(s.damageTaken||0,meta.damageTaken||0))}</strong></div><div class="lifetime-stat"><span>Healing done</span><strong>${fmt(s.healingDone)}</strong></div><div class="lifetime-stat"><span>Gold earned</span><strong>${fmt(s.goldEarned)}</strong></div><div class="lifetime-stat"><span>Gold spent</span><strong>${fmt(s.goldSpent)}</strong></div><div class="lifetime-stat"><span>Highest gold held</span><strong>${fmt(s.highestGold)}</strong></div><div class="lifetime-stat"><span>Enemies defeated</span><strong>${fmt(s.enemiesDefeated)}</strong></div><div class="lifetime-stat"><span>Bosses defeated</span><strong>${fmt(s.bossesDefeated)}</strong></div><div class="lifetime-stat"><span>Powerups taken</span><strong>${fmt(s.powerupsTaken)}</strong></div><div class="lifetime-stat lifetime-wide"><span>Board clears by class</span><div class="class-clear-list">${clears.length?clears.join("<br>"):"No recorded class-specific board clears yet."}</div></div>`;
-    renderCurrentGoldStat();
-  }
-  renderInfo=function(){const sections=$("infoSections"),classes=Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id));const classRows=classes.map(c=>`<div class="info-class"><b>${c.icon} ${c.name}</b><br>${c.desc}<br><span style="color:var(--gold)">Scaling:</span> ${c.scaleNotes||"Attack raises ordinary damage; Crit and Echo multiply the number and size of successful strikes. Its ultimate scales primarily from Attack and class-specific bonuses."}<br><span style="color:var(--muted)">Start: ${c.stats} · Ultimate: ${c.ultimate.name}</span></div>`).join("");sections.innerHTML=`<details class="info-section" open><summary>🎲 Travel & boards</summary><div class="info-body"><p>Roll 1–6 and travel that many tiles. Natural high rolls grant Fast Travel XP; some powers can add an extra step or let you choose the die. The halfway guardian intercepts rolls that would skip past it.</p><p>Boards 1–3 have 100 tiles. Board 4 has 64 tiles but its enemies receive a severe Alpha v1 stat multiplier. Enemy packs become more common later in each board.</p></div></details><details class="info-section"><summary>⚔️ Combat & scaling</summary><div class="info-body"><p>Attack is the main damage stat. Defense reduces ordinary incoming hits. Crit above 100% creates guaranteed critical tiers; Echo above 100% creates guaranteed extra strikes plus a remainder chance.</p><p>Boss Damage multiplies damage against minibosses, final guardians and the hidden Merchant fight. Guardian specials occur every five enemy responses and ignore Dodge/barriers, although Guard still reduces them.</p><p>Combat intentionally pauses about 0.2 seconds longer after actions in Alpha v1 so hits, pet attacks and elemental effects are easier to read.</p></div></details><details class="info-section"><summary>🧙 Classes & how they scale</summary><div class="info-body"><div class="info-class-grid">${classRows}</div></div></details><details class="info-section"><summary>🌳 Legacy talents</summary><div class="info-body"><p>Legacy XP grants talent points. <b>Any talent rank purchased during a run is queued: the current run keeps the talent snapshot it started with, and the new rank activates when the next run begins.</b></p><p>Prismatic Birthright now correctly creates an Uncommon elemental class weapon at the start of a run unless an heirloom weapon already occupies the weapon slot.</p></div></details><details class="info-section"><summary>🧰 Equipment, shops & heirlooms</summary><div class="info-body"><p>Equipment occupies eight slots and is replaced immediately when you equip a new item. Merchant gear includes a comparison against your current slot.</p><p>Merchant tiles remain on the board after shopping, so you can reopen them later. The Board 4 Sovereign Relic now lets you choose one of three Legendary powers instead of secretly rolling one for you.</p></div></details><details class="info-section"><summary>🐾 Companions</summary><div class="info-body"><p>Your active companion attacks after player actions. Elemental pets unlock by accumulating 500 damage or healing of their element. Companion level and Legacy talents raise pet damage; Beastmaster pushes this scaling much further.</p></div></details><details class="info-section"><summary>♻️ Prestige & Nightmare</summary><div class="info-body"><p>Prestige converts allocated Legacy talent points into permanent random stats, resets the tree and ends the current run. Nightmare doubles enemy HP, Attack and Defense, halves ordinary reward flow and multiplies final Legacy XP.</p></div></details><details class="info-section"><summary>❔ Secrets</summary><div class="info-body"><p>Some classes, bosses, interactions, Mythic drops and achievement-gated Legendary powers are intentionally not documented until you discover the relevant condition. The guide will not spoil those routes.</p></div></details>`;const guide=$("elementGuide");guide.innerHTML=Object.entries(ELEMENTS).map(([k,e])=>`<div class="element-row"><b>${e.icon} ${e.name} — ${e.spell}</b><br>${e.description}<br><span style="color:var(--muted)">Power scales with Element Power. Matching weaknesses increase activation/effect strength. Prismatic Echo can repeat it.${k==="ice"?" Guardians gain temporary freeze resistance after Ice Nova, preventing permanent freeze loops.":""}</span></div>`).join("");renderLifetimeStats();};
+  function activateInfoTab(name='guide'){return undefined;}
+  function renderLifetimeStats(){return undefined;}
+
   const openInfoV15=openInfo;openInfo=function(){openInfoV15();activateInfoTab("guide");};
 
   // Imported Alpha saves also get the stats schema immediately.
@@ -1844,8 +1833,6 @@
   const updateCombatUIBase=updateCombatUI;
   updateCombatUI=function(){updateCombatUIBase();const cls=CLASSES[player.classId]||CLASSES.ranger;applyClassPortrait($("combatPlayerIcon"),cls.id,true);if(classIdentityActive("bloodmage")){$("attackBtn").textContent="🩸 Exsanguinate";$("guardBtn").textContent="💉 Replenish";$("ultimateBtn").textContent=`${cls.ultimate.icon} ${cls.ultimate.name}`;}else{$("attackBtn").textContent="⚔️ Attack";$("guardBtn").textContent=player.guardCooldown>0?"🛡️ Guard (1 turn)":"🛡️ Guard";}};
 
-  const renderInfoBase=renderInfo;
-  renderInfo=function(){renderInfoBase();const sections=$("infoSections");if(!sections)return;const extra=document.createElement("details");extra.className="info-section";extra.innerHTML=`<summary>🏷️ Class tags & power pools</summary><div class="info-body">${Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id)).map(c=>`<div class="info-class"><b>${c.icon} ${c.name}</b><div class="info-tag-row">${tagChips(c.tags||[],"class")}</div></div>`).join("")}<p style="margin-top:8px">Powerups now display tag chips when you choose them. Class-specific powerups only appear for the relevant class, so Slime should no longer steal ultimate upgrades from the rest of the roster.</p></div>`;sections.appendChild(extra);};
 
   const openStartScreenBase=openStartScreen;openStartScreen=function(){openStartScreenBase();ensureHellToggle();};
 
@@ -1996,23 +1983,7 @@
 
   const restoration=wheelRewards.find(r=>r.name==="Restoration");if(restoration)restoration.apply=function(){if(player.hp>=player.maxHp){player.maxHp+=10;player.hp+=10;return "You were already at full HP, so Restoration permanently adds +10 max HP for this run instead.";}const heal=healPlayer(Math.ceil(player.maxHp*.55));return `The wheel restores ${heal} HP.`;};
 
-  renderInfo=function(){
-    const sections=$("infoSections"),classes=Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id));
-    if(!sections)return;
-    const classRows=classes.map(c=>`<div class="info-class"><b>${c.icon} ${c.name}</b><div class="info-tag-row">${tagChips(c.tags||[],"class")}</div>${c.passive?`<div class="passive-line"><b>Innate — ${c.passive.name}:</b> ${c.passive.desc}</div>`:""}<p>${c.desc}</p><span style="color:var(--gold)">Scaling:</span> ${c.scaleNotes||"Attack drives direct damage; Crit and Echo multiply successful strikes."}<br><span style="color:var(--muted)">Start: ${c.stats} · Ultimate: ${c.ultimate.name}</span></div>`).join("");
-    sections.innerHTML=`
-      <details class="info-section" open><summary>🎲 Travel, boards & dice</summary><div class="info-body"><p>Roll 1–6 to move. A natural high roll grants Fast Travel XP. Extra Step can add one tile after a natural roll; deliberately chosen die results do not receive the normal chosen-roll bonus interactions unless a power explicitly says so.</p><p>Boards 1–3 have 100 tiles. Boards 4–5 have 64 tiles. Board 5 introduces the Mythic Ring drop table and completes the six-piece Impossible Road set.</p></div></details>
-      <details class="info-section"><summary>📊 What every stat does</summary><div class="info-body"><p><b>HP / Max HP:</b> current life and maximum life. At 0 HP you lose unless a revive saves you. <b>Attack:</b> base value used by basic attacks, many ultimates, poison and elemental effects. <b>Defense:</b> grants percentage damage reduction with diminishing returns. Each additional point still helps, but contributes less reduction than the previous one; guardian specials only receive part of this reduction.</p><p><b>Crit:</b> chance for an attack to deal an extra damage tier. Above 100% guarantees one critical tier and rolls the remainder for another. <b>Dodge:</b> chance to avoid ordinary enemy attacks; displayed Dodge already includes diminishing returns. <b>Echo:</b> chance to create extra attacks; above 100% guarantees extra Echoes and rolls the remainder.</p><p><b>Luck:</b> improves the rarity of powerup choices and equipment rolls, shifts some event/slot outcomes, and helps rare road rewards appear. Luck does not directly increase combat damage unless a class or item explicitly converts it.</p><p><b>Lifesteal:</b> heals a percentage of damage you deal. <b>Boss Damage:</b> multiplies damage against guardians and bosses. <b>Gold bonus:</b> multiplies gold gained. <b>Potion Power:</b> increases potion healing. <b>Ultimate Charge:</b> reaches 100 to enable your class Ultimate. <b>Barriers:</b> block ordinary incoming hits before HP is lost.</p><p><b>Signature Burst:</b> chance for your current class identity to trigger its special basic/Echo-strike effect. The exact effect depends on the class. For <b>Sorcerer</b>, this effect is <b>Arcane Surge</b>: the triggering strike deals 50% more damage. Other identities use the same stat for their own effects such as Perfect Ambush, Resonant Croak or Excellent Margin. If a class has no Signature Burst mechanic, the stat has no effect for that identity.</p><p><b>Element Proc Chance:</b> increases how often elemental weapons activate. <b>Element Power:</b> increases elemental damage/healing. <b>Weakness Power:</b> strengthens effects against a matching weakness. <b>Affinity:</b> an enemy with an affinity takes only half damage from that same element.</p></div></details>
-      <details class="info-section"><summary>🎁 Powerup & item rarity</summary><div class="info-body"><div class="rarity-table"><div class="rarity-note"><b>Common</b><br>Basic reliable stats. Highest base appearance weight.</div><div class="rarity-note"><b>Uncommon</b><br>Stronger utility and build direction.</div><div class="rarity-note"><b>Rare</b><br>Build-defining effects become common here.</div><div class="rarity-note"><b>Epic</b><br>Large multipliers and unusual mechanics.</div><div class="rarity-note"><b>Legendary</b><br>Very rare powers; some are achievement-gated.</div><div class="rarity-note"><b>Mythical / Omega</b><br>Special equipment drops, not ordinary powerup rolls.</div></div><p>Powerups use rarity weights, then Luck and road depth bias the roll upward. Equipment separately rolls a rarity when it drops or appears in a shop; later boards improve those rolls and Luck gives a smaller, diminishing rarity boost. Higher-rarity equipment rolls stronger bonus packages and has a higher chance to carry an element. A Mythical or Omega item comes from a special drop table instead of the normal rarity roll.</p></div></details>
-      <details class="info-section"><summary>⚔️ Combat, affinities & elements</summary><div class="info-body"><p>Each attack resolves damage, Crit, Echo and elemental activations. Enemy elemental procs are visually shown on the <b>player side</b> so it is clear who cast them.</p><p>Matching an enemy weakness makes your elemental effect stronger. Matching an enemy <b>affinity</b> does the opposite: that enemy takes 50% elemental damage from its own affinity. Donut Rain now damages enemies as well as healing you. Electricity has a small chance to stun for one enemy response.</p><p>Guardian specials occur every five enemy responses. They ignore Dodge and barriers, while Guard still reduces them.</p></div></details>
-      <details class="info-section"><summary>🧙 Classes, tags & innate passives</summary><div class="info-body"><div class="info-class-grid">${classRows}</div></div></details>
-      <details class="info-section"><summary>🌳 Legacy talents & Prestige</summary><div class="info-body"><p>Legacy XP stays quick at the beginning, then scales progressively harder after Legacy levels 10, 25 and 50. Legacy XP grants talent points. Talent ranks purchased during a run remain queued until the next run begins.</p><p><b>Roadborn</b> now starts each run with +5 max HP, +2 Attack and +2 Defense. Prestige consumes both allocated and unspent talent points, converts each full group of ten into permanent Prestige stats, then resets leftover talent points to zero.</p></div></details>
-      <details class="info-section"><summary>🧰 Equipment, shops & heirlooms</summary><div class="info-body"><p>Equipment occupies its named slot and can carry rolled stat bonuses plus an element. Higher rarity generally means stronger rolls. Only equipped gear can become an heirloom when the run ends or during Prestige selection.</p><p>The Merchant class receives 200% of the normal sale value when selling unused gear.</p></div></details>
-      <details class="info-section"><summary>🐾 Companions</summary><div class="info-body"><p>Your active companion attacks after player actions. Elemental companion damage also respects enemy affinity: matching affinity halves the companion's elemental damage.</p></div></details>
-      <details class="info-section"><summary>🌑 Nightmare & Hell</summary><div class="info-body"><p>Nightmare massively strengthens enemies and changes reward scaling. Defeating Board 4 in Nightmare unlocks Hell Mode. In Hell Mode every enemy has an elemental affinity and enemies are dramatically stronger.</p></div></details>
-      <details class="info-section"><summary>❔ Secrets</summary><div class="info-body"><p>Some classes, bosses, interactions, drops and achievement-gated powers are deliberately undocumented until discovered. Suspicious icons remain suspicious.</p></div></details>`;
-    const guide=$("elementGuide");guide.innerHTML=Object.entries(ELEMENTS).map(([k,e])=>`<div class="element-row"><b>${e.icon} ${e.name} — ${e.spell}</b><br>${e.description}<br><span style="color:var(--muted)">Matching weakness strengthens it. Matching enemy affinity halves its elemental damage.${k==="ice"?" Guardians gain temporary freeze resistance after Ice Nova.":""}${k==="electric"?" Electricity also has a small stun chance.":""}${k==="donut"?" Donut Rain now damages the pack and heals you.":""}</span></div>`).join("");renderLifetimeStats();
-  };
+
 
   // Re-render once so the updated class order/portraits are immediately visible.
   renderClassChoices();
@@ -2372,37 +2343,9 @@
 
   // ---- Info and class cards --------------------------------------------------
 
-  const renderInfoV13=renderInfo;
-  renderInfo=function(){renderInfoV13();const sections=$("infoSections");if(!sections)return;const identity=document.createElement("details");identity.className="info-section";identity.innerHTML=`<summary>🧠 Class identity & combat resources</summary><div class="info-body"><p><b>Mana:</b> Sorcerer, Vampire, Rouge, Merchant and Summoner are occult Mana classes. Their primary attack builds Mana and their extra spell button spends it. Mana persists between battles during the run. Summoner spends Mana to conjure temporary companion spirits.</p><p><b>Bloodmage:</b> is also occult, but does not have Mana. HP is its spell resource: Bloodletting helps restore fuel, Exsanguinate spends HP for damage, and Replenish heals both sides.</p><p><b>Slime:</b> deliberately has no signature subsystem. Its identity is borrowing many non-Ultimate class powerups from other non-secret classes.</p><p><b>Rogue:</b> gains a Steal action once per battle; above 50 Luck, a successful Steal can also snatch a random powerup. <b>Monk:</b> builds Combo through uninterrupted attacks. <b>Ninja:</b> stores Smoke from critical hits. <b>Beastmaster:</b> can switch pet orders. <b>Cleric:</b> healing fills Faith.</p><p>Class identities are not intended to produce equal fresh-run win rates. Dicebound is built around meta-progression: Legacy levels, talents, heirlooms, stronger unlocks and Prestige are supposed to push runs farther over time. Secret classes may intentionally be stronger or sillier than normal classes.</p></div>`;sections.appendChild(identity);};
 
   // ---- Hidden AI simulation harness -----------------------------------------
   // This never touches the live player/meta objects. It is deliberately non-enumerable and has no menu button.
-  function buildAISim(){
-    const profiles={
-      fresh:{maxHp:0,attack:0,defense:0,crit:0,dodge:0,lifeSteal:0,luck:0,potions:0,gold:0,heirloom:0},
-      mid:{maxHp:14,attack:4,defense:3,crit:.06,dodge:.03,lifeSteal:.03,luck:.08,potions:1,gold:40,heirloom:1},
-      late:{maxHp:34,attack:10,defense:7,crit:.16,dodge:.08,lifeSteal:.08,luck:.18,potions:2,gold:100,heirloom:2}
-    };
-    const clone=o=>JSON.parse(JSON.stringify(o));
-    function currentProfile(){const p=DB_PRESTIGE.statTotals(meta.prestige||defaultPrestige()),h=(meta.heirlooms||[]).length;return {maxHp:(p.maxHp||0)*3+talentRank("survival_vitality")*4+(talentRank("roadborn")?5:0),attack:(p.attack||0)+talentRank("power_attack")+(talentRank("roadborn")?2:0),defense:(p.defense||0)+talentRank("survival_armor")+(talentRank("roadborn")?2:0),crit:(p.crit||0)*.01+talentRank("power_crit")*.02,dodge:(p.dodge||0)*.01+talentRank("survival_dodge")*.02,lifeSteal:(p.lifeSteal||0)*.01+talentRank("power_lifesteal")*.02,luck:(p.luck||0)*.02+talentRank("fortune_luck")*.03,potions:talentRank("survival_prepared"),gold:talentRank("fortune_gold")*25,heirloom:h};}
-    function rng(seed){let x=(seed||Date.now())>>>0;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
-    function rnd(R,a,b){return Math.floor(R()*(b-a+1))+a;}
-    function classPower(id){return {ranger:1,fighter:1.02,sorcerer:1.04,monk:1.05,clown:1.02,rouge:1.08,berserker:1.09,turtle:.98,frog:1.05,d20:1.12,slime:1.03,vampire:1.15,ninja:1.13,cleric:1.08,paladin:1.10,beastmaster:1.10,rogue:1.10,ceo:1.25,merchant:1.30,bloodmage:1.32}[id]||1;}
-    function makeState(id,profile,R){const c=CLASSES[id]||CLASSES.ranger,p=profile;let s={id,maxHp:c.base.maxHp+p.maxHp,hp:c.base.maxHp+p.maxHp,attack:c.base.attack+p.attack,defense:c.base.defense+p.defense,crit:(c.base.crit||0)+p.crit,dodge:(c.base.dodge||0)+p.dodge,lifeSteal:(c.base.lifeSteal||0)+p.lifeSteal,luck:(c.base.luck||0)+p.luck,gold:p.gold,potions:1+p.potions,level:1,xp:0,xpNext:20,mana:MANA_OCCULT_CLASSES.has(id)?25:0,maxMana:MANA_OCCULT_CLASSES.has(id)?100:0,board:1,dead:false,cleared:0,encounters:0,damageTaken:0,heals:0,power:classPower(id)};for(let i=0;i<p.heirloom;i++){s.attack+=2+rnd(R,0,3);s.maxHp+=rnd(R,3,8);s.hp=s.maxHp;s.crit+=.02;s.defense+=rnd(R,0,1);}if(id==="turtle")s.defense+=1;if(id==="vampire")s.lifeSteal+=.10;if(id==="ninja"){s.crit+=.05;s.dodge+=.05;}if(id==="rogue")s.dodge+=.05;return s;}
-    function enemyForSim(board,progress,boss,R){const base=enemyPool[Math.min(enemyPool.length-1,Math.floor(progress*(enemyPool.length-1))+rnd(R,0,2))],levelScale=1+(board-1+progress)*.78,boardScale=[0,1,1.28,1.68,2.30,2.55][board]||2.55;let hp=base.hp*levelScale*boardScale*(boss?boss==="final"?2.5:1.6:1),atk=base.attack*(1+(board-1+progress)*.56)*([0,1,1.22,1.48,1.82,2.02][board]||2.02)*(boss?boss==="final"?1.25:1.1:1),def=Math.max(0,Math.floor((board-1+progress)*1.15+(base.defenseBias||0)+(boss?boss==="final"?4:2:0)));return {hp:Math.max(1,Math.round(hp)),maxHp:Math.max(1,Math.round(hp)),attack:Math.max(1,Math.round(atk)),defense:def,gold:Math.round(base.gold*(1+(board-1+progress)*.65)*(boss?3:1)),xp:Math.round(base.xp*(1+(board-1+progress)*.65)*(boss?2.4:1)),boss:!!boss};}
-    function chooseUpgrade(s,R){const weights=["attack","attack","hp","def","crit","echo","sustain","gold"],pick=weights[rnd(R,0,weights.length-1)];const tier=R()<.03?4:R()<.12?3:R()<.32?2:1;if(pick==="attack")s.attack+=1+tier;if(pick==="hp"){s.maxHp+=4+tier*3;s.hp+=4+tier*3;}if(pick==="def")s.defense+=Math.max(1,Math.floor(tier/2));if(pick==="crit")s.crit+=.02*tier;if(pick==="sustain")s.lifeSteal+=.012*tier;if(pick==="gold")s.gold+=15*tier;if(pick==="echo")s.power*=1+.025*tier;}
-    function levelCheck(s,R){while(s.xp>=s.xpNext){s.xp-=s.xpNext;s.level++;s.xpNext=Math.round(s.xpNext*1.17+5);chooseUpgrade(s,R);}}
-    function playerHit(s,e,R){let dmg=Math.max(1,s.attack-e.def+rnd(R,-1,2)),crit=R()<Math.min(.95,s.crit),mult=s.power;if(crit)dmg*=2;if(s.id==="berserker"&&s.hp<s.maxHp*.5)dmg*=2;if(s.id==="ceo"&&s.gold>500)dmg*=1.12;if(s.id==="fighter")mult*=1.02;if(s.id==="paladin")dmg+=s.defense*.35;if(s.id==="turtle")dmg+=s.defense*.22;if(s.id==="monk")mult*=1.05;if(s.id==="bloodmage"&&s.hp>s.maxHp*.28&&R()<.42){const cost=Math.ceil(s.maxHp*.10);s.hp-=cost;dmg+=cost*1.5;}if(MANA_OCCULT_CLASSES.has(s.id)){if(s.mana>=35&&R()<.52){s.mana-=35;dmg*=1.85;}else{s.mana=Math.min(100,s.mana+27);dmg*=.88;}}dmg=Math.max(1,Math.round(dmg*mult));e.hp-=dmg;if(s.lifeSteal>0){const h=Math.min(s.maxHp-s.hp,Math.floor(dmg*s.lifeSteal));s.hp+=h;s.heals+=h;}return dmg;}
-    function combat(s,e,R){s.encounters++;let turn=0;while(s.hp>0&&e.hp>0&&turn++<120){playerHit(s,e,R);if(e.hp<=0)break;if(s.hp<s.maxHp*.28&&s.potions>0){const h=Math.min(s.maxHp-s.hp,14+Math.floor(s.level/2));s.hp+=h;s.heals+=h;s.potions--;continue;}if(R()<Math.min(.75,s.dodge))continue;let incoming=Math.max(1,e.attack-s.defense+rnd(R,-1,1));if(s.id==="turtle")incoming=Math.max(1,Math.round(incoming*.9));if(s.id==="monk"&&R()<s.dodge)continue;s.hp-=incoming;s.damageTaken+=incoming;}if(s.hp<=0){s.dead=true;return false;}s.gold+=e.gold;s.xp+=e.xp;levelCheck(s,R);return true;}
-    function simulateRun(id,profileName="fresh",seed=1){const R=rng(seed),profile=profileName==="current"?currentProfile():profiles[profileName]||profiles.fresh,s=makeState(id,profile,R);for(let board=1;board<=5;board++){s.board=board;const encounters=board>=4?rnd(R,10,15):rnd(R,16,23);for(let i=0;i<encounters;i++){const progress=i/Math.max(1,encounters-1),e=enemyForSim(board,progress,null,R);if(!combat(s,e,R))return s;if(R()<.16){s.hp=Math.min(s.maxHp,s.hp+Math.ceil(s.maxHp*.18));}if(R()<.18){s.gold+=rnd(R,8,25)*board;}if(R()<.11)chooseUpgrade(s,R);}const mini=enemyForSim(board,.52,"mini",R);if(!combat(s,mini,R))return s;const final=enemyForSim(board,1,"final",R);if(!combat(s,final,R))return s;s.cleared=board;s.hp=Math.min(s.maxHp,s.hp+Math.ceil(s.maxHp*.20));s.potions+=board>=4?2:1;}return s;}
-    function summarize(rows){const byClass={};for(const r of rows){const b=byClass[r.id]||={runs:0,wins:0,boardSum:0,gold:0,level:0,deaths:{1:0,2:0,3:0,4:0,5:0}};b.runs++;if(r.cleared>=5)b.wins++;b.boardSum+=r.cleared;b.gold+=r.gold;b.level+=r.level;if(r.dead)b.deaths[r.board]=(b.deaths[r.board]||0)+1;}Object.values(byClass).forEach(b=>{b.winRate=b.wins/b.runs;b.avgBoardsCleared=b.boardSum/b.runs;b.avgGold=b.gold/b.runs;b.avgLevel=b.level/b.runs;});return byClass;}
-    function run(count=500,opts={}){const ids=opts.classIds?.length?opts.classIds:Object.keys(CLASSES),profile=opts.profile||"fresh",seed=opts.seed||1337,rows=[];for(const id of ids){if(!CLASSES[id])continue;for(let i=0;i<count;i++)rows.push(simulateRun(id,profile,seed+i*977+artHash(id)));}const result={generatedAt:new Date().toISOString(),profile,runsPerClass:count,totalRuns:rows.length,summary:summarize(rows),rows};console.info("Dicebound AI simulation complete",result.summary);return result;}
-    function compare(count=300,opts={}){const ps=opts.profiles||["fresh","mid","late"],out={};for(const p of ps)out[p]=run(count,{...opts,profile:p});return out;}
-    function csv(result){const lines=["class,runs,win_rate,avg_boards_cleared,avg_gold,avg_level,deaths_b1,deaths_b2,deaths_b3,deaths_b4,deaths_b5"];Object.entries(result.summary).forEach(([id,s])=>lines.push([id,s.runs,(s.winRate*100).toFixed(2),s.avgBoardsCleared.toFixed(3),s.avgGold.toFixed(1),s.avgLevel.toFixed(2),s.deaths[1]||0,s.deaths[2]||0,s.deaths[3]||0,s.deaths[4]||0,s.deaths[5]||0].join(",")));return lines.join("\n");}
-    function selfTest(){const ids=["ranger","sorcerer","fighter","monk","rogue","bloodmage"].filter(id=>CLASSES[id]);const r=run(5,{classIds:ids,profile:"fresh",seed:42});return {ok:r.totalRuns===ids.length*5,summary:r.summary};}
-    return Object.freeze({run,compare,csv,selfTest,profiles:Object.freeze(["fresh","mid","late","current"]),note:"Hidden, non-debug balance harness. It never mutates the live save. Use run(count,{classIds,profile,seed}) or compare(count,{profiles:[...]}) from the browser console."});
-  }
-  try{Object.defineProperty(window,"DiceboundAITest",{value:buildAISim(),enumerable:false,configurable:false,writable:false});}catch(e){window.DiceboundAITest=buildAISim();}
 
 
   /* SEMANTIC OWNER — Equipment economy, defense, companions, alchemy and fifth-road systems. Migrated from the retired Alpha legacy stack in 3.1.6. */
@@ -2528,8 +2471,7 @@
   gearPowerScore=function(item){if(!item)return 0;const visible=gearPowerScoreV14Base(item),budget=v14FallbackPower(item);return visible+budget*.9;};
 
   // Update rarity/explanation text without exposing the hidden number itself.
-  const renderInfoV14Base=renderInfo;
-  renderInfo=function(){renderInfoV14Base();const sections=$("infoSections");if(!sections)return;const details=document.createElement("details");details.className="info-section";details.innerHTML=`<summary>🗡️ Affixes, suffixes & equipment quality</summary><div class="info-body"><p>Ordinary equipment now rolls a <b>prefix</b> and, increasingly with rarity, a <b>suffix</b>. Names describe the item's strengths: a <b>Savage</b> weapon leans offensive, while an item <b>of Fortune</b> leans toward Luck.</p><p>Every ordinary item is generated from a hidden quality budget. Rarity controls the possible budget range and the maximum strength of its affixes, but two items of the same rarity can still roll very differently. That means a superb Epic can sometimes be more useful than a poor Legendary.</p><p>Sale value is based mainly on the item's actual rolled quality instead of a flat rarity price. High-end Legendaries are therefore worth dramatically more than Commons. Mythical and Omega pieces remain special handcrafted drops outside the ordinary affix budget rules.</p><p>Later merchants charge more aggressively because late-road gold income is higher. Board 5 has its own stock and pricing instead of falling back to earlier-board gear logic.</p></div>`;sections.appendChild(details);};
+
 
   // ---- Progression-aware career test harness -------------------------------
   // Separate from the old run tester; this models persistent accounts, economy and milestones across sequential runs.
@@ -2721,8 +2663,6 @@
     return classPortraitV15Patch(classId);
   };
 
-  const renderInfoV15Patch=renderInfo;
-  renderInfo=function(){renderInfoV15Patch();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>🛡️ Defense, treasure & companion mastery</summary><div class="info-body"><p><b>Defense now uses diminishing percentage reduction.</b> Every point helps without allowing flat Defense to trivialize weak enemies: 5 Defense is about 17% reduction, 10 ≈ 29%, 20 ≈ 44%, and 40 ≈ 62%. Guardian specials only receive 55% of your normal Defense reduction before Guard is applied.</p><p><b>Treasure scales with road depth.</b> Later boards give more gold, higher potion chances and more frequent equipment drops, and treasure gear gets a modest board-quality bonus.</p><p><b>Equipment rarity:</b> Legendary and Epic ordinary gear are rarer again. Luck still helps equipment and powerup quality, but its rarity influence now has diminishing returns. Elemental weapons are more common than in v1.4; rolling an element reserves a small portion of the item's hidden quality budget, trading a little raw stat budget for elemental potential.</p><p><b>Replacing equipment:</b> comparison warnings include hidden rolled quality as well as visible stats. Equipping a normal replacement automatically sells the displaced item at its current sale value.</p><p><b>Summoner:</b> unlocks after three companions reach level 10 and uses Mana to conjure temporary spirit companions. <b>Primal Spark</b> is a Companion talent that gives pet/summon hits a small chance to trigger the full proc of their element.</p>${isClassUnlocked("pokemontrainer")?`<p><b>Pokémon Trainer:</b> your discovered secret class drafts six Dicebound companions at the beginning of each run. Switching is free; the active creature attacks at high pet scaling and can call assists.</p>`:""}</div>`;sections.appendChild(d);};
 
 
 
@@ -2903,7 +2843,6 @@
   const winCombatV16Base=winCombat;
   winCombat=async function(){const result=await winCombatV16Base();restoreRadiationDefenseV16();return result;};
   // ---- Info additions -------------------------------------------------------
-  const renderInfoV16Base=renderInfo;renderInfo=function(){renderInfoV16Base();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>⚗️ v1.6 combat refinements</summary><div class="info-body"><p><b>Potions:</b> baseline healing is now <b>10 + 10% of max HP</b>, multiplied by Potion Healing bonuses. The Alchemist unlocks after 100 lifetime potion uses and can turn that same healing potency into offensive flask damage.</p><p><b>Companions:</b> every elemental companion deals slightly more base damage than DiBo and grants a small active stat bonus, giving pet switching a mechanical purpose. <b>Radiation</b> ☢️ lowers Defense when it procs.</p><p><b>Powerup Rerolls:</b> the Second Opinion talent grants up to five rerolls per run. <b>Turtle</b> now rewards consecutive guarding through Shell Momentum rather than copying Fighter's single-guard counter pattern.</p><p><b>Defense:</b> hover the Defense number in the HUD to see its current diminishing percentage reduction. Enemy Attack is now visible in combat, which makes Brain Hack and other Attack reductions readable.</p></div>`;sections.appendChild(d);};
 
   try{Object.defineProperty(window,"DiceboundV16Regression",{value:{
     state:()=>({boardLevel,gameStarted,runFinalized,playerClass:player.classId,gold:player.gold,gear:EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]?.name).filter(Boolean),endVisible:!$("endOverlay").classList.contains("hidden"),powerVisible:!$("powerupOverlay").classList.contains("hidden")}),
@@ -3352,10 +3291,7 @@
   };
 
   // ---- Info/documentation updates ------------------------------------------
-  const renderInfoV18Base=renderInfo;
-  renderInfo=function(){
-    renderInfoV18Base();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>🧬 Alpha v1.8 identity rules</summary><div class="info-body"><p><b>Guard & Mana:</b> Mana-based occult classes channel a small amount of Mana while Guarding. <b>Summoner:</b> Conjure now rallies the active companion and all spirits into an empowered attack before the enemy response.</p><p><b>Healing Nuzzle:</b> heals during pet turns instead of after battle. <b>Expanded Horizons:</b> sits after Second Opinion and raises level-up choices from three to four.</p><p><b>Bloodmage:</b> Replenish now genuinely Guards while it resolves. Some secret class mechanics remain intentionally absent from the guide.</p></div>`;sections.appendChild(d);
-  };
+
 
   // ---- Regression helpers (not visible in normal UI) -----------------------
   // These functions make browser checks reproducible without exposing another
@@ -3742,8 +3678,7 @@
   v19AddDebugButton("board6","Board 6");v19AddDebugButton("mythic_offhand","Artifact offhand");v19AddDebugButton("double_dice","Unlock 2d6");
 
   // ---- Info / visual polish ------------------------------------------------
-  const renderInfoV19Base=renderInfo;
-  renderInfo=function(){renderInfoV19Base();const sections=$("infoSections");if(!sections)return;const d=document.createElement("details");d.className="info-section";d.innerHTML=`<summary>🧭 Alpha v1.9 progression</summary><div class="info-body"><p><b>Between runs:</b> the Campsite is the planning hub for talents, companions, achievements and class choice. Only pet-tagged classes may switch companions during a run.</p><p><b>Double Dice:</b> clearing Board 5 on any difficulty permanently unlocks the choice to roll 1d6 or 2d6. The Sixth Road then continues the expedition as the hardest current board.</p><p><b>Prestige:</b> every 9 total talent points becomes one Prestige point. Survivor capacity gains an additional permanent slot at 20 and again at 60 Prestige.</p><p><b>Impossible Road:</b> the set now has a small 2-piece effect, reduced 3/4-piece power and a major 7-piece payoff. Board 6 can drop the Artifact offhand needed for all seven.</p></div>`;sections.appendChild(d);};
+
 
   // Styling added in JS keeps the single-file build self-contained.
   const v19Style=document.createElement("style");v19Style.textContent=`
@@ -4024,17 +3959,7 @@
   refreshDebugButtons();
 
   // Tiny regression hooks kept out of visible UI.
-  window.DiceboundV21Test=Object.freeze({
-    signatureClasses:()=>Object.keys(PERFECTED_SIGNATURES),
-    signatureDescription:(id)=>{const old=player.classId;player.classId=id;try{return perfectedSignatureForCurrentClass().desc;}finally{player.classId=old;}},
-    eligibleCount:()=>eligibleUpgrades().length,
-    hasAllClassSignatures:()=>Object.keys(CLASSES).every(id=>id==='slimerouge'||!!PERFECTED_SIGNATURES[id]),
-    startClass:(id='ranger')=>{meta.unlocks[id]=true;selectedClassId=id;startNewGame();return {classId:player.classId,gameStarted};},
-    openAll:()=>showAllEligiblePowerupSelection('Regression Full Pool',()=>{}),
-    rangerMarkMax:()=>player.rangerMarkMax,
-    testAllSignatureApplies:()=>Object.keys(CLASSES).map(id=>{try{meta.unlocks[id]=true;resetPlayer(id);if(id==='slimerouge'){player.slimeRougeIdentityClass='ranger';applyPerfectedSignatureSafe();}else PERFECTED_SIGNATURES[id].apply();return {id,ok:true};}catch(error){return {id,ok:false,error:String(error)};}}),
-    registryPerfectedRanger:()=>{meta.unlocks.ranger=true;resetPlayer('ranger');player.rangerMarkMax=3;player.upgradeCounts={};const up=upgrades.find(u=>u.id==='perfected_signature'),before=player.rangerMarkMax;let error=null;try{applyUpgrade(up,'3.2.4 regression');}catch(e){error=String(e);}return {before,after:player.rangerMarkMax,taken:player.upgradeCounts?.perfected_signature||0,error,desc:powerupDisplayDesc(up)};}
-  });
+
 })();
 
 
@@ -4259,18 +4184,7 @@
   updateHUD=function(){updateHUDV22Base();v19EnsureDoubleDiceButton();};
 
   // Public regression hooks for this patch.
-  window.DiceboundV22Test=Object.freeze({
-    campFullscreen:()=>$('startOverlay')?.classList.contains('camp-fullscreen'),
-    classCampName:()=>$('campClassSub')?.textContent||'',
-    setTiers:()=>v24SetTierData().map(x=>x.pieces),
-    setCurve:()=>[2,3,4,5,6,7].map(n=>{const old=player.equipment;player.equipment={};for(let i=0;i<n;i++){const slot=EQUIPMENT_SLOTS[i];player.equipment[slot]={setName:'Impossible Road'};}const out={n,damage:v19SetDamageBonus(),proc:v19SetProcBonus(),element:v19SetElementPower(),pet:v19SetPetDoubleBonus(),ult:v19SetStartUltimate(),guardian:v19SetGuardianSpecialMult()};player.equipment=old;return out;}),
-    modes:()=>({nightmareMode,hellMode,nightmareUnlocked:!!meta.nightmareUnlocked,hellUnlocked:!!meta.hellUnlocked}),
-    unlockModes:()=>{meta.nightmareUnlocked=true;meta.hellUnlocked=true;renderClassChoices();return {nightmareMode,hellMode};},
-    selectClass:(id)=>{meta.unlocks[id]=true;selectedClassId=id;renderClassChoices();return $('campClassSub')?.textContent||'';},
-    prepareDoubleDice:(debug=false,chance=0)=>{meta.doubleDiceUnlocked=true;meta.debugAlwaysChooseRolls=!!debug;selectedClassId='ranger';startNewGame();player.diceChoiceChance=chance;rollLocked=false;v19EnsureDoubleDiceButton();updateHUD();return {debug:meta.debugAlwaysChooseRolls,chance:player.diceChoiceChance,visible:getComputedStyle($('roll2Btn')).display};},
-    debugButtons:()=>[...$('debugGrid').querySelectorAll('[data-debug]')].map(b=>b.dataset.debug),
-    twoDiceChooserEnabled:()=>typeof v22RollTwoDice==='function'
-  });
+
   setTimeout(()=>{v22EnsureDebugUnlockButtons();v22WireDoubleDice();v22UpdateCamp();},0);
 })();
 
@@ -4315,21 +4229,7 @@
   // domain refreshes that this historical checkpoint still needs.
   setTimeout(()=>{renderTalents();renderEquipment();},0);
 
-  window.DiceboundV23Test=Object.freeze({
-    roadWisdom:()=>({desc:talents.find(t=>t.id==='legacy_travel')?.desc,requires:requirementText(talents.find(t=>t.id==='legacy_travel'))}),
-    flowRequirement:()=>({desc:talents.find(t=>t.id==='power_ultimate_flow')?.desc,requires:requirementText(talents.find(t=>t.id==='power_ultimate_flow'))}),
-    resonantPosition:()=>{renderTalents();const b=document.querySelector('[data-talent-id="turtle_guard_element"]');return b?{left:b.style.left,top:b.style.top}:null;},
-    setTiers:()=>v23SetTierData(),
-    bloodmageSpecialReady:()=>{startCombat('bloodmage');return {boss:!!currentEnemy?.boss,bloodmage:!!currentEnemy?.bloodmageBoss,special:currentEnemy?.specialName,indicator:$('bossSpecialIndicator')?.textContent};},
-    attackPattern:name=>v23AttackPattern({name,bloodmageBoss:name==='The Bloodmage'}),
-    prestigeLayer:()=>getComputedStyle($('prestigeHeirloomOverlay')).zIndex,
-    setBoardCount:(n)=>{player.equipment={};EQUIPMENT_SLOTS.slice(0,n).forEach((s,i)=>player.equipment[s]={id:`test_${i}`,setName:'Impossible Road',slot:s,rarity:'mythical',name:'Test',icon:'x',bonuses:{}});renderEquipment();return $('mythicSetStatus')?.innerText||'';},
-    preparePrestige:()=>{meta.points=9;meta.heirlooms=[{id:'test_heirloom',slot:'weapon',rarity:'common',name:'Test Heirloom',icon:'⚔️',bonuses:{attack:1}}];renderTalents();const oldConfirm=window.confirm;window.confirm=()=>true;try{prestigeTree();}finally{window.confirm=oldConfirm;}const o=$('prestigeHeirloomOverlay');return {hidden:o.classList.contains('hidden'),z:getComputedStyle(o).zIndex};},
-    startBarrier:(n)=>{resetPlayer('ranger');gameStarted=true;boardLevel=1;generateBoard();buildBoard();player.position=1;tiles[1]={type:'enemy',cleared:false,enemyBase:{name:'Dummy',icon:'x',hp:10,attack:1,xp:1,gold:1,weakness:'fire'}};player.equipment={};EQUIPMENT_SLOTS.slice(0,n).forEach((s,i)=>player.equipment[s]={id:`s_${i}`,setName:'Impossible Road',slot:s,rarity:'mythical',name:'x',icon:'x',bonuses:{}});player.firstHitBlocks=0;startCombat('normal');return player.combatShield;},
-    multiHitBarrier:async()=>{resetPlayer('ranger');gameStarted=true;player.dodge=0;player.hp=player.maxHp;player.combatShield=3;currentEncounterTurn=0;const e={name:'Nullstar Hydra',icon:'🐉',hp:100,maxHp:100,attack:20,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true,skipTurns:0,poisonTurns:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;await enemyTurn(false);return {barriers:player.combatShield,hp:player.hp};},
-    flowLineState:()=>{const old={...(meta.purchased||{})};meta.purchased={...old,power_ultimate_start:0};renderTalents();let line=document.querySelector('line[data-from-talent="power_ultimate_start"][data-to-talent="power_ultimate_flow"]'),before=!!line?.classList.contains('active');meta.purchased.power_ultimate_start=1;renderTalents();line=document.querySelector('line[data-from-talent="power_ultimate_start"][data-to-talent="power_ultimate_flow"]');const after=!!line?.classList.contains('active');meta.purchased=old;renderTalents();return {before,after};},
-    bloodmageSpecial:async()=>{resetPlayer('ranger');gameStarted=true;player.dodge=0;player.hp=player.maxHp;player.combatShield=3;currentEncounterTurn=4;const e={name:'The Bloodmage',icon:'🩸',hp:60,maxHp:100,attack:20,defense:0,xp:0,gold:0,boss:true,guardian:true,bloodmageBoss:true,specialName:'Hemorrhagic Tide',skipTurns:0,poisonTurns:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;const beforeHp=player.hp,beforeBarrier=player.combatShield,beforeEnemy=e.hp;await enemyTurn(false);return {playerDamage:beforeHp-player.hp,barriersBefore:beforeBarrier,barriersAfter:player.combatShield,enemyHeal:e.hp-beforeEnemy};}
-  });
+
 })();
 
 
@@ -4649,7 +4549,7 @@ function buildDiceboundHumanHarness235(){
     {pieces:2,text:'+2% all damage.'},{pieces:3,text:'+4% all damage and +4% elemental proc chance.'},{pieces:4,text:'+7% all damage, +5% elemental proc chance, 25 starting Ultimate, +8% pet double-attack chance and 5% less Guardian-special damage.'},{pieces:5,text:'+10% all damage, +7% elemental proc chance, +5% elemental power, 30 starting Ultimate, 1 starting Barrier, +10% pet double-attack chance and 10% less Guardian-special damage.'},{pieces:6,text:'+14% all damage, +10% elemental proc chance, +9% elemental power, 35 starting Ultimate, +13% pet double-attack chance and 15% less Guardian-special damage.'},{pieces:7,text:'+20% all damage, +13% elemental proc chance, +14% elemental power, 40 starting Ultimate, +16% pet double-attack chance, 20% less Guardian-special damage, and once per battle at ≤25% HP restore 18% max HP + gain 1 Barrier.'}
   ];}
   mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');};
-  function v24SetPanelHtml(count){return `<strong>🌈 Impossible Road set · Artifact</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${v24SetTierData().map(t=>`<div class="set-tier ${count>=t.pieces?'active':''}"><b>${t.pieces}-piece bonus</b><span>${t.text}</span></div>`).join('')}</div>`;}
+
   // A slightly leaner Artifact table. Board 6's offhand is now 0.4% / 4%.
   openCombatLootChain=function(defeated,done){
     const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?(random()<.28?'epic':'rare'):defeated.miniBoss?(random()<.30?'rare':'uncommon'):null;openLoot(generateEquipment(rarity),done);}else done();};
@@ -4777,7 +4677,6 @@ function buildDiceboundHumanHarness235(){
   document.addEventListener('click',e=>{if(e.target.closest?.('#campHellBtn')&&!e.target.closest?.('#campHellBtn .camp-icon'))setTimeout(v24RefreshCamp,0);},true);
 
   /* MODULE: info ----------------------------------------------------------- */
-  const renderInfoV24Base=renderInfo;renderInfo=function(){renderInfoV24Base();const sections=$('infoSections');if(!sections)return;sections.querySelectorAll('details').forEach(d=>{const s=d.querySelector('summary')?.textContent||'';if(s.includes('Affixes, suffixes'))d.innerHTML=`<summary>🗡️ Equipment rarity & rolled quality</summary><div class="info-body"><p><b>Ordinary equipment tiers:</b> Poor (light grey) → Common (white) → Uncommon (light blue) → Rare (blue) → Epic (pale yellow). Ordinary generated gear stops at Epic.</p><p><b>Legendary</b> (gold) pieces are handcrafted oddities found through extremely rare/special discoveries. <b>Artifact</b> (orange) currently contains the Impossible Road set. <b>Mythical</b> (purple) and <b>Omega</b> sit above Artifact and remain handcrafted chase tiers.</p><p>Ordinary gear still uses hidden point budgets, prefixes and suffixes. Higher ordinary rarity raises the budget range; special Legendary/Artifact/Mythical/Omega items ignore those normal generation rules.</p></div>`;});const d=document.createElement('details');d.className='info-section';d.innerHTML=`<summary>🗄️ Heirloom Storage</summary><div class="info-body"><p>After Board 3, a one-rank talent appears beyond Living Legend. Buying it permanently unlocks the Campsite storage chest with eight storage slots—one for each equipment slot.</p><p>Storage expands by one after clearing Board 5, reaching Prestige 5, reaching Prestige 50, and defeating the secret Road Merchant once. Stored items survive Prestige; your normal heirloom-slot count still controls how many stored items may be equipped for the next run.</p></div>`;sections.appendChild(d);};
 
   /* MODULE: v2.4 smoke/regression helpers --------------------------------- */
   function v24TalentAudit(){return window.DiceboundTalentTree?.layoutAudit?.();}
@@ -4816,17 +4715,7 @@ function buildDiceboundHumanHarness235(){
   }
   const openDebugMenuV24PresentationBase=openDebugMenu;
   openDebugMenu=function(){const r=openDebugMenuV24PresentationBase();v24RefreshDebugLabels();return r;};
-  const renderInfoV24PresentationBase=renderInfo;
-  renderInfo=function(){
-    renderInfoV24PresentationBase();const sections=$('infoSections');if(!sections)return;
-    // Older patch notes are useful history internally, but should not present stale
-    // current-system names to the player.
-    sections.querySelectorAll('details').forEach(d=>{
-      let html=d.innerHTML;
-      html=html.replace(/Legacy Camp/g,'Campsite').replace(/Mythical offhand/g,'Artifact offhand').replace(/Impossible mythic set/gi,'Impossible Road Artifact set');
-      d.innerHTML=html;
-    });
-  };
+
   v24RefreshDebugLabels();
 
 
@@ -4945,24 +4834,7 @@ function buildDiceboundHumanHarness235(){
   /* JOURNEY END: larger storage-focused management ------------------------ */
   if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';
   /* ROADKEEPER'S GUIDE: one current source of truth, no patch archaeology -- */
-  renderInfo=function(){
-    const subtitle=$('infoOverlay')?.querySelector('.subtitle');if(subtitle)subtitle.textContent='Current rules, progression, equipment, classes, elements and save tools. Secrets remain deliberately vague until discovered.';
-    const sections=$('infoSections');if(sections)sections.innerHTML=`
-      <details class="info-section" open><summary>🎲 Travel & the six roads</summary><div class="info-body"><p>Roll to move along each road. Crossed tiles grant run XP, and high rolls grant Fast Travel XP. Minibosses intercept movement when you cross their tile, so a large roll cannot skip them.</p><p>Clearing Board 5 permanently unlocks Double Dice, allowing either 1d6 or 2d6. Board 6 is the hardest ordinary road and expects a mature build.</p></div></details>
-      <details class="info-section"><summary>⚔️ Combat, Guard & status effects</summary><div class="info-body"><p>Attack, Guard, potions, class actions and Ultimates all consume actions. Guard reduces incoming ordinary attacks and Guardian specials and builds more Ultimate; Mana classes also recover a little Mana while guarding.</p><p><b>Defense</b> uses diminishing percentage reduction rather than flat subtraction. <b>Crit</b>, <b>Echo Strike</b> and <b>Poison-on-hit</b> can exceed 100%: each full 100% guarantees another tier/hit/stack and the remainder rolls for one more. Echo Strikes roll their own Crit and elemental activations.</p><p>Barriers block individual normal hits, so multi-hit attacks can remove several barriers. Guardian specials ignore ordinary barriers but Guard still reduces them. Haste cannot proc again until an enemy response occurs.</p></div></details>
-      <details class="info-section"><summary>✨ Signature Burst & Arcane Surge</summary><div class="info-body"><p><b>Signature Burst</b> is a class-specific proc chance used by some identities. When the chance succeeds, that class triggers its own special basic/Echo-strike effect.</p><p>For <b>Sorcerer</b>, Signature Burst is called <b>Arcane Surge</b>. Every basic strike and every Echo strike independently rolls your Arcane Surge chance; when it procs, that strike deals <b>50% more damage</b>. Sorcerer starts with a 20% Arcane Surge chance, and Arcane Resonance / certain gear can raise it.</p><p>Other classes can use the same underlying Signature Burst stat for different effects, so generic equipment calls the stat <b>Signature Burst</b> instead of Arcane Surge.</p></div></details>
-      <details class="info-section"><summary>☠️ Poison</summary><div class="info-body"><p>Poison stacks tick once per combat round and each stack deals a percentage of your Attack. Poison application uses overflow scaling just like Echo: 125% means one guaranteed stack plus a 25% chance for a second; 240% means two guaranteed plus a 40% chance for a third.</p><p>Nature-focused powers can add stacks directly or improve Poison damage. Some class abilities interact with Poison in their own way.</p></div></details>
-      <details class="info-section"><summary>⬆️ Powerups & rarity</summary><div class="info-body"><p>Level-ups normally offer three eligible powerups; talents can add rerolls and a fourth choice. Eligibility respects class tags, achievements, mastery gates and Unique powers already taken.</p><p>Powerup tiers follow: <b>Poor → Common → Uncommon → Rare → Epic → Legendary</b>, with higher tiers becoming progressively less common. Similar effects may exist at several tiers with different strengths.</p></div></details>
-      <details class="info-section"><summary>🗡️ Equipment & special rarity</summary><div class="info-body"><p>Ordinary equipment rolls hidden quality budgets, prefixes and suffixes from <b>Poor, Common, Uncommon, Rare and Epic</b>. Later roads improve expected quality. Elemental weapons trade some raw budget for their proc potential.</p><p><b>Legendary</b> equipment is handcrafted and found through unusual discoveries. <b>Artifact</b> includes the Impossible Road set. <b>Mythical</b> and <b>Omega</b> are rarer handcrafted chase tiers rather than ordinary random gear.</p><p>Replacing normal gear automatically sells the displaced item. Sale value follows actual item quality; Merchant receives its class resale bonus.</p></div></details>
-      <details class="info-section"><summary>🌈 Impossible Road Artifact set</summary><div class="info-body">${v24SetPanelHtml(mythicalSetCount())}</div></details>
-      <details class="info-section"><summary>🐾 Companions</summary><div class="info-body"><p>Companions attack after player actions and gain permanent Bond levels from cookies. Elemental companions unlock by building progress with their corresponding element. Their active bonus scales slowly with Bond.</p><p>Only pet-tagged classes such as Beastmaster, Summoner and Pokémon Trainer may switch companions during a run; everyone else chooses at the Campsite.</p></div></details>
-      <details class="info-section"><summary>🌳 Legacy, Talents & Prestige</summary><div class="info-body"><p>Run distance and banked gold become Legacy XP. Legacy levels grant talent points. Talents purchased during a run activate on the <b>next</b> run.</p><p>Prestige converts every 9 total talent points into permanent random stats, then resets Legacy level and the talent tree. Permanent heirloom survivor capacity increases at major Prestige milestones.</p><p>After sufficient road progress, Heirloom Storage can be permanently unlocked. Storage survives Prestige; active heirloom slots determine which stored pieces enter the next run.</p></div></details>
-      <details class="info-section"><summary>🌑 Nightmare & Hell</summary><div class="info-body"><p>Nightmare dramatically strengthens enemies and changes reward scaling. Hell is an even harsher late-game difficulty with universal elemental affinities and more dangerous combat patterns.</p><p>The Campsite may react differently as progression systems unlock. Not every unusual interaction is explained in this guide.</p></div></details>
-      <details class="info-section"><summary>🧠 Classes & scaling</summary><div class="info-body"><div class="info-class-grid">${Object.values(CLASSES).filter(c=>!c.secret||isClassUnlocked(c.id)).map(c=>`<div class="info-class"><b>${c.icon} ${c.name}</b><p>${c.desc}</p><span>${c.scaleNotes||c.stats||''}</span>${c.passive?`<p><b>${c.passive.name}:</b> ${c.passive.desc}</p>`:''}</div>`).join('')}</div><p>Later and secret unlocks are not intended to have equal fresh-run power. Some are deliberately stranger or stronger rewards.</p></div></details>
-      <details class="info-section"><summary>🏆 Achievements & unlocks</summary><div class="info-body"><p>Achievements track permanent milestones and show their rewards when revealing that reward does not spoil a secret. Some powerful class powers require clearing later boards with that class.</p></div></details>`;
-    const guide=$('elementGuide');if(guide)guide.innerHTML=Object.entries(ELEMENTS).map(([k,e])=>`<div class="element-row"><b>${e.icon} ${e.name} — ${e.spell}</b><br>${e.description}<br><span style="color:var(--muted)">Element Power improves the effect. Matching weaknesses increase activation and strength.${k==='ice'?' Guardians gain temporary resistance after being frozen, preventing permanent freeze loops.':''}</span></div>`).join('');
-    renderLifetimeStats();
-  };
+
 
   /* DEBUG LOGGING ---------------------------------------------------------- */
   const V25_LOG_LEVELS={off:0,errors:1,events:2,detailed:3,all:4};
@@ -5046,15 +4918,7 @@ function buildDiceboundHumanHarness235(){
   const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
   DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};
   try{Object.defineProperty(window,'DiceboundModules25',{value:Object.freeze(DB25),enumerable:false});}catch(e){}
-  window.DiceboundV25Test=Object.freeze({
-    powerups:()=>['frog_lingering_croak','frog_amphibian_loop','rare_echo_chamber','echo','echo_uncommon_v24','gold','treasure_sense_common_v25','treasure_sense_uncommon_v25','merchant','venom_edge','venom_edge_rare_v25','true_legend_echo_v24','true_legend_element_v24','legendary_blood_contract','plague_lord','legendary_golden_law','destiny','legendary_packbreaker','legendary_loaded_road'].map(id=>{const u=v25Upgrade(id);return {id,rarity:u?.rarity,name:u?.name,desc:u?.desc};}),
-    poisonOverflow:(chance=2.4,n=10000)=>{let total=0;for(let i=0;i<n;i++)total+=rollTieredProc(chance);return {chance,n,average:total/n};},
-    guideHasPatchWords:()=>{renderInfo();const t=$('infoSections')?.textContent||'';return /\b(alpha|patch|v\d)/i.test(t);},
-    devilBoard:()=>({primed:meta.devilPrimed,hell:hellMode,board:boardLevel,devilTiles:tiles.map((t,i)=>t?.type==='devilboss'?i+1:null).filter(Boolean)}),
-    endUI:()=>({restart:$('endRestartBtn')?.textContent,talentExists:!!$('endTalentBtn'),storage:!!$('endStorageManager')}),
-    recovery:()=>({recoveries:v25Recoveries,blocker:v25VisibleBlocker(),state:v25State()}),
-    logging:()=>({level:meta.debugLogLevel,lines:v25LogBuffer.length})
-  });
+
   setTimeout(()=>{if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';v25EnsureDebugControls();renderInfo();},0);
 
 
@@ -5159,11 +5023,7 @@ function buildDiceboundHumanHarness235(){
     }
   },750);
 
-  window.DiceboundV251Test=Object.freeze({
-    parserPoor:()=>v15ParseSeedCode('D15|poor|weapon|ranger|q0|hotfix')?.rarity||null,
-    generatePoor:(n=1000)=>{let nulls=0,badSlots=0;for(let i=0;i<n;i++){const item=generateEquipment('poor');if(!item)nulls++;else if(!EQUIPMENT_SLOTS.includes(item.slot))badSlots++;}return {n,nulls,badSlots};},
-    state:()=>({combatBusy,rollLocked,currentEnemy:currentEnemy?.name||null,overlay:v25VisibleBlocker()})
-  });
+
   v25Log('events','hotfix','Alpha v2.5.1 hotfix loaded',{fixes:['poor-seed-parser','null-loot-guard','combatBusy-cleanup','victory-error-containment']});
 
 
@@ -5269,14 +5129,7 @@ function buildDiceboundHumanHarness235(){
   const refreshDebugButtonsV26Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV26Base();v25EnsureDebugControls();return r;};
 
   /* Regression helpers ---------------------------------------------------- */
-  window.DiceboundV26Test=Object.freeze({
-    powerups:()=>['purse','scholar','scholar_common_v26','scholar_uncommon_v26','ward','heal','thorns','thorns_common_v26','ouro_venom_coil','venom_edge_rare_v25','legendary_packbreaker'].map(id=>{const u=v26Upgrade(id);return {id,rarity:u?.rarity,name:u?.name,desc:u?.desc};}),
-    talentState:()=>({secondOpinion:gameplayTalentRank('fortune_powerup_rerolls'),expanded:gameplayTalentRank('fortune_extra_choice'),rerolls:player.powerupRerolls,choiceBonus:player.levelChoiceBonus,endless:gameplayTalentRank('monk_flow_ceiling'),fighterCounterMax:player.fighterCounterMax,counterReserveExists:talents.some(t=>t.id==='fighter_counter_reserve')}),
-    poison:()=>({chance:player.poisonOnHitChance||0,stackDamage:v26PoisonStackDamage(),power:player.poisonStackPower||.12}),
-    artifactSet:()=>[generateMythicalWeapon(),generateMythicalOffhand(),generateMythicalBoots(),generateMythicalPants(),generateMythicalAmulet(),generateMythicalHat(),generateMythicalRing()].map(x=>({slot:x.slot,rarity:x.rarity,piece:x.mythicPiece})),
-    highLuckPoor:(n=5000)=>{const old=player.luck;player.luck=1.01;let poor=0;for(let i=0;i<n;i++)if(rollGearRarity()==='poor')poor++;player.luck=old;return {n,poor,rate:poor/n};},
-    debugOrphans:()=>document.querySelectorAll('#debugGrid [data-v19-action]').length
-  });
+
   setTimeout(()=>{v26EnsurePoisonStat();v25EnsureDebugControls();updateHUD();renderTalents();},0);
 
   /* ========================================================================
@@ -5391,7 +5244,6 @@ function buildDiceboundHumanHarness235(){
   prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
-  const renderInfoV27Base=renderInfo;renderInfo=function(){const r=renderInfoV27Base();const sections=$('infoSections');if(!sections)return r;sections.querySelectorAll('details').forEach(x=>{const title=x.querySelector('summary')?.textContent||'';if(title.includes('Legacy, Talents & Prestige'))x.innerHTML='<summary>🌳 Legacy, Talents & Prestige</summary><div class="info-body"><p>Run distance and banked gold become Legacy XP. Legacy levels grant talent points. Talents purchased during a run activate on the <b>next</b> run.</p><p>Prestige converts every 9 total talent points into unspent Prestige Points, then resets Legacy level and the talent tree. Each unspent point grants one held stat point; the Prestige Moon can convert a point into a persisted five-stat random bundle. <b>Heirloom Storage and everything stored inside it survive automatically; Prestige no longer asks you to choose survivor heirlooms.</b> Your active heirloom-slot limit still determines what enters the next run.</p></div>';if(title.includes('Nightmare & Hell'))x.innerHTML='<summary>🌑 Nightmare & Hell</summary><div class="info-body"><p>Nightmare dramatically strengthens enemies. Nightmare guardians begin with a Barrier and enemies gain a small amount of Dodge.</p><p>Hell is harsher again: from Board 2 onward every enemy begins with at least one Barrier, enemy Dodge is slightly higher, and later combat patterns become increasingly hostile.</p><p>The Campsite may react differently as progression systems unlock. Not every unusual interaction is explained in this guide.</p></div>';});sections.querySelector('#v27RarityGuide')?.remove();const d=document.createElement('details');d.id='v27RarityGuide';d.className='info-section';const tiers=[['poor','Poor','#c4c8cf','light grey','lowest ordinary tier'],['common','Common','#ffffff','white','reliable ordinary rewards'],['uncommon','Uncommon','#a9dbff','light blue','stronger ordinary rewards'],['rare','Rare','#438bd8','blue','high ordinary tier'],['epic','Epic','#f5e9a8','pale yellow','top ordinary generated gear and powerful powers'],['legendary','Legendary','#ffd45f','gold','very rare powers and handcrafted equipment'],['artifact','Artifact','#ff9c38','orange','Impossible Road chase set'],['mythical','Mythical','#bd83ff','purple','extreme handcrafted chase tier'],['omega','Omega','#ffffff','white/purple','highest secret equipment tier']];d.innerHTML=`<summary>🌈 Rarity tiers & colours</summary><div class="info-body"><p>Equipment and powerups use the same rarity language. Ordinary generated equipment stops at <b>Epic</b>; Legendary and above are special/chase tiers.</p><div class="rarity-guide-grid">${tiers.map(([id,name,color,label,note])=>`<div class="rarity-guide-row"><span class="rarity-swatch" style="background:${color};${id==='omega'?'box-shadow:0 0 8px #b56cff':''}"></span><b style="color:${color}">${name}</b><span>${label} · ${note}</span></div>`).join('')}</div><p><b>Unique</b> is separate from rarity. A Unique power changes a rule or cannot safely stack; most ordinary Legendary stat powers can appear more than once.</p></div>`;sections.prepend(d);return r;};
 
   /* UI STYLES -------------------------------------------------------------- */
   const v27Style=document.createElement('style');v27Style.textContent=`
@@ -5584,20 +5436,7 @@ function buildDiceboundHumanHarness235(){
 
   setTimeout(()=>{renderClassChoices();renderInfo();updateHUD();},0);
 
-  window.DiceboundV28Test=Object.freeze({
-    alchemistRequirement:()=>({required:V28_ALCHEMIST_REQUIREMENT,used:meta.stats?.potionsUsed||0,unlocked:baseClassUnlocked('alchemist')}),
-    heavyPurse:(bonus=.5)=>{resetPlayer('ranger');nightmareMode=false;player.goldBonus=bonus;const before=player.gold;applyUpgrade(purse28,'test');return {delta:player.gold-before,desc:purse28.desc};},
-    vampEdge:()=>({vamp:{desc:vampEdge28?.desc},red:upgrades.find(u=>u.id==='rare_red_flask')?.desc}),
-    poisonTags:()=>['frog','ouroboros','ninja','slime','slimerouge'].map(id=>[id,CLASSES[id]?.tags||[]]),
-    throne:(id='ranger')=>{meta.unlocks[id]=true;resetPlayer(id);const before=player.poisonStackPower;venomThrone28.apply();return {id,delta:player.poisonStackPower-before};},
-    board6:()=>({...DB235.modules.balance.board6}),
-    boardCompare:()=>{const oldB=boardLevel,oldPos=player.position,oldN=nightmareMode,oldH=hellMode,base={name:'Road Test',icon:'👹',hp:40,attack:10,defenseBias:1,xp:1,gold:1,weakness:'fire'};nightmareMode=false;hellMode=false;player.position=35;boardLevel=5;const b5=scaleEnemy({...base},'normal',1);boardLevel=6;const b6=scaleEnemy({...base},'normal',1);boardLevel=oldB;player.position=oldPos;nightmareMode=oldN;hellMode=oldH;return {board5:{hp:b5.hp,attack:b5.attack,defense:b5.defense},board6:{hp:b6.hp,attack:b6.attack,defense:b6.defense}};},
-    frogSpeed:()=>[.5,1,2,5,10,50].map(echo=>({echoPct:echo*100,delayCapMs:v28FrogEchoCap(echo)})),
-    slimeRougeClass:()=>({exists:!!CLASSES.slimerouge,unlocked:isClassUnlocked('slimerouge'),tags:CLASSES.slimerouge.tags}),
-    slimeRougeRun:()=>{meta.unlocks.slimerouge=true;['ranger','fighter','frog'].forEach(id=>meta.unlocks[id]=true);resetPlayer('slimerouge');return {passive:player.v28BorrowedPassiveClass,ultimate:player.v28BorrowedUltimateClass,passiveName:player.v28BorrowedPassiveName};},
-    slimeRougeUltimate:async()=>{meta.unlocks.slimerouge=true;meta.unlocks.ranger=true;resetPlayer('slimerouge');player.slimeRougeUltimateClass='ranger';player.v28BorrowedUltimateClass='ranger';player.ultimateCharge=100;const e={name:'Rouge Dummy',icon:'👹',hp:5000,maxHp:5000,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const before=e.hp;await useUltimate();return {donor:player.v28BorrowedUltimateClass,damage:before-e.hp,charge:player.ultimateCharge,classId:player.classId};},
-    ninjaSmokeActual:async()=>{meta.unlocks.ninja=true;resetPlayer('ninja');player.crit=2;player.ninjaSmoke=0;player.ninjaSmokeNeed=3;const e={name:'Smoke Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const before=player.ninjaSmoke,result=await performStrike(e,{echo:false,index:0});return {critTiers:result?.crit||0,before,after:player.ninjaSmoke,need:player.ninjaSmokeNeed};}
-  });
+
 
   window.DiceboundV318Test=Object.freeze({
     forceRun:(identity='summoner',ultimate='pokemontrainer')=>{[identity,ultimate,'slimerouge'].forEach(id=>{if(id&&meta.unlocks)meta.unlocks[id]=true;});SlimeRougeRuntime.forcedIdentity=identity;SlimeRougeRuntime.forcedUltimate=ultimate;resetPlayer('slimerouge');return {identity:player.slimeRougeIdentityClass,ultimate:player.slimeRougeUltimateClass,mechanics:[...slimeRougeCapabilities()],mana:player.mana,maxMana:player.maxMana,spirits:Array.isArray(player.summonerSpirits),roster:(player.trainerRoster||[]).length};},
@@ -6323,17 +6162,7 @@ function buildDiceboundHumanHarness235(){
   });
 
   // ----- Simple diagnostics for the harness/tooling layer -----------------
-  window.DiceboundBeta045Debug=Object.freeze({
-    classOrder:()=>[...(window.DiceboundClassChooser?.order||[])],
-    boardTuning:()=>({
-      2:{entryHeal:db317Board?.(2)?.entryHeal,entryPotions:db317Board?.(2)?.entryPotions},
-      3:{entryHeal:db317Board?.(3)?.entryHeal,entryPotions:db317Board?.(3)?.entryPotions},
-      4:{entryHeal:db317Board?.(4)?.entryHeal,entryPotions:db317Board?.(4)?.entryPotions},
-      5:{entryHeal:db317Board?.(5)?.entryHeal,entryPotions:db317Board?.(5)?.entryPotions},
-      6:{entryHeal:db317Board?.(6)?.entryHeal,entryPotions:db317Board?.(6)?.entryPotions}
-    }),
-    hasteState:()=>({turns:player.hasteTurns||0,cooldown:player.hasteCooldown||0})
-  });
+
   /* ========================================================================
      Beta 0.4.6 — missing art assets, camp centering, board pass and haste fix
      ======================================================================== */
@@ -6625,11 +6454,7 @@ function buildDiceboundHumanHarness235(){
   const db047ResetPlayerBase=resetPlayer;
   resetPlayer=function(classId=selectedClassId){const out=db047ResetPlayerBase(classId);player._db047HastePrimed=false;return out;};
 
-  window.DiceboundBeta047Debug=Object.freeze({
-    alchemistRequirement:()=>DB047_ALCHEMIST_REQUIREMENT,
-    boardTuning:()=>JSON.parse(JSON.stringify(DB047_BOARD_OVERRIDES)),
-    hasteState:()=>({turns:player.hasteTurns||0,cooldown:player.hasteCooldown||0,primed:!!player._db047HastePrimed})
-  });
+
   /* ========================================================================
      Beta 0.4.9 — class order, compact pack icons and road-space polish
      ======================================================================== */
@@ -8710,6 +8535,6 @@ function buildDiceboundHumanHarness235(){
   openInfo=function(){return dbInfoGuide.open();};
   exportSave=dbInfoExportSave;
   importSave=dbInfoImportSave;
-  DB25.modules.guide={render:renderInfo};
+  DB25.modules.guide={render:()=>dbInfoGuide.render()};
 
 })();
