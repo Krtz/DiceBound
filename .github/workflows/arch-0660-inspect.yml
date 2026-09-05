@@ -1,4 +1,4 @@
-name: 0.6.6.0 combat chain inspection
+name: 0.6.6.0 combat extraction materializer
 
 on:
   push:
@@ -8,25 +8,57 @@ on:
       - .github/workflows/arch-0660-inspect.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  materialize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trace combat helper reachability
+        with:
+          fetch-depth: 0
+      - name: Materialize authoritative turn owner
+        run: python tools/materialize_0660.py
+      - name: Stamp Beta 0.6.6.0 and refresh runtime metadata
+        run: |
+          python tools/set_project_version.py --version 0.6.6.0 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.6.0 --channel Beta --development-state Unreleased
+      - name: Focused syntax and architecture proof
+        run: |
+          node --check runtime/js/combat/turn-resolution.js
+          node --check runtime/js/dicebound.js
+          node tools/test_combat_turn_resolution.js
+          python tools/test_shadow_ownership_drain.py
+          python tools/test_06520_monolith_census.py
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+          git diff --check
+      - name: Full source regression suite
         shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do node "$file"; done < <(find tools -maxdepth 1 -name 'test_*.js' -print0 | sort -z)
+          while IFS= read -r -d '' file; do python "$file"; done < <(find tools -maxdepth 1 -name 'test_*.py' -print0 | sort -z)
+      - name: Report extraction census
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          p=Path('runtime/js/dicebound.js')
-          lines=p.read_text(encoding='utf-8').splitlines()
-          names=['v24ApplyDamage','v24ResolveNormalHits','v24AttackPattern','beta03TickEnemyBurns','db0511TickPlayerElementStatuses','db0511PlayerElementDamage','db060HasEffect','db064ResolveWolfEchoes','dbFriendDragoonActive','dbFriendSuccessfulDodgePresentation']
-          print(f'dicebound.js lines={len(lines)} bytes={p.stat().st_size}')
-          for name in names:
-              hits=[(i,line.strip()) for i,line in enumerate(lines,1) if re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',line)]
-              print(f'\n=== {name} refs={len(hits)} ===')
-              for i,line in hits: print(f'{i}: {line[:1000]}')
+          p=Path('runtime/js/dicebound.js');t=p.read_text(encoding='utf-8')
+          print(f'AFTER bytes={p.stat().st_size} lines={len(t.splitlines())} named_functions={len(re.findall(r"\bfunction\s+[A-Za-z_$][\w$]*\s*\(",t))} base_captures={len(re.findall(r"\bconst\s+[A-Za-z_$][\w$]*Base\s*=",t))}')
           PY
+      - name: Remove one-shot materializer machinery
+        run: |
+          rm -f .github/workflows/arch-0660-inspect.yml tools/materialize_0660.py
+          git diff --check
+      - name: Commit validated candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DiceBound Architecture Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git status --short
+          git commit -m "refactor(combat): extract turn resolution for Beta 0.6.6.0"
+          git push origin HEAD:arch/0.6.6.0-combat-turn-resolution
