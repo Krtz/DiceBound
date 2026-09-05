@@ -17,6 +17,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Repair current shadow-guard anchor
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/materialize_0660.py')
+          t=p.read_text(encoding='utf-8')
+          old='anchor=\'print("Monolith spring-clean guard PASS: DB235/Career harness and retired patch sediment stay deleted")\''
+          new='anchor="print(\'Monolith spring-clean guard PASS\')"'
+          if old not in t:
+              raise SystemExit('expected stale materializer anchor was not found')
+          p.write_text(t.replace(old,new,1),encoding='utf-8')
+          PY
       - name: Materialize authoritative turn owner
         run: python tools/materialize_0660.py
       - name: Stamp Beta 0.6.6.0 and refresh runtime metadata
