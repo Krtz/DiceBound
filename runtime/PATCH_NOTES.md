@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.18
+# Unreleased — Beta 0.6.5.19
+
+## Beta 0.6.5.19 Monolith spring clean (#40, #209)
+- Drained the historical Info/Guide renderer ladder beneath `ui/info-guide.js`, leaving only hoist-safe compatibility shims before the extracted owner takes over.
+- Removed the production-embedded AI simulation harness, unconsumed historical test/debug exports, and newly orphaned declaration-only helpers. Current browser/native smoke hooks remain.
+- The internally coupled DB235 Career harness is deliberately deferred to its own follow-up instead of weakening the safety gates. Gameplay, balance, RNG order, saves/checkpoints and current UI ownership are unchanged.
 
 ## Beta 0.6.5.18 Compatibility-monolith sediment cleanup (#40, #209)
 - Removed proven declaration-only helpers/data and one dead helper island from the compatibility monolith; active wrapper chains and live compatibility boundaries remain intact.

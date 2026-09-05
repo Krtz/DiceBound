@@ -2,6 +2,11 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.19
+
+### Monolith spring clean (#40, #209)
+- Removed the shadowed Info renderer stack, obsolete embedded AI simulator, unconsumed historical runtime test/debug exports and newly orphaned helpers. Current smoke hooks and extracted owners remain intact.
+
 ## Beta 0.6.5.18
 
 ### Compatibility-monolith sediment cleanup (#40, #209)
