@@ -14,9 +14,19 @@ jobs:
   materialize:
     runs-on: ubuntu-latest
     steps:
+      - name: Mint protected-ref writer App token
+        id: writer_app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.writer_app_token.outputs.token }}
       - name: Repair one-shot materializer and permanent proof markers
         shell: bash
         run: |
