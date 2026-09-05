@@ -84,13 +84,20 @@ if ninja_new not in o:
     o = o.replace(ninja_old, ninja_new, 1)
 owner_path.write_text(o, encoding='utf-8', newline='\n')
 
-# 4) Pin those pauses in deterministic tests so they cannot vanish in a later cleanup.
+# 4) Pin pauses and historical Summoner retry RNG in deterministic tests.
 t = test_path.read_text(encoding='utf-8')
 if 'getCombatActionDelay: () => 200' not in t:
     anchor = "    delay: async ms => trace.push(['delay', ms]), winCombat: async () => { trace.push(['win']); return 'win'; },\n"
     if anchor not in t:
         raise SystemExit('Ultimate test delay runtime anchor missing')
     t = t.replace(anchor, "    delay: async ms => trace.push(['delay', ms]), getCombatActionDelay: () => 200, winCombat: async () => { trace.push(['win']); return 'win'; },\n", 1)
+
+summoner_old = "const picks = h.trace.filter(x => x[0] === 'pick'); assert.strictEqual(picks.length, 2); assert(h.trace.findIndex(x => x[0] === 'pick') < h.trace.findIndex(x => x[0] === 'damageAll'));"
+summoner_new = "const picks = h.trace.filter(x => x[0] === 'pick'); assert.strictEqual(picks.length, 4, 'Summoner duplicate-spirit retries must preserve all four seeded pick RNG draws'); assert(h.trace.findIndex(x => x[0] === 'pick') < h.trace.findIndex(x => x[0] === 'damageAll'));"
+if summoner_new not in t:
+    if summoner_old not in t:
+        raise SystemExit('Summoner retry RNG fixture anchor missing')
+    t = t.replace(summoner_old, summoner_new, 1)
 
 if 'Ninja charged Ultimate preserves five 200ms per-hit pauses' not in t:
     anchor = "  // Ouroboros bypasses lower generic/D20 logic, picks only after its first target, rolls once per hit, then calls petTurn.\n"
@@ -115,4 +122,4 @@ if 'Frog charged Ultimate preserves ten 200ms per-hit pauses' not in t:
     t = t.replace(anchor, addition, 1)
 
 test_path.write_text(t, encoding='utf-8', newline='\n')
-print('Patched 0.6.6.4 Ultimate materializer boundaries, combatBusy ownership and per-hit delay contract')
+print('Patched 0.6.6.4 Ultimate materializer boundaries, combatBusy ownership, per-hit delay and Summoner retry RNG contracts')
