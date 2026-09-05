@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.3
+
+### Player strike / basic attack resolution ownership (#40, #209, #275)
+- Extracted individual basic/Echo strike resolution into `runtime/js/combat/strike-resolution.js`, consolidating the live `strikeBaseDamage` and `performStrike` patch stack behind one authoritative owner.
+- Preserved exact Crit/Echo/Dodge/Poison RNG ordering, Ranger Marks, Fighter/Turtle strike consumption, Ninja Smoke Execution, Ouroboros speed/conversion, Devil's Horns and current strike-level Legendary effects, including historical ordering quirks.
+- Guard, Potion, Pet combat, Ultimates and broader player-action orchestration remain outside this slice; gameplay values, saves/checkpoints and enemy-response ordering are unchanged.
+
 ## Beta 0.6.6.2
 
 ### Combat presentation ownership (#40, #209, #273)

@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.3
+
+## Beta 0.6.6.3 Player strike / basic attack resolution ownership (#40, #209, #275)
+- Individual basic and Echo strikes now resolve through one authoritative owner in `combat/strike-resolution.js`; the historical `strikeBaseDamage` / `performStrike` wrapper tower is retired from `dicebound.js`.
+- Existing Crit/Echo/Dodge/Poison RNG ordering, Ranger Marks, Fighter/Turtle strike consumption, Ninja Smoke, Ouroboros conversion/speed, Devil's Horns and strike-level Legendary effects are preserved, including historical ordering quirks.
+- Guard, Potions, Pets, Ultimates, broader player-action orchestration, enemy responses, saves/checkpoints and gameplay values are unchanged.
+
 # Unreleased — Beta 0.6.6.2
 
 ## Beta 0.6.6.2 Combat presentation ownership (#40, #209, #273)

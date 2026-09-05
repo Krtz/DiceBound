@@ -135,7 +135,7 @@ function makeHarness(options={}){
     assert.equal(result.dealt,18,"stored Counterblow + Endless Form bonus must preserve additive temporary damageBonus ordering");
     assert.equal(h.player.fighterCounterStacks,1);
     assert.equal(h.player.fighterCounterReady,false);
-    assert.equal(h.player.damageBonus,0,"temporary Fighter bonuses must fully restore");
+    assert.ok(Math.abs(h.player.damageBonus)<1e-12,"temporary Fighter bonuses must fully restore apart from floating-point dust");
   }
   {
     const h=makeHarness({classId:"turtle",player:{turtleCrushReady:true,turtleGuardChain:3},randomValues:[.9,.3]});

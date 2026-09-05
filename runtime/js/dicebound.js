@@ -875,14 +875,8 @@
   }
 
   function rollTieredProc(chance){const guaranteed=Math.floor(Math.max(0,chance)),fraction=Math.max(0,chance-guaranteed);return guaranteed+(random()<fraction?1:0);}
-  function strikeBaseDamage(echo=false,chaos=null,{canCrit=true}={}){let attack=player.attack+(player.goldAttackScale?Math.floor(player.gold*player.goldAttackScale):0),damage=Math.max(1,Math.round(attack+player.defense*player.defenseAttackScale)+rand(-1,2)),burst="";if(classIdentityActive("sorcerer")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Arcane Surge! ";}if(classIdentityActive("monk")&&random()<player.classBurst){damage=Math.round(damage*1.35);player.ultimateCharge=clamp(player.ultimateCharge+6,0,100);burst="Flowing Combo! ";}if(classIdentityActive("clown")&&random()<player.classBurst){damage=Math.round(damage*(.9+random()*1.1));burst="Unlicensed Comedy! ";}if(classIdentityActive("rouge")&&random()<player.classBurst){damage=Math.round(damage*1.45);burst="Crimson Stroke! ";}if(classIdentityActive("berserker")&&random()<player.classBurst){damage=Math.round(damage*1.55);burst="Blood Frenzy! ";}if(classIdentityActive("frog")&&random()<player.classBurst){damage=Math.round(damage*1.35);burst="Resonant Croak! ";}if(classIdentityActive("vampire")&&random()<player.classBurst){damage=Math.round(damage*1.5);burst="Blood Frenzy! ";}if(classIdentityActive("ninja")&&random()<player.classBurst){damage=Math.round(damage*1.6);burst="Perfect Ambush! ";}if(classIdentityActive("ceo")&&random()<player.classBurst){damage=Math.round(damage*1.55);player.gold+=5;burst="Quarterly Growth! ";}if(classIdentityActive("merchant")&&random()<player.classBurst){damage=Math.round(damage*1.6);player.gold+=10;burst="Excellent Margin! ";}if(player.combatAttackCount===0&&player.firstAttackBonus>0)damage=Math.round(damage*(1+player.firstAttackBonus));if(player.hp/player.maxHp<.5)damage=Math.round(damage*(1+player.berserk));if(echo)damage=Math.max(1,Math.round(damage*(player.echoDamageScale||.70)*(canCrit&&player.criticalEchoBonus?1+player.criticalEchoBonus:1)));const weapon=player.equipment?.weapon;if(weapon?.merchantWeapon)damage+=Math.floor(player.gold*(weapon.merchantWeaponScale||1));if(livingEnemies().length>=2&&player.packDamageBonus)damage=Math.round(damage*(1+player.packDamageBonus));damage=Math.round(damage*(chaos?.mult||1)*(1+player.damageBonus+(v19SetDamageBonus())));return {damage,burst};}
-  async function performStrike(target,{echo=false,index=0,chaos=null,canCrit=true}={}){
-    if(!target||target.hp<=0)target=livingEnemies()[0];if(!target)return {domain:"combat",type:"strike",dealt:0,crit:0,critTiers:0,elementDamage:0};
-    const critTiers=window.DiceboundStrikePolicy.resolveCriticalTiers(rollTieredProc,{canCrit,critChance:player.crit,bonusCrit:chaos?.bonusCrit}),mode=critTiers?"crit":echo?"echo":"normal";await animateClassAttack(mode);const base=strikeBaseDamage(echo,chaos,{canCrit});let damage=base.damage;if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));if(target.affinity&&player.elementalEnemyDamage)damage=Math.round(damage*(1+player.elementalEnemyDamage));if(critTiers)damage*=1+critTiers;let dealt=damageEnemy(target,damage),executed=false;if(target.hp>0&&target.hp/target.maxHp<=.2&&player.execute){dealt+=target.hp;target.hp=0;executed=true;}if(target.hp<=0)db0648ReconcileDefeatedTarget(target,"strike");
-    let poisonApplied=0;if(target.hp>0&&player.poisonOnHitChance&&random()<clamp(player.poisonOnHitChance,0,.95)){target.poisonStacks=(target.poisonStacks||0)+1;poisonApplied=1;playElementAnimation("nature",target,false);addCombatHistory(`${echo?`Echo ${index}`:"Attack"} applies 1 Poison stack to ${target.name}.`);}
-    player.combatAttackCount++;const element=triggerStrikeElements(target,chaos),drainDamage=dealt+(element.totalDamage||0),heal=player.lifeSteal>0&&drainDamage>0?healPlayer(Math.max(1,Math.floor(drainDamage*player.lifeSteal))):0,label=echo?`Echo ${index}`:"Attack";
-    const result={domain:"combat",type:"strike",label,echo,index,canCrit,dealt,crit:critTiers,critTiers,executed,heal,poisonApplied,elementDamage:element.totalDamage||0,elementMessage:element.message||"",burst:base.burst||"",targetName:target.name,targetHp:target.hp,presentationTarget:db0648PresentationTargetSnapshot()};DiceboundStateEvents.emit("combat:strike",result);CombatUI.renderStrike(result);await delay(460);return result;
-  }
+  function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
+  async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
 
   async function playerAttack(){
     if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("attack");updateCombatUI();const firstTarget=currentEnemy,echoes=rollTieredProc(player.doubleStrike)+(chaos.extraEcho||0);let totalCrit=0;
@@ -1499,6 +1493,7 @@
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
   // existing regression hooks can temporarily replace them without creating
   // a second production owner.
+  let dbCombatStrikes=null;
   let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatTurns=null;
@@ -1605,8 +1600,7 @@
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
   const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};
   const applyUpgradeV15=applyUpgrade;applyUpgrade=function(up,source="Powerup"){const result=applyUpgradeV15(up,source);ensureAlphaMeta().powerupsTaken++;saveMeta();return result;};
-  const strikeBaseDamageV15=strikeBaseDamage;strikeBaseDamage=function(echo=false,chaos=null){const out=strikeBaseDamageV15(echo,chaos);if(classIdentityActive("cleric")&&random()<player.classBurst){out.damage=Math.round(out.damage*1.25);const h=healPlayer(3+(player.clericHealBonus||0));out.burst=`Blessed Strike${h?` (+${h} HP)`:""}! `;}if(classIdentityActive("paladin")&&random()<player.classBurst){out.damage+=Math.round(player.defense*.9);out.burst="Oath Smite! ";}if(classIdentityActive("beastmaster")&&random()<player.classBurst){out.damage+=Math.round(petDamage()*.75);out.burst="Pack Assist! ";}if(classIdentityActive("rogue")&&random()<player.classBurst){out.damage=Math.round(out.damage*1.75);out.burst="Backstab! ";}return out;};
-
+  
   // Blood Moon/Crimson Eclipse overheal fix and guardian freeze cooldown.
   const triggerElementEffectV15=triggerElementEffect;triggerElementEffect=function(key,target=currentEnemy,opts={}){
     if(key!=="ice"&&key!=="light"&&key!=="donut")return triggerElementEffectV15(key,target,opts);
@@ -2130,30 +2124,11 @@
   const effectiveDodgeChanceV13=effectiveDodgeChance;
   effectiveDodgeChance=function(){let base=effectiveDodgeChanceV13();if(classIdentityActive("monk"))base=clamp(base+(player.monkCombo||0)*.018,0,.92);if(classIdentityActive("clown")&&player.clownGimmick==="Big Shoes")base=clamp(base+.12,0,.92);return base;};
 
-  const strikeBaseDamageV13=strikeBaseDamage;
-  strikeBaseDamage=function(echo=false,chaos=null){let r=strikeBaseDamageV13(echo,chaos);if(player._occultChanneling)r.damage=Math.max(1,Math.round(r.damage*.82));if(classIdentityActive("clown")&&player.clownPieReady&&!echo){r.damage=Math.round(r.damage*1.55);player.clownPieReady=false;r.burst=`Exploding Pie! ${r.burst||""}`;}return r;};
-
+  
   const damageEnemyV13=damageEnemy;
   damageEnemy=function(enemy,amount,ignoreDefense=false){if(player._ninjaExecution){amount*=1.65;ignoreDefense=true;}return damageEnemyV13(enemy,amount,ignoreDefense);};
 
-  const performStrikeV13=performStrike;
-  performStrike=async function(target,opts={}){
-    const echo=!!opts.echo;let critBoost=0,damageBoost=0,consumeCounter="",execution=false;
-    if(classIdentityActive("ranger")&&target?.hp>0){critBoost=(target.rangerMarks||0)*.06;player.crit+=critBoost;}
-    if(!echo&&classIdentityActive("fighter")&&player.fighterCounterReady){damageBoost=.55;player.damageBonus+=damageBoost;consumeCounter="fighter";}
-    if(!echo&&classIdentityActive("turtle")&&player.turtleCrushReady){damageBoost=.45+Math.min(.55,player.defense*.035);player.damageBonus+=damageBoost;consumeCounter="turtle";}
-    if(!echo&&classIdentityActive("ninja")&&(player.ninjaSmoke||0)>=(player.ninjaSmokeNeed||3)){player._ninjaExecution=true;execution=true;}
-    let result;
-    try{result=await performStrikeV13(target,opts);}finally{if(critBoost)player.crit-=critBoost;if(damageBoost)player.damageBonus-=damageBoost;player._ninjaExecution=false;}
-    if(!echo&&target){
-      if(classIdentityActive("ranger")&&target.hp>0){target.rangerMarks=Math.min(3,(target.rangerMarks||0)+1);identityFlash(`🏹 Marked Quarry ×${target.rangerMarks}`);}
-      if(consumeCounter==="fighter"){player.fighterCounterReady=false;identityFlash("🛡️ Counterblow!");}
-      if(consumeCounter==="turtle"){player.turtleCrushReady=false;identityFlash("🐢 Shell Crush!");}
-      if(classIdentityActive("ninja")){if(execution){player.ninjaSmoke=0;identityFlash("🌘 Smoke Execution!");}else if(result?.crit){player.ninjaSmoke=Math.min(player.ninjaSmokeNeed||3,(player.ninjaSmoke||0)+1);if(player.ninjaSmoke>=(player.ninjaSmokeNeed||3))identityFlash("🌫️ Smoke ready");}}
-    }
-    updateCombatUI();return result;
-  };
-
+  
   const playerAttackV13=playerAttack;
   playerAttack=async function(){
     if(classIdentityActive("monk")){
@@ -2621,9 +2596,7 @@
   const showPowerupChoiceV16Base=showPowerupChoice;showPowerupChoice=function(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){showPowerupChoiceV16Base(source,onComplete,filter,subtitle);attachPowerupRerollV16($("powerupGrid"),()=>showPowerupChoice(source,onComplete,filter,subtitle));};
 
   // ---- Ranger / Fighter / Monk / Turtle identities -------------------------
-  const performStrikeV16Base=performStrike;
-  performStrike=async function(target,opts={}){const echo=!!opts.echo,beforeMarks=target?.rangerMarks||0;let temp=0,consumeFighter=false,consumeTurtle=false;if(!echo&&classIdentityActive("fighter")&&(player.fighterCounterStacks||0)>0){player.fighterCounterReady=false;temp=.55;player.damageBonus+=temp;consumeFighter=true;}if(!echo&&classIdentityActive("turtle")&&(player.turtleGuardChain||0)>0){player.turtleCrushReady=false;temp=Math.min(.90,(player.turtleGuardChain||0)*.18);player.damageBonus+=temp;consumeTurtle=true;}let result;try{result=await performStrikeV16Base(target,opts);}finally{if(temp)player.damageBonus-=temp;}if(!echo&&classIdentityActive("fighter")&&consumeFighter){player.fighterCounterStacks=Math.max(0,(player.fighterCounterStacks||0)-1);identityFlash(`🛡️ Counterblow · ${player.fighterCounterStacks} stored`);}if(!echo&&classIdentityActive("ranger")&&target?.hp>0&&(player.rangerMarkMax||3)>3&&beforeMarks>=3)target.rangerMarks=Math.min(player.rangerMarkMax,beforeMarks+1);if(!echo&&classIdentityActive("turtle")&&consumeTurtle){identityFlash(`🐢 Shell Momentum ×${player.turtleGuardChain}`);player.turtleGuardChain=0;}return result;};
-  const playerAttackV16Base=playerAttack;
+    const playerAttackV16Base=playerAttack;
   playerAttack=async function(){const cls=classIdentityId(),comboBefore=player.monkCombo||0,chicken=cls==="clown"&&player.clownGimmick==="Rubber Chicken",turtleChain=player.turtleGuardChain||0;if(chicken)player.doubleStrike+=.20;if(cls==="alchemist"&&!combatBusy&&currentEnemy){player.alchemistBrewCounter=(player.alchemistBrewCounter||0)+1;if(player.alchemistBrewCounter>=player.alchemistBrewNeed){player.alchemistBrewCounter=0;player.potions++;showToast("🧪 Brewed +1 potion");addCombatHistory("⚗️ Combat Distillery completes a fresh potion.");}}try{const r=await playerAttackV16Base();if(cls==="monk"&&(player.monkComboMax||5)>5)player.monkCombo=Math.min(player.monkComboMax,comboBefore+1);return r;}finally{if(chicken)player.doubleStrike-=.20;updateCombatUI();}};
   identityGuardAction=async function(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("fighter")){player.fighterCounterReady=false;player.fighterCounterStacks=Math.min(player.fighterCounterMax||1,(player.fighterCounterStacks||0)+1);identityFlash(`🛡️ Counterblow ${player.fighterCounterStacks}/${player.fighterCounterMax}`);}if(classIdentityActive("turtle")){player.turtleCrushReady=false;player.turtleGuardChain=Math.min(player.turtleGuardMax||5,(player.turtleGuardChain||0)+1);if(player.turtleGuardChain===3||player.turtleGuardChain===5){player.combatShield++;identityFlash(`🐢 Shell wall ×${player.turtleGuardChain} · Barrier`);}const rank=0;const bonus=Math.max(0,(player.turtleGuardChain-1)*.05),old=player.guardPower;player.guardPower=clamp(old+bonus,0,.90);try{return await guardAction();}finally{player.guardPower=old;updateCombatUI();}}return guardAction();};
   identityPotionAction=async function(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("turtle"))player.turtleGuardChain=0;return usePotion();};
@@ -2752,8 +2725,7 @@
   // ---- Ninja Smoke ---------------------------------------------------------
   if(!upgrades.some(u=>u.id==="ninja_smoke_step"))upgrades.push({id:"ninja_smoke_step",classId:"ninja",rarity:"epic",unique:true,icon:"🌫️🥷",name:"Vanishing Point",desc:"Unique: Smoke Execution needs one fewer Smoke stack.",tags:["dodgy","precision","unique"],apply(){player.ninjaSmokeNeed=2;player.ninjaSmoke=Math.min(player.ninjaSmoke||0,2);}});
   const resetPlayerV17Base=resetPlayer;resetPlayer=function(classId=selectedClassId){resetPlayerV17Base(classId);player.ninjaSmokeNeed=3;player.guardElementProcBonus=0;};
-  const performStrikeV17Base=performStrike;performStrike=async function(target,opts={}){const before=player.ninjaSmoke||0,result=await performStrikeV17Base(target,opts);if(classIdentityActive("ninja")&&result?.crit){const need=player.ninjaSmokeNeed||3;if(opts.echo){player.ninjaSmoke=Math.min(need,(player.ninjaSmoke||0)+1);if(player.ninjaSmoke!==before)identityFlash(`🌫️ Smoke ${player.ninjaSmoke}/${need}`);}if((player.ninjaSmoke||0)>=need)identityFlash("🌫️ Smoke Execution ready");updateCombatUI();}return result;};
-  const useUltimateV17Base=useUltimate;useUltimate=async function(){const ninja=classIdentityActive("ninja"),before=ninja?(player.ninjaSmoke||0):0,r=await useUltimateV17Base();if(ninja){const need=player.ninjaSmokeNeed||3;player.ninjaSmoke=Math.min(need,before+5);addCombatHistory(`🌘 Thousand Shadows' five guaranteed critical strikes build Smoke to ${player.ninjaSmoke}/${need}.`);updateCombatUI();}return r;};
+    const useUltimateV17Base=useUltimate;useUltimate=async function(){const ninja=classIdentityActive("ninja"),before=ninja?(player.ninjaSmoke||0):0,r=await useUltimateV17Base();if(ninja){const need=player.ninjaSmokeNeed||3;player.ninjaSmoke=Math.min(need,before+5);addCombatHistory(`🌘 Thousand Shadows' five guaranteed critical strikes build Smoke to ${player.ninjaSmoke}/${need}.`);updateCombatUI();}return r;};
 
   // ---- Prismatic Birthright runtime migration -----------------------------
   const prismaticTalent=talents.find(t=>t.id==="element_prismatic");if(prismaticTalent){prismaticTalent.cost=2;prismaticTalent.maxRank=3;prismaticTalent.desc="Start each run with an elemental class weapon unless an heirloom weapon replaces it. Rank 1 Common · Rank 2 Uncommon · Rank 3 Rare.";prismaticTalent.requires=[req("element_attunement",2)];}
@@ -3017,13 +2989,7 @@
   };
 
   // ---- Endless Form support hooks ------------------------------------------
-  const performStrikeV18Base=performStrike;
-  performStrike=async function(target,opts={}){
-    const counterBoost=!opts.echo&&classIdentityActive("fighter")&&(player.fighterCounterStacks||0)>0?(player.fighterCounterPowerBonus||0):0;
-    if(counterBoost)player.damageBonus+=counterBoost;
-    try{return await performStrikeV18Base(target,opts);}finally{if(counterBoost)player.damageBonus-=counterBoost;}
-  };
-  const healPlayerV18Base=healPlayer;
+    const healPlayerV18Base=healPlayer;
   healPlayer=function(amount){
     const beforeFaith=player.clericFaith||0,healed=healPlayerV18Base(amount);
     if(classIdentityActive("cleric")&&healed>0&&player.clericFaithGainBonus){const baseAdded=Math.max(0,(player.clericFaith||0)-beforeFaith),extra=Math.round(baseAdded*player.clericFaithGainBonus);player.clericFaith=clamp((player.clericFaith||0)+extra,0,100);}
@@ -4230,8 +4196,7 @@
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
   const defenseDamageReductionV24Base=defenseDamageReduction;defenseDamageReduction=function(defense=player.defense){if(v24HasJeanJacket()){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+13),0,.90);}return defenseDamageReductionV24Base(defense);};
   const healPlayerV24Base=healPlayer;healPlayer=function(amount,opts){const beforeHp=player.hp,beforeMax=player.maxHp,raw=Math.max(0,Math.round(amount||0)),normalRoom=Math.max(0,beforeMax-beforeHp),healed=healPlayerV24Base(amount,opts);if(v24HasHorns()&&raw>normalRoom){const maxGrowth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-normalRoom-maxGrowth);if(over>0){player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+over);player.energyShieldCap=player.maxHp;addCombatHistory(`🔵 Devil's Horns convert ${over} overhealing into Energy Shield.`);}}return healed;};
-  const performStrikeV24Base=performStrike;performStrike=async function(target,opts={}){const result=await performStrikeV24Base(target,opts);if(!opts.echo&&target?.hp>0&&v24HasHorns()&&random()<.005){const killed=damageEnemy(target,target.hp,true);result.dealt=(result.dealt||0)+killed;setCombatText(`👿 The Devil's Horns find the one impossible angle. ${target.name} is instantly slain.`);addCombatHistory(`👿 INSTANT KILL · ${target.name}`);sfx.holy();updateCombatUI();}return result;};
-  function v24UpdateShieldBars(){if(!dbCombatPresentation)return;return dbCombatPresentation.syncEnergyShieldBars();}
+    function v24UpdateShieldBars(){if(!dbCombatPresentation)return;return dbCombatPresentation.syncEnergyShieldBars();}
   const updateHUDV24Base=updateHUD;updateHUD=function(){updateHUDV24Base();v24UpdateShieldBars();};
 
   /* MODULE: camp synchronization ------------------------------------------ */
@@ -4344,16 +4309,7 @@
   // Poison chance now uses the same overflow model as Crit/Echo: 125% means
   // one guaranteed stack plus a 25% chance for a second; 240% means two
   // guaranteed stacks plus a 40% chance for a third.
-  const performStrikeV25PoisonBase=performStrike;
-  performStrike=async function(target,opts={}){
-    const chance=Math.max(0,player.poisonOnHitChance||0);player.poisonOnHitChance=0;
-    try{
-      const result=await performStrikeV25PoisonBase(target,opts);
-      if(target?.hp>0&&chance>0){const stacks=rollTieredProc(chance);if(stacks>0){target.poisonStacks=(target.poisonStacks||0)+stacks;playElementAnimation('nature',target,false);addCombatHistory(`${opts.echo?`Echo ${opts.index||''}`:'Attack'} applies ${stacks} Poison stack${stacks===1?'':'s'} (${Math.round(chance*100)}% Poison chance).`);updateCombatUI();}}
-      return result;
-    }finally{player.poisonOnHitChance=chance;}
-  };
-
+  
   // Endless Form makes Croak Cascade poisonous: each jump gets an independent
   // 5% chance per Endless Form rank to leave one Poison stack.
   const damageEnemyV25CroakBase=damageEnemy;
@@ -4635,9 +4591,7 @@
 
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
   v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros'))return;const delta=(Number(player.attack)||0)-10;if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}};
-  const strikeBaseDamageV26OuroBase=strikeBaseDamage;strikeBaseDamage=function(echo=false,chaos=null){if(!classIdentityActive('ouroboros'))return strikeBaseDamageV26OuroBase(echo,chaos);v18SyncOuroborosAttack();const goldScale=player.goldAttackScale;player.goldAttackScale=0;try{return strikeBaseDamageV26OuroBase(echo,chaos);}finally{player.goldAttackScale=goldScale;player.attack=10;}};
-  const performStrikeV26SpeedBase=performStrike;performStrike=async function(target,opts={}){const turbo=classIdentityActive('ouroboros')&&(player.doubleStrike||0)>10;if(turbo)window.__DB_V26_FAST_ECHO__=true;try{return await performStrikeV26SpeedBase(target,opts);}finally{if(turbo)window.__DB_V26_FAST_ECHO__=false;}};
-
+    
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
   function v26HasStone(){return !!player.equipment?.amulet?.bloodmageStone;}
@@ -4726,19 +4680,7 @@
   // delay() reads this cap. Normal Ouroboros attacks become faster above
   // 1,000% Echo and dramatically faster above 5,000%, while other classes
   // keep the normal readable action cadence.
-  const performStrikeV27SpeedDodgeBase=performStrike;
-  performStrike=async function(target,opts={}){
-    const oldCap=window.__DB_FAST_ECHO_CAP__||0,echo=player.doubleStrike||0;
-    if(classIdentityActive('ouroboros')){window.__DB_FAST_ECHO_CAP__=echo>=50?10:echo>=10?32:0;v27SyncOuroborosEconomy();}
-    try{
-      if(target?.hp>0&&(target.dodge||0)>0&&random()<target.dodge){
-        await animateClassAttack(opts.echo?'echo':'normal');player.combatAttackCount++;
-        setCombatText(`${target.name} dodges ${opts.echo?`Echo ${opts.index||''}`:'the attack'}.`);addCombatHistory(`🌫️ ${target.name} dodges (${Math.round(target.dodge*100)}% enemy Dodge).`);updateCombatUI();await delay(classIdentityActive('ouroboros')?35:220);return {dealt:0,crit:0,elementDamage:0,dodged:true};
-      }
-      return await performStrikeV27SpeedDodgeBase(target,opts);
-    }finally{window.__DB_FAST_ECHO_CAP__=oldCap;}
-  };
-  const useUltimateV27SpeedBase=useUltimate;useUltimate=async function(){if(player.classId!=='ouroboros')return useUltimateV27SpeedBase();const oldCap=window.__DB_FAST_ECHO_CAP__||0,echo=player.doubleStrike||0;window.__DB_FAST_ECHO_CAP__=echo>=50?8:echo>=10?28:90;try{return await useUltimateV27SpeedBase();}finally{window.__DB_FAST_ECHO_CAP__=oldCap;}};
+    const useUltimateV27SpeedBase=useUltimate;useUltimate=async function(){if(player.classId!=='ouroboros')return useUltimateV27SpeedBase();const oldCap=window.__DB_FAST_ECHO_CAP__||0,echo=player.doubleStrike||0;window.__DB_FAST_ECHO_CAP__=echo>=50?8:echo>=10?28:90;try{return await useUltimateV27SpeedBase();}finally{window.__DB_FAST_ECHO_CAP__=oldCap;}};
 
   /* ENERGY SHIELD ---------------------------------------------------------- */
   const healPlayerV27AegisBase=healPlayer;healPlayer=function(amount,opts){const raw=Math.max(0,Math.round(amount||0)),beforeHp=player.hp,beforeMax=player.maxHp,room=Math.max(0,beforeMax-beforeHp),r=healPlayerV27AegisBase(amount,opts),rate=player.legendaryOverhealShieldRate||0;if(rate>0&&raw>room){const growth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-room-growth);if(over>0){const gain=over*rate;player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+gain);if(currentEnemy)addCombatHistory(`🩸🔵 Crimson Aegis turns ${over} overheal into +${gain.toFixed(1)} Energy Shield.`);}}v24UpdateShieldBars?.();return r;};
@@ -4847,18 +4789,7 @@
   }
 
   /* NINJA: ONE SMOKE PER CRITICAL TIER ------------------------------------ */
-  const performStrikeV28SmokeBase=performStrike;
-  performStrike=async function(target,opts={}){
-    const ninja=classIdentityActive('ninja'),before=ninja?(player.ninjaSmoke||0):0,need=ninja?(player.ninjaSmokeNeed||3):0,execution=ninja&&!opts.echo&&before>=need;
-    const result=await performStrikeV28SmokeBase(target,opts);
-    if(ninja&&result?.crit){
-      const start=execution?0:before,wanted=Math.min(need,start+Math.max(1,Math.floor(result.crit)));if((player.ninjaSmoke||0)<wanted)player.ninjaSmoke=wanted;
-      if((player.ninjaSmoke||0)>=need)identityFlash('🌫️ Smoke Execution ready');else if(player.ninjaSmoke!==before)identityFlash(`🌫️ Smoke ${player.ninjaSmoke}/${need}`);
-      updateCombatUI();
-    }
-    return result;
-  };
-
+  
   /* SLIME ROUGE ------------------------------------------------------------ */
   /* SLIME ROUGE ------------------------------------------------------------ */
   // Alpha 3.1.9: the class definition/tags are registry-owned. Only generated
@@ -5193,19 +5124,7 @@
 
   /* Ranger identity: each qualifying hit establishes exactly one Mark.
      Echoes are separate strikes, never multi-Mark packets. */
-  const performStrikeBeta04Base=performStrike;
-  performStrike=async function(target,opts={}){
-    const ranger=classIdentityActive('ranger')&&target?.hp>0,before=ranger?(target.rangerMarks||0):0;
-    const result=await performStrikeBeta04Base(target,opts);
-    if(ranger&&target?.hp>0&&!result?.dodged){
-      const cap=Math.max(3,Number(player.rangerMarkMax)||3);
-      target.rangerMarks=window.DiceboundStrikePolicy.rangerMarkTotal(before,{cap,landed:true});
-      if(target.rangerMarks!==before)identityFlash(`🏹 Marked Quarry ×${target.rangerMarks}${opts.echo?' · Echo +1':''}`);
-      updateCombatUI();
-    }
-    return result;
-  };
-
+  
   /* Debug progression shortcut. This is intentionally a late owner so older
      layered debugAction implementations cannot swallow it. */
   const debugActionBeta04Base=debugAction;
@@ -6837,15 +6756,7 @@
   v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros')||!db060HasEffect('perfect_specimen'))return db060OuroSyncBase();const delta=(Number(player.attack)||0)-30;if(delta>0){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=30;}else if(player.attack<30)player.attack=30;};
 
   // Strike-level effects.
-  const db060StrikeBaseDamageBase=strikeBaseDamage;
-  strikeBaseDamage=function(echo=false,chaos=null){
-    const r=db060StrikeBaseDamageBase(echo,chaos);
-    if(db060HasEffect('twin_surge')&&classIdentityActive('sorcerer')&&String(r.burst||'').includes('Arcane Surge')){r.damage=Math.max(1,Math.round(r.damage*.70));r.burst='Twin Arcane Surge! ';r.db060TwinSurge=true;}
-    if(db060HasEffect('vampires_bargain')&&(player.lifeSteal||0)>1)r.damage=Math.max(1,Math.round(r.damage*(1+((player.lifeSteal||0)-1))));
-    if(db060HasEffect('hoarders_arsenal'))r.damage+=Math.floor(Math.max(0,player.gold||0)/500);
-    return r;
-  };
-  // Echo Chamber must be active before playerAttack rolls Echo count.  Doing
+    // Echo Chamber must be active before playerAttack rolls Echo count.  Doing
   // the conversion only inside performStrike is too late for that roll.
   const db060PlayerAttackBase=playerAttack;
   playerAttack=async function(...args){
@@ -6855,19 +6766,7 @@
     try{return await db060PlayerAttackBase.apply(this,args);}
     finally{player.crit=savedCrit;player.doubleStrike=savedEcho;player._db060EchoChamberActive=false;}
   };
-  const db060PerformStrikeBase=performStrike;
-  performStrike=async function(target,opts={}){
-    const useEchoChamber=db060HasEffect('echo_chamber')&&!player._db060EchoChamberActive,savedCrit=player.crit,savedEcho=player.doubleStrike;
-    if(useEchoChamber){player.crit=0;player.doubleStrike=savedEcho+savedCrit;}
-    let r;try{r=await db060PerformStrikeBase(target,opts);}finally{if(useEchoChamber){player.crit=savedCrit;player.doubleStrike=savedEcho;}}
-    if(!r)return r;
-    if(db060HasEffect('twin_surge')&&String(r.burst||'').includes('Twin Arcane Surge')&&target?.hp>0){const second=damageEnemy(target,Math.max(1,r.dealt||1),true);r.dealt+=second;addCombatHistory(`⚡⚡ Twin Surge repeats Arcane Surge for ${second} damage.`);updateCombatUI();await delay(160);}
-    if(db060HasEffect('critical_feedback')&&opts.echo&&r.critTiers>0){chargeUltimate(8);addCombatHistory('💥🔋 Critical Feedback grants 8 Ultimate.');}
-    if(db060HasEffect('iron_echo')&&opts.echo&&(r.dealt||0)>0){player.defense+=1;player._db060IronEchoDefense=(player._db060IronEchoDefense||0)+1;addCombatHistory(`🔁🛡️ Iron Echo grants +1 Defense (${player._db060IronEchoDefense} this battle).`);}
-    if(db060HasEffect('elemental_roulette')&&!opts.echo&&livingEnemies().length){const t=target?.hp>0?target:livingEnemies()[0],key=pick(ELEMENT_KEYS);triggerElementEffect(key,t,{forced:true,source:'Elemental Roulette'});}
-    return r;
-  };
-
+  
   // Weapon-proc effects and Pet Mirror element memory.
   const db060TriggerElementBase=triggerElementEffect;
   triggerElementEffect=function(key,target=currentEnemy,opts={}){
@@ -7882,6 +7781,27 @@
     clearCombatPresentation:dbFriendClearCombatPresentation,
     feedPet:count=>feedActivePet(count),
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
+  });
+
+  const dbCombatStrikeOwner=window.DiceboundCombatStrikeResolution;
+  if(!dbCombatStrikeOwner)throw new Error('DiceBound requires the combat strike-resolution owner before dicebound.js');
+  dbCombatStrikes=dbCombatStrikeOwner.configure({
+    getPlayer:()=>player,getEncounterLead:()=>currentEncounterLead,livingEnemies:()=>livingEnemies(),isClassActive:id=>classIdentityActive(id),
+    random,rand,pick,clamp,rollTieredProc,
+    resolveCriticalTiers:(roller,options)=>window.DiceboundStrikePolicy.resolveCriticalTiers(roller,options),
+    rangerMarkTotal:(before,options)=>window.DiceboundStrikePolicy.rangerMarkTotal(before,options),
+    setDamageBonus:()=>v19SetDamageBonus(),petDamage:()=>petDamage(),healPlayer:amount=>healPlayer(amount),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),animateClassAttack:mode=>animateClassAttack(mode),
+    playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy),addCombatHistory:text=>addCombatHistory(text),
+    updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),playHolySfx:()=>sfx.holy(),
+    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
+    identityFlash:text=>identityFlash(text),reconcileDefeatedTarget:(target,reason)=>db0648ReconcileDefeatedTarget(target,reason),
+    presentationTargetSnapshot:()=>db0648PresentationTargetSnapshot(),emitStrike:result=>DiceboundStateEvents.emit('combat:strike',result),
+    renderStrike:result=>CombatUI.renderStrike(result),delay:ms=>delay(ms),chargeUltimate:amount=>chargeUltimate(amount),
+    hasDevilsHorns:()=>v24HasHorns(),hasLegendaryEffect:id=>db060HasEffect(id),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
+    syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
+    setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getV26FastEcho:()=>!!window.__DB_V26_FAST_ECHO__,
+    setV26FastEcho:value=>{window.__DB_V26_FAST_ECHO__=!!value;},getElementKeys:()=>ELEMENT_KEYS
   });
 
   const dbCombatPresentationOwner=window.DiceboundCombatPresentation;
