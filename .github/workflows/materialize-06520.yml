@@ -1,0 +1,108 @@
+name: One-shot Beta 0.6.5.20 materializer
+
+on:
+  push:
+    branches:
+      - cleanup/0.6.5.20-monolith-spring-clean-2
+
+permissions:
+  contents: write
+
+env:
+  WEBVIEW2_SDK_VERSION: "1.0.4129.50"
+
+jobs:
+  materialize-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: cleanup/0.6.5.20-monolith-spring-clean-2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.7"
+
+      - name: Materialize requested patch
+        shell: pwsh
+        run: |
+          python tools/materialize_06520.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate source and focused regressions
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          node tools/test_pet_chooser.js
+          node tools/test_camp_ui.js
+          node tools/test_06515_prestige_heirloom_ui.js
+          python tools/test_shadow_ownership_drain.py
+          python tools/test_06520_monolith_census.py
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+          python tools/validate_version_identity.py --version 0.6.5.20 --channel Beta
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -eq 0) { go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Exact Windows Edge file startup and broad browser smoke
+        shell: pwsh
+        run: |
+          node tools/test_file_startup_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/smoke_run_resume_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Stage official WebView2 loader
+        shell: pwsh
+        run: |
+          $probe = Join-Path $env:RUNNER_TEMP "dicebound-webview2-sdk"
+          dotnet new classlib -n LoaderProbe -o $probe --force | Out-Host
+          dotnet add (Join-Path $probe "LoaderProbe.csproj") package Microsoft.Web.WebView2 --version $env:WEBVIEW2_SDK_VERSION | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "Could not restore Microsoft.Web.WebView2." }
+          $package = Get-Item (Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2\$env:WEBVIEW2_SDK_VERSION")
+          $loader = Join-Path $package.FullName "build\native\x64\WebView2Loader.dll"
+          if (-not (Test-Path $loader)) { throw "Official x64 WebView2Loader.dll was not found at $loader" }
+          $sig = Get-AuthenticodeSignature $loader
+          if ($sig.Status -ne "Valid") { throw "WebView2Loader.dll signature is not valid: $($sig.Status)" }
+          "WEBVIEW2_LOADER_DLL=$loader" >> $env:GITHUB_ENV
+
+      - name: Build native candidate and smoke it
+        shell: pwsh
+        run: |
+          .\Build-DiceBoundRelease.ps1 -Version "0.6.5.20" -Channel "Beta" -SkipSourceStamp -RequireSignedLoader
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/smoke_run_resume_native.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit validated materialization and remove one-shot machinery
+        shell: pwsh
+        run: |
+          git config user.name "dicebound-cleanup[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm tools/materialize_06520.py .github/workflows/materialize-06520.yml
+          git add -A
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git commit -m "cleanup(runtime): spring-clean monolith and Camp interactions"
+          git push origin HEAD:cleanup/0.6.5.20-monolith-spring-clean-2
