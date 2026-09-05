@@ -47,6 +47,8 @@ jobs:
         run: |
           python tools/patch_materializer_0664.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/patch_export_0664.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_0664_ultimate.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version $env:VERSION --channel $env:CHANNEL
