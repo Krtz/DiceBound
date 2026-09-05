@@ -1,0 +1,75 @@
+name: Materialize Beta 0.6.6.3 strike resolution
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.3-strike-resolution
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[materialized-0663]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint repository write token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: arch/0.6.6.3-strike-resolution
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Materialize strike owner and candidate metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/materialize_0663_strike_resolution.py
+          python tools/set_project_version.py --version 0.6.6.3 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.6.3 --channel Beta --development-state Unreleased
+
+      - name: Validate focused extraction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check runtime/js/combat/strike-resolution.js
+          node --check runtime/js/dicebound.js
+          node tools/test_combat_strike_resolution.js
+          python tools/test_shadow_ownership_drain.py
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_version_identity.py --version 0.6.6.3 --channel Beta
+
+      - name: Commit canonical materialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'dicebound-manifest-publisher[bot]'
+          git config user.email '323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'Materializer produced no changes.'
+            exit 1
+          fi
+          git commit -m 'Beta 0.6.6.3: extract player strike resolution [materialized-0663]'
+          git push origin HEAD:arch/0.6.6.3-strike-resolution
