@@ -1,4 +1,4 @@
-name: Temporary encounter extraction audit
+name: Temporary encounter extraction materializer
 
 on:
   push:
@@ -6,41 +6,84 @@ on:
       - arch/0.6.6.1-encounter-lifecycle
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
-    runs-on: ubuntu-latest
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[materialized-0661]') }}
+    runs-on: windows-2022
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Mint repository App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
         with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: arch/0.6.6.1-encounter-lifecycle
           fetch-depth: 0
-      - name: Print encounter ownership census
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('runtime/js/dicebound.js')
-          lines=p.read_text(encoding='utf-8').splitlines()
-          print('bytes',p.stat().st_size,'lines',len(lines))
-          keys=('startCombat','StartCombat','combatKind','v16CombatKind')
-          for i,line in enumerate(lines,1):
-              if any(k in line for k in keys):
-                  print(f'--- line {i} ---')
-                  for j in range(max(1,i-2),min(len(lines),i+2)+1):
-                      print(f'{j:05d}: {lines[j-1]}')
-          PY
-      - name: Upload source snapshot
-        uses: actions/upload-artifact@v4
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          name: encounter-audit-source
-          path: |
-            runtime/js/dicebound.js
-            runtime/js/combat/turn-resolution.js
-            runtime/js/module-manifest.json
-            wrapper-source/config/project.json
-            runtime/build-info.json
-            tools/validate_runtime_architecture.py
-            tools/test_shadow_ownership_drain.py
-            tools/test_06520_monolith_census.py
-          if-no-files-found: warn
-          retention-days: 1
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Materialize authoritative encounter owner
+        shell: pwsh
+        run: |
+          python tools/materialize_0661_encounter.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/set_project_version.py --version 0.6.6.1 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.1 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate source and deterministic contracts
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/prepare_release.py --output-dir wrapper-source/release/generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.6.1 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_06520_monolith_census.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit validated materialization
+        shell: pwsh
+        run: |
+          git status --short
+          git add runtime wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go CHANGELOG.md tools/validate_runtime_architecture.py tools/test_shadow_ownership_drain.py
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (git diff --cached --quiet)) {
+            git config user.name "dicebound-manifest-publisher[bot]"
+            git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+            git commit -m "Beta 0.6.6.1: extract combat encounter lifecycle [materialized-0661]"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            git push origin HEAD:arch/0.6.6.1-encounter-lifecycle
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            Write-Host "No materialization changes to commit."
+          }
