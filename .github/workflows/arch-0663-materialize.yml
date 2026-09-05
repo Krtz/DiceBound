@@ -49,13 +49,21 @@ jobs:
           python tools/refresh_runtime_manifest.py --version 0.6.6.3 --channel Beta --development-state Unreleased
           python - <<'PY'
           from pathlib import Path
-          path=Path('tools/test_combat_strike_resolution.js')
-          text=path.read_text(encoding='utf-8')
+
+          test_path=Path('tools/test_combat_strike_resolution.js')
+          test=test_path.read_text(encoding='utf-8')
           old='assert.equal(h.player.damageBonus,0,"temporary Fighter bonuses must fully restore");'
           new='assert.ok(Math.abs(h.player.damageBonus)<1e-12,"temporary Fighter bonuses must fully restore apart from floating-point dust");'
-          if text.count(old)!=1:
-              raise SystemExit(f'expected one Fighter restoration assertion, found {text.count(old)}')
-          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          if test.count(old)!=1:
+              raise SystemExit(f'expected one Fighter restoration assertion, found {test.count(old)}')
+          test_path.write_text(test.replace(old,new,1),encoding='utf-8')
+
+          notes_path=Path('runtime/PATCH_NOTES.md')
+          notes=notes_path.read_text(encoding='utf-8')
+          if not notes.startswith('# Unreleased — Beta 0.6.6.2\n'):
+              raise SystemExit('runtime patch notes do not start at expected 0.6.6.2 heading')
+          entry='''# Unreleased — Beta 0.6.6.3\n\n## Beta 0.6.6.3 Player strike / basic attack resolution ownership (#40, #209, #275)\n- Individual basic and Echo strikes now resolve through one authoritative owner in `combat/strike-resolution.js`; the historical `strikeBaseDamage` / `performStrike` wrapper tower is retired from `dicebound.js`.\n- Existing Crit/Echo/Dodge/Poison RNG ordering, Ranger Marks, Fighter/Turtle strike consumption, Ninja Smoke, Ouroboros conversion/speed, Devil's Horns and strike-level Legendary effects are preserved, including historical ordering quirks.\n- Guard, Potions, Pets, Ultimates, broader player-action orchestration, enemy responses, saves/checkpoints and gameplay values are unchanged.\n\n'''
+          notes_path.write_text(entry+notes,encoding='utf-8')
           PY
 
       - name: Validate focused extraction
