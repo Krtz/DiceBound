@@ -43,6 +43,8 @@ jobs:
         run: |
           python tools/materialize_06520.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/materialize_06520_fix.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Validate source and focused regressions
         shell: pwsh
@@ -100,7 +102,7 @@ jobs:
         run: |
           git config user.name "dicebound-cleanup[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm tools/materialize_06520.py .github/workflows/materialize-06520.yml
+          git rm tools/materialize_06520.py tools/materialize_06520_fix.py .github/workflows/materialize-06520.yml
           git add -A
           git diff --cached --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
