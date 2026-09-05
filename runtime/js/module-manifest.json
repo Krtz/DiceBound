@@ -19,6 +19,7 @@
     "combat-strike-policy",
     "combat-enemy-policy",
     "combat-targeting",
+    "combat-presentation",
     "combat-encounter-lifecycle",
     "combat-turn-resolution",
     "combat-vfx",
@@ -242,6 +243,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatTargeting"
+      ]
+    },
+    {
+      "id": "combat-presentation",
+      "path": "js/combat/presentation.js",
+      "domain": "combat/presentation-and-battlefield-rendering",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatPresentation"
       ]
     },
     {
@@ -687,6 +698,7 @@
         "combat-strike-policy",
         "combat-enemy-policy",
         "combat-targeting",
+        "combat-presentation",
         "combat-encounter-lifecycle",
         "combat-turn-resolution",
         "combat-vfx",

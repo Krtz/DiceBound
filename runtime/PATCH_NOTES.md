@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.6.1
+# Unreleased — Beta 0.6.6.2
+
+## Beta 0.6.6.2 Combat presentation ownership (#40, #209, #273)
+- Combat HUD and battlefield rendering now have one authoritative runtime owner in `combat/presentation.js`.
+- Final class resource panels, combat statuses, Energy Shield, target/enemy presentation, borrowed Ultimates, Unstable Ultimate and Dragoon action presentation are preserved without the historical wrapper tower.
+- Combat rendering consumes no game RNG and no longer owns gameplay/progression mutations.
 
 ## Beta 0.6.6.1 Combat encounter-lifecycle ownership (#40, #209, #269)
 - Battle entry now has one authoritative owner in `combat/encounter-lifecycle.js`, covering encounter selection/state setup, class battle-start state, Board 6 entry behavior, secret-boss tuning, difficulty defenses and battle-local cleanup/presentation handoff.

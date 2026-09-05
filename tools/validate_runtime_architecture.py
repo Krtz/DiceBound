@@ -766,6 +766,33 @@ def main() -> int:
                     "retired board-transition implementation remains in dicebound.js: "
                     + retired_board_transition_layer
                 )
+    combat_presentation_module = by_id.get("combat-presentation")
+    if not combat_presentation_module:
+        errors.append("Combat presentation owner combat-presentation is missing from the runtime manifest")
+    else:
+        if combat_presentation_module.get("path") != "js/combat/presentation.js" or "DiceboundCombatPresentation" not in (combat_presentation_module.get("provides") or []):
+            errors.append("combat-presentation must provide DiceboundCombatPresentation from js/combat/presentation.js")
+        if position.get("combat-presentation", -1) >= position.get(str(monolith_id), -1):
+            errors.append("combat-presentation must load before the compatibility monolith")
+    combat_presentation_source = sources.get("combat-presentation", "")
+    for forbidden_rng in ["Math.random", "random(", "rand(", "pick("]:
+        if forbidden_rng in combat_presentation_source:
+            errors.append("combat-presentation must not consume game RNG: " + forbidden_rng)
+    if monolith_source:
+        if "dbCombatPresentation=dbCombatPresentationOwner.configure({" not in monolith_source:
+            errors.append("dicebound.js must configure the combat presentation owner")
+        if monolith_source.count("function updateCombatUI(") != 1 or "dbCombatPresentation.update()" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin updateCombatUI presentation adapter")
+        if re.search(r"(?m)^\s*updateCombatUI\s*=", monolith_source):
+            errors.append("dicebound.js retains an updateCombatUI reassignment after presentation extraction")
+        if monolith_source.count("function renderEnemyParty(") != 1 or "dbCombatPresentation.renderEnemyParty()" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin renderEnemyParty presentation adapter")
+        if re.search(r"(?m)^\s*renderEnemyParty\s*=", monolith_source):
+            errors.append("dicebound.js retains a renderEnemyParty reassignment after presentation extraction")
+        for symbol in ("updateCombatUIBase","updateCombatUIV12","updateCombatUIV13","updateCombatUIV15Patch","updateCombatUIV16Base","updateCombatUIV17Base","updateCombatUIV17SmokeBase","updateCombatUIV18Base","updateCombatUIV19Base","updateCombatUIV24Base","updateCombatUIV25BurnBase","updateCombatUIV27EnemyBase","updateCombatUIV28SmokeBase","updateCombatUIV28RougeBase","updateCombatUIBeta04Base","db0511UpdateCombatUIBase","db060UpdateCombatUIBase","dbFriendUpdateCombatUiBase","renderEnemyPartyV17Base","db0636RenderEnemyPartyBase"):
+            if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
+                errors.append(f"retired combat presentation wrapper remains in dicebound.js: {symbol}")
+
     run_lifecycle_module = by_id.get("run-lifecycle")
     run_lifecycle_owner_ok = False
     if not run_lifecycle_module:
