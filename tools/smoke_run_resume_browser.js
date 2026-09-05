@@ -91,9 +91,9 @@ function assertCampViewport(sample,label,layout){
   const info=sample.objects.campInfoBtn.rect,pet=sample.objects.campPetBtn.rect,trophy=sample.objects.campAchievementBtn.rect,fire=sample.objects.campBonfire?.rect,go=sample.objects.campGoBtn.rect;
 assert.ok(info.left<trophy.left+trophy.width+sample.stage.width*.26,`${label} Info drifted away from the lower-left Camp cluster`);assert.ok(fire&&fire.top>sample.objects.campClassBtn.rect.top,`${label} bonfire no longer sits in the lower Camp clearing`);assert.ok(go.width>=sample.stage.width*.22&&go.height>=sample.stage.height*.20,`${label} Start Run lost its major visual/hit-area footprint: ${JSON.stringify(go)}`);
   const protectedAnchors={
-    'wide-desktop':{campOptionsBtn:[.085,.105],campTalentBtn:[.305,.125],campMoonBtn:[.48,.115],campClassBtn:[.39,.55],campPetBtn:[.39,.80]},
-    'compact-desktop':{campOptionsBtn:[.085,.105],campTalentBtn:[.305,.125],campMoonBtn:[.48,.115],campClassBtn:[.39,.55],campPetBtn:[.39,.80]},
-    'stacked-or-short':{campOptionsBtn:[.085,.16],campTalentBtn:[.305,.18],campMoonBtn:[.48,.20],campClassBtn:[.39,.68],campPetBtn:[.39,.80]}
+    'wide-desktop':{campOptionsBtn:[.085,.105],campTalentBtn:[.555,.125],campMoonBtn:[.83,.115],campClassBtn:[.39,.65],campPetBtn:[.39,.90]},
+    'compact-desktop':{campOptionsBtn:[.085,.105],campTalentBtn:[.555,.125],campMoonBtn:[.83,.115],campClassBtn:[.39,.65],campPetBtn:[.39,.90]},
+    'stacked-or-short':{campOptionsBtn:[.085,.16],campTalentBtn:[.555,.18],campMoonBtn:[.83,.20],campClassBtn:[.39,.78],campPetBtn:[.39,.80]}
   }[layout];
   assert.ok(protectedAnchors,`${label} Camp is missing an authoritative anchor contract for ${layout}`);
   for(const [id,[x,y]] of Object.entries(protectedAnchors)){const rect=sample.objects[id].rect,centerX=rect.left+rect.width/2,centerY=rect.top+rect.height/2,expectedX=sample.stage.left+sample.stage.width*x,expectedY=sample.stage.top+sample.stage.height*y;assert.ok(Math.abs(centerX-expectedX)<=3&&Math.abs(centerY-expectedY)<=3,`${label} ${id} drifted from its approved stage anchor`);}

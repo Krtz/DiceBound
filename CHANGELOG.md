@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.5.20
+
+### Camp, Pet feeding and deeper monolith spring clean (#17, #40, #209, #234)
+- Fixed Camp Pet feeding: the extracted chooser no longer shadows its `feed(count)` action with the feed-controls DOM element, and regression coverage protects the real click wiring.
+- Moved Class and Pet selection another 10 percentage points down in the authored Camp scene, moved the Talent star 25 points right, and moved the Prestige moon 35 points right across supported desktop layouts.
+- Heirloom Storage is now purely a Prestige Moon purchase; the retired Legacy-Talent migration/refund/grandfather shim is removed instead of keeping dead Beta-save compatibility sediment.
+- Removed both production-embedded Career simulation harnesses, the DB235 testing/public-manifest island, historical DB235 Camp/title wrappers and an overwritten Pet-feed wrapper. Board 6 scaling/Cultist behavior was folded into the single live `scaleEnemy` owner before deleting the DB235 patch.
+- Added permanent shadow-ownership and monolith-census guards. Gameplay values, RNG draw order and current Board 6 balance are intentionally preserved outside the explicitly requested UI/Storage changes.
+
 ## Beta 0.6.5.19
 
 ### Monolith spring clean (#40, #209)

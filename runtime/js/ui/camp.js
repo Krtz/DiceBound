@@ -29,18 +29,18 @@
       id:'wide-desktop',query:'(min-width:1360px) and (min-height:650px)',
       rules:Object.freeze([
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
-        ['#campTalentBtn','left:30.5%;top:12.5%;translate:none'],
-        ['#campMoonBtn','left:48%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:39%;top:55%;translate:none']
+        ['#campTalentBtn','left:55.5%;top:12.5%;translate:none'],
+        ['#campMoonBtn','left:83%;top:11.5%;translate:none'],
+        ['#campClassBtn','left:39%;top:65%;translate:none']
       ])
     }),
     Object.freeze({
       id:'compact-desktop',query:'(min-width:1000px) and (max-width:1359px) and (min-height:650px)',
       rules:Object.freeze([
         ['#campOptionsBtn','left:8.5%;top:10.5%;translate:none'],
-        ['#campTalentBtn','left:30.5%;top:12.5%;translate:none'],
-        ['#campMoonBtn','left:48%;top:11.5%;translate:none'],
-        ['#campClassBtn','left:39%;top:55%;translate:none']
+        ['#campTalentBtn','left:55.5%;top:12.5%;translate:none'],
+        ['#campMoonBtn','left:83%;top:11.5%;translate:none'],
+        ['#campClassBtn','left:39%;top:65%;translate:none']
       ])
     }),
     Object.freeze({
@@ -49,9 +49,9 @@
         // Preserve the same anchored composition in a short desktop viewport,
         // while allowing the tall moon/class artwork to remain wholly onscreen.
         ['#campOptionsBtn','left:8.5%;top:16%;translate:none'],
-        ['#campTalentBtn','left:30.5%;top:18%;translate:none'],
-        ['#campMoonBtn','left:48%;top:20%;translate:none'],
-        ['#campClassBtn','left:39%;top:68%;translate:none']
+        ['#campTalentBtn','left:55.5%;top:18%;translate:none'],
+        ['#campMoonBtn','left:83%;top:20%;translate:none'],
+        ['#campClassBtn','left:39%;top:78%;translate:none']
       ])
     })
   ]);
@@ -63,30 +63,30 @@
   const CAMP_STAGE_ASPECT=16/9;
   const CAMP_STAGE_ANCHORS=Object.freeze({
     campOptionsBtn:Object.freeze({x:.085,y:.105,w:110}),
-    campTalentBtn:Object.freeze({x:.305,y:.125,w:165}),
-    campMoonBtn:Object.freeze({x:.48,y:.115,w:165}),
+    campTalentBtn:Object.freeze({x:.555,y:.125,w:165}),
+    campMoonBtn:Object.freeze({x:.83,y:.115,w:165}),
     campNightmareBtn:Object.freeze({x:.89,y:.28,w:120}),
     campHellBtn:Object.freeze({x:.80,y:.28,w:118}),
-    campClassBtn:Object.freeze({x:.39,y:.55,w:235}),
+    campClassBtn:Object.freeze({x:.39,y:.65,w:235}),
     campInfoBtn:Object.freeze({x:.26,y:.78,w:145}),
     campBonfire:Object.freeze({x:.50,y:.72,w:170}),
     campGoBtn:Object.freeze({x:.85,y:.74,w:440,h:250}),
     campChestBtn:Object.freeze({x:.64,y:.76,w:245,h:150}),
     campAchievementBtn:Object.freeze({x:.10,y:.83,w:165}),
-    campPetBtn:Object.freeze({x:.39,y:.80,w:220})
+    campPetBtn:Object.freeze({x:.39,y:.90,w:220})
   });
   const CAMP_STAGE_REFINEMENTS=Object.freeze({
     'wide-desktop':Object.freeze({
       campInfoBtn:Object.freeze({x:.26,y:.78}),campBonfire:Object.freeze({x:.50,y:.72}),
       campChestBtn:Object.freeze({x:.64,y:.76}),campAchievementBtn:Object.freeze({x:.10,y:.83}),
-      campPetBtn:Object.freeze({x:.39,y:.80})
+      campPetBtn:Object.freeze({x:.39,y:.90})
     }),
     'compact-desktop':Object.freeze({
       campInfoBtn:Object.freeze({x:.26,y:.78}),campBonfire:Object.freeze({x:.50,y:.72}),
       campChestBtn:Object.freeze({x:.64,y:.76}),campAchievementBtn:Object.freeze({x:.10,y:.83}),
-      campPetBtn:Object.freeze({x:.39,y:.80})
+      campPetBtn:Object.freeze({x:.39,y:.90})
     }),
-    'stacked-or-short':Object.freeze({})
+    'stacked-or-short':Object.freeze({campPetBtn:Object.freeze({x:.39,y:.80})})
   });
   // Static Camp styling lives beside the stage layout.  The mobile/grid
   // fallback is still a Camp presentation regime; it must not survive as a
