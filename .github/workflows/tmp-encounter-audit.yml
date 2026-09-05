@@ -1,0 +1,46 @@
+name: Temporary encounter extraction audit
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.1-encounter-lifecycle
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Print encounter ownership census
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('runtime/js/dicebound.js')
+          lines=p.read_text(encoding='utf-8').splitlines()
+          print('bytes',p.stat().st_size,'lines',len(lines))
+          keys=('startCombat','StartCombat','combatKind','v16CombatKind')
+          for i,line in enumerate(lines,1):
+              if any(k in line for k in keys):
+                  print(f'--- line {i} ---')
+                  for j in range(max(1,i-2),min(len(lines),i+2)+1):
+                      print(f'{j:05d}: {lines[j-1]}')
+          PY
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: encounter-audit-source
+          path: |
+            runtime/js/dicebound.js
+            runtime/js/combat/turn-resolution.js
+            runtime/js/module-manifest.json
+            wrapper-source/config/project.json
+            runtime/build-info.json
+            tools/validate_runtime_architecture.py
+            tools/test_shadow_ownership_drain.py
+            tools/test_06520_monolith_census.py
+          if-no-files-found: warn
+          retention-days: 1
