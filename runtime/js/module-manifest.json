@@ -17,6 +17,7 @@
     "memory-diagnostics",
     "combat-effective-stats",
     "combat-strike-policy",
+    "combat-strike-resolution",
     "combat-enemy-policy",
     "combat-targeting",
     "combat-presentation",
@@ -223,6 +224,18 @@
       "requires": [],
       "provides": [
         "DiceboundStrikePolicy"
+      ]
+    },
+    {
+      "id": "combat-strike-resolution",
+      "path": "js/combat/strike-resolution.js",
+      "domain": "combat/basic-and-echo-strike-resolution",
+      "status": "extracted",
+      "requires": [
+        "combat-strike-policy"
+      ],
+      "provides": [
+        "DiceboundCombatStrikeResolution"
       ]
     },
     {
@@ -696,6 +709,7 @@
         "runtime-services",
         "combat-effective-stats",
         "combat-strike-policy",
+        "combat-strike-resolution",
         "combat-enemy-policy",
         "combat-targeting",
         "combat-presentation",

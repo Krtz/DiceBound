@@ -51,4 +51,17 @@ assert mono.count("async function enemyTurn(") == 1, "enemyTurn must have exactl
 assert mono.count("async function resolveEnemyResponse(") == 1, "resolveEnemyResponse must have exactly one thin compatibility adapter"
 assert "dbCombatTurns=dbCombatTurnOwner.configure({" in mono, "combat turn owner is not configured by the compatibility composition root"
 
+strike_retired = [
+    'strikeBaseDamageV13','strikeBaseDamageV15','strikeBaseDamageV26OuroBase','db060StrikeBaseDamageBase',
+    'performStrikeV13','performStrikeV16Base','performStrikeV17Base','performStrikeV18Base','performStrikeV24Base','performStrikeV25PoisonBase',
+    'performStrikeV26SpeedBase','performStrikeV27SpeedDodgeBase','performStrikeV28SmokeBase','performStrikeBeta04Base','db060PerformStrikeBase',
+]
+for symbol in strike_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired strike-resolution owner returned: {symbol}"
+assert mono.count('function strikeBaseDamage(') == 1, 'strikeBaseDamage must have exactly one thin compatibility adapter'
+assert mono.count('async function performStrike(') == 1, 'performStrike must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*strikeBaseDamage\s*=\s*function', mono), 'strikeBaseDamage reassignment chain must not return'
+assert not re.search(r'(?m)^\s*performStrike\s*=\s*async function', mono), 'performStrike reassignment chain must not return'
+assert "dbCombatStrikes=dbCombatStrikeOwner.configure({" in mono, 'combat strike-resolution owner is not configured by the composition root'
+
 print('Monolith spring-clean guard PASS')
