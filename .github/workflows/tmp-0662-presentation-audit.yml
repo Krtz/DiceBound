@@ -19,5 +19,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check presentation module
+        run: |
+          node --check runtime/js/combat/presentation.js
+          node tools/test_combat_presentation.js
       - name: Audit combat presentation ownership
         run: python tools/audit_combat_presentation.py
