@@ -45,6 +45,8 @@ jobs:
       - name: Materialize Ultimate extraction and version metadata
         shell: pwsh
         run: |
+          python tools/patch_materializer_0664.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_0664_ultimate.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version $env:VERSION --channel $env:CHANNEL
