@@ -162,7 +162,8 @@ for(const adapter of [
   "let dbCombatTurns=null;",
   "return dbCombatTurns.enemyTurn(...args);",
   "return dbCombatTurns.resolveEnemyResponse(...args);",
-  "dbCombatTurns=window.DiceboundCombatTurnResolution.configure({"
+  "const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;",
+  "dbCombatTurns=dbCombatTurnOwner.configure({"
 ])assert.ok(monolith.includes(adapter),`missing combat turn-resolution composition adapter: ${adapter}`);
 for(const retired of [
   "v24ApplyDamage","v24ResolveNormalHits","v24AttackPattern","beta03TickEnemyBurns","db0511TickPlayerElementStatuses","db064ResolveWolfEchoes",

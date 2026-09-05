@@ -19,6 +19,7 @@
     "combat-strike-policy",
     "combat-enemy-policy",
     "combat-targeting",
+    "combat-turn-resolution",
     "combat-vfx",
     "classes-registry",
     "progression-class-unlock-rules",
@@ -240,6 +241,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatTargeting"
+      ]
+    },
+    {
+      "id": "combat-turn-resolution",
+      "path": "js/combat/turn-resolution.js",
+      "domain": "combat/enemy-response-and-turn-orchestration",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatTurnResolution"
       ]
     },
     {
