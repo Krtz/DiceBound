@@ -1,0 +1,87 @@
+name: Temporary 0.6.6.4 Ultimate materializer
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.4-ultimate-resolution
+
+permissions:
+  contents: read
+
+env:
+  VERSION: 0.6.6.4
+  CHANNEL: Beta
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[materialized-0664]') }}
+    runs-on: windows-2022
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.7'
+
+      - name: Mint repository App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Materialize Ultimate extraction and version metadata
+        shell: pwsh
+        run: |
+          python tools/materialize_0664_ultimate.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/set_project_version.py --version $env:VERSION --channel $env:CHANNEL
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version $env:VERSION --channel $env:CHANNEL --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate materialized source
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version $env:VERSION --channel $env:CHANNEL
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit canonical Windows materialization
+        shell: pwsh
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          if ((git status --porcelain).Length -eq 0) { throw 'Materializer produced no changes.' }
+          git commit -m "Beta 0.6.6.4: extract Ultimate resolution [materialized-0664]"
+          git remote set-url origin "https://x-access-token:$env:APP_TOKEN@github.com/Krtz/DiceBound.git"
+          git push origin HEAD:arch/0.6.6.4-ultimate-resolution
