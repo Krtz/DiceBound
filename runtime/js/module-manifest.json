@@ -19,6 +19,7 @@
     "combat-strike-policy",
     "combat-enemy-policy",
     "combat-targeting",
+    "combat-encounter-lifecycle",
     "combat-turn-resolution",
     "combat-vfx",
     "classes-registry",
@@ -241,6 +242,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatTargeting"
+      ]
+    },
+    {
+      "id": "combat-encounter-lifecycle",
+      "path": "js/combat/encounter-lifecycle.js",
+      "domain": "combat/encounter-entry-and-battle-start-orchestration",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatEncounterLifecycle"
       ]
     },
     {
@@ -676,6 +687,8 @@
         "combat-strike-policy",
         "combat-enemy-policy",
         "combat-targeting",
+        "combat-encounter-lifecycle",
+        "combat-turn-resolution",
         "combat-vfx",
         "classes-registry",
         "pets-registry",
