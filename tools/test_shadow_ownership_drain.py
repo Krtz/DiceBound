@@ -10,4 +10,17 @@ for name in [
 ]:
     assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono),name
 assert re.search(r'function scaleEnemy\([\s\S]*?const scaled=\{[\s\S]*?if\(boardLevel===6\)\{const balance=db317Board\(6\)\.balance;[\s\S]*?return scaled;',mono), 'Board 6 scaling must survive inside the single scaleEnemy owner'
+combat_turn_retired = [
+    "v24ApplyDamage", "v24ResolveNormalHits", "v24AttackPattern", "beta03TickEnemyBurns",
+    "db0511TickPlayerElementStatuses", "db064ResolveWolfEchoes",
+    "enemyTurnV11", "enemyTurnV25DevilBase", "db0511EnemyTurnBase", "db060EnemyTurnBase", "db064EnemyTurnBase", "dbFriendEnemyTurnBase",
+    "resolveEnemyResponseV15", "resolveEnemyResponseV19Base", "resolveEnemyResponseV24Base", "resolveEnemyResponseBeta045Base",
+    "db046ResolveEnemyBase", "db047ResolveEnemyBase", "db0511ResolveEnemyResponseBase",
+]
+for symbol in combat_turn_retired:
+    assert symbol not in mono, f"retired combat turn owner returned to compatibility monolith: {symbol}"
+assert mono.count("async function enemyTurn(") == 1, "enemyTurn must have exactly one thin compatibility adapter"
+assert mono.count("async function resolveEnemyResponse(") == 1, "resolveEnemyResponse must have exactly one thin compatibility adapter"
+assert "dbCombatTurns=dbCombatTurnOwner.configure({" in mono, "combat turn owner is not configured by the compatibility composition root"
+
 print('Monolith spring-clean guard PASS')

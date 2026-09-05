@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.0
+
+### Combat turn-resolution ownership (#40, #209, #267)
+- Extracted enemy-response and enemy-turn orchestration into `runtime/js/combat/turn-resolution.js`, making it the single owner for incoming hit resolution, Guardian specials, response status ticks, Haste/freeze handling, forced-control repeats, Hellfire/enemy Burn follow-up, Glass Fortress, Wolf Echo follow-up and Dragoon Airborne response handling.
+- Retired the historical v1/v2/v24/v25/Beta 0.4.x/DB0511/DB060/DB064/Friends wrapper ladder instead of leaving a second live combat owner in `dicebound.js`; the monolith keeps only narrow forwarding/composition adapters.
+- Added deterministic turn-resolution regression coverage and permanent shadow-ownership guards. Existing gameplay values, RNG draw order, action/event ordering, save/checkpoint behavior and known legacy quirks are intentionally preserved.
+
 ## Beta 0.6.5.20
 
 ### Camp, Pet feeding and deeper monolith spring clean (#17, #40, #209, #234)

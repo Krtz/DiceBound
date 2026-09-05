@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.5.20
+# Unreleased — Beta 0.6.6.0
+
+## Beta 0.6.6.0 Combat turn-resolution ownership (#40, #209, #267)
+- Enemy response/turn sequencing now has one authoritative owner in `combat/turn-resolution.js`, including ordinary incoming hits, Guardian specials, Freeze/Haste response handling, player/enemy status ticks, forced-control repeat turns, Hellfire, Glass Fortress, Wolf Echo follow-up and Dragoon Airborne response handling.
+- Removed the historical enemy-turn/response reassignment chain and retained only thin composition adapters in `dicebound.js`. Existing combat numbers, RNG consumption/order, action/event ordering, saves/checkpoints and intentional legacy behavior are preserved.
+- Added deterministic owner tests plus permanent anti-shadow guards so retired combat ownership cannot quietly return.
 
 ## Beta 0.6.5.20 Camp + monolith spring clean (#17, #40, #209, #234)
 - Fixed the Camp Companion feed buttons by removing a JavaScript name-shadow collision between the feed-controls DOM element and the authoritative `feed(count)` action. Feed-one/feed-all now invoke the existing Pet transaction again.
