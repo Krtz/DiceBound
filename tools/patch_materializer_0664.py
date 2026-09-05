@@ -14,15 +14,42 @@ first_section_start = s.find('# Earliest callable becomes the one compatibility 
 first_section_end = s.find('\n# The later full generic owner is the semantically live base beneath the wrapper tower.', first_section_start)
 if first_section_start < 0 or first_section_end < 0:
     raise SystemExit('audited first Ultimate adapter materializer section not found')
-first_replacement = '''# Earliest callable becomes the one compatibility adapter. The later full generic\n# implementation and every historical wrapper layer are deleted below. The end\n# marker deliberately stops before rollTieredProc so strike ownership survives.\nfirst_start = '\\n  async function useUltimate(){\\n'\nfirst_end = '\\n\n  function rollTieredProc('\nstart_at = mono.find(first_start)\nif start_at < 0:\n    raise RuntimeError('replace original useUltimate with adapter: start marker missing')\nend_at = mono.find(first_end, start_at)\nif end_at < 0:\n    raise RuntimeError('replace original useUltimate with adapter: end marker missing')\nadapter = "\\n  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}"\nmono = mono[:start_at] + adapter + mono[end_at:]\n'''
+first_replacement = '''# Earliest callable becomes the one compatibility adapter. The later full generic
+# implementation and every historical wrapper layer are deleted below. The end
+# marker deliberately stops before rollTieredProc so strike ownership survives.
+first_start = chr(10) + '  async function useUltimate(){' + chr(10)
+first_end = chr(10) * 2 + '  function rollTieredProc('
+start_at = mono.find(first_start)
+if start_at < 0:
+    raise RuntimeError('replace original useUltimate with adapter: start marker missing')
+end_at = mono.find(first_end, start_at)
+if end_at < 0:
+    raise RuntimeError('replace original useUltimate with adapter: end marker missing')
+adapter = chr(10) + "  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}"
+mono = mono[:start_at] + adapter + mono[end_at:]
+'''
 s = s[:first_section_start] + first_replacement + s[first_section_end+1:]
 
-# 2) Replace the brittle later live-generic regex with exact audited source markers.
+# 2) Remove the later semantically-live generic owner by audited section markers.
 generic_section_start = s.find('# The later full generic owner is the semantically live base beneath the wrapper tower.')
 generic_section_end = s.find('\n# V11 Bloodmage intercept.', generic_section_start)
 if generic_section_start < 0 or generic_section_end < 0:
     raise SystemExit('audited generic Ultimate materializer section not found')
-generic_replacement = '''# The later full generic owner is the semantically live base beneath the wrapper tower.\n# Use audited source markers rather than a body regex: class-body details are intentionally\n# allowed to be dense, while both section boundaries must still match exactly once.\ngeneric_start = '\\n  useUltimate=async function(){\\n'\ngeneric_end = '\\n  // Board 4 is now intentionally cruel.'\nstart_at = mono.find(generic_start)\nif start_at < 0:\n    raise RuntimeError('remove later generic Ultimate base: start marker missing')\nend_at = mono.find(generic_end, start_at)\nif end_at < 0:\n    raise RuntimeError('remove later generic Ultimate base: end marker missing')\nif mono.find(generic_start, start_at + len(generic_start), end_at) >= 0:\n    raise RuntimeError('remove later generic Ultimate base: ambiguous nested start marker')\nmono = mono[:start_at] + mono[end_at:]\n'''
+generic_replacement = '''# The later full generic owner is the semantically live base beneath the wrapper tower.
+# Use audited source markers rather than a body regex: class-body details are intentionally
+# allowed to be dense, while both section boundaries must still match exactly once.
+generic_start = chr(10) + '  useUltimate=async function(){' + chr(10)
+generic_end = chr(10) + '  // Board 4 is now intentionally cruel.'
+start_at = mono.find(generic_start)
+if start_at < 0:
+    raise RuntimeError('remove later generic Ultimate base: start marker missing')
+end_at = mono.find(generic_end, start_at)
+if end_at < 0:
+    raise RuntimeError('remove later generic Ultimate base: end marker missing')
+if mono.find(generic_start, start_at + len(generic_start), end_at) >= 0:
+    raise RuntimeError('remove later generic Ultimate base: ambiguous nested start marker')
+mono = mono[:start_at] + mono[end_at:]
+'''
 s = s[:generic_section_start] + generic_replacement + s[generic_section_end+1:]
 
 # Compose the old ALPHA_COMBAT_DELAY through the new owner.
@@ -67,7 +94,15 @@ if 'getCombatActionDelay: () => 200' not in t:
 
 if 'Ninja charged Ultimate preserves five 200ms per-hit pauses' not in t:
     anchor = "  // Ouroboros bypasses lower generic/D20 logic, picks only after its first target, rolls once per hit, then calls petTurn.\n"
-    fixture = '''  // Ninja charged Ultimate preserves five 200ms per-hit pauses before the final 850ms handoff.\n  {\n    const h = makeHarness({ classId: 'ninja', player: { ultimateCharge: 100, ninjaSmoke: 0, ninjaSmokeNeed: 3 }, critValues: [0,0,0,0,0] });\n    await owner.start();\n    const delays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]);\n    assert.deepStrictEqual(delays, [200,200,200,200,200,850], 'Ninja charged Ultimate preserves five 200ms per-hit pauses');\n  }\n\n'''
+    fixture = '''  // Ninja charged Ultimate preserves five 200ms per-hit pauses before the final 850ms handoff.
+  {
+    const h = makeHarness({ classId: 'ninja', player: { ultimateCharge: 100, ninjaSmoke: 0, ninjaSmokeNeed: 3 }, critValues: [0,0,0,0,0] });
+    await owner.start();
+    const delays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]);
+    assert.deepStrictEqual(delays, [200,200,200,200,200,850], 'Ninja charged Ultimate preserves five 200ms per-hit pauses');
+  }
+
+'''
     if anchor not in t:
         raise SystemExit('Ultimate Ninja timing fixture anchor missing')
     t = t.replace(anchor, fixture + anchor, 1)
