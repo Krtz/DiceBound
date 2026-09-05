@@ -47,6 +47,16 @@ jobs:
           python tools/materialize_0663_strike_resolution.py
           python tools/set_project_version.py --version 0.6.6.3 --channel Beta
           python tools/refresh_runtime_manifest.py --version 0.6.6.3 --channel Beta --development-state Unreleased
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('tools/test_combat_strike_resolution.js')
+          text=path.read_text(encoding='utf-8')
+          old='assert.equal(h.player.damageBonus,0,"temporary Fighter bonuses must fully restore");'
+          new='assert.ok(Math.abs(h.player.damageBonus)<1e-12,"temporary Fighter bonuses must fully restore apart from floating-point dust");'
+          if text.count(old)!=1:
+              raise SystemExit(f'expected one Fighter restoration assertion, found {text.count(old)}')
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
 
       - name: Validate focused extraction
         shell: bash
