@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.1
+
+### Combat encounter-lifecycle ownership (#40, #209, #269)
+- Extracted battle-entry / `startCombat` orchestration into `runtime/js/combat/encounter-lifecycle.js`, including ordinary/Guardian/secret-boss selection, encounter state initialization, class entry state, Board 6 entry behavior, difficulty defenses and battle-local cleanup/presentation hooks.
+- Retired the historical `startCombat*Base` reassignment ladder and retained one thin monolith adapter. Exact encounter/scaling sequence and RNG ordering are preserved, including the existing Board 6 final double-scaling quirk.
+- Added deterministic encounter-entry coverage plus permanent architecture/shadow-ownership guards.
+
 ## Beta 0.6.6.0
 
 ### Combat turn-resolution ownership (#40, #209, #267)

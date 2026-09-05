@@ -37,10 +37,14 @@ assert.equal(guardians.resolveFinal(0),null,"invalid Boards must not silently ch
 assert.equal(guardians.resolveFinal(7),null,"invalid Boards must not silently choose Board 6");
 
 const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
-assert.match(monolith,/db317FinalGuardian\(boardLevel\)/,"the active final-combat path must use the guardian resolver");
+const encounter=fs.readFileSync(path.join(root,"runtime","js","combat","encounter-lifecycle.js"),"utf8");
+assert.match(encounter,/bases\s*=\s*\[rt\.finalGuardian\(boardLevel\)\]/,"the extracted encounter owner must resolve final guardians through its injected resolver");
+assert.match(encounter,/bases\s*=\s*\[rt\.minibossGuardian\(boardLevel\)\]/,"the extracted encounter owner must resolve miniboss guardians through its injected resolver");
+assert.match(monolith,/finalGuardian:level=>db317FinalGuardian\(level\)/,"the composition root must inject the canonical final-guardian resolver into encounter lifecycle");
+assert.match(monolith,/minibossGuardian:level=>db317MinibossGuardian\(level\)/,"the composition root must inject the canonical miniboss resolver into encounter lifecycle");
 assert.match(monolith,/DB317_GUARDIANS\.resolveFinal\(boardLevel\)/,"the final board tile must use the guardian resolver");
 assert.doesNotMatch(monolith,/const DB060_BOSS_ART=/,"legacy guardian portrait map must not bypass semantic artwork");
 assert.doesNotMatch(monolith,/assets\/enemies\/portraits\/astral-devourer-dragon\.png/,"guardian rendering must not retain the stale Astral portrait path");
 assert.ok(!fs.existsSync(path.join(root,"runtime","assets","enemies","bosses","battle","astral-devourer-dragon.png")),"opaque Astral battle art should be retired once the transparent replacement is canonical");
 
-console.log("Guardian registry PASS: Boards 1-6 use one isolated final identity with canonical battle/marker asset paths");
+console.log("Guardian registry PASS: Boards 1-6 use one isolated final identity with canonical battle/marker asset paths and extracted encounter ownership");

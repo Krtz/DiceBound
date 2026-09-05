@@ -920,6 +920,20 @@ def main() -> int:
                 + ", ".join(duplicate_top_level_functions)
             )
 
+    encounter_owner = next((m for m in modules if m.get("id") == "combat-encounter-lifecycle"), None)
+    if not encounter_owner or encounter_owner.get("status") != "extracted":
+        errors.append("combat encounter-lifecycle owner is missing or not extracted")
+    if monolith_source:
+        if "dbCombatEncounterLifecycle=dbCombatEncounterOwner.configure({" not in monolith_source:
+            errors.append("dicebound.js must configure the combat encounter-lifecycle owner")
+        if monolith_source.count("function startCombat(") != 1 or "return dbCombatEncounterLifecycle.start(kind);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin startCombat encounter-lifecycle adapter")
+        if re.search(r"(?m)^\s*startCombat\s*=", monolith_source):
+            errors.append("dicebound.js retains a startCombat reassignment after encounter-lifecycle extraction")
+        for symbol in ("startCombatV13","startCombatV15Patch","startCombatV16Base","startCombatV17Base","startCombatV18Base","startCombatV19Base","startCombatV19SetBase","startCombatV24Base","startCombatV25DevilBase","startCombatV26StoneBase","startCombatV27DifficultyBase","db0511StartCombatBase","db060StartCombatBase","db0635StartCombatBase","db064StartCombatBase","dbFriendStartCombatBase"):
+            if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
+                errors.append(f"retired combat encounter-lifecycle wrapper remains in dicebound.js: {symbol}")
+
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
     if len(planned_domains) != len(set(planned_domains)):
         errors.append("plannedDomains contains duplicates")

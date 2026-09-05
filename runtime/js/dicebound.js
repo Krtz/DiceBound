@@ -1335,11 +1335,8 @@
     if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbBoardMovement.move(value+bonus,value,bonus>0,chosen);
   }
   function startCombat(kind="normal"){
-    const tile=tiles[player.position];let bases=[];merchantBossBattle=kind==="merchant";
-    if(kind==="merchant")bases=[{name:"The Road Merchant",icon:"🧔💰",hp:185+boardLevel*60,attack:28+boardLevel*5,xp:260,gold:500,weakness:"nature",specialName:"Hostile Acquisition",enemyBarrier:4}];
-    else if(kind==="final")bases=[boardLevel===4?{name:"Crown-Eater of the Fourth Road",icon:"🐲👑",hp:190,attack:36,xp:290,gold:350,weakness:"light",specialName:"End of All Accounts"}:boardLevel===3?{name:"Nullstar Hydra",icon:"🐉🌑",hp:112,attack:24,xp:145,gold:170,weakness:"light",specialName:"Erasure of All Roads"}:boardLevel===2?{name:"Astral Devourer Dragon",icon:"🐲",hp:74,attack:16,xp:90,gold:105,weakness:"donut",specialName:"Astral Consumption"}:{name:"Ancient Road Dragon",icon:"🐉",hp:48,attack:11,xp:60,gold:70,weakness:"ice",specialName:"Worldfire Breath"}];
-    else if(kind==="miniboss")bases=[{...tile.enemyBase,specialName:boardLevel===4?"Crown Audit":boardLevel===3?"Paradox Collapse":boardLevel===2?"Titanic Roadslam":"Roadwarden Rampage"}];else bases=(tile.enemyBases?.length?tile.enemyBases:[tile.enemyBase||enemyForPosition(player.position)]).map(x=>({...x}));
-    currentEnemies=bases.map(b=>scaleEnemy(b,kind,bases.length));currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];currentEnemyTile=player.position;currentEncounterTurn=0;combatBusy=false;player.combatShield=player.firstHitBlocks+(mythicalSetCount()>=5?1:0)+(hasMythicPiece("hat")?1:0);player.combatAttackCount=0;player.combatActionCount=0;player.mythicActionCount=0;player.mythicAmuletUsed=false;if(mythicalSetCount()>=4)player.ultimateCharge=Math.max(player.ultimateCharge,v19SetStartUltimate());$("combatTitle").textContent=kind==="merchant"?"Secret Boss: The Merchant":kind==="final"?"Final Guardian":kind==="miniboss"?"Halfway Miniboss":currentEnemies.length>1?`Enemy Pack ×${currentEnemies.length}`:"Battle!";$("combatSubtitle").textContent=kind==="merchant"?"He closes the shop, raises barriers and begins charging interest.":currentEnemies.length>1?"Every enemy is visible below. The arrow marks your selected target.":"Choose your action.";$("combatHistory").innerHTML="";setCombatText(`${currentEnemies.map(e=>e.name).join(", ")} block the road. Choose your action.`);$("combatOverlay").classList.remove("hidden");addLog(`Combat begins against <b>${currentEnemies.map(e=>e.name).join(", ")}</b>.`);renderEnemyParty();updateCombatUI();
+    if(!dbCombatEncounterLifecycle)throw new Error('Combat encounter-lifecycle owner is not configured.');
+    return dbCombatEncounterLifecycle.start(kind);
   }
   function damageEnemy(enemy,amount,ignoreDefense=false){if(!enemy||enemy.hp<=0)return 0;if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);return 0;}const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0))),dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;return dealt;}
   function openCombatLootChain(defeated,done){
@@ -1526,6 +1523,7 @@
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
   // existing regression hooks can temporarily replace them without creating
   // a second production owner.
+  let dbCombatEncounterLifecycle=null;
   let dbCombatTurns=null;
   async function enemyTurn(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.enemyTurn(...args);}
   async function resolveEnemyResponse(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.resolveEnemyResponse(...args);}
@@ -1844,7 +1842,6 @@
 
   const scaleEnemyV11=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV11(base,kind,packSize);if(boardLevel===5){e.hp=Math.round(e.hp*1.55);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.45);e.defense+=(e.guardian?8:4);}if(hellMode){e.hp=Math.round(e.hp*2.1);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.85);e.defense+=(e.guardian?14:7);e.affinity=e.affinity||pick(ELEMENT_KEYS);e.elementProcChance=Math.max(e.elementProcChance||0,.36);}return e;};
 
-  startCombat=function(kind="normal"){const tile=tiles[player.position];let bases=[];merchantBossBattle=kind==="merchant";if(kind==="merchant"){const m=db317Enemy("road-merchant");m.hp=185+boardLevel*60;m.attack=28+boardLevel*5;bases=[m];}else if(kind==="bloodmage"){const b=db317Enemy("bloodmage-boss");b.hp=210+boardLevel*35;b.attack=34+boardLevel*4;bases=[b];}else if(kind==="final")bases=[db317FinalGuardian(boardLevel)];else if(kind==="miniboss")bases=[db317MinibossGuardian(boardLevel)];else bases=(tile.enemyBases?.length?tile.enemyBases:[tile.enemyBase||enemyForPosition(player.position)]).map(x=>({...x}));currentEnemies=bases.map(b=>scaleEnemy(b,kind,bases.length));if(kind==="bloodmage")currentEnemies.forEach(e=>{e.bloodmageBoss=true;e.guardian=true;e.merchantBoss=false;});currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];currentEnemyTile=player.position;currentEncounterTurn=0;combatBusy=false;player.combatShield=player.firstHitBlocks+(mythicalSetCount()>=5?1:0)+(hasMythicPiece("hat")?1:0);player.combatAttackCount=0;player.combatActionCount=0;player.mythicActionCount=0;player.mythicAmuletUsed=false;player.omegaRingUsed=false;if(mythicalSetCount()>=4)player.ultimateCharge=Math.max(player.ultimateCharge,v19SetStartUltimate());$("combatTitle").textContent=kind==="bloodmage"?"Secret Boss: The Bloodmage":kind==="merchant"?"Secret Boss: The Merchant":kind==="final"?"Final Guardian":kind==="miniboss"?"Halfway Miniboss":currentEnemies.length>1?`Enemy Pack ×${currentEnemies.length}`:"Battle!";$("combatSubtitle").textContent=kind==="bloodmage"?"The Bloodwell answers with forbidden scholarship.":kind==="merchant"?"He closes the shop, raises barriers and begins charging interest.":currentEnemies.length>1?"Every enemy is visible below. The arrow marks your selected target.":"Choose your action.";$("combatHistory").innerHTML="";setCombatText(`${currentEnemies.map(e=>e.name).join(", ")} block the road. Choose your action.`);$("combatOverlay").classList.remove("hidden");addLog(`Combat begins against <b>${currentEnemies.map(e=>e.name).join(", ")}</b>.`);renderEnemyParty();updateCombatUI();};
 
 
   async function bloodmageExsanguinate(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;const paid=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos("attack");updateCombatUI();await animateClassAttack("crit");let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(currentEnemy,damage);const ring=applyMythicRingPulse();setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${dealt} damage.${ring?` ${ring}`:""}`);sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);} 
@@ -2213,19 +2210,6 @@
   const petTurnV13=petTurn;
   petTurn=async function(){await petTurnV13();if(!classIdentityActive("beastmaster")||!currentEnemy)return;if(player.beastStance==="defensive"){player.combatShield++;addCombatHistory("🐾 Defensive pack order raises a Barrier.");}else if(player.beastStance==="support"){const h=healPlayer(2+Math.floor(boardLevel/2));if(h)addCombatHistory(`🐾 Support pack order restores ${h} HP.`);}updateCombatUI();};
 
-  const startCombatV13=startCombat;
-  startCombat=function(kind="normal"){
-    startCombatV13(kind);player.rogueStealUsed=false;player.monkCombo=0;player.fighterCounterReady=false;player.turtleCrushReady=false;player.ninjaSmoke=0;
-    if(classIdentityActive("clown")){
-      player.clownGimmick=pick(["Big Shoes","Rubber Chicken","Exploding Pie","Safety Net","Standing Ovation"]);player.clownPieReady=player.clownGimmick==="Exploding Pie";
-      if(player.clownGimmick==="Safety Net")player.combatShield++;
-      if(player.clownGimmick==="Standing Ovation")player.ultimateCharge=clamp(player.ultimateCharge+25,0,100);
-      identityFlash(`🤡 ${player.clownGimmick}`);addCombatHistory(`Opening Gag: ${player.clownGimmick}.`);
-    }
-    if(classIdentityActive("ceo")&&player.gold>=1000){player.combatShield++;addCombatHistory("📈 Platinum Executive tier begins the battle with a Barrier.");}
-    updateCombatUI();
-  };
-
   // ---- D20: make every combat roll readable and slightly more chaotic -------
   rollD20Chaos=async function(action){
     if(!classIdentityActive("d20"))return {roll:0,mult:1,extraEcho:0,bonusCrit:0,potionMult:1,guardBonus:0};
@@ -2558,8 +2542,6 @@
 
   const resetPlayerV15Patch=resetPlayer;
   resetPlayer=function(classId=selectedClassId){resetPlayerV15Patch(classId);player.summonerSpirits=[];player.summonerCap=3;player.summonerSpiritScale=1;player.summonerSpiritDouble=0;player.summonerManaBonus=0;player.summonerAutoSpirit=false;player.trainerRoster=[];player.trainerActiveIndex=0;player.trainerAssistBonus=0;player.trainerAssistScale=.65;player.trainerUltimateBonus=0;if(classIdentityActive("summoner")){player.maxMana=120;player.mana=35;}if(classIdentityActive("pokemontrainer")){player.trainerRoster=shuffledPetIds().slice(0,6);player.trainerActiveIndex=rand(0,Math.max(0,player.trainerRoster.length-1));}};
-  const startCombatV15Patch=startCombat;
-  startCombat=function(kind="normal"){startCombatV15Patch(kind);if(classIdentityActive("summoner")){player.summonerSpirits=[];if(player.summonerAutoSpirit){const pool=Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked);if(pool.length)player.summonerSpirits=[pick(pool)];}}updateCombatUI();};
   const petTurnV15Patch=petTurn;
   petTurn=async function(){if(classIdentityActive("pokemontrainer")){const targets=livingEnemies();if(!targets.length)return;let target=currentEnemy?.hp>0?currentEnemy:targets[0],id=activeTrainerPetId();await trainerStrike(id,target,1.65,"leads the roster");if(target.hp<=0){target=livingEnemies()[0];if(target)setCurrentEnemy(currentEnemies.indexOf(target));}if(target&&random()<clamp(.28+(player.trainerAssistBonus||0),0,.80)){const others=(player.trainerRoster||[]).filter(x=>x!==id),assist=others.length?pick(others):id;await trainerStrike(assist,target,player.trainerAssistScale||.65,"jumps in to assist");}updateCombatUI();await delay(380);return;}await petTurnV15Patch();if(!livingEnemies().length)return;if(classIdentityActive("summoner")&&(player.summonerSpirits||[]).length){for(const id of [...player.summonerSpirits]){const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target)break;const scale=.62*(player.summonerSpiritScale||1),hits=random()<clamp(player.summonerSpiritDouble||0,0,.75)?2:1;for(let h=0;h<hits;h++){await trainerStrike(id,target,scale,hits>1?"answers the pact twice":"answers the pact");if(!target.hp)break;}if(target.hp<=0&&livingEnemies().length)setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));}}else{const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(target)await maybePetElementProc(meta.activePet||"neutral",target);}updateCombatUI();};
 
@@ -2768,7 +2750,6 @@
   // Combat-kind metadata remains available to existing final-combat routing.
   // Board 5 terminal ownership was retired: Board 5 advances into Board 6.
   let v16CombatKind=null;
-  const startCombatV16Base=startCombat;startCombat=function(kind="normal"){v16CombatKind=kind;return startCombatV16Base(kind);};
   const winCombatV16Base=winCombat;
   winCombat=async function(){const result=await winCombatV16Base();restoreRadiationDefenseV16();return result;};
   // ---- Info additions -------------------------------------------------------
@@ -2867,7 +2848,6 @@
 
   // ---- Bloodmage secrecy + boss tuning ------------------------------------
   const openBloodwellV17Base=openBloodwell;openBloodwell=function(){openBloodwellV17Base();const grid=$("bloodwellGrid"),old=grid?.querySelector('[data-bloodmage]');if(old)old.remove();const art=$("bloodwellOverlay")?.querySelector('.start-art');if(!art)return;art.classList.toggle('bloodmage-secret-ready',(meta.merchantKills||0)>=1);art.title=(meta.merchantKills||0)>=1?"The blood icon seems to be watching you.":"";if((meta.merchantKills||0)>=1&&!art.dataset.v17Bloodmage){art.dataset.v17Bloodmage="1";art.addEventListener('click',()=>{if((meta.merchantKills||0)<1||$("bloodwellOverlay").classList.contains("hidden"))return;$("bloodwellOverlay").classList.add("hidden");startCombat("bloodmage");});}};
-  const startCombatV17Base=startCombat;startCombat=function(kind="normal"){const r=startCombatV17Base(kind);if(kind==="bloodmage"&&currentEnemy){currentEnemies.forEach(e=>{e.hp=Math.round(e.hp*1.42);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.16);e.defense=(e.defense||0)+3;e.enemyBarrier=(e.enemyBarrier||0)+2;});renderEnemyParty();updateCombatUI();addCombatHistory("🩸 The Bloodmage is stronger than the Merchant who revealed the path to this fight.");}return r;};
 
   // ---- D20: show the roll, pause, then let the calling attack resolve ------
   const rollD20ChaosV17Base=rollD20Chaos;rollD20Chaos=async function(action){const out=await rollD20ChaosV17Base(action);if(classIdentityActive("d20")&&out?.roll){setCombatText(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${d20ResultTitle(out.roll)}. Resolving...`);await delay(300);}return out;};
@@ -3148,13 +3128,6 @@
   // ---- CEO wealth barriers --------------------------------------------------
   // Older logic grants the first barrier at 1,000 gold. These are additive
   // thresholds: a CEO entering combat with 25k starts with three total.
-  const startCombatV18Base=startCombat;
-  startCombat=function(kind="normal"){
-    const out=startCombatV18Base(kind);
-    if(classIdentityActive("ceo")&&currentEnemy){let extra=0;if(player.gold>=10000)extra++;if(player.gold>=25000)extra++;if(extra){player.combatShield=(player.combatShield||0)+extra;addCombatHistory(`📈 Executive liquidity adds ${extra} extra Barrier${extra===1?"":"s"} (${player.gold>=25000?"25,000+":"10,000+"} gold tier).`);updateCombatUI();}}
-    return out;
-  };
-
   // ---- Ouroboros ultimate ---------------------------------------------------
   const useUltimateV18Base=useUltimate;
   useUltimate=async function(){
@@ -3479,16 +3452,6 @@
   // ---- Board 6 -------------------------------------------------------------
   const scaleEnemyV19Base=scaleEnemy;
   scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV19Base(base,kind,packSize);if(boardLevel===6){e.hp=Math.round(e.hp*1.85);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.58);e.defense=Math.round((e.defense||0)*1.25+10);e.xp=Math.round((e.xp||1)*1.35);e.gold=Math.round((e.gold||1)*1.18);}return e;};
-  const startCombatV19Base=startCombat;
-  startCombat=function(kind="normal"){
-    const out=startCombatV19Base(kind);if(boardLevel!==6||!currentEnemies.length)return out;
-    if(kind==="final"){
-      const base=db317FinalGuardian(6);currentEnemies=[scaleEnemy(base,"final",1)];currentEncounterLead=currentEnemies[0];currentEnemyIndex=0;currentEnemy=currentEnemies[0];
-    }else if(kind==="miniboss"){
-      currentEnemies[0].name="Abyssal Custodian";currentEnemies[0].specialName="Sixth Seal Collapse";currentEncounterLead=currentEnemies[0];currentEnemy=currentEnemies[0];
-    }
-    $("combatTitle").textContent=kind==="final"?"Sixth Road Final Guardian":kind==="miniboss"?"Sixth Road Miniboss":$("combatTitle").textContent;renderEnemyParty();updateCombatUI();return out;
-  };
   const applyRunThemeV19Base=applyRunTheme;
   applyRunTheme=function(){
     applyRunThemeV19Base();
@@ -3578,13 +3541,6 @@
   // ---- Set bonuses: runtime hooks ------------------------------------------
   // Normalize old hard-coded thresholds by wrapping the two main combat entry
   // points. This keeps v1.9's weaker 2/3/4 bonuses and strong 7-piece finish.
-  const startCombatV19SetBase=startCombat;
-  startCombat=function(kind="normal"){
-    const out=startCombatV19SetBase(kind);if(!currentEnemy)return out;
-    // Old code may have granted the former 4-piece values. Normalize to v1.9.
-    const n=mythicalSetCount();if(n>=4){player.ultimateCharge=Math.max(player.ultimateCharge,v19SetStartUltimate());}
-    return out;
-  };
   const petTurnV19Base=petTurn;
   petTurn=async function(){const bonus=v19SetPetDoubleBonus(),old=player.petDoubleChance||0;player.petDoubleChance=old+bonus;try{return await petTurnV19Base();}finally{player.petDoubleChance=old;}};
   // Base strike/ultimate/element formulas already call v19SetDamageBonus() directly.
@@ -4361,8 +4317,6 @@
   document.addEventListener('pointerdown',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(icon&&hellMode){v24SuppressHellClickUntil=Date.now()+900;e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   document.addEventListener('click',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(!icon||!hellMode)return;if(Date.now()<v24SuppressHellClickUntil){e.preventDefault();e.stopImmediatePropagation();return;}if(e.detail===0){e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   const tileMetaV24Base=tileMeta;tileMeta=function(tile){if(tile?.type==='devilboss')return ['👿🌙','???'];return tileMetaV24Base(tile);};
-  const startCombatV24Base=startCombat;
-  startCombat=function(kind='normal'){const out=startCombatV24Base(kind);if(kind==='devil'&&currentEnemy){currentEnemies.forEach(e=>{e.devilBoss=true;e.boss=true;e.guardian=true;e.specialName='Pale Moon Waltz';e.hp=Math.round(e.hp*1.75);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.35);e.defense=(e.defense||0)+8;});currentEncounterLead=currentEnemies[0];currentEnemy=currentEnemies[currentEnemyIndex]||currentEnemies[0];$('combatTitle').textContent='Secret Boss: The Pale Devil';$('combatSubtitle').textContent='You danced around the fire. Something accepted the invitation.';updateBossSpecialIndicator();updateCombatUI();}return out;};
   const winCombatV24Base=winCombat;winCombat=async function(){const defeated=currentEncounterLead||currentEnemy;if(defeated?.devilBoss){meta.devilBossKills=(meta.devilBossKills||0)+1;saveMeta();showToast('👿 The Pale Devil bows.',3000,true);}return winCombatV24Base();};
   const updateBossSpecialIndicatorV24Base=updateBossSpecialIndicator;updateBossSpecialIndicator=function(){const lead=currentEncounterLead,box=$('bossSpecialIndicator');if(lead?.devilBoss){const remaining=GUARDIAN_SPECIAL_INTERVAL-(currentEncounterTurn%GUARDIAN_SPECIAL_INTERVAL);box.classList.remove('hidden');box.classList.toggle('imminent',remaining<=2);box.textContent=`⚠️ ${lead.specialName} in ${remaining} turn${remaining===1?'':'s'}`;return;}return updateBossSpecialIndicatorV24Base();};
 
@@ -4509,13 +4463,6 @@
   useUltimate=async function(){if(!classIdentityActive("frog"))return useUltimateV25CroakBase();player._v25CroakHitsRemaining=Math.max(0,6+Math.floor((player.doubleStrike||0)*4));try{return await useUltimateV25CroakBase();}finally{player._v25CroakHitsRemaining=0;}};
 
   /* PALE DEVIL: later Hell encounter, barriers, varied attacks and Hellfire ---- */
-  const startCombatV25DevilBase=startCombat;
-  startCombat=function(kind='normal'){
-    const out=startCombatV25DevilBase(kind);
-    player.devilBurnStacks=0;
-    if(kind==='devil'&&currentEnemy){currentEnemies.forEach(e=>{e.enemyBarrier=Math.max(5,e.enemyBarrier||0);e.devilBoss=true;e.boss=true;e.guardian=true;e.specialName='Pale Moon Waltz';});player.devilBurnStacks=0;addCombatHistory('👿 The Pale Devil arrives behind five infernal barriers. Its attacks leave infinitely stacking Hellfire.');renderEnemyParty();updateCombatUI();}
-    return out;
-  };
   const updateCombatUIV25BurnBase=updateCombatUI;
   updateCombatUI=function(){updateCombatUIV25BurnBase();if($('playerStatusDots')&&(player.devilBurnStacks||0)>0)$('playerStatusDots').insertAdjacentHTML('beforeend',`<span class="burn-status" title="${player.devilBurnStacks} Hellfire stacks · uncapped · 1% max HP each">🔥×${player.devilBurnStacks}</span>`);};
 
@@ -4596,11 +4543,11 @@
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,returnToRoad,startCombat,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat,identityGuardAction})[name];if(typeof fn!=='function')return;
+    const fn=({rollDice,rollTwoDice,returnToRoad,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat,identityGuardAction})[name];if(typeof fn!=='function')return;
     const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='startCombat')startCombat=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;else if(name==='identityGuardAction')identityGuardAction=wrapped;
+    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;else if(name==='identityGuardAction')identityGuardAction=wrapped;
   }
-  ['rollDice','rollTwoDice','returnToRoad','startCombat','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat','identityGuardAction'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='startCombat'||n==='winCombat'?'events':'detailed'));
+  ['rollDice','rollTwoDice','returnToRoad','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat','identityGuardAction'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='winCombat'?'events':'detailed'));
 
   /* Final UI sync / tests -------------------------------------------------- */
   const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
@@ -4795,7 +4742,6 @@
   function v26HasStone(){return !!player.equipment?.amulet?.bloodmageStone;}
   function v26ClearStoneBattle(){const atk=Number(player.v26StoneBattleAttack)||0,echo=Number(player.v26StoneBattleEcho)||0;if(atk)player.attack-=atk;if(echo)player.doubleStrike=Math.max(0,player.doubleStrike-echo);player.v26StoneBattleAttack=0;player.v26StoneBattleEcho=0;if(classIdentityActive('ouroboros'))v18SyncOuroborosAttack();}
   const healPlayerV26StoneBase=healPlayer;healPlayer=function(amount,opts){const raw=Math.max(0,Math.round(amount||0)),beforeHp=player.hp,beforeMax=player.maxHp,room=Math.max(0,beforeMax-beforeHp),healed=healPlayerV26StoneBase(amount,opts);if(v26HasStone()&&currentEnemy&&raw>room){const maxGrowth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-room-maxGrowth);if(over>0){const shieldGain=over*.05,attackGain=over*.01;player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+shieldGain);if(classIdentityActive('ouroboros')){const echoGain=attackGain*.10;player.doubleStrike+=echoGain;player.v26StoneBattleEcho=(player.v26StoneBattleEcho||0)+echoGain;}else{player.attack+=attackGain;player.v26StoneBattleAttack=(player.v26StoneBattleAttack||0)+attackGain;}addCombatHistory(`🜂 Philosopher's Stone transmutes ${over} overheal into +${shieldGain.toFixed(1)} Energy Shield and +${attackGain.toFixed(2)} temporary Attack${player.classId==='ouroboros'?' (converted to Echo)':''}.`);}}return healed;};
-  const startCombatV26StoneBase=startCombat;startCombat=function(kind='normal'){v26ClearStoneBattle();return startCombatV26StoneBase(kind);};
 
   /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
   const winCombatV26Base=winCombat;winCombat=async function(...args){const defeated=currentEncounterLead||currentEnemy,secret=defeated?.devilBoss?'devil':defeated?.bloodmageBoss?'bloodmage':defeated?.merchantBoss?'merchant':null;const r=await winCombatV26Base.apply(this,args);v26ClearStoneBattle();if(secret){const base={merchant:400,bloodmage:650,devil:1200}[secret],gain=Math.max(1,Math.round(base*(1+(player.legacyXpBonus||0))));grantLegacyXp(gain);saveMeta();updateMetaUI();addLog(`<b>Secret legacy:</b> defeating ${defeated?.name||secret} grants <b>+${gain} Legacy XP</b>.`);showToast(`🌟 Secret boss · +${gain} Legacy XP`,3200,true);}return r;};
@@ -4913,7 +4859,6 @@
   const showLegendaryChoiceV27Base=showLegendaryChoice;showLegendaryChoice=function(source,onComplete=()=>{}){if(String(source).toLowerCase().includes('miniboss'))return v27ShowMinibossReward(source,onComplete);const legends=eligibleUpgrades(u=>u.rarity==='legendary');if(!legends.length){const epics=eligibleUpgrades(u=>u.rarity==='epic');if(epics.length)return showPowerupChoice(source,onComplete,u=>u.rarity==='epic','Every eligible Legendary is exhausted. Choose an Epic power instead.');}return showLegendaryChoiceV27Base(source,onComplete);};
 
   /* NIGHTMARE / HELL ENEMY DEFENSES --------------------------------------- */
-  const startCombatV27DifficultyBase=startCombat;startCombat=function(kind='normal'){const r=startCombatV27DifficultyBase(kind);if(currentEnemies?.length){currentEnemies.forEach(e=>{if((nightmareMode||hellMode)){const baseDodge=(e.boss?.015:.02)+Math.max(0,boardLevel-1)*.004+(hellMode?.02:0);e.dodge=Math.max(e.dodge||0,Math.min(.10,baseDodge));}if(nightmareMode&&e.boss)e.enemyBarrier=Math.max(1,e.enemyBarrier||0);if(hellMode&&boardLevel>1)e.enemyBarrier=Math.max(1,e.enemyBarrier||0);});renderEnemyParty();updateCombatUI();}return r;};
   const updateCombatUIV27EnemyBase=updateCombatUI;updateCombatUI=function(){const r=updateCombatUIV27EnemyBase();if(currentEnemy&&$('enemyHpText')&&(currentEnemy.dodge||0)>0)$('enemyHpText').textContent+=` · ${Math.round(currentEnemy.dodge*100)}% DODGE`;if(currentEnemy&&$('enemyStatusDots')&&(currentEnemy.burnStacks||0)>0)$('enemyStatusDots').insertAdjacentHTML('beforeend',`<span class="burn-status" title="Burn ${currentEnemy.burnStacks}/${BETA03_BURN_CAP}: takes ${currentEnemy.burnStacks}% max HP damage each turn">🔥×${currentEnemy.burnStacks}</span>`);return r;};
 
   /* BRAIN HACK / RADIATION ------------------------------------------------- */
@@ -6697,8 +6642,6 @@
     restoreRadiationDefenseV16?.();
     player.db0511BurnStacks=0;player.db0511PoisonStacks=0;player.db0511PoisonPower=0;player._db0511SkipAction='';player._db0511SuppressControlProc=false;
   }
-  const db0511StartCombatBase=startCombat;
-  startCombat=function(...args){db0511RestoreEnemyElementDebuffs();const r=db0511StartCombatBase.apply(this,args);player.db0511BurnStacks=0;player.db0511PoisonStacks=0;player.db0511PoisonPower=0;return r;};
   const db0511WinCombatBase=winCombat;
   winCombat=async function(...args){const r=await db0511WinCombatBase.apply(this,args);db0511RestoreEnemyElementDebuffs();return r;};
   const db0511HandleDeathBase=handlePlayerDeath;
@@ -7084,8 +7027,6 @@
 
   // Battle-lifetime Legendary state cleanup + Last Stand.
   function db060ClearBattleLegendaryTemps(){if(player._db060IronEchoDefense){player.defense=Math.max(0,player.defense-player._db060IronEchoDefense);player._db060IronEchoDefense=0;}if(player._db060BloodPriceStacks){player.damageBonus=Math.max(0,(player.damageBonus||0)-player._db060BloodPriceStacks*.08);player._db060BloodPriceStacks=0;}player._db060LastStandUsed=false;}
-  const db060StartCombatBase=startCombat;
-  startCombat=function(...args){db060ClearBattleLegendaryTemps();player._db060LastElement=null;return db060StartCombatBase(...args);};
   const db060HandleDeathBase=handlePlayerDeath;
   handlePlayerDeath=function(...args){if(player.hp<=0&&db060HasEffect('last_stand')&&!player._db060LastStandUsed){player._db060LastStandUsed=true;player.hp=Math.max(1,Math.ceil(player.maxHp*.25));player.combatShield=(player.combatShield||0)+3;combatBusy=false;addCombatHistory('❤️‍🔥🛡️ Last Stand refuses death: 25% HP and 3 Barriers.');showToast('❤️‍🔥 LAST STAND',2400,true);updateCombatUI();return;}return db060HandleDeathBase(...args);};
   const db060WinCombatBase=winCombat;
@@ -7370,8 +7311,6 @@
     else {delete overlay.dataset.combatBackground;overlay.style.removeProperty('--db0635-combat-background-image');}
     return entry;
   }
-  const db0635StartCombatBase=startCombat;
-  startCombat=function(...args){const result=db0635StartCombatBase.apply(this,args);db0635ApplyCombatBackground();return result;};
   window.DiceboundCombatBackgrounds=Object.freeze({mode:db0635CombatMode,resolve:(board,mode='normal')=>window.DiceboundAssets?.resolveCombatBackground?.(board,mode)||null,active:db0635ApplyCombatBackground});
   /* BETA 0.6.3.6 — #81 Slime Board battle progression.
      The assets owner resolves transparent Board base art. This integration
@@ -7669,8 +7608,6 @@
     meta.settings.battleLogCollapsed=!!collapsed;db064SyncBattleLog();saveMeta();return !!collapsed;
   }
   $('combatHistoryToggle')?.addEventListener('click',()=>db064SetBattleLogCollapsed(!db064BattleLogCollapsed()));
-  const db064StartCombatBase=startCombat;
-  startCombat=function(...args){const result=db064StartCombatBase.apply(this,args);db064SyncBattleLog();return result;};
 
   /* #55 Root tooltip portal.  The tooltip is a root sibling instead of a
      child of a scrolling panel, so overflow and local stacking contexts can
@@ -7987,8 +7924,6 @@
     const fx=$('attackFx');if(fx){fx.className='attack-fx';fx.replaceChildren();}
     $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
   }
-  const dbFriendStartCombatBase=startCombat;
-  startCombat=function(...args){dbFriendClearCombatPresentation();const result=dbFriendStartCombatBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
   const dbFriendReturnToRoadBase=returnToRoad;
   returnToRoad=function(...args){dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
 
@@ -8090,6 +8025,56 @@
     clearCombatPresentation:dbFriendClearCombatPresentation,
     feedPet:count=>feedActivePet(count),
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
+  });
+
+  const dbCombatEncounterOwner=window.DiceboundCombatEncounterLifecycle;
+  if(!dbCombatEncounterOwner)throw new Error('DiceBound requires the combat encounter-lifecycle owner before dicebound.js');
+  dbCombatEncounterLifecycle=dbCombatEncounterOwner.configure({
+    getPlayer:()=>player,
+    getMeta:()=>meta,
+    getTile:()=>tiles[player.position],
+    getPosition:()=>player.position,
+    getBoardLevel:()=>boardLevel,
+    isNightmare:()=>nightmareMode,
+    isHell:()=>hellMode,
+    isClassActive:id=>classIdentityActive(id),
+    petIds:()=>Object.keys(PETS),
+    isPetUnlocked:(state,id)=>!!state.pets?.[id]?.unlocked,
+    enemyById:id=>db317Enemy(id),
+    finalGuardian:level=>db317FinalGuardian(level),
+    minibossGuardian:level=>db317MinibossGuardian(level),
+    enemyForPosition:index=>enemyForPosition(index),
+    scaleEnemy:(...args)=>scaleEnemy(...args),
+    setMerchantBossBattle:value=>{merchantBossBattle=!!value;},
+    setCombatKind:value=>{v16CombatKind=value;},
+    setEncounterState:state=>{currentEnemies=state.enemies;currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;currentEnemyTile=state.tile;currentEncounterTurn=state.turn;combatBusy=state.busy;},
+    getEncounterState:()=>({enemies:currentEnemies,lead:currentEncounterLead,index:currentEnemyIndex,current:currentEnemy,tile:currentEnemyTile,turn:currentEncounterTurn,busy:combatBusy}),
+    setEncounterSelection:state=>{currentEnemies=state.enemies;currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;},
+    mythicalSetCount:()=>mythicalSetCount(),
+    hasMythicPiece:slot=>hasMythicPiece(slot),
+    startUltimate:()=>v19SetStartUltimate(),
+    setCombatTitle:value=>{$('combatTitle').textContent=value;},
+    getCombatTitle:()=>$('combatTitle').textContent,
+    setCombatSubtitle:value=>{$('combatSubtitle').textContent=value;},
+    clearCombatHistory:()=>{$('combatHistory').innerHTML='';},
+    setCombatText:(...args)=>setCombatText(...args),
+    showCombatOverlay:()=>$('combatOverlay').classList.remove('hidden'),
+    addLog:text=>addLog(text),
+    renderEnemyParty:()=>renderEnemyParty(),
+    updateCombatUI:()=>updateCombatUI(),
+    pick:values=>pick(values),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    identityFlash:text=>identityFlash(text),
+    addCombatHistory:text=>addCombatHistory(text),
+    updateBossSpecialIndicator:()=>updateBossSpecialIndicator(),
+    clearStoneBattle:()=>v26ClearStoneBattle(),
+    restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
+    clearBattleLegendaryTemps:()=>db060ClearBattleLegendaryTemps(),
+    traceCoreStart:(kind,work)=>v25TraceCommand('startCombat',work,'events',[kind]),
+    applyCombatBackground:()=>db0635ApplyCombatBackground(),
+    syncBattleLog:()=>db064SyncBattleLog(),
+    clearCombatPresentation:()=>dbFriendClearCombatPresentation(),
+    refreshActivePetArt:()=>db059RefreshActivePetArt?.()
   });
 
   const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;

@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.6.0
+# Unreleased — Beta 0.6.6.1
+
+## Beta 0.6.6.1 Combat encounter-lifecycle ownership (#40, #209, #269)
+- Battle entry now has one authoritative owner in `combat/encounter-lifecycle.js`, covering encounter selection/state setup, class battle-start state, Board 6 entry behavior, secret-boss tuning, difficulty defenses and battle-local cleanup/presentation handoff.
+- Removed the historical `startCombat` reassignment ladder from `dicebound.js`; the monolith retains one thin composition adapter. Existing combat values, encounter/scaling order, RNG draw/order, action/event ordering and checkpoint/save behavior are intentionally preserved.
+- Deterministic encounter fixtures protect ordinary packs, Board 6 double-scaling behavior, Clown/Summoner entry RNG ordering, CEO barriers, Nightmare/Hell entry defenses, Bloodmage/Pale Devil setup and outer cleanup/presentation ordering.
 
 ## Beta 0.6.6.0 Combat turn-resolution ownership (#40, #209, #267)
 - Enemy response/turn sequencing now has one authoritative owner in `combat/turn-resolution.js`, including ordinary incoming hits, Guardian specials, Freeze/Haste response handling, player/enemy status ticks, forced-control repeat turns, Hellfire, Glass Fortress, Wolf Echo follow-up and Dragoon Airborne response handling.
