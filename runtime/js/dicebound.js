@@ -1475,7 +1475,10 @@
     const progress=player.position/Math.max(1,currentTileCount()-1),global=(boardLevel-1)+progress,isMini=kind==="miniboss",isFinal=kind==="final",isMerchant=kind==="merchant",isBoss=isMini||isFinal||isMerchant,levelScale=1+(player.level-1)*.15+global*.84,boardScale=boardLevel===4?2.30:boardLevel===3?1.68:boardLevel===2?1.28:1,packHp=packSize>1?(packSize===2?.78:.66):1,packAtk=packSize>1?(packSize===2?.82:.70):1;
     let hp=Math.round(base.hp*levelScale*boardScale*(isFinal?2.65:isMini?1.66:isMerchant?2.9:1)*packHp),attack=Math.round(base.attack*(1+(player.level-1)*.095+global*.62)*(boardLevel===4?1.82:boardLevel===3?1.48:boardLevel===2?1.22:1)*(isFinal?1.27:isMini?1.12:isMerchant?1.5:1)*packAtk);const archetype=Number(base.defenseBias||0),roadArmor=global*(1.25+Math.max(0,archetype)*.16)+(boardLevel-1)*.75;let defense=Math.max(0,Math.floor(roadArmor+archetype+(isMini?2:isFinal?4:isMerchant?8:0)));if(nightmareMode){hp*=2;attack*=2;defense*=2;}
     const elementalChance=clamp(.04+global*.065+(nightmareMode?.18:0),.04,.62),affinity=isBoss?(base.affinity||pick(ELEMENT_KEYS)):(random()<elementalChance?pick(ELEMENT_KEYS):null),elementProcChance=affinity?clamp((isBoss?.28:.10)+global*.025+(nightmareMode?.08:0),.10,.55):0;
-    return {...base,hp,maxHp:hp,attack,defense,xp:Math.round(base.xp*(1+global*.72)*(isFinal?4.4:isMini?2.4:isMerchant?5:1)),gold:Math.round(base.gold*(1+global*.72)*(isFinal?4.5:isMini?2.5:isMerchant?5:1)),boss:isBoss,guardian:isBoss,miniBoss:isMini,finalBoss:isFinal,merchantBoss:isMerchant,skipTurns:0,poisonStacks:0,affinity,elementProcChance};
+    const scaled={...base,hp,maxHp:hp,attack,defense,xp:Math.round(base.xp*(1+global*.72)*(isFinal?4.4:isMini?2.4:isMerchant?5:1)),gold:Math.round(base.gold*(1+global*.72)*(isFinal?4.5:isMini?2.5:isMerchant?5:1)),boss:isBoss,guardian:isBoss,miniBoss:isMini,finalBoss:isFinal,merchantBoss:isMerchant,skipTurns:0,poisonStacks:0,affinity,elementProcChance};
+    if(boardLevel===6){const balance=db317Board(6).balance;scaled.hp=Math.round(scaled.hp*balance.extraHp);scaled.maxHp=scaled.hp;scaled.attack=Math.round(scaled.attack*balance.extraAttack);scaled.defense=Math.round((scaled.defense||0)*balance.extraDefenseMult+balance.extraDefenseFlat);if(kind==="miniboss"||kind==="final"){scaled.hp=Math.round(scaled.hp*balance.guardianHp);scaled.maxHp=scaled.hp;scaled.attack=Math.round(scaled.attack*balance.guardianAttack);}}
+    if(scaled.name==="Cultist")scaled.lifeSteal=hellMode?.20:nightmareMode?.10:.01;
+    return scaled;
   }
 
   function triggerElementEffect(key,target=currentEnemy,{forced=false,source="Weapon"}={}){
@@ -2472,57 +2475,6 @@
 
   // Update rarity/explanation text without exposing the hidden number itself.
 
-
-  // ---- Progression-aware career test harness -------------------------------
-  // Separate from the old run tester; this models persistent accounts, economy and milestones across sequential runs.
-  function buildCareerHarness(){
-    const policies={balanced:{buy:.60,risk:.50,save:.45},conservative:{buy:.72,risk:.30,save:.30},greedy:{buy:.38,risk:.68,save:.72},casual:{buy:.50,risk:.48,save:.38}};
-    function Rng(seed){let x=(seed||1)>>>0;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
-    const ri=(R,a,b)=>Math.floor(R()*(b-a+1))+a,pc=(R,a)=>a[Math.floor(R()*a.length)];
-    function newAccount(){return {legacyLevel:1,legacyXp:0,points:0,prestige:0,runs:0,unlocks:new Set(["ranger"]),heirlooms:[],highestGold:0,damageTaken:0,healing:0,bestBoard:0,bestProgress:0,milestones:{},economy:{earned:0,spent:0,sold:0,shopVisits:0,affordableVisits:0,byBoard:Object.fromEntries([1,2,3,4,5].map(b=>[b,{earned:0,spent:0,sold:0,visits:0,affordable:0}]))},unlockMilestones:{ranger:0},personalBests:0};}
-    function grantLegacy(a,xp){a.legacyXp+=Math.max(0,Math.round(xp));while(a.legacyXp>=legacyXpForLevel(a.legacyLevel)){a.legacyXp-=legacyXpForLevel(a.legacyLevel);a.legacyLevel++;a.points++;}}
-    function classScore(id){return {ranger:1,fighter:1.05,sorcerer:1.04,monk:1.07,clown:1.04,rouge:1.11,berserker:1.13,turtle:1.08,frog:1.08,d20:1.16,slime:1.10,vampire:1.18,ninja:1.17,cleric:1.11,paladin:1.18,beastmaster:1.16,rogue:1.18,ceo:1.30,merchant:1.34,bloodmage:1.36}[id]||1;}
-    function chooseClass(a,R){const unlocked=[...a.unlocks];if(unlocked.length===1)return "ranger";const newest=unlocked.slice(-3);if(R()<.48)return pc(R,newest);return unlocked.sort((x,y)=>classScore(y)-classScore(x))[Math.min(unlocked.length-1,ri(R,0,Math.min(3,unlocked.length-1)))];}
-    function gearDrop(R,board){const roll=R()+board*.035,rarity=roll>.985?"legendary":roll>.92?"epic":roll>.72?"rare":roll>.43?"uncommon":"common",range=V14_RARITY_BUDGETS[rarity]||[20,30];return {rarity,power:ri(R,range[0],range[1])+Math.min(8,board*2)};}
-    function accountPower(a,id){const talent=Math.min(50,a.points+a.prestige*5),heir=a.heirlooms.reduce((s,p)=>s+p,0);return classScore(id)*(1+talent*.012+a.prestige*.035+heir*.0018);}
-    function unlockCheck(a,r){const unlock=id=>{if(!a.unlocks.has(id)){a.unlocks.add(id);a.unlockMilestones[id]=a.runs;}};if(r.mini1)unlock("sorcerer");if(r.boardClears>=1)unlock("fighter");if(r.mini2)unlock("monk");if(r.boardClears>=2)unlock("clown");if(a.healing>=1000)unlock("cleric");if(a.highestGold>=4000)unlock("rogue");if(a.damageTaken>=1000)unlock("berserker");if(a.prestige>=10)unlock("rouge");if(a.runs>=14&&a.bestBoard>=3)unlock("vampire");if(a.runs>=18&&a.bestBoard>=3)unlock("ninja");if(a.runs>=22&&a.bestBoard>=4)unlock("d20");}
-    function runOne(a,R,policyName="balanced"){
-      const p=policies[policyName]||policies.balanced,id=chooseClass(a,R),power=accountPower(a,id),r={classId:id,boardClears:0,deathBoard:0,gold:20+Math.min(180,a.points*5),earned:0,spent:0,sold:0,gearFound:0,gearEquipped:0,mini1:false,mini2:false,legacy:0,newBest:false};
-      let hp=1.0,runLevel=1,equippedPower=a.heirlooms.length?Math.max(...a.heirlooms):0,travel=0;
-      for(let board=1;board<=5;board++){
-        const encounters=board>=4?ri(R,9,14):ri(R,15,22),boardThreat=[0,.92,1.52,2.18,3.05,4.15][board],shopAt=Math.floor(encounters*.42);
-        for(let i=0;i<encounters;i++){
-          if(board===1&&i>=Math.floor(encounters*.50))r.mini1=true;if(board===2&&i>=Math.floor(encounters*.50))r.mini2=true;
-          travel+=ri(R,3,6);const prog=i/Math.max(1,encounters-1),threat=boardThreat*(1+prog*.25)*(1+runLevel*.025),combat=power*(1+runLevel*.055+equippedPower*.0035)*(0.88+R()*.24);
-          if(combat<threat){const loss=(threat-combat)*(.22+.20*R());hp-=loss;a.damageTaken+=Math.round(loss*100);}
-          else hp=Math.min(1,hp+.012+.015*R());
-          const gold=Math.round((8+board*7+prog*10)*(0.8+R()*.45));r.gold+=gold;r.earned+=gold;a.economy.byBoard[board].earned+=gold;
-          if(R()<.23){const g=gearDrop(R,board);r.gearFound++;const sell=Math.round((12+g.power*1.45+g.power*g.power*.042)*({common:.8,uncommon:.9,rare:1,epic:1.1,legendary:1.25}[g.rarity]||1));if(g.power>equippedPower*(.92+p.risk*.08)){equippedPower=g.power;r.gearEquipped++;}else{r.gold+=sell;r.sold+=sell;a.economy.byBoard[board].sold+=sell;}}
-          if(i===shopAt){a.economy.shopVisits++;a.economy.byBoard[board].visits++;const useful=Math.round(([0,210,470,780,1220,1780][board]||1780)*(0.92+R()*.16)),can=r.gold>=useful;if(can){a.economy.affordableVisits++;a.economy.byBoard[board].affordable++;}if(can&&R()<p.buy){r.gold-=useful;r.spent+=useful;a.economy.byBoard[board].spent+=useful;equippedPower+=ri(R,4,9)+board*2;}}
-          if(hp<=0){r.deathBoard=board;break;}if(R()<.20)runLevel++;
-        }
-        if(r.deathBoard)break;
-        const bossThreat=boardThreat*(1.58+board*.10),bossPower=power*(1+runLevel*.06+equippedPower*.0038)*(0.9+R()*.22);if(bossPower<bossThreat){r.deathBoard=board;break;}
-        r.boardClears=board;if(board===2)r.mini2=true;hp=Math.min(1,hp+.14);const bossGold=Math.round([0,300,520,800,1250,1700][board]*(.85+R()*.30));r.gold+=bossGold;r.earned+=bossGold;a.economy.byBoard[board].earned+=bossGold;
-      }
-      a.runs++;a.highestGold=Math.max(a.highestGold,r.gold);a.healing+=Math.round((1-hp)*45+r.boardClears*25);const depth=r.boardClears+(r.deathBoard?0.45:0),prev=a.bestProgress;if(depth>prev){a.bestProgress=depth;a.bestBoard=Math.max(a.bestBoard,r.boardClears);a.personalBests++;r.newBest=true;}
-      const goldLegacy=Math.floor(Math.sqrt(Math.max(0,r.gold))*2.2),legacy=travel+goldLegacy;r.legacy=legacy;grantLegacy(a,legacy);a.economy.earned+=r.earned;a.economy.spent+=r.spent;a.economy.sold+=r.sold;
-      if(r.boardClears>=1&&!a.milestones.board1)a.milestones.board1=a.runs;if(r.boardClears>=2&&!a.milestones.board2)a.milestones.board2=a.runs;if(r.boardClears>=3&&!a.milestones.board3)a.milestones.board3=a.runs;if(r.boardClears>=4&&!a.milestones.board4)a.milestones.board4=a.runs;if(r.boardClears>=5&&!a.milestones.board5)a.milestones.board5=a.runs;
-      if(r.gearEquipped&&equippedPower>0){a.heirlooms=[...a.heirlooms,equippedPower].sort((x,y)=>y-x).slice(0,Math.min(3,1+Math.floor(a.prestige/10)));}
-      if(a.points>=20&&a.legacyLevel>=28&&a.runs%5===0){const gain=Math.floor(a.points/10);a.prestige+=gain;a.points=0;a.legacyLevel=1;a.legacyXp=0;if(!a.milestones.prestige)a.milestones.prestige=a.runs;}
-      unlockCheck(a,r);return r;
-    }
-    function percentile(arr,q){if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b),i=Math.min(s.length-1,Math.floor((s.length-1)*q));return s[i];}
-    function run(careers=250,runs=40,opts={}){const policy=opts.policy||"balanced",seed=opts.seed||1414,accounts=[],allRuns=[];for(let c=0;c<careers;c++){const a=newAccount(),R=Rng(seed+c*7919);for(let n=0;n<runs;n++)allRuns.push({...runOne(a,R,policy),career:c,run:n+1});accounts.push(a);}const milestoneSummary={};for(const key of ["board1","board2","board3","board4","board5","prestige"]){const vals=accounts.map(a=>a.milestones[key]).filter(Boolean);milestoneSummary[key]={reached:vals.length/careers,p10:percentile(vals,.1),median:percentile(vals,.5),p90:percentile(vals,.9)};}
-      const economy={avgEarned:accounts.reduce((s,a)=>s+a.economy.earned,0)/careers,avgSpent:accounts.reduce((s,a)=>s+a.economy.spent,0)/careers,avgSold:accounts.reduce((s,a)=>s+a.economy.sold,0)/careers,shopAffordability:accounts.reduce((s,a)=>s+a.economy.affordableVisits,0)/Math.max(1,accounts.reduce((s,a)=>s+a.economy.shopVisits,0)),byBoard:Object.fromEntries([1,2,3,4,5].map(b=>{const visits=accounts.reduce((s,a)=>s+a.economy.byBoard[b].visits,0),aff=accounts.reduce((s,a)=>s+a.economy.byBoard[b].affordable,0);return [b,{avgEarned:accounts.reduce((s,a)=>s+a.economy.byBoard[b].earned,0)/careers,avgSpent:accounts.reduce((s,a)=>s+a.economy.byBoard[b].spent,0)/careers,avgSold:accounts.reduce((s,a)=>s+a.economy.byBoard[b].sold,0)/careers,affordability:aff/Math.max(1,visits)}];}))};
-      const unlocks={};for(const id of Object.keys(CLASSES)){const vals=accounts.map(a=>a.unlockMilestones[id]).filter(v=>v!==undefined);unlocks[id]={reached:vals.length/careers,p10:percentile(vals,.1),median:percentile(vals,.5),p90:percentile(vals,.9)};}
-      const progression=Array.from({length:runs},(_,i)=>{const rows=allRuns.filter(r=>r.run===i+1);return {run:i+1,avgBoards:rows.reduce((s,r)=>s+r.boardClears,0)/rows.length,newBestRate:rows.filter(r=>r.newBest).length/rows.length,avgLegacy:rows.reduce((s,r)=>s+r.legacy,0)/rows.length,avgEndingGold:rows.reduce((s,r)=>s+r.gold,0)/rows.length};});
-      return {generatedAt:new Date().toISOString(),careers,runsPerCareer:runs,totalRuns:allRuns.length,policy,milestones:milestoneSummary,unlocks,economy,progression,accounts,rows:opts.includeRows?allRuns:undefined};}
-    function compare(careers=150,runs=40,opts={}){const out={};for(const policy of opts.policies||Object.keys(policies))out[policy]=run(careers,runs,{...opts,policy});return out;}
-    function selfTest(){const r=run(8,12,{seed:99});return {ok:r.totalRuns===96&&r.progression.length===12,milestones:r.milestones,economy:r.economy};}
-    return Object.freeze({run,compare,selfTest,policies:Object.freeze(Object.keys(policies)),note:"Progression-aware hidden harness. Simulates persistent accounts, Legacy/Prestige, unlock pacing, shops, resale, gear quality and personal-best progression. It is a model for balance direction, not a pixel-perfect replay of every live-game choice."});
-  }
-  try{Object.defineProperty(window,"DiceboundCareerTestLegacy",{value:buildCareerHarness(),enumerable:false,configurable:false,writable:false});}catch(e){window.DiceboundCareerTestLegacy=buildCareerHarness();}
 
   /* ---------- Alpha v1.5: defense, treasure scaling, summon classes & completion hardening ---------- */
   document.title=`Dicebound: Alpha v1.9 — ${pick([
@@ -4234,160 +4186,6 @@
 
 
   /* ========================================================================
-     Alpha v2.3.5 half-patch
-     ------------------------------------------------------------------------
-     This block intentionally begins the internal modularization of Dicebound.
-     New work is grouped into extractable modules (balance, talent layout,
-     camp presentation, compatibility and human testing) so a later desktop
-     wrapper can move these pieces into separate .js files without rewriting
-     their behavior.
-     ======================================================================== */
-  const DB235={version:'2.3.5',modules:{}};
-
-  /* MODULE: compatibility/version ----------------------------------------- */
-  DB235.modules.compat={
-    engineTarget:'Microsoft Edge / Chromium-compatible Web APIs only',
-    note:'No Chromium executable, Electron or Node integration is required by the game itself.'
-  };
-  const v235TabHints=[
-    'the road is counting how often you repeat yourself',
-    'some merchants dislike sustained eye contact',
-    'four echoes make a suspiciously complete circle',
-    'a bloodwell can remember more than blood',
-    'very large numbers sometimes attract management',
-    'DiBo seems unusually interested in round numbers',
-    'some companions are waiting for a fifth road story',
-    'the safest-looking tile is not always the least observant',
-    'the road has secrets, but apparently no respect for bedtime',
-    'tiny imaginary adventurers have unionized the testing department'
-  ];
-  document.title=`Dicebound: Alpha v2.3.5 — ${pick(v235TabHints)}`;
-  const v235Brand=document.querySelector('.brand h1');if(v235Brand)v235Brand.textContent='Dicebound: Alpha v2.3.5';
-  const v235BrandSub=document.querySelector('.brand p');if(v235BrandSub)v235BrandSub.textContent='Alpha v2.3.5 · Six roads, cleaner foundations, and a suspicious amount of automated adventuring.';
-
-  /* MODULE: board-6 balance ------------------------------------------------ */
-  DB235.modules.balance={
-    board6:{...db317Board(6).balance,entryHeal:db317Board(6).entryHeal,entryPotions:db317Board(6).entryPotions},
-    rationale:'Board 6 is intended to be a genuine post-Board-5 wall rather than a victory lap.'
-  };
-  const v235ScaleEnemyBase=scaleEnemy;
-  scaleEnemy=function(base,kind='normal',packSize=1){
-    const e=v235ScaleEnemyBase(base,kind,packSize);
-    if(boardLevel===6){
-      const b=DB235.modules.balance.board6;e.hp=Math.round(e.hp*b.extraHp);e.maxHp=e.hp;e.attack=Math.round(e.attack*b.extraAttack);e.defense=Math.round((e.defense||0)*b.extraDefenseMult+b.extraDefenseFlat);
-      if(kind==='miniboss'||kind==='final'){e.hp=Math.round(e.hp*b.guardianHp);e.maxHp=e.hp;e.attack=Math.round(e.attack*b.guardianAttack);}
-    }
-    if(e.name==='Cultist')e.lifeSteal=hellMode?.20:nightmareMode?.10:.01;
-    return e;
-  };
-  /* MODULE: camp presentation --------------------------------------------- */
-  DB235.modules.camp={updateHellDevil(){const hell=$('campHellBtn');if(!hell)return;const icon=hell.querySelector('.camp-icon'),sub=hell.querySelector('.camp-sub');if(icon)icon.textContent=hellMode?'😈😁🔥🤝🕴️':'😈🥺🤝🕴️';if(sub&&meta.hellUnlocked)sub.textContent=hellMode?'Hell ON · delighted':'Hell OFF · sad devil';hell.setAttribute('aria-pressed',hellMode?'true':'false');}};
-  const v235UpdateMetaBase=updateMetaUI;updateMetaUI=function(){v235UpdateMetaBase();DB235.modules.camp.updateHellDevil();};
-  document.addEventListener('click',e=>{if(e.target.closest?.('#campHellBtn'))setTimeout(()=>DB235.modules.camp.updateHellDevil(),0);},true);
-
-  /* MODULE: humanized career/regression harness --------------------------- */
-function buildDiceboundHumanHarness235(){
-    'use strict';
-    const VERSION='2.3.5';
-    const BOARD_COUNT=6;
-    const BOARD_TILES=[0,100,100,100,64,64,64];
-    const POLICIES={
-      balanced:{risk:.50,shop:.62,greed:.45,novelty:.56,nightmare:.58,hell:.48},
-      cautious:{risk:.28,shop:.72,greed:.22,novelty:.44,nightmare:.38,hell:.30},
-      greedy:{risk:.72,shop:.45,greed:.78,novelty:.48,nightmare:.68,hell:.58},
-      explorer:{risk:.55,shop:.54,greed:.46,novelty:.82,nightmare:.62,hell:.55}
-    };
-    const CLASS_POWER={ranger:1.00,sorcerer:1.05,fighter:1.06,monk:1.08,clown:1.05,rouge:1.12,berserker:1.13,turtle:1.09,frog:1.10,slime:1.12,vampire:1.16,ninja:1.17,ceo:1.27,merchant:1.29,cleric:1.11,paladin:1.17,beastmaster:1.15,rogue:1.16,bloodmage:1.24,d20:1.17,alchemist:1.12,summoner:1.16,pokemontrainer:1.24,ouroboros:1.30};
-    const SIM_CLASS_TAGS={
-      ranger:['ranged','crit'],sorcerer:['occult','element'],fighter:['guardian','defense'],monk:['melee','combo'],clown:['weird','luck'],rouge:['occult','lifesteal'],berserker:['melee','lowhp'],turtle:['guardian','defense'],frog:['echo','evasive'],slime:['weird','flex'],vampire:['occult','lifesteal'],ninja:['crit','evasive'],ceo:['wealth','barrier'],merchant:['wealth','occult'],cleric:['healing','faith'],paladin:['guardian','healing'],beastmaster:['pet','guardian'],rogue:['evasive','wealth'],bloodmage:['occult','hp'],d20:['weird','luck'],alchemist:['potion','ranged'],summoner:['pet','occult'],pokemontrainer:['pet','flex'],ouroboros:['echo','poison','element']
-    };
-    const POWERUPS=[
-      ['attack','offense',1],['crit','crit',1],['echo','echo',1],['defense','defense',1],['hp','defense',1],['potion','potion',1],['lifesteal','lifesteal',1],['boss','boss',1],['element','element',1],['poison','poison',1],['pet','pet',1],['barrier','defense',1],['gold','wealth',1],['ultimate','combo',1],
-      ['attack2','offense',2],['crit2','crit',2],['echo2','echo',2],['defense2','defense',2],['hp2','defense',2],['element2','element',2],['pet2','pet',2],['boss2','boss',2],['potion2','potion',2],['poison2','poison',2],
-      ['signature','signature',3],['legendary_offense','offense',3],['legendary_guard','defense',3],['legendary_element','element',3]
-    ];
-    const BALANCE={
-      '2.3':{threat:[0,1.00,1.46,2.08,3.18,4.72,4.18],boss:[0,1.42,1.52,1.63,1.78,1.92,1.88],board6Pack:1.08,board6Recovery:.12,board6Potions:4},
-      '2.3.5':{threat:[0,1.00,1.46,2.08,3.18,4.72,7.00],boss:[0,1.42,1.52,1.63,1.78,1.92,2.34],board6Pack:1.38,board6Recovery:.06,board6Potions:2}
-    };
-    function Rng(seed){let x=(seed||1)>>>0;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
-    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-    const ri=(R,a,b)=>Math.floor(R()*(b-a+1))+a;
-    const pick=(R,a)=>a[Math.floor(R()*a.length)];
-    const weighted=(R,arr)=>{const sum=arr.reduce((s,x)=>s+x[1],0);let n=R()*sum;for(const [v,w] of arr){n-=w;if(n<=0)return v;}return arr[arr.length-1][0];};
-    const pct=(arr,q)=>{if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b),i=Math.floor((s.length-1)*q);return s[i];};
-    function legacyNeed(l){return Math.max(1,Math.ceil(l<=10?8+l*2:l<=25?28+(l-10)*4:l<=50?88+(l-25)*5:l<=100?213+(l-50)*7.2:573+(l-100)*11));}
-    function newAccount(){return {runs:0,legacy:1,xp:0,points:0,spentTalents:0,prestige:0,heirlooms:[],unlocks:new Set(['ranger']),pets:1,potionUses:0,damageTaken:0,healing:0,highestGold:0,bestBoard:0,bestDepth:0,doubleDice:false,nightmare:false,hell:false,classClears:{},classRuns:{},milestones:{},unlockRun:{ranger:0},personalBests:0,coverage:{},bugs:[],hellBoards:0,diboLevel:1,diboXp:0,petProgress:0,petLevel10:0,merchantKills:0,bloodmageKills:0,beastNightmare5:false};}
-    function grantLegacy(a,xp){a.xp+=Math.max(0,Math.round(xp));while(a.xp>=legacyNeed(a.legacy)){a.xp-=legacyNeed(a.legacy);a.legacy++;a.points++;}}
-    function unlock(a,id){if(!CLASS_POWER[id]||a.unlocks.has(id))return false;a.unlocks.add(id);a.unlockRun[id]=a.runs;return true;}
-    function updateUnlocks(a,run){if(run.mini[1])unlock(a,'sorcerer');if(run.clears>=1)unlock(a,'fighter');if(run.mini[2])unlock(a,'monk');if(run.clears>=2)unlock(a,'clown');if(a.damageTaken>=1000)unlock(a,'berserker');if(run.maxDefense>=40)unlock(a,'turtle');if(run.maxEcho>=1.5)unlock(a,'frog');if(a.healing>=1000)unlock(a,'cleric');if(a.potionUses>=15)unlock(a,'alchemist');if(a.highestGold>=4000)unlock(a,'rogue');if(run.maxCrit>=1)unlock(a,'ninja');if(run.maxLifesteal>=1)unlock(a,'vampire');if(run.maxBossDamage>=3)unlock(a,'ceo');if(a.prestige>=10)unlock(a,'rouge');if(a.petLevel10>=3)unlock(a,'summoner');if(a.beastNightmare5&&a.petLevel10>=Math.max(8,a.pets))unlock(a,'pokemontrainer');if(run.maxEcho>=4)unlock(a,'ouroboros');if(a.diboLevel>=30)unlock(a,'d20');if(a.unlocks.size>=18)unlock(a,'slime');if(a.bestBoard>=4&&a.runs>=12)unlock(a,'paladin');if(a.bestBoard>=3&&a.runs>=10)unlock(a,'beastmaster');if(a.bloodmageKills>=1)unlock(a,'bloodmage');if(a.merchantKills>=5)unlock(a,'merchant');}
-    function talentPower(a){return 1+Math.min(140,a.spentTalents)*.0075+a.prestige*.018;}
-    function heirloomPower(a){return a.heirlooms.reduce((s,x)=>s+x.power,0)*.0015;}
-    function chooseClass(a,R,p){const ids=[...a.unlocks];const weights=ids.map(id=>{const runs=a.classRuns[id]||0,clears=a.classClears[id]||0,novelty=1/(1+runs*.16),goal=clears<4?1.35:1,raw=(CLASS_POWER[id]||1)*goal*(1+p.novelty*novelty);return [id,raw];});return weighted(R,weights);}
-    function chooseDifficulty(a,R,p){if(a.hell&&a.bestBoard>=5&&R()<p.hell)return 'hell';if(a.nightmare&&a.bestBoard>=4&&R()<p.nightmare)return 'nightmare';return 'normal';}
-    function chooseRunGoal(a,R){const goals=[];if(!a.unlocks.has('turtle'))goals.push('defense');if(!a.unlocks.has('frog'))goals.push('echo');if(!a.unlocks.has('ninja'))goals.push('crit');if(!a.unlocks.has('vampire'))goals.push('lifesteal');if(!a.unlocks.has('ceo'))goals.push('boss');if(!a.unlocks.has('alchemist'))goals.push('potion');if(!a.unlocks.has('rogue'))goals.push('wealth');if(a.unlocks.has('frog')&&!a.unlocks.has('ouroboros'))goals.push('echo');if(!a.unlocks.has('summoner'))goals.push('pet');const rotation=['element','poison','offense','defense','potion','wealth','pet','boss'];if(R()<.32||!goals.length)goals.push(rotation[a.runs%rotation.length]);return pick(R,goals);}
-  function baseStats(id,a){const cp=CLASS_POWER[id]||1,t=talentPower(a),h=1+heirloomPower(a),pet=1+(a.pets-1)*.012;return {maxHp:38*t*h,hp:38*t*h,attack:7.2*cp*t*h,defense:2.2+(a.spentTalents*.035)+(a.prestige*.055),crit:.08+Math.min(.22,a.spentTalents*.0018),echo:.05+Math.min(.28,a.spentTalents*.002),lifeSteal:id==='vampire'?.28:id==='rouge'?.05:.01,potions:1+Math.floor(Math.min(4,a.spentTalents/22)),potionPower:Math.min(1,a.spentTalents*.008),bossDamage:Math.min(.9,a.spentTalents*.005),ultimate:0,barrier:0,petDamage:2.3*pet+a.spentTalents*.025,gold:15+Math.min(180,a.points*5),level:1,gear:Array(8).fill(0),tags:new Set(SIM_CLASS_TAGS[id]||[]),poison:.12,element:.10,damageBonus:0,guard:.54,revives:Math.floor(a.spentTalents/55),diceChoice:Math.min(.4,a.spentTalents*.002),build:{},goalTag:null};}
-    function scorePowerup(pw,s){const [id,tag,tier]=pw;let score=tier*1.7;score+=s.tags.has(tag)?3.0:0;if(tag===s.goalTag)score+=s.goalTag==='echo'?5.5:4.2;if(tag==='defense')score+=s.hp/s.maxHp<.55?2:0;if(tag==='potion')score+=s.potions<2?1.6:0;if(tag==='wealth')score+=s.gold<350?0.5:-.5;if(tag==='boss')score+=1;if(tag==='signature')score+=3.4;if(tag==='echo'&&s.echo>.55)score+=1.6;if(tag==='lifesteal'&&s.lifeSteal>.25)score+=1.2;if(tag==='element'&&s.element>.2)score+=1;return score;}
-    function applyPowerup(pw,s){const [id,tag,tier]=pw;s.build[tag]=(s.build[tag]||0)+1;const n=tier===3?1.8:tier===2?1.35:1;if(tag==='offense'){s.attack+=1.8*n;s.damageBonus+=.025*n;}else if(tag==='crit')s.crit+=.055*n;else if(tag==='echo')s.echo+=.07*n;else if(tag==='defense'){s.maxHp+=5*n;s.hp+=5*n;s.defense+=.55*n;}else if(tag==='potion'){s.potionPower+=.18*n;s.potions+=tier>1?1:0;}else if(tag==='lifesteal')s.lifeSteal+=.045*n;else if(tag==='boss')s.bossDamage+=.10*n;else if(tag==='element')s.element+=.06*n;else if(tag==='poison')s.poison+=.045*n;else if(tag==='pet')s.petDamage+=1.15*n;else if(tag==='wealth')s.gold+=Math.round(25*n);else if(tag==='combo')s.ultimate=Math.min(100,s.ultimate+18*n);else if(tag==='signature'){s.attack*=1.08;s.damageBonus+=.06;s.echo+=.04;}s.crit=Math.max(0,s.crit);}
-    function levelChoice(R,s,a){const choices=3+(a.spentTalents>=72?1:0),opts=[];for(let i=0;i<choices;i++){let tier=R()<.04?3:R()<.19?2:1;const pool=POWERUPS.filter(x=>x[2]===tier);opts.push(pick(R,pool));}opts.sort((x,y)=>scorePowerup(y,s)-scorePowerup(x,s));applyPowerup(opts[0],s);}
-    function gearDrop(R,board,difficulty){const bonus=board*.045+(difficulty==='nightmare'?.05:difficulty==='hell'?.08:0),r=R()+bonus,rarity=r>.995?'legendary':r>.95?'epic':r>.79?'rare':r>.50?'uncommon':'common',ranges={common:[10,18],uncommon:[18,31],rare:[30,49],epic:[48,75],legendary:[75,115]},range=ranges[rarity],power=ri(R,range[0],range[1])+board*3;return {slot:ri(R,0,7),power,rarity};}
-    function considerGear(s,g,run){const cur=s.gear[g.slot]||0;if(g.power>cur*1.03){s.gear[g.slot]=g.power;run.gearEquipped++;return true;}run.gold+=Math.round(10+g.power*1.8+g.power*g.power*.03);run.gearSold++;return false;}
-    function effectivePower(s){const gear=s.gear.reduce((x,y)=>x+y,0);return (s.attack*(1+s.damageBonus))*(1+s.crit*.75+s.echo*.58)*(1+s.element*.28+s.poison*.16)*(1+gear*.0018)+(s.petDamage*1.2);}
-    function enemyStats(board,kind,mode,balance,pack=1){const threat=balance.threat[board],modeMult=mode==='hell'?2.45:mode==='nightmare'?1.75:1,kindHp=kind==='boss'?5.8:kind==='mini'?3.4:1,kindAtk=kind==='boss'?1.55:kind==='mini'?1.25:1,packHp=pack===3?.62:pack===2?.76:1,packAtk=pack===3?.68:pack===2?.82:1;return {maxHp:18*threat*kindHp*modeMult*packHp,hp:18*threat*kindHp*modeMult*packHp,attack:1.65*Math.pow(threat,.82)*kindAtk*modeMult*packAtk,defense:1.0+board*1.15+threat*.65,boss:kind!=='normal',kind,board,pack,turn:0};}
-    function hitEnemy(R,s,e,mult=1){let dmg=Math.max(1,effectivePower(s)*(.36+.09*R())*mult-e.defense*.9);if(R()<Math.min(.95,s.crit%1))dmg*=2;const guaranteedCrit=Math.floor(s.crit);if(guaranteedCrit)dmg*=1+guaranteedCrit;const echoes=Math.floor(s.echo)+(R()<(s.echo%1)?1:0);let total=dmg;for(let i=0;i<echoes;i++)total+=dmg*.70*(.92+.16*R());e.hp-=total;const heal=Math.min(s.maxHp-s.hp,total*Math.min(.85,s.lifeSteal));s.hp+=heal;return {damage:total,heal};}
-    function bossHits(e){if(e.kind!=='boss'&&e.kind!=='mini')return [1];const t=e.turn;if(e.board===6)return t%2?[.5,.5,.5]:[1.22];if(e.board===5)return t%2?[.68,.68]:[1.14];if(e.board===4&&t%2)return [.64,.64];if(e.board===3&&t%2)return [.46,.46,.46];return [1.05];}
-    function enemyResponse(R,s,e,guarding,balance){e.turn++;const special=e.boss&&e.turn%5===0;const hits=special?[2.15]:bossHits(e);let taken=0;for(const hm of hits){if(!special&&R()<clamp(.02+s.crit*.03,0,.18))continue;if(!special&&s.barrier>0){s.barrier--;continue;}let raw=Math.max(0.5,e.attack*hm*(.90+.20*R())*(100/(100+s.defense*12)));if(guarding)raw*=1-clamp(s.guard,0,.88);if(special)raw*=.92;taken+=raw;s.hp-=raw;if(s.hp<=0)break;}return taken;}
-    function combat(R,s,board,kind,mode,balance,run,pack=1){const e=enemyStats(board,kind,mode,balance,pack);e.maxHp*=1+(s.level-1)*.14;e.hp=e.maxHp;e.attack*=1+(s.level-1)*.085;e.defense+=(s.level-1)*.45;let rounds=0,damageTaken=0,healed=0,guarded=0,potions=0,ultimates=0;while(e.hp>0&&s.hp>0&&rounds<80){rounds++;const specialNext=e.boss&&((e.turn+1)%5===0);let action='attack';if(s.hp/s.maxHp<.34&&s.potions>0)action='potion';else if(s.ultimate>=100)action='ultimate';else if(specialNext||s.hp/s.maxHp<.25)action='guard';if(action==='potion'){const h=Math.min(s.maxHp-s.hp,(10+s.maxHp*.10)*(1+s.potionPower));s.hp+=h;s.potions--;healed+=h;potions++;s.ultimate=Math.min(100,s.ultimate+5);}else if(action==='guard'){guarded++;s.ultimate=Math.min(100,s.ultimate+29);if(s.tags.has('guardian')&&R()<.12)s.barrier++;}else if(action==='ultimate'){const r=hitEnemy(R,s,e,2.7);healed+=r.heal;s.ultimate=0;ultimates++;}else{const r=hitEnemy(R,s,e,1);healed+=r.heal;s.ultimate=Math.min(100,s.ultimate+17);if(R()<s.element*.15)e.hp-=effectivePower(s)*.08;if(R()<s.poison*.10)e.hp-=effectivePower(s)*.05;}
-        if(e.hp<=0)break;damageTaken+=enemyResponse(R,s,e,action==='guard',balance);if(s.hp<=0&&s.revives>0){s.revives--;s.hp=Math.max(1,s.maxHp*.22);}
-      }
-      run.actions+=rounds;run.guards+=guarded;run.potionsUsed+=potions;run.ultimates+=ultimates;run.damageTaken+=damageTaken;run.healing+=healed;run.maxCrit=Math.max(run.maxCrit,s.crit);run.maxEcho=Math.max(run.maxEcho,s.echo);run.maxDefense=Math.max(run.maxDefense,s.defense);run.maxLifesteal=Math.max(run.maxLifesteal,s.lifeSteal);run.maxBossDamage=Math.max(run.maxBossDamage,s.bossDamage);
-      if(s.hp<=0)return false;const xp=Math.round((kind==='boss'?95:kind==='mini'?55:15)*board*(mode==='nightmare'?.5:mode==='hell'?.4:1));run.runXp+=xp;const gold=Math.round((kind==='boss'?150:kind==='mini'?80:18)*(1+board*.35)*(mode==='nightmare'?.5:mode==='hell'?.45:1));run.gold+=gold;run.earned+=gold;if(R()<clamp(.18+board*.025+(kind!=='normal'?.15:0),0,.65)){run.gearFound++;run.cover.gear++;considerGear(s,gearDrop(R,board,mode),run);}return true;}
-    function resolveMerchant(R,s,board,p,run,a){run.cover.merchant++;const reserve=80+board*55,candidates=Array.from({length:3},()=>gearDrop(R,board,'normal'));let best=null,bestGain=0;for(const g of candidates){const gain=g.power-(s.gear[g.slot]||0);if(gain>bestGain){bestGain=gain;best=g;}}const cost=Math.round((130+board*155)*(1+bestGain*.006));run.shopVisits++;if(board>=3&&R()<.012+p.novelty*.015&&effectivePower(s)>55){a.merchantKills++;run.cover.merchantBoss=(run.cover.merchantBoss||0)+1;}if(best&&run.gold>=cost+reserve&&R()<p.shop){run.gold-=cost;run.spent+=cost;considerGear(s,best,run);run.shopBuys++;}else if(s.potions<2&&run.gold>=45+board*10){run.gold-=45+board*10;s.potions++;run.shopBuys++;}}
-    function resolveSpecial(R,s,type,board,p,run,a){run.cover[type]=(run.cover[type]||0)+1;if(type==='camp'){const h=Math.min(s.maxHp-s.hp,s.maxHp*.25);s.hp+=h;run.healing+=h;if(R()<.35)s.potions++;}else if(type==='blessing'){s.attack+=.8+board*.15;s.maxHp+=3;s.hp+=3;s.element+=.025;}else if(type==='mystic'){if(s.hp/s.maxHp>.58&&R()<p.risk){s.maxHp*=.90;s.hp=Math.min(s.hp,s.maxHp);applyPowerup(pick(R,POWERUPS.filter(x=>x[2]>=2)),s);}}else if(type==='powerup')levelChoice(R,s,{spentTalents:99});else if(type==='wheel'){const r=R();if(r<.2)s.potions++;else if(r<.45)run.gold+=50+board*30;else if(r<.7)s.attack+=.6;else if(r<.9)s.maxHp+=4;else s.barrier++;}else if(type==='treasure'){run.gold+=Math.round((40+board*45)*(0.75+R()*.55));if(R()<.28){run.gearFound++;run.cover.gear++;considerGear(s,gearDrop(R,board,'normal'),run);}}else if(type==='bloodwell'){if(board>=3&&R()<.018+p.novelty*.02&&effectivePower(s)>42){a.bloodmageKills++;run.cover.secretBoss=(run.cover.secretBoss||0)+1;}if(s.hp/s.maxHp>.64&&R()<p.risk){s.hp-=s.maxHp*.12;s.attack+=.8;s.crit+=.025;}}else if(type==='gambler'){if(run.gold>100&&R()<p.greed){const stake=Math.round(run.gold*.25);run.gold-=stake;if(R()<.47)run.gold+=stake*2;}}}
-    function spendTalents(a,R){while(a.points>0){a.points--;a.spentTalents++;}if(a.spentTalents>=27&&a.legacy>=35&&a.runs>0&&a.runs%5===0){const total=a.spentTalents+a.points,gain=Math.floor(total/9);if(gain>0){a.prestige+=gain;a.spentTalents=total%9;a.points=0;a.legacy=1;a.xp=0;if(!a.milestones.prestige)a.milestones.prestige=a.runs;}}}
-    function storeHeirloom(a,s){const best=s.gear.filter(Boolean).sort((x,y)=>y-x).slice(0,1+Math.floor(a.prestige>=20)+Math.floor(a.prestige>=60));for(const power of best){a.heirlooms.push({power});}a.heirlooms.sort((x,y)=>y.power-x.power);a.heirlooms=a.heirlooms.slice(0,Math.min(7,1+Math.floor(a.prestige/10)));}
-    function runOne(a,R,opts={}){const version=opts.version||VERSION,balance=BALANCE[version]||BALANCE[VERSION],policy=POLICIES[opts.policy]||POLICIES.balanced;spendTalents(a,R);const id=chooseClass(a,R,policy),mode=chooseDifficulty(a,R,policy),s=baseStats(id,a);s.goalTag=chooseRunGoal(a,R);for(let i=0;i<a.heirlooms.length&&i<s.gear.length;i++)s.gear[i]=a.heirlooms[i].power;const run={classId:id,mode,goal:s.goalTag,clears:0,deathBoard:0,mini:{},gold:s.gold,earned:0,spent:0,gearFound:0,gearEquipped:0,gearSold:0,shopVisits:0,shopBuys:0,runXp:0,travel:0,actions:0,guards:0,potionsUsed:0,ultimates:0,damageTaken:0,healing:0,maxCrit:s.crit,maxEcho:s.echo,maxDefense:s.defense,maxLifesteal:s.lifeSteal,maxBossDamage:s.bossDamage,newBest:false,cover:{roll:0,combat:0,merchant:0,camp:0,blessing:0,mystic:0,powerup:0,wheel:0,treasure:0,bloodwell:0,gambler:0,miniboss:0,boss:0,gear:0,levelup:0,merchantBoss:0,secretBoss:0},bugs:[]};
-      a.classRuns[id]=(a.classRuns[id]||0)+1;
-      for(let board=1;board<=BOARD_COUNT;board++){
-        const use2d6=a.doubleDice&&(s.hp/s.maxHp>.45||s.potions>0),avgRoll=use2d6?7:3.5,rolls=Math.max(5,Math.round(BOARD_TILES[board]/avgRoll));run.cover.roll+=rolls;run.travel+=BOARD_TILES[board];
-        let normals=Math.round((board<=3?15:10)*(use2d6?.72:1));if(board===6)normals=Math.round(normals*balance.board6Pack);const pre=Math.ceil(normals*.48),post=normals-pre;
-        for(let i=0;i<pre;i++){run.cover.combat++;if(!combat(R,s,board,'normal',mode,balance,run,1)){run.deathBoard=board;break;}if(run.runXp>=20+s.level*13){run.runXp=0;s.level++;run.cover.levelup++;levelChoice(R,s,a);}if(i===Math.floor(pre*.45))resolveMerchant(R,s,board,policy,run,a);}
-        if(run.deathBoard)break;
-        ['camp','blessing','mystic','powerup','wheel','treasure'].forEach(t=>resolveSpecial(R,s,t,board,policy,run,a));if(R()<.65)resolveSpecial(R,s,'bloodwell',board,policy,run,a);if(R()<.55)resolveSpecial(R,s,'gambler',board,policy,run,a);
-        run.cover.miniboss++;run.cover.combat++;run.mini[board]=combat(R,s,board,'mini',mode,balance,run,1);if(!run.mini[board]){run.deathBoard=board;break;}
-        for(let i=0;i<post;i++){const pack=board===6?(R()<.78?3:2):(board>=4&&R()<.38?2:1);run.cover.combat++;if(!combat(R,s,board,'normal',mode,balance,run,pack)){run.deathBoard=board;break;}if(run.runXp>=20+s.level*13){run.runXp=0;s.level++;run.cover.levelup++;levelChoice(R,s,a);}if(i===Math.floor(post*.48))resolveMerchant(R,s,board,policy,run,a);}
-        if(run.deathBoard)break;run.cover.boss++;run.cover.combat++;if(!combat(R,s,board,'boss',mode,balance,run,1)){run.deathBoard=board;break;}run.clears=board;
-        if(board===3)a.nightmare=true;if(board===4&&mode==='nightmare')a.hell=true;if(board===5)a.doubleDice=true;if(mode==='hell')a.hellBoards++;
-        const healPct=board===5?balance.board6Recovery:board===4?.18:board===3?.22:.28;if(board<6){const h=Math.min(s.maxHp-s.hp,s.maxHp*healPct);s.hp+=h;run.healing+=h;s.potions+=board===5?balance.board6Potions:(board>=4?3:board===3?2:1);}
-      }
-      a.runs++;a.damageTaken+=Math.round(run.damageTaken);a.healing+=Math.round(run.healing);a.potionUses+=run.potionsUsed;a.highestGold=Math.max(a.highestGold,Math.round(run.gold));const depth=run.clears+(run.deathBoard?.45:0);if(depth>a.bestDepth){a.bestDepth=depth;a.bestBoard=Math.max(a.bestBoard,run.clears);a.personalBests++;run.newBest=true;}a.classClears[id]=Math.max(a.classClears[id]||0,run.clears);const miniWins=Object.values(run.mini).filter(Boolean).length,cookies=miniWins+run.clears*2;a.diboXp+=cookies;while(a.diboLevel<30&&a.diboXp>=Math.ceil(4+a.diboLevel*1.5)){a.diboXp-=Math.ceil(4+a.diboLevel*1.5);a.diboLevel++;}a.petProgress+=run.actions*Math.max(.04,s.element*.22);a.pets=Math.min(13,1+Math.floor(a.petProgress/500));if(a.diboLevel>=10)a.petLevel10=Math.max(1,Math.min(a.pets,1+Math.floor(Math.max(0,a.runs-10)/6)));if(id==='beastmaster'&&mode==='nightmare'&&run.clears>=5)a.beastNightmare5=true;storeHeirloom(a,s);
-      const legacy=(run.travel+Math.floor(Math.max(0,run.gold)/10))*(mode==='nightmare'?5:mode==='hell'?6:1);run.legacy=Math.round(legacy);grantLegacy(a,legacy);updateUnlocks(a,run);
-      for(let b=1;b<=run.clears;b++)if(!a.milestones['board'+b])a.milestones['board'+b]=a.runs;
-      for(const k of Object.keys(run.cover))a.coverage[k]=(a.coverage[k]||0)+run.cover[k];
-      // Per-run invariant suite: all core subsystems are checked for sane state even if RNG did not encounter them.
-      const checks={finite:[s.hp,s.maxHp,s.attack,s.defense,s.crit,s.echo,run.gold,run.travel,a.legacy,a.xp,a.prestige].every(Number.isFinite),hp:s.maxHp>0&&s.hp<=s.maxHp+1e-6,potions:s.potions>=0,gear:s.gear.length===8&&s.gear.every(Number.isFinite),progress:run.clears>=0&&run.clears<=6,difficulty:['normal','nightmare','hell'].includes(mode),unlock:a.unlocks.has('ranger'),legacy:a.legacy>=1&&a.xp>=0,prestige:a.prestige>=0&&a.points>=0&&a.spentTalents>=0,heirlooms:a.heirlooms.every(x=>Number.isFinite(x.power)&&x.power>=0),modeLocks:mode!=='hell'||a.hell,board6Gate:run.clears<6||a.doubleDice};run.auditChecks=Object.keys(checks).length;
-      for(const [k,v] of Object.entries(checks))if(!v){const bug=`${k}@run${a.runs}`;run.bugs.push(bug);a.bugs.push(bug);}
-      return run;
-    }
-    function summarize(accounts,rows,careers,runs,version){const milestones={};for(const key of ['board1','board2','board3','board4','board5','board6','prestige']){const vals=accounts.map(a=>a.milestones[key]).filter(Boolean);milestones[key]={reached:vals.length/careers,p10:pct(vals,.1),median:pct(vals,.5),p90:pct(vals,.9)};}const boardAttempts={};for(let b=1;b<=6;b++){const attempts=rows.filter(r=>r.clears>=b-1&&(!r.deathBoard||r.deathBoard>=b)),clears=rows.filter(r=>r.clears>=b);boardAttempts[b]={attempts:attempts.length,clears:clears.length,clearRate:clears.length/Math.max(1,attempts.length)};}const conditional56=rows.filter(r=>r.clears>=5).length?rows.filter(r=>r.clears>=6).length/rows.filter(r=>r.clears>=5).length:0;const cover={};for(const k of Object.keys(accounts[0]?.coverage||{}))cover[k]=accounts.reduce((s,a)=>s+(a.coverage[k]||0),0)/Math.max(1,rows.length);const unlocks={};for(const id of Object.keys(CLASS_POWER)){const vals=accounts.map(a=>a.unlockRun[id]).filter(v=>v!==undefined);unlocks[id]={reached:vals.length/careers,median:pct(vals,.5)};}return {version,careers,runsPerCareer:runs,totalRuns:rows.length,milestones,boardAttempts,conditionalBoard6Given5:conditional56,avgBoards:rows.reduce((s,r)=>s+r.clears,0)/rows.length,newBestRate:rows.filter(r=>r.newBest).length/rows.length,avgLegacy:rows.reduce((s,r)=>s+r.legacy,0)/rows.length,avgGold:rows.reduce((s,r)=>s+r.gold,0)/rows.length,avgActions:rows.reduce((s,r)=>s+r.actions,0)/rows.length,guardRate:rows.reduce((s,r)=>s+r.guards,0)/Math.max(1,rows.reduce((s,r)=>s+r.actions,0)),potionRate:rows.reduce((s,r)=>s+r.potionsUsed,0)/Math.max(1,rows.reduce((s,r)=>s+r.actions,0)),coveragePerRun:cover,unlocks,bugCount:accounts.reduce((s,a)=>s+a.bugs.length,0),hellBoards:accounts.reduce((s,a)=>s+a.hellBoards,0),auditChecks:rows.reduce((s,r)=>s+(r.auditChecks||0),0)};}
-    function run(careers=250,runs=40,opts={}){const version=opts.version||VERSION,policies=opts.policies||Object.keys(POLICIES),seed=opts.seed||235235,accounts=[],rows=[];for(let c=0;c<careers;c++){const a=newAccount(),R=Rng(seed+c*104729);const policy=policies[c%policies.length];for(let n=0;n<runs;n++)rows.push({...runOne(a,R,{version,policy}),career:c,run:n+1,policy});accounts.push(a);}const summary=summarize(accounts,rows,careers,runs,version);return opts.includeRows?{...summary,accounts,rows}:summary;}
-    function compare(careers=250,runs=40,opts={}){return {'2.3':run(careers,runs,{...opts,version:'2.3'}),'2.3.5':run(careers,runs,{...opts,version:'2.3.5',seed:(opts.seed||235235)+1})};}
-    function selfTest(){const x=run(12,8,{seed:123});return {ok:x.totalRuns===96&&x.bugCount===0&&x.boardAttempts[1].attempts>0,summary:x};}
-    return Object.freeze({version:VERSION,run,compare,selfTest,policies:Object.freeze(Object.keys(POLICIES)),note:'Human-like behavioral career harness: sequential persistent accounts, class/difficulty/roll decisions, action-level combat, Guard/Potion/Ultimate use, gear/shop/event/powerup decisions, unlock goals, Prestige, heirlooms, six boards, system coverage and per-run invariants. It is deliberately much closer to player behavior than the old scalar harness, but remains a model rather than literal DOM clicking.'});
-  }
-  const v235HumanHarness=buildDiceboundHumanHarness235();
-  try{Object.defineProperty(window,'DiceboundCareerTest',{value:v235HumanHarness,enumerable:false,configurable:false,writable:false});}catch(e){window.DiceboundCareerTest=v235HumanHarness;}
-  DB235.modules.talentLayout=window.DiceboundTalentTree?.layout;
-  DB235.modules.testing={career:v235HumanHarness,legacy:window.DiceboundCareerTestLegacy||null,talentGeometry:()=>window.DiceboundTalentTree?.layoutAudit?.()};
-
-  // Public manifest only; gameplay continues to use the existing internal
-  // variables. The module boundaries are deliberately extraction-friendly for
-  // a future multi-file/desktop build without requiring that transition now.
-  try{Object.defineProperty(window,'DiceboundModules',{value:Object.freeze({version:DB235.version,balance:DB235.modules.balance,talentLayout:DB235.modules.talentLayout,camp:DB235.modules.camp,testing:DB235.modules.testing,compat:DB235.modules.compat}),enumerable:false,configurable:false,writable:false});}catch(e){}
-  setTimeout(()=>{renderTalents();DB235.modules.camp.updateHellDevil();},0);
-
-
-  /* ========================================================================
      Alpha v2.4 — rarity rebuild, heirloom storage and the Pale Devil
      ------------------------------------------------------------------------
      This patch intentionally remains one Edge-friendly HTML file. New systems
@@ -4396,11 +4194,6 @@ function buildDiceboundHumanHarness235(){
      ======================================================================== */
   const DB24={version:'2.4',modules:{}};
 
-  /* MODULE: version / camp copy ------------------------------------------- */
-  const v24TabHints=[...v235TabHints,'the moon seems to notice repeated circles','some invitations are accepted several roads later','not every dance requires music','certain relics remember very ordinary places','a warm fire can attract extremely bad company'];
-  document.title=`Dicebound: Alpha v2.4 — ${pick(v24TabHints)}`;
-  const v24Brand=document.querySelector('.brand h1');if(v24Brand)v24Brand.textContent='Dicebound: Alpha v2.4';
-  const v24BrandSub=document.querySelector('.brand p');if(v24BrandSub)v24BrandSub.textContent='Alpha v2.4 · New rarities, heirloom storage, stranger relics, and something dancing near the fire.';
   if($('restartBtn'))$('restartBtn').textContent='⛺ Back to camp';
 
   const v24Style=document.createElement('style');
@@ -4577,20 +4370,6 @@ function buildDiceboundHumanHarness235(){
   usePotionOutsideCombat=function(){const beforePotions=player.potions,beforeUses=ensureAlphaMeta().potionsUsed||0,result=usePotionOutsideCombatV24Base();if(player.potions<beforePotions&&(ensureAlphaMeta().potionsUsed||0)===beforeUses){recordPotionUseV16();}return result;};
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
-  function v24MigratePrestigeHeirloomPurchases(){
-    if(meta.prestigeHeirloomPurchasesMigrated)return {changed:false,refundedTalentPoints:0};
-    let prestige=DB_PRESTIGE.normalize(meta.prestige),refundedTalentPoints=0;
-    const oldStorageRank=Math.max(0,Math.floor(Number(meta.purchased?.legacy_storage)||0));
-    if(meta.heirloomStorageUnlocked||oldStorageRank>0){
-      prestige=DB_PRESTIGE.grantLegacyPurchase(prestige,DB_HEIRLOOM_STORAGE_NODE);
-      if((meta.prestige?.count||0)>=5)prestige=DB_PRESTIGE.grantLegacyPurchase(prestige,DB_HEIRLOOM_SLOT_I_NODE);
-      if((meta.prestige?.count||0)>=50)prestige=DB_PRESTIGE.grantLegacyPurchase(prestige,DB_HEIRLOOM_SLOT_II_NODE);
-      meta.heirloomStorageUnlocked=true;
-    }
-    if(oldStorageRank>0){refundedTalentPoints=oldStorageRank*3;meta.points=(meta.points||0)+refundedTalentPoints;delete meta.purchased.legacy_storage;}
-    meta.prestige=prestige;meta.prestigeHeirloomPurchasesMigrated=1;
-    return {changed:true,refundedTalentPoints};
-  }
   function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
   function v24StorageCapacity(){if(!v24StorageUnlocked())return 0;let n=EQUIPMENT_SLOTS.length;if((meta.board5Clears||0)>0)n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE))n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE))n++;if((meta.merchantKills||0)>=1)n++;return n;}
   function v24SyncStorage(){
@@ -4695,7 +4474,7 @@ function buildDiceboundHumanHarness235(){
   });
   DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
-  setTimeout(()=>{const migration=v24MigratePrestigeHeirloomPurchases();if(migration.changed){saveMeta();if(migration.refundedTalentPoints)showToast(`🗄️ Heirloom Storage moved to the Prestige Moon · ${migration.refundedTalentPoints} Talent Points refunded.`,3600,true);}if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();renderTalents();renderEquipment();v24EnsureShieldBars();},0);
+  setTimeout(()=>{if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();renderTalents();renderEquipment();v24EnsureShieldBars();},0);
 
 
   /* v2.4 compatibility hardening: old callers cannot generate random
@@ -4723,9 +4502,6 @@ function buildDiceboundHumanHarness235(){
      Alpha v2.5 — reliability, current guide, debug logging and combat tuning
      ======================================================================== */
   const DB25={version:'2.5.1',modules:{}};
-  document.title=`Dicebound: Alpha v2.5.1 — ${pick(v24TabHints)}`;
-  const v25Brand=document.querySelector('.brand h1');if(v25Brand)v25Brand.textContent='Dicebound: Alpha v2.5.1';
-  const v25BrandSub=document.querySelector('.brand p');if(v25BrandSub)v25BrandSub.textContent='Six roads, persistent progression, improbable equipment and increasingly questionable decisions.';
 
   const v25Style=document.createElement('style');
   v25Style.textContent=`
@@ -5113,8 +4889,6 @@ function buildDiceboundHumanHarness235(){
   const winCombatV26Base=winCombat;winCombat=async function(...args){const defeated=currentEncounterLead||currentEnemy,secret=defeated?.devilBoss?'devil':defeated?.bloodmageBoss?'bloodmage':defeated?.merchantBoss?'merchant':null;const r=await winCombatV26Base.apply(this,args);v26ClearStoneBattle();if(secret){const base={merchant:400,bloodmage:650,devil:1200}[secret],gain=Math.max(1,Math.round(base*(1+(player.legacyXpBonus||0))));grantLegacyXp(gain);saveMeta();updateMetaUI();addLog(`<b>Secret legacy:</b> defeating ${defeated?.name||secret} grants <b>+${gain} Legacy XP</b>.`);showToast(`🌟 Secret boss · +${gain} Legacy XP`,3200,true);}return r;};
   const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
 
-  /* CAMPSITE PET COOKIE FEEDING ------------------------------------------- */
-  const feedActivePetV26Base=feedActivePet;feedActivePet=function(count=1){const old=player.cookieBondBonus;if(!gameStarted)player.cookieBondBonus=talentRank('companion_bond');try{return feedActivePetV26Base(count);}finally{if(!gameStarted)player.cookieBondBonus=old;renderPetCollection();}};
 
   /* DEBUG MENU CLEANUP / DEATH SIMULATION / CURRENT ARTIFACT GEAR --------- */
   const v25EnsureDebugControlsV26Base=v25EnsureDebugControls;v25EnsureDebugControls=function(){v25EnsureDebugControlsV26Base();const grid=$('debugGrid');if(!grid)return;
@@ -5430,7 +5204,6 @@ function buildDiceboundHumanHarness235(){
     }
   }
   /* SIXTH ROAD: ACTUALLY LATER THAN THE FIFTH ----------------------------- */
-  if(DB235?.modules?.balance?.board6)Object.assign(DB235.modules.balance.board6,db317Board(6).balance,{entryHeal:db317Board(6).entryHeal,entryPotions:db317Board(6).entryPotions});
 
   /* INFO POLISH ----------------------------------------------------------- */
 

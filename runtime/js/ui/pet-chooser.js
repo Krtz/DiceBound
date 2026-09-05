@@ -137,11 +137,11 @@
       const active=model.activePet;
       summary.innerHTML=`<span>${escapeHtml(active?.icon||'🐾')} ${escapeHtml(active?.name||'No companion')} active</span><span>Bond Lv ${active?.level||1}</span><span>🍪 ${model.cookies} cookies</span>`;
     }
-    const feed=overlay.querySelector('[data-pet-chooser-feed]');
-    if(feed){
+    const feedControls=overlay.querySelector('[data-pet-chooser-feed]');
+    if(feedControls){
       const active=model.activePet;
-      feed.hidden=!!model.runActive;
-      feed.innerHTML=model.runActive?'':`<button type="button" class="small-btn" data-pet-feed="one" ${model.canFeed&&model.cookies>0?'':'disabled'}>🍪 Feed ${escapeHtml(active?.name||'active pet')} · 1</button><button type="button" class="small-btn" data-pet-feed="all" ${model.canFeed&&model.cookies>0?'':'disabled'}>🍪 Feed all · ${model.cookies}</button>`;
+      feedControls.hidden=!!model.runActive;
+      feedControls.innerHTML=model.runActive?'':`<button type="button" class="small-btn" data-pet-feed="one" ${model.canFeed&&model.cookies>0?'':'disabled'}>🍪 Feed ${escapeHtml(active?.name||'active pet')} · 1</button><button type="button" class="small-btn" data-pet-feed="all" ${model.canFeed&&model.cookies>0?'':'disabled'}>🍪 Feed all · ${model.cookies}</button>`;
     }
     const note=overlay.querySelector('[data-pet-chooser-run-note]');
     if(note){note.hidden=!model.runActive;note.textContent='Only pet-specialist classes can switch companions during an active expedition. Your current companion remains available to inspect.';}

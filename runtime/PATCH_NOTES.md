@@ -1,4 +1,11 @@
-# Unreleased — Beta 0.6.5.19
+# Unreleased — Beta 0.6.5.20
+
+## Beta 0.6.5.20 Camp + monolith spring clean (#17, #40, #209, #234)
+- Fixed the Camp Companion feed buttons by removing a JavaScript name-shadow collision between the feed-controls DOM element and the authoritative `feed(count)` action. Feed-one/feed-all now invoke the existing Pet transaction again.
+- Moved Class and Pet scene objects another 10 percentage points downward, Talent 25 points right and Prestige 35 points right through the authoritative `ui/camp.js` stage coordinates.
+- Removed the obsolete Heirloom Storage Legacy-Talent migration/refund path. Storage remains the permanent 1 PP Prestige Moon purchase and no longer carries Beta-save Talent Point compatibility sediment.
+- Removed the old Alpha career simulators and DB235 human-test/testing-manifest island from production. The still-live Board 6 scaling and Cultist Lifesteal behavior was preserved by folding it into the original `scaleEnemy` owner before the DB235 wrapper was deleted.
+- Removed the synchronously overwritten v26 Pet-feed wrapper, strengthened shadow-ownership guards, and added a CI monolith census so subsequent cleanup can target proven fake-liveness instead of guessing.
 
 ## Beta 0.6.5.19 Monolith spring clean (#40, #209)
 - Drained the historical Info/Guide renderer ladder beneath `ui/info-guide.js`, leaving only hoist-safe compatibility shims before the extracted owner takes over.

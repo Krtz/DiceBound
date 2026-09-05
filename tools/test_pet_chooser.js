@@ -55,6 +55,8 @@ assert.deepEqual(feeds,[3]);
 assert.match(source,/data-pet-chooser-done/,'chooser must own a semantic Done control');
 assert.match(source,/pet-chooser-chrome\{position:sticky/,'Done header must be sticky panel chrome');
 assert.match(source,/resolvePetArt/,'chooser must consume canonical semantic pet art');
+assert.doesNotMatch(source,/const feed=overlay\.querySelector\('\[data-pet-chooser-feed\]'\)/,'feed controls DOM handle must not shadow the feed(count) action');
+assert.match(source,/const feedControls=overlay\.querySelector\('\[data-pet-chooser-feed\]'\)/,'feed controls must use a non-action DOM binding name');
 assert.doesNotMatch(source,/petCollectionGrid|campPetPanel|MutationObserver/,'new chooser must not depend on retired Pet UI chains');
 
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');

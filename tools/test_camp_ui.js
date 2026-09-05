@@ -23,12 +23,12 @@ assert.strictEqual(typeof camp.applyStageLayout,'function','Camp must own one fi
 assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable by late patch code');
 assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
-assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.55,w:235},'Class Choice must sit 10% lower on the authored Camp stage');
+assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.65,w:235},'Class Choice must sit another 10% lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
 assert.deepStrictEqual({...camp.stageAnchors.campBonfire},{x:.50,y:.72,w:170},'Bonfire must remain grounded in the lower clearing');
 assert.deepStrictEqual({...camp.stageAnchors.campGoBtn},{x:.85,y:.74,w:440,h:250},'Start Run must remain a major lower-right scene anchor with a matching hit area');
 assert.deepStrictEqual({...camp.stageAnchors.campChestBtn},{x:.64,y:.76,w:245,h:150},'Chest must remain lower-middle/right without overlapping Start Run');
-assert.deepStrictEqual({...camp.stageAnchors.campPetBtn},{x:.39,y:.80,w:220},'Pet Choice must sit 10% lower on the authored Camp stage');
+assert.deepStrictEqual({...camp.stageAnchors.campPetBtn},{x:.39,y:.90,w:220},'Pet Choice must sit another 10% lower on the authored Camp stage');
 assert.ok(camp.stageAnchors.campPetBtn.x>camp.stageAnchors.campInfoBtn.x&&camp.stageAnchors.campInfoBtn.x>camp.stageAnchors.campAchievementBtn.x,'Pet, Info and Trophy must retain their left-side visual flow');
 assert.deepStrictEqual({...camp.stageFrame(1360,800)},{left:0,top:17.5,width:1360,height:765,scale:.85},'wide Camp must fit the authored 16:9 stage without distortion');
 assert.deepStrictEqual({...camp.stageFrame(1200,540)},{left:120,top:0,width:960,height:540,scale:.68},'short/wide Camp must letterbox rather than eject objects off-screen');
@@ -37,15 +37,16 @@ assert.deepStrictEqual({...camp.stageFrame(1120,760)},{left:0,top:65,width:1120,
 for(const layout of camp.layouts.slice(0,2)){
   const rules=Object.fromEntries(layout.rules);
   assert.equal(rules['#campOptionsBtn'],'left:8.5%;top:10.5%;translate:none',`${layout.id} must use the approved visible Options anchor`);
-  assert.equal(rules['#campTalentBtn'],'left:30.5%;top:12.5%;translate:none',`${layout.id} must use the approved visible Talents anchor`);
-  assert.equal(rules['#campMoonBtn'],'left:48%;top:11.5%;translate:none',`${layout.id} must use the approved visible Prestige anchor`);
-  assert.equal(rules['#campClassBtn'],'left:39%;top:55%;translate:none',`${layout.id} must place Class Choice 10% lower`);
+  assert.equal(rules['#campTalentBtn'],'left:55.5%;top:12.5%;translate:none',`${layout.id} must use the approved visible Talents anchor`);
+  assert.equal(rules['#campMoonBtn'],'left:83%;top:11.5%;translate:none',`${layout.id} must use the approved visible Prestige anchor`);
+  assert.equal(rules['#campClassBtn'],'left:39%;top:65%;translate:none',`${layout.id} must place Class Choice 10% lower`);
   assert.equal(layout.rules.length,4,`${layout.id} must not retain translated legacy Camp coordinates`);
 }
 const shortRules=Object.fromEntries(camp.layouts[2].rules);
-assert.equal(shortRules['#campTalentBtn'],'left:30.5%;top:18%;translate:none','short Camp layout must keep the full Talent artwork entirely onscreen');
-assert.equal(shortRules['#campMoonBtn'],'left:48%;top:20%;translate:none','short Camp layout must keep Prestige entirely onscreen');
-assert.equal(shortRules['#campClassBtn'],'left:39%;top:68%;translate:none','short Camp layout must move Class Choice 10% downward');
+assert.equal(shortRules['#campTalentBtn'],'left:55.5%;top:18%;translate:none','short Camp layout must keep the full Talent artwork entirely onscreen');
+assert.equal(shortRules['#campMoonBtn'],'left:83%;top:20%;translate:none','short Camp layout must keep Prestige entirely onscreen');
+assert.equal(shortRules['#campClassBtn'],'left:39%;top:78%;translate:none','short Camp layout must move Class Choice 10% downward');
+assert.match(source,/'stacked-or-short':Object\.freeze\(\{campPetBtn:Object\.freeze\(\{x:\.39,y:\.80\}\)\}\)/,'short/wide Pet must stay inside the viewport while wide/compact retain the requested lower anchor');
 assert.equal(typeof camp.applyViewportPositions,'function','Camp must reassert its coordinates after legacy inline layout writes');
 assert.equal(typeof camp.clampShortViewportPositions,'function','Camp must keep short desktop controls inside the viewport');
 assert.equal(typeof camp.renderClassFigure,'function','Camp must own semantic selected-class figure rendering');
