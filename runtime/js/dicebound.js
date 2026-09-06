@@ -880,9 +880,7 @@
     for(let i=1;i<=echoes&&livingEnemies().length;i++){const t=firstTarget.hp>0?firstTarget:(currentEnemy?.hp>0?currentEnemy:livingEnemies()[0]);const r=await performStrike(t,{echo:true,index:i,chaos,canCrit:false});totalCrit+=r.crit;}
     chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*totalCrit);const pants=applyMythicPantsPulse();if(pants)setCombatText(pants);updateCombatUI();if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   }
-  async function guardAction(){
-    if(combatBusy||!currentEnemy||player.guardCooldown>0)return;combatBusy=true;const chaos=await rollD20Chaos("guard");player.guardCooldown=player.guardDelay;chargeUltimate(player.ultimateGuardGain);let notes=[`gain ${player.ultimateGuardGain} ultimate charge`];if(player.guardHeal>0){const h=healPlayer(player.guardHeal);if(h)notes.push(`restore ${h} HP`);}if(player.guardShield>0){player.combatShield+=player.guardShield;notes.push("raise a Battle Barrier");}if(player.guardCounter>0){const counter=damageEnemy(currentEnemy,Math.max(1,Math.round((player.attack+player.defense*player.defenseAttackScale)*player.guardCounter)));notes.push(`riposte for ${counter} damage`);}if(chaos.forceElement){const r=triggerElementEffect(chaos.forceElement,currentEnemy,{forced:true,source:"d20 guard"});if(r)notes.push(r.message);}if(chaos.allElements)DIBO_ELEMENTS.forEach(k=>triggerElementEffect(k,currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],{forced:true,source:"natural twenty guard"}));const pants=applyMythicPantsPulse();if(pants)notes.push(pants);updateCombatUI();setCombatText(`You brace yourself and ${notes.join(", ")}.`);tone(260,.12,"triangle",.03,180);await delay(620);if(!livingEnemies().length)return winCombat();await resolveEnemyResponse(true,(chaos.guardBonus||0));
-  }
+  async function guardAction(...args){if(!dbCombatGuardResolution)throw new Error('Combat Guard-resolution owner is not configured.');return dbCombatGuardResolution.guardAction(...args);}
   async function usePotion(){
     if(combatBusy||!currentEnemy||player.potions<=0||player.hp>=player.maxHp)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("potion");player.potions--;const base=12+Math.floor(player.level/2),heal=healPlayer(Math.round(base*(1+player.potionPower)*(chaos.potionMult||1)));sfx.heal();let chaosText="";if(chaos.forceElement){const r=triggerElementEffect(chaos.forceElement,currentEnemy,{forced:true,source:"d20 potion"});if(r)chaosText=` ${r.message}`;}if(chaos.allElements)DIBO_ELEMENTS.forEach(k=>triggerElementEffect(k,currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],{forced:true,source:"natural twenty potion"}));const pants=applyMythicPantsPulse();setCombatText(`You drink a potion and restore ${heal} HP.${chaosText}${pants?` ${pants}`:""}`);updateCombatUI();await delay(630);await resolveEnemyResponse(false);
   }
@@ -1491,6 +1489,7 @@
   // a second production owner.
   let dbCombatStrikes=null;
   let dbCombatUltimateResolution=null;
+  let dbCombatGuardResolution=null;
   let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatTurns=null;
@@ -2198,7 +2197,12 @@
   function cycleBeastStance(){if(!classIdentityActive("beastmaster")||combatBusy)return;const order=["aggressive","defensive","support"],i=order.indexOf(player.beastStance);player.beastStance=order[(i+1)%order.length];identityFlash(`🐾 ${player.beastStance[0].toUpperCase()+player.beastStance.slice(1)} stance`);updateCombatUI();}
 
   // Guard/potion identity wrappers.
-  async function identityGuardAction(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("fighter"))player.fighterCounterReady=true;if(classIdentityActive("turtle"))player.turtleCrushReady=true;return guardAction();}
+  async function identityGuardAction(...args){
+    if(!dbCombatGuardResolution)throw new Error('Combat Guard-resolution owner is not configured.');
+    const invoke=(...inner)=>dbCombatGuardResolution.identityGuardAction(...inner);
+    if(typeof v25TraceCommand==='function')return v25TraceCommand('identityGuardAction',invoke,'detailed',args,this);
+    return invoke(...args);
+  }
   async function identityPotionAction(){if(classIdentityActive("monk"))player.monkCombo=0;return usePotion();}
 
 
@@ -2580,7 +2584,6 @@
   // ---- Ranger / Fighter / Monk / Turtle identities -------------------------
     const playerAttackV16Base=playerAttack;
   playerAttack=async function(){const cls=classIdentityId(),comboBefore=player.monkCombo||0,chicken=cls==="clown"&&player.clownGimmick==="Rubber Chicken",turtleChain=player.turtleGuardChain||0;if(chicken)player.doubleStrike+=.20;if(cls==="alchemist"&&!combatBusy&&currentEnemy){player.alchemistBrewCounter=(player.alchemistBrewCounter||0)+1;if(player.alchemistBrewCounter>=player.alchemistBrewNeed){player.alchemistBrewCounter=0;player.potions++;showToast("🧪 Brewed +1 potion");addCombatHistory("⚗️ Combat Distillery completes a fresh potion.");}}try{const r=await playerAttackV16Base();if(cls==="monk"&&(player.monkComboMax||5)>5)player.monkCombo=Math.min(player.monkComboMax,comboBefore+1);return r;}finally{if(chicken)player.doubleStrike-=.20;updateCombatUI();}};
-  identityGuardAction=async function(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("fighter")){player.fighterCounterReady=false;player.fighterCounterStacks=Math.min(player.fighterCounterMax||1,(player.fighterCounterStacks||0)+1);identityFlash(`🛡️ Counterblow ${player.fighterCounterStacks}/${player.fighterCounterMax}`);}if(classIdentityActive("turtle")){player.turtleCrushReady=false;player.turtleGuardChain=Math.min(player.turtleGuardMax||5,(player.turtleGuardChain||0)+1);if(player.turtleGuardChain===3||player.turtleGuardChain===5){player.combatShield++;identityFlash(`🐢 Shell wall ×${player.turtleGuardChain} · Barrier`);}const rank=0;const bonus=Math.max(0,(player.turtleGuardChain-1)*.05),old=player.guardPower;player.guardPower=clamp(old+bonus,0,.90);try{return await guardAction();}finally{player.guardPower=old;updateCombatUI();}}return guardAction();};
   identityPotionAction=async function(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("turtle"))player.turtleGuardChain=0;return usePotion();};
 
   // ---- Clown gag continuity -------------------------------------------------
@@ -2670,7 +2673,6 @@
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
   const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){resonantTalent.name="Resonant Carapace";resonantTalent.desc="Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.";resonantTalent.maxRank=3;}
   if(!upgrades.some(u=>u.id==="reactive_carapace"))upgrades.push({id:"reactive_carapace",classIds:["turtle","slime"],rarity:"rare",icon:"🐢🌈",name:"Reactive Carapace",desc:"Guard gains +12% chance to trigger an elemental proc.",tags:["guardian","elemental"],apply(){player.guardElementProcBonus=(player.guardElementProcBonus||0)+.12;}});
-  const identityGuardActionV17Base=identityGuardAction;identityGuardAction=async function(){const tags=CLASSES[classIdentityId()]?.tags||[],rank=gameplayTalentRank("turtle_guard_element"),chance=(tags.includes("guardian")?rank*.05:0)+((classIdentityActive("turtle")||classIdentityActive("slime"))?(player.guardElementProcBonus||0):0);if(chance&&currentEnemy?.hp>0&&random()<clamp(chance,0,.75)){const key=player.equipment?.weapon?.element||activePetDef().element||pick(ELEMENT_KEYS);const r=triggerElementEffect(key,currentEnemy,{forced:true,source:"Resonant Guard"});if(r)addCombatHistory(`🌈 Resonant Guard: ${r.message}`);}return identityGuardActionV17Base();};
 
   // ---- Potion / Echo tooltips ----------------------------------------------
 
@@ -2911,11 +2913,6 @@
   };
 
   // ---- Guard, Replenish and pet-turn behavior ------------------------------
-  const identityGuardActionV18Base=identityGuardAction;
-  identityGuardAction=async function(){
-    if(classHasMechanic("mana")&&!combatBusy&&currentEnemy){const gained=manaGain(player.guardManaGain||6);if(gained){addCombatHistory(`🔷 Guard channels +${gained} Mana.`);identityFlash(`🛡️ +${gained} Mana`);}}
-    return identityGuardActionV18Base();
-  };
 
   // Replenish is a real defensive action now: the enemy response receives the
   // same `guarded=true` flag as Guard, so ordinary hits and guardian specials
@@ -3255,11 +3252,6 @@
   }
   const healPlayerV19Base=healPlayer;
   healPlayer=function(amount){const before=player.hp,healed=healPlayerV19Base(amount);if(classIdentityActive("paladin")&&healed>0){player.paladinGrace=clamp((player.paladinGrace||0)+healed,0,100);if(player.hp>before)identityFlash(`⚜️ Grace ${Math.round(player.paladinGrace)}/100`);}return healed;};
-  const identityGuardActionV19Base=identityGuardAction;
-  identityGuardAction=async function(){
-    if(!classIdentityActive("paladin"))return identityGuardActionV19Base();
-    const grace=Math.floor(player.paladinGrace||0),extraGuard=Math.min(.20,grace*.002),barriers=Math.floor(grace/25),oldPower=player.guardPower;player.paladinGrace=0;player.guardPower=clamp(oldPower+extraGuard,0,.92);if(barriers)player.combatShield=(player.combatShield||0)+barriers;addCombatHistory(`⚜️ Oath Guard consumes ${grace} Grace: +${Math.round(extraGuard*100)}% Guard power${barriers?` and ${barriers} Barrier${barriers===1?"":"s"}`:""}.`);identityFlash(`⚜️ Oath Guard · ${grace} Grace`);try{return await identityGuardActionV19Base();}finally{player.guardPower=oldPower;updateCombatUI();}
-  };
 
   // ---- Runtime reset hooks -------------------------------------------------
   const resetPlayerV19Base=resetPlayer;
@@ -3383,8 +3375,6 @@
   // Do not wrap strikeBaseDamage again here: doing so risks double-counting set power.
 
   // Offhand unique effect and Paladin Guard behavior share Guard entry.
-  const identityGuardActionV19OffhandBase=identityGuardAction;
-  identityGuardAction=async function(){if(hasMythicPiece("offhand")){player.ultimateCharge=clamp((player.ultimateCharge||0)+8,0,100);player._eventHorizonGuards=(player._eventHorizonGuards||0)+1;if(player._eventHorizonGuards%3===0){player.combatShield=(player.combatShield||0)+1;addCombatHistory("🌌 Event Horizon Ward raises a Barrier on the third Guard.");}}return identityGuardActionV19OffhandBase();};
 
   // ---- Debug additions -----------------------------------------------------
   const debugActionV19Base=debugAction;
@@ -4363,11 +4353,11 @@
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,returnToRoad,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat,identityGuardAction})[name];if(typeof fn!=='function')return;
+    const fn=({rollDice,rollTwoDice,returnToRoad,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat})[name];if(typeof fn!=='function')return;
     const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;else if(name==='identityGuardAction')identityGuardAction=wrapped;
+    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;
   }
-  ['rollDice','rollTwoDice','returnToRoad','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat','identityGuardAction'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='winCombat'?'events':'detailed'));
+  ['rollDice','rollTwoDice','returnToRoad','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='winCombat'?'events':'detailed'));
 
   /* Final UI sync / tests -------------------------------------------------- */
   const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
@@ -6736,8 +6726,6 @@
   applyPoisonTick=function(){const r=db060PoisonTickBase();if(db060HasEffect('recursive_poison'))for(const e of livingEnemies())if((e.poisonStacks||0)>0&&random()<.35){e.poisonStacks++;addCombatHistory(`☠️♻️ Recursive Poison adds a stack to ${e.name}.`);}return r;};
 
   // Guard Echo.
-  const db060GuardActionBase=guardAction;
-  guardAction=async function(){if(!db060HasEffect('perfect_guard')||!(player.guardCounter>0))return db060GuardActionBase();const old=player.guardCounter,echoes=rollTieredProc(player.doubleStrike||0);player.guardCounter=old*(1+echoes*.70);try{if(echoes)addCombatHistory(`🛡️🔁 Perfect Guard rolls ${echoes} counter Echo${echoes===1?'':'es'}.`);return await db060GuardActionBase();}finally{player.guardCounter=old;}};
 
   // Blood Price.
   const db060BloodmageBase=bloodmageExsanguinate;
@@ -7700,8 +7688,6 @@
   function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
   const dbFriendPlayerAttackBase=playerAttack;
   playerAttack=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy)dbFriendTickDragoonCooldown();return dbFriendPlayerAttackBase.apply(this,args);};
-  const dbFriendGuardActionBase=guardAction;
-  guardAction=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.guardCooldown<=0)dbFriendTickDragoonCooldown();return dbFriendGuardActionBase.apply(this,args);};
   const dbFriendPotionBase=usePotion;
   usePotion=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.potions>0&&player.hp<player.maxHp)dbFriendTickDragoonCooldown();return dbFriendPotionBase.apply(this,args);};
   async function dbFriendDragoonRegressionExercise(){
@@ -7725,6 +7711,51 @@
     clearCombatPresentation:dbFriendClearCombatPresentation,
     feedPet:count=>feedActivePet(count),
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
+  });
+
+  const dbCombatGuardOwner=window.DiceboundCombatGuardResolution;
+  if(!dbCombatGuardOwner)throw new Error('DiceBound requires the combat Guard-resolution owner before dicebound.js');
+  dbCombatGuardResolution=dbCombatGuardOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    livingEnemies:()=>livingEnemies(),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    rollD20Chaos:action=>rollD20Chaos(action),
+    chargeUltimate:amount=>chargeUltimate(amount),
+    healPlayer:amount=>healPlayer(amount),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
+    getDiboElements:()=>DIBO_ELEMENTS,
+    applyMythicPantsPulse:()=>applyMythicPantsPulse(),
+    updateCombatUI:()=>updateCombatUI(),
+    setCombatText:text=>setCombatText(text),
+    tone:(frequency,duration,type,gain,slide)=>tone(frequency,duration,type,gain,slide),
+    delay:ms=>delay(ms),
+    winCombat:()=>winCombat(),
+    resolveEnemyResponse:(guarded,bonus)=>resolveEnemyResponse(guarded,bonus),
+    isClassActive:id=>classIdentityActive(id),
+    classIdentityId:()=>classIdentityId(),
+    classHasMechanic:tag=>classHasMechanic(tag),
+    getClassTags:id=>CLASSES[id]?.tags||[],
+    gameplayTalentRank:id=>gameplayTalentRank(id),
+    getWeaponElement:()=>player.equipment?.weapon?.element||null,
+    getActivePetElement:()=>activePetDef().element,
+    getElementKeys:()=>ELEMENT_KEYS,
+    random:()=>random(),
+    pick:list=>pick(list),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    addCombatHistory:text=>addCombatHistory(text),
+    identityFlash:text=>identityFlash(text),
+    manaGain:amount=>manaGain(amount),
+    hasMythicPiece:slot=>hasMythicPiece(slot),
+    hasLegendaryEffect:id=>db060HasEffect(id),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    dragoonActive:()=>dbFriendDragoonActive(),
+    dragoonLandingReady:()=>!!player.dragoonLandingReady,
+    dragoonLanding:()=>dbFriendDragoonLanding(),
+    tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
+    invokeGuardAction:(...args)=>guardAction(...args)
   });
 
   const dbCombatStrikeOwner=window.DiceboundCombatStrikeResolution;

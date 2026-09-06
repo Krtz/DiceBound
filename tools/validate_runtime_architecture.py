@@ -980,6 +980,33 @@ def main() -> int:
             if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
                 errors.append(f"retired combat Ultimate-resolution wrapper remains in dicebound.js: {symbol}")
 
+
+    guard_owner = next((m for m in modules if m.get("id") == "combat-guard-resolution"), None)
+    if not guard_owner or guard_owner.get("status") != "extracted":
+        errors.append("combat Guard-resolution owner is missing or not extracted")
+    else:
+        if guard_owner.get("path") != "js/combat/guard-resolution.js" or "DiceboundCombatGuardResolution" not in (guard_owner.get("provides") or []):
+            errors.append("combat-guard-resolution must provide DiceboundCombatGuardResolution from js/combat/guard-resolution.js")
+        if position.get("combat-guard-resolution", -1) >= position.get(str(monolith_id), -1):
+            errors.append("combat-guard-resolution must load before the compatibility monolith")
+    if monolith_source:
+        if "dbCombatGuardResolution=dbCombatGuardOwner.configure({" not in monolith_source:
+            errors.append("dicebound.js must configure the combat Guard-resolution owner")
+        if monolith_source.count("async function guardAction(") != 1 or "return dbCombatGuardResolution.guardAction(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin guardAction adapter")
+        if monolith_source.count("async function identityGuardAction(") != 1 or "dbCombatGuardResolution.identityGuardAction" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin traced identityGuardAction adapter")
+        if re.search(r"(?m)^  guardAction\s*=", monolith_source):
+            errors.append("dicebound.js retains a top-level guardAction reassignment after Guard extraction")
+        if re.search(r"(?m)^  identityGuardAction\s*=", monolith_source):
+            errors.append("dicebound.js retains an identityGuardAction reassignment after Guard extraction")
+        for symbol in (
+            "identityGuardActionV17Base", "identityGuardActionV18Base", "identityGuardActionV19Base", "identityGuardActionV19OffhandBase",
+            "db060GuardActionBase", "dbFriendGuardActionBase"
+        ):
+            if re.search(rf"(?<![\\w$]){re.escape(symbol)}(?![\\w$])", monolith_source):
+                errors.append(f"retired combat Guard-resolution wrapper remains in dicebound.js: {symbol}")
+
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
     if len(planned_domains) != len(set(planned_domains)):
         errors.append("plannedDomains contains duplicates")

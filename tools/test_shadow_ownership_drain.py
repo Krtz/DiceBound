@@ -76,4 +76,19 @@ assert not re.search(r'(?m)^\s*useUltimate\s*=', mono), 'useUltimate reassignmen
 assert "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" in mono, 'combat Ultimate-resolution owner is not configured by the composition root'
 assert "return dbCombatUltimateResolution.start(...args);" in mono, 'Ultimate thin adapter is missing'
 
+
+guard_retired = [
+    'identityGuardActionV17Base','identityGuardActionV18Base','identityGuardActionV19Base','identityGuardActionV19OffhandBase',
+    'db060GuardActionBase','dbFriendGuardActionBase',
+]
+for symbol in guard_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Guard-resolution owner returned: {symbol}"
+assert mono.count('async function guardAction(') == 1, 'guardAction must have exactly one thin compatibility adapter'
+assert mono.count('async function identityGuardAction(') == 1, 'identityGuardAction must have exactly one thin traced compatibility adapter'
+assert not re.search(r'(?m)^  guardAction\s*=', mono), 'top-level guardAction reassignment chain must not return'
+assert not re.search(r'(?m)^  identityGuardAction\s*=', mono), 'identityGuardAction reassignment chain must not return'
+assert "dbCombatGuardResolution=dbCombatGuardOwner.configure({" in mono, 'combat Guard-resolution owner is not configured by the composition root'
+assert "return dbCombatGuardResolution.guardAction(...args);" in mono, 'Guard thin adapter is missing'
+assert "dbCombatGuardResolution.identityGuardAction" in mono, 'identity Guard thin adapter is missing'
+
 print('Monolith spring-clean guard PASS')
