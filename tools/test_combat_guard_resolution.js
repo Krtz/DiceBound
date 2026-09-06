@@ -180,7 +180,7 @@ async function run() {
     await owner.identityGuardAction();
     assert.strictEqual(h.player.turtleGuardChain, 3);
     assert.strictEqual(h.player.combatShield, 1);
-    assert.strictEqual(seenPower, .3);
+    assert(Math.abs(seenPower - .3) < 1e-12, `temporary Guard Power drifted: ${seenPower}`);
     assert.strictEqual(h.player.guardPower, .2);
   }
 
@@ -220,7 +220,7 @@ async function run() {
     await owner.identityGuardAction();
     assert.strictEqual(h.player.paladinGrace, 0);
     assert.strictEqual(h.player.combatShield, 2);
-    assert.strictEqual(seenPower, .3);
+    assert(Math.abs(seenPower - .3) < 1e-12, `temporary Guard Power drifted: ${seenPower}`);
     assert.strictEqual(h.player.guardPower, .2);
   }
 

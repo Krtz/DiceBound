@@ -19,6 +19,7 @@
     "combat-strike-policy",
     "combat-strike-resolution",
     "combat-ultimate-resolution",
+    "combat-guard-resolution",
     "combat-enemy-policy",
     "combat-targeting",
     "combat-presentation",
@@ -247,6 +248,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatUltimateResolution"
+      ]
+    },
+    {
+      "id": "combat-guard-resolution",
+      "path": "js/combat/guard-resolution.js",
+      "domain": "combat/player-guard-and-defensive-action-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatGuardResolution"
       ]
     },
     {
@@ -722,6 +733,7 @@
         "combat-strike-policy",
         "combat-strike-resolution",
         "combat-ultimate-resolution",
+        "combat-guard-resolution",
         "combat-enemy-policy",
         "combat-targeting",
         "combat-presentation",

@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.5
+
+### Guard resolution ownership (#40, #209, #279)
+- Extracted the complete player Guard transaction into `runtime/js/combat/guard-resolution.js`, consolidating both the `guardAction` and `identityGuardAction` ownership ladders behind one authoritative owner.
+- Preserved the historical outer order for Mythic offhand, Paladin Grace, Mana Guard, Resonant Guard, Fighter/Turtle/Monk identity behavior, Dragoon landing/cooldown, Perfect Guard and the base D20 Guard action, including RNG draw/order and temporary-stat restoration semantics.
+- Potions, Pet turns, basic/Echo strikes, Ultimates, enemy-response internals, encounter/presentation owners, saves/checkpoints and gameplay values remain unchanged.
+
 ## Beta 0.6.6.4
 
 ### Ultimate resolution ownership (#40, #209, #277)

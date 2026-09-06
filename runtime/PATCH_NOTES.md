@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.5
+
+## Beta 0.6.6.5 Guard resolution ownership (#40, #209, #279)
+- Guard now resolves through one authoritative `combat/guard-resolution.js` owner; the historical `guardAction` / `identityGuardAction` wrapper towers are retired from `dicebound.js`.
+- Fighter Counterblows, Turtle Shell Momentum, Mana Guard, Resonant Guard, Paladin Grace, Event Horizon Ward, Perfect Guard, D20 Guard behavior and Dragoon landing/cooldown retain their existing values, RNG order and wrapper ordering.
+- Potions, Pet turns, basic/Echo strikes, Ultimates, enemy-response internals, encounter/presentation owners, saves/checkpoints and gameplay values are unchanged.
+
 # Unreleased — Beta 0.6.6.4
 
 ## Beta 0.6.6.4 Ultimate resolution ownership (#40, #209, #277)
