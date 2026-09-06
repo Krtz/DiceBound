@@ -99,14 +99,15 @@ function makeHarness(options = {}) {
 }
 
 async function run() {
-  // Ordinary Guard order and enemy-response contract.
+  // Ordinary Guard order and enemy-response contract, including the historical
+  // implicit undefined return after awaiting the enemy response.
   {
     const h = makeHarness({
       chaos: { guardBonus: .25 }, pants: 'pants pulse',
       player: { guardHeal: 5, guardShield: 1, guardCounter: .5 }
     });
     const result = await owner.guardAction();
-    assert.strictEqual(result, 'response');
+    assert.strictEqual(result, undefined);
     assert.strictEqual(h.player.guardCooldown, 2);
     assert.strictEqual(h.player.ultimateCharge, 14);
     assert.strictEqual(h.player.hp, 95);
