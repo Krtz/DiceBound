@@ -68,7 +68,7 @@
     rt.tone(260, .12, "triangle", .03, 180);
     await rt.delay(620);
     if (!livingEnemies().length) return rt.winCombat();
-    return await rt.resolveEnemyResponse(true, chaos.guardBonus || 0);
+    await rt.resolveEnemyResponse(true, chaos.guardBonus || 0);
   }
 
   // Beta 0.6 Legendary Perfect Guard wrapper. Importantly, the Echo roll is
