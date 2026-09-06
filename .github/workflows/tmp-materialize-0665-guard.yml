@@ -47,6 +47,8 @@ jobs:
         run: |
           python tools/materialize_0665_guard.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/patch_0665_guard_test_float.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version $env:VERSION --channel $env:CHANNEL
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version $env:VERSION --channel $env:CHANNEL --development-state Unreleased
