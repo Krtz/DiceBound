@@ -31,11 +31,23 @@ jobs:
         run: |
           python tools/materialize_0667.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           $testPath = "tools/test_combat_pet_turn_resolution.js"
           $testSource = Get-Content $testPath -Raw
           $testSource = $testSource.Replace("assert.strictEqual(owner.petDamage(), 6, 'Beastmaster aggressive Pet damage drifted');", "assert.strictEqual(owner.petDamage(), 5, 'Beastmaster aggressive Pet damage drifted');")
           $testSource = $testSource.Replace("String(x[3]).includes('companion proc')", "x[3] === 'Companion Spark'")
           Set-Content -Path $testPath -Value $testSource -NoNewline
+
+          $monoPath = "runtime/js/dicebound.js"
+          $monoSource = Get-Content $monoPath -Raw
+          $oldPetDamage = 'function petDamage(){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petDamage();}'
+          $newPetDamage = 'function petDamage(){if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}'
+          if (($monoSource.Split($oldPetDamage).Count - 1) -ne 1) { throw "Expected exactly one bootstrap Pet damage adapter" }
+          $monoSource = $monoSource.Replace($oldPetDamage, $newPetDamage)
+          Set-Content -Path $monoPath -Value $monoSource -NoNewline
+
+          python tools/refresh_runtime_manifest.py --version 0.6.6.7 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Validate materialized source
         shell: pwsh
