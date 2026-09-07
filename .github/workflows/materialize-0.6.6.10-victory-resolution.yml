@@ -27,6 +27,8 @@ jobs:
       - name: Materialize extraction and release identity
         shell: pwsh
         run: |
+          python tools/prepatch_0_6_6_10_victory_materializer.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_0_6_6_10_victory_resolution.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -60,7 +62,7 @@ jobs:
       - name: Commit validated materialized source
         shell: pwsh
         run: |
-          git rm .github/workflows/materialize-0.6.6.10-victory-resolution.yml tools/materialize_0_6_6_10_victory_resolution.py
+          git rm .github/workflows/materialize-0.6.6.10-victory-resolution.yml tools/materialize_0_6_6_10_victory_resolution.py tools/prepatch_0_6_6_10_victory_materializer.py
           git add -A
           git config user.name "DiceBound Architecture Bot"
           git config user.email "actions@users.noreply.github.com"
