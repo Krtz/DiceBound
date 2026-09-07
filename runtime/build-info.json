@@ -9,7 +9,7 @@
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Approved art intake: birthday gear, Nightmare backgrounds and transparent Wraiths.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.8.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
