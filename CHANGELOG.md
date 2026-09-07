@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.6
+
+### Devil Patch critical fixes (#282)
+- Gun element procs now present the Deagle beside the actor that fired the proc, and Donut procs use their dedicated artwork instead of the retired emoji presentation.
+- Post-run Heirloom selection preserves item rarity-name styling, Gold is visible in the board stats surface, Board 5 Double Dice unlock feedback is transition-only, and high Luck sharply suppresses Poor/Common reward outcomes.
+- Enemy packs now present one enemy turn at a time while preserving the existing damage/effect order. Hell mode is driven from the Camp mountain and uses the supplied active-volcano artwork.
+- Wraith transparent-art replacement is tracked separately in #283; the current release keeps its existing assets/runtime treatment until those files are ingested canonically.
+
 ## Beta 0.6.6.5
 
 ### Guard resolution ownership (#40, #209, #279)
