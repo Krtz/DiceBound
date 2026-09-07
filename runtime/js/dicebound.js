@@ -867,15 +867,14 @@
   function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
   async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
 
+  let dbConsumablesResolution=null;
   let dbCombatVictoryResolution=null;
   let dbCombatAttackResolution=null;
   async function playerAttack(...args){if(!dbCombatAttackResolution)throw new Error('Combat Attack-action owner is not configured.');return dbCombatAttackResolution.playerAttack(...args);}
 
   async function guardAction(...args){if(!dbCombatGuardResolution)throw new Error('Combat Guard-resolution owner is not configured.');return dbCombatGuardResolution.guardAction(...args);}
-  async function usePotion(){
-    if(combatBusy||!currentEnemy||player.potions<=0||player.hp>=player.maxHp)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("potion");player.potions--;const base=12+Math.floor(player.level/2),heal=healPlayer(Math.round(base*(1+player.potionPower)*(chaos.potionMult||1)));sfx.heal();let chaosText="";if(chaos.forceElement){const r=triggerElementEffect(chaos.forceElement,currentEnemy,{forced:true,source:"d20 potion"});if(r)chaosText=` ${r.message}`;}if(chaos.allElements)DIBO_ELEMENTS.forEach(k=>triggerElementEffect(k,currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],{forced:true,source:"natural twenty potion"}));const pants=applyMythicPantsPulse();setCombatText(`You drink a potion and restore ${heal} HP.${chaosText}${pants?` ${pants}`:""}`);updateCombatUI();await delay(630);await resolveEnemyResponse(false);
-  }
-  function usePotionOutsideCombat(){if(!gameStarted||rollLocked||currentEnemy||player.potions<=0||player.hp>=player.maxHp)return;player.potions--;const base=12+Math.floor(player.level/2),heal=healPlayer(Math.round(base*(1+player.potionPower)));sfx.heal();addLog(`You drink a potion on the road and restore <b>${heal} HP</b>.`);showToast(`+${heal} HP`);updateHUD();}
+  async function usePotion(...args){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.usePotion.apply(this,args);}
+  function usePotionOutsideCombat(...args){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.usePotionOutsideCombat.apply(this,args);}
 
   function handlePlayerDeath(){
     if(player.revives>0){player.revives--;player.hp=Math.max(1,Math.ceil(player.maxHp*.5));combatBusy=false;sfx.holy();addLog("A <b>Phoenix Feather</b> drags you back from death.");setCombatText(`You revive at ${player.hp} HP. Phoenix feathers remaining: ${player.revives}.`);updateCombatUI();return;}
@@ -2174,7 +2173,7 @@
     if(typeof v25TraceCommand==='function')return v25TraceCommand('identityGuardAction',invoke,'detailed',args,this);
     return invoke(...args);
   }
-  async function identityPotionAction(){if(classIdentityActive("monk"))player.monkCombo=0;return usePotion();}
+  async function identityPotionAction(...args){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.identityPotionAction.apply(this,args);}
 
 
   // Replace the four original action buttons once, removing old stacked listeners and giving class identity one clean dispatch path.
@@ -2502,24 +2501,8 @@
   const baseClassUnlockedV16=baseClassUnlocked;baseClassUnlocked=function(id){if(id==="alchemist")return !!meta.unlocks?.alchemist||(meta.stats?.potionsUsed||0)>=100;return baseClassUnlockedV16(id);};
   const checkDynamicClassUnlocksV16=checkDynamicClassUnlocks;checkDynamicClassUnlocks=function(){checkDynamicClassUnlocksV16();if((meta.stats?.potionsUsed||0)>=100)unlockClass("alchemist");};
 
-  function v16PotionHealValue(mult=1){return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
-  function recordPotionUseV16(){const s=ensureAlphaMeta();s.potionsUsed=(s.potionsUsed||0)+1;checkDynamicClassUnlocks();saveMeta();if(!gameStarted)window.DiceboundClassChooser?.render?.();}
-  usePotion=async function(){
-    if(combatBusy||!currentEnemy||player.potions<=0||player.hp>=player.maxHp)return;
-    combatBusy=true;player.guardCooldown=0;
-    const maxDrinks=player.doublePotionTurn?2:1;let drinks=0,totalHeal=0,chaosNotes=[];
-    while(drinks<maxDrinks&&player.potions>0&&player.hp<player.maxHp&&livingEnemies().length){
-      const chaos=await rollD20Chaos("potion");player.potions--;recordPotionUseV16();drinks++;
-      totalHeal+=healPlayer(v16PotionHealValue(chaos.potionMult||1));sfx.heal();
-      if(chaos.forceElement){const r=triggerElementEffect(chaos.forceElement,currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],{forced:true,source:"d20 potion"});if(r)chaosNotes.push(r.message);}
-      if(chaos.allElements)DIBO_ELEMENTS.forEach(k=>triggerElementEffect(k,currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],{forced:true,source:"natural twenty potion"}));
-      if(drinks<maxDrinks&&player.potions>0&&player.hp<player.maxHp&&livingEnemies().length)await delay(180);
-    }
-    const pants=applyMythicPantsPulse(),dose=drinks>1?' Double Dose drinks a second potion before the enemy can respond.':'';
-    setCombatText(`You drink ${drinks>1?drinks+' potions':'a potion'} and restore ${totalHeal} HP.${dose}${chaosNotes.length?' '+chaosNotes.join(' '):''}${pants?` ${pants}`:""}`);
-    updateCombatUI();await delay(630);if(!livingEnemies().length)return winCombat();await resolveEnemyResponse(false);
-  };
-  usePotionOutsideCombat=function(){if(!gameStarted||rollLocked||currentEnemy||player.potions<=0||player.hp>=player.maxHp)return;player.potions--;recordPotionUseV16();const heal=healPlayer(v16PotionHealValue());sfx.heal();addLog(`You drink a potion on the road and restore <b>${heal} HP</b>.`);showToast(`+${heal} HP`);updateHUD();};
+  function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
+  function recordPotionUseV16(){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();}
   async function alchemistVolatileFlaskV16(){if(combatBusy||!currentEnemy||player.potions<=0)return;combatBusy=true;player.guardCooldown=0;const free=random()<clamp(player.alchemistFreeFlask||0,0,.8);if(!free){player.potions--;recordPotionUseV16();}const healing=v16PotionHealValue(),raw=Math.round((healing*1.35+player.attack*.9)*(1+(player.alchemistFlaskBonus||0))),dealt=damageAll(raw,.72);let extra=free?" Panacea Engine preserves the potion.":"";if(random()<clamp(player.alchemistElementChance||0,0,.75)){const key=pick(ELEMENT_KEYS),target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],r=triggerElementEffect(key,target,{forced:true,source:"Volatile Flask"});if(r)extra+=` ${r.message}`;}player.combatActionCount++;chargeUltimate(Math.round(player.ultimateAttackGain*.75));sfx.crit();setCombatText(`🧪 Volatile Flask consumes restorative potency as violence for ${dealt} total damage.${extra}`);updateCombatUI();await delay(720);if(!livingEnemies().length)return winCombat();await resolveEnemyResponse(false);}
 
   // ---- Talents --------------------------------------------------------------
@@ -2547,7 +2530,6 @@
   const showPowerupChoiceV16Base=showPowerupChoice;showPowerupChoice=function(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){showPowerupChoiceV16Base(source,onComplete,filter,subtitle);attachPowerupRerollV16($("powerupGrid"),()=>showPowerupChoice(source,onComplete,filter,subtitle));};
 
   // ---- Ranger / Fighter / Monk / Turtle identities -------------------------
-  identityPotionAction=async function(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("turtle"))player.turtleGuardChain=0;return usePotion();};
 
   // ---- Clown gag continuity -------------------------------------------------
   const GAG_INFO={"Big Shoes":"+12% Dodge while active. Final Punchline raises extra barriers.","Rubber Chicken":"Basic attacks gain +20% Echo chance. Final Punchline hits harder.","Exploding Pie":"Your next basic attack deals +55% damage. Final Punchline becomes an enormous explosion.","Safety Net":"Opening the gag grants a Barrier. Final Punchline reinforces the net with more barriers.","Standing Ovation":"Opening the gag grants +25 Ultimate. Final Punchline leaves applause behind as 45 Ultimate."};
@@ -4063,8 +4045,6 @@
   if(CLASSES.beastmaster){CLASSES.beastmaster.base.maxHp=42;CLASSES.beastmaster.base.attack=7;CLASSES.beastmaster.base.crit=.10;CLASSES.beastmaster.stats='42 HP · 7 ATK · 1 DEF · STRONG PET SCALING';CLASSES.beastmaster.desc='A late-unlock companion commander. Its own attacks are reliable, while pet Bond, pet damage and double-pet attacks become a genuinely dangerous second damage engine.';}
   const resetPlayerV24Base=resetPlayer;
   resetPlayer=function(classId=selectedClassId){const out=resetPlayerV24Base(classId);player.energyShield=0;player.energyShieldCap=player.maxHp;if(classIdentityActive('beastmaster')){player.petDamageBonus=(player.petDamageBonus||0)+3;player.petDoubleChance=(player.petDoubleChance||0)+.08;}return out;};
-  const usePotionOutsideCombatV24Base=usePotionOutsideCombat;
-  usePotionOutsideCombat=function(){const beforePotions=player.potions,beforeUses=ensureAlphaMeta().potionsUsed||0,result=usePotionOutsideCombatV24Base();if(player.potions<beforePotions&&(ensureAlphaMeta().potionsUsed||0)===beforeUses){recordPotionUseV16();}return result;};
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
   function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
@@ -4296,11 +4276,11 @@
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,returnToRoad,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat})[name];if(typeof fn!=='function')return;
+    const fn=({rollDice,rollTwoDice,returnToRoad,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
     const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;
+    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
   }
-  ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
+  ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
 
   /* Final UI sync / tests -------------------------------------------------- */
   const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
@@ -7576,8 +7556,6 @@
     if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
   }
   function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
-  const dbFriendPotionBase=usePotion;
-  usePotion=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.potions>0&&player.hp<player.maxHp)dbFriendTickDragoonCooldown();return dbFriendPotionBase.apply(this,args);};
   async function dbFriendDragoonRegressionExercise(){
     const enemy={name:'Airborne Exercise Guardian',icon:'🐲',hp:999,maxHp:999,attack:999,defense:0,weakness:'ice',affinity:null,poisonStacks:0,guardian:true,finalBoss:true,specialName:'Exercise Skybreaker'};
     try{
@@ -7637,6 +7615,43 @@
     getLastElement:()=>player._db060LastElement
   });
 
+
+
+  const dbConsumablesOwner=window.DiceboundConsumables;
+  if(!dbConsumablesOwner)throw new Error('DiceBound requires the Consumables owner before dicebound.js');
+  dbConsumablesResolution=dbConsumablesOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    livingEnemies:()=>livingEnemies(),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    isGameStarted:()=>gameStarted,
+    getRollLocked:()=>rollLocked,
+    rollD20Chaos:action=>rollD20Chaos(action),
+    healPlayer:amount=>healPlayer(amount),
+    playHeal:()=>sfx.heal(),
+    triggerElementEffect:(...args)=>triggerElementEffect(...args),
+    getDiboElements:()=>DIBO_ELEMENTS,
+    applyMythicPantsPulse:()=>applyMythicPantsPulse(),
+    setCombatText:text=>setCombatText(text),
+    updateCombatUI:()=>updateCombatUI(),
+    delay:ms=>delay(ms),
+    winCombat:()=>winCombat(),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    ensureAlphaMeta:()=>ensureAlphaMeta(),
+    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    saveMeta:()=>saveMeta(),
+    renderClassChooser:()=>window.DiceboundClassChooser?.render?.(),
+    addLog:html=>addLog(html),
+    showToast:(...args)=>showToast(...args),
+    updateHud:()=>updateHUD(),
+    traceCommand:(name,fn,level,args,thisArg)=>v25TraceCommand(name,fn,level,args,thisArg),
+    isClassActive:id=>classIdentityActive(id),
+    dragoonActive:()=>dbFriendDragoonActive(),
+    dragoonLandingReady:()=>!!player.dragoonLandingReady,
+    dragoonLanding:()=>dbFriendDragoonLanding(),
+    tickDragoonCooldown:()=>dbFriendTickDragoonCooldown()
+  });
 
   const dbCombatVictoryOwner=window.DiceboundCombatVictoryResolution;
   if(!dbCombatVictoryOwner)throw new Error('DiceBound requires the combat Victory-resolution owner before dicebound.js');

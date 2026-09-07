@@ -1,15 +1,15 @@
 {
   "assetCount": 422,
-  "browserContentHash": "beb17e262a5e1e69d1bcd3fbf96baf887e2c4f78fb5fc0bf00115869bf7cde30",
-  "buildId": "dicebound-0.6.6.10-dev-beb17e262a5e1e69",
+  "browserContentHash": "48e15795f0b9e82f3f5ed0eb2161f04780577fc50e802455013290ea4ad8e72b",
+  "buildId": "dicebound-0.6.6.11-dev-48e15795f0b9e82f",
   "channel": "Beta",
-  "contentFileCount": 485,
+  "contentFileCount": 486,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.6.10.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.11.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -53,6 +53,7 @@
     "js/combat/guardians.js",
     "js/items/rarities.js",
     "js/items/equipment.js",
+    "js/items/consumables.js",
     "js/progression/talents.js",
     "js/progression/prestige.js",
     "js/progression/achievements.js",
@@ -74,9 +75,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "beb17e262a5e1e69d1bcd3fbf96baf887e2c4f78fb5fc0bf00115869bf7cde30",
+  "sourceHash": "48e15795f0b9e82f3f5ed0eb2161f04780577fc50e802455013290ea4ad8e72b",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.6.10",
+  "version": "0.6.6.11",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

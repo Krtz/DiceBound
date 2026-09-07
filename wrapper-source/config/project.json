@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.10",
+  "version": "0.6.6.11",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -51,6 +51,7 @@
     "js/combat/guardians.js",
     "js/items/rarities.js",
     "js/items/equipment.js",
+    "js/items/consumables.js",
     "js/progression/talents.js",
     "js/progression/prestige.js",
     "js/progression/achievements.js",
