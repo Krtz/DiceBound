@@ -45,15 +45,17 @@ jobs:
           $patchPath = 'runtime/PATCH_NOTES.md'
           $patchText = Get-Content $patchPath -Raw
           if (-not $patchText.StartsWith('# Unreleased — Beta 0.6.6.8')) { throw 'Unexpected PATCH_NOTES head while materializing 0.6.6.9.' }
-          $patchHead = @'
-# Unreleased — Beta 0.6.6.9
-
-## Beta 0.6.6.9 Basic Attack action-resolution ownership (#40, #209, #288)
-- Basic Attack orchestration now resolves through one authoritative `combat/attack-action-resolution.js` owner while individual base/Echo strike math remains in `combat/strike-resolution.js`.
-- The historical Monk/Frog, Clown/Alchemist, Echo Chamber and Dragoon Basic Attack wrapper ladder is consolidated with the same D20/Echo RNG order, targeting, Crit-to-Ultimate accounting, UI timing and temporary-state restoration.
-- Potions, Ultimates, Guard, Pet/companion turns, special/occult attacks, victory rewards, saves/checkpoints and gameplay/balance values are unchanged.
-
-'@
+          $patchLines = @(
+            '# Unreleased — Beta 0.6.6.9',
+            '',
+            '## Beta 0.6.6.9 Basic Attack action-resolution ownership (#40, #209, #288)',
+            '- Basic Attack orchestration now resolves through one authoritative `combat/attack-action-resolution.js` owner while individual base/Echo strike math remains in `combat/strike-resolution.js`.',
+            '- The historical Monk/Frog, Clown/Alchemist, Echo Chamber and Dragoon Basic Attack wrapper ladder is consolidated with the same D20/Echo RNG order, targeting, Crit-to-Ultimate accounting, UI timing and temporary-state restoration.',
+            '- Potions, Ultimates, Guard, Pet/companion turns, special/occult attacks, victory rewards, saves/checkpoints and gameplay/balance values are unchanged.',
+            '',
+            ''
+          )
+          $patchHead = $patchLines -join "`n"
           Set-Content -Path $patchPath -Value ($patchHead + $patchText) -NoNewline -Encoding utf8
           python tools/refresh_runtime_manifest.py --version 0.6.6.9 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
