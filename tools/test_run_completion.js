@@ -9,6 +9,7 @@ const vm=require("vm");
 
 const root=path.resolve(__dirname,"..");
 const source=fs.readFileSync(path.join(root,"runtime/js/run/completion.js"),"utf8");
+const victorySource=fs.readFileSync(path.join(root,"runtime/js/combat/victory-resolution.js"),"utf8").replace(/\r\n/g,"\n");
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 
 assert.doesNotMatch(source,/\bMath\.random\b/,"terminal completion must not consume RNG");
@@ -89,16 +90,16 @@ for(const retired of [
   "const dbRunCompleteSixthBase=completeSixthRoadV19;"
 ])assert.ok(!monolith.includes(retired),`retired terminal wrapper remains: ${retired}`);
 
-const lateFinalStart=monolith.indexOf("async function v19ResolveLateFinal(");
-const lateFinalEnd=monolith.indexOf("winCombat=async function(){",lateFinalStart);
-assert.ok(lateFinalStart>=0&&lateFinalEnd>lateFinalStart,"late-final combat boundary is missing");
-const lateFinal=monolith.slice(lateFinalStart,lateFinalEnd);
-assert.match(lateFinal,/const finish=\(\)=>boardAtWin===6\?completeSixthRoadV19\(\):advanceToNextBoard\(\)/,"Board 5 must advance instead of terminally completing");
-const rewardIndex=lateFinal.indexOf("grantXp(rewardXp);"),finishIndex=lateFinal.indexOf("const finish=()=>"),levelsIndex=lateFinal.indexOf("afterLevels=()=>"),lootIndex=lateFinal.indexOf("openCombatLootChain(defeated,afterLevels);");
+// The Board-5/6 post-combat boundary moved from the monolith into the
+// authoritative Combat Victory owner in 0.6.6.10. Run completion still owns
+// only the terminal Sixth-Road handoff itself.
+assert.ok(victorySource.includes("async function lateFinalCore(defeated, boardAtWin)"),"Victory owner is missing late-final combat boundary");
+assert.ok(victorySource.includes("const finish = () => boardAtWin === 6 ? rt.completeFinalRoad() : rt.advanceToNextBoard();"),"Board 5 must advance while Board 6 delegates terminal completion");
+const rewardIndex=victorySource.indexOf("rt.grantXp(reward.xp);"),finishIndex=victorySource.indexOf("const finish = () =>"),levelsIndex=victorySource.indexOf("const afterLevels = () =>"),lootIndex=victorySource.indexOf("rt.openCombatLootChain(defeated, afterLevels);");
 assert.ok(rewardIndex>=0&&finishIndex>rewardIndex&&levelsIndex>finishIndex&&lootIndex>levelsIndex,"final reward, level-up and loot ordering changed before terminal completion");
-assert.match(monolith,/const v266ResolveLateFinalBase=v19ResolveLateFinal;/,"Board-5 repeat-notification guard must wrap the existing completion order instead of duplicating it");
-assert.match(monolith,/if\(boardAtWin!==5\|\|!meta\.doubleDiceUnlocked\)return v266ResolveLateFinalBase\(defeated,boardAtWin\);/,"the first Board-5 clear must retain its Double Dice unlock announcement");
-assert.match(monolith,/if\(message==='🎲🎲 Double Dice unlocked!'\)return;/,"repeat Board-5 clears must suppress only the duplicate Double Dice toast");
+assert.ok(victorySource.includes("const alreadyUnlocked = !!meta.doubleDiceUnlocked;"),"Victory owner must distinguish first and repeat Board-5 Double Dice clears");
+assert.ok(victorySource.includes('if (!alreadyUnlocked) rt.showToast("🎲🎲 Double Dice unlocked!", 2600, true);'),"first Board-5 clear must retain Double Dice announcement while repeat clears suppress it");
+assert.ok(!monolith.includes("v266ResolveLateFinalBase")&&!monolith.includes("v19ResolveLateFinal"),"retired late-final monolith ownership returned");
 
 const restoreStart=monolith.indexOf("function dbRunRestore(");
 const restoreEnd=monolith.indexOf("function dbRunPanelText(",restoreStart);

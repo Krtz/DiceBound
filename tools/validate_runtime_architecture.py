@@ -1039,6 +1039,30 @@ def main() -> int:
             if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
                 errors.append(f"retired combat Pet-resolution wrapper remains in dicebound.js: {symbol}")
 
+
+    victory_owner = next((m for m in modules if m.get("id") == "combat-victory-resolution"), None)
+    if not victory_owner or victory_owner.get("status") != "extracted":
+        errors.append("combat Victory-resolution owner is missing or not extracted")
+    else:
+        if victory_owner.get("path") != "js/combat/victory-resolution.js" or "DiceboundCombatVictoryResolution" not in (victory_owner.get("provides") or []):
+            errors.append("combat-victory-resolution must provide DiceboundCombatVictoryResolution from js/combat/victory-resolution.js")
+        if position.get("combat-victory-resolution", -1) >= position.get(str(monolith_id), -1):
+            errors.append("combat-victory-resolution must load before the compatibility monolith")
+    if monolith_source:
+        if "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" not in monolith_source:
+            errors.append("dicebound.js must configure the combat Victory-resolution owner")
+        if monolith_source.count("async function winCombat(") != 1 or "return dbCombatVictoryResolution.winCombat(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin winCombat adapter")
+        if re.search(r"(?m)^  winCombat\s*=\s*async function", monolith_source):
+            errors.append("dicebound.js retains a top-level winCombat reassignment after Victory extraction")
+        for symbol in (
+            "winCombatV15", "winCombatV15Patch", "winCombatV16Base", "winCombatV19Base", "v266ResolveLateFinalBase",
+            "winCombatV24Base", "winCombatV251Base", "winCombatV26Base", "db0511WinCombatBase", "db060WinCombatBase", "db0631WinCombatBase",
+            "v19ResolveLateFinal",
+        ):
+            if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
+                errors.append(f"retired combat Victory-resolution wrapper remains in dicebound.js: {symbol}")
+
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
     if len(planned_domains) != len(set(planned_domains)):
         errors.append("plannedDomains contains duplicates")

@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.10
+
+## Beta 0.6.6.10 Combat Victory / Reward resolution ownership (#40, #209, #291)
+- `combat/victory-resolution.js` now owns the post-kill settlement/continuation transaction, including the published Board 5/6 final path and the historical cleanup/error-containment wrapper ordering.
+- Exact Gold/XP/cookie formulas, unlock/accounting hooks, loot -> level-up -> continuation ordering and existing RNG-consuming loot callbacks are preserved.
+- Loot/drop policy, Powerup UI, Board transition, terminal run completion, saves/checkpoints and gameplay/balance are unchanged.
+
 # Unreleased — Beta 0.6.6.9
 
 ## Beta 0.6.6.9 Basic Attack action-resolution ownership (#40, #209, #288)
