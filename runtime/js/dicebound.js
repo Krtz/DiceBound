@@ -867,12 +867,9 @@
   function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
   async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
 
-  async function playerAttack(){
-    if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("attack");updateCombatUI();const firstTarget=currentEnemy,echoes=rollTieredProc(player.doubleStrike)+(chaos.extraEcho||0);let totalCrit=0;
-    const base=await performStrike(firstTarget,{echo:false,chaos});totalCrit+=base.crit;
-    for(let i=1;i<=echoes&&livingEnemies().length;i++){const t=firstTarget.hp>0?firstTarget:(currentEnemy?.hp>0?currentEnemy:livingEnemies()[0]);const r=await performStrike(t,{echo:true,index:i,chaos,canCrit:false});totalCrit+=r.crit;}
-    chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*totalCrit);const pants=applyMythicPantsPulse();if(pants)setCombatText(pants);updateCombatUI();if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  }
+  let dbCombatAttackResolution=null;
+  async function playerAttack(...args){if(!dbCombatAttackResolution)throw new Error('Combat Attack-action owner is not configured.');return dbCombatAttackResolution.playerAttack(...args);}
+
   async function guardAction(...args){if(!dbCombatGuardResolution)throw new Error('Combat Guard-resolution owner is not configured.');return dbCombatGuardResolution.guardAction(...args);}
   async function usePotion(){
     if(combatBusy||!currentEnemy||player.potions<=0||player.hp>=player.maxHp)return;combatBusy=true;player.guardCooldown=0;const chaos=await rollD20Chaos("potion");player.potions--;const base=12+Math.floor(player.level/2),heal=healPlayer(Math.round(base*(1+player.potionPower)*(chaos.potionMult||1)));sfx.heal();let chaosText="";if(chaos.forceElement){const r=triggerElementEffect(chaos.forceElement,currentEnemy,{forced:true,source:"d20 potion"});if(r)chaosText=` ${r.message}`;}if(chaos.allElements)DIBO_ELEMENTS.forEach(k=>triggerElementEffect(k,currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],{forced:true,source:"natural twenty potion"}));const pants=applyMythicPantsPulse();setCombatText(`You drink a potion and restore ${heal} HP.${chaosText}${pants?` ${pants}`:""}`);updateCombatUI();await delay(630);await resolveEnemyResponse(false);
@@ -2111,17 +2108,6 @@
   damageEnemy=function(enemy,amount,ignoreDefense=false){if(player._ninjaExecution){amount*=1.65;ignoreDefense=true;}return damageEnemyV13(enemy,amount,ignoreDefense);};
 
   
-  const playerAttackV13=playerAttack;
-  playerAttack=async function(){
-    if(classIdentityActive("monk")){
-      const combo=player.monkCombo||0,echoBonus=combo*.035,damageBonus=combo*.045;player.doubleStrike+=echoBonus;player.damageBonus+=damageBonus;
-      try{await playerAttackV13();}finally{player.doubleStrike-=echoBonus;player.damageBonus-=damageBonus;}
-      if(player.hp>0&&currentEnemy)player.monkCombo=Math.min(5,combo+1);updateCombatUI();return;
-    }
-    if(classIdentityActive("frog")&&currentEnemy?.hp>0&&currentEnemy.hp/currentEnemy.maxHp<.5){player.doubleStrike+=1;try{return await playerAttackV13();}finally{player.doubleStrike-=1;}}
-    return playerAttackV13();
-  };
-
   const healPlayerV13=healPlayer;
   healPlayer=function(amount){const healed=healPlayerV13(amount);if(classIdentityActive("cleric")&&healed>0){player.clericFaith=clamp((player.clericFaith||0)+healed*2,0,100);}return healed;};
 
@@ -2567,8 +2553,6 @@
   const showPowerupChoiceV16Base=showPowerupChoice;showPowerupChoice=function(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){showPowerupChoiceV16Base(source,onComplete,filter,subtitle);attachPowerupRerollV16($("powerupGrid"),()=>showPowerupChoice(source,onComplete,filter,subtitle));};
 
   // ---- Ranger / Fighter / Monk / Turtle identities -------------------------
-    const playerAttackV16Base=playerAttack;
-  playerAttack=async function(){const cls=classIdentityId(),comboBefore=player.monkCombo||0,chicken=cls==="clown"&&player.clownGimmick==="Rubber Chicken",turtleChain=player.turtleGuardChain||0;if(chicken)player.doubleStrike+=.20;if(cls==="alchemist"&&!combatBusy&&currentEnemy){player.alchemistBrewCounter=(player.alchemistBrewCounter||0)+1;if(player.alchemistBrewCounter>=player.alchemistBrewNeed){player.alchemistBrewCounter=0;player.potions++;showToast("🧪 Brewed +1 potion");addCombatHistory("⚗️ Combat Distillery completes a fresh potion.");}}try{const r=await playerAttackV16Base();if(cls==="monk"&&(player.monkComboMax||5)>5)player.monkCombo=Math.min(player.monkComboMax,comboBefore+1);return r;}finally{if(chicken)player.doubleStrike-=.20;updateCombatUI();}};
   identityPotionAction=async function(){if(classIdentityActive("monk"))player.monkCombo=0;if(classIdentityActive("turtle"))player.turtleGuardChain=0;return usePotion();};
 
   // ---- Clown gag continuity -------------------------------------------------
@@ -6687,17 +6671,8 @@
   const db060OuroSyncBase=v18SyncOuroborosAttack;
   v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros')||!db060HasEffect('perfect_specimen'))return db060OuroSyncBase();const delta=(Number(player.attack)||0)-30;if(delta>0){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=30;}else if(player.attack<30)player.attack=30;};
 
-  // Strike-level effects.
-    // Echo Chamber must be active before playerAttack rolls Echo count.  Doing
-  // the conversion only inside performStrike is too late for that roll.
-  const db060PlayerAttackBase=playerAttack;
-  playerAttack=async function(...args){
-    if(!db060HasEffect('echo_chamber'))return db060PlayerAttackBase.apply(this,args);
-    const savedCrit=player.crit,savedEcho=player.doubleStrike;
-    player.crit=0;player.doubleStrike=savedEcho+savedCrit;player._db060EchoChamberActive=true;
-    try{return await db060PlayerAttackBase.apply(this,args);}
-    finally{player.crit=savedCrit;player.doubleStrike=savedEcho;player._db060EchoChamberActive=false;}
-  };
+  // Basic Attack action-level Echo Chamber sequencing is owned by combat/attack-action-resolution.
+  // Individual strike-level effects remain owned by combat/strike-resolution.
   
   // Weapon-proc effects and Pet Mirror element memory.
   const db060TriggerElementBase=triggerElementEffect;
@@ -7673,8 +7648,6 @@
     if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
   }
   function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
-  const dbFriendPlayerAttackBase=playerAttack;
-  playerAttack=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy)dbFriendTickDragoonCooldown();return dbFriendPlayerAttackBase.apply(this,args);};
   const dbFriendPotionBase=usePotion;
   usePotion=async function(...args){if(dbFriendDragoonActive()&&player.dragoonLandingReady)return dbFriendDragoonLanding();if(dbFriendDragoonActive()&&!combatBusy&&currentEnemy&&player.potions>0&&player.hp<player.maxHp)dbFriendTickDragoonCooldown();return dbFriendPotionBase.apply(this,args);};
   async function dbFriendDragoonRegressionExercise(){
@@ -7734,6 +7707,36 @@
     petBondLevel:id=>v17PetBondLevel(id),
     hasLegendaryEffect:id=>db060HasEffect(id),
     getLastElement:()=>player._db060LastElement
+  });
+
+  const dbCombatAttackOwner=window.DiceboundCombatAttackActionResolution;
+  if(!dbCombatAttackOwner)throw new Error('DiceBound requires the combat Attack-action owner before dicebound.js');
+  dbCombatAttackResolution=dbCombatAttackOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    rollD20Chaos:(...args)=>rollD20Chaos(...args),
+    updateCombatUI:()=>updateCombatUI(),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    performStrike:(...args)=>performStrike(...args),
+    chargeUltimate:amount=>chargeUltimate(amount),
+    applyMythicPantsPulse:()=>applyMythicPantsPulse(),
+    setCombatText:text=>setCombatText(text),
+    winCombat:(...args)=>winCombat(...args),
+    setCurrentEnemy:index=>setCurrentEnemy(index),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    isClassActive:id=>classIdentityActive(id),
+    classIdentityId:()=>classIdentityId(),
+    hasLegendaryEffect:id=>db060HasEffect(id),
+    showToast:text=>showToast(text),
+    addCombatHistory:text=>addCombatHistory(text),
+    dragoonActive:()=>dbFriendDragoonActive(),
+    dragoonLandingReady:()=>!!player.dragoonLandingReady,
+    dragoonLanding:()=>dbFriendDragoonLanding(),
+    tickDragoonCooldown:()=>dbFriendTickDragoonCooldown()
   });
 
   const dbCombatGuardOwner=window.DiceboundCombatGuardResolution;

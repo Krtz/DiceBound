@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.9
+
+### Basic Attack action-resolution ownership (#40, #209, #288)
+- Extracted the high-level Basic Attack transaction into `runtime/js/combat/attack-action-resolution.js`, leaving individual base/Echo strike math in the existing strike-resolution owner.
+- Consolidated the live Monk/Frog, Clown/Alchemist, Echo Chamber and Dragoon Basic Attack wrapper ladder while preserving D20/Echo RNG order, target reconciliation, Crit-to-Ultimate accounting and temporary-state restoration.
+- Potions, Ultimates, Guard, Pet/companion turns, occult/special attacks, victory rewards, saves/checkpoints and gameplay values remain outside this slice.
+
 ## Beta 0.6.6.8
 
 ### Approved art intake (#164, #283, #286)
