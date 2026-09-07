@@ -31,10 +31,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $path = 'tools/test_combat_attack_action_resolution.js'
           $text = Get-Content $path -Raw
-          $old = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response']"
-          $new = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']"
-          if (($text.Split($old).Count - 1) -ne 1) { throw 'Expected exactly one Basic Attack trace assertion to patch.' }
-          Set-Content -Path $path -Value ($text.Replace($old, $new)) -NoNewline -Encoding utf8
+          $oldTrace = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response']"
+          $newTrace = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']"
+          if (($text.Split($oldTrace).Count - 1) -ne 1) { throw 'Expected exactly one Basic Attack trace assertion to patch.' }
+          $text = $text.Replace($oldTrace, $newTrace)
+          $oldFloat = 'assert.strictEqual(h.player.doubleStrike, .2);'
+          $newFloat = 'assert(Math.abs(h.player.doubleStrike - .2) < 1e-12);'
+          if (($text.Split($oldFloat).Count - 1) -ne 1) { throw 'Expected exactly one Frog restoration assertion to patch.' }
+          $text = $text.Replace($oldFloat, $newFloat)
+          Set-Content -Path $path -Value $text -NoNewline -Encoding utf8
 
       - name: Validate JavaScript and deterministic contracts
         shell: pwsh
