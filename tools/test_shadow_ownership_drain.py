@@ -157,4 +157,28 @@ assert "dbCombatHealingResolution.recordHealing.apply(this,args)" in mono, 'reco
 assert "dbCombatHealingResolution.clearBloodOverhealTemp.apply(this,args)" in mono, 'Blood Overheal cleanup adapter is missing'
 assert "dbCombatHealingResolution.clearStoneBattle.apply(this,args)" in mono, 'Stone cleanup adapter is missing'
 
+
+element_retired = [
+    'triggerElementEffectV15', 'triggerElementEffectV16Base', 'enemyElementProcV16Base',
+    'triggerElementEffectV19Base', 'triggerElementEffectV27Base', 'triggerElementEffectBeta045Base',
+    'db046TriggerElementBase', 'db047TriggerElementBase', 'db060TriggerElementBase',
+    'db060TriggerWeaponBase', 'dbTriggerElementBase', 'dbEnemyElementProcBase',
+    'db064EnemyElementProcBase', 'db064DonutTriggerElementBase', 'db064DonutEnemyElementProcBase',
+    'db0648TriggerElementBase', 'dbFriendElementProcBase', 'dbFriendEnemyElementProcBase',
+    'db0511PlayerElementDamage', 'db0511AddPlayerBurn', 'db0511AddPlayerPoison', 'db0511QueueControl',
+]
+for symbol in element_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Element owner returned: {symbol}"
+assert mono.count('function triggerElementEffect(') == 1, 'triggerElementEffect must have exactly one thin compatibility adapter'
+assert mono.count('function enemyElementProc(') == 1, 'enemyElementProc must have exactly one thin compatibility adapter'
+assert mono.count('function triggerWeaponElement(') == 1, 'triggerWeaponElement must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*triggerElementEffect\s*=\s*function', mono), 'triggerElementEffect reassignment chain must not return'
+assert not re.search(r'(?m)^\s*enemyElementProc\s*=\s*function', mono), 'enemyElementProc reassignment chain must not return'
+assert not re.search(r'(?m)^\s*triggerWeaponElement\s*=\s*function', mono), 'triggerWeaponElement reassignment chain must not return'
+assert "dbCombatElementResolution=dbCombatElementOwner.configure({" in mono, 'Element owner is not configured by the composition root'
+assert "dbCombatElementResolution.triggerElementEffect.apply(this,args)" in mono, 'triggerElementEffect thin adapter is missing'
+assert "dbCombatElementResolution.enemyElementProc.apply(this,args)" in mono, 'enemyElementProc thin adapter is missing'
+assert "dbCombatElementResolution.triggerWeaponElement.apply(this,args)" in mono, 'triggerWeaponElement thin adapter is missing'
+assert "dbCombatElementResolution.restoreEnemyElementDebuffs.apply(this,args)" in mono, 'enemy elemental cleanup adapter is missing'
+
 print('Monolith spring-clean guard PASS')

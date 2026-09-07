@@ -153,15 +153,18 @@ projectileTimers[4]();
 assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_bullet_tracer_05.png", "Gun travel must use the authored bullet tracer");
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
+const elementOwner = fs.readFileSync(path.join(root, "runtime", "js", "combat", "element-resolution.js"), "utf8");
 assert.match(monolith, /window\.DiceboundCombatVfx\?\.create/, "Combat VFX local-state adapter is missing");
-assert.match(monolith, /dbCombatVfx\.playDonutRain\(\{origin:'player',enemy:target\}\)/, "Player-origin Donut presentation is not routed with its real target");
-assert.match(monolith, /const db064DonutEnemyElementProcBase=enemyElementProc;/, "Enemy-origin Donut procs are not routed through the authored VFX owner");
-assert.match(monolith, /if\(isDonut&&result\)dbCombatVfx\.playDonutRain\(\{origin:'enemy',enemy\}\);/, "Enemy-origin Donut proc must play the authored rain after a real completed proc");
+assert.match(monolith, /playDonutRain:payload=>dbCombatVfx\.playDonutRain\(payload\)/, "Element owner composition must inject the authored Donut presentation callback");
+assert.match(elementOwner, /if \(key === "donut" && result\) rt\.playDonutRain\(\{ origin: "player", enemy: target \}\);/, "Player-origin Donut presentation is not routed with its real target");
+assert.doesNotMatch(monolith, /db064DonutEnemyElementProcBase|db064DonutTriggerElementBase/, "Retired Donut mechanic/VFX wrappers must not survive in the monolith");
+assert.match(elementOwner, /if \(isDonut && result\) rt\.playDonutRain\(\{ origin: "enemy", enemy \}\);/, "Enemy-origin Donut proc must play the authored rain after a real completed proc");
 assert.doesNotMatch(monolith, /function dbPlayNatureVfx/, "Nature DOM presentation remained duplicated in the monolith");
 assert.doesNotMatch(monolith, /function db064PlayDonutRain/, "Donut DOM presentation remained duplicated in the monolith");
 assert.doesNotMatch(fs.readFileSync(path.join(root, "runtime", "js", "combat", "vfx.js"), "utf8"), /backgroundPosition: donutFramePosition/, "Donut must use its whole authored frames rather than CSS spritesheet cropping");
 assert.match(monolith, /dbCombatVfx\.clearTransient\?\.\(\)/, "Combat transitions must explicitly clear authored transient VFX");
-assert.match(monolith, /dbCombatVfx\.playProjectileProc\?\.\(key,\{origin:'player',enemy:target\}\)/, "Player Fire/Gun procs must use the authored projectile owner");
+assert.match(monolith, /playProjectileProc:\(key,payload\)=>dbCombatVfx\.playProjectileProc\?\.\(key,payload\)/, "Element owner composition must inject the authored projectile presentation callback");
+assert.match(elementOwner, /if \(result && \(key === "fire" \|\| key === "gun"\)\) rt\.playProjectileProc\(key, \{ origin: "player", enemy: target \}\);/, "Player Fire/Gun procs must use the authored projectile owner");
 assert.match(monolith, /if\(key==='fire'\|\|key==='gun'\|\|key==='donut'\)return false;/, "Legacy emoji Donut presentation must be suppressed when authored Donut VFX owns the proc");
 
 console.log("Combat VFX ownership PASS: Nature suppression scope, live-target filter, asset contracts and monolith adapters");
