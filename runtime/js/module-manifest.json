@@ -17,6 +17,7 @@
     "memory-diagnostics",
     "combat-effective-stats",
     "combat-healing-resolution",
+    "combat-element-resolution",
     "combat-strike-policy",
     "combat-strike-resolution",
     "combat-attack-action-resolution",
@@ -231,6 +232,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatHealingResolution"
+      ]
+    },
+    {
+      "id": "combat-element-resolution",
+      "path": "js/combat/element-resolution.js",
+      "domain": "combat/player-and-enemy-elemental-proc-effect-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatElementResolution"
       ]
     },
     {

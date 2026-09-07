@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.13
+
+### Elemental Proc / Effect resolution ownership (#40, #209, #297)
+- Extracted player and enemy elemental proc/effect mechanics into `runtime/js/combat/element-resolution.js`.
+- Retired the historical Radiation, Haste anti-lock, Fire/Tech, Legendary, target-reconciliation and presentation wrapper ladders while preserving exact RNG/order and VFX callbacks.
+- Generic damage/healing, strike/Pet/enemy-turn orchestration and authored `combat/vfx.js` presentation remain separate owners.
+
 ## Beta 0.6.6.12
 
 ### Healing / Overheal resolution ownership (#40, #209, #295)

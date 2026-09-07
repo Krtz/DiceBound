@@ -829,9 +829,9 @@
   async function animateUltimate(){
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760}[player.classId]||620));enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");
   }
-  function currentWeaponElement(){const weapon=player.equipment?.weapon;return weapon?.element&&ELEMENTS[weapon.element]?weapon.element:null;}
+  function currentWeaponElement(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.currentWeaponElement.apply(this,args);}
   function damageAll(amount,falloff=1){let total=0;livingEnemies().forEach(e=>{total+=damageEnemy(e,amount*(e===currentEnemy?1:falloff));});return total;}
-  function triggerWeaponElement(target=currentEnemy){const key=currentWeaponElement();return key?triggerElementEffect(key,target,{forced:false,source:"weapon"}):null;}
+  function triggerWeaponElement(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.triggerWeaponElement.apply(this,args);}
   function triggerStrikeElements(target,chaos=null){
     const results=[];const weapon=triggerWeaponElement(target);if(weapon)results.push(weapon);
     Object.entries(player.classElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=triggerElementEffect(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"class affinity"});if(r)results.push(r);}});
@@ -867,6 +867,7 @@
   function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
   async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
 
+  let dbCombatElementResolution=null;
   let dbCombatHealingResolution=null;
   let dbConsumablesResolution=null;
   let dbCombatVictoryResolution=null;
@@ -1430,46 +1431,14 @@
     return scaled;
   }
 
-  function triggerElementEffect(key,target=currentEnemy,{forced=false,source="Weapon"}={}){
-    if(!key||!ELEMENTS[key]||!target||target.hp<=0)return null;const item=player.equipment.weapon,e=ELEMENTS[key],weak=target.weakness===key,guaranteedRend=!forced&&item?.mythicPiece==="weapon"&&player.combatAttackCount>0&&player.combatAttackCount%5===0;
-    if(!forced){if(!item||item.element!==key)return null;const setProc=v19SetProcBonus(),chance=clamp(.14+rarityValues[item.rarity]*.025+player.elementProcBonus+setProc+(weak?.22:0),0,.98);if(!guaranteedRend&&random()>=chance)return null;}
-    playElementAnimation(key,target,false);const rendPower=guaranteedRend?1.65:1,setElementPower=v19SetElementPower(),mult=(weak?1.55+player.weaknessElementBonus:1)*(1+player.elementDamageBonus)*rendPower*setElementPower;let totalDamage=0,heal=0,extra=guaranteedRend?" Reality Rend guarantees and strengthens the activation.":"",aoe=["ice","light","nature","metal"].includes(key);const old=currentEnemy;currentEnemy=target;
-    if(key==="fire")totalDamage=damageEnemy(target,player.attack*.65*mult);
-    if(key==="ice"){totalDamage=damageAll(player.attack*.38*mult,.85);target.skipTurns=(target.skipTurns||0)+1;extra+=" Ice Nova damages the entire pack, but only the selected target is frozen.";}
-    if(key==="electric")totalDamage=damageEnemy(target,player.attack*.90*mult);
-    if(key==="light"){totalDamage=damageAll(player.attack*.52*mult,.75);heal=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*(weak?.15:.09)*(1+player.elementDamageBonus)));player.hp+=heal;extra=heal?` Holy restores ${heal} HP.`:"";}
-    if(key==="void")totalDamage=damageEnemy(target,Math.max(1,Math.min(target.maxHp*(weak?.14:.09)*mult,player.attack*4.5*mult)),true);
-    if(key==="nature"){totalDamage=damageAll(player.attack*.30*mult,.8);const add=Math.max(1,player.naturePoisonStacks||1);livingEnemies().forEach(x=>x.poisonStacks=(x.poisonStacks||0)+add);extra=` Poison Vines add ${add} Poison stack${add===1?"":"s"} to every living enemy.`;}
-    if(key==="donut"){heal=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*(weak?.28:.18)*(1+player.elementDamageBonus)));player.hp+=heal;extra=` Healing donuts restore ${heal} HP.`;}
-    if(key==="tech"){totalDamage=damageEnemy(target,player.attack*.42*mult);const cut=Math.max(1,Math.ceil(target.attack*(weak?.22:.14)*(1+player.elementDamageBonus)));target.attack=Math.max(1,target.attack-cut);extra=` Brain Hack lowers ${target.name}'s attack by ${cut}.`;}
-    if(key==="metal"){totalDamage=damageAll(player.attack*.58*mult,.78);player.ultimateCharge=clamp(player.ultimateCharge+(weak?22:14),0,100);extra=" The riff charges your ultimate.";}
-    if(key==="coffee"){totalDamage=damageEnemy(target,player.attack*.34*mult);player.hasteTurns+=1;player.ultimateCharge=clamp(player.ultimateCharge+8,0,100);extra=" Caffeinated Haste deals damage and grants another action.";}
-    if(key==="gun"){const armorPierce=Math.ceil((target.defense||0)*.5);totalDamage=damageEnemy(target,player.attack*1.05*mult+armorPierce);extra=" Deadeye Volley ignores roughly half the target's Defense.";}
-    currentEnemy=old?.hp>0?old:(livingEnemies()[0]||target);if(weak&&player.elementUltimateGain){player.ultimateCharge=clamp(player.ultimateCharge+player.elementUltimateGain,0,100);extra+=` Weakness Lore grants ${player.elementUltimateGain} ultimate charge.`;}
-    const echoed=random()<clamp(player.elementEchoChance,0,.80);if(echoed){playElementAnimation(key,target,false);if(totalDamage){const echoTarget=target.hp>0?target:(livingEnemies()[0]||target),echoDamage=aoe?damageAll(Math.max(1,totalDamage/Math.max(1,currentEnemies.length)),.75):damageEnemy(echoTarget,totalDamage);totalDamage+=echoDamage;}if(heal){const more=Math.min(player.maxHp-player.hp,heal);player.hp+=more;heal+=more;}extra+=" Prismatic Echo repeats the effect!";}
-    trackElementProgress(key,totalDamage+heal);const message=`${weak?"WEAKNESS! ":""}${e.icon} ${e.spell}${totalDamage?` deals ${totalDamage} elemental damage${aoe?" across the pack":""}.`:""}${extra}`;addLog(`<b>${e.spell}</b> ${source}${weak?" exploits a weakness":" activates"}${echoed?" and echoes":""}.`);showToast(`${e.icon} ${e.spell}${weak?" — WEAKNESS!":""}${echoed?" ×2":""}`);return {totalDamage,heal,message,weak,echoed,aoe};
-  }
+  function triggerElementEffect(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.triggerElementEffect.apply(this,args);}
 
   function applyPoisonTick(){
     let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;const dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}
     if(total){playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;
   }
 
-  function enemyElementProc(enemy){
-    if(!enemy?.affinity||random()>enemy.elementProcChance)return "";const key=enemy.affinity,e=ELEMENTS[key];playElementAnimation(key,enemy,true);let note=`${e.icon} ${enemy.name} activates ${e.spell}: `;
-    if(key==="fire"){const d=Math.max(1,Math.round(enemy.attack*.30));player.hp=Math.max(0,player.hp-d);note+=`${d} bonus fire damage.`;}
-    else if(key==="ice"){player.ultimateCharge=Math.max(0,player.ultimateCharge-8);note+="your Ultimate loses 8 charge.";}
-    else if(key==="electric"){const d=Math.max(1,Math.round(enemy.attack*.22));player.hp=Math.max(0,player.hp-d);player.ultimateCharge=Math.max(0,player.ultimateCharge-6);note+=`${d} shock damage and -6 Ultimate.`;}
-    else if(key==="light"){const h=Math.min(enemy.maxHp-enemy.hp,Math.max(1,Math.ceil(enemy.maxHp*.08)));enemy.hp+=h;note+=`heals ${h} HP.`;}
-    else if(key==="void"){const d=Math.max(1,Math.ceil(player.maxHp*.035));player.hp=Math.max(0,player.hp-d);note+=`${d} void damage based on your max HP.`;}
-    else if(key==="nature"){const d=Math.max(1,Math.round(enemy.attack*.24));player.hp=Math.max(0,player.hp-d);note+=`vines deal ${d} bonus damage.`;}
-    else if(key==="donut"){const h=Math.min(enemy.maxHp-enemy.hp,Math.max(1,Math.ceil(enemy.maxHp*.12)));enemy.hp+=h;note+=`heals ${h} HP with deeply unfair donuts.`;}
-    else if(key==="tech"){player.ultimateCharge=Math.max(0,player.ultimateCharge-12);note+="Brain Hack drains 12 Ultimate charge.";}
-    else if(key==="metal"){const d=Math.max(1,Math.round(enemy.attack*.28));player.hp=Math.max(0,player.hp-d);note+=`the riff deals ${d} sonic damage.`;}
-    else if(key==="coffee"){const d=Math.max(1,Math.round(enemy.attack*.35));player.hp=Math.max(0,player.hp-d);note+=`Haste grants a rapid extra hit for ${d}.`;}
-    else if(key==="gun"){const d=Math.max(1,Math.round(enemy.attack*.45));player.hp=Math.max(0,player.hp-d);note+=`a piercing shot deals ${d} damage.`;}
-    addCombatHistory(note);return note;
-  }
+  function enemyElementProc(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.enemyElementProc.apply(this,args);}
 
   // Beta 0.6.6.0: enemy-response and enemy-turn orchestration is owned by
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
@@ -1582,16 +1551,6 @@
   const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};
   const applyUpgradeV15=applyUpgrade;applyUpgrade=function(up,source="Powerup"){const result=applyUpgradeV15(up,source);ensureAlphaMeta().powerupsTaken++;saveMeta();return result;};
   
-  // Blood Moon/Crimson Eclipse overheal fix and guardian freeze cooldown.
-  const triggerElementEffectV15=triggerElementEffect;triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    if(key!=="ice"&&key!=="light"&&key!=="donut")return triggerElementEffectV15(key,target,opts);
-    if(!key||!ELEMENTS[key]||!target||target.hp<=0)return null;const {forced=false,source="Weapon"}=opts,item=player.equipment.weapon,e=ELEMENTS[key],weak=target.weakness===key,guaranteedRend=!forced&&item?.mythicPiece==="weapon"&&player.combatAttackCount>0&&player.combatAttackCount%5===0;if(!forced){if(!item||item.element!==key)return null;const setProc=v19SetProcBonus(),chance=clamp(.14+rarityValues[item.rarity]*.025+player.elementProcBonus+setProc+(weak?.22:0),0,.98);if(!guaranteedRend&&random()>=chance)return null;}
-    playElementAnimation(key,target,false);const rendPower=guaranteedRend?1.65:1,setElementPower=v19SetElementPower(),mult=(weak?1.55+player.weaknessElementBonus:1)*(1+player.elementDamageBonus)*rendPower*setElementPower;let totalDamage=0,heal=0,extra=guaranteedRend?" Reality Rend guarantees and strengthens the activation.":"",aoe=true,old=currentEnemy;currentEnemy=target;
-    if(key==="ice"){totalDamage=damageAll(player.attack*.38*mult,.85);if(target.guardian){if((target.freezeCooldown||0)<=0){target.skipTurns=(target.skipTurns||0)+1;target.freezeCooldown=2;extra+=" The guardian is frozen; Ice Nova cannot freeze it again until it has recovered.";}else extra+=` The guardian resists the freeze (${target.freezeCooldown} response${target.freezeCooldown===1?"":"s"} of freeze resistance remain).`;}else{target.skipTurns=(target.skipTurns||0)+1;extra+=" The selected target is frozen.";}}
-    if(key==="light"){totalDamage=damageAll(player.attack*.52*mult,.75);heal=healPlayer(Math.ceil(player.maxHp*(weak?.15:.09)*(1+player.elementDamageBonus)));extra=heal?` Holy restores ${heal} HP.`:"";}
-    if(key==="donut"){heal=healPlayer(Math.ceil(player.maxHp*(weak?.28:.18)*(1+player.elementDamageBonus)));extra=` Healing donuts restore ${heal} HP.`;}
-    currentEnemy=old?.hp>0?old:(livingEnemies()[0]||target);if(weak&&player.elementUltimateGain){player.ultimateCharge=clamp(player.ultimateCharge+player.elementUltimateGain,0,100);extra+=` Weakness Lore grants ${player.elementUltimateGain} ultimate charge.`;}const echoed=random()<clamp(player.elementEchoChance,0,.80);if(echoed){playElementAnimation(key,target,false);if(totalDamage){const echoTarget=target.hp>0?target:(livingEnemies()[0]||target),echoDamage=damageAll(Math.max(1,totalDamage/Math.max(1,currentEnemies.length)),.75);totalDamage+=echoDamage;}if(heal){heal+=healPlayer(heal);}extra+=" Prismatic Echo repeats the effect!";}trackElementProgress(key,totalDamage+heal);const message=`${weak?"WEAKNESS! ":""}${e.icon} ${e.spell}${totalDamage?` deals ${totalDamage} elemental damage${aoe?" across the pack":""}.`:""}${extra}`;addLog(`<b>${e.spell}</b> ${source}${weak?" exploits a weakness":" activates"}${echoed?" and echoes":""}.`);showToast(`${e.icon} ${e.spell}${weak?" — WEAKNESS!":""}${echoed?" ×2":""}`);return {totalDamage,heal,message,weak,echoed,aoe};
-  };
 
   // Custom ultimate art for the new classes.
   animateUltimate=async function(){const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️",cleric:"☀️✝️",paladin:"⚜️🛡️",beastmaster:"🐺🐾🐺",rogue:"💎🗡️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760,cleric:720,paladin:720,beastmaster:760,rogue:690}[player.classId]||620)+ALPHA_COMBAT_DELAY);enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");};
@@ -1882,29 +1841,9 @@
 
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;if(enemySource){const el=document.createElement("div");el.className="enemy-proc-fx";el.innerHTML=`<span>${target?.icon||"👹"} → ${art}</span><small>ENEMY ELEMENT PROC</small>`;head.appendChild(el);setTimeout(()=>el.remove(),900);return;}const el=document.createElement("div");el.className=`element-proc-fx ${key}`;el.textContent=art;head.appendChild(el);setTimeout(()=>el.remove(),850);};
 
-  function affinityElementMultiplier(enemy,key){return enemy?.affinity===key ? .5 : 1;}
-  function elementHit(enemy,key,amount,ignoreDefense=false){return damageEnemy(enemy,amount*affinityElementMultiplier(enemy,key),ignoreDefense);}
-  function elementHitAll(key,amount,falloff=1,ignoreDefense=false){let total=0;livingEnemies().forEach(e=>{total+=elementHit(e,key,amount*(e===currentEnemy?1:falloff),ignoreDefense);});return total;}
-
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    if(!key||!ELEMENTS[key]||!target||target.hp<=0)return null;const {forced=false,source="Weapon"}=opts,item=player.equipment.weapon,e=ELEMENTS[key],weak=target.weakness===key,guaranteedRend=!forced&&item?.mythicPiece==="weapon"&&player.combatAttackCount>0&&player.combatAttackCount%5===0;if(!forced){if(!item||item.element!==key)return null;const setProc=v19SetProcBonus(),chance=clamp(.14+rarityValues[item.rarity]*.025+player.elementProcBonus+setProc+(weak?.22:0),0,.98);if(!guaranteedRend&&random()>=chance)return null;}
-    playElementAnimation(key,target,false);const rendPower=guaranteedRend?1.65:1,setElementPower=v19SetElementPower(),mult=(weak?1.55+player.weaknessElementBonus:1)*(1+player.elementDamageBonus)*rendPower*setElementPower;let totalDamage=0,heal=0,extra=guaranteedRend?" Reality Rend guarantees and strengthens the activation.":"",aoe=["ice","light","nature","metal","donut"].includes(key),old=currentEnemy;currentEnemy=target;
-    if(target.affinity===key)extra+=` ${target.name}'s ${e.name} affinity resists half of matching elemental damage.`;
-    if(key==="fire")totalDamage=elementHit(target,key,player.attack*.65*mult);
-    if(key==="ice"){totalDamage=elementHitAll(key,player.attack*.38*mult,.85);if(target.guardian){if((target.freezeCooldown||0)<=0){target.skipTurns=(target.skipTurns||0)+1;target.freezeCooldown=2;extra+=" The guardian is frozen; Ice Nova cannot freeze it again until it has recovered.";}else extra+=` The guardian resists the freeze (${target.freezeCooldown} response${target.freezeCooldown===1?"":"s"} remain).`;}else{target.skipTurns=(target.skipTurns||0)+1;extra+=" The selected target is frozen.";}}
-    if(key==="electric"){totalDamage=elementHit(target,key,player.attack*.90*mult);const stunChance=target.guardian?.075:.15;if(random()<stunChance){if(!target.guardian||(target.freezeCooldown||0)<=0){target.skipTurns=(target.skipTurns||0)+1;if(target.guardian)target.freezeCooldown=1;extra+=" Static Shock stuns the target for one response!";}}}
-    if(key==="light"){totalDamage=elementHitAll(key,player.attack*.52*mult,.75);heal=healPlayer(Math.ceil(player.maxHp*(weak?.15:.09)*(1+player.elementDamageBonus)));extra+=heal?` Holy restores ${heal} HP.`:"";}
-    if(key==="void")totalDamage=elementHit(target,key,Math.max(1,Math.min(target.maxHp*(weak?.14:.09)*mult,player.attack*4.5*mult)),true);
-    if(key==="nature"){totalDamage=elementHitAll(key,player.attack*.30*mult,.8);const add=Math.max(1,player.naturePoisonStacks||1);livingEnemies().forEach(x=>x.poisonStacks=(x.poisonStacks||0)+add);extra+=` Poison Vines add ${add} Poison stack${add===1?"":"s"} to every living enemy.`;}
-    if(key==="donut"){totalDamage=elementHitAll(key,player.attack*.30*mult,.75);heal=healPlayer(Math.ceil(player.maxHp*(weak?.28:.18)*(1+player.elementDamageBonus)));extra+=` Donut Rain pelts the pack and restores ${heal} HP.`;}
-    if(key==="tech"){totalDamage=elementHit(target,key,player.attack*.42*mult);const cut=Math.max(1,Math.ceil(target.attack*(weak?.22:.14)*(1+player.elementDamageBonus)));target.attack=Math.max(1,target.attack-cut);extra+=` Brain Hack lowers ${target.name}'s attack by ${cut}.`;}
-    if(key==="metal"){totalDamage=elementHitAll(key,player.attack*.58*mult,.78);player.ultimateCharge=clamp(player.ultimateCharge+(weak?22:14),0,100);extra+=" The riff charges your ultimate.";}
-    if(key==="coffee"){totalDamage=elementHit(target,key,player.attack*.34*mult);player.hasteTurns+=1;player.ultimateCharge=clamp(player.ultimateCharge+8,0,100);extra+=" Caffeinated Haste deals damage and grants another action.";}
-    if(key==="gun"){const armorPierce=Math.ceil((target.defense||0)*.5);totalDamage=elementHit(target,key,player.attack*1.05*mult+armorPierce);extra+=" Deadeye Volley ignores roughly half the target's Defense.";}
-    currentEnemy=old?.hp>0?old:(livingEnemies()[0]||target);if(weak&&player.elementUltimateGain){player.ultimateCharge=clamp(player.ultimateCharge+player.elementUltimateGain,0,100);extra+=` Weakness Lore grants ${player.elementUltimateGain} ultimate charge.`;}
-    const echoed=random()<clamp(player.elementEchoChance,0,.80);if(echoed){playElementAnimation(key,target,false);if(totalDamage){const echoTarget=target.hp>0?target:(livingEnemies()[0]||target),echoDamage=aoe?damageAll(Math.max(1,totalDamage/Math.max(1,livingEnemies().length||1)),.75):damageEnemy(echoTarget,totalDamage);totalDamage+=echoDamage;}if(heal)heal+=healPlayer(heal);extra+=" Prismatic Echo repeats the effect!";}
-    trackElementProgress(key,totalDamage+heal);const message=`${weak?"WEAKNESS! ":""}${e.icon} ${e.spell}${totalDamage?` deals ${totalDamage} elemental damage${aoe?" across the pack":""}.`:""}${extra}`;addLog(`<b>${e.spell}</b> ${source}${weak?" exploits a weakness":" activates"}${echoed?" and echoes":""}.`);showToast(`${e.icon} ${e.spell}${weak?" — WEAKNESS!":""}${echoed?" ×2":""}`);return {totalDamage,heal,message,weak,echoed,aoe};
-  };
+  function affinityElementMultiplier(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.affinityElementMultiplier.apply(this,args);}
+  function elementHit(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.elementHit.apply(this,args);}
+  function elementHitAll(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.elementHitAll.apply(this,args);}
 
   applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
 
@@ -2464,20 +2403,7 @@
   meta.stats=meta.stats||defaultLifetimeStats();if(meta.stats.potionsUsed==null)meta.stats.potionsUsed=0;
   meta.unlocks=meta.unlocks||{};if(meta.unlocks.alchemist==null)meta.unlocks.alchemist=false;
 
-  const triggerElementEffectV16Base=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    if(key!=="radiation")return triggerElementEffectV16Base(key,target,opts);
-    if(!target||target.hp<=0)return null;const {forced=false,source="Weapon"}=opts,item=player.equipment?.weapon,weak=target.weakness===key;
-    if(!forced){if(!item||item.element!==key)return null;const setProc=v19SetProcBonus(),chance=clamp(.14+rarityValues[item.rarity]*.025+player.elementProcBonus+setProc+(weak?.22:0),0,.98);if(random()>=chance)return null;}
-    playElementAnimation(key,target,false);const mult=(weak?1.55+player.weaknessElementBonus:1)*(1+player.elementDamageBonus),damage=elementHit(target,key,player.attack*.34*mult),before=target.defense||0,shred=Math.min(before,Math.max(1,Math.round(1+(weak?1:0)+player.elementDamageBonus*2)));target.defense=Math.max(0,before-shred);trackElementProgress(key,damage);const message=`${weak?"WEAKNESS! ":""}☢️ Irradiate deals ${damage} damage and lowers ${target.name}'s Defense by ${shred}.`;
-    addLog(`<b>Irradiate</b> ${source} ${weak?"exploits a weakness":"activates"}.`);showToast(`☢️ -${shred} DEF`);renderEnemyParty();updateCombatUI();return {totalDamage:damage,heal:0,message};
-  };
-  const enemyElementProcV16Base=enemyElementProc;
-  enemyElementProc=function(enemy){
-    if(enemy?.affinity!=="radiation")return enemyElementProcV16Base(enemy);
-    if(random()>enemy.elementProcChance)return "";playElementAnimation("radiation",enemy,true);const loss=Math.min(Math.max(0,player.defense),1);if(loss){player.defense-=loss;player.radiationDefenseLost=(player.radiationDefenseLost||0)+loss;}const note=`☢️ ${enemy.name} activates Irradiate: ${loss?`your Defense falls by ${loss} for this battle.`:"your Defense is already at 0."}`;addCombatHistory(note);updateHUD();return note;
-  };
-  function restoreRadiationDefenseV16(){if(player.radiationDefenseLost){player.defense+=player.radiationDefenseLost;player.radiationDefenseLost=0;}}
+  function restoreRadiationDefenseV16(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.restoreRadiationDefense.apply(this,args);}
 
   // Enemy affinity can never contradict its weakness.
   const scaleEnemyV16Base=scaleEnemy;
@@ -3123,12 +3049,6 @@
   // Haste may grant one immediate extra action, but cannot chain itself again
   // until one normal enemy response has elapsed. This mirrors Freeze's anti-
   // lock behavior without removing Haste's tempo identity.
-  const triggerElementEffectV19Base=triggerElementEffect;
-  triggerElementEffect=function(key,target,opts={}){
-    const before=player.hasteTurns||0,out=triggerElementEffectV19Base(key,target,opts);
-    if(key==="coffee"&&(player.hasteCooldown||0)>0&&(player.hasteTurns||0)>before){player.hasteTurns=before;if(out)out.message=`${out.message||"Coffee crackles."} Haste is cooling down, so no extra action is granted.`;}
-    return out;
-  };
   const rollD20ChaosV19Base=rollD20Chaos;
   rollD20Chaos=async function(action){const before=player.hasteTurns||0,out=await rollD20ChaosV19Base(action);if((player.hasteCooldown||0)>0&&(player.hasteTurns||0)>before)player.hasteTurns=before;return out;};
 
@@ -4518,9 +4438,8 @@
   /* NIGHTMARE / HELL ENEMY DEFENSES --------------------------------------- */
 
   /* BRAIN HACK / RADIATION ------------------------------------------------- */
-  const BETA03_FIREBALL_BURN_CHANCE=.15,BETA03_BURN_CAP=10;
-  function beta03AddBurn(target,stacks=1){if(!target||target.hp<=0)return 0;target.burnStacks=Math.min(BETA03_BURN_CAP,Math.max(0,target.burnStacks||0)+Math.max(0,stacks||0));return target.burnStacks;}
-  const triggerElementEffectV27Base=triggerElementEffect;triggerElementEffect=function(key,target=currentEnemy,opts={}){const beforeAttack=target?.attack,beforeDefense=target?.defense,out=triggerElementEffectV27Base(key,target,opts);if(!out||!target)return out;if(key==='fire'&&target.hp>0&&random()<BETA03_FIREBALL_BURN_CHANCE){const stacks=beta03AddBurn(target,1);out.message=`${out.message||'🔥 Fireball erupts.'} 🔥 Burn applied (${stacks}/${BETA03_BURN_CAP}).`;addCombatHistory(`🔥 Fireball ignites ${target.name}: Burn ${stacks}/${BETA03_BURN_CAP}.`);}if(key==='tech'&&Number.isFinite(beforeAttack)){const cut=Math.max(1,Math.ceil(beforeAttack*.10));target.attack=Math.max(1,beforeAttack-cut);if(out.message)out.message=out.message.replace(/Brain Hack lowers .*? attack by \d+\./,`Brain Hack lowers ${target.name}'s attack by ${beforeAttack-target.attack} (10%).`);renderEnemyParty();updateCombatUI();}if(key==='radiation'&&Number.isFinite(beforeDefense)&&beforeDefense<=0){target.defense=beforeDefense-1;out.message=`${target.weakness==='radiation'?'WEAKNESS! ':''}☢️ Irradiate deals ${out.totalDamage||0} damage and drives ${target.name}'s Defense from ${beforeDefense} to ${target.defense}, increasing later damage.`;renderEnemyParty();updateCombatUI();}return out;};
+  const BETA03_FIREBALL_BURN_CHANCE=window.DiceboundCombatElementResolution.fireBurnChance,BETA03_BURN_CAP=window.DiceboundCombatElementResolution.fireBurnCap;
+  function beta03AddBurn(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.addEnemyBurn.apply(this,args);}
   if(ELEMENTS.fire)ELEMENTS.fire.description='Fireball deals elemental damage and has a 15% chance to add 1 Burn stack. Burn deals 1% enemy max HP per stack each turn and caps at 10 stacks.';
   if(ELEMENTS.tech)ELEMENTS.tech.description='Deals damage and lowers the target\'s current Attack by about 10% for the battle.';
   if(ELEMENTS.radiation)ELEMENTS.radiation.description='Deals light elemental damage and shreds Defense. At 0 Defense or below it keeps pushing Defense negative, making later hits deal more damage.';
@@ -5276,18 +5195,6 @@
     if(beta045Board6){beta045Board6.entryHeal=.30;beta045Board6.entryPotions=2;beta045Board6.extraHp=Math.max(beta045Board6.extraHp||0,.48);beta045Board6.extraAttack=Math.max(beta045Board6.extraAttack||0,.34);beta045Board6.extraDefense=Math.max(beta045Board6.extraDefense||0,6);}
   }
 
-  // ----- Haste anti-lock: never queue more than one skipped response ------
-  function beta045ClampQueuedHaste(before=0){
-    const pending=Math.max(0,player.hasteTurns||0);
-    if(before>=1&&pending>before)player.hasteTurns=before;
-    else if(pending>1)player.hasteTurns=1;
-  }
-  const triggerElementEffectBeta045Base=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const before=player.hasteTurns||0,out=triggerElementEffectBeta045Base(key,target,opts);
-    if(key==='coffee')beta045ClampQueuedHaste(before);
-    return out;
-  };
   const rollD20ChaosBeta045Base=rollD20Chaos;
   rollD20Chaos=async function(action){
     const before=player.hasteTurns||0,out=await rollD20ChaosBeta045Base(action);beta045ClampQueuedHaste(before);return out;
@@ -5477,23 +5384,6 @@
   // Hard anti-lock: only one haste skip can be banked before an enemy actually acts.
   // Coffee still deals damage, but if Haste has already been granted in this response chain,
   // additional coffee procs cannot create another skipped enemy response.
-  const db046TriggerElementBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const beforeTurns=player.hasteTurns||0,beforeCd=player.hasteCooldown||0,beforeLock=!!player._db046HasteLocked;
-    const out=db046TriggerElementBase(key,target,opts);
-    if(key==='coffee'){
-      const gained=(player.hasteTurns||0)>beforeTurns;
-      const blocked=beforeLock||beforeCd>0||beforeTurns>0;
-      if(gained&&blocked){
-        player.hasteTurns=beforeTurns;
-        if(out)out.message=`${out.message||'Coffee crackles.'} Haste is already primed, so no extra action is granted.`;
-      }else if(gained){
-        player.hasteTurns=1;
-        player._db046HasteLocked=true;
-      }
-    }
-    return out;
-  };
   const db046RollD20Base=rollD20Chaos;
   rollD20Chaos=async function(action){
     const beforeTurns=player.hasteTurns||0,beforeCd=player.hasteCooldown||0,beforeLock=!!player._db046HasteLocked;
@@ -5626,24 +5516,6 @@
 
   // --- haste anti-lock: never queue more than one skipped response ---------
   player._db047HastePrimed=false;
-  const db047TriggerElementBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const beforeTurns=player.hasteTurns||0;
-    const beforeCd=player.hasteCooldown||0;
-    const out=db047TriggerElementBase(key,target,opts);
-    if(key==='coffee'){
-      if((player.hasteTurns||0)>beforeTurns){
-        if(beforeTurns>0 || beforeCd>0 || player._db047HastePrimed){
-          player.hasteTurns=beforeTurns;
-          if(out)out.message=`${out.message||'Coffee crackles.'} Haste is already primed, so no extra action is granted.`;
-        }else{
-          player.hasteTurns=1;
-          player._db047HastePrimed=true;
-        }
-      }
-    }
-    return out;
-  };
   const db047RollD20Base=rollD20Chaos;
   rollD20Chaos=async function(action){
     const beforeTurns=player.hasteTurns||0;
@@ -6191,69 +6063,8 @@
     },true);
   }
 
-  // ENEMY ELEMENTAL PARITY — enemy affinities now use mirrored versions of the
-  // player's elemental effects instead of the old unrelated penalty table.
-  function db0511PlayerElementDamage(raw){
-    return applyCombatPlayerDamage(Math.max(1,Math.round(raw||0)));
-  }
-  function db0511AddPlayerBurn(stacks=1){
-    player.db0511BurnStacks=Math.min(10,Math.max(0,(player.db0511BurnStacks||0)+stacks));
-    return player.db0511BurnStacks;
-  }
-  function db0511AddPlayerPoison(stacks=1,power=.12){
-    player.db0511PoisonStacks=Math.max(0,(player.db0511PoisonStacks||0)+stacks);
-    player.db0511PoisonPower=Math.max(player.db0511PoisonPower||0,power||.12);
-    return player.db0511PoisonStacks;
-  }
-  function db0511QueueControl(label){
-    if(player._db0511SuppressControlProc)return false;
-    // Multiple proc sources in the same enemy pack still cost only one action.
-    if(!player._db0511SkipAction)player._db0511SkipAction=label;
-    return true;
-  }
-  enemyElementProc=function(enemy){
-    if(!enemy?.affinity||!ELEMENTS[enemy.affinity]||random()>enemy.elementProcChance)return '';
-    const key=enemy.affinity,e=ELEMENTS[key];
-    playElementAnimation(key,enemy,true);
-    let note=`${e.icon} ${enemy.name} activates ${e.spell}: `,hit=null;
-    if(key==='fire'){
-      hit=db0511PlayerElementDamage(enemy.attack*.65);note+=`${hit.total} Fire damage.`;
-      if(random()<.15){const stacks=db0511AddPlayerBurn(1);note+=` Burn ${stacks}/10 applied.`;}
-    }else if(key==='ice'){
-      hit=db0511PlayerElementDamage(enemy.attack*.38);db0511QueueControl('❄️ Frozen by Ice Nova');note+=`${hit.total} Ice damage and you are Frozen for your next action.`;
-    }else if(key==='electric'){
-      hit=db0511PlayerElementDamage(enemy.attack*.90);note+=`${hit.total} Electric damage.`;
-      if(random()<.15&&db0511QueueControl('⚡ Stunned by Static Shock'))note+=' Static Shock stuns your next action.';
-    }else if(key==='light'){
-      hit=db0511PlayerElementDamage(enemy.attack*.52);const heal=Math.min(enemy.maxHp-enemy.hp,Math.max(1,Math.ceil(enemy.maxHp*.09)));enemy.hp+=heal;note+=`${hit.total} Light damage and restores ${heal} HP to ${enemy.name}.`;
-    }else if(key==='void'){
-      const raw=Math.max(1,Math.min(player.maxHp*.09,enemy.attack*4.5));hit=db0511PlayerElementDamage(raw);note+=`${hit.total} Void damage based on your max HP.`;
-    }else if(key==='nature'){
-      hit=db0511PlayerElementDamage(enemy.attack*.30);const stacks=db0511AddPlayerPoison(1,.12);note+=`${hit.total} Nature damage and Poison Vines add a Poison stack (${stacks}).`;
-    }else if(key==='donut'){
-      hit=db0511PlayerElementDamage(enemy.attack*.30);const heal=Math.min(enemy.maxHp-enemy.hp,Math.max(1,Math.ceil(enemy.maxHp*.18)));enemy.hp+=heal;note+=`${hit.total} Donut damage and restores ${heal} HP to ${enemy.name}.`;
-    }else if(key==='tech'){
-      hit=db0511PlayerElementDamage(enemy.attack*.42);const before=player.attack,cut=Math.max(1,Math.ceil(Math.max(1,before)*.10));player.attack=Math.max(1,before-cut);const actual=Math.max(0,before-player.attack);player.db0511TechAttackLost=(player.db0511TechAttackLost||0)+actual;note+=`${hit.total} Tech damage and Brain Hack lowers your Attack by ${actual} for this battle.`;
-    }else if(key==='metal'){
-      hit=db0511PlayerElementDamage(enemy.attack*.58);if(currentEncounterLead?.guardian){currentEncounterTurn+=1;note+=`${hit.total} Metal damage and advances the Guardian special clock.`;}else{const gain=Math.max(1,Math.round(enemy.attack*.05));enemy.attack+=gain;note+=`${hit.total} Metal damage and powers ${enemy.name} up by ${gain} Attack for this battle.`;}
-    }else if(key==='coffee'){
-      hit=db0511PlayerElementDamage(enemy.attack*.34);const extra=db0511PlayerElementDamage(enemy.attack*.34);note+=`${hit.total+extra.total} Coffee damage as Caffeinated Haste grants ${enemy.name} an immediate extra hit.`;
-    }else if(key==='gun'){
-      const pierce=Math.ceil(Math.max(0,player.defense)*.5);hit=db0511PlayerElementDamage(enemy.attack*1.05+pierce);note+=`${hit.total} piercing damage, bypassing roughly half your Defense.`;
-    }else if(key==='radiation'){
-      hit=db0511PlayerElementDamage(enemy.attack*.34);const loss=Math.min(Math.max(0,player.defense),1);if(loss){player.defense-=loss;player.radiationDefenseLost=(player.radiationDefenseLost||0)+loss;}note+=`${hit.total} Radiation damage${loss?` and your Defense falls by ${loss} for this battle`:''}.`;
-    }
-    addCombatHistory(note);updateCombatUI();return note;
-  };
-
-
-
-
-  function db0511RestoreEnemyElementDebuffs(){
-    if(player.db0511TechAttackLost){player.attack+=player.db0511TechAttackLost;player.db0511TechAttackLost=0;}
-    restoreRadiationDefenseV16?.();
-    player.db0511BurnStacks=0;player.db0511PoisonStacks=0;player.db0511PoisonPower=0;player._db0511SkipAction='';player._db0511SuppressControlProc=false;
-  }
+  // ENEMY ELEMENTAL PARITY — mechanical ownership lives in combat/element-resolution.js.
+  function db0511RestoreEnemyElementDebuffs(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.restoreEnemyElementDebuffs.apply(this,args);}
   const db0511HandleDeathBase=handlePlayerDeath;
   handlePlayerDeath=function(...args){const r=db0511HandleDeathBase.apply(this,args);if(player.hp<=0)db0511RestoreEnemyElementDebuffs();return r;};
 
@@ -6564,15 +6375,7 @@
   // Basic Attack action-level Echo Chamber sequencing is owned by combat/attack-action-resolution.
   // Individual strike-level effects remain owned by combat/strike-resolution.
   
-  // Weapon-proc effects and Pet Mirror element memory.
-  const db060TriggerElementBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const oldBonus=player.elementDamageBonus||0,r=db060TriggerElementBase(key,target,opts);if(r)player._db060LastElement=key;
-    if(r&&key==='gun'&&db060HasEffect('second_barrel')&&!player._db060SecondBarrel){player._db060SecondBarrel=true;try{player.elementDamageBonus=(1+oldBonus)*.65-1;const extra=db060TriggerElementBase('gun',target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:'Second Barrel'});if(extra)r.totalDamage=(r.totalDamage||0)+(extra.totalDamage||0);}finally{player.elementDamageBonus=oldBonus;player._db060SecondBarrel=false;}}
-    return r;
-  };
-  const db060TriggerWeaponBase=triggerWeaponElement;
-  triggerWeaponElement=function(target=currentEnemy){const r=db060TriggerWeaponBase(target);if(r&&db060HasEffect('prismatic_weapon')&&!player._db060PrismaticWeapon){player._db060PrismaticWeapon=true;const old=player.elementDamageBonus||0;try{player.elementDamageBonus=(1+old)*.40-1;for(const key of DIBO_ELEMENTS){const t=target?.hp>0?target:(livingEnemies()[0]||target);if(!t)break;triggerElementEffect(key,t,{forced:true,source:'Prismatic Weapon'});}}finally{player.elementDamageBonus=old;player._db060PrismaticWeapon=false;}}return r;};
+  // Weapon-proc effects and Pet Mirror element memory are owned by combat/element-resolution.js.
 
   // Poison recursion.
   const db060PoisonTickBase=applyPoisonTick;
@@ -6921,74 +6724,6 @@
     if(dbCombatVfx.suppressLegacyElementAnimation(key))return false;
     return dbNatureLegacyAnimationBase(key,target,enemySource);
   };
-  const dbTriggerElementBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const candidates=key==='nature'?dbCombatVfx.livingNatureTargets(livingEnemies()):[];
-    const result=dbCombatVfx.withNatureLegacyPresentation(key,()=>dbTriggerElementBase(key,target,opts));
-    if(key==='nature'&&result)candidates.forEach(enemy=>dbCombatVfx.playNatureOnEnemy(enemy));
-    return result;
-  };
-  const dbEnemyElementProcBase=enemyElementProc;
-  enemyElementProc=function(enemy){const result=dbCombatVfx.withNatureLegacyPresentation(enemy?.affinity,()=>dbEnemyElementProcBase(enemy));if(enemy?.affinity==='nature'&&result&&player.hp>0)dbCombatVfx.playNatureOnPlayer();return result;};
-  function dbNatureProcRegressionExercise(key='nature'){
-    document.querySelectorAll('.db-nature-vines-vfx,.element-proc-fx,.enemy-proc-fx').forEach(node=>node.remove());
-    resetPlayer('ranger');
-    Object.assign(player,{attack:10,elementDamageBonus:0,naturePoisonStacks:1,combatAttackCount:0});
-    player.equipment.weapon={...(player.equipment.weapon||{}),element:key,rarity:'common'};
-    const targets=[
-      {name:'Nature VFX Defeated Target',icon:'👹',hp:3,maxHp:3,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0},
-      {name:'Nature VFX Living Target A',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0},
-      {name:'Nature VFX Living Target B',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0}
-    ];
-    currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
-    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
-    const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
-    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatVfx.natureEntries(),projectiles:[...document.querySelectorAll('.db-combat-projectile-vfx')].map(node=>({effect:node.dataset.effect,origin:node.dataset.origin})),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
-  }
-  function dbCombatPresentationExercise(kind='final'){
-    document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
-    const tiered=kind==='slime'||kind==='wolf';
-    const enemy={name:tiered?(kind==='slime'?'Slime':'Wolf'):(kind==='miniboss'?'Ogre Roadwarden':'Ancient Road Dragon'),icon:'👹',hp:100,maxHp:100,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,guardian:!tiered,miniBoss:kind==='miniboss',finalBoss:kind==='final'};
-    currentEnemies=[enemy];currentEnemyIndex=-1;currentEnemy=enemy;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
-    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
-    const stage=$('enemyIcon'),host=stage?.querySelector('.stage-enemy'),sprite=host?.querySelector('.stage-sprite'),art=host?.querySelector('.enemy-art-frame'),player=$('combatPlayerIcon');
-    const rect=node=>{const box=node?.getBoundingClientRect();return box?{width:Math.round(box.width),height:Math.round(box.height)}:null;};
-    return {kind,narrow:window.matchMedia('(max-width:760px)').matches,viewportHeight:window.innerHeight,stageClasses:stage?.className||'',hostClasses:host?.className||'',sprite:rect(sprite),art:rect(art),player:rect(player)};
-  }
-  window.DiceboundNatureVfxTest=Object.freeze({
-    effect:dbCombatVfx.natureEffect,
-    livingTargets:enemies=>dbCombatVfx.livingNatureTargets(enemies).map(enemy=>enemy.name||''),
-    previewPlayer:dbCombatVfx.playNatureOnPlayer,
-    exerciseProc:dbNatureProcRegressionExercise,
-    exercisePresentation:dbCombatPresentationExercise,
-    active:dbCombatVfx.natureEntries
-  });
-
-  /* #128/#83 authored equipment identities.
-     The extracted equipment domain selects and owns stable base IDs, intrinsic
-     stats and visual metadata. This adapter deliberately keeps live combat,
-     saves and the ordinary rolled-point budget in their existing owners. */
-  const db06314Equipment=window.DiceboundEquipment;
-  if(!db06314Equipment?.identityForItem||!db06314Equipment?.allBonusesForItem)throw new Error('DiceBound requires the equipment identity domain.');
-  function db06314Identity(item){return db06314Equipment.identityForItem(item);}
-  function db06314BonusLabel(key,value){return key==='maxMana'?`+${value} Mana`:bonusLabel(key,value);}
-  function db06314IntrinsicParts(item){
-    const identity=db06314Identity(item),bonuses=db06314Equipment.intrinsicBonusesForItem(item);
-    const values=Object.entries(bonuses).map(([key,value])=>db06314BonusLabel(key,value));
-    return identity&&values.length?{identity,values}:null;
-  }
-  applyItemStats=function(item,sign){
-    const oldMax=player.maxHp;
-    Object.entries(db06314Equipment.allBonusesForItem(item)).forEach(([key,value])=>{if(typeof player[key]==='number')player[key]+=value*sign;});
-    player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
-    if(player.maxHp<1)player.maxHp=1;
-    if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
-    player.hp=clamp(player.hp,1,player.maxHp);
-    if(typeof player.maxMana==='number'){
-      player.maxMana=Math.max(0,player.maxMana);
-      if(typeof player.mana==='number')player.mana=clamp(player.mana,0,player.maxMana);
-    }
-  };
   const db06314FormatBonusesBase=formatBonuses;
   formatBonuses=function(item){
     const base=db06314FormatBonusesBase(item),intrinsic=db06314IntrinsicParts(item);
@@ -7109,15 +6844,6 @@
     }
     return enemy;
   };
-  const db064EnemyElementProcBase=enemyElementProc;
-  enemyElementProc=function(enemy){
-    const innate=enemy?.innateElement;
-    if(!innate)return db064EnemyElementProcBase(enemy);
-    const originalAffinity=enemy.affinity;
-    enemy.affinity=innate;
-    try{return db064EnemyElementProcBase(enemy);}
-    finally{if(originalAffinity===undefined)delete enemy.affinity;else enemy.affinity=originalAffinity;}
-  };
   window.DiceboundEnemyMechanicsTest=Object.freeze({
     wolfEchoChance:(board,mode)=>db064EnemyPolicy.wolfEchoChance(board,mode),
     devilFlameChance:(board,mode)=>db064EnemyPolicy.standardDevilFlameChance(board,mode),
@@ -7126,19 +6852,6 @@
 
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
      a real completed Donut proc and never changes its target, timing or RNG. */
-  const db064DonutTriggerElementBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const result=db064DonutTriggerElementBase(key,target,opts);
-    if(key==='donut'&&result)dbCombatVfx.playDonutRain({origin:'player',enemy:target});
-    return result;
-  };
-  const db064DonutEnemyElementProcBase=enemyElementProc;
-  enemyElementProc=function(enemy){
-    const isDonut=enemy?.affinity==='donut';
-    const result=db064DonutEnemyElementProcBase(enemy);
-    if(isDonut&&result)dbCombatVfx.playDonutRain({origin:'enemy',enemy});
-    return result;
-  };
   window.DiceboundDonutVfxTest=Object.freeze({
     effect:dbCombatVfx.donutEffect,
     play:dbCombatVfx.playDonutRain,
@@ -7351,12 +7064,6 @@
     return Object.freeze({index:currentEnemyIndex,name:currentEnemy?.name||null,alive:!!currentEnemy&&currentEnemy.hp>0});
   }
   setCurrentEnemy=function(index){return db0648ApplyPresentationTarget(index);};
-  const db0648TriggerElementBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const result=db0648TriggerElementBase(key,target,opts);
-    if(target?.hp<=0)db0648ReconcileDefeatedTarget(target,`element:${key}`);
-    return result;
-  };
   function db0648SelectedTargetSurfaces(){
     const stage=$('enemyIcon'),selected=stage?.querySelector('.stage-enemy.selected'),chips=[...($('enemyParty')?.querySelectorAll('.enemy-chip.active')||[])];
     return {currentIndex:currentEnemyIndex,currentName:currentEnemy?.name||null,stageIndex:selected?Number(selected.dataset.enemyIndex):null,activeChipCount:chips.length,enemyName:$('enemyName')?.textContent||'',enemyHp:$('enemyHpText')?.textContent||'',hostIndex:selected?Number(selected.dataset.enemyIndex):null};
@@ -7457,18 +7164,6 @@
     if(key==='fire'||key==='gun'||key==='donut')return false;
     return dbFriendLegacyElementPresentation(key,target,enemySource);
   };
-  const dbFriendElementProcBase=triggerElementEffect;
-  triggerElementEffect=function(key,target=currentEnemy,opts={}){
-    const result=dbFriendElementProcBase(key,target,opts);
-    if(result&&(key==='fire'||key==='gun'))dbCombatVfx.playProjectileProc?.(key,{origin:'player',enemy:target});
-    return result;
-  };
-  const dbFriendEnemyElementProcBase=enemyElementProc;
-  enemyElementProc=function(enemy){
-    const key=enemy?.affinity,result=dbFriendEnemyElementProcBase(enemy);
-    if(result&&(key==='fire'||key==='gun'))dbCombatVfx.playProjectileProc?.(key,{origin:'enemy',enemy});
-    return result;
-  };
   function dbFriendClearCombatPresentation(){
     dbCombatVfx.clearTransient?.();
     dbCombatPresentation?.clearDragoonPresentation();
@@ -7553,6 +7248,45 @@
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
   });
 
+
+
+  const dbCombatElementOwner=window.DiceboundCombatElementResolution;
+  if(!dbCombatElementOwner)throw new Error('DiceBound requires the combat Element-resolution owner before dicebound.js');
+  dbCombatElementResolution=dbCombatElementOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    setCurrentEnemy:value=>{currentEnemy=value;},
+    livingEnemies:()=>livingEnemies(),
+    getEncounterLead:()=>currentEncounterLead,
+    getEncounterTurn:()=>currentEncounterTurn,
+    setEncounterTurn:value=>{currentEncounterTurn=value;},
+    getElements:()=>ELEMENTS,
+    getRarityValues:()=>rarityValues,
+    getCoreElements:()=>DIBO_ELEMENTS,
+    random:()=>random(),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    applyPlayerDamage:raw=>applyCombatPlayerDamage(raw),
+    healPlayer:(...args)=>healPlayer(...args),
+    trackElementProgress:(key,amount)=>trackElementProgress(key,amount),
+    playElementAnimation:(key,target,enemySource)=>playElementAnimation(key,target,enemySource),
+    addLog:text=>addLog(text),
+    showToast:(...args)=>showToast(...args),
+    addCombatHistory:text=>addCombatHistory(text),
+    renderEnemyParty:()=>renderEnemyParty(),
+    updateCombatUI:()=>updateCombatUI(),
+    updateHUD:()=>updateHUD(),
+    setProcBonus:()=>v19SetProcBonus(),
+    setElementPower:()=>v19SetElementPower(),
+    hasLegendaryEffect:id=>db060HasEffect(id),
+    reconcileDefeatedTarget:(target,reason)=>db0648ReconcileDefeatedTarget(target,reason),
+    withNatureLegacyPresentation:(key,work)=>dbCombatVfx.withNatureLegacyPresentation(key,work),
+    livingNatureTargets:list=>dbCombatVfx.livingNatureTargets(list),
+    playNatureOnEnemy:enemy=>dbCombatVfx.playNatureOnEnemy(enemy),
+    playNatureOnPlayer:()=>dbCombatVfx.playNatureOnPlayer(),
+    playDonutRain:payload=>dbCombatVfx.playDonutRain(payload),
+    playProjectileProc:(key,payload)=>dbCombatVfx.playProjectileProc?.(key,payload)
+  });
 
   const dbCombatHealingOwner=window.DiceboundCombatHealingResolution;
   if(!dbCombatHealingOwner)throw new Error('DiceBound requires the combat Healing-resolution owner before dicebound.js');

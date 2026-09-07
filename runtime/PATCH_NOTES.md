@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.13
+
+## Beta 0.6.6.13 Elemental Proc / Effect resolution ownership (#40, #209, #297)
+- `combat/element-resolution.js` now owns player/enemy elemental mechanics, affinity/weakness math, Radiation, Coffee/Haste safeguards, elemental progress and Legendary element chaining.
+- Fire Burn, Electric stun, Prismatic Echo, enemy parity and Second Barrel/Prismatic Weapon preserve their historical RNG draw order and target semantics.
+- `combat/vfx.js` remains the authored Nature/Donut/projectile presentation owner; generic Healing and damage remain separate.
+
 # Unreleased — Beta 0.6.6.12
 
 ## Beta 0.6.6.12 Healing / Overheal resolution ownership (#40, #209, #295)
