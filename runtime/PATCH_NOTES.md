@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.11
+
+## Beta 0.6.6.11 Potion / Consumable action-resolution ownership (#40, #209, #293)
+- `items/consumables.js` now owns combat Potion, Double Dose and road Potion transactions plus their historical action-level wrappers.
+- Potion counts, healing/rounding, Alchemist use tracking, D20 element ordering, Monk/Turtle reset behavior and Dragoon Landing precedence are preserved.
+- Generic healing, D20, elemental effects, Victory, enemy response and class-specific Volatile Flask behavior remain separate.
+
 # Unreleased — Beta 0.6.6.10
 
 ## Beta 0.6.6.10 Combat Victory / Reward resolution ownership (#40, #209, #291)

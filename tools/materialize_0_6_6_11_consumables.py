@@ -45,7 +45,7 @@ mono=regex_once(mono,
 
 mono=regex_once(mono,
     r'  function v16PotionHealValue\(mult=1\)\{.*?\n  async function alchemistVolatileFlaskV16\(\)',
-    "  function v16PotionHealValue(mult=1){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.potionHealValue(mult);}\n  function recordPotionUseV16(){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();}\n  async function alchemistVolatileFlaskV16()",
+    "  function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}\n  function recordPotionUseV16(){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();}\n  async function alchemistVolatileFlaskV16()",
     'V16 Potion ownership block')
 
 mono=regex_once(mono,

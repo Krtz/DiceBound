@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.11
+
+### Potion / Consumable action-resolution ownership (#40, #209, #293)
+- Extracted combat and road Potion action resolution into `runtime/js/items/consumables.js` and retired the historical Potion reassignment ladder.
+- Preserved Double Dose, D20 Potion effects, exact healing/accounting, Alchemist usage tracking, Monk/Turtle action resets, Dragoon Landing precedence and Victory/enemy-response ordering.
+- Generic healing, elemental effects, D20 generation, Victory, enemy-response and Volatile Flask remain in their existing owners.
+
 ## Beta 0.6.6.10
 
 ### Combat Victory / Reward resolution ownership (#40, #209, #291)

@@ -122,4 +122,21 @@ assert not re.search(r'(?m)^  winCombat\s*=\s*async function', mono), 'winCombat
 assert "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" in mono, 'combat Victory-resolution owner is not configured by the composition root'
 assert "return dbCombatVictoryResolution.winCombat(...args);" in mono, 'Victory thin adapter is missing'
 
+
+consumables_retired = [
+    'usePotionOutsideCombatV24Base', 'dbFriendPotionBase',
+]
+for symbol in consumables_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Consumables owner returned: {symbol}"
+assert mono.count('async function usePotion(') == 1, 'usePotion must have exactly one thin compatibility adapter'
+assert mono.count('function usePotionOutsideCombat(') == 1, 'usePotionOutsideCombat must have exactly one thin compatibility adapter'
+assert mono.count('async function identityPotionAction(') == 1, 'identityPotionAction must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*usePotion\s*=\s*async function', mono), 'usePotion reassignment chain must not return'
+assert not re.search(r'(?m)^\s*usePotionOutsideCombat\s*=\s*function', mono), 'road Potion reassignment chain must not return'
+assert not re.search(r'(?m)^\s*identityPotionAction\s*=\s*async function', mono), 'identity Potion reassignment chain must not return'
+assert "dbConsumablesResolution=dbConsumablesOwner.configure({" in mono, 'Consumables owner is not configured by the composition root'
+assert "dbConsumablesResolution.usePotion.apply(this,args)" in mono, 'combat Potion thin adapter is missing'
+assert "dbConsumablesResolution.usePotionOutsideCombat.apply(this,args)" in mono, 'road Potion thin adapter is missing'
+assert "dbConsumablesResolution.identityPotionAction.apply(this,args)" in mono, 'identity Potion thin adapter is missing'
+
 print('Monolith spring-clean guard PASS')

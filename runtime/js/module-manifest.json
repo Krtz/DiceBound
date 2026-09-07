@@ -44,6 +44,7 @@
     "combat-guardians",
     "item-rarities",
     "item-equipment",
+    "item-consumables",
     "progression-talents",
     "progression-prestige",
     "progression-achievements",
@@ -508,6 +509,16 @@
       ]
     },
     {
+      "id": "item-consumables",
+      "path": "js/items/consumables.js",
+      "domain": "items/potion-and-consumable-action-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundConsumables"
+      ]
+    },
+    {
       "id": "progression-talents",
       "path": "js/progression/talents.js",
       "domain": "progression/talents",
@@ -814,7 +825,6 @@
   "plannedDomains": [
     "core/constants",
     "combat",
-    "items/consumables",
     "powerups",
     "pets",
     "progression/state",
