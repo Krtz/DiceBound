@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.12
+
+### Healing / Overheal resolution ownership (#40, #209, #295)
+- Extracted generic healing, Blood Overheal growth/cleanup, lifetime healing accounting, Cleric Faith, Paladin Grace and overheal item side effects into `runtime/js/combat/healing-resolution.js`.
+- Retired the historical seven-layer `healPlayer` wrapper ladder while preserving rounding, caps, class-resource ordering, Energy Shield behavior and Philosopher's Stone battle bookkeeping.
+- Potion actions, individual class abilities, Pet healing, elemental Light/Donut resolution, Victory flow, Shield damage consumption and gameplay/balance values remain in their existing owners.
+
 ## Beta 0.6.6.11
 
 ### Potion / Consumable action-resolution ownership (#40, #209, #293)

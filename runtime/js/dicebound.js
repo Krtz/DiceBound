@@ -867,6 +867,7 @@
   function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
   async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
 
+  let dbCombatHealingResolution=null;
   let dbConsumablesResolution=null;
   let dbCombatVictoryResolution=null;
   let dbCombatAttackResolution=null;
@@ -1503,13 +1504,9 @@
   function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
   function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')||key===legacyBoardClearKey(classId,board)));}
   function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();checkDynamicClassUnlocks();}
-  function recordHealing(amount){amount=Math.max(0,Math.round(amount||0));if(!amount)return 0;const s=ensureAlphaMeta();s.healingDone+=amount;statsLastHp=player.hp;saveMeta();checkDynamicClassUnlocks();return amount;}
-  function healPlayer(amount,{overheal=true}={}){
-    amount=Math.max(0,Math.round(amount||0));if(!amount)return 0;const missing=Math.max(0,player.maxHp-player.hp),normal=Math.min(missing,amount);player.hp+=normal;let bonus=0;
-    if(overheal&&player.bloodOverheal&&amount>normal){const room=Math.max(0,20-(player.bloodOverhealBonus||0));bonus=Math.min(room,amount-normal);if(bonus>0){player.bloodOverhealBonus=(player.bloodOverhealBonus||0)+bonus;player.maxHp+=bonus;player.hp+=bonus;}}
-    recordHealing(normal+bonus);return normal+bonus;
-  }
-  function clearBloodOverhealTemp(){const bonus=Math.max(0,player.bloodOverhealBonus||0);if(!bonus)return;player.maxHp=Math.max(1,player.maxHp-bonus);player.hp=Math.min(player.hp,player.maxHp);player.bloodOverhealBonus=0;statsLastHp=player.hp;}
+  function recordHealing(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.recordHealing.apply(this,args);}
+  function healPlayer(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.healPlayer.apply(this,args);}
+  function clearBloodOverhealTemp(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.clearBloodOverhealTemp.apply(this,args);}
   function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
   // Preserve v15 save compatibility while enriching imported saves with Alpha fields.
@@ -2103,8 +2100,6 @@
   damageEnemy=function(enemy,amount,ignoreDefense=false){if(player._ninjaExecution){amount*=1.65;ignoreDefense=true;}return damageEnemyV13(enemy,amount,ignoreDefense);};
 
   
-  const healPlayerV13=healPlayer;
-  healPlayer=function(amount){const healed=healPlayerV13(amount);if(classIdentityActive("cleric")&&healed>0){player.clericFaith=clamp((player.clericFaith||0)+healed*2,0,100);}return healed;};
 
 
   // ---- D20: make every combat roll readable and slightly more chaotic -------
@@ -2894,12 +2889,6 @@
   };
 
   // ---- Endless Form support hooks ------------------------------------------
-    const healPlayerV18Base=healPlayer;
-  healPlayer=function(amount){
-    const beforeFaith=player.clericFaith||0,healed=healPlayerV18Base(amount);
-    if(classIdentityActive("cleric")&&healed>0&&player.clericFaithGainBonus){const baseAdded=Math.max(0,(player.clericFaith||0)-beforeFaith),extra=Math.round(baseAdded*player.clericFaithGainBonus);player.clericFaith=clamp((player.clericFaith||0)+extra,0,100);}
-    return healed;
-  };
 
   // ---- Level-up fourth choice ----------------------------------------------
   function v18LevelChoices(){
@@ -3186,8 +3175,6 @@
     CLASSES.paladin.scaleNotes="Healing and max HP build Oath Grace; Defense makes each empowered Guard more valuable. The class blends Cleric sustain with Fighter-style defensive tempo.";
     CLASSES.paladin.ultimate.desc="Heavy holy area damage scaling with Attack and Defense, heals the Paladin and feeds Oath Grace, then raises barriers.";
   }
-  const healPlayerV19Base=healPlayer;
-  healPlayer=function(amount){const before=player.hp,healed=healPlayerV19Base(amount);if(classIdentityActive("paladin")&&healed>0){player.paladinGrace=clamp((player.paladinGrace||0)+healed,0,100);if(player.hp>before)identityFlash(`⚜️ Grace ${Math.round(player.paladinGrace)}/100`);}return healed;};
 
   // ---- Runtime reset hooks -------------------------------------------------
   const resetPlayerV19Base=resetPlayer;
@@ -3495,15 +3482,6 @@
 
   // Paladin's existing Grace gain happens inside the current healPlayer chain.
   // Add only the bonus portion afterwards so old healing/Faith hooks remain intact.
-  const healPlayerV21Base=healPlayer;
-  healPlayer=function(amount){
-    const beforeGrace=player.paladinGrace||0,healed=healPlayerV21Base(amount);
-    if(player.classId==='paladin'&&healed>0&&(player.paladinGraceGainBonus||0)>0){
-      const normalGain=Math.max(0,(player.paladinGrace||0)-beforeGrace),extra=Math.round(normalGain*player.paladinGraceGainBonus);
-      player.paladinGrace=clamp((player.paladinGrace||0)+extra,0,100);
-    }
-    return healed;
-  };
 
   // Rogue: keep the established once-per-battle Steal cadence, but let the
   // Perfected Signature directly improve the thing the button actually does.
@@ -4073,7 +4051,6 @@
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
   const defenseDamageReductionV24Base=defenseDamageReduction;defenseDamageReduction=function(defense=player.defense){if(v24HasJeanJacket()){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+13),0,.90);}return defenseDamageReductionV24Base(defense);};
-  const healPlayerV24Base=healPlayer;healPlayer=function(amount,opts){const beforeHp=player.hp,beforeMax=player.maxHp,raw=Math.max(0,Math.round(amount||0)),normalRoom=Math.max(0,beforeMax-beforeHp),healed=healPlayerV24Base(amount,opts);if(v24HasHorns()&&raw>normalRoom){const maxGrowth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-normalRoom-maxGrowth);if(over>0){player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+over);player.energyShieldCap=player.maxHp;addCombatHistory(`🔵 Devil's Horns convert ${over} overhealing into Energy Shield.`);}}return healed;};
     function v24UpdateShieldBars(){if(!dbCombatPresentation)return;return dbCombatPresentation.syncEnergyShieldBars();}
   const updateHUDV24Base=updateHUD;updateHUD=function(){updateHUDV24Base();v24UpdateShieldBars();};
 
@@ -4438,9 +4415,7 @@
     
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
-  function v26HasStone(){return !!player.equipment?.amulet?.bloodmageStone;}
-  function v26ClearStoneBattle(){const atk=Number(player.v26StoneBattleAttack)||0,echo=Number(player.v26StoneBattleEcho)||0;if(atk)player.attack-=atk;if(echo)player.doubleStrike=Math.max(0,player.doubleStrike-echo);player.v26StoneBattleAttack=0;player.v26StoneBattleEcho=0;if(classIdentityActive('ouroboros'))v18SyncOuroborosAttack();}
-  const healPlayerV26StoneBase=healPlayer;healPlayer=function(amount,opts){const raw=Math.max(0,Math.round(amount||0)),beforeHp=player.hp,beforeMax=player.maxHp,room=Math.max(0,beforeMax-beforeHp),healed=healPlayerV26StoneBase(amount,opts);if(v26HasStone()&&currentEnemy&&raw>room){const maxGrowth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-room-maxGrowth);if(over>0){const shieldGain=over*.05,attackGain=over*.01;player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+shieldGain);if(classIdentityActive('ouroboros')){const echoGain=attackGain*.10;player.doubleStrike+=echoGain;player.v26StoneBattleEcho=(player.v26StoneBattleEcho||0)+echoGain;}else{player.attack+=attackGain;player.v26StoneBattleAttack=(player.v26StoneBattleAttack||0)+attackGain;}addCombatHistory(`🜂 Philosopher's Stone transmutes ${over} overheal into +${shieldGain.toFixed(1)} Energy Shield and +${attackGain.toFixed(2)} temporary Attack${player.classId==='ouroboros'?' (converted to Echo)':''}.`);}}return healed;};
+  function v26ClearStoneBattle(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.clearStoneBattle.apply(this,args);}
 
   /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
   const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
@@ -4525,7 +4500,6 @@
   // keep the normal readable action cadence.
 
   /* ENERGY SHIELD ---------------------------------------------------------- */
-  const healPlayerV27AegisBase=healPlayer;healPlayer=function(amount,opts){const raw=Math.max(0,Math.round(amount||0)),beforeHp=player.hp,beforeMax=player.maxHp,room=Math.max(0,beforeMax-beforeHp),r=healPlayerV27AegisBase(amount,opts),rate=player.legendaryOverhealShieldRate||0;if(rate>0&&raw>room){const growth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-room-growth);if(over>0){const gain=over*rate;player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+gain);if(currentEnemy)addCombatHistory(`🩸🔵 Crimson Aegis turns ${over} overheal into +${gain.toFixed(1)} Energy Shield.`);}}v24UpdateShieldBars?.();return r;};
 
   /* POISON COUNTER CLEANUP ------------------------------------------------- */
 
@@ -7577,6 +7551,24 @@
     clearCombatPresentation:dbFriendClearCombatPresentation,
     feedPet:count=>feedActivePet(count),
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
+  });
+
+
+  const dbCombatHealingOwner=window.DiceboundCombatHealingResolution;
+  if(!dbCombatHealingOwner)throw new Error('DiceBound requires the combat Healing-resolution owner before dicebound.js');
+  dbCombatHealingResolution=dbCombatHealingOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    ensureAlphaMeta:()=>ensureAlphaMeta(),
+    setStatsLastHp:value=>{statsLastHp=value;},
+    saveMeta:()=>saveMeta(),
+    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    isClassActive:id=>classIdentityActive(id),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    identityFlash:text=>identityFlash(text),
+    addCombatHistory:text=>addCombatHistory(text),
+    syncShieldBars:()=>v24UpdateShieldBars(),
+    syncOuroborosAttack:()=>v18SyncOuroborosAttack()
   });
 
   const dbCombatPetTurnOwner=window.DiceboundCombatPetTurnResolution;

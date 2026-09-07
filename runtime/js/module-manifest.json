@@ -16,6 +16,7 @@
     "runtime-services",
     "memory-diagnostics",
     "combat-effective-stats",
+    "combat-healing-resolution",
     "combat-strike-policy",
     "combat-strike-resolution",
     "combat-attack-action-resolution",
@@ -220,6 +221,16 @@
       "requires": [],
       "provides": [
         "DiceboundEffectiveStats"
+      ]
+    },
+    {
+      "id": "combat-healing-resolution",
+      "path": "js/combat/healing-resolution.js",
+      "domain": "combat/generic-healing-overheal-and-healing-side-effect-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatHealingResolution"
       ]
     },
     {
