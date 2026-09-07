@@ -49,6 +49,12 @@ jobs:
         with:
           go-version: '1.26.7'
 
+      - name: Apply reported 0.6.6.6 follow-up fixes
+        shell: pwsh
+        run: |
+          python tools/materialize_0666_followup.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Stamp canonical Beta 0.6.6.6 identity
         shell: pwsh
         run: |
@@ -60,6 +66,8 @@ jobs:
       - name: Focused Devil Patch regression tests
         shell: pwsh
         run: |
+          node tools/test_0666_visual_followups.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_camp_ui.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_combat_turn_resolution.js
@@ -103,7 +111,7 @@ jobs:
           go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Commit canonical 0.6.6.6 metadata
+      - name: Commit canonical 0.6.6.6 follow-up
         shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -112,9 +120,9 @@ jobs:
           git config user.email '323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com'
           git add -A
           if (git diff --cached --quiet) {
-            throw 'Expected canonical 0.6.6.6 metadata changes, but the tree is unchanged.'
+            throw 'Expected 0.6.6.6 follow-up changes, but the tree is unchanged.'
           }
-          git commit -m 'Beta 0.6.6.6: canonicalize Devil Patch metadata [materialized-0666]'
+          git commit -m 'Beta 0.6.6.6: fix Devil Patch follow-ups [materialized-0666]'
           git config --unset-all http.https://github.com/.extraheader 2>$null
           git remote set-url origin "https://x-access-token:$env:GH_TOKEN@github.com/Krtz/DiceBound.git"
           git push origin HEAD:$env:TARGET_BRANCH
