@@ -29,17 +29,34 @@ jobs:
         run: |
           python tools/materialize_0_6_6_9_attack_action.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $path = 'tools/test_combat_attack_action_resolution.js'
-          $text = Get-Content $path -Raw
+
+          $testPath = 'tools/test_combat_attack_action_resolution.js'
+          $testText = Get-Content $testPath -Raw
           $oldTrace = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response']"
           $newTrace = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']"
-          if (($text.Split($oldTrace).Count - 1) -ne 1) { throw 'Expected exactly one Basic Attack trace assertion to patch.' }
-          $text = $text.Replace($oldTrace, $newTrace)
+          if (($testText.Split($oldTrace).Count - 1) -ne 1) { throw 'Expected exactly one Basic Attack trace assertion to patch.' }
+          $testText = $testText.Replace($oldTrace, $newTrace)
           $oldFloat = 'assert.strictEqual(h.player.doubleStrike, .2);'
           $newFloat = 'assert(Math.abs(h.player.doubleStrike - .2) < 1e-12);'
-          if (($text.Split($oldFloat).Count - 1) -ne 1) { throw 'Expected exactly one Frog restoration assertion to patch.' }
-          $text = $text.Replace($oldFloat, $newFloat)
-          Set-Content -Path $path -Value $text -NoNewline -Encoding utf8
+          if (($testText.Split($oldFloat).Count - 1) -ne 1) { throw 'Expected exactly one Frog restoration assertion to patch.' }
+          $testText = $testText.Replace($oldFloat, $newFloat)
+          Set-Content -Path $testPath -Value $testText -NoNewline -Encoding utf8
+
+          $patchPath = 'runtime/PATCH_NOTES.md'
+          $patchText = Get-Content $patchPath -Raw
+          if (-not $patchText.StartsWith('# Unreleased — Beta 0.6.6.8')) { throw 'Unexpected PATCH_NOTES head while materializing 0.6.6.9.' }
+          $patchHead = @'
+# Unreleased — Beta 0.6.6.9
+
+## Beta 0.6.6.9 Basic Attack action-resolution ownership (#40, #209, #288)
+- Basic Attack orchestration now resolves through one authoritative `combat/attack-action-resolution.js` owner while individual base/Echo strike math remains in `combat/strike-resolution.js`.
+- The historical Monk/Frog, Clown/Alchemist, Echo Chamber and Dragoon Basic Attack wrapper ladder is consolidated with the same D20/Echo RNG order, targeting, Crit-to-Ultimate accounting, UI timing and temporary-state restoration.
+- Potions, Ultimates, Guard, Pet/companion turns, special/occult attacks, victory rewards, saves/checkpoints and gameplay/balance values are unchanged.
+
+'@
+          Set-Content -Path $patchPath -Value ($patchHead + $patchText) -NoNewline -Encoding utf8
+          python tools/refresh_runtime_manifest.py --version 0.6.6.9 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Validate JavaScript and deterministic contracts
         shell: pwsh
