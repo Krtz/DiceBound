@@ -5,7 +5,7 @@ import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
-EXPECTED={'classes': 26, 'pets': 13, 'pet_battle_assets': 13, 'normal_enemies': 11, 'normal_enemy_battle_assets': 27, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 6, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 277, 'combat_effect_assets': 33, 'equipment_assets': 21}
+EXPECTED={'classes': 26, 'pets': 13, 'pet_battle_assets': 13, 'normal_enemies': 11, 'normal_enemy_battle_assets': 27, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 6, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 278, 'combat_effect_assets': 33, 'equipment_assets': 21}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
@@ -93,9 +93,6 @@ def main():
     bad={k for k in reg["powerupNames"].values() if k not in m["powerups"] and k not in m["ui"]["icons"]}
     if bad: fail("unknown powerup art keys: "+", ".join(sorted(bad)))
 
-    # Check EVERY literal asset pointer in live runtime JS/CSS/HTML. Semantic pointers
-    # must exist directly; historical pointers are permitted only under explicit
-    # compatibility roots and every concrete file pointer must still resolve.
     pointer_sources=collect_live_pointers(runtime); pointers=sorted({x for refs in pointer_sources.values() for x in refs})
     unknown=[]; missing=[]
     for lit in pointers:
