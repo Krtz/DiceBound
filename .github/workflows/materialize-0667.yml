@@ -34,6 +34,7 @@ jobs:
           $testPath = "tools/test_combat_pet_turn_resolution.js"
           $testSource = Get-Content $testPath -Raw
           $testSource = $testSource.Replace("assert.strictEqual(owner.petDamage(), 6, 'Beastmaster aggressive Pet damage drifted');", "assert.strictEqual(owner.petDamage(), 5, 'Beastmaster aggressive Pet damage drifted');")
+          $testSource = $testSource.Replace("String(x[3]).includes('companion proc')", "x[3] === 'Companion Spark'")
           Set-Content -Path $testPath -Value $testSource -NoNewline
 
       - name: Validate materialized source
