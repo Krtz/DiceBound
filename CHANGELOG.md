@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.8
+
+### Approved art intake (#164, #283, #286)
+- Imported approved transparent Wraith Board 1–6 battle artwork and retired the Wraith-only dark-matte/blending workaround.
+- Added six Board-specific, user-approved Nightmare combat backgrounds without changing Normal or Hell behavior.
+- Added the birthday art split: lower-rarity originals retain their catalog identities, while the three flashy variants are Epic+ visual identities that use normal generated rarity budgets without bespoke bonus packages or effects.
+- Imported the requested RuneScape armour expansion as catalog documentation only; no unimplemented gear slots or runtime mechanics were added.
+
 ## Beta 0.6.6.7
 
 ### Pet / Companion combat resolution ownership (#40, #209, #281)

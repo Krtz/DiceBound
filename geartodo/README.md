@@ -11,16 +11,17 @@ Axel's reviewed/edited entry always wins over an older first-pass suggestion.
 The slot files are now the **single pending-candidate source of truth**:
 
 - `weapon.md` — every pending Weapon reference/candidate in one editable list;
-- `offhand.md` — every pending Offhand reference/candidate;
+- `offhand.md` — every pending Offhand reference/candidate, including shields, defenders, books, caster focuses/sources, mojos/phylacteries and quivers where they function as the secondary equipment identity;
 - `chest.md`, `boots.md`, `legs.md`, `hat.md`, `ring.md`, `amulet.md` — the corresponding pending slot catalogues;
-- `gloves.md` and `belt.md` — preserved future-slot/backburner candidates only; these files do **not** mean those runtime slots are approved;
+- `gloves.md`, `belt.md`, and `back.md` — preserved future-slot/backburner candidates only; these files do **not** mean those runtime slots are approved;
+- `back.md` specifically owns capes, cloaks, wings, backpacks, back banners, trophy rigs and other rear-worn/back-mounted equipment concepts;
 - `created-gear.md` — gear whose first modular art asset already exists.
 
 The former `source-inspired-loot-expansion.md`, `runescape-weapon-expansion.md`, and `runescape-quest-fun-oddity-weapons.md` pools were consolidated into the appropriate slot files. There should no longer be a second hidden reference catalogue to check before choosing art.
 
 When art is created and accepted for a pending item, move that item **out of its slot file** and into `created-gear.md`, preserving/refining its metadata and recording the intended runtime asset path.
 
-`runescape-reference-policy.md` still records the deliberately broad inspiration policy. Source-specific names remain prototype/reference language and should be renamed/originalized under #93 before a public/commercial release where appropriate.
+`runescape-reference-policy.md` still records the deliberately broad RuneScape inspiration policy. The same prototype/reference rule now applies to other source-inspired catalogue entries (including Path of Exile and Diablo references): source-specific names are planning language and should be renamed/originalized under #93 before a public/commercial release where appropriate.
 
 ## Fields
 
@@ -67,6 +68,7 @@ Use the numeric conventions in `docs/GAMEPLAY_VOCABULARY.md`:
 - Do not normalize every base into the same hidden point budget.
 - These first-pass values are allowed to be uneven. Review and real playtesting happen later.
 - Empty metadata fields are fine if no useful value exists.
+- Future-slot files are catalogue/design space only. Their existence must not silently add runtime slots or expand active save/equipment schema.
 
 ## Art workflow
 

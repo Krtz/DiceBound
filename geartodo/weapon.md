@@ -12,14 +12,6 @@ tags: weird, source-inspired, prototype-reference, martial
 eligibility: common+
 intrinsic: +4 Attack, +3% Crit
 ---
-## 10th Birthday Balloons
-family: balloon
-material: rubber
-weight: light
-tags: weird, source-inspired, prototype-reference, toy, festival, holiday
-eligibility: common+
-intrinsic: +3% Dodge, +2% Echo, +1 Luck
----
 ## Abyssal Wand
 family: wand
 material: 
@@ -260,14 +252,6 @@ tags: ranged, source-inspired, prototype-reference
 eligibility: legendary+
 intrinsic: +9 Attack, +5% Crit, +4% Echo
 ---
-## Ashen Staff
-family: staff
-material: wood
-weight: medium
-tags: arcane, caster
-eligibility: poor+
-intrinsic: +5 Mana
----
 ## Astral Bell
 family: bell
 material: metal
@@ -435,22 +419,6 @@ weight: medium
 tags: pack, pet
 eligibility: uncommon+
 intrinsic: +3 Attack, +8% Pet Damage
----
-## birthday balloons
-family: balloon
-material: rubber
-weight: light
-tags: weird, source-inspired, prototype-reference, toy, festival, holiday
-eligibility: common+
-intrinsic: +3% Dodge, +2% Echo, +1 Luck
----
-## Birthday Cake
-family: food-weapon
-material: 
-weight: light
-tags: weird, source-inspired, prototype-reference, food, holiday
-eligibility: common+
-intrinsic: +2 Attack, +5 HP, +1% Donut proc chance
 ---
 ## Black 2H Crossbow
 family: two-handed-crossbow

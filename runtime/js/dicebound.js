@@ -6990,12 +6990,13 @@
   });
   setTimeout(()=>db0633RefreshCampProgression(),0);
 
-  /* BETA 0.6.3.5 — #115 Normal-mode combat backgrounds.
+  /* BETA 0.6.3.5 — #115 Normal-mode combat backgrounds; #286 adds approved
+     Nightmare plates through the same semantic registry.
      Board environment resolves independently from combatants and difficulty
-     presentation. The supplied artwork is Normal-only; mode variants remain
-     an explicit future #88 asset decision rather than a generated filter. */
+     presentation. Hell remains an explicit future #88 asset decision rather
+     than a generated filter. */
   const db0635CombatBackgroundStyle=document.createElement('style');
-  db0635CombatBackgroundStyle.id='dicebound-normal-combat-background-style';
+  db0635CombatBackgroundStyle.id='dicebound-combat-background-style';
   db0635CombatBackgroundStyle.textContent=`
     #combatOverlay[data-combat-background]{isolation:isolate;overflow:hidden;background:#07101c!important}
     #combatOverlay[data-combat-background]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--db0635-combat-background-image);background-size:cover;background-position:center;transform:scale(1.01)}
@@ -7007,7 +7008,7 @@
   function db0635ApplyCombatBackground(){
     const overlay=$('combatOverlay'),mode=db0635CombatMode(),entry=window.DiceboundAssets?.resolveCombatBackground?.(boardLevel,mode)||null;
     if(!overlay)return entry;
-    if(entry?.image){overlay.dataset.combatBackground=`board-${boardLevel}-normal`;overlay.style.setProperty('--db0635-combat-background-image',`url("${entry.image}")`);}
+    if(entry?.image){overlay.dataset.combatBackground=`board-${boardLevel}-${mode}`;overlay.style.setProperty('--db0635-combat-background-image',`url("${entry.image}")`);}
     else {delete overlay.dataset.combatBackground;overlay.style.removeProperty('--db0635-combat-background-image');}
     return entry;
   }
@@ -7025,15 +7026,6 @@
   }
   const db0636EnemyPortraitBase=enemyPortraitSVG;
   enemyPortraitSVG=function(enemy){return db0636TieredEnemyMarkup(enemy)||db0636EnemyPortraitBase(enemy);};
-  const db066TieredEnemyMarkupBase=db0636TieredEnemyMarkup;
-  db0636TieredEnemyMarkup=function(enemy){
-    const markup=db066TieredEnemyMarkupBase(enemy),art=window.DiceboundAssets?.resolveEnemyBattleArt?.(enemy?.name||'',boardLevel);
-    return art?.matte==='dark'?markup?.replace('db0636-tiered-enemy-art ','db0636-tiered-enemy-art db-enemy-dark-matte '):markup;
-  };
-  if(!document.getElementById('dicebound-066-wraith-dark-matte-style')){
-    const style=document.createElement('style');style.id='dicebound-066-wraith-dark-matte-style';
-    style.textContent='.db-enemy-dark-matte .db0636-tiered-enemy-image{mix-blend-mode:screen}';document.head.appendChild(style);
-  }
   if(!document.getElementById('dicebound-0636-slime-battle-art-style')){
     const style=document.createElement('style');style.id='dicebound-0636-slime-battle-art-style';style.textContent=`
       #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(224px,35vh,430px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
