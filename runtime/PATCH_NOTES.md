@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.7
+
+## Beta 0.6.6.7 Pet / Companion combat resolution ownership (#40, #209, #281)
+- Pet and companion combat now resolves through one authoritative `combat/pet-turn-resolution.js` owner instead of the historical Pet/Trainer/Summoner wrapper ladder in `dicebound.js`.
+- Ordinary Pets, Beastmaster stance follow-up, Pokémon Trainer lead/assist, Summoner spirits, Primal Spark, Healing Nuzzle, set Pet-double behavior, Pet Mirror and Bond-scaled Pet damage preserve their current formulas, RNG order and timing.
+- Pet chooser/feeding, Conjure orchestration, Trainer switch UI, saves/checkpoints and gameplay/balance values are unchanged.
+
 # Unreleased — Beta 0.6.6.6
 
 ## Beta 0.6.6.6 Devil Patch (#282)

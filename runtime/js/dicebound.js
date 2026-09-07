@@ -780,7 +780,7 @@
 
   function activePetDef(){return PETS[meta.activePet]||PETS.neutral;}
   function activePetState(){return meta.pets?.[meta.activePet]||meta.pets.neutral;}
-  function petDamage(){const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
+  function petDamage(){if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
   function updateMetaUI(){
     const pet=activePetState(),def=activePetDef();
     $("talentPointTop").textContent=meta.points;
@@ -824,14 +824,7 @@
     if(!key||!ELEMENTS[key]||amount<=0)return;meta.elementProgress[key]=(meta.elementProgress[key]||0)+amount;const state=meta.pets[key];
     if(state&&!state.unlocked&&meta.elementProgress[key]>=PET_UNLOCK_REQUIREMENT){state.unlocked=true;saveMeta();sfx.holy();showToast(`NEW PET UNLOCKED · ${PETS[key].icon} ${PETS[key].name}`,3400,true);addLog(`<b>Elemental companion unlocked:</b> ${PETS[key].name} after ${Math.floor(meta.elementProgress[key])} ${ELEMENTS[key].name} damage/healing.`);}else saveMeta();
   }
-  async function petTurn(){
-    const targets=livingEnemies();if(!targets.length)return;const target=currentEnemy?.hp>0?currentEnemy:targets[0],def=activePetDef(),pet=$("combatPet");pet.classList.remove("pet-attack");void pet.offsetWidth;pet.classList.add("pet-attack");await delay(300);
-    let hits=1,totalBase=petDamage();if(random()<clamp(player.petDoubleChance+(v19SetPetDoubleBonus()),0,.95))hits=2;
-    let total=0,element=def.element;
-    if(def.id==="neutral")element=pick(DIBO_ELEMENTS);
-    for(let i=0;i<hits;i++){let amount=totalBase;if(element&&target.weakness===element)amount=Math.round(amount*1.5);total+=damageEnemy(target,amount);if(element)trackElementProgress(element,amount);}
-    tone(520,.08,"triangle",.025,760);setCombatText(`${def.name} ${hits===2?"attacks twice":"attacks"} for ${total} ${element?ELEMENTS[element].name:"neutral"} damage${def.id==="neutral"?` after rolling ${ELEMENTS[element].icon}`:""}.`);if(target.hp<=0)setCurrentEnemy(currentEnemies.indexOf(target));updateCombatUI();await delay(620);pet.classList.remove("pet-attack");
-  }
+  async function petTurn(...args){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petTurn(...args);}
 
   async function animateUltimate(){
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760}[player.classId]||620));enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");
@@ -1490,6 +1483,7 @@
   let dbCombatStrikes=null;
   let dbCombatUltimateResolution=null;
   let dbCombatGuardResolution=null;
+  let dbCombatPetTurnResolution=null;
   let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatTurns=null;
@@ -1925,7 +1919,6 @@
 
   applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
 
-  petTurn=async function(){const targets=livingEnemies();if(!targets.length)return;const target=currentEnemy?.hp>0?currentEnemy:targets[0],def=activePetDef(),pet=$("combatPet");pet.classList.remove("pet-attack");void pet.offsetWidth;pet.classList.add("pet-attack");await delay(300);let hits=1,totalBase=petDamage();if(random()<clamp(player.petDoubleChance+(v19SetPetDoubleBonus()),0,.95))hits=2;let total=0,element=def.element;if(def.id==="neutral")element=pick(DIBO_ELEMENTS);for(let i=0;i<hits;i++){let amount=totalBase;if(element&&target.weakness===element)amount=Math.round(amount*1.5);if(element&&target.affinity===element)amount=Math.round(amount*.5);total+=damageEnemy(target,amount);if(element)trackElementProgress(element,amount);}tone(520,.08,"triangle",.025,760);setCombatText(`${def.name} ${hits===2?"attacks twice":"attacks"} for ${total} ${element?ELEMENTS[element].name:"neutral"} damage${target.affinity===element?" (affinity resisted half)":""}${def.id==="neutral"?` after rolling ${ELEMENTS[element].icon}`:""}.`);if(target.hp<=0)setCurrentEnemy(currentEnemies.indexOf(target));updateCombatUI();await delay(620);pet.classList.remove("pet-attack");};
 
   openGambler=function(){const grid=$("gambleGrid");grid.innerHTML="";if(player.gold<=0){player.gold=100;$("gambleResult").textContent="The Gambler stares at your empty purse, sighs theatrically, and hands you 100 gold out of pity.";addLog("<b>Gambler:</b> You had no gold, so the Gambler takes pity and gives you <b>100 gold</b>.");showToast("🪙 Pity fund: +100 gold");updateHUD();}else $("gambleResult").textContent=`You carry ${player.gold} gold.`;[0,.25,.5,1].forEach(p=>{const wager=Math.floor(player.gold*p),b=document.createElement("button");b.className="choice-btn uncommon";b.innerHTML=`<span class="choice-icon">🪙</span><span class="choice-name">Bet ${Math.round(p*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;b.addEventListener("click",()=>{if(p===0){finishGambler("You politely decline.");return;}const actual=Math.floor(player.gold*p),win=random()<.5;if(win){player.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{player.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}});grid.appendChild(b);});$("gamblerOverlay").classList.remove("hidden");};
 
@@ -2132,10 +2125,6 @@
   const healPlayerV13=healPlayer;
   healPlayer=function(amount){const healed=healPlayerV13(amount);if(classIdentityActive("cleric")&&healed>0){player.clericFaith=clamp((player.clericFaith||0)+healed*2,0,100);}return healed;};
 
-  const petDamageV13=petDamage;
-  petDamage=function(){let d=petDamageV13();if(classIdentityActive("beastmaster")&&player.beastStance==="aggressive")d=Math.round(d*1.5);return d;};
-  const petTurnV13=petTurn;
-  petTurn=async function(){await petTurnV13();if(!classIdentityActive("beastmaster")||!currentEnemy)return;if(player.beastStance==="defensive"){player.combatShield++;addCombatHistory("🐾 Defensive pack order raises a Barrier.");}else if(player.beastStance==="support"){const h=healPlayer(2+Math.floor(boardLevel/2));if(h)addCombatHistory(`🐾 Support pack order restores ${h} HP.`);}updateCombatUI();};
 
   // ---- D20: make every combat roll readable and slightly more chaotic -------
   rollD20Chaos=async function(action){
@@ -2423,11 +2412,11 @@
 
   // ---- Summoner & Pokémon Trainer runtime ----------------------------------
   function shuffledPetIds(){const arr=Object.keys(PETS);for(let i=arr.length-1;i>0;i--){const j=rand(0,i),t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr;}
-  function trainerPetDamage(id){const lvl=Math.max(1,meta.pets?.[id]?.level||1),base=1+Math.ceil(lvl*.82)+player.petDamageBonus;return Math.max(1,base);}
-  function petElementFor(id){const def=PETS[id]||PETS.neutral;return def.id==="neutral"?pick(DIBO_ELEMENTS):def.element;}
-  function activeTrainerPetId(){const r=player.trainerRoster||[];return r.length?r[(player.trainerActiveIndex||0)%r.length]:meta.activePet;}
-  async function maybePetElementProc(id,target,source="Companion Spark"){const rank=gameplayTalentRank("companion_element_proc");if(!rank||!target||target.hp<=0||random()>=rank*.025)return null;const key=petElementFor(id),result=triggerElementEffect(key,target,{forced:true,source});if(result){addCombatHistory(`🌈 ${PETS[id]?.name||"Companion"} triggers ${ELEMENTS[key].name} through Primal Spark.`);await delay(180);}return result;}
-  async function trainerStrike(id,target,scale=1,label="attacks"){if(!target||target.hp<=0)return 0;const def=PETS[id]||PETS.neutral,element=petElementFor(id);let amount=Math.round(trainerPetDamage(id)*scale);if(element&&target.weakness===element)amount=Math.round(amount*1.5);if(element&&target.affinity===element)amount=Math.round(amount*.5);const dealt=damageEnemy(target,amount);if(element)trackElementProgress(element,dealt);addCombatHistory(`${def.icon} ${def.name} ${label} for ${dealt} ${element?ELEMENTS[element].name:"neutral"} damage.`);await maybePetElementProc(id,target,`${def.name} companion proc`);return dealt;}
+  function trainerPetDamage(id){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.trainerPetDamage(id);}
+  function petElementFor(id){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petElementFor(id);}
+  function activeTrainerPetId(){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.activeTrainerPetId();}
+  async function maybePetElementProc(id,target,source="Companion Spark"){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.maybePetElementProc(id,target,source);}
+  async function trainerStrike(id,target,scale=1,label="attacks"){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.trainerStrike(id,target,scale,label);}
   async function summonerConjure(){if(combatBusy||!currentEnemy||!classIdentityActive("summoner"))return;const cfg=OCCULT_SPELLS.summoner;if(player.mana<cfg.cost)return;combatBusy=true;player.mana-=cfg.cost;player.combatActionCount++;player.summonerSpirits=player.summonerSpirits||[];const cap=player.summonerCap||3,candidates=Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked&&!player.summonerSpirits.includes(id)),pool=candidates.length?candidates:Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked),id=pool.length?pick(pool):"neutral";if(player.summonerSpirits.length>=cap)player.summonerSpirits.shift();player.summonerSpirits.push(id);identityFlash(`🐾 Conjured ${PETS[id].name}`);setCombatText(`📖 You spend ${cfg.cost} Mana to conjure ${PETS[id].icon} ${PETS[id].name}. ${player.summonerSpirits.length}/${cap} spirit slots are active.`);updateCombatUI();await delay(520);await resolveEnemyResponse(false);}
   const occultChannelAttackV15Patch=occultChannelAttack;
   occultChannelAttack=async function(){if(!classIdentityActive("summoner")||!(player.summonerManaBonus||0))return occultChannelAttackV15Patch();const cfg=OCCULT_SPELLS.summoner,old=cfg.gain;cfg.gain=old+(player.summonerManaBonus||0);try{return await occultChannelAttackV15Patch();}finally{cfg.gain=old;}};
@@ -2438,8 +2427,6 @@
 
   const resetPlayerV15Patch=resetPlayer;
   resetPlayer=function(classId=selectedClassId){resetPlayerV15Patch(classId);player.summonerSpirits=[];player.summonerCap=3;player.summonerSpiritScale=1;player.summonerSpiritDouble=0;player.summonerManaBonus=0;player.summonerAutoSpirit=false;player.trainerRoster=[];player.trainerActiveIndex=0;player.trainerAssistBonus=0;player.trainerAssistScale=.65;player.trainerUltimateBonus=0;if(classIdentityActive("summoner")){player.maxMana=120;player.mana=35;}if(classIdentityActive("pokemontrainer")){player.trainerRoster=shuffledPetIds().slice(0,6);player.trainerActiveIndex=rand(0,Math.max(0,player.trainerRoster.length-1));}};
-  const petTurnV15Patch=petTurn;
-  petTurn=async function(){if(classIdentityActive("pokemontrainer")){const targets=livingEnemies();if(!targets.length)return;let target=currentEnemy?.hp>0?currentEnemy:targets[0],id=activeTrainerPetId();await trainerStrike(id,target,1.65,"leads the roster");if(target.hp<=0){target=livingEnemies()[0];if(target)setCurrentEnemy(currentEnemies.indexOf(target));}if(target&&random()<clamp(.28+(player.trainerAssistBonus||0),0,.80)){const others=(player.trainerRoster||[]).filter(x=>x!==id),assist=others.length?pick(others):id;await trainerStrike(assist,target,player.trainerAssistScale||.65,"jumps in to assist");}updateCombatUI();await delay(380);return;}await petTurnV15Patch();if(!livingEnemies().length)return;if(classIdentityActive("summoner")&&(player.summonerSpirits||[]).length){for(const id of [...player.summonerSpirits]){const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target)break;const scale=.62*(player.summonerSpiritScale||1),hits=random()<clamp(player.summonerSpiritDouble||0,0,.75)?2:1;for(let h=0;h<hits;h++){await trainerStrike(id,target,scale,hits>1?"answers the pact twice":"answers the pact");if(!target.hp)break;}if(target.hp<=0&&livingEnemies().length)setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));}}else{const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(target)await maybePetElementProc(meta.activePet||"neutral",target);}updateCombatUI();};
 
 
 
@@ -2573,8 +2560,6 @@
     fire:{label:"+1 Attack",apply(s){player.attack+=s},remove(s){player.attack-=s},v:1},ice:{label:"+1 Defense",apply(s){player.defense+=s},remove(s){player.defense-=s},v:1},electric:{label:"+3% Crit",apply(s){player.crit+=s},remove(s){player.crit-=s},v:.03},light:{label:"+5 Max HP",apply(s){player.maxHp+=s;player.hp+=s},remove(s){player.maxHp=Math.max(1,player.maxHp-s);player.hp=Math.min(player.hp,player.maxHp)},v:5},void:{label:"+3% Echo",apply(s){player.doubleStrike+=s},remove(s){player.doubleStrike-=s},v:.03},nature:{label:"+10% Potion Healing",apply(s){player.potionPower+=s},remove(s){player.potionPower-=s},v:.10},donut:{label:"+3 Max HP & +5% Potion Healing",apply(){player.maxHp+=3;player.hp+=3;player.potionPower+=.05},remove(){player.maxHp=Math.max(1,player.maxHp-3);player.hp=Math.min(player.hp,player.maxHp);player.potionPower-=.05},v:0},tech:{label:"+8% Boss Damage",apply(s){player.bossDamage+=s},remove(s){player.bossDamage-=s},v:.08},metal:{label:"+1 Flat Damage Reduction",apply(s){player.flatReduction+=s},remove(s){player.flatReduction-=s},v:1},coffee:{label:"+4 Luck",apply(s){player.luck+=s},remove(s){player.luck-=s},v:.04},radiation:{label:"+6% Element Power",apply(s){player.elementDamageBonus+=s},remove(s){player.elementDamageBonus-=s},v:.06}
   };
   function syncActivePetBonusV16(force=false){if(!gameStarted&&!force)return;const next=meta.activePet||"neutral",prev=player._activePetBonusId;if(prev===next&&!force)return;if(prev&&prev!=="neutral"&&PET_STAT_BONUSES[prev]){const b=PET_STAT_BONUSES[prev];b.remove(b.v);}player._activePetBonusId=next;if(next!=="neutral"&&PET_STAT_BONUSES[next]){const b=PET_STAT_BONUSES[next];b.apply(b.v);}}
-  const petDamageV16Base=petDamage;petDamage=function(){return petDamageV16Base()+(meta.activePet&&meta.activePet!=="neutral"?2:0);};
-  if(typeof trainerPetDamage==="function"){const trainerPetDamageV16Base=trainerPetDamage;trainerPetDamage=function(id){return trainerPetDamageV16Base(id)+(id&&id!=="neutral"?2:0);};}
 
   // ---- Powerup rerolls ------------------------------------------------------
   function attachPowerupRerollV16(grid,reroll){if(!grid)return;const b=document.createElement("button");b.className="powerup-reroll-btn";b.disabled=(player.powerupRerolls||0)<=0;b.textContent=`🔄 Reroll choices · ${player.powerupRerolls||0} remaining`;b.addEventListener("click",()=>{if((player.powerupRerolls||0)<=0)return;player.powerupRerolls--;sfx.roll();reroll();});grid.appendChild(b);}
@@ -2667,8 +2652,6 @@
   function v17PetBonusText(id){const b=PET_STAT_BONUSES[id],lv=v17PetBondLevel(id),scale=v17PetBonusScale(id);if(!b)return `Bonus: +${v17PetDamageExtra(id)} base pet damage · Bond Lv ${lv}`;return `Bonus: +${v17PetDamageExtra(id)} base pet damage · ${b.label} (${Math.round(scale*100)}% bond scaling) · Bond Lv ${lv}`;}
   // Replace the v1.6 flat active-pet bonus with a slowly bond-scaled version.
   syncActivePetBonusV16=function(force=false){if(!gameStarted&&!force)return;const next=meta.activePet||"neutral",prev=player._activePetBonusId,prevScale=player._v17PetBonusScale||1;if(prev&&prev!=="neutral"&&PET_STAT_BONUSES[prev]){const b=PET_STAT_BONUSES[prev];if(prev==="donut"){player.maxHp=Math.max(1,player.maxHp-3*prevScale);player.hp=Math.min(player.hp,player.maxHp);player.potionPower-=.05*prevScale;}else b.remove(b.v*prevScale);}player._activePetBonusId=next;player._v17PetBonusScale=v17PetBonusScale(next);if(next!=="neutral"&&PET_STAT_BONUSES[next]){const b=PET_STAT_BONUSES[next],scale=player._v17PetBonusScale;if(next==="donut"){player.maxHp+=3*scale;player.hp+=3*scale;player.potionPower+=.05*scale;}else b.apply(b.v*scale);}};
-  const petDamageV17Base=petDamage;petDamage=function(){const current=petDamageV17Base(),id=meta.activePet||"neutral";return current+(id!=="neutral"?(v17PetDamageExtra(id)-2):0);};
-  if(typeof trainerPetDamage==="function"){const trainerPetDamageV17Base=trainerPetDamage;trainerPetDamage=function(id){return trainerPetDamageV17Base(id)+(id&&id!=="neutral"?Math.max(0,v17PetDamageExtra(id)-2):0);};}
 
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
   const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){resonantTalent.name="Resonant Carapace";resonantTalent.desc="Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.";resonantTalent.maxRank=3;}
@@ -2936,11 +2919,6 @@
     sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   };
 
-  const petTurnV18Base=petTurn;
-  petTurn=async function(){
-    await petTurnV18Base();
-    if((player.petTurnHeal||0)>0&&player.hp>0){const healed=healPlayer(player.petTurnHeal);if(healed)addCombatHistory(`💗 Healing Nuzzle restores ${healed} HP.`);updateCombatUI();}
-  };
 
   // Conjure now immediately rallies the whole companion circle. The normal
   // active companion and every summoned spirit attack once with a modest
@@ -3378,8 +3356,6 @@
   // ---- Set bonuses: runtime hooks ------------------------------------------
   // Normalize old hard-coded thresholds by wrapping the two main combat entry
   // points. This keeps v1.9's weaker 2/3/4 bonuses and strong 7-piece finish.
-  const petTurnV19Base=petTurn;
-  petTurn=async function(){const bonus=v19SetPetDoubleBonus(),old=player.petDoubleChance||0;player.petDoubleChance=old+bonus;try{return await petTurnV19Base();}finally{player.petDoubleChance=old;}};
   // Base strike/ultimate/element formulas already call v19SetDamageBonus() directly.
   // Do not wrap strikeBaseDamage again here: doing so risks double-counting set power.
 
@@ -6748,8 +6724,6 @@
   // Unstable Ultimate: 70 charge threshold, 75% damage.
 
   // Pet Mirror.
-  const db060PetTurnBase=petTurn;
-  petTurn=async function(...args){const r=await db060PetTurnBase(...args);if(db060HasEffect('pet_mirror')&&player._db060LastElement&&livingEnemies().length&&random()<.25){const old=player.elementDamageBonus||0;try{player.elementDamageBonus=(1+old)*.65-1;triggerElementEffect(player._db060LastElement,livingEnemies()[0],{forced:true,source:'Pet Mirror'});addCombatHistory(`🐾🪞 Pet Mirror repeats ${ELEMENTS[player._db060LastElement]?.name||player._db060LastElement}.`);}finally{player.elementDamageBonus=old;}}return r;};
 
   // Battle-lifetime Legendary state cleanup + Last Stand.
   function db060ClearBattleLegendaryTemps(){if(player._db060IronEchoDefense){player.defense=Math.max(0,player.defense-player._db060IronEchoDefense);player._db060IronEchoDefense=0;}if(player._db060BloodPriceStacks){player.damageBonus=Math.max(0,(player.damageBonus||0)-player._db060BloodPriceStacks*.08);player._db060BloodPriceStacks=0;}player._db060LastStandUsed=false;}
@@ -7732,6 +7706,42 @@
     clearCombatPresentation:dbFriendClearCombatPresentation,
     feedPet:count=>feedActivePet(count),
     petCombatArt:()=>$('combatPet')?.querySelector('img')?.getAttribute('src')||null
+  });
+
+  const dbCombatPetTurnOwner=window.DiceboundCombatPetTurnResolution;
+  if(!dbCombatPetTurnOwner)throw new Error('DiceBound requires the combat Pet turn-resolution owner before dicebound.js');
+  dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({
+    getPlayer:()=>player,
+    getMeta:()=>meta,
+    getPets:()=>PETS,
+    getElements:()=>ELEMENTS,
+    getDiboElements:()=>DIBO_ELEMENTS,
+    getBoardLevel:()=>boardLevel,
+    isGameStarted:()=>gameStarted,
+    talentRank:id=>talentRank(id),
+    gameplayTalentRank:id=>gameplayTalentRank(id),
+    isClassActive:id=>classIdentityActive(id),
+    livingEnemies:()=>livingEnemies(),
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    setCurrentEnemy:index=>setCurrentEnemy(index),
+    animatePetAttack:async(duration=300,active=true)=>{const pet=$("combatPet");if(!pet)return;if(active){pet.classList.remove("pet-attack");void pet.offsetWidth;pet.classList.add("pet-attack");if(duration>0)await delay(duration);}else pet.classList.remove("pet-attack");},
+    delay:ms=>delay(ms),
+    random:()=>random(),
+    pick:list=>pick(list),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    trackElementProgress:(key,amount)=>trackElementProgress(key,amount),
+    tone:(frequency,duration,type,gain,slide)=>tone(frequency,duration,type,gain,slide),
+    setCombatText:text=>setCombatText(text),
+    updateCombatUI:()=>updateCombatUI(),
+    addCombatHistory:text=>addCombatHistory(text),
+    healPlayer:amount=>healPlayer(amount),
+    triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
+    setPetDoubleBonus:()=>v19SetPetDoubleBonus(),
+    petBondLevel:id=>v17PetBondLevel(id),
+    hasLegendaryEffect:id=>db060HasEffect(id),
+    getLastElement:()=>player._db060LastElement
   });
 
   const dbCombatGuardOwner=window.DiceboundCombatGuardResolution;

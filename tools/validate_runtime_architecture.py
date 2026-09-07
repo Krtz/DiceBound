@@ -1004,8 +1004,40 @@ def main() -> int:
             "identityGuardActionV17Base", "identityGuardActionV18Base", "identityGuardActionV19Base", "identityGuardActionV19OffhandBase",
             "db060GuardActionBase", "dbFriendGuardActionBase"
         ):
-            if re.search(rf"(?<![\\w$]){re.escape(symbol)}(?![\\w$])", monolith_source):
+            if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
                 errors.append(f"retired combat Guard-resolution wrapper remains in dicebound.js: {symbol}")
+
+
+    pet_owner = next((m for m in modules if m.get("id") == "combat-pet-turn-resolution"), None)
+    if not pet_owner or pet_owner.get("status") != "extracted":
+        errors.append("combat Pet turn-resolution owner is missing or not extracted")
+    else:
+        if pet_owner.get("path") != "js/combat/pet-turn-resolution.js" or "DiceboundCombatPetTurnResolution" not in (pet_owner.get("provides") or []):
+            errors.append("combat-pet-turn-resolution must provide DiceboundCombatPetTurnResolution from js/combat/pet-turn-resolution.js")
+        if position.get("combat-pet-turn-resolution", -1) >= position.get(str(monolith_id), -1):
+            errors.append("combat-pet-turn-resolution must load before the compatibility monolith")
+    if monolith_source:
+        if "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" not in monolith_source:
+            errors.append("dicebound.js must configure the combat Pet turn-resolution owner")
+        if monolith_source.count("async function petTurn(") != 1 or "return dbCombatPetTurnResolution.petTurn(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin petTurn adapter")
+        if monolith_source.count("function petDamage(") != 1 or "return dbCombatPetTurnResolution.petDamage();" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin petDamage adapter")
+        if monolith_source.count("function trainerPetDamage(") != 1 or "return dbCombatPetTurnResolution.trainerPetDamage(id);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin trainerPetDamage adapter")
+        for pattern, label in (
+            (r"(?m)^  petTurn\s*=", "petTurn"),
+            (r"(?m)^  petDamage\s*=", "petDamage"),
+            (r"(?m)^  trainerPetDamage\s*=", "trainerPetDamage"),
+        ):
+            if re.search(pattern, monolith_source):
+                errors.append(f"dicebound.js retains a top-level {label} reassignment after Pet extraction")
+        for symbol in (
+            "petTurnV13", "petTurnV15Patch", "petTurnV18Base", "petTurnV19Base", "db060PetTurnBase",
+            "petDamageV13", "petDamageV16Base", "petDamageV17Base", "trainerPetDamageV16Base", "trainerPetDamageV17Base"
+        ):
+            if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
+                errors.append(f"retired combat Pet-resolution wrapper remains in dicebound.js: {symbol}")
 
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
     if len(planned_domains) != len(set(planned_domains)):
