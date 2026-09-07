@@ -1,0 +1,64 @@
+name: Materialize Beta 0.6.6.9 Attack Action
+
+on:
+  push:
+    branches:
+      - release/0.6.6.9-attack-action-resolution
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-2022
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/0.6.6.9-attack-action-resolution
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize extraction
+        shell: pwsh
+        run: |
+          python tools/materialize_0_6_6_9_attack_action.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate JavaScript and deterministic contracts
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+
+      - name: Validate Python contracts
+        shell: pwsh
+        run: |
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+
+      - name: Validate architecture assets and version identity
+        shell: pwsh
+        run: |
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/prepare_release.py --output-dir wrapper-source/release/generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.6.9 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit validated materialized source
+        shell: pwsh
+        run: |
+          git rm .github/workflows/materialize-0.6.6.9-attack-action.yml tools/materialize_0_6_6_9_attack_action.py
+          git add -A
+          git config user.name "DiceBound Architecture Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Beta 0.6.6.9 — extract Basic Attack action resolution"
+          git push origin HEAD:release/0.6.6.9-attack-action-resolution
