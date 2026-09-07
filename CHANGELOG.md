@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.10
+
+### Combat Victory / Reward resolution ownership (#40, #209, #291)
+- Extracted the post-kill combat-victory transaction into `runtime/js/combat/victory-resolution.js` and retired the historical `winCombat` reassignment ladder.
+- Preserved ordinary/miniboss/final/secret-boss rewards, Board 5/6 late-final routing, command tracing, reward-error containment, class-unlock facts and battle cleanup ordering.
+- Loot policy, level-up UI, Board transition, terminal run completion, saves/checkpoints and gameplay/balance values remain in their existing owners.
+
 ## Beta 0.6.6.9
 
 ### Basic Attack action-resolution ownership (#40, #209, #288)

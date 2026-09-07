@@ -18,7 +18,8 @@
       "grantXp", "getPendingLevelUps", "openLevelUp", "openCombatLootChain", "showLegendaryChoice", "advanceToNextBoard",
       "completeFinalRoad", "returnToRoad", "renderClassChoices", "setMerchantBossFlags", "restoreRadiationDefense",
       "traceCommand", "logDebug", "debugState", "setCombatBusy", "isCombatOverlayHidden", "setRollLocked",
-      "clearStoneBattle", "grantLegacyXp", "updateMetaUi", "restoreEnemyElementDebuffs", "clearLegendaryBattleTemps"
+      "clearStoneBattle", "grantLegacyXp", "updateMetaUi", "restoreEnemyElementDebuffs", "clearLegendaryBattleTemps",
+      "getClassUnlockFacts", "recordCombatFacts"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat victory runtime missing ${name}().`);
     runtime = nextRuntime;
@@ -316,11 +317,37 @@
     return result;
   }
 
-  async function winCombat(...args) {
+  async function legendaryCleanupLayer(...args) {
     const rt = requireRuntime();
     const result = await enemyElementCleanupLayer(...args);
     rt.clearLegendaryBattleTemps();
     return result;
+  }
+
+  // 0.6.3.1 class-unlock fact recording is the final historical outer layer:
+  // record combat facts before settlement, then re-check unlocks after every
+  // successful/contained inner victory.
+  async function classUnlockFactsLayer(...args) {
+    const rt = requireRuntime(), state = live(), defeated = defeatedFrom(state);
+    const tile = state.tiles?.[state.currentEnemyTile];
+    const isFinal = !!defeated?.finalBoss || state.combatKind === "final" || tile?.type === "boss";
+    state.meta.classUnlockFacts = rt.recordCombatFacts(rt.getClassUnlockFacts(), {
+      board: state.boardLevel,
+      classId: state.player.classId,
+      miniBoss: !!defeated?.miniBoss,
+      finalBoss: isFinal,
+      merchantBoss: !!defeated?.merchantBoss,
+      mode: state.hellMode ? "hell" : state.nightmareMode ? "nightmare" : "normal"
+    });
+    rt.saveMeta();
+    const result = await legendaryCleanupLayer(...args);
+    rt.checkDynamicClassUnlocks();
+    rt.saveMeta();
+    return result;
+  }
+
+  async function winCombat(...args) {
+    return classUnlockFactsLayer(...args);
   }
 
   const api = Object.freeze({
@@ -338,7 +365,9 @@
       tracedLayer,
       failureContainmentLayer,
       secretLegacyLayer,
-      enemyElementCleanupLayer
+      enemyElementCleanupLayer,
+      legendaryCleanupLayer,
+      classUnlockFactsLayer
     })
   });
 

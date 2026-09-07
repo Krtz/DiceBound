@@ -110,4 +110,16 @@ assert "return dbCombatPetTurnResolution.petTurn(...args);" in mono, 'Pet turn t
 assert "return dbCombatPetTurnResolution.petDamage();" in mono, 'Pet damage thin adapter is missing'
 assert "return dbCombatPetTurnResolution.trainerPetDamage(id);" in mono, 'Trainer Pet damage thin adapter is missing'
 
+victory_retired = [
+    'winCombatV15','winCombatV15Patch','winCombatV16Base','winCombatV19Base','v266ResolveLateFinalBase',
+    'winCombatV24Base','winCombatV251Base','winCombatV26Base','db0511WinCombatBase','db060WinCombatBase','db0631WinCombatBase',
+    'v19ResolveLateFinal',
+]
+for symbol in victory_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Victory-resolution owner returned: {symbol}"
+assert mono.count('async function winCombat(') == 1, 'winCombat must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^  winCombat\s*=\s*async function', mono), 'winCombat reassignment chain must not return'
+assert "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" in mono, 'combat Victory-resolution owner is not configured by the composition root'
+assert "return dbCombatVictoryResolution.winCombat(...args);" in mono, 'Victory thin adapter is missing'
+
 print('Monolith spring-clean guard PASS')

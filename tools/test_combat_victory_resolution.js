@@ -21,7 +21,7 @@ function enemy(name='Dummy', extra={}) {
 function makeHarness(options={}) {
   const trace = [];
   const meta = Object.assign({
-    petCookies: 0, merchantKills: 0, bloodmageKills: 0, devilBossKills: 0,
+    petCookies: 0, merchantKills: 0, bloodmageKills: 0, devilBossKills: 0, classUnlockFacts: {},
     board5Clears: 0, doubleDiceUnlocked: false, nightmareUnlocked: false, hellUnlocked: false,
     stats: { enemiesDefeated: 0, bossesDefeated: 0, minibossesDefeated: 0 }
   }, options.meta || {});
@@ -40,7 +40,7 @@ function makeHarness(options={}) {
   let legacyXp = 0;
 
   const state = () => ({
-    player, meta, boardLevel: options.boardLevel || 1, nightmareMode: !!options.nightmareMode,
+    player, meta, boardLevel: options.boardLevel || 1, nightmareMode: !!options.nightmareMode, hellMode: !!options.hellMode,
     combatKind: options.combatKind || null, tiles,
     currentEnemy, currentEnemies, currentEncounterLead, currentEnemyTile
   });
@@ -94,7 +94,9 @@ function makeHarness(options={}) {
     grantLegacyXp: gain => { legacyXp += gain; push('legacyXp', gain); },
     updateMetaUi: () => push('metaUi'),
     restoreEnemyElementDebuffs: () => push('restoreEnemyDebuffs'),
-    clearLegendaryBattleTemps: () => push('clearLegendaryTemps')
+    clearLegendaryBattleTemps: () => push('clearLegendaryTemps'),
+    getClassUnlockFacts: () => meta.classUnlockFacts || {},
+    recordCombatFacts: (facts, payload) => { push('recordCombatFacts', payload.board, payload.classId, payload.mode); return Object.assign({}, facts, { lastCombat: payload }); }
   };
 
   owner.configure(rt);
@@ -131,6 +133,7 @@ async function run() {
     assert(order.indexOf('traceComplete') < order.indexOf('clearStone'), 'v2.6 Stone cleanup must remain outside command trace');
     assert(order.indexOf('clearStone') < order.indexOf('restoreEnemyDebuffs'));
     assert(order.indexOf('restoreEnemyDebuffs') < order.indexOf('clearLegendaryTemps'));
+    assert(order.indexOf('recordCombatFacts') < order.indexOf('traceStart'), 'class unlock facts must record before the historical victory stack');
   }
 
   // Board 5 final uses the separate late-final algorithm, continues to Board 6,
@@ -188,7 +191,7 @@ async function run() {
     assert(order.indexOf('traceComplete') < order.indexOf('clearStone'));
     assert(order.indexOf('clearStone') < order.indexOf('legacyXp'));
     assert(order.indexOf('legacyXp') < order.indexOf('restoreEnemyDebuffs'));
-    assert(order.indexOf('restoreEnemyDebuffs') < order.indexOf('clearLegendaryTemps'));
+    assert(order.indexOf('restoreEnemyDebuffs') < order.indexOf('clearLegendaryTemps'), 'outer cleanup order');
   }
 
   // Reward failure after encounter teardown is contained. Road state recovers,

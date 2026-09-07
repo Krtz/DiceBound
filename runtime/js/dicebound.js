@@ -867,6 +867,7 @@
   function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
   async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
 
+  let dbCombatVictoryResolution=null;
   let dbCombatAttackResolution=null;
   async function playerAttack(...args){if(!dbCombatAttackResolution)throw new Error('Combat Attack-action owner is not configured.');return dbCombatAttackResolution.playerAttack(...args);}
 
@@ -1324,10 +1325,7 @@
   }
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
-  async function winCombat(){
-    const defeated=currentEncounterLead||currentEnemy,all=currentEnemies.length?currentEnemies:[defeated],rewardGold=modifiedGold(all.reduce((s,e)=>s+e.gold,0)),rewardXp=Math.max(1,Math.round(all.reduce((s,e)=>s+e.xp,0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);let cookies=defeated.finalBoss?(boardLevel===4?8:boardLevel===3?6:boardLevel===2?4:2):defeated.miniBoss?(boardLevel===4?7:boardLevel===3?5:boardLevel===2?3:1):0;if(cookies){meta.petCookies+=cookies;saveMeta();showToast(`🍪 +${cookies} cookies`);}if(defeated.merchantBoss){merchantBossBattle=false;merchantBossPrimed=false;merchantBossDefeatedThisBoard=true;player.freeMerchantRun=true;meta.merchantKills=(meta.merchantKills||0)+1;saveMeta();checkDynamicClassUnlocks();addLog("<b>The Road Merchant is defeated.</b> Every merchant item is free for the rest of this run.");showToast("🧔 All shops are free!");}
-    if(defeated.miniBoss&&boardLevel===1)unlockClass("sorcerer");if(defeated.finalBoss&&boardLevel===1)unlockClass("fighter");if(defeated.miniBoss&&boardLevel===2)unlockClass("monk");if(defeated.finalBoss&&boardLevel===2)unlockClass("clown");if(tiles[currentEnemyTile]){tiles[currentEnemyTile].cleared=true;if(!defeated.finalBoss){tiles[currentEnemyTile].type="empty";delete tiles[currentEnemyTile].enemyBase;refreshTile(currentEnemyTile);}}setCombatText(`Victory! +${rewardXp} XP, +${rewardGold} gold${cookies?`, +${cookies} cookies`:""}.`);sfx.win();addLog(`Defeated <b>${all.map(e=>e.name).join(", ")}</b>: +${rewardXp} XP, +${rewardGold} gold.`);updateHUD();await delay(900);$("combatOverlay").classList.add("hidden");currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);updateHUD();const after=()=>{if(defeated.finalBoss){if(boardLevel===3&&!meta.nightmareUnlocked){meta.nightmareUnlocked=true;saveMeta();showToast("🌑 Nightmare Mode unlocked");addLog("<b>Nightmare Mode unlocked!</b> You may enable it from class selection on future runs.");}if(boardLevel<4)advanceToNextBoard();else{meta.board4Clears=(meta.board4Clears||0)+1;saveMeta();showEnd(true);}}else returnToRoad();},cont=()=>pendingLevelUps>0?openLevelUp(after):after(),loot=()=>openCombatLootChain(defeated,cont);if(defeated.miniBoss){showLegendaryChoice("Miniboss Legendary Reward",loot);}else loot();
-  }
+  async function winCombat(...args){if(!dbCombatVictoryResolution)throw new Error('Combat Victory-resolution owner is not configured.');return dbCombatVictoryResolution.winCombat(...args);}
   function applyRunTheme(){const themes={1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},2:{bg1:"#2a2105",bg2:"#130f02",glow1:"rgba(255,221,69,.25)",glow2:"rgba(255,152,45,.12)",board1:"#594817",board2:"#2d240b"},3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},4:{bg1:"#160522",bg2:"#07020b",glow1:"rgba(196,88,255,.30)",glow2:"rgba(255,70,173,.15)",board1:"#3f1357",board2:"#1b0828"}},t=themes[boardLevel]||themes[1],r=document.documentElement.style;for(const [k,v] of Object.entries(t))r.setProperty(`--run-${k.replace(/([A-Z])/g,"-$1").toLowerCase()}`,v);}
 
   function openBloodwell(){
@@ -1611,8 +1609,7 @@
     $("merchantGold").textContent=player.gold;const notice=$("merchantNotice");notice.classList.toggle("show",!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$("shopGrid");grid.innerHTML="";currentMerchantItems.forEach(item=>{const price=merchantPrice(item.base),btn=document.createElement("button");btn.className=`shop-item${item.sold?" sold":""}`;btn.disabled=item.sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:"";btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?"SOLD":price+"g"}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;btn.addEventListener("click",()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`))return;}player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);if(item.alphaChooseLegendary){currentMerchantNotice="👑 <b>Sovereign Relic purchased.</b> Choose one Legendary power.";renderMerchant();showPowerupChoice("Sovereign Relic",()=>{currentMerchantNotice="👑 <b>Sovereign Relic claimed.</b> The chosen Legendary is active for this run.";updateHUD();renderMerchant();},u=>u.rarity==="legendary","Choose one of three Legendary powers. This time the word choose is legally binding.");return;}const result=item.buy();if(item.id==="relic"&&result)currentMerchantNotice=`🔮 <b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(["attack","armor","charm"].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,"merchant","Merchant");showToast(item.id==="relic"&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();});grid.appendChild(btn);});
   };
 
-  // Track board/class feats and keep the Merchant tile after the secret fight.
-  const winCombatV15=winCombat;winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,all=currentEnemies.length?[...currentEnemies]:defeated?[defeated]:[],tileIndex=currentEnemyTile,board=boardLevel,classId=player.classId;if(defeated){const s=ensureAlphaMeta();s.enemiesDefeated+=all.length;if(defeated.boss)s.bossesDefeated++;if(defeated.miniBoss)s.minibossesDefeated++;if(defeated.finalBoss)recordBoardClear(board,classId);}if(player.bloodOverhealBonus)clearBloodOverhealTemp();const result=await winCombatV15();if(defeated?.merchantBoss&&tiles[tileIndex]){tiles[tileIndex].type="merchant";tiles[tileIndex].cleared=false;delete tiles[tileIndex].enemyBase;refreshTile(tileIndex);}saveMeta();return result;};
+  // Track board/class feats; victory ownership now lives in combat/victory-resolution.
   const loseGameV15=loseGame;loseGame=function(){clearBloodOverhealTemp();return loseGameV15();};
 
   // Stats hooks around existing run lifecycle.
@@ -1810,7 +1807,6 @@
   completePrestige=function(data,keepIds=[]){const total=data.totalPoints??(allocatedTalentPoints()+(meta.points||0)),rewards=Math.floor(total/10),keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=0;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();};
   prestigeTree=function(){const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/10);if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige all ${total} talent points? This includes ${unspent} unspent points. You gain ${rewards} permanent stat point${rewards===1?"":"s"}, your talent tree resets, and your leftover points are consumed so you do not keep extra talent points. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);};
 
-  winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,all=currentEnemies.length?[...currentEnemies]:defeated?[defeated]:[],tileIndex=currentEnemyTile,board=boardLevel,classId=player.classId;if(defeated){const s=ensureAlphaMeta();s.enemiesDefeated+=all.length;if(defeated.boss)s.bossesDefeated++;if(defeated.miniBoss)s.minibossesDefeated++;if(defeated.finalBoss)recordBoardClear(board,classId);}if(player.bloodOverhealBonus)clearBloodOverhealTemp();const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);let cookies=defeated.finalBoss?(boardLevel===5?10:boardLevel===4?8:boardLevel===3?6:boardLevel===2?4:2):defeated.miniBoss?(boardLevel===6?10:boardLevel===5?8:boardLevel===4?7:boardLevel===3?5:boardLevel===2?3:1):0;if(cookies){meta.petCookies+=cookies;saveMeta();showToast(`🍪 +${cookies} cookies`);}if(defeated.merchantBoss){merchantBossBattle=false;merchantBossPrimed=false;merchantBossDefeatedThisBoard=true;player.freeMerchantRun=true;meta.merchantKills=(meta.merchantKills||0)+1;saveMeta();checkDynamicClassUnlocks();addLog("<b>The Road Merchant is defeated.</b> Every merchant item is free for the rest of this run.");showToast("🧔 All shops are free!");}if(defeated.bloodmageBoss){meta.bloodmageKills=(meta.bloodmageKills||0)+1;unlockClass("bloodmage");saveMeta();addLog("<b>The Bloodmage is defeated.</b> Forbidden hemomancy bends the knee.");showToast("🩸 Bloodmage unlocked");}if(defeated.miniBoss&&boardLevel===1)unlockClass("sorcerer");if(defeated.finalBoss&&boardLevel===1)unlockClass("fighter");if(defeated.miniBoss&&boardLevel===2)unlockClass("monk");if(defeated.finalBoss&&boardLevel===2)unlockClass("clown");if(tiles[currentEnemyTile]){tiles[currentEnemyTile].cleared=true;if(!defeated.finalBoss&&!defeated.merchantBoss){tiles[currentEnemyTile].type="empty";delete tiles[currentEnemyTile].enemyBase;refreshTile(currentEnemyTile);}}setCombatText(`Victory! +${rewardXp} XP, +${rewardGold} gold${cookies?`, +${cookies} cookies`:""}.`);sfx.win();addLog(`Defeated <b>${all.map(e=>e.name).join(", ")}</b>: +${rewardXp} XP, +${rewardGold} gold.`);updateHUD();await delay(320);await BattleVictoryUI.present(BattleVictoryState.create({title:'Victory!',defeatedNames:all.map(e=>e.name),xp:rewardXp,gold:rewardGold,cookies,board}));$("combatOverlay").classList.add("hidden");BattleVictoryUI.reset();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);updateHUD();const after=()=>{if(defeated.finalBoss){if(boardLevel===3&&!meta.nightmareUnlocked){meta.nightmareUnlocked=true;saveMeta();showToast("🌑 Nightmare Mode unlocked");addLog("<b>Nightmare Mode unlocked!</b> You may enable it from class selection on future runs.");}if(boardLevel===4&&nightmareMode&&!meta.hellUnlocked){meta.hellUnlocked=true;saveMeta();showToast("🔥 Hell Mode unlocked");addLog("<b>Hell Mode unlocked!</b> Future runs may enable it from class selection.");renderClassChoices();}if(boardLevel<5)advanceToNextBoard();else{meta.board5Clears=(meta.board5Clears||0)+1;saveMeta();showEnd(true);}}else returnToRoad();},cont=()=>pendingLevelUps>0?openLevelUp(after):after(),loot=()=>openCombatLootChain(defeated,cont);if(defeated.miniBoss){showLegendaryChoice("Miniboss Legendary Reward",loot);}else loot();if(defeated?.merchantBoss&&tiles[tileIndex]){tiles[tileIndex].type="merchant";tiles[tileIndex].cleared=false;delete tiles[tileIndex].enemyBase;refreshTile(tileIndex);}saveMeta();};
 
   const openBloodwellV11=openBloodwell;openBloodwell=function(){openBloodwellV11();if((meta.merchantKills||0)>=1){const grid=$("bloodwellGrid");if(grid&&!grid.querySelector("[data-bloodmage]")){const b=document.createElement("button");b.className="choice-btn legendary";b.dataset.bloodmage="1";b.innerHTML=`<span class="choice-icon">🩸</span><span class="choice-name">Challenge the hidden Bloodmage</span><span class="choice-desc">The blood icon trembles. Begin a secret boss fight. A 5% Omega drop may await.</span>`;b.addEventListener("click",()=>{$("bloodwellOverlay").classList.add("hidden");startCombat("bloodmage");});grid.prepend(b);}}};
 
@@ -2422,8 +2418,6 @@
   const rollD20ChaosV15Patch=rollD20Chaos;
   rollD20Chaos=async function(action){const out=await rollD20ChaosV15Patch(action);if(classIdentityActive("d20")&&out?.roll){const title=d20ResultTitle(out.roll);identityFlash(`🎲 ${out.roll}/20 — ${title}`);addCombatHistory(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${title}. ${out.notes||""}`);setCombatText(`🎲 Twenty-Sider ${action}: ${out.roll}/20 — ${title}. ${out.notes||""}`);showToast(`🎲 ${out.roll}/20: ${title}`);await delay(260);}return out;};
 
-  const winCombatV15Patch=winCombat;
-  winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,boardAtWin=boardLevel,classAtWin=player.classId,wasNightmare=nightmareMode,isFinal=!!defeated?.finalBoss;if(isFinal&&boardAtWin===5&&classAtWin==="beastmaster"&&wasNightmare){meta.beastmasterNightmareBoard5=true;saveMeta();}const result=await winCombatV15Patch();checkDynamicClassUnlocks();return result;};
 
   // ---- Debug: all Mythic pieces + item seed recreation ----------------------
   const refreshDebugButtonsV15Patch=refreshDebugButtons;
@@ -2589,8 +2583,6 @@
   // Combat-kind metadata remains available to existing final-combat routing.
   // Board 5 terminal ownership was retired: Board 5 advances into Board 6.
   let v16CombatKind=null;
-  const winCombatV16Base=winCombat;
-  winCombat=async function(){const result=await winCombatV16Base();restoreRadiationDefenseV16();return result;};
   // ---- Info additions -------------------------------------------------------
 
   try{Object.defineProperty(window,"DiceboundV16Regression",{value:{
@@ -3312,23 +3304,6 @@
   }
   function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}
 
-  // Custom final resolution for Boards 5 and 6 bypasses all historical v16
-  // Board-5 terminal wrappers. Other encounters continue through the mature
-  // existing combat-resolution pipeline.
-  const winCombatV19Base=winCombat;
-  async function v19ResolveLateFinal(defeated,boardAtWin){
-    const all=currentEnemies.length?[...currentEnemies]:[defeated],tileIndex=currentEnemyTile,classId=player.classId,s=ensureAlphaMeta();s.enemiesDefeated+=all.length;s.bossesDefeated++;recordBoardClear(boardAtWin,classId);const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);const cookies=boardAtWin===6?15:10;meta.petCookies+=cookies;if(boardAtWin===5){meta.board5Clears=(meta.board5Clears||0)+1;meta.doubleDiceUnlocked=true;if(classId==="beastmaster"&&nightmareMode)meta.beastmasterNightmareBoard5=true;showToast("🎲🎲 Double Dice unlocked!",2600,true);}saveMeta();checkDynamicClassUnlocks();if(tiles[tileIndex])tiles[tileIndex].cleared=true;setCombatText(`${boardAtWin===6?"Sixth":"Fifth"} Road victory! +${rewardXp} XP, +${rewardGold} gold, +${cookies} cookies.`);sfx.win();addLog(`<b>${defeated.name} defeated.</b> +${rewardXp} XP, +${rewardGold} gold and +${cookies} cookies.`);updateHUD();await delay(320);await BattleVictoryUI.present(BattleVictoryState.create({title:`${boardAtWin===6?'Sixth':'Fifth'} Road Victory!`,defeatedNames:all.map(e=>e.name),xp:rewardXp,gold:rewardGold,cookies,board:boardAtWin}));$("combatOverlay").classList.add("hidden");BattleVictoryUI.reset();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);updateHUD();const finish=()=>boardAtWin===6?completeSixthRoadV19():advanceToNextBoard(),afterLevels=()=>pendingLevelUps>0?openLevelUp(finish):finish();openCombatLootChain(defeated,afterLevels);
-  }
-  // Board 5 still records every clear, but its unlock announcement is a one-time event.
-  const v266ResolveLateFinalBase=v19ResolveLateFinal;
-  v19ResolveLateFinal=async function(defeated,boardAtWin){
-    if(boardAtWin!==5||!meta.doubleDiceUnlocked)return v266ResolveLateFinalBase(defeated,boardAtWin);
-    const showToastBeforeRepeatBoard5=showToast;
-    showToast=function(message,...args){if(message==='🎲🎲 Double Dice unlocked!')return;return showToastBeforeRepeatBoard5.call(this,message,...args);};
-    try{return await v266ResolveLateFinalBase(defeated,boardAtWin);}
-    finally{showToast=showToastBeforeRepeatBoard5;}
-  };
-  winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,isFinal=!!defeated?.finalBoss||v16CombatKind==="final"||tiles[currentEnemyTile]?.type==="boss";if(isFinal&&(boardLevel===5||boardLevel===6))return v19ResolveLateFinal(defeated,boardLevel);return winCombatV19Base();};
   // Board-6 guardian labels in the road HUD.
   const updateHUDV19RoadBase=updateHUD;
   updateHUD=function(){updateHUDV19RoadBase();if(boardLevel===6&&gameStarted){const count=currentTileCount(),mini=currentMinibossTile();$("floorText").textContent=`Board 6 · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Abyssal Custodian · tile ${mini}`:`The Last Equation · tile ${count}`;}};
@@ -4112,7 +4087,6 @@
   document.addEventListener('pointerdown',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(icon&&hellMode){v24SuppressHellClickUntil=Date.now()+900;e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   document.addEventListener('click',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(!icon||!hellMode)return;if(Date.now()<v24SuppressHellClickUntil){e.preventDefault();e.stopImmediatePropagation();return;}if(e.detail===0){e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   const tileMetaV24Base=tileMeta;tileMeta=function(tile){if(tile?.type==='devilboss')return ['👿🌙','???'];return tileMetaV24Base(tile);};
-  const winCombatV24Base=winCombat;winCombat=async function(){const defeated=currentEncounterLead||currentEnemy;if(defeated?.devilBoss){meta.devilBossKills=(meta.devilBossKills||0)+1;saveMeta();showToast('👿 The Pale Devil bows.',3000,true);}return winCombatV24Base();};
 
   /* MODULE: Energy Shield / special Legendary combat hooks ---------------- */
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
@@ -4322,11 +4296,11 @@
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,returnToRoad,winCombat,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat})[name];if(typeof fn!=='function')return;
+    const fn=({rollDice,rollTwoDice,returnToRoad,applyUpgrade,equipItem,usePotion,usePotionOutsideCombat})[name];if(typeof fn!=='function')return;
     const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='winCombat')winCombat=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;
+    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;else if(name==='usePotion')usePotion=wrapped;else if(name==='usePotionOutsideCombat')usePotionOutsideCombat=wrapped;
   }
-  ['rollDice','rollTwoDice','returnToRoad','winCombat','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'||n==='winCombat'?'events':'detailed'));
+  ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem','usePotion','usePotionOutsideCombat'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
 
   /* Final UI sync / tests -------------------------------------------------- */
   const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
@@ -4391,42 +4365,7 @@
     return result;
   };
 
-  // Contain reward-side failures after an enemy is already dead. The actual
-  // null-item cause above is fixed, but this prevents a future optional reward,
-  // animation or UI callback from permanently locking a completed battle.
-  const winCombatV251Base=winCombat;
-  winCombat=async function(...args){
-    const defeated=currentEncounterLead||currentEnemy;
-    try{
-      const result=await winCombatV251Base.apply(this,args);
-      if(!currentEnemy&&$('combatOverlay')?.classList.contains('hidden'))combatBusy=false;
-      return result;
-    }catch(e){
-      const battleFinished=!currentEnemy&&(!currentEnemies?.length||currentEnemies.every(x=>!x||x.hp<=0));
-      v25Log('errors','hotfix','winCombat failure contained',{error:String(e),stack:e?.stack||'',battleFinished,defeated:defeated?.name||null,state:v25State()});
-      if(!battleFinished)throw e;
-      combatBusy=false;
-      $('combatOverlay')?.classList.add('hidden');
-      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;
-      const continueAfterError=()=>{
-        try{
-          if(defeated?.finalBoss){
-            // Existing board-transition wrappers retain authority over how a
-            // late-road final victory completes the journey.
-            advanceToNextBoard();
-          }else{
-            rollLocked=false;updateHUD();
-          }
-        }catch(inner){
-          v25Log('errors','hotfix','Post-victory recovery continuation failed',{error:String(inner),stack:inner?.stack||'',state:v25State()});
-          rollLocked=false;combatBusy=false;updateHUD();
-        }
-      };
-      if(pendingLevelUps>0)openLevelUp(continueAfterError);else continueAfterError();
-      showToast('🛠️ Victory reward error contained — road recovered',3200,true);
-      return null;
-    }
-  };
+  // Victory reward-side failure containment moved to combat/victory-resolution.
 
   // Lightweight state healer for saves/runs already carrying the stale
   // combatBusy flag. It never runs while an enemy or combat overlay exists.
@@ -4524,7 +4463,6 @@
   const healPlayerV26StoneBase=healPlayer;healPlayer=function(amount,opts){const raw=Math.max(0,Math.round(amount||0)),beforeHp=player.hp,beforeMax=player.maxHp,room=Math.max(0,beforeMax-beforeHp),healed=healPlayerV26StoneBase(amount,opts);if(v26HasStone()&&currentEnemy&&raw>room){const maxGrowth=Math.max(0,player.maxHp-beforeMax),over=Math.max(0,raw-room-maxGrowth);if(over>0){const shieldGain=over*.05,attackGain=over*.01;player.energyShield=Math.min(player.maxHp,(player.energyShield||0)+shieldGain);if(classIdentityActive('ouroboros')){const echoGain=attackGain*.10;player.doubleStrike+=echoGain;player.v26StoneBattleEcho=(player.v26StoneBattleEcho||0)+echoGain;}else{player.attack+=attackGain;player.v26StoneBattleAttack=(player.v26StoneBattleAttack||0)+attackGain;}addCombatHistory(`🜂 Philosopher's Stone transmutes ${over} overheal into +${shieldGain.toFixed(1)} Energy Shield and +${attackGain.toFixed(2)} temporary Attack${player.classId==='ouroboros'?' (converted to Echo)':''}.`);}}return healed;};
 
   /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
-  const winCombatV26Base=winCombat;winCombat=async function(...args){const defeated=currentEncounterLead||currentEnemy,secret=defeated?.devilBoss?'devil':defeated?.bloodmageBoss?'bloodmage':defeated?.merchantBoss?'merchant':null;const r=await winCombatV26Base.apply(this,args);v26ClearStoneBattle();if(secret){const base={merchant:400,bloodmage:650,devil:1200}[secret],gain=Math.max(1,Math.round(base*(1+(player.legacyXpBonus||0))));grantLegacyXp(gain);saveMeta();updateMetaUI();addLog(`<b>Secret legacy:</b> defeating ${defeated?.name||secret} grants <b>+${gain} Legacy XP</b>.`);showToast(`🌟 Secret boss · +${gain} Legacy XP`,3200,true);}return r;};
   const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
 
 
@@ -6362,8 +6300,6 @@
     restoreRadiationDefenseV16?.();
     player.db0511BurnStacks=0;player.db0511PoisonStacks=0;player.db0511PoisonPower=0;player._db0511SkipAction='';player._db0511SuppressControlProc=false;
   }
-  const db0511WinCombatBase=winCombat;
-  winCombat=async function(...args){const r=await db0511WinCombatBase.apply(this,args);db0511RestoreEnemyElementDebuffs();return r;};
   const db0511HandleDeathBase=handlePlayerDeath;
   handlePlayerDeath=function(...args){const r=db0511HandleDeathBase.apply(this,args);if(player.hp<=0)db0511RestoreEnemyElementDebuffs();return r;};
 
@@ -6704,8 +6640,6 @@
   function db060ClearBattleLegendaryTemps(){if(player._db060IronEchoDefense){player.defense=Math.max(0,player.defense-player._db060IronEchoDefense);player._db060IronEchoDefense=0;}if(player._db060BloodPriceStacks){player.damageBonus=Math.max(0,(player.damageBonus||0)-player._db060BloodPriceStacks*.08);player._db060BloodPriceStacks=0;}player._db060LastStandUsed=false;}
   const db060HandleDeathBase=handlePlayerDeath;
   handlePlayerDeath=function(...args){if(player.hp<=0&&db060HasEffect('last_stand')&&!player._db060LastStandUsed){player._db060LastStandUsed=true;player.hp=Math.max(1,Math.ceil(player.maxHp*.25));player.combatShield=(player.combatShield||0)+3;combatBusy=false;addCombatHistory('❤️‍🔥🛡️ Last Stand refuses death: 25% HP and 3 Barriers.');showToast('❤️‍🔥 LAST STAND',2400,true);updateCombatUI();return;}return db060HandleDeathBase(...args);};
-  const db060WinCombatBase=winCombat;
-  winCombat=async function(...args){const r=await db060WinCombatBase(...args);db060ClearBattleLegendaryTemps();return r;};
 
   // Board 6 miniboss cookie correction. The mature victory owner still uses
   // the explicit sequence 1/3/5/7/8, so patch its live 6th-road fallback by
@@ -6871,12 +6805,6 @@
   }
   const db0631CheckDynamicBase=checkDynamicClassUnlocks;
   checkDynamicClassUnlocks=function(...args){const changed=db0631RecordObservedProgress(),result=db0631CheckDynamicBase.apply(this,args);['pokemontrainer','rogue','merchant','slime','vampire','invoker','dragoon'].forEach(id=>{if(CLASSES[id]&&db0631RuleEligible(id))unlockClass(id);});if(changed)saveMeta();return result;};
-  const db0631WinCombatBase=winCombat;
-  winCombat=async function(...args){
-    const defeated=currentEncounterLead||currentEnemy,board=boardLevel,classId=player.classId,isFinal=!!defeated?.finalBoss||v16CombatKind==='final'||tiles[currentEnemyTile]?.type==='boss';
-    meta.classUnlockFacts=db0631Rules.recordCombatFacts(db0631Facts(),{board,classId,miniBoss:!!defeated?.miniBoss,finalBoss:isFinal,merchantBoss:!!defeated?.merchantBoss,mode:hellMode?'hell':nightmareMode?'nightmare':'normal'});saveMeta();
-    const result=await db0631WinCombatBase.apply(this,args);checkDynamicClassUnlocks();saveMeta();return result;
-  };
   const db0631OccultSpellAttackBase=occultSpellAttack;
   occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent){meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};
   if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
@@ -7707,6 +7635,56 @@
     petBondLevel:id=>v17PetBondLevel(id),
     hasLegendaryEffect:id=>db060HasEffect(id),
     getLastElement:()=>player._db060LastElement
+  });
+
+
+  const dbCombatVictoryOwner=window.DiceboundCombatVictoryResolution;
+  if(!dbCombatVictoryOwner)throw new Error('DiceBound requires the combat Victory-resolution owner before dicebound.js');
+  dbCombatVictoryResolution=dbCombatVictoryOwner.configure({
+    getState:()=>({player,meta,boardLevel,nightmareMode,hellMode,combatKind:v16CombatKind,tiles,currentEnemy,currentEnemies,currentEncounterLead,currentEnemyTile}),
+    ensureAlphaMeta:()=>ensureAlphaMeta(),
+    recordBoardClear:(board,classId)=>recordBoardClear(board,classId),
+    clearBloodOverhealTemp:()=>clearBloodOverhealTemp(),
+    modifiedGold:amount=>modifiedGold(amount),
+    healPlayer:amount=>healPlayer(amount),
+    saveMeta:()=>saveMeta(),
+    showToast:(...args)=>showToast(...args),
+    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    addLog:html=>addLog(html),
+    unlockClass:id=>unlockClass(id),
+    refreshTile:index=>refreshTile(index),
+    setCombatText:text=>setCombatText(text),
+    playWin:()=>sfx.win(),
+    updateHud:()=>updateHUD(),
+    delay:ms=>delay(ms),
+    presentVictory:payload=>BattleVictoryUI.present(BattleVictoryState.create(payload)),
+    hideCombatOverlay:()=>$('combatOverlay')?.classList.add('hidden'),
+    resetVictoryPresentation:()=>BattleVictoryUI.reset(),
+    clearEncounterState:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
+    grantXp:xp=>grantXp(xp),
+    getPendingLevelUps:()=>pendingLevelUps,
+    openLevelUp:done=>openLevelUp(done),
+    openCombatLootChain:(defeated,done)=>openCombatLootChain(defeated,done),
+    showLegendaryChoice:(source,done)=>showLegendaryChoice(source,done),
+    advanceToNextBoard:()=>advanceToNextBoard(),
+    completeFinalRoad:()=>completeSixthRoadV19(),
+    returnToRoad:()=>returnToRoad(),
+    renderClassChoices:()=>renderClassChoices(),
+    setMerchantBossFlags:flags=>{merchantBossBattle=!!flags.battle;merchantBossPrimed=!!flags.primed;merchantBossDefeatedThisBoard=!!flags.defeatedThisBoard;},
+    restoreRadiationDefense:()=>restoreRadiationDefenseV16(),
+    traceCommand:(name,fn,level,args,thisArg)=>v25TraceCommand(name,fn,level,args,thisArg),
+    logDebug:(level,category,message,data)=>v25Log(level,category,message,data),
+    debugState:()=>v25State(),
+    setCombatBusy:value=>{combatBusy=!!value;},
+    isCombatOverlayHidden:()=>!!$('combatOverlay')?.classList.contains('hidden'),
+    setRollLocked:value=>{rollLocked=!!value;},
+    clearStoneBattle:()=>v26ClearStoneBattle(),
+    grantLegacyXp:gain=>grantLegacyXp(gain),
+    updateMetaUi:()=>updateMetaUI(),
+    restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
+    clearLegendaryBattleTemps:()=>db060ClearBattleLegendaryTemps(),
+    getClassUnlockFacts:()=>db0631Facts(),
+    recordCombatFacts:(facts,payload)=>db0631Rules.recordCombatFacts(facts,payload)
   });
 
   const dbCombatAttackOwner=window.DiceboundCombatAttackActionResolution;

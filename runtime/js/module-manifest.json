@@ -22,6 +22,7 @@
     "combat-ultimate-resolution",
     "combat-guard-resolution",
     "combat-pet-turn-resolution",
+    "combat-victory-resolution",
     "combat-enemy-policy",
     "combat-targeting",
     "combat-presentation",
@@ -280,6 +281,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatPetTurnResolution"
+      ]
+    },
+    {
+      "id": "combat-victory-resolution",
+      "path": "js/combat/victory-resolution.js",
+      "domain": "combat/post-kill-victory-reward-and-continuation-orchestration",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatVictoryResolution"
       ]
     },
     {
@@ -794,7 +805,8 @@
         "ui-talent-tree",
         "ui-prestige-moon",
         "ui-achievements",
-        "ui-info-guide"
+        "ui-info-guide",
+        "combat-victory-resolution"
       ],
       "provides": []
     }
