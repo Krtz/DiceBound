@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.12
+
+## Beta 0.6.6.12 Healing / Overheal resolution ownership (#40, #209, #295)
+- `combat/healing-resolution.js` now owns generic healing and the cumulative Cleric, Paladin, Blood Overheal, Devil's Horns, Philosopher's Stone and Crimson Aegis healing-side effects.
+- Exact healing rounding, lifetime accounting, resource caps, overheal excess calculations, Shield caps and Stone temporary Attack/Echo bookkeeping are preserved.
+- Potion actions, class abilities, Pet/elemental callers, Victory, damage resolution, saves/checkpoints and gameplay/balance remain separate.
+
 # Unreleased — Beta 0.6.6.11
 
 ## Beta 0.6.6.11 Potion / Consumable action-resolution ownership (#40, #209, #293)

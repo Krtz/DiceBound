@@ -139,4 +139,22 @@ assert "dbConsumablesResolution.usePotion.apply(this,args)" in mono, 'combat Pot
 assert "dbConsumablesResolution.usePotionOutsideCombat.apply(this,args)" in mono, 'road Potion thin adapter is missing'
 assert "dbConsumablesResolution.identityPotionAction.apply(this,args)" in mono, 'identity Potion thin adapter is missing'
 
+
+healing_retired = [
+    'healPlayerV13', 'healPlayerV18Base', 'healPlayerV19Base', 'healPlayerV21Base',
+    'healPlayerV24Base', 'healPlayerV26StoneBase', 'healPlayerV27AegisBase', 'v26HasStone',
+]
+for symbol in healing_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Healing owner returned: {symbol}"
+assert mono.count('function healPlayer(') == 1, 'healPlayer must have exactly one thin compatibility adapter'
+assert mono.count('function recordHealing(') == 1, 'recordHealing must have exactly one thin compatibility adapter'
+assert mono.count('function clearBloodOverhealTemp(') == 1, 'Blood Overheal cleanup must have exactly one thin compatibility adapter'
+assert mono.count('function v26ClearStoneBattle(') == 1, 'Stone cleanup must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^\s*healPlayer\s*=\s*function', mono), 'healPlayer reassignment chain must not return'
+assert "dbCombatHealingResolution=dbCombatHealingOwner.configure({" in mono, 'Healing owner is not configured by the composition root'
+assert "dbCombatHealingResolution.healPlayer.apply(this,args)" in mono, 'healPlayer thin adapter is missing'
+assert "dbCombatHealingResolution.recordHealing.apply(this,args)" in mono, 'recordHealing thin adapter is missing'
+assert "dbCombatHealingResolution.clearBloodOverhealTemp.apply(this,args)" in mono, 'Blood Overheal cleanup adapter is missing'
+assert "dbCombatHealingResolution.clearStoneBattle.apply(this,args)" in mono, 'Stone cleanup adapter is missing'
+
 print('Monolith spring-clean guard PASS')
