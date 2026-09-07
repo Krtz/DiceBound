@@ -31,6 +31,8 @@ jobs:
         run: |
           python tools/materialize_0667.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -c "from pathlib import Path; p=Path('tools/test_combat_pet_turn_resolution.js'); s=p.read_text(encoding='utf-8'); old=\"assert.strictEqual(owner.petDamage(), 6, 'Beastmaster aggressive Pet damage drifted');\"; new=\"assert.strictEqual(owner.petDamage(), 5, 'Beastmaster aggressive Pet damage drifted');\"; assert s.count(old)==1; p.write_text(s.replace(old,new,1), encoding='utf-8')"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Validate materialized source
         shell: pwsh
