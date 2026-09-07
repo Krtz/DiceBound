@@ -1,0 +1,57 @@
+name: Materialize Beta 0.6.6.7 Pet extraction
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.7-pet-turn-resolution
+    paths:
+      - .github/workflows/materialize-0667.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: arch/0.6.6.7-pet-turn-resolution
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Materialize extraction and release identity
+        shell: pwsh
+        run: |
+          python tools/materialize_0667.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate materialized source
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit canonical materialization
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "dicebound-materializer[bot]"
+          git config user.email "dicebound-materializer[bot]@users.noreply.github.com"
+          git add CHANGELOG.md runtime wrapper-source tools/test_combat_pet_turn_resolution.js tools/test_shadow_ownership_drain.py tools/validate_runtime_architecture.py
+          git status --short
+          git commit -m "arch: materialize Beta 0.6.6.7 Pet turn extraction"
+          git push origin HEAD:arch/0.6.6.7-pet-turn-resolution
