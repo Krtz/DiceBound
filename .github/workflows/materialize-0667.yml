@@ -46,6 +46,27 @@ jobs:
           $monoSource = $monoSource.Replace($oldPetDamage, $newPetDamage)
           Set-Content -Path $monoPath -Value $monoSource -NoNewline
 
+          @'
+          from pathlib import Path
+          replacements = {
+              r"r'(?m)^  petTurn\\s*='": r"r'(?m)^  petTurn\s*='",
+              r"r'(?m)^  petDamage\\s*='": r"r'(?m)^  petDamage\s*='",
+              r"r'(?m)^  trainerPetDamage\\s*='": r"r'(?m)^  trainerPetDamage\s*='",
+              r"rf'(?<![\\w$]){re.escape(symbol)}(?![\\w$])'": r"rf'(?<![\w$]){re.escape(symbol)}(?![\w$])'",
+              r'r"(?m)^  petTurn\\s*="': r'r"(?m)^  petTurn\s*="',
+              r'r"(?m)^  petDamage\\s*="': r'r"(?m)^  petDamage\s*="',
+              r'r"(?m)^  trainerPetDamage\\s*="': r'r"(?m)^  trainerPetDamage\s*="',
+              r'rf"(?<![\\w$]){re.escape(symbol)}(?![\\w$])"': r'rf"(?<![\w$]){re.escape(symbol)}(?![\w$])"',
+          }
+          for rel in ("tools/test_shadow_ownership_drain.py", "tools/validate_runtime_architecture.py"):
+              path = Path(rel)
+              source = path.read_text(encoding="utf-8")
+              for old, new in replacements.items():
+                  source = source.replace(old, new)
+              path.write_text(source, encoding="utf-8")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           python tools/refresh_runtime_manifest.py --version 0.6.6.7 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
