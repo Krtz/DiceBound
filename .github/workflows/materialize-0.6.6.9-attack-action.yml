@@ -29,8 +29,12 @@ jobs:
         run: |
           python tools/materialize_0_6_6_9_attack_action.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -c "from pathlib import Path; p=Path('tools/test_combat_attack_action_resolution.js'); s=p.read_text(encoding='utf-8'); old=\"['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response']\"; new=\"['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']\"; assert s.count(old)==1; p.write_text(s.replace(old,new,1),encoding='utf-8')"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $path = 'tools/test_combat_attack_action_resolution.js'
+          $text = Get-Content $path -Raw
+          $old = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response']"
+          $new = "['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']"
+          if (($text.Split($old).Count - 1) -ne 1) { throw 'Expected exactly one Basic Attack trace assertion to patch.' }
+          Set-Content -Path $path -Value ($text.Replace($old, $new)) -NoNewline -Encoding utf8
 
       - name: Validate JavaScript and deterministic contracts
         shell: pwsh
