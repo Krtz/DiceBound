@@ -12,8 +12,12 @@ for(let board=1;board<=6;board++){
   assert(entry,`Board ${board} Normal background did not resolve`);
   assert.strictEqual(entry.image,`assets/combat/backgrounds/board-${board}-normal.png`);
   assert(assets.files.includes(entry.image),`Board ${board} background is not a registry preload target`);
+  const nightmare=assets.resolveCombatBackground(board,'Nightmare');
+  assert(nightmare,`Board ${board} Nightmare background did not resolve`);
+  assert.strictEqual(nightmare.image,`assets/combat/backgrounds/board-${board}-nightmare.png`);
+  assert(assets.files.includes(nightmare.image),`Board ${board} Nightmare background is not a registry preload target`);
 }
-assert.strictEqual(assets.resolveCombatBackground(3,'nightmare'),null,'Nightmare must not receive a fabricated Normal background');
 assert.strictEqual(assets.resolveCombatBackground(3,'hell'),null,'Hell must not receive a fabricated Normal background');
 assert.strictEqual(assets.resolveCombatBackground(999,'normal').image,'assets/combat/backgrounds/board-1-normal.png','invalid Board context must fail safely to Board 1');
-console.log('Combat background registry PASS: six Board-specific Normal plates; Nightmare/Hell intentionally have no authored fallback');
+assert.strictEqual(assets.resolveCombatBackground(999,'nightmare').image,'assets/combat/backgrounds/board-1-nightmare.png','invalid Nightmare Board context must fail safely to Board 1');
+console.log('Combat background registry PASS: six Board-specific Normal and approved Nightmare plates; Hell intentionally has no authored fallback');

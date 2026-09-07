@@ -8,6 +8,39 @@ The PNGs are delivered through approved art-inbox packs such as #110 and #142. `
 
 ## Weapon
 
+### 10th Birthday Balloons
+family: balloon
+material: rubber
+weight: light
+tags: weird, toy, festival, holiday
+eligibility: common+
+intrinsic: +3% Dodge, +2% Echo, +1 Luck
+asset: `runtime/assets/equipment/weapon/10th-birthday-balloons.png`
+art: approved #164 lower-rarity birthday-balloon replacement
+---
+
+### Ashen Staff
+family: staff
+material: wood
+weight: medium
+tags: arcane, caster
+eligibility: poor+
+intrinsic: +5 Mana
+asset: `runtime/assets/equipment/weapon/ashen-staff.png`
+art: approved #164 lower-rarity ashen-staff replacement
+---
+
+### Birthday Cake
+family: food-weapon
+material: cake
+weight: light
+tags: weird, food, holiday
+eligibility: common+
+intrinsic: +2 Attack, +5 Max HP
+asset: `runtime/assets/equipment/weapon/birthday-cake.png`
+art: approved #164 lower-rarity birthday-cake replacement; no unsupported item-specific proc was added
+---
+
 ### Bronze Longsword
 family: sword
 material: bronze
@@ -50,6 +83,17 @@ eligibility: poor+
 intrinsic: +3 Attack, -1% Dodge
 asset: `runtime/assets/equipment/weapon/bronze-battleaxe.png`
 art: approved #142 battered starter battleaxe; rough wooden haft and worn low-tier metal head
+---
+
+### Ashcore Pyrestaff
+family: staff
+material: emberwood
+weight: medium
+tags: arcane, caster, ember, epic-visual
+eligibility: epic+
+intrinsic: none; normal generated rarity stats/effects remain authoritative
+asset: `runtime/assets/equipment/weapon/ashcore-pyrestaff.png`
+art: approved #164 flashy birthday variant retained as a separate Epic+ visual identity; weighted toward caster identities without an equip restriction
 ---
 
 ### Rubber Chicken
@@ -214,6 +258,32 @@ eligibility: poor+
 intrinsic: +5 Mana
 asset: `runtime/assets/equipment/offhand/spellbook.png`
 art: approved #142 worn starter spellbook with battered binding, simple arcane sigil and faint magical page glow
+---
+
+## Amulet
+
+### Decennial Jubilee Balloons
+family: balloon
+material: festival-rubber
+weight: light
+tags: festival, holiday, fortune, epic-visual
+eligibility: epic+
+intrinsic: none; normal generated rarity stats/effects remain authoritative
+asset: `runtime/assets/equipment/amulet/decennial-jubilee-balloons.png`
+art: approved #164 flashy birthday variant retained as a separate Epic+ visual identity
+---
+
+## Offhand
+
+### Candlecrown Gateau
+family: gateau
+material: cake
+weight: light
+tags: food, holiday, sustain, epic-visual
+eligibility: epic+
+intrinsic: none; normal generated rarity stats/effects remain authoritative
+asset: `runtime/assets/equipment/offhand/candlecrown-gateau.png`
+art: approved #164 flashy birthday variant retained as a separate Epic+ visual identity
 ---
 
 ## Ring

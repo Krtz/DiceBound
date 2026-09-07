@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.8
+
+## Beta 0.6.6.8 Approved art intake (#164, #283, #286)
+- Imported the approved transparent Board 1–6 Wraith battle art, preserving its semantic Board mapping while retiring the old Wraith-only dark-matte/blending workaround.
+- Imported the six user-approved Board-specific Nightmare battle backgrounds. Normal and Hell background behavior remains separate and unchanged.
+- Imported the birthday equipment split: the three lower-rarity originals retain their catalog identities, while Decennial Jubilee Balloons, Ashcore Pyrestaff and Candlecrown Gateau are Epic+ visual identities with normal generated stat/effect budgets and no item-specific bonus package.
+- Integrated the requested RuneScape armour expansion catalogue files as documentation only; no Back/Gloves runtime slots or mechanics were added.
+
 # Unreleased — Beta 0.6.6.7
 
 ## Beta 0.6.6.7 Pet / Companion combat resolution ownership (#40, #209, #281)

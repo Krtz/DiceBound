@@ -14,13 +14,16 @@ const equipment=context.window.DiceboundEquipment;
 const registry=equipment.createRegistry(),identities=registry.identities;
 
 assert.equal(equipment.apiVersion,3);
-assert.equal(identities.length,20,"the two approved authored packs must share one registry without generic ring/amulet fallbacks");
+assert.equal(identities.length,26,"the approved authored packs and birthday identities must share one registry without generic fallbacks");
 const expectedArt={
   "bronze-longsword":"assets/equipment/weapon/bronze-longsword.png",
   shortbow:"assets/equipment/weapon/shortbow.png",
   "rubber-chicken":"assets/equipment/weapon/rubber-chicken.png",
   "crimson-brush":"assets/equipment/weapon/crimson-brush.png",
   "tongue-lash":"assets/equipment/weapon/tongue-lash.png",
+  "10th-birthday-balloons":"assets/equipment/weapon/10th-birthday-balloons.png",
+  "ashen-staff":"assets/equipment/weapon/ashen-staff.png",
+  "birthday-cake":"assets/equipment/weapon/birthday-cake.png",
   "bronze-full-helm":"assets/equipment/hat/bronze-full-helm.png",
   "bronze-platebody":"assets/equipment/chest/bronze-platebody.png",
   "bronze-platelegs":"assets/equipment/legs/bronze-platelegs.png",
@@ -36,6 +39,9 @@ const expectedArt={
   "trail-boots":"assets/equipment/boots/trail-boots.png",
   "mood-ring":"assets/equipment/ring/mood-ring.png",
   "hawkeye-charm":"assets/equipment/amulet/hawkeye-charm.png",
+  "decennial-jubilee-balloons":"assets/equipment/amulet/decennial-jubilee-balloons.png",
+  "ashcore-pyrestaff":"assets/equipment/weapon/ashcore-pyrestaff.png",
+  "candlecrown-gateau":"assets/equipment/offhand/candlecrown-gateau.png",
 };
 for(const [id,asset] of Object.entries(expectedArt)){
   const identity=equipment.equipmentIdentity(id);
@@ -43,8 +49,10 @@ for(const [id,asset] of Object.entries(expectedArt)){
   assert.equal(identity.art.image,asset,`${id} does not own its canonical art reference`);
   assert.ok(fs.existsSync(path.join(root,"runtime",asset)),`${id} asset was not imported`);
   assert.ok(identity.family&&identity.visual?.rig&&identity.visual?.anchor,`${id} has incomplete reusable identity/rig metadata`);
-  assert.ok(identity.rarityEligibility.includes("poor")&&identity.rarityEligibility.includes("epic"),`${id} should be eligible across ordinary rarities`);
+  assert.ok(identity.rarityEligibility.includes("epic"),`${id} should be eligible at Epic or above where its identity allows`);
 }
+for(const id of ["10th-birthday-balloons","ashen-staff","birthday-cake"])assert.ok(equipment.equipmentIdentity(id).rarityEligibility.includes("common"),`${id} must retain its original lower-rarity identity range`);
+for(const id of ["decennial-jubilee-balloons","ashcore-pyrestaff","candlecrown-gateau"]){const identity=equipment.equipmentIdentity(id);assert.deepEqual(JSON.parse(JSON.stringify(identity.rarityEligibility)),["epic","legendary"],`${id} must remain an Epic+ visual identity`);assert.equal(Object.hasOwn(identity,"intrinsicBonuses"),false,`${id} must use only the normal generated rarity budget, without a bonus package`);}
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"shortbow"}))),{attack:1,crit:.01});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"oak-shortbow"}))),{attack:2,crit:.01},"Oak Shortbow must remain a distinct approved identity");
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"offhand",equipmentId:"spellbook"}))),{maxMana:5});
@@ -56,7 +64,7 @@ assert.equal(equipment.identityForItem({slot:"weapon",equipmentId:"bronze-round-
 assert.equal(equipment.identityForItem({slot:"weapon",name:"Old saved gear"}),null,"old saves must not be rerolled into random identities");
 
 const weaponIds=Array.from(equipment.eligibleEquipmentIdentities({slot:"weapon",rarity:"common"}),identity=>identity.id);
-assert.deepEqual(weaponIds,["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash","oak-shortbow","bronze-battleaxe"]);
+assert.deepEqual(weaponIds,["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash","10th-birthday-balloons","ashen-staff","birthday-cake","oak-shortbow","bronze-battleaxe"]);
 for(const classId of ["ranger","fighter","clown","rouge","frog","slime"]){
   const distribution=Object.fromEntries(weaponIds.map(id=>[id,0]));
   for(let index=0;index<10000;index++)distribution[equipment.selectEquipmentIdentity({slot:"weapon",rarity:"common",classId,seed:`${classId}-${index}`}).id]++;
