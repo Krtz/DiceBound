@@ -112,8 +112,9 @@
     const messages = [], roundState = { hit: false }, lead = rt.getEncounterLead();
     const special = !!(lead?.guardian && (lead.miniBoss || lead.finalBoss || lead.merchantBoss || lead.bloodmageBoss || lead.devilBoss) && lead.hp > 0 && rt.getEncounterTurn() % rt.guardianSpecialInterval === 0);
     for (const enemy of livingEnemies()) {
-      if ((enemy.skipTurns || 0) > 0 && !(special && enemy === lead)) { enemy.skipTurns -= 1; messages.push(`${enemy.name} is frozen.`); continue; }
-      if (special && enemy === lead) {
+      const messageStart = messages.length;
+      if ((enemy.skipTurns || 0) > 0 && !(special && enemy === lead)) { enemy.skipTurns -= 1; messages.push(`${enemy.name} is frozen.`); }
+      else if (special && enemy === lead) {
         const partialDR = rt.defenseDamageReduction() * .55;
         if (enemy.bloodmageBoss || enemy.devilBoss) {
           const pulses = enemy.devilBoss ? 3 : 2, totalMult = enemy.devilBoss ? .72 : .98; let total = 0;
@@ -147,6 +148,8 @@
         await resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState);
         if (enemy.merchantBoss) { const stolen = Math.min(player.gold, Math.max(1, Math.round(enemy.attack * .6))); player.gold -= stolen; messages.push(`The Merchant steals ${stolen} gold.`); }
       }
+      const enemyMessages = messages.splice(messageStart);
+      if (enemyMessages.length) { rt.setCombatText(enemyMessages.join(" ")); rt.updateCombatUI(); await rt.delay(980); }
       if (player.hp <= 0) break;
     }
     if (special && rt.hasMythicPiece("hat") && player.hp > 0 && !rt.hasDevilsHorns()) {
@@ -162,7 +165,8 @@
       player.omegaRingUsed = true; const heal = rt.healPlayer(Math.ceil(player.maxHp * .18)); player.combatShield = (player.combatShield || 0) + 1;
       messages.push(`🌈 Impossible Road 7-piece restores ${heal} HP and grants 1 barrier.`);
     }
-    rt.checkDynamicClassUnlocks(); rt.saveMeta(); rt.playHitSfx(); rt.setCombatText(messages.join(" ")); rt.updateCombatUI(); await rt.delay(980);
+    if (messages.length) { rt.setCombatText(messages.join(" ")); rt.updateCombatUI(); await rt.delay(640); }
+    rt.checkDynamicClassUnlocks(); rt.saveMeta(); rt.playHitSfx();
     if (!livingEnemies().length) return rt.winCombat();
     if (player.hp <= 0) return rt.handlePlayerDeath();
     rt.setCombatBusy(false); rt.updateCombatUI(); rt.setCombatText("Choose your next action.", false);

@@ -93,6 +93,12 @@ assert.match(source,/#startOverlay\.camp-fullscreen #nightmareBox,#startOverlay\
 assert.doesNotMatch(source,/#startHeirloom/,'Camp owner must not retain the retired hidden start-Heirloom presentation target');
 assert.match(source,/assets\/camp\/interactions\/talent-star\.png/,'Camp Talents must resolve the canonical interaction asset');
 assert.doesNotMatch(source,/assets\/camp\/objects\/talent-star\.png/,'Camp must not retain an obsolete Talent-object fallback pointer');
+assert.match(assets,/hellOn:\{image:`\$\{paths\.hellToggle\}\/on\.png`,alt:"Active Hell volcano with a dancing devil"\}/,'Camp assets must register the approved active Hell-volcano scene semantically');
+assert.match(source,/function renderHellModeArt\(view\)/,'Camp must own active/inactive Hell artwork presentation');
+assert.match(source,/setObjectArt\('campHellBtn','hellOn','db066-hell-volcano-art','Active Hell volcano with a dancing devil','assets\/camp\/mode-toggles\/hell\/on\.png'\)/,'active Hell must resolve the approved canonical volcano asset rather than an inline or compatibility image');
+assert.match(source,/hell-volcano-active/,'Camp must expose one semantic active-Hell state for layout and hit-target synchronization');
+assert.match(source,/spec=\{\.\.\.spec,x:\.72,y:\.33,w:460,h:174\}/,'active Hell volcano must have a deliberate wide Camp-stage footprint rather than use the small inactive mountain target');
+assert.match(source,/db066-hell-volcano-art/,'active Hell art needs its Camp-owned semantic presentation class');
 assert.match(source,/campGoBtn:Object\.freeze\(\{x:\.85,y:\.74,w:440,h:250\}\)/,'Start Run must retain its minimum authored scene footprint');
 assert.match(source,/const CAMP_BASE_STYLE=/,'Camp must own its responsive base/grid presentation style');
 for(const retiredCampLayer of ['function beta043RefreshCampIcons(','function beta045RefreshCampLayout(','function db046RefreshCamp(','function db047RefreshCamp(','const db055Style=','const db057Style=','const db058Style=','const db0510Style=','const db0512Style=','const db060CampStyle='])assert(!monolith.includes(retiredCampLayer),`retired Camp style/wrapper remains in dicebound.js: ${retiredCampLayer}`);

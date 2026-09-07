@@ -142,6 +142,15 @@ assert.equal(projectileVfx.playProjectileProc("fire", { origin: "player", enemy:
 assert.equal(projectileTimers.length, 3, "Projectile VFX must schedule travel, impact and cleanup once");
 assert.equal(projectileVfx.clearTransient(), 1, "Clearing a transition must advance the presentation epoch");
 assert.deepEqual(clearedTimers, [1, 2, 3], "Stale projectile callbacks must be cancelled at the combat boundary");
+assert.equal(projectileVfx.playProjectileProc("gun", { origin: "player", enemy: projectileEnemy }), true, "Gun must use the authored Deagle presentation path");
+const gunNode = projectileDom.document.body.children.at(-1);
+assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_spawn_01_no_arm.png", "The Deagle must materialize beside its proc owner before firing");
+assert.equal(gunNode.style.left, "94px", "Player-origin Gun materialization must be offset beside the player rather than start on the target");
+assert.equal(projectileTimers.length, 7, "Gun must schedule materialize, fire, travel, impact and cleanup stages");
+projectileTimers[3]();
+assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_fire_02_no_arm.png", "Gun must visibly enter its firing stage before travelling");
+projectileTimers[4]();
+assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_bullet_tracer_05.png", "Gun travel must use the authored bullet tracer");
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 assert.match(monolith, /window\.DiceboundCombatVfx\?\.create/, "Combat VFX local-state adapter is missing");
@@ -153,5 +162,6 @@ assert.doesNotMatch(monolith, /function db064PlayDonutRain/, "Donut DOM presenta
 assert.doesNotMatch(fs.readFileSync(path.join(root, "runtime", "js", "combat", "vfx.js"), "utf8"), /backgroundPosition: donutFramePosition/, "Donut must use its whole authored frames rather than CSS spritesheet cropping");
 assert.match(monolith, /dbCombatVfx\.clearTransient\?\.\(\)/, "Combat transitions must explicitly clear authored transient VFX");
 assert.match(monolith, /dbCombatVfx\.playProjectileProc\?\.\(key,\{origin:'player',enemy:target\}\)/, "Player Fire/Gun procs must use the authored projectile owner");
+assert.match(monolith, /if\(key==='fire'\|\|key==='gun'\|\|key==='donut'\)return false;/, "Legacy emoji Donut presentation must be suppressed when authored Donut VFX owns the proc");
 
 console.log("Combat VFX ownership PASS: Nature suppression scope, live-target filter, asset contracts and monolith adapters");

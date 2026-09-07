@@ -186,6 +186,7 @@
     style.id='dicebound-camp-layout-owner';
     style.textContent=CAMP_BASE_STYLE+CAMP_STAGE_STYLE;
     style.textContent += `\nhtml body #startOverlay.camp-fullscreen .camp-panel.active > .camp-panel-head{position:sticky!important;top:0!important;z-index:80!important;background:linear-gradient(180deg,rgba(17,24,42,.98),rgba(17,24,42,.90))!important;padding:10px 12px!important;box-shadow:0 8px 18px rgba(0,0,0,.22)!important;backdrop-filter:blur(8px)}\nhtml body #startOverlay.camp-fullscreen .camp-panel.active > .camp-panel-head .camp-close-btn{margin-left:auto!important;flex:0 0 auto!important;position:relative!important;z-index:81!important}`;
+    style.textContent += `\n#startOverlay.camp-fullscreen #campHellBtn.hell-volcano-active{padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}#startOverlay.camp-fullscreen #campHellBtn.hell-volcano-active .db058-camp-art-frame{width:100%!important;height:100%!important;margin:0!important}#startOverlay.camp-fullscreen #campHellBtn.hell-volcano-active .db066-hell-volcano-art{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;filter:drop-shadow(0 12px 18px rgba(72,8,10,.48))!important}#startOverlay.camp-fullscreen #campHellBtn.hell-volcano-active .camp-label,#startOverlay.camp-fullscreen #campHellBtn.hell-volcano-active .camp-sub{position:relative!important;z-index:2!important;text-shadow:0 2px 5px #000!important}`;
     documentRef.head?.appendChild(style);
   }
 
@@ -330,6 +331,15 @@
     const src=asset(key,fallback);if(image.getAttribute('src')!==src)image.src=src;
   }
 
+  function renderHellModeArt(view){
+    const button=find('campHellBtn');if(!button)return;
+    const enabled=!!view.hellMode;button.classList.toggle('hell-volcano-active',enabled);
+    if(enabled){setObjectArt('campHellBtn','hellOn','db066-hell-volcano-art','Active Hell volcano with a dancing devil','assets/camp/mode-toggles/hell/on.png');return;}
+    const frame=button.querySelector('.db058-camp-art-frame');
+    if(frame){const icon=doc()?.createElement('div');if(icon){icon.className='camp-icon camp-hell-mountain';icon.textContent='⛰️';frame.replaceWith(icon);}}
+    const icon=button.querySelector('.camp-icon');if(icon&&!icon.querySelector('img')){icon.classList.add('camp-hell-mountain');icon.textContent='⛰️';}
+  }
+
   function renderClassFigure(icon,view){
     if(!icon||!view.classId)return;
     if(view.classId==='random'){
@@ -374,6 +384,7 @@
     setObjectArt('campChestBtn','chest','db-art-camp db058-chest','Treasure chest','assets/camp/interactions/chest.png');
     find('campChestBtn')?.classList.add('camp-chest-bare');
     setObjectArt('campNightmareBtn',view.nightmareMode?'nightmareOn':'nightmareOff','db058-nightmare-art',view.nightmareMode?'Nightmare creature emerged':'Nightmare creature spying from behind a tree',view.nightmareMode?'assets/camp/mode-toggles/nightmare/on.png':'assets/camp/mode-toggles/nightmare/off.png');
+    renderHellModeArt(view);
     const journey=find('campGoBtn')?.querySelector('.camp-journey-art');
     if(journey){const src=asset('roadCaravan','assets/camp/interactions/road-caravan.png');if(journey.getAttribute('src')!==src)journey.src=src;journey.hidden=false;}
     renderClassFigure(find('campClassIcon'),view);
@@ -477,11 +488,16 @@
     const bounds=overlay.getBoundingClientRect(),frame=stageFrame(bounds.width||root.innerWidth||1,bounds.height||root.innerHeight||1),layout=layoutForViewport();
     for(const [property,value] of Object.entries({left:`${Math.round(frame.left)}px`,top:`${Math.round(frame.top)}px`,right:'auto',bottom:'auto',width:`${Math.round(frame.width)}px`,height:`${Math.round(frame.height)}px`,'min-height':'0','max-width':'none',transform:'none',translate:'none'}))important(scene,property,value);
     for(const id of Object.keys(CAMP_STAGE_ANCHORS)){
-      const node=id==='campBonfire'?scene.querySelector('.camp-bonfire'):find(id),spec=stageSpec(id,layout);
+      const node=id==='campBonfire'?scene.querySelector('.camp-bonfire'):find(id);let spec=stageSpec(id,layout);
       if(!node||!spec)continue;
+      const hellVolcano=id==='campHellBtn'&&node.classList.contains('hell-volcano-active');
+      if(hellVolcano)spec={...spec,x:.72,y:.33,w:460,h:174};
       for(const [property,value] of Object.entries({position:'absolute',left:`${(spec.x*100).toFixed(3)}%`,top:`${(spec.y*100).toFixed(3)}%`,right:'auto',bottom:'auto',transform:'translate(-50%,-50%)',translate:'none'}))important(node,property,value);
       if(id==='campGoBtn'){
         const width=Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08)),height=Math.round(clamp((spec.h||spec.w)*frame.scale,(spec.h||spec.w)*.72,(spec.h||spec.w)*1.08));
+        for(const [property,value] of Object.entries({width:`${width}px`,height:`${height}px`,'min-width':`${width}px`,'min-height':`${height}px`,'max-width':`${width}px`,'max-height':`${height}px`,padding:'0'}))important(node,property,value);
+      }else if(hellVolcano){
+        const width=Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08)),height=Math.round(clamp(spec.h*frame.scale,spec.h*.72,spec.h*1.08));
         for(const [property,value] of Object.entries({width:`${width}px`,height:`${height}px`,'min-width':`${width}px`,'min-height':`${height}px`,'max-width':`${width}px`,'max-height':`${height}px`,padding:'0'}))important(node,property,value);
       }else if(node.dataset.db064HitTarget!=='painted-object'){
         important(node,'width',`${Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08))}px`);

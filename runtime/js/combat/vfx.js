@@ -293,7 +293,7 @@
 
     function projectileFrames(key, effect) {
       const frames = effect?.frames || [];
-      if (key === 'gun') return { launch: frames[1] || frames[0], travel: frames[4] || frames[1] || frames[0], impact: frames[7] || frames[8] || frames[0] };
+      if (key === 'gun') return { materialize: frames[0], launch: frames[1] || frames[0], travel: frames[4] || frames[1] || frames[0], impact: frames[7] || frames[8] || frames[0] };
       return { launch: frames[4] || frames[0], travel: frames[7] || frames[8] || frames[0], impact: frames[1] || frames[2] || frames[0] };
     }
 
@@ -312,13 +312,23 @@
       projectile.className = `db-combat-projectile-vfx db-${key}-proc`;
       projectile.dataset.effect = key;
       projectile.dataset.origin = origin === 'enemy' ? 'enemy' : 'player';
-      image.alt = ''; image.draggable = false; image.src = frames.launch;
+      const isGun = key === 'gun';
+      image.alt = ''; image.draggable = false; image.src = isGun ? (frames.materialize || frames.launch) : frames.launch;
       projectile.append(image);
-      Object.assign(projectile.style, { left: `${Math.round(from.left)}px`, top: `${Math.round(from.top)}px`, transform: 'translate(-50%,-50%) scale(.72)' });
+      const sourceOffset = isGun ? (origin === 'enemy' ? -34 : 34) : 0;
+      Object.assign(projectile.style, { left: `${Math.round(from.left + sourceOffset)}px`, top: `${Math.round(from.top)}px`, transform: `translate(-50%,-50%) scale(.72)${isGun && origin === 'enemy' ? ' scaleX(-1)' : ''}` });
       document.body.append(projectile);
-      schedule(() => { image.src = frames.travel; Object.assign(projectile.style, { left: `${Math.round(to.left)}px`, top: `${Math.round(to.top)}px`, transform: 'translate(-50%,-50%) scale(1)' }); }, 40);
-      schedule(() => { projectile.classList.add('db-impact'); image.src = frames.impact; projectile.style.transform = 'translate(-50%,-50%) scale(1.1)'; }, 355);
-      schedule(() => projectile.remove(), 720);
+      if (isGun) {
+        // The Deagle materializes beside its owner before the shot. This is presentation-only.
+        schedule(() => { image.src = frames.launch; projectile.dataset.phase = 'fire'; projectile.style.transform = `translate(-50%,-50%) scale(.82)${origin === 'enemy' ? ' scaleX(-1)' : ''}`; }, 180);
+        schedule(() => { image.src = frames.travel; projectile.dataset.phase = 'travel'; Object.assign(projectile.style, { left: `${Math.round(to.left)}px`, top: `${Math.round(to.top)}px`, transform: 'translate(-50%,-50%) scale(1)' }); }, 290);
+        schedule(() => { projectile.dataset.phase = 'impact'; projectile.classList.add('db-impact'); image.src = frames.impact; projectile.style.transform = 'translate(-50%,-50%) scale(1.1)'; }, 605);
+        schedule(() => projectile.remove(), 970);
+      } else {
+        schedule(() => { image.src = frames.travel; Object.assign(projectile.style, { left: `${Math.round(to.left)}px`, top: `${Math.round(to.top)}px`, transform: 'translate(-50%,-50%) scale(1)' }); }, 40);
+        schedule(() => { projectile.classList.add('db-impact'); image.src = frames.impact; projectile.style.transform = 'translate(-50%,-50%) scale(1.1)'; }, 355);
+        schedule(() => projectile.remove(), 720);
+      }
       return true;
     }
 

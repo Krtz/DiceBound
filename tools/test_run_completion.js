@@ -96,6 +96,9 @@ const lateFinal=monolith.slice(lateFinalStart,lateFinalEnd);
 assert.match(lateFinal,/const finish=\(\)=>boardAtWin===6\?completeSixthRoadV19\(\):advanceToNextBoard\(\)/,"Board 5 must advance instead of terminally completing");
 const rewardIndex=lateFinal.indexOf("grantXp(rewardXp);"),finishIndex=lateFinal.indexOf("const finish=()=>"),levelsIndex=lateFinal.indexOf("afterLevels=()=>"),lootIndex=lateFinal.indexOf("openCombatLootChain(defeated,afterLevels);");
 assert.ok(rewardIndex>=0&&finishIndex>rewardIndex&&levelsIndex>finishIndex&&lootIndex>levelsIndex,"final reward, level-up and loot ordering changed before terminal completion");
+assert.match(monolith,/const v266ResolveLateFinalBase=v19ResolveLateFinal;/,"Board-5 repeat-notification guard must wrap the existing completion order instead of duplicating it");
+assert.match(monolith,/if\(boardAtWin!==5\|\|!meta\.doubleDiceUnlocked\)return v266ResolveLateFinalBase\(defeated,boardAtWin\);/,"the first Board-5 clear must retain its Double Dice unlock announcement");
+assert.match(monolith,/if\(message==='🎲🎲 Double Dice unlocked!'\)return;/,"repeat Board-5 clears must suppress only the duplicate Double Dice toast");
 
 const restoreStart=monolith.indexOf("function dbRunRestore(");
 const restoreEnd=monolith.indexOf("function dbRunPanelText(",restoreStart);
