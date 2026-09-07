@@ -91,4 +91,23 @@ assert "dbCombatGuardResolution=dbCombatGuardOwner.configure({" in mono, 'combat
 assert "return dbCombatGuardResolution.guardAction(...args);" in mono, 'Guard thin adapter is missing'
 assert "dbCombatGuardResolution.identityGuardAction" in mono, 'identity Guard thin adapter is missing'
 
+
+pet_retired = [
+    'petTurnV13', 'petTurnV15Patch', 'petTurnV18Base', 'petTurnV19Base', 'db060PetTurnBase',
+    'petDamageV13', 'petDamageV16Base', 'petDamageV17Base',
+    'trainerPetDamageV16Base', 'trainerPetDamageV17Base',
+]
+for symbol in pet_retired:
+    assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Pet-resolution owner returned: {symbol}"
+assert mono.count('async function petTurn(') == 1, 'petTurn must have exactly one thin compatibility adapter'
+assert mono.count('function petDamage(') == 1, 'petDamage must have exactly one thin compatibility adapter'
+assert mono.count('function trainerPetDamage(') == 1, 'trainerPetDamage must have exactly one thin compatibility adapter'
+assert not re.search(r'(?m)^  petTurn\s*=', mono), 'top-level petTurn reassignment chain must not return'
+assert not re.search(r'(?m)^  petDamage\s*=', mono), 'top-level petDamage reassignment chain must not return'
+assert not re.search(r'(?m)^  trainerPetDamage\s*=', mono), 'top-level trainerPetDamage reassignment chain must not return'
+assert "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" in mono, 'combat Pet turn-resolution owner is not configured by the composition root'
+assert "return dbCombatPetTurnResolution.petTurn(...args);" in mono, 'Pet turn thin adapter is missing'
+assert "return dbCombatPetTurnResolution.petDamage();" in mono, 'Pet damage thin adapter is missing'
+assert "return dbCombatPetTurnResolution.trainerPetDamage(id);" in mono, 'Trainer Pet damage thin adapter is missing'
+
 print('Monolith spring-clean guard PASS')

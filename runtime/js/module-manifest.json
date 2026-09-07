@@ -20,6 +20,7 @@
     "combat-strike-resolution",
     "combat-ultimate-resolution",
     "combat-guard-resolution",
+    "combat-pet-turn-resolution",
     "combat-enemy-policy",
     "combat-targeting",
     "combat-presentation",
@@ -258,6 +259,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatGuardResolution"
+      ]
+    },
+    {
+      "id": "combat-pet-turn-resolution",
+      "path": "js/combat/pet-turn-resolution.js",
+      "domain": "combat/pet-and-companion-turn-resolution",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatPetTurnResolution"
       ]
     },
     {
@@ -734,6 +745,7 @@
         "combat-strike-resolution",
         "combat-ultimate-resolution",
         "combat-guard-resolution",
+        "combat-pet-turn-resolution",
         "combat-enemy-policy",
         "combat-targeting",
         "combat-presentation",

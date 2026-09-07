@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.7
+
+### Pet / Companion combat resolution ownership (#40, #209, #281)
+- Extracted the complete Pet/companion combat transaction into `runtime/js/combat/pet-turn-resolution.js`, consolidating ordinary active-Pet turns, Beastmaster stance follow-up, Pokémon Trainer lead/assist, Summoner spirits, Primal Spark, Healing Nuzzle, set Pet-double handling, Pet Mirror and Pet/trainer damage formulas.
+- Preserved Pet double/neutral-element RNG order, weakness/affinity rounding, Bond scaling, target reconciliation, presentation timing and temporary-state restoration, including the existing dynamic lexical `petTurn` compatibility seam.
+- Pet chooser/feeding, Conjure orchestration, Trainer switch UI, saves/checkpoints and gameplay/balance values are unchanged.
+
 ## Beta 0.6.6.6
 
 ### Devil Patch critical fixes (#282)

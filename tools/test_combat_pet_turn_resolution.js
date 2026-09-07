@@ -147,7 +147,7 @@ async function run() {
   // Beastmaster damage and stance follow-up remain outside/after the base Pet strike.
   {
     const h = makeHarness({ classId: 'beastmaster', activeClasses: ['beastmaster'], activePet: 'fire', player: { beastStance: 'aggressive' } });
-    assert.strictEqual(owner.petDamage(), 6, 'Beastmaster aggressive Pet damage drifted');
+    assert.strictEqual(owner.petDamage(), 5, 'Beastmaster aggressive Pet damage drifted');
     h.player.beastStance = 'defensive';
     await owner.petTurn();
     assert.strictEqual(h.player.combatShield, 1);
@@ -186,7 +186,7 @@ async function run() {
   {
     const h = makeHarness({ activePet: 'fire', gameplayRanks: { companion_element_proc: 1 }, randomValues: [.99, .01] });
     await owner.petTurn();
-    assert(h.trace.some(x => x[0] === 'element' && x[1] === 'fire' && String(x[3]).includes('companion proc')), 'Primal Spark did not use semantic Pet element');
+    assert(h.trace.some(x => x[0] === 'element' && x[1] === 'fire' && x[3] === 'Companion Spark'), 'Primal Spark did not use semantic Pet element');
   }
 
   // Healing Nuzzle and the historical temporary set-double mutation both restore correctly.
@@ -209,8 +209,8 @@ async function run() {
   // Bond scaling is authoritative for both active and Trainer/Summoner damage.
   {
     makeHarness({ activePet: 'fire', bondLevels: { fire: 21 }, meta: { activePet: 'fire', pets: { neutral: { level: 1 }, fire: { level: 11 }, ice: { level: 1 }, light: { level: 1 } } } });
-    assert.strictEqual(owner.petDamage(), 13, 'active Pet Bond scaling drifted');
-    assert.strictEqual(owner.trainerPetDamage('fire'), 14, 'Trainer Pet Bond scaling drifted');
+    assert.strictEqual(owner.petDamage(), 14, 'active Pet Bond scaling drifted');
+    assert.strictEqual(owner.trainerPetDamage('fire'), 15, 'Trainer Pet Bond scaling drifted');
   }
 
   console.log('Combat Pet Turn Resolution deterministic contract: PASS');

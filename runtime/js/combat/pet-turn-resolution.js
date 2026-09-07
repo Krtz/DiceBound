@@ -152,6 +152,6 @@
     return result;
   }
 
-  const api=Object.freeze({owner:"combat/pet-turn-resolution",apiVersion:1,configure,petDamage,trainerPetDamage,petElementFor,trainerStrike,maybePetElementProc,petTurn});
+  const api=Object.freeze({owner:"combat/pet-turn-resolution",apiVersion:1,configure,petDamage,trainerPetDamage,petElementFor,activeTrainerPetId,trainerStrike,maybePetElementProc,petTurn});
   window.DiceboundCombatPetTurnResolution=api;
 })();
