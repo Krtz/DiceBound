@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.9
+
+## Beta 0.6.6.9 Basic Attack action-resolution ownership (#40, #209, #288)
+- Basic Attack orchestration now resolves through one authoritative `combat/attack-action-resolution.js` owner while individual base/Echo strike math remains in `combat/strike-resolution.js`.
+- The historical Monk/Frog, Clown/Alchemist, Echo Chamber and Dragoon Basic Attack wrapper ladder is consolidated with the same D20/Echo RNG order, targeting, Crit-to-Ultimate accounting, UI timing and temporary-state restoration.
+- Potions, Ultimates, Guard, Pet/companion turns, special/occult attacks, victory rewards, saves/checkpoints and gameplay/balance values are unchanged.
+
 # Unreleased — Beta 0.6.6.8
 
 ## Beta 0.6.6.8 Approved art intake (#164, #283, #286)

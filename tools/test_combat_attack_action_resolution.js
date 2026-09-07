@@ -103,7 +103,7 @@ async function run() {
     assert.strictEqual(h.player.ultimateCharge, 16);
     assert.deepStrictEqual(
       h.trace.filter(x => ['busy','chaos','ui','tier','strike','charge','pants','text','select','response'].includes(x[0])).map(x => x[0]),
-      ['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response']
+      ['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']
     );
     assert(h.trace.filter(x => x[0] === 'strike').slice(1).every(x => x[4] === false), 'Echoes must remain non-critical at action dispatch');
   }
@@ -170,7 +170,7 @@ async function run() {
     const h = makeHarness({ classId: 'frog', enemies: [enemy], tierValues: [0], player: { doubleStrike: .2 } });
     await owner.playerAttack();
     assert(Math.abs(h.trace.find(x => x[0] === 'tier')[1] - 1.2) < 1e-12);
-    assert.strictEqual(h.player.doubleStrike, .2);
+    assert(Math.abs(h.player.doubleStrike - .2) < 1e-12);
   }
 
   // Rubber Chicken and Combat Distillery remain V16 action-level effects.

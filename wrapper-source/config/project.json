@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.8",
+  "version": "0.6.6.9",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -25,6 +25,7 @@
     "js/combat/effective-stats.js",
     "js/combat/strike-policy.js",
     "js/combat/strike-resolution.js",
+    "js/combat/attack-action-resolution.js",
     "js/combat/ultimate-resolution.js",
     "js/combat/guard-resolution.js",
     "js/combat/pet-turn-resolution.js",
