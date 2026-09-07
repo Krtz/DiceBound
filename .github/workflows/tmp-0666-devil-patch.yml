@@ -1,0 +1,120 @@
+name: Temporary Beta 0.6.6.6 Devil Patch materializer
+
+on:
+  push:
+    branches:
+      - fix/0.6.6.6-critical-patch
+
+permissions:
+  contents: read
+
+env:
+  TARGET_BRANCH: fix/0.6.6.6-critical-patch
+
+jobs:
+  materialize-and-validate:
+    if: ${{ !contains(github.event.head_commit.message, '[materialized-0666]') }}
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Mint repository write token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/0.6.6.6-critical-patch
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.7'
+
+      - name: Stamp canonical Beta 0.6.6.6 identity
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.6.6 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.6 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Focused Devil Patch regression tests
+        shell: pwsh
+        run: |
+          node tools/test_camp_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_combat_turn_resolution.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_enemy_battle_art_registry.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_run_completion.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_static_registries.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Full committed-source validation
+        shell: pwsh
+        run: |
+          python tools/prepare_release.py --output-dir wrapper-source/release/generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.6.6 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object {
+            node --check $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object {
+            node $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object {
+            python $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Commit canonical 0.6.6.6 metadata
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config user.name 'dicebound-manifest-publisher[bot]'
+          git config user.email '323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com'
+          git add -A
+          if (git diff --cached --quiet) {
+            throw 'Expected canonical 0.6.6.6 metadata changes, but the tree is unchanged.'
+          }
+          git commit -m 'Beta 0.6.6.6: canonicalize Devil Patch metadata [materialized-0666]'
+          git config --unset-all http.https://github.com/.extraheader 2>$null
+          git remote set-url origin "https://x-access-token:$env:GH_TOKEN@github.com/Krtz/DiceBound.git"
+          git push origin HEAD:$env:TARGET_BRANCH
