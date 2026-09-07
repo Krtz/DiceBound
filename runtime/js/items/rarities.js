@@ -57,6 +57,7 @@
   // Omega are distinct content types, so their display order must never make
   // them implicitly eligible for a "Rare+" reward.
   const POWERUP_PROGRESSION=Object.freeze(["common","uncommon","rare","epic","legendary","mythical"]);
+  const ORDINARY_LOOT_PROGRESSION=Object.freeze(["poor","common","uncommon","rare","epic"]);
   function createInfoRegistry(){return JSON.parse(JSON.stringify(RARITY_INFO_DATA));}
   function createValueRegistry(){return JSON.parse(JSON.stringify(RARITY_VALUE_DATA));}
   function isPowerupRarityAtLeast(rarity,floor="rare"){
@@ -64,5 +65,15 @@
     const floorIndex=POWERUP_PROGRESSION.indexOf(String(floor||"").toLowerCase());
     return rarityIndex>=0&&floorIndex>=0&&rarityIndex>=floorIndex;
   }
-  window.DiceboundRarities=Object.freeze({apiVersion:1,ids:RARITY_IDS,powerupProgression:POWERUP_PROGRESSION,createInfoRegistry,createValueRegistry,isPowerupRarityAtLeast});
+  function luckFloor(luck){return (Number(luck)||0)>=2?"uncommon":"poor";}
+  function promoteOrdinaryRarityForLuck(rarity,luck){
+    const index=ORDINARY_LOOT_PROGRESSION.indexOf(String(rarity||"").toLowerCase()),floor=ORDINARY_LOOT_PROGRESSION.indexOf(luckFloor(luck));
+    return index<0?rarity:ORDINARY_LOOT_PROGRESSION[Math.max(index,floor)];
+  }
+  function filterPowerupPoolForLuck(pool,luck){
+    if(!Array.isArray(pool)||luckFloor(luck)!=="uncommon")return Array.isArray(pool)?pool:[];
+    const eligible=pool.filter(entry=>POWERUP_PROGRESSION.indexOf(String(entry?.rarity||"").toLowerCase())>=1);
+    return eligible.length?eligible:pool;
+  }
+  window.DiceboundRarities=Object.freeze({apiVersion:1,ids:RARITY_IDS,powerupProgression:POWERUP_PROGRESSION,ordinaryLootProgression:ORDINARY_LOOT_PROGRESSION,createInfoRegistry,createValueRegistry,isPowerupRarityAtLeast,luckFloor,promoteOrdinaryRarityForLuck,filterPowerupPoolForLuck});
 })();

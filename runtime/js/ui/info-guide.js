@@ -31,8 +31,6 @@
   function isClassUnlocked(classId){return runtime.isClassUnlocked?.(classId)!==false;}
   function artifactSet(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
   function stats(){return runtime.getLifetimeStats?.()||{};}
-  function gameStarted(){return !!runtime.isGameStarted?.();}
-  function goldSnapshot(){return runtime.getGoldSnapshot?.()||null;}
 
   function installStyles(){
     const documentRef=doc();
@@ -59,7 +57,7 @@
       #infoOverlay .info-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}#infoOverlay .info-class{padding:9px 10px;border-radius:11px;background:rgba(0,0,0,.17);border:1px solid rgba(255,255,255,.055);font-size:10px;line-height:1.5}#infoOverlay .info-class b{font-size:11px}
       #infoOverlay .info-tag-row{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}#infoOverlay .info-tag{padding:2px 5px;border-radius:999px;background:rgba(115,185,255,.14);border:1px solid rgba(115,185,255,.24);font-size:8px;color:#d8eaff}
       #infoOverlay .element-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}#infoOverlay .element-row{padding:10px;border-radius:10px;background:rgba(0,0,0,.17);border:1px solid rgba(255,255,255,.06);font-size:10px;line-height:1.45}
-      #infoOverlay .lifetime-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}#infoOverlay .lifetime-stat{padding:12px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}#infoOverlay .lifetime-stat span{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.08em}#infoOverlay .lifetime-stat strong{display:block;font-size:20px;margin-top:3px}#infoOverlay .lifetime-wide{grid-column:1/-1}#infoOverlay .class-clear-list{font-size:10px;line-height:1.6;color:#dce5f4}.effective-gold-card,.effective-gold-line{cursor:help}.effective-gold-card strong,.effective-gold-line [data-effective-gold]{color:var(--gold)}
+      #infoOverlay .lifetime-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}#infoOverlay .lifetime-stat{padding:12px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}#infoOverlay .lifetime-stat span{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.08em}#infoOverlay .lifetime-stat strong{display:block;font-size:20px;margin-top:3px}#infoOverlay .lifetime-wide{grid-column:1/-1}#infoOverlay .class-clear-list{font-size:10px;line-height:1.6;color:#dce5f4}
       #infoOverlay .save-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}#infoOverlay .save-textarea{width:100%;height:120px;background:#080d17;color:#eaf0ff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;font:11px ui-monospace,monospace;resize:vertical}
       #infoOverlay .rarity-guide-grid{display:grid;gap:6px;margin:10px 0}#infoOverlay .rarity-guide-row{display:grid;grid-template-columns:14px 92px 1fr;gap:8px;align-items:center;padding:7px 8px;border-radius:9px;background:rgba(255,255,255,.035);font-size:10px;color:var(--muted)}#infoOverlay .rarity-swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.35)}
       #infoOverlay .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;margin-top:9px}#infoOverlay .set-tier{padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:9px;color:var(--muted);font-size:10px}#infoOverlay .set-tier b,#infoOverlay .set-tier span{display:block}#infoOverlay .set-tier.active{border-color:rgba(255,172,56,.65);background:rgba(255,156,56,.1);color:#ffe7c0}
@@ -126,15 +124,14 @@
     return Object.freeze({
       owner:OWNER,
       values:Object.freeze({runsStarted:source.runsStarted,runsFinished:source.runsFinished,fullVictories:source.fullVictories,tilesTraveled:source.tilesTraveled,rolls:source.rolls,highestRunLevel:source.highestRunLevel,damageDealt:source.damageDealt,damageTaken:Math.max(source.damageTaken||0,runtime.getMetaDamageTaken?.()||0),healingDone:source.healingDone,goldEarned:source.goldEarned,goldSpent:source.goldSpent,highestGold:source.highestGold,enemiesDefeated:source.enemiesDefeated,bossesDefeated:source.bossesDefeated,powerupsTaken:source.powerupsTaken}),
-      clears:Object.freeze(clears),gold:goldSnapshot(),running:gameStarted()
+      clears:Object.freeze(clears)
     });
   }
   function renderStats(){
     const overlay=ensureSurface(),grid=overlay?.querySelector('[data-lifetime-stats]');
     const model=lifetimeModel();if(!grid)return model;
     const fmt=value=>Math.round(Number(value)||0).toLocaleString(),labels=[['runsStarted','Runs started'],['runsFinished','Runs finished'],['fullVictories','Full victories'],['tilesTraveled','Tiles traveled'],['rolls','Dice rolls'],['highestRunLevel','Highest run level'],['damageDealt','Damage dealt'],['damageTaken','Damage taken'],['healingDone','Healing done'],['goldEarned','Gold earned'],['goldSpent','Gold spent'],['highestGold','Highest gold held'],['enemiesDefeated','Enemies defeated'],['bossesDefeated','Bosses defeated'],['powerupsTaken','Powerups taken']];
-    const gold=model.gold;const goldCard=gold?`<div class="lifetime-stat effective-gold-card" tabindex="0" data-effective-gold-container title="${escapeHtml(gold.description||'')}"><span>Current-run Gold gain</span><strong data-effective-gold>${model.running?escapeHtml(gold.label||'—'):'Start a run'}</strong></div>`:'';
-    grid.innerHTML=goldCard+labels.map(([key,label])=>`<div class="lifetime-stat"><span>${label}</span><strong>${fmt(model.values[key])}</strong></div>`).join('')+`<div class="lifetime-stat lifetime-wide"><span>Board clears by class</span><div class="class-clear-list">${model.clears.length?model.clears.map(escapeHtml).join('<br>'):'No recorded class-specific board clears yet.'}</div></div>`;
+    grid.innerHTML=labels.map(([key,label])=>`<div class="lifetime-stat"><span>${label}</span><strong>${fmt(model.values[key])}</strong></div>`).join('')+`<div class="lifetime-stat lifetime-wide"><span>Board clears by class</span><div class="class-clear-list">${model.clears.length?model.clears.map(escapeHtml).join('<br>'):'No recorded class-specific board clears yet.'}</div></div>`;
     return model;
   }
   function render(){

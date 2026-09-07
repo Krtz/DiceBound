@@ -98,11 +98,14 @@ const end=ui.renderEndGear();
 assert.equal(end.storage,true);
 assert.equal(document.getElementById("endGearGrid").children.length,2);
 assert.match(document.getElementById("endGearGrid").children[0].innerHTML,/db-equipment-card-art/,"end-of-run Heirloom choice art must use bounded card sizing");
+assert.match(document.getElementById("endGearGrid").children[0].innerHTML,/db-rarity-name db-rarity-rare/,"end-of-run Heirloom item names must retain their rarity colour semantic class");
 assert.ok(document.getElementById("endOverlay").modal.children.some(child=>child.id==="endStorageManager"),"end storage manager must remain owned by the UI module");
 const endStorage=document.getElementById("endStorageManager");
 assert.match(endStorage.endStorageGrid.children[0].innerHTML,/db-equipment-card-art/,"end storage manager art must use bounded card sizing");
+assert.match(endStorage.endStorageGrid.children[0].innerHTML,/db-rarity-name db-rarity-rare/,"stored Heirloom item names must retain their rarity colour semantic class");
 const ownerStyle=document.getElementById("dicebound-equipment-heirloom-ui-owner");
 assert.match(ownerStyle.textContent,/\.db-equipment-card-art\{width:48px;height:48px;max-width:48px;max-height:48px;/,"Heirloom card art must have explicit maximum dimensions");
+assert.match(ownerStyle.textContent,/\.db-rarity-rare\{color:#438bd8\}/,"Heirloom UI owner must own the rarity-name colour palette");
 assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderers must not fall back to unbounded semantic art");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");

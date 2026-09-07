@@ -22,6 +22,7 @@ for(let board=1;board<=6;board++){
 }
 assert.equal(assets.resolveEnemyBattleArt("Slime",0).board,1,"invalid low boards must safely select Board 1");
 assert.equal(assets.resolveEnemyBattleArt("Slime",99).board,6,"invalid high boards must safely select Board 6");
+for(let board=1;board<=6;board++)assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyBattleArt("Wraith",board))),{key:"wraith",src:`assets/enemies/normal/battle/wraith-board-${board}.png`,alt:"Wraith",board,matte:"dark"},"Wraith must retain its canonical Board art while declaring its dark baked-in matte");
 const slimeMarker=assets.resolveEnemyMarker("Slime");
 assert.deepEqual(JSON.parse(JSON.stringify(slimeMarker)),{key:"slime",src:"assets/enemies/normal/board-markers/slime.png",alt:"Slime"});
 assert.notEqual(slimeMarker.src,assets.resolveEnemyBattleArt("Slime",1).src,"the static marker must remain separate from tiered battle art");
@@ -34,6 +35,10 @@ assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("normal")
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("Nightmare"))),{id:"nightmare",className:"db-enemy-mode-nightmare"});
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("HELL"))),{id:"hell",className:"db-enemy-mode-hell"});
 assert.equal(assets.resolveEnemyModeAura("unexpected").id,"normal");
-for(const identity of ["slime","wolf","devil"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",`${identity}-board-${board}.png`)));
+for(const identity of ["slime","wolf","devil","wraith"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",`${identity}-board-${board}.png`)));
+const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
+assert.match(monolith,/const db066TieredEnemyMarkupBase=db0636TieredEnemyMarkup;/,"Wraith matte treatment must adapt the one existing tiered-art renderer rather than add a second renderer");
+assert.match(monolith,/art\?\.matte==='dark'\?markup\?\.replace\('db0636-tiered-enemy-art ','db0636-tiered-enemy-art db-enemy-dark-matte '/,"Wraith dark-matte treatment must be driven by the semantic asset contract");
+assert.match(monolith,/\.db-enemy-dark-matte \.db0636-tiered-enemy-image\{mix-blend-mode:screen\}/,"Wraith dark matte must visually blend away against the combat scene");
 
 console.log("Ordinary Board battle-art registry: identity/Board resolution, independent marker ownership and mode-presentation separation pass");

@@ -3357,6 +3357,15 @@
   async function v19ResolveLateFinal(defeated,boardAtWin){
     const all=currentEnemies.length?[...currentEnemies]:[defeated],tileIndex=currentEnemyTile,classId=player.classId,s=ensureAlphaMeta();s.enemiesDefeated+=all.length;s.bossesDefeated++;recordBoardClear(boardAtWin,classId);const rewardGold=modifiedGold(all.reduce((sum,e)=>sum+(e?.gold||0),0)),rewardXp=Math.max(1,Math.round(all.reduce((sum,e)=>sum+(e?.xp||0),0)*(1+player.xpBonus)));player.gold+=rewardGold;if(player.postFightHeal>0)healPlayer(player.postFightHeal);const cookies=boardAtWin===6?15:10;meta.petCookies+=cookies;if(boardAtWin===5){meta.board5Clears=(meta.board5Clears||0)+1;meta.doubleDiceUnlocked=true;if(classId==="beastmaster"&&nightmareMode)meta.beastmasterNightmareBoard5=true;showToast("🎲🎲 Double Dice unlocked!",2600,true);}saveMeta();checkDynamicClassUnlocks();if(tiles[tileIndex])tiles[tileIndex].cleared=true;setCombatText(`${boardAtWin===6?"Sixth":"Fifth"} Road victory! +${rewardXp} XP, +${rewardGold} gold, +${cookies} cookies.`);sfx.win();addLog(`<b>${defeated.name} defeated.</b> +${rewardXp} XP, +${rewardGold} gold and +${cookies} cookies.`);updateHUD();await delay(320);await BattleVictoryUI.present(BattleVictoryState.create({title:`${boardAtWin===6?'Sixth':'Fifth'} Road Victory!`,defeatedNames:all.map(e=>e.name),xp:rewardXp,gold:rewardGold,cookies,board:boardAtWin}));$("combatOverlay").classList.add("hidden");BattleVictoryUI.reset();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;grantXp(rewardXp);updateHUD();const finish=()=>boardAtWin===6?completeSixthRoadV19():advanceToNextBoard(),afterLevels=()=>pendingLevelUps>0?openLevelUp(finish):finish();openCombatLootChain(defeated,afterLevels);
   }
+  // Board 5 still records every clear, but its unlock announcement is a one-time event.
+  const v266ResolveLateFinalBase=v19ResolveLateFinal;
+  v19ResolveLateFinal=async function(defeated,boardAtWin){
+    if(boardAtWin!==5||!meta.doubleDiceUnlocked)return v266ResolveLateFinalBase(defeated,boardAtWin);
+    const showToastBeforeRepeatBoard5=showToast;
+    showToast=function(message,...args){if(message==='🎲🎲 Double Dice unlocked!')return;return showToastBeforeRepeatBoard5.call(this,message,...args);};
+    try{return await v266ResolveLateFinalBase(defeated,boardAtWin);}
+    finally{showToast=showToastBeforeRepeatBoard5;}
+  };
   winCombat=async function(){const defeated=currentEncounterLead||currentEnemy,isFinal=!!defeated?.finalBoss||v16CombatKind==="final"||tiles[currentEnemyTile]?.type==="boss";if(isFinal&&(boardLevel===5||boardLevel===6))return v19ResolveLateFinal(defeated,boardLevel);return winCombatV19Base();};
   // Board-6 guardian labels in the road HUD.
   const updateHUDV19RoadBase=updateHUD;
@@ -4523,8 +4532,8 @@
   const endless26=talents.find(t=>t.id==='monk_flow_ceiling');if(endless26)endless26.desc='Each rank improves many class signatures: Ranger Marks, Monk Combo, Turtle Guard chain, Fighter Counterblow damage and +1 stored Counterblow, Mana building, Cleric Faith gain, Summoner spirits and Alchemist flasks.';
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
-  const rollGearRarityV26Base=rollGearRarity;rollGearRarity=function(...args){let r=rollGearRarityV26Base.apply(this,args);if((player.luck||0)>1&&r==='poor'&&random()<.97)r='common';return r;};
-  const weightedUpgradeV26Base=weightedUpgrade;weightedUpgrade=function(pool){let u=weightedUpgradeV26Base(pool);if((player.luck||0)>1&&u?.rarity==='poor'&&random()<.97){const better=pool.filter(x=>x?.rarity!=='poor');if(better.length)u=weightedUpgradeV26Base(better);}return u;};
+  const rollGearRarityV26Base=rollGearRarity;rollGearRarity=function(...args){const rarity=rollGearRarityV26Base.apply(this,args);return DB_RARITIES.promoteOrdinaryRarityForLuck?.(rarity,player.luck)||rarity;};
+  const weightedUpgradeV26Base=weightedUpgrade;weightedUpgrade=function(pool){const eligible=DB_RARITIES.filterPowerupPoolForLuck?.(pool,player.luck);return weightedUpgradeV26Base(Array.isArray(eligible)&&eligible.length?eligible:pool);};
 
   /* LONG STRIDE: FATE CHOICES ARE EXACT ----------------------------------- */
   // The legacy debug 1d6 capture path predates the shared fate rule. Replace
@@ -4538,6 +4547,9 @@
   function v26EnsurePoisonStat(){if($('poisonChanceText'))return;const echo=$('echoText')?.closest('.stat'),grid=echo?.parentElement;if(!grid)return;const box=document.createElement('div');box.className='stat v18-stat-tooltip';box.id='poisonChanceStat';box.innerHTML='<span>Poison Chance</span><strong id="poisonChanceText">0%</strong>';echo.after(box);}
   function v26PoisonStackDamage(){return Math.max(1,Math.round((player.attack||0)*(player.poisonStackPower||.12)));}
   const updateHUDV26PoisonBase=updateHUD;updateHUD=function(){if(classIdentityActive('ouroboros'))v18SyncOuroborosAttack();const r=updateHUDV26PoisonBase();v26EnsurePoisonStat();const t=$('poisonChanceText'),box=$('poisonChanceStat');if(t)t.textContent=`${Math.round((player.poisonOnHitChance||0)*100)}%`;if(box)box.dataset.tip=`${Math.round((player.poisonOnHitChance||0)*100)}% Poison Chance per eligible strike. Chance above 100% guarantees stacks and rolls the overflow for extra stacks. One Poison stack currently deals ${v26PoisonStackDamage()} damage each Poison tick before affinity modifiers.`;return r;};
+
+  function v266SyncGoldGainStat(){const snapshot=currentGoldSnapshot(),text=$('goldGainText'),box=$('goldGainStat');if(text)text.textContent=snapshot.label||'100%';if(box){box.dataset.tip=snapshot.description||'Gold gain is shown as a percentage of base rewards.';box.title=box.dataset.tip;}}
+  const updateHUDV266GoldGainBase=updateHUD;updateHUD=function(){const result=updateHUDV266GoldGainBase();v266SyncGoldGainStat();return result;};
 
   /* LEGENDARY REWARD EXHAUSTION ------------------------------------------- */
   showLegendaryChoice=function(source,onComplete=()=>{}){const pool=eligibleUpgrades(u=>u.rarity==='legendary');if(!pool.length){const gold=modifiedGold(250);player.gold+=gold;player.potions+=2;addLog(`<b>${source}:</b> every eligible Legendary power is already owned this run. The guardian converts the exhausted boon into <b>${gold} gold</b> and <b>2 potions</b>.`);showToast(`👑 Legendary pool exhausted · +${gold} gold · +2 potions`,3000,true);updateHUD();setTimeout(()=>onComplete(false),0);return;}showPowerupChoice(source,onComplete,u=>u.rarity==='legendary','The guardian yields. Choose one guaranteed Legendary powerup.');};
@@ -7039,6 +7051,15 @@
   }
   const db0636EnemyPortraitBase=enemyPortraitSVG;
   enemyPortraitSVG=function(enemy){return db0636TieredEnemyMarkup(enemy)||db0636EnemyPortraitBase(enemy);};
+  const db066TieredEnemyMarkupBase=db0636TieredEnemyMarkup;
+  db0636TieredEnemyMarkup=function(enemy){
+    const markup=db066TieredEnemyMarkupBase(enemy),art=window.DiceboundAssets?.resolveEnemyBattleArt?.(enemy?.name||'',boardLevel);
+    return art?.matte==='dark'?markup?.replace('db0636-tiered-enemy-art ','db0636-tiered-enemy-art db-enemy-dark-matte '):markup;
+  };
+  if(!document.getElementById('dicebound-066-wraith-dark-matte-style')){
+    const style=document.createElement('style');style.id='dicebound-066-wraith-dark-matte-style';
+    style.textContent='.db-enemy-dark-matte .db0636-tiered-enemy-image{mix-blend-mode:screen}';document.head.appendChild(style);
+  }
   if(!document.getElementById('dicebound-0636-slime-battle-art-style')){
     const style=document.createElement('style');style.id='dicebound-0636-slime-battle-art-style';style.textContent=`
       #enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(224px,35vh,430px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
@@ -7610,7 +7631,7 @@
   dbCombatVfx.prepareProjectileEffects?.();
   const dbFriendLegacyElementPresentation=playElementAnimation;
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){
-    if(key==='fire'||key==='gun')return false;
+    if(key==='fire'||key==='gun'||key==='donut')return false;
     return dbFriendLegacyElementPresentation(key,target,enemySource);
   };
   const dbFriendElementProcBase=triggerElementEffect;
@@ -7988,7 +8009,6 @@
     getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
     getLifetimeStats:()=>ensureAlphaMeta(),
     getMetaDamageTaken:()=>meta.damageTaken||0,
-    getGoldSnapshot:currentGoldSnapshot,
     isGameStarted:()=>gameStarted,
     exportSave:dbInfoExportSave,
     importSave:dbInfoImportSave,

@@ -102,6 +102,19 @@ function makeHarness(options={}){
     assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
   }
   {
+    const h=makeHarness({enemies:[
+      {name:"First Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0},
+      {name:"Second Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0}
+    ]});
+    await turns.enemyTurn(false,0);
+    const turnTexts=h.calls.filter(call=>call[0]==="text"&&/First Enemy|Second Enemy/.test(call[1])).map(call=>call[1]);
+    assert.equal(turnTexts.length,2,"each living enemy must present its own turn instead of one pack summary");
+    assert.match(turnTexts[0],/First Enemy/);assert.doesNotMatch(turnTexts[0],/Second Enemy/);
+    assert.match(turnTexts[1],/Second Enemy/);assert.doesNotMatch(turnTexts[1],/First Enemy/);
+    assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980,980],"individual enemy presentation must retain the established per-turn dwell time");
+    assert.equal(h.player.hp,80,"individual presentation must not change incoming damage");
+  }
+  {
     const h=makeHarness({glassFortress:true,player:{defense:10}});
     await turns.enemyTurn(false,0);
     assert.ok(h.calls.some(call=>call[0]==="defense-seen"&&call[1]===20),"Glass Fortress must double Defense during incoming resolution");

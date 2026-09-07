@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.6
+
+## Beta 0.6.6.6 Devil Patch (#282)
+- Gun and Donut elemental proc presentation now uses the intended authored art; Gold is surfaced with the other board stats.
+- Enemy packs present each enemy action as its own turn message/dwell without changing combat math.
+- Heirloom rarity-name rendering, 200-Luck low-rarity suppression and one-time Double Dice unlock feedback are included.
+- Hell mode is activated from the Camp mountain and uses the supplied active-volcano image. Wraith alpha-art replacement remains a separate follow-up under #283.
+
 # Unreleased — Beta 0.6.6.5
 
 ## Beta 0.6.6.5 Guard resolution ownership (#40, #209, #279)

@@ -88,6 +88,11 @@ specialEnemies["last-equation"].hp = -1;
 assert.equal(enemiesApi.createSpecialRegistry()["last-equation"].hp, 520);
 rarityInfo.common.weight = -1;
 assert.equal(raritiesApi.createInfoRegistry().common.weight, 25);
+assert.equal(raritiesApi.luckFloor(1.99), "poor", "Luck below 200 must not receive the deterministic rarity floor");
+assert.equal(raritiesApi.luckFloor(2), "uncommon", "200 Luck must receive the Uncommon rarity floor");
+assert.equal(raritiesApi.promoteOrdinaryRarityForLuck("poor", 2), "uncommon", "200 Luck must remove Poor ordinary item outcomes");
+assert.equal(raritiesApi.promoteOrdinaryRarityForLuck("common", 2), "uncommon", "200 Luck must remove Common ordinary item outcomes");
+assert.deepEqual(Array.from(raritiesApi.filterPowerupPoolForLuck([{rarity:"poor"},{rarity:"common"},{rarity:"uncommon"},{rarity:"rare"}], 2)).map(entry=>entry.rarity), ["uncommon","rare"], "200 Luck must exclude Poor and Common powerup offers without consuming extra RNG");
 
 const classes = context.window.DiceboundClasses.createRegistry();
 const derivedTags = Object.fromEntries(Object.entries(classes).map(([id, value]) => [id, value.tags]));
