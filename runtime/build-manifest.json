@@ -74,7 +74,7 @@
     "js/ui/talent-tree.js": "0e17550e844063c01cf0ff91e272ab6dc52b8eb334b464ef07db3fedba003d26",
     "js/ui/prestige-moon.js": "ed00b3b0bc88b7dcb31a53462b196bf8c916361692a109ef0fdf17a3baf1cf18",
     "js/ui/achievements.js": "488d8f4cac6f19464f7223f5fb099ef2756f25e9154ae9efc65a739d21011718",
-    "js/ui/info-guide.js": "cb722f56b8450ba949f7d495e2c4b90089ac2cc523bbf3fdeadbeef000000000",
+    "js/ui/info-guide.js": "cb722f56b8450ba949f7d495e2c4b90089ac2cc523bbf3ddea3c9114ed9b9554",
     "js/dicebound.js": "97e0e69d30bc1565cad68ce0694e9dee12121661a02a56b51c9a21025a1feae6"
   },
   "reproducible": true,
