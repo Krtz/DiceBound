@@ -1,4 +1,8 @@
-# Unreleased — Beta 0.6.6.14
+# Unreleased — Beta 0.6.6.15
+
+## Beta 0.6.6.15 Invoker battle-art fix (#300)
+- Fixed the combat class-art compatibility resolver so it derives valid class IDs from the authoritative class registry instead of a stale hand-maintained allowlist. Invoker now resolves its approved full-body battle art rather than falling back to Ranger, and future registered classes inherit the same protection.
+- Added a registry-sync regression test covering canonical campsite, battle and marker art for every registered class. No gameplay, RNG, save, combat-math or progression behavior changes.
 
 ## Beta 0.6.6.14 Invoker class (#37)
 - Added the Invoker's FIFO Blue/Green/Red orb system: Defend forms Blue, Arcane Current forms Green, Elemental Lance forms Red, and only successful core actions can create an orb.
