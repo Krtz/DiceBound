@@ -2,6 +2,12 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.15
+
+### Invoker battle-art fix (#300)
+- Replaced the stale hand-maintained combat class-art allowlist with IDs derived from the authoritative class registry, fixing Invoker incorrectly falling back to Ranger in battle and preventing the same failure mode for future registered classes.
+- Added a focused class-art registry-sync guard; gameplay and RNG are unchanged.
+
 ## Beta 0.6.6.14
 
 ### Invoker class (#37)

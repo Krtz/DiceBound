@@ -5715,11 +5715,7 @@
   /* ========================================================================
      Beta 0.5.10 — authoritative class artwork
      ======================================================================== */
-  const DB054_CLASS_ART_IDS=Object.freeze([
-    'ranger','sorcerer','fighter','monk','clown','rouge','berserker','turtle','frog','d20',
-    'slime','vampire','ninja','ceo','merchant','cleric','paladin','beastmaster','rogue','bloodmage',
-    'summoner','pokemontrainer','alchemist','ouroboros','slimerouge'
-  ]);
+  const DB054_CLASS_ART_IDS=Object.freeze(Object.keys(CLASSES));
   function db054ClassArt(classId){
     const id=DB054_CLASS_ART_IDS.includes(String(classId))?String(classId):'ranger';
     const fromRegistry=window.DiceboundAssets?.resolveClassArt?.(id);
