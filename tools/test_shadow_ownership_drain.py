@@ -2,7 +2,14 @@ from pathlib import Path
 import re
 root=Path(__file__).resolve().parents[1]
 mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
-assert re.search(r'renderInfo\s*=\s*function\s*\([^)]*\)\s*\{\s*return\s+dbInfoGuide\.render\(\)',mono)
+for adapter in ['renderInfo', 'renderLifetimeStats', 'activateInfoTab', 'openInfo']:
+    assert len(re.findall(rf'function\s+{re.escape(adapter)}\s*\(', mono)) == 1, f'{adapter} must have one stable Info/Guide adapter'
+    assert not re.search(rf'(?m)^\s*{re.escape(adapter)}\s*=', mono), f'{adapter} reassignment chain returned'
+assert 'let dbInfoGuide=null;' in mono
+assert 'openInfoV15' not in mono
+assert 'if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);' in mono
+for retired_transfer in ['function exportSave(', 'function importSave(', 'exportSave=dbInfoExportSave;', 'importSave=dbInfoImportSave;']:
+    assert retired_transfer not in mono, f'retired Info save-transfer implementation returned: {retired_transfer}'
 for name in [
     'renderInfoBase','renderInfoV13','renderInfoV14Base','renderInfoV15Patch','renderInfoV16Base','renderInfoV18Base','renderInfoV19Base','renderInfoV24Base','renderInfoV24PresentationBase','renderInfoV27Base',
     'buildAISim','DiceboundAITest','buildCareerHarness','DiceboundCareerTestLegacy','buildDiceboundHumanHarness235','DiceboundCareerTest','v235HumanHarness','DB235','DiceboundModules','v235ScaleEnemyBase','v235UpdateMetaBase','feedActivePetV26Base','v24MigratePrestigeHeirloomPurchases','prestigeHeirloomPurchasesMigrated','legacy_storage',

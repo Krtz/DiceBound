@@ -38,12 +38,17 @@ assert.equal(stats.gold,undefined,"current-run Gold gain belongs in the visible 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
 const indexHtml=fs.readFileSync(path.join(root,"runtime/index.html"),"utf8");
 for(const adapter of [
-  "renderInfo=function(){return dbInfoGuide.render();};",
-  "renderLifetimeStats=function(){return dbInfoGuide.renderStats();};",
-  "activateInfoTab=function(name='guide'){return dbInfoGuide.activateTab(name);};",
-  "openInfo=function(){return dbInfoGuide.open();};"
+  "let dbInfoGuide=null;",
+  "function renderInfo(){return dbInfoGuide?.render();}",
+  "function renderLifetimeStats(){return dbInfoGuide?.renderStats();}",
+  "function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}",
+  "function openInfo(){return dbInfoGuide?.open();}"
 ])assert.ok(monolith.includes(adapter),`missing thin Info/Guide adapter: ${adapter}`);
-for(const retiredLayer of ["db060RenderInfoBase","renderInfoV28Base"])assert.ok(!monolith.includes(retiredLayer),`retired final Info/Guide layer remains: ${retiredLayer}`);
+for(const retiredLayer of ["db060RenderInfoBase","renderInfoV28Base","openInfoV15"])assert.ok(!monolith.includes(retiredLayer),`retired final Info/Guide layer remains: ${retiredLayer}`);
+for(const adapter of ["renderInfo","renderLifetimeStats","activateInfoTab","openInfo"])assert.ok(!new RegExp(`^\\s*${adapter}\\s*=`,"m").test(monolith),`retired ${adapter} reassignment remains`);
+assert.ok(monolith.includes('if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);'),"first-run Guide preparation must not capture an obsolete openInfo wrapper");
+for(const retiredTransfer of ["function exportSave(","function importSave(","exportSave=dbInfoExportSave;","importSave=dbInfoImportSave;"])assert.ok(!monolith.includes(retiredTransfer),`retired Info save-transfer implementation remains: ${retiredTransfer}`);
+for(const injectedCallback of ["exportSave:dbInfoExportSave,","importSave:dbInfoImportSave,"])assert.ok(monolith.includes(injectedCallback),`Info/Guide owner is missing ${injectedCallback}`);
 for(const legacy of ["infoCloseBtn","exportSaveBtn","importSaveBtn"])assert.ok(!fs.readFileSync(path.join(root,"runtime/index.html"),"utf8").includes(`id=\"${legacy}\"`),`static legacy Info markup remains: ${legacy}`);
 assert.match(indexHtml,/id="goldGainStat"/,"current-run Gold gain must be a real visible board HUD stat");
 assert.match(indexHtml,/id="goldGainText"/,"Gold gain HUD stat needs a dedicated value node");
