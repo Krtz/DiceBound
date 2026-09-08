@@ -1,3 +1,10 @@
+# Unreleased — Beta 0.6.6.16
+
+## Beta 0.6.6.16 Mana / Occult Action Resolution ownership (#40, #209, #302)
+- `combat/mana-action-resolution.js` now owns Mana gain plus generator and spender action orchestration for Sorcerer, Vampire, Rouge, Merchant and Summoner, while Invoker continues to delegate its class-owned orb/spell behavior.
+- The historical Summoner, Mana-Powerup, Rouge and career wrapper ladder is retired from `dicebound.js`; existing RNG order, spend/order quirks, targeting, Arcane Overflow behavior and career counting are preserved exactly.
+- Basic Attack, Pet damage, generic elemental/healing, Invoker recipes, Victory, enemy-response internals, saves/checkpoints and gameplay/balance remain in their existing owners.
+
 # Unreleased — Beta 0.6.6.15
 
 ## Beta 0.6.6.15 Invoker battle-art fix (#300)

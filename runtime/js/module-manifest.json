@@ -33,6 +33,7 @@
     "combat-vfx",
     "classes-registry",
     "classes-invoker",
+    "combat-mana-action-resolution",
     "progression-class-unlock-rules",
     "progression-class-unlock-feedback",
     "pets-registry",
@@ -400,6 +401,20 @@
       ],
       "provides": [
         "DiceboundInvoker"
+      ]
+    },
+    {
+      "id": "combat-mana-action-resolution",
+      "path": "js/combat/mana-action-resolution.js",
+      "domain": "combat/mana-and-occult-player-action-resolution",
+      "status": "extracted",
+      "requires": [
+        "combat-attack-action-resolution",
+        "combat-pet-turn-resolution",
+        "classes-invoker"
+      ],
+      "provides": [
+        "DiceboundCombatManaActionResolution"
       ]
     },
     {
