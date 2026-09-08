@@ -2065,21 +2065,10 @@
   };
 
   // ---- occult attacks --------------------------------------------------------
-  function manaGain(amount){if(!player.maxMana)return 0;const before=player.mana;player.mana=clamp(player.mana+amount,0,player.maxMana);return player.mana-before;}
-  async function occultChannelAttack(){if(combatBusy||!currentEnemy)return;const cfg=OCCULT_SPELLS[classIdentityId()];if(!cfg)return playerAttack();const invoker=classIdentityActive("invoker")&&dbInvoker?.active();const gained=manaGain(cfg.gain*(invoker?dbInvoker.generatorManaMultiplier():1));player._occultChanneling=true;player._occultChannelMultiplier=invoker ? .98 : 0;player._invokerPendingGenerator=!!invoker;identityFlash(`${cfg.builderIcon} +${gained} Mana`);try{await playerAttack();}finally{player._occultChanneling=false;player._occultChannelMultiplier=0;player._invokerPendingGenerator=false;}updateCombatUI();}
-  async function occultSpellAttack(){
-    if(combatBusy||!currentEnemy)return;const cfg=OCCULT_SPELLS[classIdentityId()];if(!cfg||player.mana<cfg.cost)return;combatBusy=true;player.guardCooldown=0;player.mana-=cfg.cost;player.combatActionCount++;
-    if(classIdentityActive("invoker")&&dbInvoker?.active()){combatBusy=false;player.mana+=cfg.cost;player.combatActionCount--;return dbInvoker.elementalLance();}
-    const target=currentEnemy;await animateClassAttack("crit");let damage=0,extra="";
-    if(classIdentityActive("sorcerer")){const echoScale=1+Math.max(0,Number(player.doubleStrike)||0)*.5;damage=Math.round((player.attack*2.15+rand(4,9))*echoScale);const key=pick(DIBO_ELEMENTS),er=triggerElementEffect(key,target,{forced:true,source:"Arcane Lance"});player._arcaneLanceElementDamage=Math.max(0,Number(er?.totalDamage)||0);if(er)extra=` ${er.message}`;}
-    else if(classIdentityActive("vampire")){damage=Math.round(player.attack*1.95+rand(3,7));}
-    else if(classIdentityActive("rouge")){const tiers=rollTieredProc(player.crit+.35);damage=Math.round((player.attack*1.85+rand(3,8))*(1+tiers));if(livingEnemies().length>1){const splash=Math.max(1,Math.round(damage*.28));livingEnemies().filter(e=>e!==target).forEach(e=>damageEnemy(e,splash));extra=` Scarlet paint splashes the rest of the pack for ${splash} each.`;}}
-    else if(classIdentityActive("merchant")){damage=Math.round(player.attack*1.55+Math.min(220,player.gold*.12)+rand(4,10));extra=` The ledger converts ${Math.min(220,Math.round(player.gold*.12))} notional gold-value into violence without spending it.`;}
-    damage=Math.round(damage*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(target,damage);
-    if(classIdentityActive("sorcerer")){const drainDamage=dealt+Math.max(0,Number(player._arcaneLanceElementDamage)||0),heal=player.lifeSteal>0&&drainDamage>0?healPlayer(Math.max(1,Math.floor(drainDamage*player.lifeSteal))):0;player._arcaneLanceElementDamage=0;if(heal)extra+=` Arcane Lance lifesteal restores ${heal} HP.`;}
-    if(classIdentityActive("vampire")){const h=healPlayer(Math.max(1,Math.floor(dealt*.30)));extra+=` Grave Lance drains ${h} HP.`;}
-    chargeUltimate(Math.max(8,Math.round(player.ultimateAttackGain*.65)));setCombatText(`${cfg.spellIcon} ${cfg.spell} spends ${cfg.cost} Mana and deals ${dealt} damage.${extra}`);sfx.crit();updateCombatUI();await delay(720);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  }
+  // Mana / occult action ownership lives in combat/mana-action-resolution.js.
+  function manaGain(amount){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.manaGain(amount);}
+  async function occultChannelAttack(...args){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.occultChannelAttack.apply(this,args);}
+  async function occultSpellAttack(...args){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.occultSpellAttack.apply(this,args);}
 
   async function bloodmageBloodletting(){if(combatBusy||!currentEnemy)return;const oldLS=player.lifeSteal;player.lifeSteal+=.12;identityFlash("🩸 Bloodletting restores fuel");try{await playerAttack();}finally{player.lifeSteal=oldLS;}updateCombatUI();}
 
@@ -2335,11 +2324,7 @@
   function activeTrainerPetId(){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.activeTrainerPetId();}
   async function maybePetElementProc(id,target,source="Companion Spark"){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.maybePetElementProc(id,target,source);}
   async function trainerStrike(id,target,scale=1,label="attacks"){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.trainerStrike(id,target,scale,label);}
-  async function summonerConjure(){if(combatBusy||!currentEnemy||!classIdentityActive("summoner"))return;const cfg=OCCULT_SPELLS.summoner;if(player.mana<cfg.cost)return;combatBusy=true;player.mana-=cfg.cost;player.combatActionCount++;player.summonerSpirits=player.summonerSpirits||[];const cap=player.summonerCap||3,candidates=Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked&&!player.summonerSpirits.includes(id)),pool=candidates.length?candidates:Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked),id=pool.length?pick(pool):"neutral";if(player.summonerSpirits.length>=cap)player.summonerSpirits.shift();player.summonerSpirits.push(id);identityFlash(`🐾 Conjured ${PETS[id].name}`);setCombatText(`📖 You spend ${cfg.cost} Mana to conjure ${PETS[id].icon} ${PETS[id].name}. ${player.summonerSpirits.length}/${cap} spirit slots are active.`);updateCombatUI();await delay(520);await resolveEnemyResponse(false);}
-  const occultChannelAttackV15Patch=occultChannelAttack;
-  occultChannelAttack=async function(){if(!classIdentityActive("summoner")||!(player.summonerManaBonus||0))return occultChannelAttackV15Patch();const cfg=OCCULT_SPELLS.summoner,old=cfg.gain;cfg.gain=old+(player.summonerManaBonus||0);try{return await occultChannelAttackV15Patch();}finally{cfg.gain=old;}};
-  const occultSpellAttackV15Patch=occultSpellAttack;
-  occultSpellAttack=async function(){if(classIdentityActive("summoner"))return summonerConjure();return occultSpellAttackV15Patch();};
+  async function summonerConjure(...args){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.summonerConjure.apply(this,args);}
   function cycleTrainerPokemon(){if(!classIdentityActive("pokemontrainer")||combatBusy)return;const roster=player.trainerRoster||[];if(!roster.length)return;player.trainerActiveIndex=((player.trainerActiveIndex||0)+1)%roster.length;const id=activeTrainerPetId();identityFlash(`${PETS[id].icon} Go, ${PETS[id].name}!`);setCombatText(`🧢 You switch to ${PETS[id].icon} ${PETS[id].name}. Switching does not spend your turn.`);updateCombatUI();}
   $("specialAttackBtn")?.addEventListener("click",e=>{if(classIdentityActive("pokemontrainer")){e.preventDefault();e.stopImmediatePropagation();cycleTrainerPokemon();}},true);
 
@@ -2586,8 +2571,6 @@
     {id:"mana_quick_channel",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"rare",icon:"⚡🔮",name:"Quick Channel",desc:"Mana-building attacks generate +8 Mana.",tags:["mana","tempo"],apply(){player.manaBuilderBonus=(player.manaBuilderBonus||0)+8;}},
     {id:"mana_overflow",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"epic",icon:"🌊🔮",name:"Arcane Overflow",desc:"+35 max Mana. Spending Mana grants 8 Ultimate charge.",tags:["mana","ultimate"],apply(){player.maxMana=(player.maxMana||0)+35;player.mana=Math.min(player.maxMana,(player.mana||0)+35);player.manaSpendUltimate=(player.manaSpendUltimate||0)+8;}}
   ].forEach(u=>{if(!upgrades.some(x=>x.id===u.id))upgrades.push(u);});
-  const occultChannelAttackV17Base=occultChannelAttack;occultChannelAttack=async function(){const cfg=OCCULT_SPELLS[classIdentityId()],bonus=player.manaBuilderBonus||0;if(!cfg||!bonus)return occultChannelAttackV17Base();const old=cfg.gain;cfg.gain+=bonus;try{return await occultChannelAttackV17Base();}finally{cfg.gain=old;}};
-  const occultSpellAttackV17Base=occultSpellAttack;occultSpellAttack=async function(){const before=player.mana||0,r=await occultSpellAttackV17Base();if(player.manaSpendUltimate&&player.mana<before){player.ultimateCharge=clamp(player.ultimateCharge+player.manaSpendUltimate,0,100);updateCombatUI();}return r;};
 
   // ---- Summoner spirits become visible in combat --------------------------
 
@@ -2596,19 +2579,6 @@
 
 
   // ---- v1.7 final consistency fixes --------------------------------------
-  // Mana-spend augments also apply to the Summoner's bespoke Conjure action.
-  const summonerConjureV17ManaBase=summonerConjure;
-  summonerConjure=async function(){
-    const beforeMana=classIdentityActive("summoner")?(player.mana||0):0;
-    const out=await summonerConjureV17ManaBase();
-    if(classIdentityActive("summoner")&&beforeMana>(player.mana||0)&&(player.manaSpendUltimate||0)){
-      player.ultimateCharge=clamp((player.ultimateCharge||0)+player.manaSpendUltimate,0,100);
-      addCombatHistory(`✨ Arcane Overflow converts the Mana spend into +${player.manaSpendUltimate} Ultimate.`);
-      updateCombatUI();
-    }
-    return out;
-  };
-
   // Status-dot rendering itself knows how to collapse double-digit poison counts.
   statusDotsHTML=function(barriers=0,poison=0,affinity=null){
     let html="";
@@ -2801,21 +2771,6 @@
     sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   };
 
-
-  // Conjure now immediately rallies the whole companion circle. The normal
-  // active companion and every summoned spirit attack once with a modest
-  // temporary empowerment before the enemy receives its response.
-  summonerConjure=async function(){
-    if(combatBusy||!currentEnemy||!classIdentityActive("summoner"))return;const cfg=OCCULT_SPELLS.summoner;if(player.mana<cfg.cost)return;
-    combatBusy=true;const beforeMana=player.mana;player.mana-=cfg.cost;player.combatActionCount++;player.summonerSpirits=player.summonerSpirits||[];
-    const cap=player.summonerCap||3,candidates=Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked&&!player.summonerSpirits.includes(id)),pool=candidates.length?candidates:Object.keys(PETS).filter(id=>meta.pets?.[id]?.unlocked),id=pool.length?pick(pool):"neutral";
-    if(player.summonerSpirits.length>=cap)player.summonerSpirits.shift();player.summonerSpirits.push(id);identityFlash(`🐾 Conjured ${PETS[id].name}`);
-    if(player.manaSpendUltimate&&beforeMana>player.mana){player.ultimateCharge=clamp(player.ultimateCharge+player.manaSpendUltimate,0,100);addCombatHistory(`✨ Arcane Overflow converts the Mana spend into +${player.manaSpendUltimate} Ultimate.`);}
-    setCombatText(`📖 Conjure calls ${PETS[id].icon} ${PETS[id].name}; the entire companion circle surges forward with empowered attacks.`);updateCombatUI();await delay(300);
-    const oldPet=player.petDamageBonus||0,oldSpirit=player.summonerSpiritScale||1;player.petDamageBonus=oldPet+2;player.summonerSpiritScale=oldSpirit*1.20;
-    try{await petTurn();}finally{player.petDamageBonus=oldPet;player.summonerSpiritScale=oldSpirit;}
-    if(!livingEnemies().length)return winCombat();await delay(240);await resolveEnemyResponse(false);
-  };
 
   // ---- Endless Form support hooks ------------------------------------------
 
@@ -3271,18 +3226,6 @@
   checkDynamicClassUnlocks=function(){checkDynamicClassUnlocksV110();if((meta.stats?.potionsUsed||0)>=alchemistRequirement)unlockClass("alchemist");};
 
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"omega",mythical:true,bloodmageStone:true,icon:"🜂",name:"Philosopher's Stone",uniqueEffect:"Scarlet Transmutation: healing beyond full grants +2 attack for the rest of the battle and blood-fuelled abilities cost less life.",bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
-
-  const occultSpellAttackV110Base=occultSpellAttack;
-  occultSpellAttack=async function(){
-    if(player.classId!=="rouge")return occultSpellAttackV110Base();
-    if(combatBusy||!currentEnemy)return;const cfg=OCCULT_SPELLS[player.classId];if(!cfg||player.mana<cfg.cost)return;combatBusy=true;player.guardCooldown=0;player.mana-=cfg.cost;player.combatActionCount++;
-    const target=currentEnemy;await animateClassAttack("crit");let damage=0,extra="";
-    const tiers=rollTieredProc(player.crit+.35);damage=Math.round((player.attack*1.85+rand(3,8))*(1+tiers));
-    if(livingEnemies().length>1){const splash=Math.max(1,Math.round(damage*.28));livingEnemies().filter(e=>e!==target).forEach(e=>damageEnemy(e,splash));extra=` Scarlet paint splashes the rest of the pack for ${splash} each.`;}
-    damage=Math.round(damage*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(target,damage);
-    const heal=Math.max(1,Math.floor(dealt*Math.max(0,player.lifeSteal)*2));if(heal>0){const restored=healPlayer(heal);extra+=` Scarlet Hex drinks back ${restored} HP.`;}
-    chargeUltimate(Math.max(8,Math.round(player.ultimateAttackGain*.65)));setCombatText(`${cfg.spellIcon} ${cfg.spell} spends ${cfg.cost} Mana and deals ${dealt} damage.${extra}`);sfx.crit();updateCombatUI();await delay(720);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  };
 
   const debugActionV110Base=debugAction;
   debugAction=function(action){
@@ -6562,8 +6505,6 @@
   }
   const db0631CheckDynamicBase=checkDynamicClassUnlocks;
   checkDynamicClassUnlocks=function(...args){const changed=db0631RecordObservedProgress(),result=db0631CheckDynamicBase.apply(this,args);['pokemontrainer','rogue','merchant','slime','vampire','invoker','dragoon'].forEach(id=>{if(CLASSES[id]&&db0631RuleEligible(id))unlockClass(id);});if(changed)saveMeta();return result;};
-  const db0631OccultSpellAttackBase=occultSpellAttack;
-  occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent&&!classIdentityActive("invoker")){meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};
   if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
   if(CLASSES.rogue)CLASSES.rogue.unlock='Hold 5,000 gold at one time and defeat the Board 3 miniboss';
   if(CLASSES.merchant)CLASSES.merchant.unlock='Defeat the Road Merchant secret boss once';
@@ -7500,6 +7441,51 @@
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown()
+  });
+
+  const dbCombatManaActionOwner=window.DiceboundCombatManaActionResolution;
+  if(!dbCombatManaActionOwner)throw new Error('DiceBound requires the combat Mana action owner before dicebound.js');
+  const dbCombatManaActionResolution=dbCombatManaActionOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    spellFor:id=>OCCULT_SPELLS[id],
+    classIdentityId:()=>classIdentityId(),
+    isClassActive:id=>classIdentityActive(id),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    playerAttack:(...args)=>playerAttack(...args),
+    invokerActive:()=>!!dbInvoker?.active(),
+    invokerGeneratorManaMultiplier:()=>dbInvoker?.generatorManaMultiplier?.()||1,
+    invokerElementalLance:()=>dbInvoker?.elementalLance(),
+    identityFlash:text=>identityFlash(text),
+    updateCombatUI:()=>updateCombatUI(),
+    animateClassAttack:mode=>animateClassAttack(mode),
+    rand:(min,max)=>rand(min,max),
+    pick:values=>pick(values),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    coreElementIds:()=>DIBO_ELEMENTS,
+    triggerElementEffect:(...args)=>triggerElementEffect(...args),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    healPlayer:amount=>healPlayer(amount),
+    getSetDamageBonus:()=>v19SetDamageBonus(),
+    getEncounterLead:()=>currentEncounterLead,
+    chargeUltimate:amount=>chargeUltimate(amount),
+    setCombatText:text=>setCombatText(text),
+    critSfx:()=>sfx.crit(),
+    delay:ms=>delay(ms),
+    winCombat:(...args)=>winCombat(...args),
+    setCurrentEnemy:index=>setCurrentEnemy(index),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    getPets:()=>PETS,
+    getMeta:()=>meta,
+    petTurn:(...args)=>petTurn(...args),
+    addCombatHistory:text=>addCombatHistory(text),
+    recordManaSpenderCast:()=>{meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);},
+    saveMeta:()=>saveMeta(),
+    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks()
   });
 
   const dbCombatGuardOwner=window.DiceboundCombatGuardResolution;

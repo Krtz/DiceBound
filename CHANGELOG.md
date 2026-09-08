@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.16
+
+### Mana / Occult Action Resolution ownership (#40, #209, #302)
+- Extracted Mana gain, generator and spender action orchestration into `runtime/js/combat/mana-action-resolution.js`, including Sorcerer, Vampire, Rouge, Merchant and Summoner action formulas while preserving Invoker delegation.
+- Retired the historical Summoner/Mana-powerup/Rouge/career wrapper ladder with exact RNG, spend, targeting, Overflow, career-count and temporary-state ordering preserved, including shipped compatibility quirks.
+- Basic Attack, Pet damage, generic elemental/healing, Invoker recipes, Victory, enemy-response internals, saves/checkpoints and gameplay/balance remain in their existing owners.
+
 ## Beta 0.6.6.15
 
 ### Invoker battle-art fix (#300)

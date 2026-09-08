@@ -1063,6 +1063,59 @@ def main() -> int:
             if re.search(rf"(?<![\w$]){re.escape(symbol)}(?![\w$])", monolith_source):
                 errors.append(f"retired combat Victory-resolution wrapper remains in dicebound.js: {symbol}")
 
+    mana_action_module = by_id.get("combat-mana-action-resolution")
+    mana_action_owner_ok = False
+    if not mana_action_module:
+        errors.append("Combat Mana action owner combat-mana-action-resolution is missing from the runtime manifest")
+    else:
+        mana_action_owner_ok = (
+            mana_action_module.get("path") == "js/combat/mana-action-resolution.js"
+            and {"combat-attack-action-resolution", "combat-pet-turn-resolution", "classes-invoker"}.issubset(set(mana_action_module.get("requires") or []))
+            and "DiceboundCombatManaActionResolution" in (mana_action_module.get("provides") or [])
+            and position.get("combat-mana-action-resolution", -1) < position.get(str(monolith_id), -1)
+        )
+        if not mana_action_owner_ok:
+            errors.append("combat-mana-action-resolution must provide its owner, declare Attack/Pet/Invoker dependencies and load before the monolith")
+    mana_action_source = sources.get("combat-mana-action-resolution", "")
+    for required_mana_behavior in [
+        'const OWNER = "combat/mana-action-resolution"',
+        "function manaGain(",
+        "function baseChannelAttack(",
+        "function summonerConjure(",
+        "function baseSpellAttack(",
+        "function rougeFinalSpellLayer(",
+        "function occultSpellAttack(",
+        "invokerElementalLance",
+        "recordManaSpenderCast",
+    ]:
+        if required_mana_behavior not in mana_action_source:
+            errors.append("Combat Mana action owner is missing required behavior: " + required_mana_behavior)
+    if monolith_source:
+        for expected_mana_adapter in [
+            "const dbCombatManaActionOwner=window.DiceboundCombatManaActionResolution;",
+            "function manaGain(amount){if(!dbCombatManaActionResolution)",
+            "async function occultChannelAttack(...args){if(!dbCombatManaActionResolution)",
+            "async function occultSpellAttack(...args){if(!dbCombatManaActionResolution)",
+            "async function summonerConjure(...args){if(!dbCombatManaActionResolution)",
+        ]:
+            if expected_mana_adapter not in monolith_source:
+                errors.append("dicebound.js must retain only the thin Mana action composition adapters")
+        for retired_mana_layer in [
+            "occultChannelAttackV15Patch",
+            "occultSpellAttackV15Patch",
+            "occultChannelAttackV17Base",
+            "occultSpellAttackV17Base",
+            "summonerConjureV17ManaBase",
+            "occultSpellAttackV110Base",
+            "db0631OccultSpellAttackBase",
+            "Conjure now immediately rallies the whole companion circle",
+        ]:
+            if retired_mana_layer in monolith_source:
+                errors.append("retired Mana action wrapper/implementation remains in dicebound.js: " + retired_mana_layer)
+        for reassignment in ["occultChannelAttack", "occultSpellAttack", "summonerConjure"]:
+            if re.search(rf"(?m)^\s*{re.escape(reassignment)}\s*=", monolith_source):
+                errors.append(f"dicebound.js retains retired {reassignment} reassignment after Mana action extraction")
+
     planned_domains = [str(x) for x in manifest.get("plannedDomains") or []]
     if len(planned_domains) != len(set(planned_domains)):
         errors.append("plannedDomains contains duplicates")
