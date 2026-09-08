@@ -134,6 +134,12 @@
     "characters/classes/campsite/dragoon.png",
     "characters/classes/battle/dragoon.png",
     "characters/classes/markers/dragoon.png",
+    "characters/classes/campsite/invoker.png",
+    "characters/classes/battle/invoker.png",
+    "characters/classes/markers/invoker.png",
+    "characters/classes/invoker/orb-system-emblem.png",
+    "characters/classes/invoker/tri-element-projectile.png",
+    "characters/classes/invoker/triad-grimoire-emblem.png",
     "characters/random-class/campsite/random-class.png",
     "characters/pets/portraits/neutral.png",
     "characters/pets/portraits/fire.png",
@@ -363,8 +369,8 @@
     }
   ],
   "counts": {
-    "canonicalRegistryFiles": 244,
-    "implementedCurrent": 243,
+    "canonicalRegistryFiles": 250,
+    "implementedCurrent": 249,
     "retiredSourceAssets": 1,
     "powerupArtKeys": 22,
     "powerupRenderedNameMappings": 28,

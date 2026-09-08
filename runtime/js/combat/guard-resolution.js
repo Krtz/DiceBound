@@ -63,6 +63,9 @@
     }
     const pants = rt.applyMythicPantsPulse();
     if (pants) notes.push(pants);
+    // The Blue Invoker orb belongs to the response created by this successful
+    // Guard, so this callback intentionally precedes resolveEnemyResponse().
+    if (typeof rt.afterPlayerAction === "function") rt.afterPlayerAction("guard");
     rt.updateCombatUI();
     rt.setCombatText(`You brace yourself and ${notes.join(", ")}.`);
     rt.tone(260, .12, "triangle", .03, 180);
@@ -143,7 +146,9 @@
 
   async function v18ManaGuardAction(...args) {
     const rt = requireRuntime(), p = player();
-    if (rt.classHasMechanic("mana") && !rt.getCombatBusy() && rt.getCurrentEnemy()) {
+    // Invoker's Guard is intentionally its Blue-orb action, not the inherited
+    // generic Mana-guard refill used by the older mana identities.
+    if (rt.classHasMechanic("mana") && !rt.isClassActive("invoker") && !rt.getCombatBusy() && rt.getCurrentEnemy()) {
       const gained = rt.manaGain(p.guardManaGain || 6);
       if (gained) {
         rt.addCombatHistory(`🔷 Guard channels +${gained} Mana.`);

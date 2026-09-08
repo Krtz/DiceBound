@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.6.13
+# Unreleased — Beta 0.6.6.14
+
+## Beta 0.6.6.14 Invoker class (#37)
+- Added the Invoker's FIFO Blue/Green/Red orb system: Defend forms Blue, Arcane Current forms Green, Elemental Lance forms Red, and only successful core actions can create an orb.
+- Invoke now resolves the ten authored formulae through `classes/invoker.js`; the battle UI shows the active three-orb sequence and recipe preview, and Info includes the unlocked Formula Codex.
+- Imported the six approved semantic Invoker assets. Generic combat resolution, save/checkpoint ownership, RNG and progression remain in their existing owners.
 
 ## Beta 0.6.6.13 Elemental Proc / Effect resolution ownership (#40, #209, #297)
 - `combat/element-resolution.js` now owns player/enemy elemental mechanics, affinity/weakness math, Radiation, Coffee/Haste safeguards, elemental progress and Legendary element chaining.

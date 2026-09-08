@@ -36,7 +36,8 @@
     const chaos = await rt.rollD20Chaos("attack");
     rt.updateCombatUI();
     const firstTarget = currentEnemy();
-    const echoes = rt.rollTieredProc(p.doubleStrike) + (chaos.extraEcho || 0);
+    const actionBonus = typeof rt.actionBonuses === "function" ? rt.actionBonuses() : null;
+    const echoes = rt.rollTieredProc(p.doubleStrike + (actionBonus?.echo || 0)) + (chaos.extraEcho || 0);
     let totalCrit = 0;
     const base = await rt.performStrike(firstTarget, { echo: false, chaos });
     totalCrit += base.crit;
@@ -49,6 +50,9 @@
     rt.chargeUltimate(p.ultimateAttackGain + p.critUltimateGain * totalCrit);
     const pants = rt.applyMythicPantsPulse();
     if (pants) rt.setCombatText(pants);
+    // A class action's post-state is committed after every strike/Echo but
+    // before the ordinary enemy response.
+    if (typeof rt.afterPlayerAction === "function") rt.afterPlayerAction("attack");
     rt.updateCombatUI();
     if (!livingEnemies().length) return rt.winCombat();
     const enemies = rt.getCurrentEnemies();

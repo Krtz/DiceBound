@@ -83,6 +83,9 @@
     const pants = rt.applyMythicPantsPulse();
     const dose = drinks > 1 ? " Double Dose drinks a second potion before the enemy can respond." : "";
     rt.setCombatText(`You drink ${drinks > 1 ? drinks + " potions" : "a potion"} and restore ${totalHeal} HP.${dose}${chaosNotes.length ? " " + chaosNotes.join(" ") : ""}${pants ? ` ${pants}` : ""}`);
+    // A Potion is a successful player action, but never forms an Invoker orb.
+    // The optional hook keeps temporary class effects inside their own owner.
+    rt.afterPlayerAction?.("potion");
     rt.updateCombatUI();
     await rt.delay(630);
     if (!livingEnemies().length) return rt.winCombat();

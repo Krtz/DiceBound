@@ -11,7 +11,7 @@
     boardBackgrounds:`${ROOT}/board/backgrounds`,boardEventTiles:`${ROOT}/board/tiles/events`,combatBackgrounds:`${ROOT}/combat/backgrounds`,combatEffects:`${ROOT}/combat/effects`,uiCurrencies:`${ROOT}/ui/currencies`,installerIcons:`${ROOT}/installer/icons`,
     audio:`${ROOT}/audio`,audioCustom:`${ROOT}/audio/custom`
   });
-  const CLASSES=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","ouroboros","slimerouge","dragoon"];
+  const CLASSES=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","ouroboros","slimerouge","dragoon","invoker"];
   const PETS=["neutral","fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation"];
   const MINI=["ogre-roadwarden","titan-guard","paradox-warden","crownless-auditor","ringbound-chancellor","abyssal-custodian"];
   const BOSS=["ancient-road-dragon","astral-devourer-dragon","nullstar-hydra","crown-eater","ring-tyrant","last-equation"];
@@ -20,6 +20,7 @@
   // campFigure. Existing chooser/reveal cards retain their campsite/headshot
   // semantic, so the Camp scene cannot silently substitute a portrait.
   const classes=Object.fromEntries(CLASSES.map(id=>[id,Object.freeze({campsite:`${paths.classCampsite}/${id}.png`,headshot:`${paths.classCampsite}/${id}.png`,campFigure:`${paths.classBattle}/${id}.png`,battle:`${paths.classBattle}/${id}.png`,marker:`${paths.classMarkers}/${id}.png`,alt:id})]));
+  classes.invoker=Object.freeze({...classes.invoker,orbSystem:`${ROOT}/characters/classes/invoker/orb-system-emblem.png`,projectile:`${ROOT}/characters/classes/invoker/tri-element-projectile.png`,grimoire:`${ROOT}/characters/classes/invoker/triad-grimoire-emblem.png`,alt:"Invoker"});
   // The currently approved Pet finals are shared between portrait and battle
   // contexts. Keep both semantic paths explicit so combat never falls back to
   // a UI-context filename when dedicated battle variants arrive later.
@@ -41,7 +42,7 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:21,
+  const manifest=Object.freeze({version:22,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.

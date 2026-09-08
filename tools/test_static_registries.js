@@ -96,7 +96,8 @@ assert.deepEqual(Array.from(raritiesApi.filterPowerupPoolForLuck([{rarity:"poor"
 
 const classes = context.window.DiceboundClasses.createRegistry();
 const derivedTags = Object.fromEntries(Object.entries(classes).map(([id, value]) => [id, value.tags]));
-snapshot(derivedTags, 1172, "4fa5e8944fd9078219a946b16b853a9e93107df1db538c2898f939d9bcd6fa49", "derived class tags");
+assert.deepEqual(Array.from(derivedTags.invoker), ["ranged", "occult", "mana", "elemental", "combo"]);
+snapshot(derivedTags, 1229, "ff813f56e685a877e9b4e4e6cd04055f117deca1750bb1f5136863447b22a274", "derived class tags");
 
 const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js");
 const monolith = fs.readFileSync(monolithPath, "utf8");

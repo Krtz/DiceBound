@@ -32,6 +32,7 @@
     "combat-turn-resolution",
     "combat-vfx",
     "classes-registry",
+    "classes-invoker",
     "progression-class-unlock-rules",
     "progression-class-unlock-feedback",
     "pets-registry",
@@ -386,6 +387,19 @@
       "requires": [],
       "provides": [
         "DiceboundClasses"
+      ]
+    },
+    {
+      "id": "classes-invoker",
+      "path": "js/classes/invoker.js",
+      "domain": "classes/invoker-orb-state-recipes-and-spell-resolution",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "combat-element-resolution"
+      ],
+      "provides": [
+        "DiceboundInvoker"
       ]
     },
     {
@@ -772,6 +786,7 @@
       "requires": [
         "assets",
         "classes-registry",
+        "classes-invoker",
         "progression-achievements",
         "ui-camp"
       ],

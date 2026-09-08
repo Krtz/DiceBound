@@ -51,13 +51,14 @@
     const weapon = p.equipment?.weapon;
     if (weapon?.merchantWeapon) damage += Math.floor(p.gold * (weapon.merchantWeaponScale || 1));
     if (livingEnemies().length >= 2 && p.packDamageBonus) damage = Math.round(damage * (1 + p.packDamageBonus));
-    damage = Math.round(damage * (chaos?.mult || 1) * (1 + p.damageBonus + rt.setDamageBonus()));
+    const classMultiplier = typeof rt.outgoingDamageMultiplier === "function" ? rt.outgoingDamageMultiplier() : 1;
+    damage = Math.round(damage * (chaos?.mult || 1) * (1 + p.damageBonus + rt.setDamageBonus()) * classMultiplier);
     return { damage, burst };
   }
 
   function v13StrikeBaseDamage(echo = false, chaos = null) {
     const rt = requireRuntime(), p = player(), result = baseStrikeDamage(echo, chaos);
-    if (p._occultChanneling) result.damage = Math.max(1, Math.round(result.damage * .82));
+    if (p._occultChanneling) result.damage = Math.max(1, Math.round(result.damage * (p._occultChannelMultiplier || .82)));
     if (rt.isClassActive("clown") && p.clownPieReady && !echo) {
       result.damage = Math.round(result.damage * 1.55);
       p.clownPieReady = false;
@@ -119,6 +120,7 @@
     if (critTiers) damage *= 1 + critTiers;
 
     let dealt = rt.damageEnemy(resolvedTarget, damage), executed = false;
+    if (typeof rt.afterPlayerHit === "function") rt.afterPlayerHit(resolvedTarget, { echo });
     if (resolvedTarget.hp > 0 && resolvedTarget.hp / resolvedTarget.maxHp <= .2 && p.execute) {
       dealt += resolvedTarget.hp;
       resolvedTarget.hp = 0;

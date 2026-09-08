@@ -5,7 +5,7 @@ import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
-EXPECTED={'classes': 26, 'pets': 13, 'pet_battle_assets': 13, 'normal_enemies': 11, 'normal_enemy_battle_assets': 27, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 12, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 290, 'combat_effect_assets': 33, 'equipment_assets': 27}
+EXPECTED={'classes': 27, 'pets': 13, 'pet_battle_assets': 13, 'normal_enemies': 11, 'normal_enemy_battle_assets': 27, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 12, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 296, 'combat_effect_assets': 33, 'equipment_assets': 27}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}

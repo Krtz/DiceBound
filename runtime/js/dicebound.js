@@ -1447,6 +1447,7 @@
   let dbCombatStrikes=null;
   let dbCombatUltimateResolution=null;
   let dbCombatGuardResolution=null;
+  let dbInvoker=null;
   let dbCombatPetTurnResolution=null;
   let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
@@ -1891,12 +1892,13 @@
   document.head.appendChild(v13Style);
 
   // ---- identity descriptions -------------------------------------------------
-  const MANA_OCCULT_CLASSES=new Set(["sorcerer","vampire","rouge","merchant"]);
+  const MANA_OCCULT_CLASSES=new Set(["sorcerer","vampire","rouge","merchant","invoker"]);
   const OCCULT_SPELLS={
     sorcerer:{builder:"Channel Bolt",builderIcon:"🔮",spell:"Arcane Lance",spellIcon:"✦",cost:35,gain:28,desc:"Channel Bolt deals slightly reduced normal attack damage and builds Mana. Arcane Lance spends 35 Mana for a heavy spell, converts half of your Echo Strike chance into bonus Lance damage, applies Lifesteal, and guarantees a random core-element eruption."},
     vampire:{builder:"Night Siphon",builderIcon:"🦇",spell:"Grave Lance",spellIcon:"🌑",cost:35,gain:26,desc:"Night Siphon builds Mana while attacking. Grave Lance spends 35 Mana for heavy damage and drains 30% of the direct damage as HP."},
     rouge:{builder:"Crimson Stroke",builderIcon:"🖌️",spell:"Scarlet Hex",spellIcon:"🌹",cost:35,gain:27,desc:"Crimson Stroke paints Mana into existence. Scarlet Hex spends 35 Mana for a high-crit occult strike and splashes crimson damage into the pack."},
-    merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana and converts part of your current gold into occult damage."}
+    merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana and converts part of your current gold into occult damage."},
+    invoker:{builder:"Arcane Current",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Arcane Current generates Mana and a Green orb. Elemental Lance spends 50 Mana for a Red orb. Guard forms Blue; three orbs unlock Invoke."}
   };
 
   Object.assign(CLASS_PASSIVES,{
@@ -2064,9 +2066,10 @@
 
   // ---- occult attacks --------------------------------------------------------
   function manaGain(amount){if(!player.maxMana)return 0;const before=player.mana;player.mana=clamp(player.mana+amount,0,player.maxMana);return player.mana-before;}
-  async function occultChannelAttack(){if(combatBusy||!currentEnemy)return;const cfg=OCCULT_SPELLS[classIdentityId()];if(!cfg)return playerAttack();const gained=manaGain(cfg.gain);player._occultChanneling=true;identityFlash(`${cfg.builderIcon} +${gained} Mana`);try{await playerAttack();}finally{player._occultChanneling=false;}updateCombatUI();}
+  async function occultChannelAttack(){if(combatBusy||!currentEnemy)return;const cfg=OCCULT_SPELLS[classIdentityId()];if(!cfg)return playerAttack();const invoker=classIdentityActive("invoker")&&dbInvoker?.active();const gained=manaGain(cfg.gain*(invoker?dbInvoker.generatorManaMultiplier():1));player._occultChanneling=true;player._occultChannelMultiplier=invoker ? .98 : 0;player._invokerPendingGenerator=!!invoker;identityFlash(`${cfg.builderIcon} +${gained} Mana`);try{await playerAttack();}finally{player._occultChanneling=false;player._occultChannelMultiplier=0;player._invokerPendingGenerator=false;}updateCombatUI();}
   async function occultSpellAttack(){
     if(combatBusy||!currentEnemy)return;const cfg=OCCULT_SPELLS[classIdentityId()];if(!cfg||player.mana<cfg.cost)return;combatBusy=true;player.guardCooldown=0;player.mana-=cfg.cost;player.combatActionCount++;
+    if(classIdentityActive("invoker")&&dbInvoker?.active()){combatBusy=false;player.mana+=cfg.cost;player.combatActionCount--;return dbInvoker.elementalLance();}
     const target=currentEnemy;await animateClassAttack("crit");let damage=0,extra="";
     if(classIdentityActive("sorcerer")){const echoScale=1+Math.max(0,Number(player.doubleStrike)||0)*.5;damage=Math.round((player.attack*2.15+rand(4,9))*echoScale);const key=pick(DIBO_ELEMENTS),er=triggerElementEffect(key,target,{forced:true,source:"Arcane Lance"});player._arcaneLanceElementDamage=Math.max(0,Number(er?.totalDamage)||0);if(er)extra=` ${er.message}`;}
     else if(classIdentityActive("vampire")){damage=Math.round(player.attack*1.95+rand(3,7));}
@@ -3332,6 +3335,7 @@
     silently drift away from the actual effect for a class.
   */
   const PERFECTED_SIGNATURES={
+    invoker:{desc:'Perfected Signature — Invoker: Orb passive bonuses are 25% stronger and the first Invoke each combat gains 25% spell potency.',apply(){player.invokerPerfected=true;}},
     ranger:{desc:'Perfected Signature — Ranger: maximum Marks +2.',apply(){player.rangerMarkMax=(player.rangerMarkMax||3)+2;}},
     sorcerer:{desc:'Perfected Signature — Sorcerer: +25 Max Mana, +6 Mana from Channel Bolt, and +10% Arcane Surge chance.',apply(){player.maxMana=(player.maxMana||100)+25;player.mana=Math.min(player.maxMana,(player.mana||0)+25);player.manaBuilderBonus=(player.manaBuilderBonus||0)+6;player.classBurst+=.10;}},
     fighter:{desc:'Perfected Signature — Fighter: store +1 Counterblow and each stored Counterblow deals +20% more damage.',apply(){player.fighterCounterMax=(player.fighterCounterMax||1)+1;player.fighterCounterPowerBonus=(player.fighterCounterPowerBonus||0)+.20;}},
@@ -5197,7 +5201,7 @@
 
   const rollD20ChaosBeta045Base=rollD20Chaos;
   rollD20Chaos=async function(action){
-    const before=player.hasteTurns||0,out=await rollD20ChaosBeta045Base(action);beta045ClampQueuedHaste(before);return out;
+    const before=player.hasteTurns||0,out=await rollD20ChaosBeta045Base(action);dbCombatElementResolution.clampQueuedHaste(before);return out;
   };
 
   // ----- Bandit / troll board presentation fallback -----------------------
@@ -6563,7 +6567,7 @@
   const db0631CheckDynamicBase=checkDynamicClassUnlocks;
   checkDynamicClassUnlocks=function(...args){const changed=db0631RecordObservedProgress(),result=db0631CheckDynamicBase.apply(this,args);['pokemontrainer','rogue','merchant','slime','vampire','invoker','dragoon'].forEach(id=>{if(CLASSES[id]&&db0631RuleEligible(id))unlockClass(id);});if(changed)saveMeta();return result;};
   const db0631OccultSpellAttackBase=occultSpellAttack;
-  occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent){meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};
+  occultSpellAttack=async function(...args){const beforeMana=Number(player.mana)||0,beforeActions=Number(player.combatActionCount)||0,result=await db0631OccultSpellAttackBase.apply(this,args),spent=beforeMana>(Number(player.mana)||0)&&(Number(player.combatActionCount)||0)>beforeActions;if(spent&&!classIdentityActive("invoker")){meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);saveMeta();checkDynamicClassUnlocks();}return result;};
   if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
   if(CLASSES.rogue)CLASSES.rogue.unlock='Hold 5,000 gold at one time and defeat the Board 3 miniboss';
   if(CLASSES.merchant)CLASSES.merchant.unlock='Defeat the Road Merchant secret boss once';
@@ -6724,6 +6728,47 @@
     if(dbCombatVfx.suppressLegacyElementAnimation(key))return false;
     return dbNatureLegacyAnimationBase(key,target,enemySource);
   };
+  // Browser/native smoke adapter for the authored Nature VFX.  This owns no
+  // gameplay: it drives the already-configured element-resolution and VFX
+  // owners with a deterministic fixture so presentation regressions remain
+  // observable after combat mechanics move out of the compatibility monolith.
+  function dbNatureProcRegressionExercise(key='nature'){
+    document.querySelectorAll('.db-nature-vines-vfx,.element-proc-fx,.enemy-proc-fx').forEach(node=>node.remove());
+    resetPlayer('ranger');
+    Object.assign(player,{attack:10,elementDamageBonus:0,naturePoisonStacks:1,combatAttackCount:0});
+    player.equipment.weapon={...(player.equipment.weapon||{}),element:key,rarity:'common'};
+    const targets=[
+      {name:'Nature VFX Defeated Target',icon:'👹',hp:3,maxHp:3,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0},
+      {name:'Nature VFX Living Target A',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0},
+      {name:'Nature VFX Living Target B',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0}
+    ];
+    currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
+    const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
+    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatVfx.natureEntries(),projectiles:[...document.querySelectorAll('.db-combat-projectile-vfx')].map(node=>({effect:node.dataset.effect,origin:node.dataset.origin})),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
+  }
+  function dbCombatPresentationExercise(kind='final'){
+    document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
+    const tiered=kind==='slime'||kind==='wolf';
+    const enemy={name:tiered?(kind==='slime'?'Slime':'Wolf'):(kind==='miniboss'?'Ogre Roadwarden':'Ancient Road Dragon'),icon:'👹',hp:100,maxHp:100,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,guardian:!tiered,miniBoss:kind==='miniboss',finalBoss:kind==='final'};
+    currentEnemies=[enemy];currentEnemyIndex=-1;currentEnemy=enemy;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
+    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
+    const stage=$('enemyIcon'),host=stage?.querySelector('.stage-enemy'),sprite=host?.querySelector('.stage-sprite'),art=host?.querySelector('.enemy-art-frame'),player=$('combatPlayerIcon');
+    const rect=node=>{const box=node?.getBoundingClientRect();return box?{width:Math.round(box.width),height:Math.round(box.height)}:null;};
+    return {kind,narrow:window.matchMedia('(max-width:760px)').matches,viewportHeight:window.innerHeight,stageClasses:stage?.className||'',hostClasses:host?.className||'',sprite:rect(sprite),art:rect(art),player:rect(player)};
+  }
+  window.DiceboundNatureVfxTest=Object.freeze({
+    effect:dbCombatVfx.natureEffect,
+    livingTargets:enemies=>dbCombatVfx.livingNatureTargets(enemies).map(enemy=>enemy.name||''),
+    previewPlayer:dbCombatVfx.playNatureOnPlayer,
+    exerciseProc:dbNatureProcRegressionExercise,
+    exercisePresentation:dbCombatPresentationExercise,
+    active:dbCombatVfx.natureEntries
+  });
+  // #128/#83 compatibility composition binds the extracted equipment owner
+  // once before any legacy UI/effective-Mana adapters consume it.
+  const db06314Equipment=window.DiceboundEquipment;
+  if(!db06314Equipment)throw new Error('DiceBound requires the equipment identity owner before dicebound.js');
   const db06314FormatBonusesBase=formatBonuses;
   formatBonuses=function(item){
     const base=db06314FormatBonusesBase(item),intrinsic=db06314IntrinsicParts(item);
@@ -7172,7 +7217,7 @@
     $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
   }
   const dbFriendReturnToRoadBase=returnToRoad;
-  returnToRoad=function(...args){dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
+  returnToRoad=function(...args){dbInvoker?.resetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
 
   const dbFriendUpdateMetaUiBase=updateMetaUI;
   updateMetaUI=function(...args){const result=dbFriendUpdateMetaUiBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
@@ -7188,7 +7233,7 @@
     player.hp=max;updateHUD();return true;
   }
   const dbFriendOpenStartScreenBase=openStartScreen;
-  openStartScreen=function(...args){const result=dbFriendOpenStartScreenBase.apply(this,args);dbFriendHealAtCamp();dbFriendClearCombatPresentation();db059RefreshActivePetArt?.();return result;};
+  openStartScreen=function(...args){const result=dbFriendOpenStartScreenBase.apply(this,args);dbInvoker?.resetCombat();dbFriendHealAtCamp();dbFriendClearCombatPresentation();db059RefreshActivePetArt?.();return result;};
   function dbFriendCampRecoveryExercise(){resetPlayer('ranger');player.hp=1;openStartScreen();return Object.freeze({hp:player.hp,maxHp:player.maxHp,campVisible:!$('startOverlay')?.classList.contains('hidden')});}
   function dbFriendBoardClearModeRegressionExercise(){
     const before={...(ensureAlphaMeta().boardClears||{})},modes={nightmare:nightmareMode,hell:hellMode};
@@ -7376,7 +7421,8 @@
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
-    tickDragoonCooldown:()=>dbFriendTickDragoonCooldown()
+    tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
+    afterPlayerAction:kind=>dbInvoker?.afterPlayerAction(kind)
   });
 
   const dbCombatVictoryOwner=window.DiceboundCombatVictoryResolution;
@@ -7452,6 +7498,8 @@
     hasLegendaryEffect:id=>db060HasEffect(id),
     showToast:text=>showToast(text),
     addCombatHistory:text=>addCombatHistory(text),
+    actionBonuses:()=>dbInvoker?.actionBonuses()||null,
+    afterPlayerAction:kind=>dbInvoker?.afterPlayerAction(kind==="attack"&&player._invokerPendingGenerator?"generator":kind),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
@@ -7496,6 +7544,7 @@
     hasMythicPiece:slot=>hasMythicPiece(slot),
     hasLegendaryEffect:id=>db060HasEffect(id),
     rollTieredProc:chance=>rollTieredProc(chance),
+    afterPlayerAction:kind=>dbInvoker?.afterPlayerAction(kind),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
@@ -7521,7 +7570,9 @@
     hasDevilsHorns:()=>v24HasHorns(),hasLegendaryEffect:id=>db060HasEffect(id),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
     syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
     setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getV26FastEcho:()=>!!window.__DB_V26_FAST_ECHO__,
-    setV26FastEcho:value=>{window.__DB_V26_FAST_ECHO__=!!value;},getElementKeys:()=>ELEMENT_KEYS
+    setV26FastEcho:value=>{window.__DB_V26_FAST_ECHO__=!!value;},getElementKeys:()=>ELEMENT_KEYS,
+    outgoingDamageMultiplier:()=>dbInvoker?.outgoingMultiplier()||1,
+    afterPlayerHit:(target,options)=>dbInvoker?.afterPlayerHit(target,options)
   });
 
   const dbCombatUltimateOwner=window.DiceboundCombatUltimateResolution;
@@ -7580,6 +7631,7 @@
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
+    invokeUltimate:()=>dbInvoker?.invokeUltimate(),
   });
 
   const dbCombatPresentationOwner=window.DiceboundCombatPresentation;
@@ -7656,6 +7708,7 @@
     restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
     clearBattleLegendaryTemps:()=>db060ClearBattleLegendaryTemps(),
     traceCoreStart:(kind,work)=>v25TraceCommand('startCombat',work,'events',[kind]),
+    onCombatStart:()=>dbInvoker?.beginCombat(),
     applyCombatBackground:()=>db0635ApplyCombatBackground(),
     syncBattleLog:()=>db064SyncBattleLog(),
     clearCombatPresentation:()=>dbFriendClearCombatPresentation(),
@@ -7688,7 +7741,7 @@
     addCombatHistory:text=>addCombatHistory(text),
     renderEnemyParty:()=>renderEnemyParty(),
     triggerElementEffect:(...args)=>triggerElementEffect(...args),
-    defenseDamageReduction:()=>defenseDamageReduction(),
+    defenseDamageReduction:value=>defenseDamageReduction(value),
     effectiveDodgeChance:()=>effectiveDodgeChance(),
     enemyElementProc:enemy=>enemyElementProc(enemy),
     damageEnemy:(...args)=>damageEnemy(...args),
@@ -7705,7 +7758,20 @@
     recordDamageTaken:amount=>{meta.damageTaken=(meta.damageTaken||0)+amount;},
     wolfEchoChance:()=>db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode()),
     successfulDodgePresentation:()=>dbFriendSuccessfulDodgePresentation(),
-    dragoonActive:()=>dbFriendDragoonActive()
+    dragoonActive:()=>dbFriendDragoonActive(),
+    responseModifier:()=>dbInvoker?.responseModifier()
+  });
+
+  const dbInvokerOwner=window.DiceboundInvoker;
+  if(!dbInvokerOwner)throw new Error('DiceBound requires the Invoker class owner before dicebound.js');
+  dbInvoker=dbInvokerOwner.configure({
+    getPlayer:()=>player,getMeta:()=>meta,isClassActive:id=>classIdentityActive(id),getCurrentEnemy:()=>currentEnemy,getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),getCombatBusy:()=>combatBusy,setCombatBusy:value=>{combatBusy=!!value;},
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),damageAll:(amount,falloff=1)=>damageAll(amount,falloff),healPlayer:amount=>healPlayer(amount),
+    addEnemyBurn:(enemy,stacks)=>dbCombatElementResolution.addEnemyBurn(enemy,stacks),updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),addCombatHistory:text=>addCombatHistory(text),identityFlash:text=>identityFlash(text),
+    delay:ms=>delay(ms),winCombat:()=>winCombat(),resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
+    clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
+    recordManaSpenderCast:()=>{meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),document:()=>document
   });
 
   /* INFO / ROADKEEPER'S GUIDE ------------------------------------------------

@@ -73,6 +73,16 @@
     return p.db0511PoisonStacks;
   }
 
+  // The original Coffee/D20 patch stack permits at most one pending skipped
+  // response.  Keep that pure combat-state rule with elemental resolution so
+  // every remaining caller uses the same exact clamp.
+  function clampQueuedHaste(before = 0) {
+    const p = player(), pending = Math.max(0, p.hasteTurns || 0);
+    if (before >= 1 && pending > before) p.hasteTurns = before;
+    else if (pending > 1) p.hasteTurns = 1;
+    return p.hasteTurns || 0;
+  }
+
   function queuePlayerControl(label) {
     const p = player();
     if (p._db0511SuppressControlProc) return false;
@@ -265,9 +275,7 @@
         out.message = `${out.message || "Coffee crackles."} Haste is cooling down, so no extra action is granted.`;
       }
 
-      const pending = Math.max(0, p.hasteTurns || 0);
-      if (beta045BeforeTurns >= 1 && pending > beta045BeforeTurns) p.hasteTurns = beta045BeforeTurns;
-      else if (pending > 1) p.hasteTurns = 1;
+      clampQueuedHaste(beta045BeforeTurns);
 
       const gained046 = (p.hasteTurns || 0) > db046BeforeTurns;
       const blocked046 = db046BeforeLock || db046BeforeCd > 0 || db046BeforeTurns > 0;
@@ -451,6 +459,7 @@
     triggerElementEffect,
     enemyElementProc,
     addEnemyBurn,
+    clampQueuedHaste,
     restoreRadiationDefense,
     restoreEnemyElementDebuffs,
     fireBurnChance: FIRE_BURN_CHANCE,
