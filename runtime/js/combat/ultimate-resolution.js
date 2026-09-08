@@ -244,6 +244,7 @@
 
   async function friendsUltimate() {
     const rt = requireRuntime();
+    if (rt.isClassActive("invoker") && typeof rt.invokeUltimate === "function") return rt.invokeUltimate();
     if (rt.dragoonActive() && rt.dragoonLandingReady()) return rt.dragoonLanding();
     if (rt.dragoonActive()) return dragonDive();
     rt.tickDragoonCooldown();

@@ -52,9 +52,10 @@ const liveDefaults=api.createMetaService({
   saveService:null,
 }).defaultMeta();
 const liveSerialized=JSON.stringify(liveDefaults);
-assert.equal(Buffer.byteLength(liveSerialized),2020,"full live default-career byte snapshot drifted");
-assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"d382cbea9df4ab2c77c7ef935631e1e0ef26af4b609bad485776eaae8c1ed317","full live default-career data drifted");
+assert.equal(Buffer.byteLength(liveSerialized),2036,"full live default-career byte snapshot drifted");
+assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"6160aeb919873d83f381165654bc825c68f415b0b9ff10e33d1822cca44bb915","full live default-career data drifted");
 assert.equal(liveDefaults.unlocks.dragoon,false,"Dragoon must start locked on a fresh career");
+assert.equal(liveDefaults.unlocks.invoker,false,"Invoker must start locked until 100 real Mana-spender casts");
 
 const result=service.load(),meta=result.meta;
 assert.equal(result.source,"primary");

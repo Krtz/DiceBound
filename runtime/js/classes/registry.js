@@ -940,6 +940,19 @@
         "burst"
       ]
     },
+    "invoker": {
+      "id": "invoker",
+      "name": "Invoker",
+      "icon": "🔵🟢🔴",
+      "attackIcon": "✨",
+      "fxIcon": "🔵🟢🔴",
+      "unlock": "Cast 100 Mana-spender spells across your career.",
+      "desc": "A grand occultist who turns Defend, Mana generation and Mana spending into a three-orb formula. Invoke combines the current three orbs into one of ten battle spells.",
+      "stats": "32 HP · 6 ATK · 25/100 MANA · THREE ORBS",
+      "ultimate": {"name":"Invoke","icon":"🔵🟢🔴","desc":"At 100 Ultimate, invoke the spell determined by your current three-orb formula."},
+      "base": {"maxHp":32,"attack":6,"defense":0,"crit":0.08,"dodge":0.02,"luck":0.05,"doubleStrike":0.05,"guardPower":0.50,"classBurst":0,"lifeSteal":0},
+      "tags": ["ranged","occult","mana","elemental","combo"]
+    },
     "slimerouge": {
       "id": "slimerouge",
       "secret": true,
@@ -979,6 +992,7 @@
   };
 
   const CLASS_PASSIVE_DATA={
+    "invoker": {"name":"Orb Invocation","desc":"Defend forms Blue, Mana generation forms Green, and Mana spending forms Red. Three active orbs empower you and define Invoke."},
     "ranger": {
       "name": "Marked Quarry",
       "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
@@ -1080,6 +1094,7 @@
   const CLASS_TAG_VOCABULARY=["ranged","precision","evasive","occult","elemental","mana","melee","armored","guardian","combo","disciplined","weird","chaotic","burst","artful","vampiric","reckless","slow","dodgy","echo","poison","lucky","sticky","durable","sustain","wealth","holy","pet","pack","blood-fuel","strong","alchemy","secret","flex","airborne"];
 
   const CLASS_UNLOCK_DATA={
+    invoker:{type:"manaSpenderCasts",minimum:100},
     ranger:{type:"always"},
     sorcerer:{type:"guardianDefeat",board:1,guardian:"miniboss"},
     fighter:{type:"guardianDefeat",board:1,guardian:"boss"},
@@ -1109,6 +1124,7 @@
   };
 
   const CLASS_MECHANICS_DATA={
+    invoker:["mana","orb-sequence","ultimate","elemental","guard"],
     ranger:["marks","crit","evasion","ranged"],
     sorcerer:["mana","occult-spell","elemental","ranged","arcane-surge"],
     fighter:["counter","guard","barrier","melee"],

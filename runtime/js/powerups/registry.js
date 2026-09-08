@@ -2427,7 +2427,8 @@
         "vampire",
         "rouge",
         "merchant",
-        "summoner"
+        "summoner",
+        "invoker"
       ],
       "rarity": "uncommon",
       "icon": "🔷",
@@ -2447,7 +2448,8 @@
         "vampire",
         "rouge",
         "merchant",
-        "summoner"
+        "summoner",
+        "invoker"
       ],
       "rarity": "uncommon",
       "icon": "⚡🔮",
@@ -2467,7 +2469,8 @@
         "vampire",
         "rouge",
         "merchant",
-        "summoner"
+        "summoner",
+        "invoker"
       ],
       "rarity": "rare",
       "icon": "🌊🔮",
@@ -2480,6 +2483,30 @@
       apply(){player.maxMana=(player.maxMana||0)+35;player.mana=Math.min(player.maxMana,(player.mana||0)+35);player.manaSpendUltimate=(player.manaSpendUltimate||0)+8;},
       "achievementGate": "achievement:prestige5",
       "v24Tiered": true
+    },
+    {
+      "id":"invoker_orb_theory","classId":"invoker","rarity":"common","icon":"🔵🟢🔴","name":"Orb Theory","desc":"Orb passive bonuses are 20% stronger.","tags":["mana","elemental","combo"],apply(){player.invokerOrbTheory=true;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_quas_mastery","classId":"invoker","rarity":"uncommon","icon":"🔵","name":"Quas Mastery","desc":"Whenever a Blue orb enters, restore 3% max HP.","tags":["mana","guard","sustain"],apply(){player.invokerQuasMastery=true;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_wex_mastery","classId":"invoker","rarity":"uncommon","icon":"🟢","name":"Wex Mastery","desc":"Each Green orb grants an additional 4% Echo Strike.","tags":["mana","echo","combo"],apply(){player.invokerWexMastery=(player.invokerWexMastery||0)+.04;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_exort_mastery","classId":"invoker","rarity":"uncommon","icon":"🔴","name":"Exort Mastery","desc":"Each Red orb grants an additional 4% outgoing damage.","tags":["mana","damage","combo"],apply(){player.invokerExortMastery=(player.invokerExortMastery||0)+.04;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_mnemonic_recursion","classId":"invoker","rarity":"rare","icon":"📖","name":"Mnemonic Recursion","desc":"Changing Invoke formulas refunds 20 Ultimate charge.","tags":["mana","ultimate","combo"],apply(){player.invokerMnemonic=true;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_perfect_formula","classId":"invoker","rarity":"rare","unique":true,"icon":"✨","name":"Perfect Formula","desc":"The first B+G+R queue each combat grants 1 Barrier and 15 Mana.","tags":["mana","barrier","combo"],apply(){player.invokerPerfectFormula=true;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_double_invocation","classId":"invoker","rarity":"epic","unique":true,"icon":"✦✦","name":"Double Invocation","desc":"The first Invoke each combat gains 55% potency.","tags":["mana","ultimate","combo"],apply(){player.invokerDoubleInvocation=true;},"v24Tiered":true
+    },
+    {
+      "id":"invoker_cataclysm","classId":"invoker","rarity":"legendary","unique":true,"icon":"☀️☄️","name":"Cataclysm","desc":"Sun Strike also hits every other living enemy for 50% of its final damage.","tags":["mana","ultimate","elemental","legendary"],"achievementGate":"achievement:invoker-tenfold-memory",apply(){player.invokerCataclysm=true;},"v24Tiered":true
     },
     {
       "id": "ouro_venom_coil",

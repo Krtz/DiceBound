@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.14
+
+### Invoker class (#37)
+- Added Invoker with its authored 32 HP / 6 ATK Mana body, FIFO Blue/Green/Red orb state, ten Invoke recipes, a visible combat formula display, class powerups, achievement hooks and the Info Formula Codex.
+- Imported all six approved semantic Invoker assets and registered the full-body Camp/battle, campsite, marker, orb-system, projectile and grimoire roles without using the raw `art-inbox` as a runtime source.
+- Existing combat owners remain authoritative for generic strikes, enemy responses, elemental Burn, progression, saves and checkpoints; Invoker owns only its class state, formula effects and narrow action hooks.
+
 ## Beta 0.6.6.13
 
 ### Elemental Proc / Effect resolution ownership (#40, #209, #297)

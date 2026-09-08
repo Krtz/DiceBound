@@ -199,6 +199,36 @@
       "category": "builds",
       "name": "Roadside Pharmacist",
       "condition": "potionsUsed:50"
+    },
+    {
+      "id": "invoker-first-principles",
+      "category": "builds",
+      "name": "First Principles",
+      "condition": "invoker:first-invoke"
+    },
+    {
+      "id": "invoker-tenfold-memory",
+      "category": "builds",
+      "name": "Tenfold Memory",
+      "condition": "invoker:ten-recipes"
+    },
+    {
+      "id": "invoker-solar-citation",
+      "category": "builds",
+      "name": "Solar Citation",
+      "condition": "invoker:sun-strike-boss"
+    },
+    {
+      "id": "invoker-threefold-thesis",
+      "category": "builds",
+      "name": "Threefold Thesis",
+      "condition": "invoker:deafening-blast"
+    },
+    {
+      "id": "invoker-grand-magus",
+      "category": "builds",
+      "name": "Grand Magus",
+      "condition": "boardClear:invoker:6"
     }
   ];
 

@@ -85,4 +85,7 @@ const assets=assetsContext.window.DiceboundAssets;
 assert.equal(assets.resolveEquipmentArt(saved).image,equipment.equipmentIdentity(selected.id).art.image,"asset bridge does not resolve equipment-owned art");
 for(const asset of Object.values(expectedArt))assert.ok(assets.files.includes(asset),`asset preload inventory omits ${asset}`);
 
+const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
+assert.match(monolith,/const db06314Equipment=window\.DiceboundEquipment;/,"equipment compatibility adapters must bind their extracted owner before use");
+
 console.log("PASS #128/#83 authored equipment identities: assets, weights, Intrinsics, save IDs and class-neutral eligibility");

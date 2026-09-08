@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.13",
+  "version": "0.6.6.14",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -39,6 +39,7 @@
     "js/combat/turn-resolution.js",
     "js/combat/vfx.js",
     "js/classes/registry.js",
+    "js/classes/invoker.js",
     "js/progression/class-unlock-rules.js",
     "js/progression/class-unlock-feedback.js",
     "js/pets/registry.js",

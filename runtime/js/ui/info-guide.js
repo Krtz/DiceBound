@@ -92,6 +92,14 @@
     const passive=entry.passive?`<p><b>${escapeHtml(entry.passive.name)}:</b> ${escapeHtml(entry.passive.desc)}</p>`:'';
     return `<div class="info-class"><b>${escapeHtml(entry.icon||'')} ${escapeHtml(entry.name||entry.id)}</b>${tags?`<div class="info-tag-row">${tags}</div>`:''}<p>${escapeHtml(entry.desc||'')}</p><span>${escapeHtml(entry.scaleNotes||entry.stats||'')}</span>${passive}</div>`;
   }).join('');}
+  function invokerCodexHtml(){
+    if(!isClassUnlocked('invoker'))return '';
+    const recipes=window.DiceboundInvoker?.RECIPE;
+    if(!recipes)return '';
+    const names={b:'Blue',g:'Green',r:'Red'};
+    const rows=Object.entries(recipes).map(([formula,recipe])=>`<div class="info-class"><b>${formula.toUpperCase().split('').map(key=>names[key][0]).join(' + ')} — ${escapeHtml(recipe.name)}</b><p>${escapeHtml(recipe.tip)}</p></div>`).join('');
+    return `<h4>Invoker Formula Codex</h4><p>Blue comes from Defend, Green from Arcane Current and Red from Elemental Lance. Invoke reads the current three-orb formula; the oldest orb rotates out when a fourth forms.</p><div class="info-class-grid">${rows}</div>`;
+  }
   function artifactSetHtml(){
     const set=artifactSet(),count=Math.max(0,Number(set.count)||0),tiers=Array.isArray(set.tiers)?set.tiers:[];
     return `<strong>Impossible Road set · Artifact</strong><br><span style="color:var(--muted)">${count}/7 pieces active.</span><div class="set-tier-grid">${tiers.map(tier=>`<div class="set-tier${count>=Number(tier.pieces)?' active':''}"><b>${escapeHtml(tier.pieces)}-piece bonus</b><span>${escapeHtml(tier.text)}</span></div>`).join('')}</div>`;
@@ -110,7 +118,7 @@
     detail('companions','Companions','<p>Companions attack after player actions and gain permanent Bond levels from cookies. Elemental companions unlock by building progress with their corresponding element. Their active bonus scales slowly with Bond.</p><p>Only pet-tagged classes such as Beastmaster, Summoner and Pokémon Trainer may switch companions during a run; everyone else chooses at the Campsite.</p>'),
     detail('legacy','Legacy, Talents & Prestige','<p>Run distance and banked gold become Legacy XP. Legacy levels grant talent points. Talents purchased during a run activate on the <b>next</b> run.</p><p>Prestige converts every 9 total talent points into unspent Prestige Points, then resets Legacy level and the talent tree. Each unspent point grants one held stat point; the Prestige Moon can convert a point into a persisted five-stat random bundle. <b>Heirloom Storage and everything stored inside it survive automatically.</b></p>'),
     detail('modes','Nightmare & Hell','<p>Nightmare dramatically strengthens enemies. Nightmare guardians begin with a Barrier and enemies gain a small amount of Dodge.</p><p>Hell is harsher again: from Board 2 onward every enemy begins with at least one Barrier, enemy Dodge is slightly higher, and later combat patterns become increasingly hostile.</p>'),
-    detail('classes','Classes & scaling',`<div class="info-class-grid">${classRows()}</div><p>Later and secret unlocks are not intended to have equal fresh-run power. Some are deliberately stranger or stronger rewards.</p>`),
+    detail('classes','Classes & scaling',`<div class="info-class-grid">${classRows()}</div>${invokerCodexHtml()}<p>Later and secret unlocks are not intended to have equal fresh-run power. Some are deliberately stranger or stronger rewards.</p>`),
     detail('achievements','Achievements & unlocks','<p>Achievements track permanent milestones and show their rewards when revealing that reward does not spoil a secret. Some powerful class powers require clearing later boards with that class.</p>')
   ].join('');}
   function elementsHtml(){return Object.entries(elements()).map(([key,entry])=>`<div class="element-row"><b>${escapeHtml(entry.icon||'')} ${escapeHtml(entry.name||key)} — ${escapeHtml(entry.spell||'')}</b><br>${escapeHtml(entry.description||'')}<br><span style="color:var(--muted)">Element Power improves the effect. Matching weaknesses increase activation and strength.${key==='ice'?' Guardians gain temporary resistance after being frozen, preventing permanent freeze loops.':''}</span></div>`).join('');}

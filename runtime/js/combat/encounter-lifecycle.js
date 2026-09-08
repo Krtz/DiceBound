@@ -246,6 +246,7 @@
 
   function start(kind = "normal") {
     const rt = requireRuntime(), player = rt.getPlayer();
+    if (typeof rt.onCombatStart === "function") rt.onCombatStart();
     // Preserve the exact outer-wrapper order from the final 0.6.6.0 runtime.
     rt.clearCombatPresentation();
     rt.clearBattleLegendaryTemps();

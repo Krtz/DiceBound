@@ -212,6 +212,12 @@ async function run() {
     assert.strictEqual(h.player.mana, 6);
     assert(h.trace.findIndex(x => x[0] === 'mana') < h.trace.findIndex(x => x[0] === 'hook'));
   }
+  {
+    const h = makeHarness({ classId: 'invoker', mechanics: ['mana'], invokeGuardAction: ({ trace }) => { trace.push(['hook']); return 'guard'; } });
+    await owner.identityGuardAction();
+    assert.strictEqual(h.player.mana, 0, 'Invoker Guard must form Blue rather than inherit generic Mana Guard');
+    assert(!h.trace.some(x => x[0] === 'mana'), 'Invoker Guard must not call the generic Mana gain seam');
+  }
 
   // Paladin consumes Grace, adds Barriers, exposes temporary power to lower layers, then restores it.
   {

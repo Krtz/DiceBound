@@ -52,8 +52,13 @@ assert.ok(Object.isFrozen(services.economy));
 assert.deepEqual(Array.from(services.content.elementIds), ["fire", "ice", "electric", "nature", "light", "void"]);
 
 const registry = window.DiceboundPowerupRegistry.createRegistry(services);
-assert.equal(registry.length, 200);
-assert.equal(new Set(registry.map((powerup) => powerup.id)).size, 200);
+assert.equal(registry.length, 208);
+assert.equal(new Set(registry.map((powerup) => powerup.id)).size, 208);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(registry.filter((powerup) => powerup.classId === "invoker").map((powerup) => [powerup.id, powerup.rarity]))),
+  [["invoker_orb_theory", "common"], ["invoker_quas_mastery", "uncommon"], ["invoker_wex_mastery", "uncommon"], ["invoker_exort_mastery", "uncommon"], ["invoker_mnemonic_recursion", "rare"], ["invoker_perfect_formula", "rare"], ["invoker_double_invocation", "epic"], ["invoker_cataclysm", "legendary"]],
+);
+assert.equal(registry.find((powerup) => powerup.id === "invoker_cataclysm").achievementGate, "achievement:invoker-tenfold-memory");
 
 const attack = registry.find((powerup) => powerup.id === "attack");
 attack.apply();
@@ -119,7 +124,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "43317c1ea7d1051b7b51f9a26659bbfa7724c536bfbae8bf3f461cd0198dee66";
+const expectedDigest = "e02166a4df15aa1d0a7ff1ff564ce5996d9cef5a870ec508dedd7b1e3f829a8e";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {
@@ -130,4 +135,4 @@ const moduleSource = read("powerups/registry.js");
 assert.doesNotMatch(moduleSource, /window\.DiceboundPerfectedSignature/);
 assert.doesNotMatch(moduleSource, /\bnightmareMode\b/);
 
-console.log(`Powerup service extraction PASS: 200 exact entries, live reset-safe state, six explicit capabilities, digest ${digest}`);
+console.log(`Powerup service extraction PASS: 208 exact entries, live reset-safe state, six explicit capabilities, digest ${digest}`);

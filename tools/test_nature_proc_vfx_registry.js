@@ -17,5 +17,8 @@ const vfx=fs.readFileSync(path.join(root,"runtime","js","combat","vfx.js"),"utf8
 assert.match(vfx,/natureLegacySuppressions/,"Nature VFX does not own a legacy-presentation suppression boundary");
 assert.match(vfx,/key === "nature" && natureLegacySuppressions > 0/,"Nature suppression is not scoped to the authored Nature presentation");
 assert.match(monolith,/dbCombatVfx\.withNatureLegacyPresentation/,"Monolith is not wired through the authoritative VFX owner");
+assert.match(monolith,/window\.DiceboundNatureVfxTest=Object\.freeze\(/,"Nature browser/native smoke adapter was removed");
+assert.match(monolith,/effect:dbCombatVfx\.natureEffect/,"Nature smoke adapter bypasses the authoritative VFX owner");
+assert.match(monolith,/exerciseProc:dbNatureProcRegressionExercise/,"Nature smoke adapter lost its real element-resolution fixture");
 assert.doesNotMatch(monolith,/dbNatureReplacesLegacyPresentation/,"Legacy Nature VFX presentation state remained in the monolith");
 console.log("Nature poison-vines VFX registry/owner: ordered canonical per-element frames, timing and asset existence pass");

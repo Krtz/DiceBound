@@ -58,8 +58,8 @@
     return { name: "Attack", hits: [1] };
   }
 
-  async function resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState = { hit: false }) {
-    const rt = requireRuntime(), player = rt.getPlayer(), pattern = enemyAttackPattern(enemy), dr = rt.defenseDamageReduction();
+  async function resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState = { hit: false }, responseModifier = {}) {
+    const rt = requireRuntime(), player = rt.getPlayer(), pattern = enemyAttackPattern(enemy), dr = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0));
     let totalHpDamage = 0, totalDamage = 0, landedAny = false, blocked = 0, dodged = 0;
     for (let i = 0; i < pattern.hits.length; i += 1) {
       if (rt.hasHeadphones() && roundState.hit) {
@@ -78,7 +78,8 @@
       }
       const base = Math.max(1, (enemy.attack + rt.rand(-1, 1)) * pattern.hits[i]);
       let raw = Math.max(1, Math.round(base * (1 - dr) - player.flatReduction));
-      if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower, 0, .9))));
+      if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9))));
+      raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
       const hit = applyPlayerDamage(raw);
       if (hit.total > 0) roundState.hit = true;
       totalDamage += hit.total; totalHpDamage += hit.hp; landedAny = landedAny || hit.total > 0;
@@ -110,19 +111,21 @@
     if (!rt.getCurrentEnemy()) return;
     rt.setEncounterTurn(rt.getEncounterTurn() + 1);
     const messages = [], roundState = { hit: false }, lead = rt.getEncounterLead();
-    const special = !!(lead?.guardian && (lead.miniBoss || lead.finalBoss || lead.merchantBoss || lead.bloodmageBoss || lead.devilBoss) && lead.hp > 0 && rt.getEncounterTurn() % rt.guardianSpecialInterval === 0);
+    const responseModifier = typeof rt.responseModifier === "function" ? (rt.responseModifier() || {}) : {};
+    const special = !!(lead?.guardian && (lead.miniBoss || lead.finalBoss || lead.merchantBoss || lead.bloodmageBoss || lead.devilBoss) && lead.hp > 0 && rt.getEncounterTurn() % rt.guardianSpecialInterval === 0 && !responseModifier.suppressSpecial);
     for (const enemy of livingEnemies()) {
       const messageStart = messages.length;
       if ((enemy.skipTurns || 0) > 0 && !(special && enemy === lead)) { enemy.skipTurns -= 1; messages.push(`${enemy.name} is frozen.`); }
       else if (special && enemy === lead) {
-        const partialDR = rt.defenseDamageReduction() * .55;
+        const partialDR = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0)) * .55;
         if (enemy.bloodmageBoss || enemy.devilBoss) {
           const pulses = enemy.devilBoss ? 3 : 2, totalMult = enemy.devilBoss ? .72 : .98; let total = 0;
           for (let i = 0; i < pulses; i += 1) {
             if (rt.hasHeadphones() && roundState.hit) { messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName} pulse ${i + 1}.`); continue; }
             const base = Math.max(1, enemy.attack * totalMult), rawBase = Math.max(1, Math.round(base * (1 - partialDR) - player.flatReduction * .35));
-            let raw = guarded ? Math.max(0, Math.floor(rawBase * (1 - rt.clamp(player.guardPower + extraGuardPower, 0, .9)))) : rawBase;
+            let raw = guarded ? Math.max(0, Math.floor(rawBase * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9)))) : rawBase;
             if (rt.mythicalSetCount() >= 4) raw = Math.floor(raw * rt.guardianSpecialMultiplier());
+            raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
             const hit = applyPlayerDamage(raw); if (hit.total > 0) roundState.hit = true; total += hit.total;
             messages.push(`⚠️ ${enemy.specialName} pulse ${i + 1}/${pulses} pierces barriers for ${hit.total}${hit.shield ? ` (${hit.shield} Energy Shield)` : ""}.`);
             if (player.hp <= 0) break;
@@ -135,8 +138,9 @@
         else {
           const base = Math.max(1, enemy.attack * (enemy.merchantBoss ? 2.6 : 2.25));
           let raw = Math.max(1, Math.round(base * (1 - partialDR) - player.flatReduction * .5));
-          if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower, 0, .9))));
+          if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9))));
           if (rt.mythicalSetCount() >= 4) raw = Math.floor(raw * rt.guardianSpecialMultiplier());
+          raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
           const hit = applyPlayerDamage(raw); if (hit.total > 0) roundState.hit = true;
           messages.push(`⚠️ ${enemy.specialName || "Guardian special"} partially pierces Defense and ignores barriers${guarded ? ", but Guard reduces it further" : ""}, dealing ${hit.total}${hit.shield ? ` (${hit.shield} Energy Shield)` : ""}.`);
           if (enemy.merchantBoss) {
@@ -145,7 +149,7 @@
           }
         }
       } else {
-        await resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState);
+        await resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState, responseModifier);
         if (enemy.merchantBoss) { const stolen = Math.min(player.gold, Math.max(1, Math.round(enemy.attack * .6))); player.gold -= stolen; messages.push(`The Merchant steals ${stolen} gold.`); }
       }
       const enemyMessages = messages.splice(messageStart);

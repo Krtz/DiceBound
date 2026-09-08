@@ -114,6 +114,12 @@ function harness(options={}) {
 
 // Coffee preserves cooldown and both historical anti-lock layers.
 {
+  const h=harness({player:{hasteTurns:3}});
+  assert.strictEqual(owner.clampQueuedHaste(0),1);
+  h.p.hasteTurns=3;
+  assert.strictEqual(owner.clampQueuedHaste(2),2);
+}
+{
   const h=harness({randoms:[.9],player:{hasteTurns:0,hasteCooldown:1}});
   const result=owner.triggerElementEffect('coffee',h.enemies[0],{forced:true});
   assert.strictEqual(h.p.hasteTurns,0);
