@@ -18,6 +18,7 @@
     "combat-effective-stats",
     "combat-healing-resolution",
     "combat-element-resolution",
+    "combat-d20-chaos-resolution",
     "combat-strike-policy",
     "combat-strike-resolution",
     "combat-attack-action-resolution",
@@ -244,6 +245,18 @@
       "requires": [],
       "provides": [
         "DiceboundCombatElementResolution"
+      ]
+    },
+    {
+      "id": "combat-d20-chaos-resolution",
+      "path": "js/combat/d20-chaos-resolution.js",
+      "domain": "combat/twenty-sider-d20-chaos-outcome-presentation-and-haste-gating",
+      "status": "extracted",
+      "requires": [
+        "combat-element-resolution"
+      ],
+      "provides": [
+        "DiceboundCombatD20ChaosResolution"
       ]
     },
     {
@@ -826,6 +839,7 @@
         "core-state",
         "runtime-services",
         "combat-effective-stats",
+        "combat-d20-chaos-resolution",
         "combat-strike-policy",
         "combat-strike-resolution",
         "combat-ultimate-resolution",
