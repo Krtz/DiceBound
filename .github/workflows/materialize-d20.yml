@@ -41,6 +41,15 @@ jobs:
           python tools/materialize_d20_extraction.py
           python - <<'PY'
           from pathlib import Path
+          p=Path('runtime/js/dicebound.js')
+          text=p.read_text(encoding='utf-8')
+          lines=text.splitlines()
+          # Wrapper deletion can leave whitespace-only separator lines. Strip
+          # only those lines; non-empty source text is untouched.
+          p.write_text('\n'.join('' if not line.strip() else line for line in lines)+'\n', encoding='utf-8')
+          PY
+          python - <<'PY'
+          from pathlib import Path
           p=Path('CHANGELOG.md')
           text=p.read_text(encoding='utf-8')
           if '## Beta 0.6.6.19' not in text:
