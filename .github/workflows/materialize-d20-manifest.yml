@@ -1,0 +1,43 @@
+name: Materialize D20 Windows manifest
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.19-d20-chaos-resolution
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh canonical runtime metadata
+        shell: pwsh
+        run: |
+          python tools/refresh_runtime_manifest.py --version 0.6.6.19 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff -- runtime/build-info.json runtime/build-manifest.json
+
+      - name: Commit clean generated tree
+        shell: pwsh
+        run: |
+          Remove-Item .github/workflows/materialize-d20-manifest.yml -Force
+          git config user.name "Axel"
+          git config user.email "axelkratz@hotmail.com"
+          git add -A
+          git status --short
+          git commit -m "chore: canonicalize 0.6.6.19 Windows manifest"
+          git rev-parse HEAD
+          git push origin HEAD:arch/0.6.6.19-d20-chaos-resolution
