@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.18
+
+### Merchant tile hotfix (#306)
+- Fixed the real Merchant-tile crash: live equipment formatting still referenced two deleted identity-format helpers, causing `openMerchant()` to throw and Board recovery to swallow the shop.
+- Restored only that formatting compatibility seam against `DiceboundEquipment`, and fixed the secondary split-visit transaction defect for exact Merchant stock identity.
+- Added a real Edge regression covering Merchant arrival, generated gear comparison, an actual purchase and absence of tile-error recovery.
+- No Merchant economy, RNG, Board generation, secret-boss, save-schema or balance changes.
+
 ## Beta 0.6.6.17
 
 ### Info/Guide adapter ownership cleanup (#40, #209)

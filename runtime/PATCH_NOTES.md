@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.18
+
+## Beta 0.6.6.18 Merchant tile hotfix (#306)
+- Fixed Merchant arrival crashing during shop-stock construction because two live equipment-identity formatting helper names had been deleted while `formatBonuses()` / `formatGearComparison()` still called them.
+- Restored the narrow compatibility formatting bridge against the authoritative equipment owner, and fixed Merchant transaction visit ownership so one rendered stock array keeps one transaction visit through rerenders and Legendary choices.
+- Added deterministic transaction coverage plus a real Windows Edge Merchant-arrival regression that renders gear comparison, commits a purchase and rejects road-recovery exceptions.
+- Merchant prices, stock composition, RNG, Board generation, secret Merchant-boss behavior, save schema and balance values are unchanged.
+
 # Unreleased — Beta 0.6.6.16
 
 ## Beta 0.6.6.17 Info/Guide adapter ownership cleanup (#40, #209)
