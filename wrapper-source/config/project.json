@@ -64,7 +64,7 @@
     "js/items/artifacts.js",
     "js/items/loot.js",
     "js/powerups/registry.js",
-    "js/powerup-borrowing.js",
+    "js/powerups/borrowing.js",
     "js/ui/camp.js",
     "js/ui/options.js",
     "js/ui/equipment-heirlooms.js",
