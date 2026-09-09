@@ -1413,15 +1413,9 @@
   function renderEnemyParty(){if(!dbCombatPresentation)throw new Error('Combat presentation owner is not configured.');return dbCombatPresentation.renderEnemyParty();}
   function updateCombatUI(){if(!dbCombatPresentation)throw new Error('Combat presentation owner is not configured.');const result=dbCombatPresentation.update();updateHUD();return result;}
 
-  function scaleEnemy(base,kind="normal",packSize=1){
-    const progress=player.position/Math.max(1,currentTileCount()-1),global=(boardLevel-1)+progress,isMini=kind==="miniboss",isFinal=kind==="final",isMerchant=kind==="merchant",isBoss=isMini||isFinal||isMerchant,levelScale=1+(player.level-1)*.15+global*.84,boardScale=boardLevel===4?2.30:boardLevel===3?1.68:boardLevel===2?1.28:1,packHp=packSize>1?(packSize===2?.78:.66):1,packAtk=packSize>1?(packSize===2?.82:.70):1;
-    let hp=Math.round(base.hp*levelScale*boardScale*(isFinal?2.65:isMini?1.66:isMerchant?2.9:1)*packHp),attack=Math.round(base.attack*(1+(player.level-1)*.095+global*.62)*(boardLevel===4?1.82:boardLevel===3?1.48:boardLevel===2?1.22:1)*(isFinal?1.27:isMini?1.12:isMerchant?1.5:1)*packAtk);const archetype=Number(base.defenseBias||0),roadArmor=global*(1.25+Math.max(0,archetype)*.16)+(boardLevel-1)*.75;let defense=Math.max(0,Math.floor(roadArmor+archetype+(isMini?2:isFinal?4:isMerchant?8:0)));if(nightmareMode){hp*=2;attack*=2;defense*=2;}
-    const elementalChance=clamp(.04+global*.065+(nightmareMode?.18:0),.04,.62),affinity=isBoss?(base.affinity||pick(ELEMENT_KEYS)):(random()<elementalChance?pick(ELEMENT_KEYS):null),elementProcChance=affinity?clamp((isBoss?.28:.10)+global*.025+(nightmareMode?.08:0),.10,.55):0;
-    const scaled={...base,hp,maxHp:hp,attack,defense,xp:Math.round(base.xp*(1+global*.72)*(isFinal?4.4:isMini?2.4:isMerchant?5:1)),gold:Math.round(base.gold*(1+global*.72)*(isFinal?4.5:isMini?2.5:isMerchant?5:1)),boss:isBoss,guardian:isBoss,miniBoss:isMini,finalBoss:isFinal,merchantBoss:isMerchant,skipTurns:0,poisonStacks:0,affinity,elementProcChance};
-    if(boardLevel===6){const balance=db317Board(6).balance;scaled.hp=Math.round(scaled.hp*balance.extraHp);scaled.maxHp=scaled.hp;scaled.attack=Math.round(scaled.attack*balance.extraAttack);scaled.defense=Math.round((scaled.defense||0)*balance.extraDefenseMult+balance.extraDefenseFlat);if(kind==="miniboss"||kind==="final"){scaled.hp=Math.round(scaled.hp*balance.guardianHp);scaled.maxHp=scaled.hp;scaled.attack=Math.round(scaled.attack*balance.guardianAttack);}}
-    if(scaled.name==="Cultist")scaled.lifeSteal=hellMode?.20:nightmareMode?.10:.01;
-    return scaled;
-  }
+  // #309: enemy scaling/difficulty now has one authoritative owner.
+  let dbEnemyScalingResolution=null;
+  function scaleEnemy(...args){if(!dbEnemyScalingResolution)throw new Error('Enemy scaling-resolution owner is not configured.');return dbEnemyScalingResolution.scale(...args);}
 
   function triggerElementEffect(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.triggerElementEffect.apply(this,args);}
 
@@ -1550,7 +1544,6 @@
   animateUltimate=async function(){const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️",cleric:"☀️✝️",paladin:"⚜️🛡️",beastmaster:"🐺🐾🐺",rogue:"💎🗡️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760,cleric:720,paladin:720,beastmaster:760,rogue:690}[player.classId]||620)+ALPHA_COMBAT_DELAY);enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");};
 
   // Board 4 is now intentionally cruel.
-  const scaleEnemyV15=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV15(base,kind,packSize);if(boardLevel===4){e.hp=Math.round(e.hp*1.45);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.35);e.defense+=e.guardian?6:3;if(e.finalBoss){e.hp=Math.round(e.hp*1.12);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.10);}}return e;};
 
   // Sovereign Relic now actually lets the player choose one of three Legendaries.
   const merchantCatalogV15=merchantCatalog;merchantCatalog=function(){const catalog=merchantCatalogV15();if(boardLevel===4){const relic=catalog.find(x=>x.id==="relic");if(relic){relic.desc="Choose one of three random Legendary powerups.";relic.alphaChooseLegendary=true;}}return catalog;};
@@ -1730,7 +1723,6 @@
 
   openCombatLootChain=function(defeated,done){const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?pick(["epic","legendary"]):defeated.miniBoss?pick(["rare","epic"]):null;openLoot(generateEquipment(rarity),done);}else done();};const specials=[];let weapon=0,boots=0,amulet=0,pants=0,hat=0,ring=0;if(defeated.merchantBoss){if(random()<.05*(nightmareMode?2:1)){specials.push(generateMerchantWeapon());meta.merchantOmegaDrops++;saveMeta();}}else if(defeated.bloodmageBoss){if(random()<.05*(nightmareMode?2:1)){specials.push(generatePhilosophersStone());meta.bloodmageOmegaDrops++;saveMeta();}}else if(defeated.miniBoss){if(boardLevel===1)weapon=.005;else if(boardLevel===2){weapon=.075;boots=.01;}else if(boardLevel===3){weapon=.075;boots=.01;pants=.005;}else if(boardLevel===4){weapon=.12;boots=.075;pants=.04;amulet=.005;hat=.005;}else{weapon=.14;boots=.09;pants=.05;amulet=.01;hat=.01;ring=.04;}}else if(defeated.finalBoss){if(boardLevel===1)weapon=.05;else if(boardLevel===2){weapon=.10;boots=.05;amulet=.001;}else if(boardLevel===3){weapon=.10;boots=.05;pants=.02;amulet=.001;}else if(boardLevel===4){weapon=.18;boots=.10;pants=.06;amulet=.01;hat=.02;}else{weapon=.20;boots=.12;pants=.08;amulet=.02;hat=.03;ring=.10;}}const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());if(ring&&random()<ring*mult)specials.push(generateMythicalRing());const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${item.rarity==="omega"?"OMEGA ITEM!":"MYTHIC ITEM!"}</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();};
 
-  const scaleEnemyV11=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV11(base,kind,packSize);if(boardLevel===5){e.hp=Math.round(e.hp*1.55);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.45);e.defense+=(e.guardian?8:4);}if(hellMode){e.hp=Math.round(e.hp*2.1);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.85);e.defense+=(e.guardian?14:7);e.affinity=e.affinity||pick(ELEMENT_KEYS);e.elementProcChance=Math.max(e.elementProcChance||0,.36);}return e;};
 
 
 
@@ -2199,12 +2191,6 @@
   };
 
   // Later boards become meaningful progression walls instead of a Board-1 check followed by a snowball.
-  const scaleEnemyV14Base=scaleEnemy;
-  scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV14Base(base,kind,packSize),b=boardLevel,mods={2:[1.12,1.08,1],3:[1.18,1.12,2],4:[1.12,1.08,2],5:[1.16,1.10,3]}[b];if(mods){e.hp=Math.round(e.hp*mods[0]);e.maxHp=e.hp;e.attack=Math.round(e.attack*mods[1]);e.defense+=mods[2];}
-    // Replace the runaway reward multiplier with a gentler board curve. Board 1 normals are slightly richer; late bosses stop printing a country's GDP.
-    const progress=player.position/Math.max(1,currentTileCount()-1),normalMult=[0,1.40,1.55,1.75,2.00,2.25][b]||2.25;let rewardMult=normalMult*(1+progress*.25);
-    if(kind==="miniboss")rewardMult*=2.4;else if(kind==="final")rewardMult=[0,4.4,5.0,5.5,6.0,6.0][b]||6;else if(kind==="merchant"||kind==="bloodmage")rewardMult*=3.5;
-    e.gold=Math.max(1,Math.round((base.gold||e.gold||1)*rewardMult));return e;};
 
   // Better item comparison: actual hidden point budget is useful internally, while players still judge the visible rolls.
   const gearPowerScoreV14Base=gearPowerScorePreV14;
@@ -2360,8 +2346,6 @@
   function restoreRadiationDefenseV16(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.restoreRadiationDefense.apply(this,args);}
 
   // Enemy affinity can never contradict its weakness.
-  const scaleEnemyV16Base=scaleEnemy;
-  scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV16Base(base,kind,packSize);if(e.affinity&&e.affinity===e.weakness){const pool=ELEMENT_KEYS.filter(k=>k!==e.weakness);e.affinity=pool.length?pick(pool):null;}return e;};
 
   // ---- New Alchemist class --------------------------------------------------
   CLASSES.alchemist={id:"alchemist",name:"Alchemist",icon:"⚗️",attackIcon:"🧪",fxIcon:"🧪💥",unlock:"Use 100 potions across all runs",desc:"A potion engineer who brews replacements during combat and can drink potions for healing or throw them as volatile weapons. Offensive flask damage scales directly with Potion Healing bonuses.",stats:"34 HP · 6 ATK · 1 DEF · +25% POTION HEALING",ultimate:{name:"Grand Distillation",icon:"⚗️✨",desc:"Creates three potions, restores health and detonates an oversized restorative formula across the enemy pack."},base:{maxHp:34,attack:6,defense:1,crit:.08,dodge:.04,luck:.06,doubleStrike:.04,guardPower:.54,classBurst:.14,lifeSteal:0},tags:["alchemy","sustain","ranged","weird"]};
@@ -2509,9 +2493,7 @@
   const wLuck=wheelRewards.find(x=>x.name==="Lucky Star");if(wLuck)wLuck.apply=function(){const c=.08+(boardLevel-1)*.012,l=.08+(boardLevel-1)*.015;player.crit+=c;player.luck+=l;return `Gain +${Math.round(c*100)}% Crit and +${Math.round(l*100)} Luck.`;};
 
   // ---- Explicit late-road difficulty curve --------------------------------
-  const scaleEnemyV17Base=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV17Base(base,kind,packSize),mods={2:[1.04,1.03,0],3:[1.05,1.04,0],4:[1.16,1.11,2],5:[1.34,1.22,4]}[boardLevel];if(mods){e.hp=Math.round(e.hp*mods[0]);e.maxHp=e.hp;e.attack=Math.round(e.attack*mods[1]);e.defense+=mods[2];}return e;};
   // Soften the historical Board-4-only overboost by compensating it, then let v1.7's monotonic layer rebuild the curve.
-  const scaleEnemyV17Normalized=scaleEnemy;scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV17Normalized(base,kind,packSize);if(boardLevel===4){e.hp=Math.max(1,Math.round(e.hp/1.85));e.maxHp=e.hp;e.attack=Math.max(1,Math.round(e.attack/1.55));}return e;};
 
   // ---- Ninja Smoke ---------------------------------------------------------
   if(!upgrades.some(u=>u.id==="ninja_smoke_step"))upgrades.push({id:"ninja_smoke_step",classId:"ninja",rarity:"epic",unique:true,icon:"🌫️🥷",name:"Vanishing Point",desc:"Unique: Smoke Execution needs one fewer Smoke stack.",tags:["dodgy","precision","unique"],apply(){player.ninjaSmokeNeed=2;player.ninjaSmoke=Math.min(player.ninjaSmoke||0,2);}});
@@ -3043,8 +3025,6 @@
   updateHUD=function(){updateHUDV19Base();v19EnsureDoubleDiceButton();const b=$("roll2Btn");if(b){b.style.display=meta.doubleDiceUnlocked?"block":"none";b.disabled=rollLocked||!gameStarted;}const one=$("rollBtn");if(one)one.textContent=meta.doubleDiceUnlocked?"🎲 Roll 1d6":"🎲 Roll the dice";};
 
   // ---- Board 6 -------------------------------------------------------------
-  const scaleEnemyV19Base=scaleEnemy;
-  scaleEnemy=function(base,kind="normal",packSize=1){const e=scaleEnemyV19Base(base,kind,packSize);if(boardLevel===6){e.hp=Math.round(e.hp*1.85);e.maxHp=e.hp;e.attack=Math.round(e.attack*1.58);e.defense=Math.round((e.defense||0)*1.25+10);e.xp=Math.round((e.xp||1)*1.35);e.gold=Math.round((e.gold||1)*1.18);}return e;};
   const applyRunThemeV19Base=applyRunTheme;
   applyRunTheme=function(){
     applyRunThemeV19Base();
@@ -5078,25 +5058,6 @@
   }
 
   // ----- Board pass: ensure late boards climb cleanly ---------------------
-  const scaleEnemyBeta045Base=scaleEnemy;
-  scaleEnemy=function(base,kind='normal',packSize=1){
-    const e=scaleEnemyBeta045Base(base,kind,packSize);
-    const tune={
-      1:[1.00,1.00,0],
-      2:[1.02,1.01,0],
-      3:[1.05,1.04,1],
-      4:[0.99,1.00,0],
-      5:[1.20,1.14,2],
-      6:[1.08,1.06,1]
-    }[boardLevel]||[1,1,0];
-    e.hp=Math.max(1,Math.round(e.hp*tune[0]));e.maxHp=e.hp;
-    e.attack=Math.max(1,Math.round(e.attack*tune[1]));
-    e.defense=Math.max(0,(e.defense||0)+tune[2]);
-    if(e.name==='Cultist')e.lifeSteal=hellMode?.20:nightmareMode?.10:.01;
-    const art=beta045EnemyArtForName(e.name);
-    if(art)e.icon=art;
-    return e;
-  };
   if(typeof db317Board==='function'){
     const beta045Board6=db317Board(6),beta045Board5=db317Board(5),beta045Board4=db317Board(4),beta045Board3=db317Board(3),beta045Board2=db317Board(2);
     if(beta045Board2){beta045Board2.entryHeal=.14;beta045Board2.entryPotions=1;}
@@ -5268,25 +5229,6 @@
     db317Board=function(level=boardLevel){const base=db046BoardBase(level),ov=DB046_BOARD_OVERRIDES[level]||DB046_BOARD_OVERRIDES[String(level)]||null;return ov?Object.assign({},base,ov):base;};
   }
 
-  const db046ScaleEnemyBase=scaleEnemy;
-  scaleEnemy=function(base,kind='normal',packSize=1){
-    const e=db046ScaleEnemyBase(base,kind,packSize);
-    const tune={
-      1:[1.00,1.00,0],
-      2:[1.03,1.02,0],
-      3:[1.07,1.05,1],
-      4:[1.10,1.08,2],
-      5:[1.30,1.20,4],
-      6:[1.12,1.10,2]
-    }[boardLevel]||[1,1,0];
-    e.hp=Math.max(1,Math.round(e.hp*tune[0]));
-    e.maxHp=e.hp;
-    e.attack=Math.max(1,Math.round(e.attack*tune[1]));
-    e.defense=Math.max(0,(e.defense||0)+tune[2]);
-    const art=db046EnemyArtForName(e.name);
-    if(art)e.icon=art;
-    return e;
-  };
 
   // Hard anti-lock: only one haste skip can be banked before an enemy actually acts.
   // Coffee still deals damage, but if Haste has already been granted in this response chain,
@@ -5397,19 +5339,6 @@
     return ov?Object.assign({},base,ov):base;
   };
 
-  const db047ScaleEnemyBase=scaleEnemy;
-  scaleEnemy=function(base,kind='normal',packSize=1){
-    const enemy=db047ScaleEnemyBase(base,kind,packSize);
-    const perBoard={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.08,1.06,1],4:[1.15,1.10,2],5:[1.38,1.24,5],6:[1.55,1.33,7]}[boardLevel]||[1,1,0];
-    enemy.hp=Math.max(1,Math.round(enemy.hp*perBoard[0]));
-    enemy.maxHp=enemy.hp;
-    enemy.attack=Math.max(1,Math.round(enemy.attack*perBoard[1]));
-    enemy.defense=Math.max(0,(enemy.defense||0)+perBoard[2]);
-    const name=(enemy.name||'').toLowerCase();
-    if(name.includes('bandit'))enemy.icon=db047UiArt('bandit',enemy.name,'db-art-portrait')||enemy.icon;
-    if(name.includes('troll'))enemy.icon=db047UiArt('troll',enemy.name,'db-art-portrait')||enemy.icon;
-    return enemy;
-  };
 
   // --- haste anti-lock: never queue more than one skipped response ---------
 
@@ -6750,15 +6679,13 @@
   if(!db064EnemyPolicy)throw new Error('DiceBound requires the enemy policy domain.');
   function db064CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function db064IsStandardDevil(enemy){return /\bdevil\b/i.test(String(enemy?.name||''))&&!/\bpale\s+devil\b/i.test(String(enemy?.name||''));}
-  const db064ScaleEnemyBase=scaleEnemy;
-  scaleEnemy=function(...args){
-    const enemy=db064ScaleEnemyBase.apply(this,args);
-    if(db064IsStandardDevil(enemy)){
-      enemy.innateElement='fire';
-      enemy.elementProcChance=db064EnemyPolicy.standardDevilFlameChance(boardLevel,db064CombatMode());
-    }
-    return enemy;
-  };
+  const dbEnemyScalingOwner=window.DiceboundEnemyScalingResolution;
+  if(!dbEnemyScalingOwner)throw new Error('DiceBound requires the enemy scaling-resolution owner.');
+  dbEnemyScalingResolution=dbEnemyScalingOwner.configure({
+    getState:()=>({player,boardLevel,nightmareMode,hellMode}),currentTileCount,clamp,random,pick,
+    getBoard:level=>db317Board(level),enemyPolicy:db064EnemyPolicy,elementKeys:ELEMENT_KEYS,
+    beta045EnemyArtForName,db046EnemyArtForName,db047UiArt
+  });
   window.DiceboundEnemyMechanicsTest=Object.freeze({
     wolfEchoChance:(board,mode)=>db064EnemyPolicy.wolfEchoChance(board,mode),
     devilFlameChance:(board,mode)=>db064EnemyPolicy.standardDevilFlameChance(board,mode),

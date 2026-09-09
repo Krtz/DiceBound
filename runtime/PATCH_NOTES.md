@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.20
+
+## Beta 0.6.6.20 Enemy Scaling / Difficulty Resolution ownership (#309)
+- `combat/enemy-scaling-resolution.js` is now the single owner for the exact ordered enemy scaling pipeline, including Board/difficulty transforms, rewards, affinity correction, Cultist lifesteal, legacy art normalization and ordinary-Devil fire policy.
+- The historical base implementation plus eleven nested `scaleEnemy` reassignment layers are retired from `dicebound.js`; callers retain one thin adapter.
+- A frozen 30-case 0.6.6.19 oracle compares full enemy result objects and RNG draw streams across Boards 1–6 and Normal/Nightmare/Hell, including bosses, special encounter kinds, Cultists, affinity collisions and Devil policy.
+- Targeted extraction validation reports 67 runtime modules (66 extracted + one compatibility monolith), with the monolith reduced from 793,728 to 786,946 bytes and no intended gameplay, balance, RNG, save/checkpoint or encounter change.
+
 # Unreleased — Beta 0.6.6.19
 
 ## Beta 0.6.6.19 D20 Chaos Resolution ownership (#304)

@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.20
+
+### Enemy Scaling / Difficulty Resolution ownership (#309)
+- `combat/enemy-scaling-resolution.js` now owns enemy stat/reward scaling, difficulty transforms, affinity correction and the ordinary-Devil elemental policy bridge as one ordered pipeline.
+- Removed the original monolith implementation plus eleven cumulative `scaleEnemy` replacement layers, leaving one thin compatibility adapter in `dicebound.js`.
+- A frozen 30-case Beta 0.6.6.19 regression matrix pins exact enemy outputs and exact RNG consumption across Boards 1–6, Normal/Nightmare/Hell, normal/miniboss/final/Merchant/Bloodmage cases, Cultists, affinity collisions, Devils and legacy Bandit/Troll art hooks.
+- Monolith size falls from 793,728 to 786,946 bytes (7,747 to 7,674 `wc -l` lines) while preserving current balance, rounding, rewards, RNG order, saves/checkpoints and encounter behavior.
+
 ## Beta 0.6.6.19
 
 ### D20 Chaos Resolution ownership (#304)
