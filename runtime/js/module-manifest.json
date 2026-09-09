@@ -27,6 +27,7 @@
     "combat-pet-turn-resolution",
     "combat-victory-resolution",
     "combat-enemy-policy",
+    "combat-enemy-scaling-resolution",
     "combat-targeting",
     "combat-presentation",
     "combat-encounter-lifecycle",
@@ -339,6 +340,18 @@
       "requires": [],
       "provides": [
         "DiceboundEnemyPolicy"
+      ]
+    },
+    {
+      "id": "combat-enemy-scaling-resolution",
+      "path": "js/combat/enemy-scaling-resolution.js",
+      "domain": "combat/enemy-scaling-difficulty-reward-affinity-and-legacy-normalization",
+      "status": "extracted",
+      "requires": [
+        "combat-enemy-policy"
+      ],
+      "provides": [
+        "DiceboundEnemyScalingResolution"
       ]
     },
     {

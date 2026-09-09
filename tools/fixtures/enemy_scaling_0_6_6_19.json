@@ -1,0 +1,1399 @@
+{
+  "format": 1,
+  "sourceVersion": "0.6.6.19",
+  "caseCount": 30,
+  "cases": [
+    {
+      "id": "b1-normal-road",
+      "input": {
+        "id": "b1-normal-road",
+        "board": 1,
+        "mode": "normal",
+        "level": 3,
+        "position": 36,
+        "kind": "normal",
+        "packSize": 2,
+        "base": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 18,
+          "attack": 5,
+          "defenseBias": 1,
+          "xp": 8,
+          "gold": 7
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 23,
+          "attack": 6,
+          "defenseBias": 1,
+          "xp": 10,
+          "gold": 11,
+          "maxHp": 23,
+          "defense": 1,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b1-nightmare-miniboss",
+      "input": {
+        "id": "b1-nightmare-miniboss",
+        "board": 1,
+        "mode": "nightmare",
+        "level": 5,
+        "position": 51,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 44,
+          "attack": 11,
+          "defenseBias": 3,
+          "xp": 24,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 296,
+          "attack": 42,
+          "defenseBias": 3,
+          "xp": 79,
+          "gold": 68,
+          "maxHp": 296,
+          "defense": 10,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.3728787878787879
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b1-hell-final",
+      "input": {
+        "id": "b1-hell-final",
+        "board": 1,
+        "mode": "hell",
+        "level": 8,
+        "position": 99,
+        "kind": "final",
+        "packSize": 1,
+        "base": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 80,
+          "attack": 16,
+          "defenseBias": 5,
+          "xp": 50,
+          "gold": 40
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 1287,
+          "attack": 85,
+          "defenseBias": 5,
+          "xp": 378,
+          "gold": 176,
+          "maxHp": 1287,
+          "defense": 25,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": true,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.36
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b2-normal-road",
+      "input": {
+        "id": "b2-normal-road",
+        "board": 2,
+        "mode": "normal",
+        "level": 5,
+        "position": 36,
+        "kind": "normal",
+        "packSize": 3,
+        "base": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 18,
+          "attack": 5,
+          "defenseBias": 1,
+          "xp": 8,
+          "gold": 7
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 54,
+          "attack": 11,
+          "defenseBias": 1,
+          "xp": 16,
+          "gold": 12,
+          "maxHp": 54,
+          "defense": 4,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b2-nightmare-miniboss",
+      "input": {
+        "id": "b2-nightmare-miniboss",
+        "board": 2,
+        "mode": "nightmare",
+        "level": 8,
+        "position": 51,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 44,
+          "attack": 11,
+          "defenseBias": 3,
+          "xp": 24,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 785,
+          "attack": 92,
+          "defenseBias": 3,
+          "xp": 120,
+          "gold": 76,
+          "maxHp": 785,
+          "defense": 17,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.39787878787878794
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b2-hell-final",
+      "input": {
+        "id": "b2-hell-final",
+        "board": 2,
+        "mode": "hell",
+        "level": 12,
+        "position": 99,
+        "kind": "final",
+        "packSize": 1,
+        "base": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 80,
+          "attack": 16,
+          "defenseBias": 5,
+          "xp": 50,
+          "gold": 40
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 3112,
+          "attack": 175,
+          "defenseBias": 5,
+          "xp": 537,
+          "gold": 200,
+          "maxHp": 3112,
+          "defense": 28,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": true,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.36
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b3-normal-road",
+      "input": {
+        "id": "b3-normal-road",
+        "board": 3,
+        "mode": "normal",
+        "level": 7,
+        "position": 36,
+        "kind": "normal",
+        "packSize": 1,
+        "base": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 18,
+          "attack": 5,
+          "defenseBias": 1,
+          "xp": 8,
+          "gold": 7
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 176,
+          "attack": 30,
+          "defenseBias": 1,
+          "xp": 22,
+          "gold": 13,
+          "maxHp": 176,
+          "defense": 10,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b3-nightmare-miniboss",
+      "input": {
+        "id": "b3-nightmare-miniboss",
+        "board": 3,
+        "mode": "nightmare",
+        "level": 11,
+        "position": 51,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 44,
+          "attack": 11,
+          "defenseBias": 3,
+          "xp": 24,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 1702,
+          "attack": 173,
+          "defenseBias": 3,
+          "xp": 162,
+          "gold": 85,
+          "maxHp": 1702,
+          "defense": 25,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.4228787878787879
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b3-hell-final",
+      "input": {
+        "id": "b3-hell-final",
+        "board": 3,
+        "mode": "hell",
+        "level": 16,
+        "position": 99,
+        "kind": "final",
+        "packSize": 1,
+        "base": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 80,
+          "attack": 16,
+          "defenseBias": 5,
+          "xp": 50,
+          "gold": 40
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 6489,
+          "attack": 323,
+          "defenseBias": 5,
+          "xp": 695,
+          "gold": 220,
+          "maxHp": 6489,
+          "defense": 35,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": true,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.36
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b4-normal-road",
+      "input": {
+        "id": "b4-normal-road",
+        "board": 4,
+        "mode": "normal",
+        "level": 9,
+        "position": 23,
+        "kind": "normal",
+        "packSize": 2,
+        "base": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 18,
+          "attack": 5,
+          "defenseBias": 1,
+          "xp": 8,
+          "gold": 7
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 206,
+          "attack": 35,
+          "defenseBias": 1,
+          "xp": 27,
+          "gold": 15,
+          "maxHp": 206,
+          "defense": 18,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b4-nightmare-miniboss",
+      "input": {
+        "id": "b4-nightmare-miniboss",
+        "board": 4,
+        "mode": "nightmare",
+        "level": 14,
+        "position": 32,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 44,
+          "attack": 11,
+          "defenseBias": 3,
+          "xp": 24,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 2528,
+          "attack": 244,
+          "defenseBias": 3,
+          "xp": 203,
+          "gold": 97,
+          "maxHp": 2528,
+          "defense": 40,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.44769841269841276
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b4-hell-final",
+      "input": {
+        "id": "b4-hell-final",
+        "board": 4,
+        "mode": "hell",
+        "level": 20,
+        "position": 63,
+        "kind": "final",
+        "packSize": 1,
+        "base": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 80,
+          "attack": 16,
+          "defenseBias": 5,
+          "xp": 50,
+          "gold": 40
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 10547,
+          "attack": 492,
+          "defenseBias": 5,
+          "xp": 854,
+          "gold": 240,
+          "maxHp": 10547,
+          "defense": 47,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": true,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.38
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b5-normal-road",
+      "input": {
+        "id": "b5-normal-road",
+        "board": 5,
+        "mode": "normal",
+        "level": 11,
+        "position": 23,
+        "kind": "normal",
+        "packSize": 3,
+        "base": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 18,
+          "attack": 5,
+          "defenseBias": 1,
+          "xp": 8,
+          "gold": 7
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 378,
+          "attack": 52,
+          "defenseBias": 1,
+          "xp": 33,
+          "gold": 17,
+          "maxHp": 378,
+          "defense": 32,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b5-nightmare-miniboss",
+      "input": {
+        "id": "b5-nightmare-miniboss",
+        "board": 5,
+        "mode": "nightmare",
+        "level": 17,
+        "position": 32,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 44,
+          "attack": 11,
+          "defenseBias": 3,
+          "xp": 24,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 5447,
+          "attack": 432,
+          "defenseBias": 3,
+          "xp": 245,
+          "gold": 110,
+          "maxHp": 5447,
+          "defense": 56,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.47269841269841273
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b5-hell-final",
+      "input": {
+        "id": "b5-hell-final",
+        "board": 5,
+        "mode": "hell",
+        "level": 24,
+        "position": 63,
+        "kind": "final",
+        "packSize": 1,
+        "base": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 80,
+          "attack": 16,
+          "defenseBias": 5,
+          "xp": 50,
+          "gold": 40
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 19978,
+          "attack": 782,
+          "defenseBias": 5,
+          "xp": 1012,
+          "gold": 240,
+          "maxHp": 19978,
+          "defense": 62,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": true,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.405
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b6-normal-road",
+      "input": {
+        "id": "b6-normal-road",
+        "board": 6,
+        "mode": "normal",
+        "level": 13,
+        "position": 23,
+        "kind": "normal",
+        "packSize": 1,
+        "base": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 18,
+          "attack": 5,
+          "defenseBias": 1,
+          "xp": 8,
+          "gold": 7
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Goblin",
+          "icon": "👹",
+          "hp": 755,
+          "attack": 89,
+          "defenseBias": 1,
+          "xp": 53,
+          "gold": 20,
+          "maxHp": 755,
+          "defense": 54,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b6-nightmare-miniboss",
+      "input": {
+        "id": "b6-nightmare-miniboss",
+        "board": 6,
+        "mode": "nightmare",
+        "level": 20,
+        "position": 32,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 44,
+          "attack": 11,
+          "defenseBias": 3,
+          "xp": 24,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Guardian",
+          "icon": "🗿",
+          "hp": 9565,
+          "attack": 638,
+          "defenseBias": 3,
+          "xp": 386,
+          "gold": 130,
+          "maxHp": 9565,
+          "defense": 90,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.49769841269841275
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "b6-hell-final",
+      "input": {
+        "id": "b6-hell-final",
+        "board": 6,
+        "mode": "hell",
+        "level": 28,
+        "position": 63,
+        "kind": "final",
+        "packSize": 1,
+        "base": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 80,
+          "attack": 16,
+          "defenseBias": 5,
+          "xp": 50,
+          "gold": 40
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Test Dragon",
+          "icon": "🐉",
+          "hp": 34700,
+          "attack": 1129,
+          "defenseBias": 5,
+          "xp": 1580,
+          "gold": 283,
+          "maxHp": 34700,
+          "defense": 91,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": true,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.43000000000000005
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "merchant-b4",
+      "input": {
+        "id": "merchant-b4",
+        "board": 4,
+        "mode": "normal",
+        "level": 17,
+        "position": 24,
+        "kind": "merchant",
+        "packSize": 1,
+        "base": {
+          "name": "Road Merchant",
+          "icon": "🧳",
+          "hp": 62,
+          "attack": 13,
+          "defenseBias": 4,
+          "xp": 32,
+          "gold": 35
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Merchant",
+          "icon": "🧳",
+          "hp": 3290,
+          "attack": 204,
+          "defenseBias": 4,
+          "xp": 549,
+          "gold": 268,
+          "maxHp": 3290,
+          "defense": 34,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": true,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "void",
+          "elementProcChance": 0.3645238095238096
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "bloodmage-b5",
+      "input": {
+        "id": "bloodmage-b5",
+        "board": 5,
+        "mode": "nightmare",
+        "level": 25,
+        "position": 41,
+        "kind": "bloodmage",
+        "packSize": 1,
+        "base": {
+          "name": "Bloodmage",
+          "icon": "🩸",
+          "hp": 70,
+          "attack": 17,
+          "defenseBias": 2,
+          "xp": 40,
+          "gold": 30
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Bloodmage",
+          "icon": "🩸",
+          "hp": 6175,
+          "attack": 694,
+          "defenseBias": 2,
+          "xp": 174,
+          "gold": 275,
+          "maxHp": 6175,
+          "defense": 46,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "cultist-normal",
+      "input": {
+        "id": "cultist-normal",
+        "board": 3,
+        "mode": "normal",
+        "level": 12,
+        "position": 40,
+        "kind": "normal",
+        "packSize": 2,
+        "base": {
+          "name": "Cultist",
+          "icon": "🕯️",
+          "hp": 24,
+          "attack": 7,
+          "defenseBias": 1,
+          "xp": 10,
+          "gold": 9
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Cultist",
+          "icon": "🕯️",
+          "hp": 220,
+          "attack": 40,
+          "defenseBias": 1,
+          "xp": 27,
+          "gold": 17,
+          "maxHp": 220,
+          "defense": 10,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0,
+          "lifeSteal": 0.01
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "cultist-nightmare",
+      "input": {
+        "id": "cultist-nightmare",
+        "board": 3,
+        "mode": "nightmare",
+        "level": 12,
+        "position": 40,
+        "kind": "normal",
+        "packSize": 2,
+        "base": {
+          "name": "Cultist",
+          "icon": "🕯️",
+          "hp": 24,
+          "attack": 7,
+          "defenseBias": 1,
+          "xp": 10,
+          "gold": 9
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Cultist",
+          "icon": "🕯️",
+          "hp": 442,
+          "attack": 82,
+          "defenseBias": 1,
+          "xp": 27,
+          "gold": 17,
+          "maxHp": 442,
+          "defense": 15,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0,
+          "lifeSteal": 0.1
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "cultist-hell",
+      "input": {
+        "id": "cultist-hell",
+        "board": 3,
+        "mode": "hell",
+        "level": 12,
+        "position": 40,
+        "kind": "normal",
+        "packSize": 2,
+        "base": {
+          "name": "Cultist",
+          "icon": "🕯️",
+          "hp": 24,
+          "attack": 7,
+          "defenseBias": 1,
+          "xp": 10,
+          "gold": 9
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Cultist",
+          "icon": "🕯️",
+          "hp": 464,
+          "attack": 76,
+          "defenseBias": 1,
+          "xp": 27,
+          "gold": 17,
+          "maxHp": 464,
+          "defense": 17,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "fire",
+          "elementProcChance": 0.36,
+          "lifeSteal": 0.2
+        },
+        "rng": [
+          0.91,
+          0.12
+        ]
+      }
+    },
+    {
+      "id": "affinity-collision",
+      "input": {
+        "id": "affinity-collision",
+        "board": 2,
+        "mode": "normal",
+        "level": 8,
+        "position": 48,
+        "kind": "miniboss",
+        "packSize": 1,
+        "base": {
+          "name": "Collision Guardian",
+          "icon": "🧿",
+          "hp": 35,
+          "attack": 9,
+          "defenseBias": 2,
+          "xp": 16,
+          "gold": 13,
+          "affinity": "fire",
+          "weakness": "fire"
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Collision Guardian",
+          "icon": "🧿",
+          "hp": 309,
+          "attack": 38,
+          "defenseBias": 2,
+          "xp": 79,
+          "gold": 54,
+          "affinity": "void",
+          "weakness": "fire",
+          "maxHp": 309,
+          "defense": 8,
+          "boss": true,
+          "guardian": true,
+          "miniBoss": true,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "elementProcChance": 0.31712121212121214
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "standard-devil-normal",
+      "input": {
+        "id": "standard-devil-normal",
+        "board": 1,
+        "mode": "normal",
+        "level": 6,
+        "position": 62,
+        "kind": "normal",
+        "packSize": 1,
+        "base": {
+          "name": "Devil",
+          "icon": "😈",
+          "hp": 28,
+          "attack": 8,
+          "defenseBias": 1,
+          "xp": 12,
+          "gold": 11
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Devil",
+          "icon": "😈",
+          "hp": 64,
+          "attack": 15,
+          "defenseBias": 1,
+          "xp": 17,
+          "gold": 18,
+          "maxHp": 64,
+          "defense": 1,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0.05,
+          "innateElement": "fire"
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "standard-devil-nightmare",
+      "input": {
+        "id": "standard-devil-nightmare",
+        "board": 4,
+        "mode": "nightmare",
+        "level": 18,
+        "position": 37,
+        "kind": "normal",
+        "packSize": 3,
+        "base": {
+          "name": "Ash Devil",
+          "icon": "😈",
+          "hp": 31,
+          "attack": 9,
+          "defenseBias": 2,
+          "xp": 14,
+          "gold": 12
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Ash Devil",
+          "icon": "😈",
+          "hp": 789,
+          "attack": 136,
+          "defenseBias": 2,
+          "xp": 50,
+          "gold": 28,
+          "maxHp": 789,
+          "defense": 29,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0.5,
+          "innateElement": "fire"
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "standard-devil-hell",
+      "input": {
+        "id": "standard-devil-hell",
+        "board": 6,
+        "mode": "hell",
+        "level": 32,
+        "position": 55,
+        "kind": "normal",
+        "packSize": 3,
+        "base": {
+          "name": "Cinder Devil",
+          "icon": "😈",
+          "hp": 36,
+          "attack": 11,
+          "defenseBias": 2,
+          "xp": 18,
+          "gold": 15
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Cinder Devil",
+          "icon": "😈",
+          "hp": 3015,
+          "attack": 363,
+          "defenseBias": 2,
+          "xp": 127,
+          "gold": 48,
+          "maxHp": 3015,
+          "defense": 65,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "fire",
+          "elementProcChance": 0.9,
+          "innateElement": "fire"
+        },
+        "rng": [
+          0.91,
+          0.12
+        ]
+      }
+    },
+    {
+      "id": "pale-devil-exclusion",
+      "input": {
+        "id": "pale-devil-exclusion",
+        "board": 6,
+        "mode": "hell",
+        "level": 32,
+        "position": 55,
+        "kind": "normal",
+        "packSize": 1,
+        "base": {
+          "name": "Pale Devil",
+          "icon": "👿",
+          "hp": 45,
+          "attack": 14,
+          "defenseBias": 3,
+          "xp": 22,
+          "gold": 18
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Pale Devil",
+          "icon": "👿",
+          "hp": 5720,
+          "attack": 662,
+          "defenseBias": 3,
+          "xp": 155,
+          "gold": 58,
+          "maxHp": 5720,
+          "defense": 69,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": "fire",
+          "elementProcChance": 0.36
+        },
+        "rng": [
+          0.91,
+          0.12
+        ]
+      }
+    },
+    {
+      "id": "bandit-art",
+      "input": {
+        "id": "bandit-art",
+        "board": 2,
+        "mode": "normal",
+        "level": 7,
+        "position": 33,
+        "kind": "normal",
+        "packSize": 1,
+        "base": {
+          "name": "Road Bandit",
+          "icon": "🗡️",
+          "hp": 21,
+          "attack": 6,
+          "defenseBias": 1,
+          "xp": 9,
+          "gold": 8
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Road Bandit",
+          "icon": "db047:bandit:Road Bandit",
+          "hp": 103,
+          "attack": 20,
+          "defenseBias": 1,
+          "xp": 18,
+          "gold": 13,
+          "maxHp": 103,
+          "defense": 4,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    },
+    {
+      "id": "troll-art",
+      "input": {
+        "id": "troll-art",
+        "board": 5,
+        "mode": "normal",
+        "level": 20,
+        "position": 28,
+        "kind": "normal",
+        "packSize": 2,
+        "base": {
+          "name": "Bridge Troll",
+          "icon": "👺",
+          "hp": 42,
+          "attack": 12,
+          "defenseBias": 4,
+          "xp": 21,
+          "gold": 17
+        }
+      },
+      "result": {
+        "output": {
+          "name": "Bridge Troll",
+          "icon": "db047:troll:Bridge Troll",
+          "hp": 1283,
+          "attack": 181,
+          "defenseBias": 4,
+          "xp": 88,
+          "gold": 43,
+          "maxHp": 1283,
+          "defense": 37,
+          "boss": false,
+          "guardian": false,
+          "miniBoss": false,
+          "finalBoss": false,
+          "merchantBoss": false,
+          "skipTurns": 0,
+          "poisonStacks": 0,
+          "affinity": null,
+          "elementProcChance": 0
+        },
+        "rng": [
+          0.91
+        ]
+      }
+    }
+  ]
+}

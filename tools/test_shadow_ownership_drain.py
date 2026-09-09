@@ -16,7 +16,12 @@ for name in [
     'v235TabHints','v24TabHints','v24Brand','v24BrandSub','v25Brand','v25BrandSub'
 ]:
     assert not re.search(rf'(?<![\w$]){re.escape(name)}(?![\w$])',mono),name
-assert re.search(r'function scaleEnemy\([\s\S]*?const scaled=\{[\s\S]*?if\(boardLevel===6\)\{const balance=db317Board\(6\)\.balance;[\s\S]*?return scaled;',mono), 'Board 6 scaling must survive inside the single scaleEnemy owner'
+enemy_scaling=(root/'runtime/js/combat/enemy-scaling-resolution.js').read_text(encoding='utf-8')
+assert 'window.DiceboundEnemyScalingResolution=Object.freeze({apiVersion:1,configure});' in enemy_scaling, 'Enemy scaling authoritative owner missing'
+assert 'if(boardLevel===6){const balance=db317Board(6).balance;' in enemy_scaling, 'Board 6 scaling must survive in the extracted owner'
+assert mono.count('function scaleEnemy(') == 1, 'scaleEnemy must have exactly one thin compatibility adapter'
+assert not re.search(r'(?<![\w$])scaleEnemy\s*=\s*function',mono), 'scaleEnemy reassignment chain returned'
+assert 'return dbEnemyScalingResolution.scale(...args);' in mono, 'scaleEnemy thin adapter must delegate to the owner'
 presentation_retired = [
     'updateCombatUIBase','updateCombatUIV12','updateCombatUIV13','updateCombatUIV15Patch','updateCombatUIV16Base',
     'updateCombatUIV17Base','updateCombatUIV17SmokeBase','updateCombatUIV18Base','updateCombatUIV19Base','updateCombatUIV24Base',

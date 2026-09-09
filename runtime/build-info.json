@@ -1,15 +1,15 @@
 {
   "assetCount": 428,
-  "browserContentHash": "3fd2dae90df668fa1b8006ff720e8f0dba57f87e8ad1c973259c64beb9f579fb",
-  "buildId": "dicebound-0.6.6.19-dev-3fd2dae90df668fa",
+  "browserContentHash": "2ec78ebe4a99ee7c78aa56dc37fdd500d6f84de8746a7ee55a921fce6fab919b",
+  "buildId": "dicebound-0.6.6.20-dev-2ec78ebe4a99ee7c",
   "channel": "Beta",
-  "contentFileCount": 497,
+  "contentFileCount": 498,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.6.19.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.20.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -36,6 +36,7 @@
     "js/combat/pet-turn-resolution.js",
     "js/combat/victory-resolution.js",
     "js/combat/enemy-policy.js",
+    "js/combat/enemy-scaling-resolution.js",
     "js/combat/targeting.js",
     "js/combat/presentation.js",
     "js/combat/encounter-lifecycle.js",
@@ -80,9 +81,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "3fd2dae90df668fa1b8006ff720e8f0dba57f87e8ad1c973259c64beb9f579fb",
+  "sourceHash": "2ec78ebe4a99ee7c78aa56dc37fdd500d6f84de8746a7ee55a921fce6fab919b",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.6.19",
+  "version": "0.6.6.20",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
