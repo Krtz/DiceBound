@@ -14,25 +14,7 @@ jobs:
   census:
     runs-on: ubuntu-latest
     steps:
-      - name: Mint repository App token
-        id: app
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
-          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
-          owner: Krtz
-          repositories: DiceBound
-          permission-contents: write
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ steps.app.outputs.token }}
-      - name: Capture frozen player initialization oracle
+      - name: Verify new owner against frozen oracle
         shell: bash
-        run: |
-          node tools/test_player_initialization.js --capture
-          git config user.name "dicebound-manifest-publisher[bot]"
-          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
-          git add tools/fixtures/player_initialization_0_6_6_20.json
-          git commit -m "test: freeze 0.6.6.20 player initialization oracle"
-          git push origin HEAD:arch/0.6.6.21-player-run-initialization
+        run: node tools/test_player_initialization.js
