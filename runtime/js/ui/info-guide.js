@@ -97,7 +97,7 @@
     const recipes=window.DiceboundInvoker?.RECIPE;
     if(!recipes)return '';
     const names={b:'Blue',g:'Green',r:'Red'};
-    const rows=Object.entries(recipes).map(([formula,recipe])=>`<div class="info-class"><b>${formula.toUpperCase().split('').map(key=>names[key][0]).join(' + ')} — ${escapeHtml(recipe.name)}</b><p>${escapeHtml(recipe.tip)}</p></div>`).join('');
+    const rows=Object.entries(recipes).map(([formula,recipe])=>`<div class="info-class"><b>${formula.split('').map(key=>names[key]?.[0]||key.toUpperCase()).join(' + ')} — ${escapeHtml(recipe.name)}</b><p>${escapeHtml(recipe.tip)}</p></div>`).join('');
     return `<h4>Invoker Formula Codex</h4><p>Blue comes from Defend, Green from Arcane Current and Red from Elemental Lance. Invoke reads the current three-orb formula; the oldest orb rotates out when a fourth forms.</p><div class="info-class-grid">${rows}</div>`;
   }
   function artifactSetHtml(){
