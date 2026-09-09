@@ -1,0 +1,86 @@
+name: Materialize Merchant hotfix identity
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.head_ref == 'fix/merchant-tile-visit-state'
+    runs-on: windows-2022
+    steps:
+      - name: Check out hotfix head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Add release notes and materialize identity
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+
+          patch = Path('runtime/PATCH_NOTES.md')
+          patch_text = patch.read_text(encoding='utf-8')
+          marker = '## Beta 0.6.6.18 Merchant tile transaction hotfix (#306)'
+          if marker not in patch_text:
+              section = '''# Unreleased — Beta 0.6.6.18
+
+          ## Beta 0.6.6.18 Merchant tile transaction hotfix (#306)
+          - Fixed Merchant shop visit ownership so landing on a Merchant tile keeps one transaction visit for the exact generated stock instead of replacing the renderer-bound visit with a second disconnected visit.
+          - Added deterministic coverage for exact-stock visit adoption, consumed-offer continuity, fresh visits for replacement stock, and the existing Sovereign/Legendary choice re-entry guard.
+          - Merchant prices, stock composition, RNG, Board generation, secret Merchant-boss behavior, save schema and balance values are unchanged.
+
+          '''
+              patch.write_text(section + patch_text, encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          change_text = changelog.read_text(encoding='utf-8')
+          change_marker = '## Beta 0.6.6.18'
+          if change_marker not in change_text:
+              anchor = '# DiceBound Changelog\n\nThis file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.\n\n'
+              section = '''## Beta 0.6.6.18
+
+          ### Merchant tile transaction hotfix (#306)
+          - Fixed split Merchant visit ownership: the outer Merchant-open seam now adopts the visit already created for the exact rendered stock array instead of replacing it with a disconnected transaction.
+          - Added regression coverage for same-stock state continuity, fresh replacement stock, and protected Sovereign/Legendary choice re-entry.
+          - No Merchant economy, RNG, Board generation, secret-boss, save-schema or balance changes.
+
+          '''
+              if anchor not in change_text:
+                  raise SystemExit('CHANGELOG anchor missing')
+              changelog.write_text(change_text.replace(anchor, anchor + section, 1), encoding='utf-8')
+
+          version = Path('runtime/js/version.js')
+          version_text = version.read_text(encoding='utf-8')
+          version_text = version_text.replace('const RELEASE_SUMMARY="Info/Guide shadow-ownership cleanup.";', 'const RELEASE_SUMMARY="Merchant tile transaction hotfix.";')
+          version.write_text(version_text, encoding='utf-8')
+          '@ | Set-Content -Encoding utf8 .\materialize_hotfix.py
+          python .\materialize_hotfix.py
+          Remove-Item .\materialize_hotfix.py
+          python tools/set_project_version.py --version 0.6.6.18 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.6.18 --channel Beta --development-state Unreleased
+
+      - name: Commit generated hotfix identity
+        shell: pwsh
+        run: |
+          git config user.name "dicebound-release-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add CHANGELOG.md runtime/PATCH_NOTES.md runtime/index.html runtime/js/version.js runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json wrapper-source/wrappers/webview2/native-go/main.go
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Hotfix identity already materialized."
+            exit 0
+          }
+          git commit -m "Materialize Beta 0.6.6.18 Merchant hotfix"
+          git push origin HEAD:${{ github.head_ref }}
