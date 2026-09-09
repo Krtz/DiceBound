@@ -27,27 +27,29 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ steps.app.outputs.token }}
-      - name: Capture resetPlayer census
+      - name: Capture exact resetPlayer blocks
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('runtime/js/dicebound.js')
-          lines=p.read_text(encoding='utf-8').splitlines()
-          out=[]
-          out.append(f'bytes={p.stat().st_size} lines={len(lines)}')
-          out.append('')
+          text=p.read_text(encoding='utf-8')
+          lines=text.splitlines()
+          matches=[]
           for i,line in enumerate(lines,1):
-              if 'resetPlayer' in line:
-                  out.append(f'===== line {i} =====')
-                  a=max(1,i-4); b=min(len(lines),i+10)
-                  for n in range(a,b+1):
-                      out.append(f'{n:05d}: {lines[n-1]}')
-                  out.append('')
-          Path('docs/tmp-player-init-census.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
+              if re.search(r'function\s+resetPlayer\s*\(', line) or 'resetPlayer=function' in line:
+                  matches.append(i)
+          out=[f'bytes={p.stat().st_size} lines={len(lines)} matches={len(matches)}', 'match-lines='+','.join(map(str,matches)), '']
+          for i in matches:
+              out.append(f'===== RESET MATCH line {i} =====')
+              a=max(1,i-3); b=min(len(lines),i+12)
+              for n in range(a,b+1): out.append(f'{n:05d}: {lines[n-1]}')
+              out.append('')
+          Path('docs/tmp-player-init-blocks.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
           PY
           git config user.name "dicebound-manifest-publisher[bot]"
           git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
-          git add docs/tmp-player-init-census.txt
-          git commit -m "chore: capture player initialization census"
+          git add docs/tmp-player-init-blocks.txt
+          git commit -m "chore: capture exact player initialization blocks"
           git push origin HEAD:arch/0.6.6.21-player-run-initialization
