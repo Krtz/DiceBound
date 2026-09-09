@@ -16,6 +16,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Run Merchant browser diagnostic
+      - name: Run Merchant Edge regression
         shell: pwsh
-        run: node tools/diagnose_merchant_browser.js
+        run: node tools/test_merchant_browser.js
