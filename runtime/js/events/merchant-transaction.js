@@ -5,6 +5,41 @@
   let nextReservationId = 1;
   const visitsByStock = new WeakMap();
 
+  // The compatibility monolith still owns the final equipment text renderer,
+  // but the tiny #128 formatting helpers it calls were accidentally deleted
+  // during later ownership cleanup. They are unresolved identifiers inside the
+  // classic-script IIFE, so a property on the browser global environment is a
+  // valid late binding. Restore only those two historical formatting helpers
+  // until equipment presentation itself is extracted; the authoritative item
+  // identity/stat data remains in DiceboundEquipment.
+  function installEquipmentIdentityFormattingBridge() {
+    const equipment = window.DiceboundEquipment;
+    if (!equipment?.identityForItem || !equipment?.intrinsicBonusesForItem) return;
+
+    if (typeof window.db06314BonusLabel !== "function") {
+      window.db06314BonusLabel = (key, value) => {
+        const names = {
+          attack: "Attack", defense: "Defense", maxHp: "Max HP", maxMana: "Mana", crit: "Crit", dodge: "Dodge",
+          lifeSteal: "Lifesteal", luck: "Luck", goldBonus: "Gold", potionPower: "Potion healing", bossDamage: "Boss Damage",
+          flatReduction: "Damage reduction", doubleStrike: "Echo Strike", classBurst: "Signature Burst",
+          extraStepChance: "Extra-step chance", damageBonus: "All damage"
+        };
+        if (key === "luck") return `+${Math.round(value * 100)} Luck`;
+        const percent = ["crit", "dodge", "lifeSteal", "goldBonus", "potionPower", "bossDamage", "doubleStrike", "classBurst", "extraStepChance", "damageBonus"].includes(key);
+        return `+${percent ? Math.round(value * 100) + "%" : value} ${names[key] || key}`;
+      };
+    }
+
+    if (typeof window.db06314IntrinsicParts !== "function") {
+      window.db06314IntrinsicParts = item => {
+        const identity = equipment.identityForItem(item), bonuses = equipment.intrinsicBonusesForItem(item);
+        const values = Object.entries(bonuses || {}).map(([key, value]) => window.db06314BonusLabel(key, value));
+        return identity && values.length ? { identity, values } : null;
+      };
+    }
+  }
+  installEquipmentIdentityFormattingBridge();
+
   const offerKey = (offer, index = 0) => `${String(offer?.id || "offer")}:${Math.max(0, Number(index) || 0)}`;
   const createVisit = (offers = []) => {
     const visit = {
