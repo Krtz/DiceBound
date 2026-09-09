@@ -148,6 +148,27 @@ def main() -> int:
 
     monolith_id = next((m["id"] for m in modules if m.get("status") == "monolith"), None)
     monolith_source = sources.get(str(monolith_id), "") if monolith_id else ""
+    player_init_module = by_id.get("run-player-initialization")
+    player_init_source = sources.get("run-player-initialization", "")
+    if not player_init_module:
+        errors.append("Player initialization owner run-player-initialization is missing from the runtime manifest")
+    else:
+        if player_init_module.get("path") != "js/run/player-initialization.js" or "DiceboundPlayerInitialization" not in (player_init_module.get("provides") or []):
+            errors.append("run-player-initialization must own js/run/player-initialization.js and provide DiceboundPlayerInitialization")
+        if position.get("run-player-initialization", -1) >= position.get("run-lifecycle", -1):
+            errors.append("run-player-initialization must load before run-lifecycle")
+        if "run-player-initialization" not in (by_id.get("run-lifecycle", {}).get("requires") or []):
+            errors.append("run-lifecycle must declare the player initialization owner dependency")
+    for required_player_init in ["function initialize(classId)", "Slime Rouge", "setRunTalentSnapshot", "syncMana", "resetDragoonState"]:
+        if required_player_init not in player_init_source:
+            errors.append("player initialization owner is missing required ordered responsibility: " + required_player_init)
+    if monolith_source:
+        expected_reset_adapter = "function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}"
+        if expected_reset_adapter not in monolith_source:
+            errors.append("dicebound.js must retain only the thin resetPlayer player-initialization adapter")
+        for retired_reset_layer in ["resetPlayer=function", "resetPlayerV15=", "resetPlayerV12=", "resetPlayerV13=", "resetPlayerV15Patch=", "resetPlayerV16Base=", "resetPlayerV17Base=", "resetPlayerV18Base=", "resetPlayerV19Base=", "resetPlayerV21Base=", "resetPlayerV23TalentBase=", "resetPlayerV24Base=", "resetPlayerV26TalentBase=", "resetPlayerV27Base=", "resetPlayerV28Base=", "db060ResetPlayerBase=", "db06421ResetPlayerBase=", "dbFriendResetPlayerBase="]:
+            if retired_reset_layer in monolith_source:
+                errors.append("retired player initialization wrapper remains in dicebound.js: " + retired_reset_layer)
     camp_source = sources.get("ui-camp", "")
     reward_policy_source = sources.get("event-rewards", "")
     stylesheet_source = STYLE_PATH.read_text(encoding="utf-8")

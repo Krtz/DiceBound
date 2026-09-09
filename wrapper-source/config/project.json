@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.20",
+  "version": "0.6.6.21",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -51,6 +51,7 @@
     "js/board/tile-dispatch.js",
     "js/board/generation.js",
     "js/board/transition.js",
+    "js/run/player-initialization.js",
     "js/run/lifecycle.js",
     "js/run/completion.js",
     "js/combat/enemies.js",

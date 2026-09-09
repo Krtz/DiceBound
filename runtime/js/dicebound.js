@@ -10,7 +10,7 @@
   // The Info/Guide module is configured after legacy bootstrap has supplied
   // its runtime callbacks. These stable adapters deliberately stay safe
   // during that bootstrap window instead of recreating a wrapper chain.
-  let dbInfoGuide=null;
+  let dbInfoGuide=null,dbPlayerInitialization=null;
   const DB_EQUIPMENT_CONFIG=window.DiceboundEquipment?.createRegistry?.();
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
   const EQUIPMENT_SLOTS=[...DB_EQUIPMENT_CONFIG.slots];
@@ -1443,7 +1443,7 @@
   async function resolveEnemyResponse(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.resolveEnemyResponse(...args);}
   function applyCombatPlayerDamage(raw){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.applyPlayerDamage(raw);}
 
-  function resetPlayer(classId=selectedClassId){const cls=CLASSES[classId]||CLASSES.ranger;Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0});applyTalentBonuses();(meta.heirlooms||[]).slice(0,getHeirloomSlots()).forEach(item=>equipItem(item,true));boardLevel=1;rolls=0;tilesMovedThisRun=0;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentMerchantItems=[];runFinalized=false;lastLegacyAward=0;lastGoldLegacyAward=0;merchantBossBattle=false;if(dbCombatD20ChaosResolution)dbCombatD20ChaosResolution.initializePlayerState();}
+  function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}
 
   function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbBoardTileDispatch.dispatch();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
 
@@ -1532,7 +1532,7 @@
 
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
   const getHeirloomSlotsV15=getHeirloomSlots;getHeirloomSlots=function(){const source=runTalentSnapshot;if(!source)return getHeirloomSlotsV15();return 1+(Number(source.legacy_heirloom)||0)+((meta.prestige?.count||0)>=20?1:0);};
-  const resetPlayerV15=resetPlayer;resetPlayer=function(classId=selectedClassId){runTalentSnapshot=JSON.parse(JSON.stringify(meta.purchased||{}));resetPlayerV15(classId);player.bloodOverhealBonus=0;player.clericHealBonus=0;if(gameplayTalentRank("element_prismatic")&&!player.equipment.weapon){const pr=gameplayTalentRank("element_prismatic"),rr=pr>=3?"rare":pr>=2?"uncommon":"common",starter=generateEquipment(rr,"weapon");starter.provenance="prismatic-birthright";starter.heirloomEligible=false;starter.element=pick(ELEMENT_KEYS);starter.name=`Prismatic ${starter.name}`;equipItem(starter,true);recordRunBuff("🌈","Prismatic Birthright",`Rank ${pr} started with ${starter.name}: ${elementSummary(starter)}`,"legacy","Element Talent");}if(classIdentityActive("beastmaster")){player.petDamageBonus+=4;player.petDoubleChance+=.10;}if(classIdentityActive("paladin"))player.defenseAttackScale+=.35;statsLastHp=player.hp;statsLastGold=player.gold;};
+  
   const openStartScreenV15=openStartScreen;openStartScreen=function(){runTalentSnapshot=null;openStartScreenV15();};
 
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
@@ -1808,8 +1808,7 @@
   };
 
 
-  const resetPlayerV12=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){resetPlayerV12(classId);const p=player.classId;if(p==="fighter")player.firstHitBlocks+=1;if(p==="sorcerer")player.elementProcBonus+=.08;if(p==="clown")player.luck+=.10;if(p==="turtle"){player.firstHitBlocks+=1;player.defense+=1;}if(p==="frog")player.doubleStrike+=.10;if(p==="d20")player.luck+=.08;if(p==="slime"){player.maxHp+=10;player.hp+=10;}if(p==="vampire")player.lifeSteal+=.10;if(p==="ninja"){player.dodge+=.05;player.crit+=.05;}if(p==="rouge"){player.luck+=.10;player.crit+=.05;}if(p==="ceo")player.goldBonus+=2;if(p==="cleric")player.classElementProcs.light=(player.classElementProcs.light||0)+.08;if(p==="rogue"){player.goldBonus+=.25;player.dodge+=.05;} };
+  
 
   const effectiveDodgeChanceV12=effectiveDodgeChance;
   effectiveDodgeChance=function(){const base=effectiveDodgeChanceV12();return classIdentityActive("monk")?1-(1-base)*(1-base):base;};
@@ -1994,13 +1993,7 @@
   function identityFlash(text){const head=document.querySelector("#combatOverlay .combat-head");if(!head)return;const el=document.createElement("div");el.className="identity-flash";el.textContent=text;head.appendChild(el);setTimeout(()=>el.remove(),1050);}
 
   // ---- reset/setup for identity state ---------------------------------------
-  const resetPlayerV13=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    resetPlayerV13(classId);
-    Object.assign(player,{mana:0,maxMana:0,monkCombo:0,ninjaSmoke:0,fighterCounterReady:false,turtleCrushReady:false,rogueStealUsed:false,clericFaith:0,beastStance:"aggressive",clownGimmick:null,clownPieReady:false,_occultChanneling:false,_ninjaExecution:false});
-    if(classHasMechanic("mana")){player.maxMana=100;player.mana=25;}
-    if(classIdentityActive("slime")){player.maxHp=Math.max(CLASSES.slime.base.maxHp,player.maxHp-10);player.hp=Math.min(player.maxHp,Math.max(1,player.hp-10));}
-  };
+  
 
   // Slime can borrow broad class powers only when the power actually works with
   // mechanics Slime possesses. Pure stat/class-flavour powers remain eligible;
@@ -2283,8 +2276,7 @@
   function cycleTrainerPokemon(){if(!classIdentityActive("pokemontrainer")||combatBusy)return;const roster=player.trainerRoster||[];if(!roster.length)return;player.trainerActiveIndex=((player.trainerActiveIndex||0)+1)%roster.length;const id=activeTrainerPetId();identityFlash(`${PETS[id].icon} Go, ${PETS[id].name}!`);setCombatText(`🧢 You switch to ${PETS[id].icon} ${PETS[id].name}. Switching does not spend your turn.`);updateCombatUI();}
   $("specialAttackBtn")?.addEventListener("click",e=>{if(classIdentityActive("pokemontrainer")){e.preventDefault();e.stopImmediatePropagation();cycleTrainerPokemon();}},true);
 
-  const resetPlayerV15Patch=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){resetPlayerV15Patch(classId);player.summonerSpirits=[];player.summonerCap=3;player.summonerSpiritScale=1;player.summonerSpiritDouble=0;player.summonerManaBonus=0;player.summonerAutoSpirit=false;player.trainerRoster=[];player.trainerActiveIndex=0;player.trainerAssistBonus=0;player.trainerAssistScale=.65;player.trainerUltimateBonus=0;if(classIdentityActive("summoner")){player.maxMana=120;player.mana=35;}if(classIdentityActive("pokemontrainer")){player.trainerRoster=shuffledPetIds().slice(0,6);player.trainerActiveIndex=rand(0,Math.max(0,player.trainerRoster.length-1));}};
+  
 
 
 
@@ -2374,8 +2366,7 @@
   ];for(const t of v16Talents)if(!talents.some(x=>x.id===t.id))talents.push(t);
 
   // ---- Per-run identity state ----------------------------------------------
-  const resetPlayerV16Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){resetPlayerV16Base(classId);v16CombatKind=null;player.powerupRerolls=gameplayTalentRank("fortune_powerup_rerolls");player.rangerMarkMax=3+gameplayTalentRank("ranger_deep_marks");player.monkComboMax=5+gameplayTalentRank("monk_flow_ceiling");player.fighterCounterStacks=0;player.fighterCounterMax=1+Math.min(1,gameplayTalentRank("fighter_counter_reserve"));player.fighterCounterReady=false;player.turtleCrushReady=false;player.turtleGuardChain=0;player.turtleGuardMax=5;player.secondSun=false;player.secondSunUsedBoards={};player.radiationDefenseLost=0;player.alchemistBrewCounter=0;player.alchemistBrewNeed=3;player.alchemistFlaskBonus=0;player.alchemistElementChance=0;player.alchemistFreeFlask=0;player._activePetBonusId=null;if(classIdentityActive("alchemist")){player.potions+=2;if(player.classId!=="alchemist")player.potionPower+=.50;}syncActivePetBonusV16(true);};
+  
 
   // ---- Companion differentiation -------------------------------------------
   const PET_STAT_BONUSES={
@@ -2497,7 +2488,7 @@
 
   // ---- Ninja Smoke ---------------------------------------------------------
   if(!upgrades.some(u=>u.id==="ninja_smoke_step"))upgrades.push({id:"ninja_smoke_step",classId:"ninja",rarity:"epic",unique:true,icon:"🌫️🥷",name:"Vanishing Point",desc:"Unique: Smoke Execution needs one fewer Smoke stack.",tags:["dodgy","precision","unique"],apply(){player.ninjaSmokeNeed=2;player.ninjaSmoke=Math.min(player.ninjaSmoke||0,2);}});
-  const resetPlayerV17Base=resetPlayer;resetPlayer=function(classId=selectedClassId){resetPlayerV17Base(classId);player.ninjaSmokeNeed=3;player.guardElementProcBonus=0;};
+  
 
   // ---- Prismatic Birthright runtime migration -----------------------------
   const prismaticTalent=talents.find(t=>t.id==="element_prismatic");if(prismaticTalent){prismaticTalent.cost=2;prismaticTalent.maxRank=3;prismaticTalent.desc="Start each run with an elemental class weapon unless an heirloom weapon replaces it. Rank 1 Common · Rank 2 Uncommon · Rank 3 Rare.";prismaticTalent.requires=[req("element_attunement",2)];}
@@ -2675,24 +2666,7 @@
     if(now>last){const extra=now-last;player.maxHp+=extra;player.hp=Math.min(player.maxHp,player.hp+extra);}
     player._v18BloodmageMaxHp=player.maxHp;
   }
-  const resetPlayerV18Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    resetPlayerV18Base(classId);
-    const form=gameplayTalentRank("monk_flow_ceiling"),nuzzle=gameplayTalentRank("companion_recovery");
-    // Healing Nuzzle used to be post-battle healing; remove that old contribution.
-    player.postFightHeal=Math.max(0,(player.postFightHeal||0)-nuzzle);player.petTurnHeal=nuzzle;
-    player.levelChoiceBonus=gameplayTalentRank("fortune_extra_choice");
-    player.guardManaGain=6;
-    player.fighterCounterPowerBonus=(player.fighterCounterPowerBonus||0)+form*.10;
-    player.rangerMarkMax=(player.rangerMarkMax||3)+form;
-    player.turtleGuardMax=(player.turtleGuardMax||5)+form;
-    player.clericFaithGainBonus=(player.clericFaithGainBonus||0)+form*.15;
-    player.manaBuilderBonus=(player.manaBuilderBonus||0)+(classHasMechanic("mana")?form*2:0);
-    player.summonerSpiritScale=(player.summonerSpiritScale||1)+(classIdentityActive("summoner")?form*.10:0);
-    player.alchemistFlaskBonus=(player.alchemistFlaskBonus||0)+(classIdentityActive("alchemist")?form*.10:0);
-    player._v18BloodmageMaxHp=null;
-    v18SyncBloodmageHpPassive(true);v18SyncOuroborosAttack();
-  };
+  
 
   // ---- Guard, Replenish and pet-turn behavior ------------------------------
 
@@ -3001,13 +2975,7 @@
   }
 
   // ---- Runtime reset hooks -------------------------------------------------
-  const resetPlayerV19Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    resetPlayerV19Base(classId);player.hasteCooldown=0;player.titanCleaveBarrierBonus=player.titanCleaveBarrierBonus||0;player.paladinGrace=0;
-    // Deep Quarry no longer exists. Endless Form is the sole talent source for
-    // additional Ranger Mark cap beyond powerups.
-    if(classIdentityActive("ranger"))player.rangerMarkMax=Math.max(3,3+gameplayTalentRank("monk_flow_ceiling"));
-  };
+  
 
   // Show Paladin Grace through the standard class resource component.
 
@@ -3326,13 +3294,7 @@
     sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   };
 
-  const resetPlayerV21Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    resetPlayerV21Base(classId);
-    player.paladinGraceGainBonus=0;
-    player.rogueStealChanceBonus=0;player.rogueStealGoldMult=1;
-    player.bloodmageExsanguinateCostMult=1;player.bloodmageExsanguinateDamageMult=1;
-  };
+  
 
   /*
     Full eligible-powerup picker. Unlike getUpgradeChoices(), this deliberately
@@ -3642,8 +3604,7 @@
 
   // Base talent code already grants +1 Fast Travel XP/rank; add two more here
   // so Road Wisdom's real total is the documented +3/rank.
-  const resetPlayerV23TalentBase=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){const r=resetPlayerV23TalentBase(classId);player.fastTravelBonus+=(gameplayTalentRank('legacy_travel')||0)*2;return r;};
+  
 
   // Camp owns its own scene dimensions and refresh.  Keep only the inherited
   // domain refreshes that this historical checkpoint still needs.
@@ -3832,8 +3793,7 @@
   if(CLASSES.fighter){CLASSES.fighter.base.attack=5;CLASSES.fighter.base.guardPower=.67;CLASSES.fighter.stats='38 HP · 5 ATK · 2 DEF';}
   if(CLASSES.paladin){CLASSES.paladin.base.maxHp=52;CLASSES.paladin.base.attack=7;CLASSES.paladin.base.defense=5;CLASSES.paladin.base.guardPower=.78;CLASSES.paladin.stats='52 HP · 7 ATK · 5 DEF · DEFENSE/HEALING SCALING';}
   if(CLASSES.beastmaster){CLASSES.beastmaster.base.maxHp=42;CLASSES.beastmaster.base.attack=7;CLASSES.beastmaster.base.crit=.10;CLASSES.beastmaster.stats='42 HP · 7 ATK · 1 DEF · STRONG PET SCALING';CLASSES.beastmaster.desc='A late-unlock companion commander. Its own attacks are reliable, while pet Bond, pet damage and double-pet attacks become a genuinely dangerous second damage engine.';}
-  const resetPlayerV24Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){const out=resetPlayerV24Base(classId);player.energyShield=0;player.energyShieldCap=player.maxHp;if(classIdentityActive('beastmaster')){player.petDamageBonus=(player.petDamageBonus||0)+3;player.petDoubleChance=(player.petDoubleChance||0)+.08;}return out;};
+  
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
   function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
@@ -4174,18 +4134,7 @@
   /* SECOND OPINION / EXPANDED HORIZONS ------------------------------------ */
   // Keep a stable per-run snapshot. Rerolls track consumption separately, so
   // refreshing a chooser cannot erase or accidentally refill the talent.
-  const resetPlayerV26TalentBase=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    const r=resetPlayerV26TalentBase(classId);
-    player.v26SecondOpinionRank=gameplayTalentRank('fortune_powerup_rerolls');
-    player.v26SecondOpinionSpent=0;
-    player.powerupRerolls=player.v26SecondOpinionRank;
-    player.v26ExpandedHorizons=gameplayTalentRank('fortune_extra_choice')>0;
-    player.levelChoiceBonus=player.v26ExpandedHorizons?1:0;
-    const form=gameplayTalentRank('monk_flow_ceiling');
-    player.fighterCounterMax=Math.max(1,1+form);
-    return r;
-  };
+  
   attachPowerupRerollV16=function(grid,reroll){
     if(!grid)return;grid.querySelectorAll('.powerup-reroll-btn').forEach(x=>x.remove());
     const total=Math.max(0,Number(player.v26SecondOpinionRank??gameplayTalentRank('fortune_powerup_rerolls'))||0),spent=Math.max(0,Number(player.v26SecondOpinionSpent)||0),remaining=Math.max(0,total-spent);player.powerupRerolls=remaining;
@@ -4301,7 +4250,7 @@
     if(Math.abs(desired-old)>.0000001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+(desired-old));player.v27OuroGoldEchoApplied=desired;}
     v18SyncOuroborosAttack();
   }
-  const resetPlayerV27Base=resetPlayer;resetPlayer=function(classId=selectedClassId){const r=resetPlayerV27Base(classId);player.legendaryOverhealShieldRate=0;player.v27OuroGoldEchoScale=0;player.v27OuroGoldEchoApplied=0;v27SyncOuroborosEconomy();return r;};
+  
   const applyUpgradeV27Base=applyUpgrade;applyUpgrade=function(up,source){const r=applyUpgradeV27Base(up,source);v27SyncOuroborosEconomy();return r;};
   const updateHUDV27OuroBase=updateHUD;updateHUD=function(){v27SyncOuroborosEconomy();const r=updateHUDV27OuroBase();if(classIdentityActive('ouroboros')&&$('attackText'))$('attackText').textContent='10';return r;};
 
@@ -4456,20 +4405,7 @@
     if(mechanics.has('smoke')){player.ninjaSmoke=player.ninjaSmoke||0;player.ninjaSmokeNeed=player.ninjaSmokeNeed||3;}
     if(mechanics.has('alchemy')){player.alchemistBrewCounter=player.alchemistBrewCounter||0;player.alchemistBrewNeed=player.alchemistBrewNeed||3;player.alchemistFlaskBonus=player.alchemistFlaskBonus||0;}
   }
-  const resetPlayerV28Base=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    let identity=null,ultimate=null;const wantsRouge=classId==='slimerouge';
-    if(wantsRouge){const pool=v318SlimeRougeDonorPool();if(pool.length){identity=pool.find(c=>c.id===SlimeRougeRuntime.forcedIdentity)||pick(pool);ultimate=pool.find(c=>c.id===SlimeRougeRuntime.forcedUltimate)||pick(pool);SlimeRougeRuntime.pendingIdentity=identity.id;SlimeRougeRuntime.pendingUltimate=ultimate.id;}}
-    const r=resetPlayerV28Base(classId);player.v28StartedRandom=false;player.v28BorrowedPassiveClass=null;player.v28BorrowedUltimateClass=null;player.v28BorrowedPassiveName='';
-    if(player.classId==='slimerouge'&&identity&&ultimate){
-      player.slimeRougeIdentityClass=identity.id;player.slimeRougeUltimateClass=ultimate.id;player.v28BorrowedPassiveClass=identity.id;player.v28BorrowedUltimateClass=ultimate.id;player.v28BorrowedPassiveName=CLASS_PASSIVES[identity.id]?.name||identity.name;v32InitIdentitySupport(identity.id);v318InitUltimateSupport(ultimate.id);player.slimeRougeRunSummary=`🔴 Slime Rouge rolled ${identity.icon} ${identity.name} identity + ${ultimate.ultimate.icon} ${ultimate.ultimate.name} ultimate`;
-      const identityMechanics=classMechanicsFor(identity.id),ultimateSupport=window.DiceboundContent?.ultimateSupportMechanics?.[ultimate.id]||[];
-      recordRunBuff?.('🔴','Random Identity',`${identity.icon} ${identity.name}: ${CLASS_PASSIVES[identity.id]?.name||'class identity'} · mechanics: ${identityMechanics.join(', ')}`,'class','Slime Rouge');
-      recordRunBuff?.('🎭','Random Ultimate',`${ultimate.icon} ${ultimate.ultimate.name} · real ${ultimate.name} ultimate${ultimateSupport.length?` · support: ${ultimateSupport.join(', ')}`:''}`,'class','Slime Rouge');
-      addLog(`🔴 Slime Rouge becomes <b>${identity.icon} ${identity.name}</b> for this run and independently rolls <b>${ultimate.icon} ${ultimate.ultimate.name}</b>. Both use their real class mechanics.`);
-    }
-    SlimeRougeRuntime.pendingIdentity=null;SlimeRougeRuntime.pendingUltimate=null;SlimeRougeRuntime.forcedIdentity=null;SlimeRougeRuntime.forcedUltimate=null;return r;
-  };
+  
 
   const eligibleUpgradesV28Base=eligibleUpgrades;
   eligibleUpgrades=function(filter=()=>true){
@@ -6166,8 +6102,7 @@
   }
   const db060EquipItemBase=equipItem;
   equipItem=function(item,silent=false){db060ClearGearTransform();const r=db060EquipItemBase(item,silent);db060ApplyGearTransform();renderEquipment();updateHUD();return r;};
-  const db060ResetPlayerBase=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){const r=db060ResetPlayerBase(classId);player._db060GearSwapAttackAdj=0;player._db060GearSwapDefenseAdj=0;player._db060GlassHpPenalty=0;player._db060IronEchoDefense=0;player._db060BloodPriceStacks=0;player._db060LastStandUsed=false;player._db060LastElement=null;db060ApplyGearTransform();return r;};
+  
 
   // Attack/Defense powerup cross-feed.
   const db060ApplyUpgradeBase=applyUpgrade;
@@ -6611,14 +6546,7 @@
     db06421SyncMana({baseMaxMana,currentMana});
     return result;
   };
-  const db06421ResetPlayerBase=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){
-    const result=db06421ResetPlayerBase(classId);
-    // The historical reset chain mounts heirlooms before it initializes each
-    // class resource, so rebuild the effective cap once that base is final.
-    db06421SyncMana({baseMaxMana:player.maxMana,currentMana:player.mana});
-    return result;
-  };
+  
   function db06421ManaEquipmentExercise(){
     try{
       window.DiceboundRng.seed('db06421-mana-equipment');resetPlayer('sorcerer');gameStarted=true;rollLocked=false;generateBoard();buildBoard();
@@ -7047,8 +6975,7 @@
   function dbFriendSyncDragoonPresentation(){return dbCombatPresentation?.syncDragoonPresentation();}
   function dbFriendDragoonLandPresentation(){return dbCombatPresentation?.dragoonLandPresentation();}
   function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
-  const dbFriendResetPlayerBase=resetPlayer;
-  resetPlayer=function(...args){const result=dbFriendResetPlayerBase.apply(this,args);dbFriendResetDragoonState();return result;};
+  
   function dbFriendEnsureDragoonJumpButton(){return dbCombatPresentation?.ensureDragoonJumpButton();}
   async function dbFriendDragoonLanding(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
@@ -7671,4 +7598,22 @@
     clampQueuedHaste:before=>dbCombatElementResolution.clampQueuedHaste(before)
   });
   dbCombatD20ChaosResolution.initializePlayerState();
+
+  /* SEMANTIC OWNER — Player / per-run initialization (#311). */
+  const dbPlayerInitializationOwner=window.DiceboundPlayerInitialization;
+  if(!dbPlayerInitializationOwner)throw new Error('DiceBound requires the player initialization owner before dicebound.js');
+  dbPlayerInitialization=dbPlayerInitializationOwner.configure({
+    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
+    setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>getHeirloomSlots(),
+    equipItem:(item,silent=false)=>equipItem(item,silent),gameplayTalentRank:id=>gameplayTalentRank(id),generateEquipment:(rarity,slot)=>generateEquipment(rarity,slot),
+    pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
+    classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
+    syncActivePetBonus:force=>syncActivePetBonusV16(force),syncBloodmageHpPassive:initial=>v18SyncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
+    slimeRougeDonorPool:()=>v318SlimeRougeDonorPool(),getSlimeRougeRuntime:()=>SlimeRougeRuntime,initIdentitySupport:id=>v32InitIdentitySupport(id),initUltimateSupport:id=>v318InitUltimateSupport(id),
+    classMechanicsFor:id=>classMechanicsFor(id),getUltimateSupportMechanics:id=>window.DiceboundContent?.ultimateSupportMechanics?.[id]||[],addLog:text=>addLog(text),
+    applyGearTransform:()=>db060ApplyGearTransform(),syncMana:args=>db06421SyncMana(args),resetDragoonState:()=>dbFriendResetDragoonState(),
+    setStatsLast:({hp,gold})=>{statsLastHp=hp;statsLastGold=gold;},
+    setRunGlobals:next=>{boardLevel=next.boardLevel;rolls=next.rolls;tilesMovedThisRun=next.tilesMovedThisRun;pendingLevelUps=next.pendingLevelUps;currentEnemy=next.currentEnemy;currentEnemies=next.currentEnemies;currentEncounterLead=next.currentEncounterLead;currentEnemyTile=next.currentEnemyTile;currentMerchantItems=next.currentMerchantItems;runFinalized=next.runFinalized;lastLegacyAward=next.lastLegacyAward;lastGoldLegacyAward=next.lastGoldLegacyAward;merchantBossBattle=next.merchantBossBattle;},
+    initializeD20State:()=>dbCombatD20ChaosResolution.initializePlayerState()
+  });
 })();

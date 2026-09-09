@@ -1,15 +1,15 @@
 {
   "assetCount": 428,
-  "browserContentHash": "2ec78ebe4a99ee7c78aa56dc37fdd500d6f84de8746a7ee55a921fce6fab919b",
-  "buildId": "dicebound-0.6.6.20-dev-2ec78ebe4a99ee7c",
+  "browserContentHash": "8725bb968dd27f2316b51dc230e4fa3e1c30a9e90cbb57e4a6f7c75b5e247d0b",
+  "buildId": "dicebound-0.6.6.21-dev-8725bb968dd27f23",
   "channel": "Beta",
-  "contentFileCount": 498,
+  "contentFileCount": 499,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.6.20.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.21.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -53,6 +53,7 @@
     "js/board/tile-dispatch.js",
     "js/board/generation.js",
     "js/board/transition.js",
+    "js/run/player-initialization.js",
     "js/run/lifecycle.js",
     "js/run/completion.js",
     "js/combat/enemies.js",
@@ -81,9 +82,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "2ec78ebe4a99ee7c78aa56dc37fdd500d6f84de8746a7ee55a921fce6fab919b",
+  "sourceHash": "8725bb968dd27f2316b51dc230e4fa3e1c30a9e90cbb57e4a6f7c75b5e247d0b",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.6.20",
+  "version": "0.6.6.21",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

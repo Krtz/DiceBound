@@ -44,6 +44,7 @@
     "board-tile-dispatch",
     "board-generation",
     "board-transition",
+    "run-player-initialization",
     "run-lifecycle",
     "run-completion",
     "combat-enemies",
@@ -512,6 +513,16 @@
       ]
     },
     {
+      "id": "run-player-initialization",
+      "path": "js/run/player-initialization.js",
+      "domain": "run/player-and-per-run-state-initialization",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundPlayerInitialization"
+      ]
+    },
+    {
       "id": "run-lifecycle",
       "path": "js/run/lifecycle.js",
       "domain": "run/fresh-run-checkpoint-seed-player-board-and-entry-orchestration",
@@ -519,7 +530,8 @@
       "requires": [
         "run-checkpoint",
         "board-generation",
-        "board-transition"
+        "board-transition",
+        "run-player-initialization"
       ],
       "provides": [
         "DiceboundRunLifecycle"
