@@ -1,0 +1,46 @@
+name: Temporary 0.6.6.21 identity refresh
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.21-player-run-initialization
+    paths:
+      - .github/workflows/tmp-refresh-021.yml
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: windows-latest
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Correct subtitle and refresh committed identity
+        shell: pwsh
+        run: |
+          python -c "from pathlib import Path; p=Path('runtime/index.html'); s=p.read_text(encoding='utf-8'); old='Beta v0.6.6.21 · Enemy scaling ownership extraction.'; new='Beta v0.6.6.21 · Player / Run Initialization ownership extraction.'; assert old in s; p.write_text(s.replace(old,new,1),encoding='utf-8',newline='\n')"
+          python tools/refresh_runtime_manifest.py --version 0.6.6.21 --channel Beta --development-state Unreleased
+          python tools/validate_version_identity.py
+          python tools/validate_runtime_architecture.py
+          node tools/test_player_initialization.js
+          git rm .github/workflows/tmp-refresh-021.yml
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add runtime/index.html runtime/build-info.json runtime/build-manifest.json
+          git commit -m "fix: align 0.6.6.21 runtime subtitle"
+          git push origin HEAD:arch/0.6.6.21-player-run-initialization
