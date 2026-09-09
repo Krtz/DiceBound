@@ -1,92 +1,42 @@
-/* DiceBound Info / Roadkeeper's Guide presentation owner.
- *
- * Runtime rules, save transfer, lifetime counters, class unlock state and
- * equipment-set data remain authoritative in their existing domains. This
- * module owns the player-facing Guide destination: surface, tabs, guide
- * composition, responsive rendering and persistent dismissal chrome.
- */
-(function(root){
-  'use strict';
+(() => {
+  "use strict";
 
   const OWNER='ui/info-guide';
-  const STYLE_ID='dicebound-info-guide-ui-owner';
-  const RARITY_TIERS=Object.freeze([
-    ['poor','Poor','#c4c8cf','light grey','lowest ordinary tier'],
-    ['common','Common','#ffffff','white','reliable ordinary rewards'],
-    ['uncommon','Uncommon','#a9dbff','light blue','stronger ordinary rewards'],
-    ['rare','Rare','#438bd8','blue','high ordinary tier'],
-    ['epic','Epic','#f5e9a8','pale yellow','top ordinary generated gear and powerful powers'],
-    ['legendary','Legendary','#ffd45f','gold','very rare powers and handcrafted equipment'],
-    ['artifact','Artifact','#ff9c38','orange','Impossible Road chase set'],
-    ['mythical','Mythical','#bd83ff','purple','extreme handcrafted chase tier'],
-    ['omega','Omega','#ffffff','white/purple','highest secret equipment tier']
-  ]);
   let runtime={};
-
-  function doc(){return root.document||null;}
+  const RARITY_TIERS=[
+    ['poor','Poor','#888888','11–25 points','ordinary generated'],
+    ['common','Common','#ffffff','26–45 points','ordinary generated'],
+    ['uncommon','Uncommon','#3ad36e','46–70 points','ordinary generated'],
+    ['rare','Rare','#3da5ff','71–105 points','ordinary generated'],
+    ['epic','Epic','#b65cff','106–150 points','ordinary generated'],
+    ['legendary','Legendary','#ff9f43','151–210+ points + effect','special generated'],
+    ['artifact','Artifact','#ff7a00','handcrafted set pieces','Impossible Road set'],
+    ['mythical','Mythical','#ff4fd8','named handcrafted','ultra-rare'],
+    ['omega','Omega','#b56cff','rule-breaking handcrafted','rarest chase tier']
+  ];
+  function doc(){return window.document||null;}
   function find(id){return runtime.find?.(id)||doc()?.getElementById(id)||null;}
-  function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
+  function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
   function classes(){return runtime.getClasses?.()||[];}
+  function isClassUnlocked(id){return !!runtime.isClassUnlocked?.(id);}
   function elements(){return runtime.getElements?.()||{};}
-  function isClassUnlocked(classId){return runtime.isClassUnlocked?.(classId)!==false;}
   function artifactSet(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
   function stats(){return runtime.getLifetimeStats?.()||{};}
-
-  function installStyles(){
-    const documentRef=doc();
-    if(!documentRef||documentRef.getElementById(STYLE_ID))return;
-    const style=documentRef.createElement('style');
-    style.id=STYLE_ID;
-    style.textContent=`
-      #infoOverlay.info-guide-overlay{z-index:145;padding:clamp(8px,2vw,22px);align-items:center;justify-content:center;background:rgba(3,7,16,.78);backdrop-filter:blur(8px)}
-      #infoOverlay.info-guide-overlay.hidden{display:none}
-      #infoOverlay .info-guide-shell{width:min(1180px,100%);max-height:calc(100vh - clamp(16px,4vw,44px));overflow:auto;border:1px solid rgba(255,255,255,.13);border-radius:22px;background:linear-gradient(145deg,#111b34,#172747 55%,#10182c);box-shadow:0 28px 75px rgba(0,0,0,.55);scrollbar-color:#657ca9 transparent}
-      #infoOverlay .info-guide-chrome{position:sticky;top:0;z-index:5;display:flex;align-items:flex-start;gap:14px;padding:16px clamp(14px,3vw,28px);border-bottom:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(16,27,50,.99),rgba(16,27,50,.93));backdrop-filter:blur(12px)}
-      #infoOverlay .info-guide-kicker{display:block;color:#91c5ff;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
-      #infoOverlay .info-guide-chrome h2{margin:3px 0 0;font-size:clamp(20px,3vw,30px)}
-      #infoOverlay .info-guide-done{margin-left:auto;flex:0 0 auto;position:relative;z-index:6;min-width:88px}
-      #infoOverlay .info-guide-content{padding:clamp(14px,3vw,28px) clamp(14px,3vw,30px) 28px}
-      #infoOverlay .info-guide-subtitle{margin:0 0 14px;color:#dce7fb;font-size:12px;line-height:1.45}
-      #infoOverlay .info-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 12px}
-      #infoOverlay .info-tabs .small-btn.active{background:linear-gradient(180deg,rgba(101,169,255,.28),rgba(181,140,255,.16));box-shadow:inset 0 0 0 1px rgba(101,169,255,.42)}
-      #infoOverlay .info-tab-panel{display:none}#infoOverlay .info-tab-panel.active{display:block}
-      #infoOverlay .info-section{display:block;margin-bottom:9px;padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035)}
-      #infoOverlay .info-section summary{cursor:pointer;list-style:none;padding:13px 15px;font-size:14px;font-weight:900;background:rgba(255,255,255,.035)}
-      #infoOverlay .info-section summary::-webkit-details-marker{display:none}#infoOverlay .info-section summary::after{content:'+';float:right;color:var(--muted)}#infoOverlay .info-section[open] summary::after{content:'-'}
-      #infoOverlay .info-body{padding:4px 15px 13px;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}#infoOverlay .info-body p{margin:8px 0;line-height:1.48}
-      #infoOverlay .info-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}#infoOverlay .info-class{padding:9px 10px;border-radius:11px;background:rgba(0,0,0,.17);border:1px solid rgba(255,255,255,.055);font-size:10px;line-height:1.5}#infoOverlay .info-class b{font-size:11px}
-      #infoOverlay .info-tag-row{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}#infoOverlay .info-tag{padding:2px 5px;border-radius:999px;background:rgba(115,185,255,.14);border:1px solid rgba(115,185,255,.24);font-size:8px;color:#d8eaff}
-      #infoOverlay .element-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}#infoOverlay .element-row{padding:10px;border-radius:10px;background:rgba(0,0,0,.17);border:1px solid rgba(255,255,255,.06);font-size:10px;line-height:1.45}
-      #infoOverlay .lifetime-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}#infoOverlay .lifetime-stat{padding:12px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}#infoOverlay .lifetime-stat span{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.08em}#infoOverlay .lifetime-stat strong{display:block;font-size:20px;margin-top:3px}#infoOverlay .lifetime-wide{grid-column:1/-1}#infoOverlay .class-clear-list{font-size:10px;line-height:1.6;color:#dce5f4}
-      #infoOverlay .save-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}#infoOverlay .save-textarea{width:100%;height:120px;background:#080d17;color:#eaf0ff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;font:11px ui-monospace,monospace;resize:vertical}
-      #infoOverlay .rarity-guide-grid{display:grid;gap:6px;margin:10px 0}#infoOverlay .rarity-guide-row{display:grid;grid-template-columns:14px 92px 1fr;gap:8px;align-items:center;padding:7px 8px;border-radius:9px;background:rgba(255,255,255,.035);font-size:10px;color:var(--muted)}#infoOverlay .rarity-swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.35)}
-      #infoOverlay .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;margin-top:9px}#infoOverlay .set-tier{padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:9px;color:var(--muted);font-size:10px}#infoOverlay .set-tier b,#infoOverlay .set-tier span{display:block}#infoOverlay .set-tier.active{border-color:rgba(255,172,56,.65);background:rgba(255,156,56,.1);color:#ffe7c0}
-      @media(max-width:700px){#infoOverlay.info-guide-overlay{padding:0;align-items:stretch}#infoOverlay .info-guide-shell{width:100%;max-height:100vh;min-height:100vh;border-radius:0;border-width:0}#infoOverlay .info-guide-chrome{padding:14px 16px}#infoOverlay .info-guide-chrome h2{font-size:22px}#infoOverlay .info-guide-content{padding:14px 16px 28px}#infoOverlay .info-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#infoOverlay .info-class-grid,#infoOverlay .element-guide,#infoOverlay .lifetime-stats{grid-template-columns:1fr}#infoOverlay .lifetime-wide{grid-column:auto}#infoOverlay .save-tools{grid-template-columns:1fr}}
-    `;
-    documentRef.head?.appendChild(style);
-  }
-
+  function detail(id,title,body,open=false){return `<details class="info-section" data-guide-section="${escapeHtml(id)}"${open?' open':''}><summary>${escapeHtml(title)}</summary><div class="info-section-body">${body}</div></details>`;}
   function ensureSurface(){
-    const documentRef=doc();
-    let overlay=find('infoOverlay');
-    if(!documentRef)return null;
-    if(!overlay){overlay=documentRef.createElement('div');overlay.id='infoOverlay';documentRef.body?.appendChild(overlay);}
-    installStyles();
-    overlay.classList.add('overlay','info-guide-overlay');
+    const overlay=find('infoOverlay');if(!overlay)return null;
     overlay.dataset.infoGuideOwner=OWNER;
-    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',"Roadkeeper's Guide");
-    if(overlay.dataset.infoGuideSurface!=='1'){
-      overlay.dataset.infoGuideSurface='1';
-      overlay.innerHTML=`<section class="info-guide-shell"><header class="info-guide-chrome"><div><span class="info-guide-kicker">Roadkeeper's Guide</span><h2>Info & progress</h2></div><button type="button" class="small-btn info-guide-done" data-info-done>Done</button></header><div class="info-guide-content"><p class="info-guide-subtitle">Current rules, progression, classes, elements and save tools. Secrets remain deliberately vague until discovered.</p><nav class="info-tabs" id="infoTabs" data-info-tabs aria-label="Guide sections"><button type="button" class="small-btn active" data-info-tab="guide">Guide</button><button type="button" class="small-btn" data-info-tab="stats">Stats</button><button type="button" class="small-btn" data-info-tab="elements">Elements</button><button type="button" class="small-btn" data-info-tab="save">Save</button></nav><section class="info-tab-panel active" data-info-panel="guide"><div id="infoSections" data-info-sections></div></section><section class="info-tab-panel" data-info-panel="stats"><div class="lifetime-stats" id="lifetimeStats" data-lifetime-stats></div></section><section class="info-tab-panel" data-info-panel="elements"><div class="element-guide" id="elementGuide" data-element-guide></div></section><section class="info-tab-panel" data-info-panel="save"><h3>Transfer save</h3><p class="info-guide-subtitle">Export a portable save string or import one into the current profile.</p><textarea class="save-textarea" id="saveTransferText" data-save-transfer placeholder="Exported save data appears here. Paste save data here to import."></textarea><div class="save-tools"><button type="button" class="small-btn" data-save-export>Export save</button><button type="button" class="small-btn" data-save-import>Import save</button></div></section></div></section>`;
-      overlay.querySelector('[data-info-done]')?.addEventListener('click',close);
-      overlay.querySelector('[data-info-tabs]')?.addEventListener('click',event=>{const button=event.target.closest('[data-info-tab]');if(button)activateTab(button.dataset.infoTab);});
-      overlay.querySelector('[data-save-export]')?.addEventListener('click',exportSave);
-      overlay.querySelector('[data-save-import]')?.addEventListener('click',importSave);
-    }
+    if(overlay.dataset.infoGuideBuilt==='1')return overlay;
+    overlay.dataset.infoGuideBuilt='1';overlay.setAttribute('aria-hidden','true');
+    overlay.innerHTML=`<div class="modal info-modal"><div class="info-head"><div><h2>📘 Roadkeeper's Guide</h2><p>Rules, systems, progression and permanent statistics.</p></div><button class="small-btn" data-info-done>Done</button></div><div class="info-tabs"><button class="small-btn active" data-info-tab="guide">Guide</button><button class="small-btn" data-info-tab="stats">Lifetime stats</button><button class="small-btn" data-info-tab="elements">Elements</button><button class="small-btn" data-info-tab="save">Save</button></div><div class="info-panel active" data-info-panel="guide"><div data-info-sections></div></div><div class="info-panel" data-info-panel="stats"><div class="lifetime-grid" data-lifetime-stats></div></div><div class="info-panel" data-info-panel="elements"><div class="element-guide" data-element-guide></div></div><div class="info-panel" data-info-panel="save"><p>Export or import your permanent save. Imported saves are normalized before use.</p><textarea class="save-transfer" data-save-transfer rows="8" spellcheck="false"></textarea><div class="save-transfer-actions"><button class="small-btn" data-save-export>Export save</button><button class="small-btn" data-save-import>Import save</button></div></div></div>`;
+    overlay.addEventListener('click',event=>{
+      const tab=event.target.closest?.('[data-info-tab]');if(tab){activateTab(tab.dataset.infoTab);return;}
+      if(event.target.closest?.('[data-info-done]')){close();return;}
+      if(event.target.closest?.('[data-save-export]')){exportSave();return;}
+      if(event.target.closest?.('[data-save-import]')){importSave();return;}
+    });
     return overlay;
   }
-
-  function detail(id,label,html,open=false){return `<details class="info-section" data-guide-section="${escapeHtml(id)}"${open?' open':''}><summary>${label}</summary><div class="info-body">${html}</div></details>`;}
   function classRows(){return classes().filter(entry=>!entry.secret||isClassUnlocked(entry.id)).map(entry=>{
     const tags=(entry.tags||[]).map(tag=>`<span class="info-tag">${escapeHtml(tag)}</span>`).join('');
     const passive=entry.passive?`<p><b>${escapeHtml(entry.passive.name)}:</b> ${escapeHtml(entry.passive.desc)}</p>`:'';
@@ -97,7 +47,7 @@
     const recipes=window.DiceboundInvoker?.RECIPE;
     if(!recipes)return '';
     const names={b:'Blue',g:'Green',r:'Red'};
-    const rows=Object.entries(recipes).map(([formula,recipe])=>`<div class="info-class"><b>${formula.toUpperCase().split('').map(key=>names[key][0]).join(' + ')} — ${escapeHtml(recipe.name)}</b><p>${escapeHtml(recipe.tip)}</p></div>`).join('');
+    const rows=Object.entries(recipes).map(([formula,recipe])=>`<div class="info-class"><b>${formula.split('').map(key=>names[key]?.[0]||key.toUpperCase()).join(' + ')} — ${escapeHtml(recipe.name)}</b><p>${escapeHtml(recipe.tip)}</p></div>`).join('');
     return `<h4>Invoker Formula Codex</h4><p>Blue comes from Defend, Green from Arcane Current and Red from Elemental Lance. Invoke reads the current three-orb formula; the oldest orb rotates out when a fourth forms.</p><div class="info-class-grid">${rows}</div>`;
   }
   function artifactSetHtml(){
