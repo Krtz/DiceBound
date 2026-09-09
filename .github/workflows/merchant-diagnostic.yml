@@ -1,0 +1,21 @@
+name: Merchant browser diagnostic
+
+on:
+  push:
+    branches:
+      - fix/merchant-tile-visit-state
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Merchant browser diagnostic
+        shell: pwsh
+        run: node tools/diagnose_merchant_browser.js
