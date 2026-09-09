@@ -6,18 +6,29 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   materialize:
     if: github.head_ref == 'fix/merchant-tile-visit-state'
     runs-on: windows-2022
     steps:
+      - name: Mint DiceBound release App token
+        id: release_app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+
       - name: Check out hotfix head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+          token: ${{ steps.release_app.outputs.token }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,13 +43,14 @@ jobs:
 
           patch = Path('runtime/PATCH_NOTES.md')
           patch_text = patch.read_text(encoding='utf-8')
-          marker = '## Beta 0.6.6.18 Merchant tile transaction hotfix (#306)'
+          marker = '## Beta 0.6.6.18 Merchant tile hotfix (#306)'
           if marker not in patch_text:
               section = '''# Unreleased — Beta 0.6.6.18
 
-          ## Beta 0.6.6.18 Merchant tile transaction hotfix (#306)
-          - Fixed Merchant shop visit ownership so landing on a Merchant tile keeps one transaction visit for the exact generated stock instead of replacing the renderer-bound visit with a second disconnected visit.
-          - Added deterministic coverage for exact-stock visit adoption, consumed-offer continuity, fresh visits for replacement stock, and the existing Sovereign/Legendary choice re-entry guard.
+          ## Beta 0.6.6.18 Merchant tile hotfix (#306)
+          - Fixed Merchant arrival crashing during shop-stock construction because two live equipment-identity formatting helper names had been deleted while `formatBonuses()` / `formatGearComparison()` still called them.
+          - Restored the narrow compatibility formatting bridge against the authoritative equipment owner, and fixed Merchant transaction visit ownership so one rendered stock array keeps one transaction visit through rerenders and Legendary choices.
+          - Added deterministic transaction coverage plus a real Windows Edge Merchant-arrival regression that renders gear comparison, commits a purchase and rejects road-recovery exceptions.
           - Merchant prices, stock composition, RNG, Board generation, secret Merchant-boss behavior, save schema and balance values are unchanged.
 
           '''
@@ -51,9 +63,10 @@ jobs:
               anchor = '# DiceBound Changelog\n\nThis file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.\n\n'
               section = '''## Beta 0.6.6.18
 
-          ### Merchant tile transaction hotfix (#306)
-          - Fixed split Merchant visit ownership: the outer Merchant-open seam now adopts the visit already created for the exact rendered stock array instead of replacing it with a disconnected transaction.
-          - Added regression coverage for same-stock state continuity, fresh replacement stock, and protected Sovereign/Legendary choice re-entry.
+          ### Merchant tile hotfix (#306)
+          - Fixed the real Merchant-tile crash: live equipment formatting still referenced two deleted identity-format helpers, causing `openMerchant()` to throw and Board recovery to swallow the shop.
+          - Restored only that formatting compatibility seam against `DiceboundEquipment`, and fixed the secondary split-visit transaction defect for exact Merchant stock identity.
+          - Added a real Edge regression covering Merchant arrival, generated gear comparison, an actual purchase and absence of tile-error recovery.
           - No Merchant economy, RNG, Board generation, secret-boss, save-schema or balance changes.
 
           '''
@@ -63,7 +76,7 @@ jobs:
 
           version = Path('runtime/js/version.js')
           version_text = version.read_text(encoding='utf-8')
-          version_text = version_text.replace('const RELEASE_SUMMARY="Info/Guide shadow-ownership cleanup.";', 'const RELEASE_SUMMARY="Merchant tile transaction hotfix.";')
+          version_text = version_text.replace('const RELEASE_SUMMARY="Info/Guide shadow-ownership cleanup.";', 'const RELEASE_SUMMARY="Merchant tile hotfix.";')
           version.write_text(version_text, encoding='utf-8')
           '@ | Set-Content -Encoding utf8 .\materialize_hotfix.py
           python .\materialize_hotfix.py
