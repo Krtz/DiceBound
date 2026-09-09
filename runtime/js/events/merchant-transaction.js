@@ -3,15 +3,20 @@
 
   let nextVisitId = 1;
   let nextReservationId = 1;
+  const visitsByStock = new WeakMap();
 
   const offerKey = (offer, index = 0) => `${String(offer?.id || "offer")}:${Math.max(0, Number(index) || 0)}`;
-  const createVisit = (offers = []) => ({
-    id: nextVisitId++,
-    offers: new Set(offers),
-    consumed: new Set(),
-    reservations: new Map(),
-    activeChoice: null
-  });
+  const createVisit = (offers = []) => {
+    const visit = {
+      id: nextVisitId++,
+      offers: new Set(offers),
+      consumed: new Set(),
+      reservations: new Map(),
+      activeChoice: null
+    };
+    if (Array.isArray(offers)) visitsByStock.set(offers, visit);
+    return visit;
+  };
   const ownsOffers = (visit, offers = []) => !!visit && offers.length === visit.offers.size && offers.every(offer => visit.offers.has(offer));
   const hasActiveChoice = visit => !!visit?.activeChoice;
   const canPurchase = (visit, key) => !!visit && !visit.activeChoice && !visit.consumed.has(key) && ![...visit.reservations.values()].some(reservation => reservation.key === key);
@@ -57,7 +62,16 @@
   function beginVisit(previous, offers = []) {
     // A reward modal owns input. A delayed/re-entrant merchant open must keep
     // the same stock and consumed-offer state rather than rebuilding a shop.
-    return hasActiveChoice(previous) ? previous : createVisit(offers);
+    if (hasActiveChoice(previous)) return previous;
+
+    // renderMerchant() establishes the visit before the compatibility
+    // openMerchant() wrapper returns. Reuse that exact visit for that exact
+    // stock-array identity instead of replacing it with a second transaction
+    // whose state is invisible to the already-rendered buttons.
+    const renderedVisit = Array.isArray(offers) ? visitsByStock.get(offers) : null;
+    if (!previous && ownsOffers(renderedVisit, offers)) return renderedVisit;
+
+    return createVisit(offers);
   }
 
   const snapshot = visit => !visit ? null : Object.freeze({
