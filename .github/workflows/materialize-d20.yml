@@ -26,13 +26,16 @@ jobs:
       - name: Materialize extraction
         shell: bash
         run: |
-          # CHANGELOG has durable headings rather than PATCH_NOTES' Unreleased header;
-          # keep that tiny formatting difference out of the temporary materializer.
+          # PATCH_NOTES and INDEX have slightly different durable formatting
+          # than the temporary transplant expected; patch only the disposable
+          # materializer, never the runtime source by guesswork.
           python - <<'PY'
           from pathlib import Path
           p=Path('tools/materialize_d20_extraction.py')
           t=p.read_text(encoding='utf-8')
           t=t.replace('    update_notes(CHANGELOG)\n', '')
+          t=t.replace("script = '  <script src=\"js/combat/d20-chaos-resolution.js\"></script>\\n'", "script = '<script src=\"js/combat/d20-chaos-resolution.js\"></script>\\n'")
+          t=t.replace("anchor = '  <script src=\"js/combat/element-resolution.js\"></script>\\n'", "anchor = '<script src=\"js/combat/element-resolution.js\"></script>\\n'")
           p.write_text(t, encoding='utf-8')
           PY
           python tools/materialize_d20_extraction.py
