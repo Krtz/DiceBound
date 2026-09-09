@@ -1,0 +1,43 @@
+name: Temporary player initialization census
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.21-player-run-initialization
+    paths:
+      - .github/workflows/tmp-player-init-census.yml
+
+permissions:
+  contents: write
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Capture resetPlayer census
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('runtime/js/dicebound.js')
+          lines=p.read_text(encoding='utf-8').splitlines()
+          out=[]
+          out.append(f'bytes={p.stat().st_size} lines={len(lines)}')
+          out.append('')
+          for i,line in enumerate(lines,1):
+              if 'resetPlayer' in line:
+                  out.append(f'===== line {i} =====')
+                  a=max(1,i-4); b=min(len(lines),i+10)
+                  for n in range(a,b+1):
+                      out.append(f'{n:05d}: {lines[n-1]}')
+                  out.append('')
+          Path('docs/tmp-player-init-census.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/tmp-player-init-census.txt
+          git commit -m "chore: capture player initialization census"
+          git push origin HEAD:arch/0.6.6.21-player-run-initialization
