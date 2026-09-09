@@ -4,7 +4,9 @@
 /* Manual branch testing commonly opens runtime/index.html directly from an
  * extracted GitHub ZIP. Keep that file:// path covered separately from the
  * HTTP/native-host browser smoke so UI ownership bugs cannot hide behind an
- * origin difference.
+ * origin difference. Exercise a rich progression state too: the Guide renders
+ * substantially more class/content data on an established save than on a fresh
+ * profile.
  */
 const childProcess=require("node:child_process");
 const fs=require("node:fs");
@@ -27,14 +29,23 @@ async function main(){
     child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--disable-gpu-sandbox","--no-sandbox","--allow-file-access-from-files","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
     page=await connect();await page.send("Runtime.enable");await page.send("Emulation.setDeviceMetricsOverride",{width:1680,height:1000,deviceScaleFactor:1,mobile:false});
     const deadline=Date.now()+20000;while(Date.now()<deadline){if(await page.evaluate("document.readyState==='complete'&&!!window.DiceboundInfoGuide&&!!document.getElementById('campInfoBtn')"))break;await sleep(100);}
+    await page.evaluate(`(()=>{window.__infoFileErrors=[];window.addEventListener('error',event=>window.__infoFileErrors.push(String(event.error?.stack||event.message||event.error||'window error')));})()`);
     const loaded=await page.evaluate(`(()=>({version:window.DiceboundVersion?.version,ready:document.readyState,booting:document.documentElement.classList.contains('db-booting'),camp:!!document.getElementById('campInfoBtn'),road:!!document.getElementById('infoBtn')}))()`);if(loaded.booting||!loaded.camp||!loaded.road)throw new Error(`file:// runtime did not finish boot: ${JSON.stringify(loaded)}`);
-    const campHit=await pointerClick(page,"#campInfoBtn"),campOpen=!(await page.evaluate("document.getElementById('infoOverlay')?.classList.contains('hidden')"));if(!campOpen)throw new Error(`file:// Camp Info did not open; hit=${JSON.stringify(campHit)}`);
+
+    // Manufacture an established profile through the game's own debug actions,
+    // not by inventing save fields. This exposes every unlocked-class row the
+    // Guide would compose for a long-lived player save.
+    await page.evaluate(`(async()=>{document.getElementById('debugTrigger')?.click();await new Promise(resolve=>setTimeout(resolve,30));document.querySelector('[data-debug="unlockclasses"]')?.click();document.querySelector('[data-debug="unlockpets"]')?.click();await new Promise(resolve=>setTimeout(resolve,80));document.getElementById('debugOverlay')?.classList.add('hidden');})()`);
+
+    const campHit=await pointerClick(page,"#campInfoBtn"),campState=await page.evaluate(`(()=>({open:!document.getElementById('infoOverlay')?.classList.contains('hidden'),classes:document.querySelectorAll('#infoOverlay .info-class').length,inspect:window.DiceboundInfoGuide?.inspect?.()}))()`);if(!campState.open)throw new Error(`file:// rich-state Camp Info did not open; hit=${JSON.stringify(campHit)} state=${JSON.stringify(campState)}`);if(campState.classes<5)throw new Error(`file:// rich-state Guide did not render unlocked classes: ${JSON.stringify(campState)}`);
     await pointerClick(page,"#infoOverlay [data-info-done]");
-    await page.evaluate(`(async()=>{document.getElementById('campGoBtn')?.click();await new Promise(resolve=>setTimeout(resolve,260));document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');})()`);
-    const roadHit=await pointerClick(page,"#infoBtn"),roadOpen=!(await page.evaluate("document.getElementById('infoOverlay')?.classList.contains('hidden')"));if(!roadOpen)throw new Error(`file:// Road Info did not open; hit=${JSON.stringify(roadHit)}`);
+
+    await page.evaluate(`(async()=>{document.getElementById('campGoBtn')?.click();await new Promise(resolve=>setTimeout(resolve,260));document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');document.getElementById('debugTrigger')?.click();await new Promise(resolve=>setTimeout(resolve,30));document.querySelector('[data-debug="mythic"]')?.click();document.getElementById('debugOverlay')?.classList.add('hidden');})()`);
+    const roadHit=await pointerClick(page,"#infoBtn"),roadState=await page.evaluate(`(()=>({open:!document.getElementById('infoOverlay')?.classList.contains('hidden'),sets:document.querySelectorAll('#infoOverlay .set-tier').length,inspect:window.DiceboundInfoGuide?.inspect?.()}))()`);if(!roadState.open)throw new Error(`file:// rich-state Road Info did not open; hit=${JSON.stringify(roadHit)} state=${JSON.stringify(roadState)}`);if(roadState.sets<1)throw new Error(`file:// rich-state Artifact set Guide did not render: ${JSON.stringify(roadState)}`);
     await pointerClick(page,'#infoOverlay [data-info-tab="stats"]');if((await page.evaluate("window.DiceboundInfoGuide?.inspect?.().activeTab"))!=="stats")throw new Error("file:// Info Stats tab did not activate");
     await pointerClick(page,"#infoOverlay [data-info-done]");
-    console.log(`Info file Edge PASS: ${loaded.version} Camp + Road Info pointer controls work from runtime/index.html`);
+    const errors=await page.evaluate("window.__infoFileErrors||[]");if(errors.length)throw new Error(`file:// rich-state Info emitted runtime errors: ${JSON.stringify(errors)}`);
+    console.log(`Info file Edge PASS: ${loaded.version} Camp + Road Info work from runtime/index.html with all classes/pets unlocked and Artifact gear`);
   }finally{try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}}
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
