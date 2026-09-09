@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.19
+
+### D20 Chaos Resolution ownership (#304)
+- `combat/d20-chaos-resolution.js` now owns the Twenty-Sider d20 result table, readability/presentation sequence, Probability branches and accumulated Haste gating.
+- Removed the historical `rollD20Chaos` replacement/wrapper tower and the two D20-specific `resetPlayer` wrappers from `dicebound.js`, leaving one thin composition adapter.
+- Deterministic fixtures pin decorative and real RNG draw order, High Roll replacement order, all outcome families, Probability side effects, Haste lock/clamp ordering and presentation delays.
+- No gameplay, balance, save/checkpoint, class, element or action-resolution redesign is intended.
+
 ## Beta 0.6.6.18
 
 ### Merchant and Info hotfixes (#306)

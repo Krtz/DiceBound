@@ -846,20 +846,8 @@
   }
 
   async function rollD20Chaos(action){
-    if(!classIdentityActive("d20"))return {roll:0,mult:1,extraEcho:0,bonusCrit:0,potionMult:1,guardBonus:0};
-    let roll=rand(1,20);if(player.d20HighRollChance&&random()<player.d20HighRollChance)roll=rand(17,20);const fx=$("attackFx");fx.className="attack-fx crit-attack";fx.textContent=`🎲 ${roll}`;void fx.offsetWidth;await delay(260);
-    const out={roll,mult:1,extraEcho:0,bonusCrit:0,potionMult:1,guardBonus:0,notes:""};
-    if(roll===1){const hurt=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-hurt);out.mult=.35;out.potionMult=.5;out.notes=`Natural 1: probability bites back for ${hurt} self-damage.`;}
-    else if(roll<=4){out.mult=.7;out.notes=`Roll ${roll}: a distinctly mediocre outcome.`;}
-    else if(roll<=7){player.ultimateCharge=clamp(player.ultimateCharge+12,0,100);out.notes=`Roll ${roll}: +12 ultimate charge.`;}
-    else if(roll<=10){const h=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*.08));player.hp+=h;out.notes=`Roll ${roll}: fate restores ${h} HP.`;}
-    else if(roll<=13){out.mult=1.3;out.potionMult=1.3;out.guardBonus=.12;out.notes=`Roll ${roll}: the action is empowered by 30%.`;}
-    else if(roll<=16){out.extraEcho=1;player.combatShield++;out.notes=`Roll ${roll}: gain one extra strike and a barrier.`;}
-    else if(roll<=18){out.mult=1.65;out.forceElement=pick(DIBO_ELEMENTS);out.notes=`Roll ${roll}: ${ELEMENTS[out.forceElement].icon} ${ELEMENTS[out.forceElement].name} chaos erupts.`;}
-    else if(roll===19){out.mult=2;out.bonusCrit=1;out.notes="Roll 19: guaranteed additional critical tier and double power.";}
-    else{out.mult=3;out.bonusCrit=2;out.extraEcho=2;out.allElements=true;player.hp=player.maxHp;player.ultimateCharge=100;out.notes="NATURAL 20: full heal, triple power, two extra strikes and all six core elements.";}
-    if(player.d20BonusChance&&random()<player.d20BonusChance){const bonus=pick(["echo","barrier","heal","element"]);if(bonus==="echo"){out.extraEcho++;out.notes+=" Probability adds an extra Echo.";}if(bonus==="barrier"){player.combatShield++;out.notes+=" Probability raises a barrier.";}if(bonus==="heal"){const h=Math.min(player.maxHp-player.hp,rand(4,12));player.hp+=h;out.notes+=` Probability heals ${h} HP.`;}if(bonus==="element"){out.forceElement=pick(DIBO_ELEMENTS);out.notes+=` Probability invokes ${ELEMENTS[out.forceElement].icon} ${ELEMENTS[out.forceElement].name}.`;}}
-    setCombatText(`🎲 ${action} d20: ${out.notes}`);showToast(`D20 rolled ${roll}`);return out;
+    if(!dbCombatD20ChaosResolution)throw new Error("D20 chaos-resolution owner is not configured.");
+    return dbCombatD20ChaosResolution.rollD20Chaos(action);
   }
   function applyMythicPantsPulse(){
     if(!hasMythicPiece("legs"))return "";player.mythicActionCount++;if(player.mythicActionCount%3)return "";
@@ -1455,12 +1443,13 @@
   let dbCombatPetTurnResolution=null;
   let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
+  let dbCombatD20ChaosResolution=null;
   let dbCombatTurns=null;
   async function enemyTurn(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.enemyTurn(...args);}
   async function resolveEnemyResponse(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.resolveEnemyResponse(...args);}
   function applyCombatPlayerDamage(raw){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.applyPlayerDamage(raw);}
 
-  function resetPlayer(classId=selectedClassId){const cls=CLASSES[classId]||CLASSES.ranger;Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0});applyTalentBonuses();(meta.heirlooms||[]).slice(0,getHeirloomSlots()).forEach(item=>equipItem(item,true));boardLevel=1;rolls=0;tilesMovedThisRun=0;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentMerchantItems=[];runFinalized=false;lastLegacyAward=0;lastGoldLegacyAward=0;merchantBossBattle=false;}
+  function resetPlayer(classId=selectedClassId){const cls=CLASSES[classId]||CLASSES.ranger;Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0});applyTalentBonuses();(meta.heirlooms||[]).slice(0,getHeirloomSlots()).forEach(item=>equipItem(item,true));boardLevel=1;rolls=0;tilesMovedThisRun=0;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentMerchantItems=[];runFinalized=false;lastLegacyAward=0;lastGoldLegacyAward=0;merchantBossBattle=false;if(dbCombatD20ChaosResolution)dbCombatD20ChaosResolution.initializePlayerState();}
 
   function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbBoardTileDispatch.dispatch();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
 
@@ -1555,7 +1544,7 @@
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
   const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};
   const applyUpgradeV15=applyUpgrade;applyUpgrade=function(up,source="Powerup"){const result=applyUpgradeV15(up,source);ensureAlphaMeta().powerupsTaken++;saveMeta();return result;};
-  
+
 
   // Custom ultimate art for the new classes.
   animateUltimate=async function(){const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️",cleric:"☀️✝️",paladin:"⚜️🛡️",beastmaster:"🐺🐾🐺",rogue:"💎🗡️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760,cleric:720,paladin:720,beastmaster:760,rogue:690}[player.classId]||620)+ALPHA_COMBAT_DELAY);enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");};
@@ -2034,33 +2023,15 @@
   const effectiveDodgeChanceV13=effectiveDodgeChance;
   effectiveDodgeChance=function(){let base=effectiveDodgeChanceV13();if(classIdentityActive("monk"))base=clamp(base+(player.monkCombo||0)*.018,0,.92);if(classIdentityActive("clown")&&player.clownGimmick==="Big Shoes")base=clamp(base+.12,0,.92);return base;};
 
-  
+
   const damageEnemyV13=damageEnemy;
   damageEnemy=function(enemy,amount,ignoreDefense=false){if(player._ninjaExecution){amount*=1.65;ignoreDefense=true;}return damageEnemyV13(enemy,amount,ignoreDefense);};
 
-  
+
 
 
   // ---- D20: make every combat roll readable and slightly more chaotic -------
-  rollD20Chaos=async function(action){
-    if(!classIdentityActive("d20"))return {roll:0,mult:1,extraEcho:0,bonusCrit:0,potionMult:1,guardBonus:0};
-    const fx=$("attackFx");fx.className="attack-fx crit-attack";
-    for(let i=0;i<4;i++){fx.textContent=`🎲 ${rand(1,20)}`;void fx.offsetWidth;await delay(105+i*18);}
-    let roll=rand(1,20);if(player.d20HighRollChance&&random()<player.d20HighRollChance)roll=rand(17,20);fx.textContent=`🎲 ${roll}`;void fx.offsetWidth;await delay(430);
-    const out={roll,mult:1,extraEcho:0,bonusCrit:0,potionMult:1,guardBonus:0,notes:""};
-    if(roll===1){const hurt=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-hurt);out.mult=.35;out.potionMult=.5;out.notes=`Natural 1: probability bites back for ${hurt} self-damage.`;}
-    else if(roll<=3){const curse=pick(["ult","shield","wobble"]);if(curse==="ult"){player.ultimateCharge=Math.max(0,player.ultimateCharge-15);out.notes=`Roll ${roll}: fate steals 15 Ultimate charge.`;}else if(curse==="shield"){out.mult=.65;out.notes=`Roll ${roll}: reality becomes suspiciously soft. This action has reduced power.`;}else{out.mult=.8;out.guardBonus=-.08;out.notes=`Roll ${roll}: the action wobbles sideways through probability.`;}}
-    else if(roll<=6){out.mult=.78;out.notes=`Roll ${roll}: a mediocre timeline wins the argument.`;}
-    else if(roll<=9){const h=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*.08));player.hp+=h;player.ultimateCharge=clamp(player.ultimateCharge+8,0,100);out.notes=`Roll ${roll}: fate restores ${h} HP and 8 Ultimate.`;}
-    else if(roll<=12){out.mult=1.25;out.potionMult=1.3;out.guardBonus=.10;out.notes=`Roll ${roll}: the action is empowered.`;}
-    else if(roll<=15){out.extraEcho=1;player.combatShield++;out.notes=`Roll ${roll}: gain an extra strike and a Barrier.`;}
-    else if(roll<=17){out.mult=1.6;out.forceElement=pick(DIBO_ELEMENTS);out.notes=`Roll ${roll}: ${ELEMENTS[out.forceElement].icon} ${ELEMENTS[out.forceElement].name} chaos erupts.`;}
-    else if(roll===18){out.mult=1.8;player.hasteTurns=(player.hasteTurns||0)+1;out.notes="Roll 18: double-ish power and the enemy pack may lose its response to Haste.";}
-    else if(roll===19){out.mult=2;out.bonusCrit=1;out.extraEcho=1;out.notes="Roll 19: double power, a critical tier and an extra strike.";}
-    else{out.mult=3;out.bonusCrit=2;out.extraEcho=2;out.allElements=true;player.hp=player.maxHp;player.ultimateCharge=100;player.combatShield+=2;out.notes="NATURAL 20: full heal, triple power, two extra strikes, two Barriers and all six core elements.";}
-    if(player.d20BonusChance&&random()<player.d20BonusChance){const bonus=pick(["echo","barrier","heal","element","haste","gold"]);if(bonus==="echo"){out.extraEcho++;out.notes+=" Probability adds another Echo.";}if(bonus==="barrier"){player.combatShield++;out.notes+=" Probability raises a Barrier.";}if(bonus==="heal"){const h=Math.min(player.maxHp-player.hp,rand(4,12));player.hp+=h;out.notes+=` Probability heals ${h} HP.`;}if(bonus==="element"){out.forceElement=pick(DIBO_ELEMENTS);out.notes+=` Probability invokes ${ELEMENTS[out.forceElement].icon} ${ELEMENTS[out.forceElement].name}.`;}if(bonus==="haste"){player.hasteTurns=(player.hasteTurns||0)+1;out.notes+=" Probability grants Haste.";}if(bonus==="gold"){const g=rand(5,25);player.gold+=g;out.notes+=` Probability manifests ${g} gold for no defensible reason.`;}}
-    setCombatText(`🎲 ${action} d20: ${out.notes}`);showToast(`D20 rolled ${roll}`);await delay(260);return out;
-  };
+
 
   // ---- occult attacks --------------------------------------------------------
   // Mana / occult action ownership lives in combat/mana-action-resolution.js.
@@ -2333,9 +2304,6 @@
 
   if(!talents.some(t=>t.id==="companion_element_proc"))talents.push({id:"companion_element_proc",branch:"Companion",icon:"🌈🐾",name:"Primal Spark",cost:3,maxRank:3,desc:"Each rank gives companion and summoned-creature hits a 2.5% chance to trigger their element's full proc.",requires:[req("companion_ascendant",1),req("element_attunement",1)]});
 
-  function d20ResultTitle(roll){if(roll===1)return "CATASTROPHE";if(roll<=3)return "BAD OMEN";if(roll<=6)return "WEAK TIMELINE";if(roll<=9)return "PATCH-UP";if(roll<=12)return "EMPOWERED";if(roll<=15)return "ECHO + BARRIER";if(roll<=17)return "ELEMENTAL CHAOS";if(roll===18)return "HASTE";if(roll===19)return "CRITICAL MIRACLE";return "NATURAL TWENTY";}
-  const rollD20ChaosV15Patch=rollD20Chaos;
-  rollD20Chaos=async function(action){const out=await rollD20ChaosV15Patch(action);if(classIdentityActive("d20")&&out?.roll){const title=d20ResultTitle(out.roll);identityFlash(`🎲 ${out.roll}/20 — ${title}`);addCombatHistory(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${title}. ${out.notes||""}`);setCombatText(`🎲 Twenty-Sider ${action}: ${out.roll}/20 — ${title}. ${out.notes||""}`);showToast(`🎲 ${out.roll}/20: ${title}`);await delay(260);}return out;};
 
 
   // ---- Debug: all Mythic pieces + item seed recreation ----------------------
@@ -2561,7 +2529,6 @@
   const openBloodwellV17Base=openBloodwell;openBloodwell=function(){openBloodwellV17Base();const grid=$("bloodwellGrid"),old=grid?.querySelector('[data-bloodmage]');if(old)old.remove();const art=$("bloodwellOverlay")?.querySelector('.start-art');if(!art)return;art.classList.toggle('bloodmage-secret-ready',(meta.merchantKills||0)>=1);art.title=(meta.merchantKills||0)>=1?"The blood icon seems to be watching you.":"";if((meta.merchantKills||0)>=1&&!art.dataset.v17Bloodmage){art.dataset.v17Bloodmage="1";art.addEventListener('click',()=>{if((meta.merchantKills||0)<1||$("bloodwellOverlay").classList.contains("hidden"))return;$("bloodwellOverlay").classList.add("hidden");startCombat("bloodmage");});}};
 
   // ---- D20: show the roll, pause, then let the calling attack resolve ------
-  const rollD20ChaosV17Base=rollD20Chaos;rollD20Chaos=async function(action){const out=await rollD20ChaosV17Base(action);if(classIdentityActive("d20")&&out?.roll){setCombatText(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${d20ResultTitle(out.roll)}. Resolving...`);await delay(300);}return out;};
 
   // ---- More Mana augments --------------------------------------------------
   [
@@ -3005,8 +2972,7 @@
   // Haste may grant one immediate extra action, but cannot chain itself again
   // until one normal enemy response has elapsed. This mirrors Freeze's anti-
   // lock behavior without removing Haste's tempo identity.
-  const rollD20ChaosV19Base=rollD20Chaos;
-  rollD20Chaos=async function(action){const before=player.hasteTurns||0,out=await rollD20ChaosV19Base(action);if((player.hasteCooldown||0)>0&&(player.hasteTurns||0)>before)player.hasteTurns=before;return out;};
+
 
   // ---- Sovereign Relic / Legendary Contract ------------------------------
   // The final runtime owner now uses Dicebound's visual powerup-choice overlay.
@@ -4029,7 +3995,7 @@
   // Poison chance now uses the same overflow model as Crit/Echo: 125% means
   // one guaranteed stack plus a 25% chance for a second; 240% means two
   // guaranteed stacks plus a 40% chance for a third.
-  
+
   // Endless Form makes Croak Cascade poisonous: each jump gets an independent
   // 5% chance per Endless Form rank to leave one Poison stack.
   const damageEnemyV25CroakBase=damageEnemy;
@@ -4277,7 +4243,7 @@
 
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
   v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros'))return;const delta=(Number(player.attack)||0)-10;if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}};
-    
+
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
   function v26ClearStoneBattle(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.clearStoneBattle.apply(this,args);}
@@ -4469,7 +4435,7 @@
   }
 
   /* NINJA: ONE SMOKE PER CRITICAL TIER ------------------------------------ */
-  
+
   /* SLIME ROUGE ------------------------------------------------------------ */
   /* SLIME ROUGE ------------------------------------------------------------ */
   // Alpha 3.1.9: the class definition/tags are registry-owned. Only generated
@@ -4796,7 +4762,7 @@
 
   /* Ranger identity: each qualifying hit establishes exactly one Mark.
      Echoes are separate strikes, never multi-Mark packets. */
-  
+
   /* Debug progression shortcut. This is intentionally a late owner so older
      layered debugAction implementations cannot swallow it. */
   const debugActionBeta04Base=debugAction;
@@ -5140,10 +5106,6 @@
     if(beta045Board6){beta045Board6.entryHeal=.30;beta045Board6.entryPotions=2;beta045Board6.extraHp=Math.max(beta045Board6.extraHp||0,.48);beta045Board6.extraAttack=Math.max(beta045Board6.extraAttack||0,.34);beta045Board6.extraDefense=Math.max(beta045Board6.extraDefense||0,6);}
   }
 
-  const rollD20ChaosBeta045Base=rollD20Chaos;
-  rollD20Chaos=async function(action){
-    const before=player.hasteTurns||0,out=await rollD20ChaosBeta045Base(action);dbCombatElementResolution.clampQueuedHaste(before);return out;
-  };
 
   // ----- Bandit / troll board presentation fallback -----------------------
   const tileMetaBeta045Base=tileMeta;
@@ -5329,18 +5291,8 @@
   // Hard anti-lock: only one haste skip can be banked before an enemy actually acts.
   // Coffee still deals damage, but if Haste has already been granted in this response chain,
   // additional coffee procs cannot create another skipped enemy response.
-  const db046RollD20Base=rollD20Chaos;
-  rollD20Chaos=async function(action){
-    const beforeTurns=player.hasteTurns||0,beforeCd=player.hasteCooldown||0,beforeLock=!!player._db046HasteLocked;
-    const out=await db046RollD20Base(action);
-    if((player.hasteTurns||0)>beforeTurns){
-      if(beforeLock||beforeCd>0||beforeTurns>0)player.hasteTurns=beforeTurns;
-      else {player.hasteTurns=1;player._db046HasteLocked=true;}
-    }
-    return out;
-  };
-  const db046ResetPlayerBase=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){const r=db046ResetPlayerBase(classId);player._db046HasteLocked=false;return r;};
+
+
 
   const db046TileMetaBase=tileMeta;
   tileMeta=function(tile){
@@ -5460,25 +5412,8 @@
   };
 
   // --- haste anti-lock: never queue more than one skipped response ---------
-  player._db047HastePrimed=false;
-  const db047RollD20Base=rollD20Chaos;
-  rollD20Chaos=async function(action){
-    const beforeTurns=player.hasteTurns||0;
-    const beforeCd=player.hasteCooldown||0;
-    const beforePrimed=!!player._db047HastePrimed;
-    const out=await db047RollD20Base(action);
-    if((player.hasteTurns||0)>beforeTurns){
-      if(beforeTurns>0 || beforeCd>0 || beforePrimed){
-        player.hasteTurns=beforeTurns;
-      }else{
-        player.hasteTurns=1;
-        player._db047HastePrimed=true;
-      }
-    }
-    return out;
-  };
-  const db047ResetPlayerBase=resetPlayer;
-  resetPlayer=function(classId=selectedClassId){const out=db047ResetPlayerBase(classId);player._db047HastePrimed=false;return out;};
+
+
 
 
   /* ========================================================================
@@ -6315,7 +6250,7 @@
 
   // Basic Attack action-level Echo Chamber sequencing is owned by combat/attack-action-resolution.
   // Individual strike-level effects remain owned by combat/strike-resolution.
-  
+
   // Weapon-proc effects and Pet Mirror element memory are owned by combat/element-resolution.js.
 
   // Poison recursion.
@@ -7786,4 +7721,27 @@
   });
   DB25.modules.guide={render:()=>dbInfoGuide.render()};
 
+
+
+  /* SEMANTIC OWNER — D20 / Twenty-Sider chaos resolution. */
+  const dbCombatD20ChaosOwner=window.DiceboundCombatD20ChaosResolution;
+  if(!dbCombatD20ChaosOwner)throw new Error("DiceBound requires the D20 chaos-resolution owner before dicebound.js");
+  dbCombatD20ChaosResolution=dbCombatD20ChaosOwner.configure({
+    getPlayer:()=>player,
+    classIdentityActive:id=>classIdentityActive(id),
+    rand:(min,max)=>rand(min,max),
+    random:()=>random(),
+    pick:values=>pick(values),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    getAttackFx:()=>$("attackFx"),
+    delay:ms=>delay(ms),
+    getElements:()=>ELEMENTS,
+    getCoreElements:()=>DIBO_ELEMENTS,
+    setCombatText:text=>setCombatText(text),
+    showToast:text=>showToast(text),
+    identityFlash:text=>identityFlash(text),
+    addCombatHistory:text=>addCombatHistory(text),
+    clampQueuedHaste:before=>dbCombatElementResolution.clampQueuedHaste(before)
+  });
+  dbCombatD20ChaosResolution.initializePlayerState();
 })();
