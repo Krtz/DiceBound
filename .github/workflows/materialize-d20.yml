@@ -26,9 +26,8 @@ jobs:
       - name: Materialize extraction
         shell: bash
         run: |
-          # PATCH_NOTES and INDEX have slightly different durable formatting
-          # than the temporary transplant expected; patch only the disposable
-          # materializer, never the runtime source by guesswork.
+          # Adapt the disposable transplant helper to the exact current 0.6.6.18
+          # index/manifest formatting. Runtime behavior is not guessed here.
           python - <<'PY'
           from pathlib import Path
           p=Path('tools/materialize_d20_extraction.py')
@@ -36,6 +35,7 @@ jobs:
           t=t.replace('    update_notes(CHANGELOG)\n', '')
           t=t.replace("script = '  <script src=\"js/combat/d20-chaos-resolution.js\"></script>\\n'", "script = '<script src=\"js/combat/d20-chaos-resolution.js\"></script>\\n'")
           t=t.replace("anchor = '  <script src=\"js/combat/element-resolution.js\"></script>\\n'", "anchor = '<script src=\"js/combat/element-resolution.js\"></script>\\n'")
+          t=t.replace('pos = monolith["requires"].index("combat-element-resolution") + 1', 'pos = monolith["requires"].index("combat-strike-policy")')
           p.write_text(t, encoding='utf-8')
           PY
           python tools/materialize_d20_extraction.py
