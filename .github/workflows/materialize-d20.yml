@@ -26,8 +26,6 @@ jobs:
       - name: Materialize extraction
         shell: bash
         run: |
-          # Adapt the disposable transplant helper to the exact current 0.6.6.18
-          # index/manifest formatting. Runtime behavior is not guessed here.
           python - <<'PY'
           from pathlib import Path
           p=Path('tools/materialize_d20_extraction.py')
@@ -44,8 +42,6 @@ jobs:
           p=Path('runtime/js/dicebound.js')
           text=p.read_text(encoding='utf-8')
           lines=text.splitlines()
-          # Wrapper deletion can leave whitespace-only separator lines. Strip
-          # only those lines; non-empty source text is untouched.
           p.write_text('\n'.join('' if not line.strip() else line for line in lines)+'\n', encoding='utf-8')
           PY
           python - <<'PY'
@@ -88,7 +84,7 @@ jobs:
           print(f'dicebound.js after extraction: {len(b)} bytes / {len(b.decode("utf-8").splitlines())} physical lines')
           PY
 
-      - name: Remove temporary materializer and commit result
+      - name: Commit clean candidate
         shell: bash
         run: |
           rm -f tools/materialize_d20_extraction.py .github/workflows/materialize-d20.yml
@@ -97,4 +93,4 @@ jobs:
           git add -A
           git status --short
           git commit -m "refactor: extract D20 chaos resolution"
-          git push origin HEAD:arch/0.6.6.19-d20-chaos-resolution
+          git push origin HEAD:refs/heads/candidate-0.6.6.19-d20-chaos-resolution
