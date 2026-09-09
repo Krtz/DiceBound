@@ -1,0 +1,88 @@
+name: Materialize D20 extraction
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.19-d20-chaos-resolution
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Materialize extraction
+        shell: bash
+        run: |
+          # CHANGELOG has durable headings rather than PATCH_NOTES' Unreleased header;
+          # keep that tiny formatting difference out of the temporary materializer.
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/materialize_d20_extraction.py')
+          t=p.read_text(encoding='utf-8')
+          t=t.replace('    update_notes(CHANGELOG)\n', '')
+          p.write_text(t, encoding='utf-8')
+          PY
+          python tools/materialize_d20_extraction.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('CHANGELOG.md')
+          text=p.read_text(encoding='utf-8')
+          if '## Beta 0.6.6.19' not in text:
+              marker='## Beta 0.6.6.18'
+              if marker not in text:
+                  raise SystemExit('CHANGELOG 0.6.6.18 anchor missing')
+              section='''## Beta 0.6.6.19\n\n### D20 Chaos Resolution ownership (#304)\n- `combat/d20-chaos-resolution.js` now owns the Twenty-Sider d20 result table, readability/presentation sequence, Probability branches and accumulated Haste gating.\n- Removed the historical `rollD20Chaos` replacement/wrapper tower and the two D20-specific `resetPlayer` wrappers from `dicebound.js`, leaving one thin composition adapter.\n- Deterministic fixtures pin decorative and real RNG draw order, High Roll replacement order, all outcome families, Probability side effects, Haste lock/clamp ordering and presentation delays.\n- No gameplay, balance, save/checkpoint, class, element or action-resolution redesign is intended.\n\n'''
+              text=text.replace(marker, section+marker, 1)
+              p.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Stamp Beta 0.6.6.19 identity
+        shell: bash
+        run: |
+          python tools/set_project_version.py --version 0.6.6.19 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.6.19 --channel Beta --development-state Unreleased
+
+      - name: Focused extraction validation
+        shell: bash
+        run: |
+          node --check runtime/js/combat/d20-chaos-resolution.js
+          node --check runtime/js/dicebound.js
+          node tools/test_d20_chaos_resolution.js
+          python tools/test_shadow_ownership_drain.py
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          git diff --check
+
+      - name: Record extraction metrics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('runtime/js/dicebound.js')
+          b=p.read_bytes()
+          print(f'dicebound.js after extraction: {len(b)} bytes / {len(b.decode("utf-8").splitlines())} physical lines')
+          PY
+
+      - name: Remove temporary materializer and commit result
+        shell: bash
+        run: |
+          rm -f tools/materialize_d20_extraction.py .github/workflows/materialize-d20.yml
+          git config user.name "Axel"
+          git config user.email "axelkratz@hotmail.com"
+          git add -A
+          git status --short
+          git commit -m "refactor: extract D20 chaos resolution"
+          git push origin HEAD:arch/0.6.6.19-d20-chaos-resolution
