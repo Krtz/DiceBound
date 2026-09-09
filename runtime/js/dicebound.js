@@ -10,7 +10,8 @@
   // The Info/Guide module is configured after legacy bootstrap has supplied
   // its runtime callbacks. These stable adapters deliberately stay safe
   // during that bootstrap window instead of recreating a wrapper chain.
-  let dbInfoGuide=null,dbPlayerInitialization=null;
+  let dbInfoGuide=null;
+  let dbPlayerInitialization=null;
   const DB_EQUIPMENT_CONFIG=window.DiceboundEquipment?.createRegistry?.();
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
   const EQUIPMENT_SLOTS=[...DB_EQUIPMENT_CONFIG.slots];

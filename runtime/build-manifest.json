@@ -3,13 +3,13 @@
   "version": "0.6.6.21",
   "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6.6.21-dev-fdc27e50b04694dc",
-  "browserContentHash": "fdc27e50b04694dc252087187edec1b59c543ce3157d5e2d2d485ca8eff1ddb7",
+  "buildId": "dicebound-0.6.6.21-dev-d229beb57e27209e",
+  "browserContentHash": "d229beb57e27209eb953b53d447cbf66209d81777997d162a726dca84adef48d",
   "assetRegistryVersion": 22,
   "payloadFileCount": 498,
   "assetPayloadCount": 428,
   "files": {
-    "build-info.json": "41f46795d9ae8cc9c9b46a6018480ae9af6cc9e7eb18377d539e07310aa79b9c",
+    "build-info.json": "7b2dfbcdbdb5e90c5b32e290238c35c4ec79cb760eee46f159ad12fa41e4cb59",
     "index.html": "7c3d17ef554eba80c8ff71c966d27519747fe0ed238b71d6a4e536531ab61e0f",
     "css/dicebound.css": "332019d7e73fa7a1588e0120799b26932f1f608f689725d617622be8fec07ffd",
     "js/version.js": "03d5b8fee27121260c460eaa07a92cf72c5cae0676cd0e75fd70d6707958d0a6",
@@ -79,7 +79,7 @@
     "js/ui/prestige-moon.js": "ed00b3b0bc88b7dcb31a53462b196bf8c916361692a109ef0fdf17a3baf1cf18",
     "js/ui/achievements.js": "488d8f4cac6f19464f7223f5fb099ef2756f25e9154ae9efc65a739d21011718",
     "js/ui/info-guide.js": "543557349a75f9350e15b3bf3ebddb7615182eb59d3de64ff64a8fd1f4dd8fb7",
-    "js/dicebound.js": "adaf3f366ddc1501486b4e935fd3ed4633fa211dac2ff5d2c3bdabbfafde21ab"
+    "js/dicebound.js": "7f12978b17d79601ce5054022a8dcb5238f22559928ba2b277d8734861e77910"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
