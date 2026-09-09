@@ -8,15 +8,25 @@ on:
       - .github/workflows/tmp-player-init-census.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   census:
     runs-on: ubuntu-latest
     steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
       - name: Capture resetPlayer census
         shell: bash
         run: |
@@ -36,8 +46,8 @@ jobs:
                   out.append('')
           Path('docs/tmp-player-init-census.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
           PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
           git add docs/tmp-player-init-census.txt
           git commit -m "chore: capture player initialization census"
           git push origin HEAD:arch/0.6.6.21-player-run-initialization
