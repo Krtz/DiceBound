@@ -4,10 +4,11 @@ This file starts the durable Git-era release history. Earlier Alpha/Beta history
 
 ## Beta 0.6.6.18
 
-### Merchant tile hotfix (#306)
+### Merchant and Info hotfixes (#306)
 - Fixed the real Merchant-tile crash: live equipment formatting still referenced two deleted identity-format helpers, causing `openMerchant()` to throw and Board recovery to swallow the shop.
 - Restored only that formatting compatibility seam against `DiceboundEquipment`, and fixed the secondary split-visit transaction defect for exact Merchant stock identity.
-- Added a real Edge regression covering Merchant arrival, generated gear comparison, an actual purchase and absence of tile-error recovery.
+- Fixed the Roadkeeper's Guide failing to open for progressed profiles with Invoker unlocked: the Formula Codex converted recipe keys to uppercase before indexing its lowercase colour map.
+- Added real Edge regressions covering Merchant arrival plus Camp/Road Info controls from both HTTP and direct local-file runtime paths, including a progressed all-classes profile.
 - No Merchant economy, RNG, Board generation, secret-boss, save-schema or balance changes.
 
 ## Beta 0.6.6.17
