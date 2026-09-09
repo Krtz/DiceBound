@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.17
+
+### Info/Guide adapter ownership cleanup (#40, #209)
+- Replaced the historical no-op and `openInfoV15` last-definition-wins chain with one stable set of thin adapters to `runtime/js/ui/info-guide.js`.
+- Preserved first-run Guide-tab preparation timing without opening the surface, and added anti-shadow guards so the retired adapter reassignments cannot return.
+- No gameplay, RNG, save, checkpoint, progression, or Info/Guide presentation behavior changes.
+
 ## Beta 0.6.6.16
 
 ### Mana / Occult Action Resolution ownership (#40, #209, #302)

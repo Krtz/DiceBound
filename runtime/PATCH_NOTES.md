@@ -1,5 +1,10 @@
 # Unreleased — Beta 0.6.6.16
 
+## Beta 0.6.6.17 Info/Guide adapter ownership cleanup (#40, #209)
+- Replaced the historical no-op and `openInfoV15` last-definition-wins chain with one stable thin-adapter set to `ui/info-guide.js`.
+- First-run startup still prepares the Guide tab without opening the surface; the anti-shadow guards now reject any return of those legacy reassignment layers.
+- Gameplay, RNG, saves/checkpoints, progression and Info/Guide presentation behavior are unchanged.
+
 ## Beta 0.6.6.16 Mana / Occult Action Resolution ownership (#40, #209, #302)
 - `combat/mana-action-resolution.js` now owns Mana gain plus generator and spender action orchestration for Sorcerer, Vampire, Rouge, Merchant and Summoner, while Invoker continues to delegate its class-owned orb/spell behavior.
 - The historical Summoner, Mana-Powerup, Rouge and career wrapper ladder is retired from `dicebound.js`; existing RNG order, spend/order quirks, targeting, Arcane Overflow behavior and career counting are preserved exactly.

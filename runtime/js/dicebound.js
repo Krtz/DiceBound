@@ -7,6 +7,10 @@
   const STATIC_CAMP_TILES = [10,30,55,70,90];
   const POWERUP_TILE_COUNT = 5;
   const WHEEL_TILE_COUNT = 5;
+  // The Info/Guide module is configured after legacy bootstrap has supplied
+  // its runtime callbacks. These stable adapters deliberately stay safe
+  // during that bootstrap window instead of recreating a wrapper chain.
+  let dbInfoGuide=null;
   const DB_EQUIPMENT_CONFIG=window.DiceboundEquipment?.createRegistry?.();
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
   const EQUIPMENT_SLOTS=[...DB_EQUIPMENT_CONFIG.slots];
@@ -1342,10 +1346,10 @@
   function openGambler(){const grid=$("gambleGrid");grid.innerHTML="";$("gambleResult").textContent=`You carry ${player.gold} gold.`;[0,.25,.5,1].forEach(p=>{const wager=Math.floor(player.gold*p),b=document.createElement("button");b.className="choice-btn uncommon";b.innerHTML=`<span class="choice-icon">🪙</span><span class="choice-name">Bet ${Math.round(p*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;b.addEventListener("click",()=>{if(p===0){finishGambler("You politely decline.");return;}const actual=Math.floor(player.gold*p),win=random()<.5;if(win){player.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{player.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}});grid.appendChild(b);});$("gamblerOverlay").classList.remove("hidden");}
   function finishGambler(msg){$("gambleResult").textContent=msg;addLog(`<b>Gambler:</b> ${msg}`);showToast(msg);tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);updateHUD();setTimeout(()=>{$("gamblerOverlay").classList.add("hidden");returnToRoad();},700);}
 
-  function openInfo(){return undefined;}
-  function renderInfo(){return undefined;}
-  function exportSave(){const data=window.DiceboundSave.exportText(v13NormalizeMeta(meta));$("saveTransferText").value=data;window.DiceboundPlatform.copyText(data).then(ok=>showToast(ok?"Save copied to clipboard":"Save placed in text box")).catch(()=>showToast("Save placed in text box"));}
-  function importSave(){try{const raw=$("saveTransferText").value.trim();if(!raw)throw new Error("empty");meta=window.DiceboundSave.importText(raw,{defaultFactory:defaultMeta,normalize:v13NormalizeMeta});repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast("Save imported");$("infoOverlay").classList.add("hidden");openStartScreen();}catch(e){window.DiceboundPlatform.alert("That save string could not be imported.");}}
+  function openInfo(){return dbInfoGuide?.open();}
+  function renderInfo(){return dbInfoGuide?.render();}
+  function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}
+  function renderLifetimeStats(){return dbInfoGuide?.renderStats();}
 
   function prestigeSummary(){return DB_PRESTIGE.inspect(meta.prestige||defaultPrestige()).permanentSummary;}
   function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});prestigeOverlay.classList.remove("hidden");}
@@ -1573,15 +1577,6 @@
   const showEndV15=showEnd;showEnd=function(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}return showEndV15(victory);};
   const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);checkDynamicClassUnlocks();saveMeta();return r;};
 
-  // Alpha Info: expandable guide categories plus a lifetime stats tab.
-  function activateInfoTab(name='guide'){return undefined;}
-  function renderLifetimeStats(){return undefined;}
-
-  const openInfoV15=openInfo;openInfo=function(){openInfoV15();activateInfoTab("guide");};
-
-  // Imported Alpha saves also get the stats schema immediately.
-  importSave=function(){try{const raw=$("saveTransferText").value.trim();if(!raw)throw new Error("empty");meta=window.DiceboundSave.importText(raw,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});ensureAlphaMeta();saveMeta();repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast("Save imported");$("infoOverlay").classList.add("hidden");openStartScreen();}catch(e){window.DiceboundPlatform.alert("That save string could not be imported.");}};
-
   // Ensure transferred v14 saves gain the new Gun companion/progress fields immediately.
   saveMeta();
 
@@ -1611,7 +1606,10 @@
   $("gamblerLeaveBtn").addEventListener("click",()=>{$("gamblerOverlay").classList.add("hidden");tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);returnToRoad();});
 
   generateBoard();buildBoard();renderClassChoices();renderEquipment();syncWheelIcons();updateHUD();updateMetaUI();
-  if(!meta.infoSeen)setTimeout(openInfo,250);
+  // Historically the first-run timer prepared the Guide tab but did not open
+  // the surface. Keep that timing contract explicit now that openInfo is a
+  // stable module adapter rather than a captured legacy wrapper.
+  if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);
 
   /* ---------- Alpha v1.1: portraits, tags, board 5, hell mode and bloodmage ---------- */
   let hellMode=false;
@@ -7759,7 +7757,7 @@
   /* INFO / ROADKEEPER'S GUIDE ------------------------------------------------
      Presentation is owned by ui/info-guide.js. Runtime facts, save transfer and
      progression state remain here as injected callbacks. */
-  const dbInfoGuide=window.DiceboundInfoGuide;
+  dbInfoGuide=window.DiceboundInfoGuide;
   if(!dbInfoGuide)throw new Error('DiceBound requires the Info Guide UI module before dicebound.js');
   function dbInfoExportSave(){
     const data=window.DiceboundSave.exportText(v13NormalizeMeta(meta));
@@ -7786,12 +7784,6 @@
     importSave:dbInfoImportSave,
     onOpen:()=>{meta.infoSeen=true;saveMeta();}
   });
-  renderInfo=function(){return dbInfoGuide.render();};
-  renderLifetimeStats=function(){return dbInfoGuide.renderStats();};
-  activateInfoTab=function(name='guide'){return dbInfoGuide.activateTab(name);};
-  openInfo=function(){return dbInfoGuide.open();};
-  exportSave=dbInfoExportSave;
-  importSave=dbInfoImportSave;
   DB25.modules.guide={render:()=>dbInfoGuide.render()};
 
 })();

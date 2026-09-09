@@ -420,14 +420,21 @@ def main() -> int:
             )
     if monolith_source:
         for expected_info_guide_adapter in [
-            "renderInfo=function(){return dbInfoGuide.render();};",
-            "renderLifetimeStats=function(){return dbInfoGuide.renderStats();};",
-            "activateInfoTab=function(name='guide'){return dbInfoGuide.activateTab(name);};",
-            "openInfo=function(){return dbInfoGuide.open();};",
+            "let dbInfoGuide=null;",
+            "function renderInfo(){return dbInfoGuide?.render();}",
+            "function renderLifetimeStats(){return dbInfoGuide?.renderStats();}",
+            "function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}",
+            "function openInfo(){return dbInfoGuide?.open();}",
         ]:
             if expected_info_guide_adapter not in monolith_source:
                 errors.append("dicebound.js must retain only the thin Info/Guide lifecycle adapter")
-        for retired_info_guide_layer in ["db060RenderInfoBase", "renderInfoV28Base"]:
+        for adapter in ["renderInfo", "renderLifetimeStats", "activateInfoTab", "openInfo"]:
+            if re.search(rf"(?m)^\s*{re.escape(adapter)}\s*=", monolith_source):
+                errors.append(f"dicebound.js retains retired {adapter} reassignment after Info/Guide extraction")
+        for retired_info_guide_layer in [
+            "db060RenderInfoBase", "renderInfoV28Base", "openInfoV15",
+            "function exportSave(", "function importSave(", "exportSave=dbInfoExportSave;", "importSave=dbInfoImportSave;",
+        ]:
             if retired_info_guide_layer in monolith_source:
                 errors.append(
                     "retired final Info/Guide renderer remains in dicebound.js: "
