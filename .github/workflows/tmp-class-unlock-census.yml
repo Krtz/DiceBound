@@ -1,4 +1,4 @@
-name: Temporary class unlock census
+name: Temporary class unlock extraction
 
 on:
   push:
@@ -8,39 +8,47 @@ on:
       - .github/workflows/tmp-class-unlock-census.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  census:
+  transform:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Census unlock ownership
+        with:
+          ref: arch/0.6.6.22-class-unlock-resolution
+      - name: Apply extraction
+        run: python tools/tmp_extract_class_unlock_resolution.py
+      - name: Focused rules regression
+        run: node tools/test_class_unlock_rules.js
+      - name: Existing 0.6.3.1 regression
+        run: node tools/test_0631_progression_slime_gear.js
+      - name: Print reconciled registry snapshots
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('runtime/js/dicebound.js')
-          lines=p.read_text(encoding='utf-8').splitlines()
-          names=['baseClassUnlocked','isClassUnlocked','unlockClass','checkDynamicClassUnlocks','recordBoardClear','recordGuardianDefeat','recordSecretBossKill']
-          print(f'MONOLITH bytes={p.stat().st_size} lines={len(lines)}')
-          for name in names:
-              print(f'\n===== {name} =====')
-              hits=[]
-              pats=[rf'\bfunction\s+{re.escape(name)}\s*\(',rf'\b{re.escape(name)}\s*=\s*(?:async\s+)?function\b',rf'\bconst\s+\w+\s*=\s*{re.escape(name)}\s*;']
-              for i,line in enumerate(lines,1):
-                  if any(re.search(pat,line) for pat in pats): hits.append(i)
-              print('hits',hits)
-              for i in hits:
-                  a=max(1,i-4);b=min(len(lines),i+10)
-                  for j in range(a,b+1): print(f'{j:05d}: {lines[j-1]}')
-                  print('---')
-
-          # Find unlock-related constants and direct meta.unlock writes/reads near wrappers.
-          print('\n===== unlock-related identifiers =====')
-          for i,line in enumerate(lines,1):
-              if re.search(r'(ALCHEMIST_REQUIREMENT|ClassUnlocked|classUnlocked|unlockClass\(|baseClassUnlocked\(|isClassUnlocked\(|checkDynamicClassUnlocks\(|merchantKills|beastmasterNightmareBoard5|slimerouge|ouroboros)',line):
-                  if any(tok in line for tok in ['unlock','Unlock','ALCHEMIST_REQUIREMENT','merchantKills','beastmasterNightmareBoard5']):
-                      print(f'{i:05d}: {line}')
-          PY
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),crypto=require('crypto');
+          const source=fs.readFileSync('runtime/js/classes/registry.js','utf8');
+          const c=vm.createContext({window:{}});vm.runInContext(source,c);
+          const C=c.window.DiceboundClasses;
+          for(const [name,value] of [['registry',C.createRegistry()],['unlocks',C.createUnlockRegistry()]]){
+            const data=JSON.stringify(value);console.log(name,Buffer.byteLength(data),crypto.createHash('sha256').update(data).digest('hex'));
+          }
+          console.log('rouge',C.createRegistry().rouge.unlock,C.createUnlockRegistry().rouge);
+          console.log('alchemist',C.createRegistry().alchemist.unlock,C.createUnlockRegistry().alchemist);
+          NODE
+      - name: Static sanity
+        shell: bash
+        run: |
+          git diff --check
+          node --check runtime/js/progression/class-unlock-rules.js
+          node --check runtime/js/dicebound.js
+          python tools/validate_runtime_architecture.py
+      - name: Commit transformed source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add runtime/js/dicebound.js runtime/js/progression/class-unlock-rules.js runtime/js/classes/registry.js tools/test_0631_progression_slime_gear.js
+          git commit -m "refactor: extract class unlock resolution"
+          git push origin HEAD:arch/0.6.6.22-class-unlock-resolution
