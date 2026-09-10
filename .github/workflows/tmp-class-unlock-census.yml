@@ -1,0 +1,46 @@
+name: Temporary class unlock census
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.22-class-unlock-resolution
+    paths:
+      - .github/workflows/tmp-class-unlock-census.yml
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Census unlock ownership
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('runtime/js/dicebound.js')
+          lines=p.read_text(encoding='utf-8').splitlines()
+          names=['baseClassUnlocked','isClassUnlocked','unlockClass','checkDynamicClassUnlocks','recordBoardClear','recordGuardianDefeat','recordSecretBossKill']
+          print(f'MONOLITH bytes={p.stat().st_size} lines={len(lines)}')
+          for name in names:
+              print(f'\n===== {name} =====')
+              hits=[]
+              pats=[rf'\bfunction\s+{re.escape(name)}\s*\(',rf'\b{re.escape(name)}\s*=\s*(?:async\s+)?function\b',rf'\bconst\s+\w+\s*=\s*{re.escape(name)}\s*;']
+              for i,line in enumerate(lines,1):
+                  if any(re.search(pat,line) for pat in pats): hits.append(i)
+              print('hits',hits)
+              for i in hits:
+                  a=max(1,i-4);b=min(len(lines),i+10)
+                  for j in range(a,b+1): print(f'{j:05d}: {lines[j-1]}')
+                  print('---')
+
+          # Find unlock-related constants and direct meta.unlock writes/reads near wrappers.
+          print('\n===== unlock-related identifiers =====')
+          for i,line in enumerate(lines,1):
+              if re.search(r'(ALCHEMIST_REQUIREMENT|ClassUnlocked|classUnlocked|unlockClass\(|baseClassUnlocked\(|isClassUnlocked\(|checkDynamicClassUnlocks\(|merchantKills|beastmasterNightmareBoard5|slimerouge|ouroboros)',line):
+                  if any(tok in line for tok in ['unlock','Unlock','ALCHEMIST_REQUIREMENT','merchantKills','beastmasterNightmareBoard5']):
+                      print(f'{i:05d}: {line}')
+          PY
