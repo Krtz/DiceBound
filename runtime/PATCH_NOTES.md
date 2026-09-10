@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.21
+
+## Beta 0.6.6.21 Player / Run Initialization ownership (#311)
+- `run/player-initialization.js` is now the single owner for the ordered per-run player reset/initialization transaction.
+- The canonical reset implementation and 17 historical `resetPlayer` replacement layers are retired from `dicebound.js`; callers retain one thin composition adapter.
+- A frozen 24-case 0.6.6.20 oracle preserves state, side-effect and RNG ordering across class starts, Talents, heirlooms, Pets, Prismatic Birthright, Trainer, Slime Rouge, Artifact transforms, Mana reconciliation and Dragoon state.
+- Architecture-only: no gameplay, balance, RNG, save/checkpoint or fresh-run orchestration redesign is intended.
+
 # Unreleased — Beta 0.6.6.20
 
 ## Beta 0.6.6.20 Enemy Scaling / Difficulty Resolution ownership (#309)

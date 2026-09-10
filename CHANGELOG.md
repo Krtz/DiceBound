@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.21
+
+### Player / Run Initialization ownership (#311)
+- `run/player-initialization.js` now owns the exact ordered player and per-run state construction previously spread across the canonical `resetPlayer()` plus 17 live replacement layers.
+- Talent snapshots, heirloom/equipment ordering, class resources, Pet bonuses, Summoner/Trainer setup, Slime Rouge borrowing, Artifact transforms, Mana reconciliation and Dragoon transient state preserve the Beta 0.6.6.20 execution order.
+- A frozen 24-case Beta 0.6.6.20 oracle pins complete scoped state, observable initialization side effects and exact RNG draw streams, including Prismatic Birthright, Pokémon Trainer and Slime Rouge.
+- The monolith changes from 786,946 -> 777,058 bytes; 7,674 -> 7,619 physical lines; `run/lifecycle.js` remains the fresh-run orchestration owner and calls initialization through one thin compatibility adapter.
+
 ## Beta 0.6.6.20
 
 ### Enemy Scaling / Difficulty Resolution ownership (#309)
