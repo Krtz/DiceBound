@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.22
+
+## Beta 0.6.6.22 Class Unlock Resolution ownership (#314)
+- `progression/class-unlock-rules.js` now resolves all shipped class-unlock eligibility and the cumulative dynamic scan order from explicit runtime context.
+- Historical class-unlock policy wrappers are removed from `dicebound.js`; runtime persistence, toast/log/reveal and class-choice refresh remain thin injected composition responsibilities.
+- Deterministic tests pin class thresholds, compound gates, one-way persisted unlocks, Slime counting, observed Gold/Lifesteal progression and the exact historical dynamic-attempt order.
+- Registry text/data now matches shipped runtime truth for Alchemist (15 potion uses) and Rouge (10 Prestige points). No gameplay rebalance, RNG or save/checkpoint redesign is intended.
+
 # Unreleased — Beta 0.6.6.21
 
 ## Beta 0.6.6.21 Player / Run Initialization ownership (#311)

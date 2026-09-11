@@ -194,7 +194,7 @@
       "icon": "🟥",
       "attackIcon": "🖌️",
       "fxIcon": "🩸",
-      "unlock": "Prestige once",
+      "unlock": "Reach 10 Prestige points",
       "desc": "Rouge—the colour, not the thief—is a crimson battle artist whose occult brushwork builds Mana for Scarlet Hex.",
       "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT",
       "ultimate": {
@@ -838,7 +838,7 @@
       "icon": "⚗️",
       "attackIcon": "🧪",
       "fxIcon": "🧪💥",
-      "unlock": "Use 25 potions across all runs",
+      "unlock": "Use 15 potions across all runs",
       "desc": "A potion engineer who brews replacements during combat and can drink potions for healing or throw them as volatile weapons. Starts with +50% Potion Healing and gains another +5% Potion Healing every level. Offensive flask damage scales directly with Potion Healing bonuses.",
       "stats": "39 HP · 6 ATK · 1 DEF · +50% POTION HEALING · +5%/LEVEL",
       "ultimate": {
@@ -1100,7 +1100,7 @@
     fighter:{type:"guardianDefeat",board:1,guardian:"boss"},
     monk:{type:"guardianDefeat",board:2,guardian:"miniboss"},
     clown:{type:"guardianDefeat",board:2,guardian:"boss"},
-    rouge:{type:"prestige",count:1},
+    rouge:{type:"prestige",count:10},
     berserker:{type:"lifetimeStat",stat:"damageTaken",minimum:1000},
     turtle:{type:"runStat",stat:"defense",greaterThan:40},
     frog:{type:"runStat",stat:"doubleStrike",greaterThan:1.499999},
@@ -1117,7 +1117,7 @@
     bloodmage:{type:"secretBossKills",boss:"bloodmage-boss",minimum:1},
     summoner:{type:"petsAtLevel",count:3,level:10},
     pokemontrainer:{type:"compound",requirements:[{type:"allPetsAtLevel",level:10},{type:"boardClear",classId:"beastmaster",board:5}]},
-    alchemist:{type:"lifetimeStat",stat:"potionsUsed",minimum:25},
+    alchemist:{type:"lifetimeStat",stat:"potionsUsed",minimum:15},
     ouroboros:{type:"runStat",stat:"doubleStrike",minimum:4},
     dragoon:{type:"guardianDefeat",board:4,guardian:"miniboss"},
     slimerouge:{type:"compound",requirements:[{type:"classUnlocked",classId:"slime"},{type:"randomRunBoardClear",board:6}]}

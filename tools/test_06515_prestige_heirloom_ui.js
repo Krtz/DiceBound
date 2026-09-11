@@ -12,8 +12,10 @@ assert.match(prestige,/id: 'heirloom-storage'[\s\S]*?cost: 1/);
 assert.match(prestige,/id: 'heirloom-slot-i'[\s\S]*?cost: 2/);
 assert.match(prestige,/id: 'heirloom-slot-ii'[\s\S]*?cost: 5/);
 assert.match(prestige,/refundable: false/);
-assert.match(classes,/rouge:\{type:"prestige",count:1\}/);
-assert.match(classes,/"unlock": "Prestige once"/);
+// #314 reconciles the declarative class registry to the already-shipped runtime
+// truth: Rouge unlocks at 10 Prestige points, not the older "Prestige once" text.
+assert.match(classes,/rouge:\{type:"prestige",count:10\}/);
+assert.match(classes,/"unlock": "Reach 10 Prestige points"/);
 assert.match(camp,/campClassBtn:Object\.freeze\(\{x:\.39,y:\.65,w:235\}\)/);
 assert.match(camp,/campPetBtn:Object\.freeze\(\{x:\.39,y:\.90,w:220\}\)/);
 assert.match(moon,/prestige-moon-intro\{[^}]*left:clamp\(14px,2\.6vw,40px\)[^}]*text-align:left/);
