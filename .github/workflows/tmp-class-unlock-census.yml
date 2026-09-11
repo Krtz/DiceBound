@@ -52,3 +52,5 @@ jobs:
           git add runtime/js/dicebound.js runtime/js/progression/class-unlock-rules.js runtime/js/classes/registry.js tools/test_0631_progression_slime_gear.js
           git commit -m "refactor: extract class unlock resolution"
           git push origin HEAD:arch/0.6.6.22-class-unlock-resolution
+
+# rerun after correcting the historical dynamic-attempt oracle
