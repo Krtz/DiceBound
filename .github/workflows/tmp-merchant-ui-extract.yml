@@ -1,0 +1,48 @@
+name: Temporary Merchant UI extraction
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.23-merchant-ui
+    paths:
+      - .github/workflows/tmp-merchant-ui-extract.yml
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply one-shot Merchant UI extraction
+        shell: pwsh
+        run: python tools/tmp_extract_merchant_ui.py
+      - name: Focused Merchant and architecture validation
+        shell: pwsh
+        run: |
+          node --check runtime/js/ui/merchant.js
+          node --check runtime/js/dicebound.js
+          node tools/test_merchant_transaction.js
+          python tools/test_merchant_ui_extraction_boundary.py
+          python tools/test_shadow_ownership_drain.py
+          python tools/validate_runtime_architecture.py
+          node tools/test_merchant_browser.js
+      - name: Commit validated extraction tree
+        shell: pwsh
+        run: |
+          git diff --check
+          git status --short
+          git config user.name "dicebound-extraction-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Beta 0.6.6.23: extract Merchant UI ownership"
+          git push origin HEAD:arch/0.6.6.23-merchant-ui
