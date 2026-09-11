@@ -6,7 +6,7 @@
   const VERSION="0.6.6.23";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Enemy scaling ownership extraction.";
+  const RELEASE_SUMMARY="Merchant UI ownership extraction.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
