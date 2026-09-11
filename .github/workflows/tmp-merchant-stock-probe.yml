@@ -5,7 +5,8 @@ on:
     branches:
       - arch/0.6.6.24-merchant-stock-resolution
     paths:
-      - tools/tmp_merchant_stock_probe.js
+      - tools/test_merchant_stock_resolution.js
+      - tools/fixtures/merchant_stock_0_6_6_23.json
       - .github/workflows/tmp-merchant-stock-probe.yml
 
 permissions:
@@ -19,6 +20,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Probe released Merchant state
+      - name: Verify released Merchant stock oracle
         shell: pwsh
-        run: node tools/tmp_merchant_stock_probe.js
+        run: node tools/test_merchant_stock_resolution.js
