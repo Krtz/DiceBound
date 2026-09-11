@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.24
+
+## Beta 0.6.6.24 Merchant Stock / Economy Resolution ownership (#318)
+- `events/merchant-stock.js` now owns Boards 1–6 Merchant catalogs, price calculation, generated gear offers and exact stock construction while Merchant transactions and UI remain in their existing explicit owners.
+- The canonical Merchant functions now delegate through one configured stock/economy controller, and the historical catalog/gear/price/open replacement ladders and predecessor captures are removed from `dicebound.js`.
+- A permanent 10-case Windows Edge oracle compares released 0.6.6.23 Merchant stock signatures plus exact RNG-call counts/final RNG state for Boards 1–6, free Merchant, discount, Nightmare and Hell paths; a static boundary guard rejects shadow ownership returning.
+- No Merchant balance, RNG, Board, transaction, save/checkpoint, secret-boss or presentation redesign is intended. `dicebound.js` measures 748,359 bytes / 7,432 physical lines before release metadata, down from 752,414 / 7,465 in 0.6.6.23.
+
 # Unreleased — Beta 0.6.6.23
 
 ## Beta 0.6.6.23 Merchant UI ownership (#313)

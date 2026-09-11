@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.24
+
+### Merchant Stock / Economy Resolution ownership (#318)
+- `events/merchant-stock.js` is now the authoritative Merchant catalog, pricing, generated-gear offer and stock-composition owner for Boards 1–6; transaction atomicity remains in `events/merchant-transaction.js` and presentation remains in `ui/merchant.js`.
+- Removed the historical Merchant stock/economy patch ladder from `dicebound.js`: three `merchantCatalog` replacements, four `makeMerchantGear` replacements, the late pricing replacement and three `openMerchant` replacements are retired, leaving thin compatibility delegates plus one composition adapter.
+- A frozen 10-case Beta 0.6.6.23 Windows Edge oracle pins complete Merchant stock signatures and exact RNG consumption across Boards 1–6, free-Merchant pricing, shop discount, Nightmare and Hell.
+- Architecture-only: no Merchant balance, rarity odds, prices, item counts, Board routing, transaction, save/checkpoint or secret-boss behavior change is intended. The compatibility monolith drops from 752,414 bytes / 7,465 physical lines to 748,359 bytes / 7,432 physical lines before release metadata.
+
 ## Beta 0.6.6.23
 
 ### Merchant UI ownership (#313)
