@@ -1,0 +1,55 @@
+name: Temporary Merchant stock extraction
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.24-merchant-stock-resolution
+    paths:
+      - tools/tmp_apply_merchant_stock_extraction.py
+      - .github/workflows/tmp-merchant-stock-extraction.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply extraction transform
+        shell: pwsh
+        run: |
+          python tools/tmp_apply_merchant_stock_extraction.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Focused validation
+        shell: pwsh
+        run: |
+          node --check runtime/js/events/merchant-stock.js
+          node --check runtime/js/dicebound.js
+          python tools/test_merchant_stock_extraction_boundary.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_merchant_stock_resolution_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit transformed extraction
+        shell: pwsh
+        run: |
+          Remove-Item tools/tmp_apply_merchant_stock_extraction.py -Force
+          Remove-Item .github/workflows/tmp-merchant-stock-extraction.yml -Force
+          Remove-Item .github/workflows/tmp-merchant-stock-probe.yml -Force
+          git config user.name "DiceBound Extraction Bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw "Extraction transform produced no committed changes." }
+          git commit -m "Beta 0.6.6.24: wire Merchant stock owner and retire legacy ladder"
+          git push origin HEAD:arch/0.6.6.24-merchant-stock-resolution
