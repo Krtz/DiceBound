@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.22
+
+### Class Unlock Resolution ownership (#314)
+- `progression/class-unlock-rules.js` is now the authoritative class-unlock eligibility and dynamic-resolution owner; the historical `baseClassUnlocked` / `isClassUnlocked` / `unlockClass` / `checkDynamicClassUnlocks` wrapper ladders are retired from `dicebound.js`.
+- Shipped Beta 0.6.6.21 unlock behavior is preserved, including compound Rogue/Vampire/Pokémon Trainer/Invoker/Dragoon rules, Slime counting semantics, dynamic run-stat unlocks and duplicate historical scan order.
+- Stale registry metadata is reconciled to runtime truth: Alchemist requires 15 lifetime potion uses and Rouge requires 10 Prestige points.
+- Monolith policy ownership drops from roughly 777,065 bytes / 7,620 physical lines to 769,124 bytes / 7,514 physical lines before release metadata, with thin composition/persistence adapters retained only where runtime side effects still belong in the monolith.
+
 ## Beta 0.6.6.21
 
 ### Player / Run Initialization ownership (#311)
