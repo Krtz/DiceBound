@@ -9,7 +9,7 @@ on:
       - .github/workflows/tmp-merchant-stock-extraction.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   apply:
@@ -44,16 +44,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Commit transformed extraction
+      - name: Stage validated files
         shell: pwsh
         run: |
-          Remove-Item tools/tmp_apply_merchant_stock_extraction.py -Force
-          Remove-Item .github/workflows/tmp-merchant-stock-extraction.yml -Force
-          Remove-Item .github/workflows/tmp-merchant-stock-probe.yml -Force
-          git config user.name "DiceBound Extraction Bot"
-          git config user.email "actions@github.com"
-          git add -A
-          git diff --cached --quiet
-          if ($LASTEXITCODE -eq 0) { throw "Extraction transform produced no committed changes." }
-          git commit -m "Beta 0.6.6.24: wire Merchant stock owner and retire legacy ladder"
-          git push origin HEAD:arch/0.6.6.24-merchant-stock-resolution
+          New-Item -ItemType Directory -Force validated/runtime/js/events | Out-Null
+          New-Item -ItemType Directory -Force validated/runtime/js | Out-Null
+          New-Item -ItemType Directory -Force validated/tools/fixtures | Out-Null
+          New-Item -ItemType Directory -Force validated/tools | Out-Null
+          Copy-Item runtime/js/dicebound.js validated/runtime/js/dicebound.js
+          Copy-Item runtime/js/events/merchant-stock.js validated/runtime/js/events/merchant-stock.js
+          Copy-Item runtime/js/module-manifest.json validated/runtime/js/module-manifest.json
+          Copy-Item runtime/index.html validated/runtime/index.html
+          Copy-Item tools/fixtures/merchant_stock_0_6_6_23.json validated/tools/fixtures/merchant_stock_0_6_6_23.json
+          Copy-Item tools/test_merchant_stock_extraction_boundary.py validated/tools/test_merchant_stock_extraction_boundary.py
+          Copy-Item tools/test_merchant_stock_resolution_browser.js validated/tools/test_merchant_stock_resolution_browser.js
+      - name: Upload validated extraction
+        uses: actions/upload-artifact@v4
+        with:
+          name: merchant-stock-extraction-validated
+          path: validated
+          if-no-files-found: error
+          retention-days: 7
