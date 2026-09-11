@@ -1,0 +1,24 @@
+name: Temporary Merchant stock probe
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.24-merchant-stock-resolution
+    paths:
+      - tools/tmp_merchant_stock_probe.js
+      - .github/workflows/tmp-merchant-stock-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe released Merchant state
+        shell: pwsh
+        run: node tools/tmp_merchant_stock_probe.js
