@@ -4,7 +4,7 @@ path=Path('tools/tmp_extract_merchant_ui.py')
 text=path.read_text(encoding='utf-8')
 start=text.index("assign_pattern = re.compile")
 end=text.index("\n\nif len(re.findall(r'function renderMerchant", start)
-replacement=r'''def find_function_assignments(source, name):
+replacement=r"""def find_function_assignments(source, name):
     import re
     starts=list(re.finditer(rf'\b{re.escape(name)}\s*=\s*function\s*\(\s*\)\s*\{{', source))
     spans=[]
@@ -51,7 +51,7 @@ for idx,(span_start,span_end) in enumerate(assign_spans):
         parts.append(config)
     cursor=span_end
 parts.append(text[cursor:])
-text=''.join(parts)'''
+text=''.join(parts)"""
 path.write_text(text[:start]+replacement+text[end:],encoding='utf-8')
 Path(__file__).unlink()
 print('patched Merchant extraction transform with brace-aware renderer scanner')
