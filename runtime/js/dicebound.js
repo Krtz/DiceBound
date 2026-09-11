@@ -227,6 +227,8 @@
   if(!DB_CORE_META)throw new Error("DiceboundCoreState must load before dicebound.js");
   const DB_PRESTIGE=window.DiceboundPrestige;
   if(!DB_PRESTIGE)throw new Error("DiceboundPrestige must load before dicebound.js");
+  const DB_CLASS_UNLOCK_RULES=window.DiceboundClassUnlockRules;
+  if(!DB_CLASS_UNLOCK_RULES)throw new Error("DiceboundClassUnlockRules must load before dicebound.js");
   const {legacyXpForLevel,defaultPrestige,defaultPetState,defaultPets,defaultSettings,defaultMeta,normalizePurchased,normalizeSavedItem}=DB_CORE_META;
   const normalizeMetaCore=DB_CORE_META.normalizeMeta;
   function loadMeta(){
@@ -239,11 +241,13 @@
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
-  function unlockClass(id){
+  function commitClassUnlock(id){
+    if(id==="bloodmage"){meta.bloodmageUnlocked=true;meta.unlocks=meta.unlocks||{};meta.unlocks.bloodmage=true;saveMeta();renderClassChoices();return true;}
     if(!CLASSES[id]||meta.unlocks?.[id])return false;
     meta.unlocks=meta.unlocks||{};meta.unlocks[id]=true;saveMeta();
     const cls=CLASSES[id],unlockFeedback=window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id);if(gameStarted)addLog(`<b>Class unlocked:</b> ${cls.icon} ${cls.name}!`);showToast(unlockFeedback?.toast||`NEW CLASS UNLOCKED · ${cls.icon} ${cls.name}`,3400,true);renderClassChoices();return true;
   }
+  function unlockClass(id){if(!DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,dbClassUnlockContext()))return false;return commitClassUnlock(id);}
 
   /* ========================================================================
      Alpha v3.1.9 — state/render contracts
@@ -1245,11 +1249,7 @@
   }
   importOldSaveIfNeeded();
 
-  function isClassUnlocked(id){
-    if(meta.unlocks?.[id])return true;
-    if(id==="slime")return Object.keys(CLASSES).filter(k=>!PUBLIC_SLIME_EXEMPT.has(k)&&!CLASSES[k].secret).every(baseClassUnlocked);
-    return baseClassUnlocked(id);
-  }
+  function isClassUnlocked(id){return DB_CLASS_UNLOCK_RULES.isUnlocked(id,dbClassUnlockContext());}
   // Thin composition adapter only.  The real Class chooser, including
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
   function renderClassChoices(){return window.DiceboundClassChooser?.render();}
@@ -1382,25 +1382,28 @@
   }
   function eligibleUpgrades(filter=()=>true){return upgrades.filter(u=>{const classOk=!u.classId&&!u.classIds||player.classId==="slime"||u.classId===player.classId||(u.classIds||[]).includes(player.classId);return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});}
 
-  function baseClassUnlocked(id){
-    if(id==="ranger")return true;if(meta.unlocks?.[id])return true;
-    if(id==="rouge")return (meta.prestige?.count||0)>=10;
-    if(id==="berserker")return (meta.damageTaken||0)>=1000;
-    if(id==="d20")return (meta.pets?.neutral?.level||1)>=30;
-    if(id==="ceo")return false;if(id==="merchant")return (meta.merchantKills||0)>=5;
-    return false;
+  function dbClassUnlockFacts(){meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;}
+  function dbClassUnlockContext(){
+    const stats=ensureAlphaMeta(),facts=dbClassUnlockFacts(),petIds=Object.keys(PETS),petLevels={},petUnlocked={},classIds=Object.keys(CLASSES),classSecret={};
+    petIds.forEach(id=>{petLevels[id]=meta.pets?.[id]?.level||1;petUnlocked[id]=!!meta.pets?.[id]?.unlocked;});
+    classIds.forEach(id=>classSecret[id]=!!CLASSES[id]?.secret);
+    const currentPlayer=player||{};
+    return {
+      classIds,classSecret,persistedUnlocks:meta.unlocks||{},bloodmageUnlocked:!!meta.bloodmageUnlocked,
+      prestigeCount:Number(meta.prestige?.count)||0,damageTaken:Number(meta.damageTaken)||0,merchantKills:Number(meta.merchantKills)||0,
+      stats:{healingDone:Number(stats.healingDone)||0,highestGold:Number(stats.highestGold)||0,potionsUsed:Number(stats.potionsUsed)||0},
+      storedHighestGold:Number(stats.highestGold)||0,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(currentPlayer.gold)||0):0),facts,
+      petIds,petLevels,petUnlocked,beastmasterNightmareBoard5:!!meta.beastmasterNightmareBoard5,gameStarted:!!gameStarted,
+      player:{gold:Number(currentPlayer.gold)||0,defense:Number(currentPlayer.defense)||0,doubleStrike:Number(currentPlayer.doubleStrike)||0,lifeSteal:Number(currentPlayer.lifeSteal)||0,crit:Number(currentPlayer.crit)||0,bossDamage:Number(currentPlayer.bossDamage)||0},
+      hasBoardClear:(classId,board)=>hasBoardClear(classId,board)
+    };
   }
+  function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES.isBaseUnlocked(id,dbClassUnlockContext());}
   function checkDynamicClassUnlocks(){
-    if((meta.pets?.neutral?.level||1)>=30)unlockClass("d20");
-    if(gameStarted&&player.defense>40)unlockClass("turtle");
-    if(gameStarted&&player.doubleStrike>=1.5)unlockClass("frog");
-    if(gameStarted&&player.lifeSteal>1)unlockClass("vampire");
-    if(gameStarted&&player.crit>1)unlockClass("ninja");
-    if(gameStarted&&player.bossDamage>=1.5)unlockClass("ceo");
-    if((meta.prestige?.count||0)>=10)unlockClass("rouge");
-    if((meta.damageTaken||0)>=1000)unlockClass("berserker");
-    if((meta.merchantKills||0)>=5)unlockClass("merchant");
-    if(Object.keys(CLASSES).filter(k=>!PUBLIC_SLIME_EXEMPT.has(k)&&!CLASSES[k].secret).every(baseClassUnlocked))unlockClass("slime");
+    const observed=DB_CLASS_UNLOCK_RULES.recordObservedProgress(dbClassUnlockContext());
+    if(observed.changed){const stats=ensureAlphaMeta();stats.highestGold=observed.highestGold;meta.classUnlockFacts=observed.facts;}
+    DB_CLASS_UNLOCK_RULES.resolveDynamic({getContext:()=>dbClassUnlockContext(),unlock:id=>unlockClass(id)});
+    if(observed.changed)saveMeta();
   }
 
   function playElementAnimation(key,target=currentEnemy,enemySource=false){
@@ -1504,12 +1507,6 @@
   achievementGateUnlocked=function(gate){
     if(!gate)return true;ensureAlphaMeta();if(gate==="merchant1")return (meta.merchantKills||0)>=1;if(gate==="ranger_b1")return hasBoardClear("ranger",1);if(gate==="sorcerer_b2")return hasBoardClear("sorcerer",2);if(gate==="slime_lvl5")return (meta.stats.classMaxLevel.slime||0)>=5;if(gate==="heal1000")return meta.stats.healingDone>=1000;if(gate==="gold1500")return meta.stats.highestGold>=4000;if(gate==="menagerie")return Object.values(meta.pets||{}).every(p=>p.unlocked);if(gate==="paladin_oath")return hasBoardClear("fighter",3)&&hasBoardClear("cleric",3);return gateV15(gate);};
 
-  baseClassUnlocked=function(id){
-    ensureAlphaMeta();if(id==="ranger")return true;if(meta.unlocks?.[id])return true;if(id==="rouge")return (meta.prestige?.count||0)>=10;if(id==="berserker")return (meta.damageTaken||0)>=1000;if(id==="d20")return (meta.pets?.neutral?.level||1)>=30;if(id==="ceo")return false;if(id==="merchant")return (meta.merchantKills||0)>=5;if(id==="cleric")return meta.stats.healingDone>=1000;if(id==="paladin")return hasBoardClear("fighter",3)&&hasBoardClear("cleric",3);if(id==="beastmaster")return Object.values(meta.pets||{}).every(p=>p.unlocked);if(id==="rogue")return meta.stats.highestGold>=4000;return false;
-  };
-  checkDynamicClassUnlocks=function(){
-    ensureAlphaMeta();if((meta.pets?.neutral?.level||1)>=30)unlockClass("d20");if(gameStarted&&player.defense>40)unlockClass("turtle");if(gameStarted&&player.doubleStrike>=1.5)unlockClass("frog");if(gameStarted&&player.lifeSteal>1)unlockClass("vampire");if(gameStarted&&player.crit>1)unlockClass("ninja");if(gameStarted&&player.bossDamage>=3)unlockClass("ceo");if((meta.prestige?.count||0)>=10)unlockClass("rouge");if((meta.damageTaken||0)>=1000)unlockClass("berserker");if((meta.merchantKills||0)>=5)unlockClass("merchant");if(meta.stats.healingDone>=1000)unlockClass("cleric");if(hasBoardClear("fighter",3)&&hasBoardClear("cleric",3))unlockClass("paladin");if(Object.values(meta.pets||{}).every(p=>p.unlocked))unlockClass("beastmaster");if(meta.stats.highestGold>=4000||gameStarted&&player.gold>=4000)unlockClass("rogue");if(Object.keys(CLASSES).filter(k=>!PUBLIC_SLIME_EXEMPT.has(k)&&!CLASSES[k].secret).every(baseClassUnlocked))unlockClass("slime");
-  };
   CLASSES.ceo.unlock="Secret: reach 300% Boss Damage";
   Object.assign(CLASSES.ranger,{scaleNotes:"Attack is the core stat; Crit is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive."});
   Object.assign(CLASSES.sorcerer,{scaleNotes:"Attack and elemental power drive spell damage. Channel Bolt still rolls normal Crit/Echo chains, while Arcane Lance converts half of your total Echo Strike chance into bonus Lance damage and applies Lifesteal to the spell plus its forced elemental eruption. Arcane Surge is the Sorcerer signature burst: each basic or Echo strike has your Signature Burst chance to deal 50% more strike damage. Starfall rewards both Attack and sustain/lifesteal."});
@@ -1646,11 +1643,6 @@
     bloodmage:{id:"bloodmage",secret:true,name:"Bloodmage",icon:"🩸",attackIcon:"🩸",fxIcon:"🩸💥",unlock:"Secret: defeat the Bloodmage hidden inside a Bloodwell",desc:"A forbidden caster that spends life as fuel. Exsanguinate converts your own blood into damage, Replenish restores both combatants, and its ultimate turns injury into catastrophic area damage.",stats:"34 HP · 9 ATK · 1 DEF · LIFE-FUELLED",scaleNotes:"Attack scales burst damage, while max HP determines how much blood you can safely spend. Healing and lifesteal extend the amount of damage the class can buy with its own veins.",ultimate:{name:"Sanguine Cataclysm",icon:"🩸☄️",desc:"Deals heavy damage to every enemy, then restores a portion of the blood spilled."},base:{maxHp:34,attack:9,defense:1,crit:.12,dodge:.04,luck:.04,doubleStrike:.06,guardPower:.40,classBurst:.22,lifeSteal:.05}}
   });
   Object.entries(CLASS_TAGS).forEach(([id,tags])=>{if(CLASSES[id])CLASSES[id].tags=tags;});
-
-  const isClassUnlockedV11=isClassUnlocked;
-  isClassUnlocked=function(id){ensureV11Meta();if(id==="bloodmage")return !!(meta.bloodmageUnlocked||meta.unlocks?.bloodmage);return isClassUnlockedV11(id);};
-  const unlockClassV11=unlockClass;
-  unlockClass=function(id){if(id==="bloodmage"){meta.bloodmageUnlocked=true;meta.unlocks.bloodmage=true;saveMeta();renderClassChoices();return true;}return unlockClassV11(id);};
 
   const portraitPalette={
     ranger:["#16344f","#2e7d4f","🏹"],fighter:["#2e3548","#8ea4d2","🛡️"],sorcerer:["#1c1437","#7c59ff","🔮"],monk:["#3e2718","#d89b53","👊"],clown:["#3b1335","#ff5bbd","🤡"],
@@ -2234,13 +2226,6 @@
     {id:"trainer_champion",classId:"pokemontrainer",rarity:"legendary",icon:"🏆🐾",name:"Road Champion",desc:"Every roster creature gains +5 effective pet damage and the Six-Pack Stampede is 35% stronger.",tags:["pet","pack","legendary"],apply(){player.petDamageBonus+=5;player.trainerUltimateBonus=(player.trainerUltimateBonus||0)+.35;}}
   );
 
-  function petLevel10Count(){return Object.values(meta.pets||{}).filter(p=>(p?.level||1)>=10).length;}
-  function allPetsLevel10(){const ids=Object.keys(PETS);return ids.length>0&&ids.every(id=>(meta.pets?.[id]?.level||1)>=10);}
-  const baseClassUnlockedV15Patch=baseClassUnlocked;
-  baseClassUnlocked=function(id){if(id==="summoner")return !!meta.unlocks?.summoner||petLevel10Count()>=3;if(id==="pokemontrainer")return !!meta.unlocks?.pokemontrainer||(allPetsLevel10()&&!!meta.beastmasterNightmareBoard5);return baseClassUnlockedV15Patch(id);};
-  const checkDynamicClassUnlocksV15Patch=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){checkDynamicClassUnlocksV15Patch();if(petLevel10Count()>=3)unlockClass("summoner");if(allPetsLevel10()&&meta.beastmasterNightmareBoard5)unlockClass("pokemontrainer");};
-
   // ---- Defense becomes diminishing percentage reduction --------------------
   function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+25),0,.82);}
   // ---- Rarity/Luck and deterministic v1.5 seed codes -----------------------
@@ -2350,9 +2335,6 @@
     {id:"alchemist_volatile_formula",classId:"alchemist",rarity:"rare",icon:"💥🧪",name:"Volatile Formula",desc:"Volatile Flask deals +35% damage and has a 20% chance to trigger a random element.",tags:["alchemy","damage","elemental"],apply(){player.alchemistFlaskBonus=(player.alchemistFlaskBonus||0)+.35;player.alchemistElementChance=(player.alchemistElementChance||0)+.20;}},
     {id:"alchemist_panacea_engine",classId:"alchemist",rarity:"legendary",icon:"⚗️🌈",name:"Panacea Engine",desc:"+75% Potion Healing. Volatile Flask has a 30% chance not to consume its potion.",tags:["alchemy","sustain","legendary"],apply(){player.potionPower+=.75;player.alchemistFreeFlask=(player.alchemistFreeFlask||0)+.30;}}
   );
-  const baseClassUnlockedV16=baseClassUnlocked;baseClassUnlocked=function(id){if(id==="alchemist")return !!meta.unlocks?.alchemist||(meta.stats?.potionsUsed||0)>=100;return baseClassUnlockedV16(id);};
-  const checkDynamicClassUnlocksV16=checkDynamicClassUnlocks;checkDynamicClassUnlocks=function(){checkDynamicClassUnlocksV16();if((meta.stats?.potionsUsed||0)>=100)unlockClass("alchemist");};
-
   function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
   function recordPotionUseV16(){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();}
   async function alchemistVolatileFlaskV16(){if(combatBusy||!currentEnemy||player.potions<=0)return;combatBusy=true;player.guardCooldown=0;const free=random()<clamp(player.alchemistFreeFlask||0,0,.8);if(!free){player.potions--;recordPotionUseV16();}const healing=v16PotionHealValue(),raw=Math.round((healing*1.35+player.attack*.9)*(1+(player.alchemistFlaskBonus||0))),dealt=damageAll(raw,.72);let extra=free?" Panacea Engine preserves the potion.":"";if(random()<clamp(player.alchemistElementChance||0,0,.75)){const key=pick(ELEMENT_KEYS),target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],r=triggerElementEffect(key,target,{forced:true,source:"Volatile Flask"});if(r)extra+=` ${r.message}`;}player.combatActionCount++;chargeUltimate(Math.round(player.ultimateAttackGain*.75));sfx.crit();setCombatText(`🧪 Volatile Flask consumes restorative potency as violence for ${dealt} total damage.${extra}`);updateCombatUI();await delay(720);if(!livingEnemies().length)return winCombat();await resolveEnemyResponse(false);}
@@ -2718,12 +2700,6 @@
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent="♾️🐍☠️";fx.classList.add("ultimate-ouroboros");sfx.holy();await delay(760);enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");
   };
 
-  // ---- Dynamic secret unlock and class-selection clarity -------------------
-  const baseClassUnlockedV18Base=baseClassUnlocked;
-  baseClassUnlocked=function(id){if(id==="ouroboros")return !!meta.unlocks?.ouroboros;return baseClassUnlockedV18Base(id);};
-  const checkDynamicClassUnlocksV18Base=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){checkDynamicClassUnlocksV18Base();if(gameStarted&&(player.doubleStrike||0)>=4)unlockClass("ouroboros");};
-
   const classPortraitV18Base=classPortraitSVG;
   classPortraitSVG=function(classId){
     if(classId!=="ouroboros")return classPortraitV18Base(classId);
@@ -2803,12 +2779,6 @@
   // CEO is intentionally a later secret now. Existing unlocked saves remain
   // unlocked; only future unlock checks use the new 300% threshold.
   if(CLASSES.ceo){CLASSES.ceo.unlock="Secret: reach 300% Boss Damage";CLASSES.ceo.desc="The hidden executive class converts extreme guardian specialization into hostile quarterly growth.";}
-  const checkDynamicClassUnlocksV19Base=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){
-    checkDynamicClassUnlocksV19Base();
-    if(gameStarted&&(player.bossDamage||0)>=3)unlockClass("ceo");
-  };
-
   // ---- Gear point budgets --------------------------------------------------
   // Hidden point budgets are a little wider at every ordinary rarity. Mythic
   // and Omega pieces remain handcrafted rather than budget-generated.
@@ -3130,13 +3100,6 @@
   document.title=`Dicebound: ${V}`;
   const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${V}`;
   const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${V} · Six roads, impossible builds and a proper between-runs camp.`;
-
-  const alchemistRequirement=50;
-  if(CLASSES.alchemist)CLASSES.alchemist.unlock=`Use ${alchemistRequirement} potions across all runs`;
-  const baseClassUnlockedV110=baseClassUnlocked;
-  baseClassUnlocked=function(id){if(id==="alchemist")return !!meta.unlocks?.alchemist||((meta.stats?.potionsUsed||0)>=alchemistRequirement);return baseClassUnlockedV110(id);};
-  const checkDynamicClassUnlocksV110=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){checkDynamicClassUnlocksV110();if((meta.stats?.potionsUsed||0)>=alchemistRequirement)unlockClass("alchemist");};
 
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"omega",mythical:true,bloodmageStone:true,icon:"🜂",name:"Philosopher's Stone",uniqueEffect:"Scarlet Transmutation: healing beyond full grants +2 attack for the rest of the battle and blood-fuelled abilities cost less life.",bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
 
@@ -4333,18 +4296,6 @@
   const v28Brand=document.querySelector('.brand h1');if(v28Brand)v28Brand.textContent='Dicebound: Beta v0.4';
   const v28Sub=document.querySelector('.brand p');if(v28Sub)v28Sub.textContent='Split development source · stable Edge bundle · campsite gathered around the bonfire.';
 
-  /* ALCHEMIST: REAL PLAYTEST PACING --------------------------------------- */
-  const V28_ALCHEMIST_REQUIREMENT=25;
-  if(CLASSES.alchemist)CLASSES.alchemist.unlock=`Use ${V28_ALCHEMIST_REQUIREMENT} potions across all runs`;
-  const baseClassUnlockedV28Base=baseClassUnlocked;
-  baseClassUnlocked=function(id){
-    if(id==='alchemist')return !!meta.unlocks?.alchemist||((meta.stats?.potionsUsed||0)>=V28_ALCHEMIST_REQUIREMENT);
-    if(id==='slimerouge')return !!meta.unlocks?.slimerouge;
-    return baseClassUnlockedV28Base(id);
-  };
-  const checkDynamicClassUnlocksV28Base=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){const r=checkDynamicClassUnlocksV28Base();if((meta.stats?.potionsUsed||0)>=V28_ALCHEMIST_REQUIREMENT)unlockClass('alchemist');return r;};
-
   /* HEAVY PURSE / VAMPIRIC EDGE ------------------------------------------- */
   const purse28=upgrades.find(u=>u.id==='purse');
   if(purse28){
@@ -4371,9 +4322,6 @@
   // Alpha 3.1.9: the class definition/tags are registry-owned. Only generated
   // gear-name presentation remains here; runtime identity lives below.
   for(const slot of EQUIPMENT_SLOTS){gearNames[slot]=gearNames[slot]||{};gearNames[slot].slimerouge=[...(gearNames[slot].slime||[`Rouge Slime ${SLOT_LABELS[slot]}`])].map(n=>`Rouge ${n}`);}
-
-  const isClassUnlockedV28Base=isClassUnlocked;
-  isClassUnlocked=function(id){if(id==='slimerouge')return !!meta.unlocks?.slimerouge;return isClassUnlockedV28Base(id);};
 
   /* SLIME ROUGE 3.1.8 — real random identity + real borrowed ultimate ------- */
   function v318SlimeRougeDonorPool(){return Object.values(CLASSES).filter(c=>c.id!=='slime'&&c.id!=='slimerouge'&&isClassUnlocked(c.id));}
@@ -5142,15 +5090,8 @@
   }
   db046ApplyAssetBindings();
 
-  // Alchemist should unlock much earlier and the UI should say so.
-  if(CLASSES.alchemist){CLASSES.alchemist.unlock='Use 15 potions in total';}
-  const db046BaseClassUnlocked=baseClassUnlocked;
-  baseClassUnlocked=function(id){
-    if(id==='alchemist')return !!meta.unlocks?.alchemist||((meta.stats?.potionsUsed||0)>=15);
-    return db046BaseClassUnlocked(id);
-  };
-  const db046CheckDynamicClassUnlocks=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){db046CheckDynamicClassUnlocks();if((meta.stats?.potionsUsed||0)>=15)unlockClass('alchemist');};
+  // Alchemist's final shipped unlock copy is presentation only; resolution lives in class-unlock-rules.
+  if(CLASSES.alchemist)CLASSES.alchemist.unlock='Use 15 potions across all runs';
   if(window.DiceboundV16Debug?.prepareAlchemist)window.DiceboundV16Debug.prepareAlchemist=()=>{meta.stats.potionsUsed=15;checkDynamicClassUnlocks();renderClassChoices();return isClassUnlocked('alchemist');};
 
   // Board balance pass. Goal: a smoother climb with Board 5 clearly harder than Board 4.
@@ -5243,21 +5184,6 @@
       if(/troll/i.test(enemyName)){const icon=db047UiArt('troll',enemyName,'db-art-portrait');if(icon)return db047CompactEnemyTile(icon,enemyName,tile.packSize||1);}
     }
     return db047TileMetaBase(tile);
-  };
-
-  // --- alchemist requirement hard override ---------------------------------
-  const DB047_ALCHEMIST_REQUIREMENT=15;
-  if(CLASSES?.alchemist)CLASSES.alchemist.unlock=`Use ${DB047_ALCHEMIST_REQUIREMENT} potions across all runs`;
-  const db047BaseClassUnlocked=baseClassUnlocked;
-  baseClassUnlocked=function(id){
-    if(id==='alchemist')return !!meta.unlocks?.alchemist||((meta.stats?.potionsUsed||0)>=DB047_ALCHEMIST_REQUIREMENT);
-    return db047BaseClassUnlocked(id);
-  };
-  const db047CheckDynamicClassUnlocks=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(){
-    const out=db047CheckDynamicClassUnlocks();
-    if((meta.stats?.potionsUsed||0)>=DB047_ALCHEMIST_REQUIREMENT)unlockClass('alchemist');
-    return out;
   };
 
   // --- board pass: make the climb smoother and Board 5 > Board 4 ----------
@@ -6269,40 +6195,8 @@
 
 
 
-  /* BETA 0.6.3.1 — class progression, Slime ownership, neutral ordinary gear */
-  const db0631Rules=window.DiceboundClassUnlockRules;
-  if(!db0631Rules||!window.DiceboundPowerupBorrowing||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Beta 0.6.3.1 rule modules must load before dicebound.js');
-  const db0631TargetIds=new Set(db0631Rules.targetIds);
-  function db0631Facts(){
-    meta.classUnlockFacts=db0631Rules.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;
-  }
-  const db0631IsClassUnlockedBase=isClassUnlocked;
-  function db0631Context(includeUnlocked=false){
-    const stats=ensureAlphaMeta(),facts=db0631Facts(),petIds=Object.keys(PETS),petLevels={};petIds.forEach(id=>petLevels[id]=meta.pets?.[id]?.level||1);
-    const ctx={facts,petIds,petLevels,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(player.gold)||0):0),unlockedClassIds:[]};
-    if(includeUnlocked)ctx.unlockedClassIds=Object.keys(CLASSES).filter(id=>id!=='slime'&&db0631EligibleWithoutSlime(id));
-    return ctx;
-  }
-  function db0631EligibleWithoutSlime(id){
-    if(meta.unlocks?.[id])return true;if(!CLASSES[id])return false;
-    if(db0631TargetIds.has(id)&&id!=='slime'){const result=db0631Rules.isEligible(id,db0631Context(false));if(result!==null)return result;}
-    return db0631IsClassUnlockedBase(id);
-  }
-  function db0631RuleEligible(id){
-    if(meta.unlocks?.[id])return true;if(!CLASSES[id])return false;
-    const result=db0631Rules.isEligible(id,db0631Context(id==='slime'));return result===null?db0631IsClassUnlockedBase(id):result;
-  }
-  const db0631BaseClassUnlockedBase=baseClassUnlocked;
-  baseClassUnlocked=function(id){if(db0631TargetIds.has(id)&&CLASSES[id])return db0631RuleEligible(id);return db0631BaseClassUnlockedBase(id);};
-  isClassUnlocked=function(id){if(db0631TargetIds.has(id)&&CLASSES[id])return db0631RuleEligible(id);return db0631IsClassUnlockedBase(id);};
-  const db0631UnlockClassBase=unlockClass;
-  unlockClass=function(id){if(db0631TargetIds.has(id)&&CLASSES[id]&&!db0631RuleEligible(id))return false;return db0631UnlockClassBase(id);};
-  function db0631RecordObservedProgress(){
-    if(!gameStarted)return false;const stats=ensureAlphaMeta(),facts=db0631Facts(),gold=Math.max(Number(stats.highestGold)||0,Number(player.gold)||0),life=Math.max(Number(facts.maxLifesteal)||0,Number(player.lifeSteal)||0);let changed=false;
-    if(gold!==(Number(stats.highestGold)||0)){stats.highestGold=gold;changed=true;}if(life!==(Number(facts.maxLifesteal)||0)){facts.maxLifesteal=life;changed=true;}return changed;
-  }
-  const db0631CheckDynamicBase=checkDynamicClassUnlocks;
-  checkDynamicClassUnlocks=function(...args){const changed=db0631RecordObservedProgress(),result=db0631CheckDynamicBase.apply(this,args);['pokemontrainer','rogue','merchant','slime','vampire','invoker','dragoon'].forEach(id=>{if(CLASSES[id]&&db0631RuleEligible(id))unlockClass(id);});if(changed)saveMeta();return result;};
+  /* BETA 0.6.6.22 — class-unlock policy now resolves in progression/class-unlock-rules.js. */
+  if(!window.DiceboundPowerupBorrowing||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Progression/equipment rule modules must load before dicebound.js');
   if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
   if(CLASSES.rogue)CLASSES.rogue.unlock='Hold 5,000 gold at one time and defeat the Board 3 miniboss';
   if(CLASSES.merchant)CLASSES.merchant.unlock='Defeat the Road Merchant secret boss once';
@@ -7195,8 +7089,8 @@
     updateMetaUi:()=>updateMetaUI(),
     restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
     clearLegendaryBattleTemps:()=>db060ClearBattleLegendaryTemps(),
-    getClassUnlockFacts:()=>db0631Facts(),
-    recordCombatFacts:(facts,payload)=>db0631Rules.recordCombatFacts(facts,payload)
+    getClassUnlockFacts:()=>dbClassUnlockFacts(),
+    recordCombatFacts:(facts,payload)=>DB_CLASS_UNLOCK_RULES.recordCombatFacts(facts,payload)
   });
 
   const dbCombatAttackOwner=window.DiceboundCombatAttackActionResolution;
@@ -7271,7 +7165,7 @@
     getMeta:()=>meta,
     petTurn:(...args)=>petTurn(...args),
     addCombatHistory:text=>addCombatHistory(text),
-    recordManaSpenderCast:()=>{meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);},
+    recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},
     saveMeta:()=>saveMeta(),
     checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks()
   });
@@ -7541,7 +7435,7 @@
     addEnemyBurn:(enemy,stacks)=>dbCombatElementResolution.addEnemyBurn(enemy,stacks),updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),addCombatHistory:text=>addCombatHistory(text),identityFlash:text=>identityFlash(text),
     delay:ms=>delay(ms),winCombat:()=>winCombat(),resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
     clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
-    recordManaSpenderCast:()=>{meta.classUnlockFacts=db0631Rules.recordManaSpenderCast(db0631Facts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),document:()=>document
+    recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),document:()=>document
   });
 
   /* INFO / ROADKEEPER'S GUIDE ------------------------------------------------

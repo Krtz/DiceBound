@@ -18,6 +18,7 @@
   // has actually become true.
   const TARGET_IDS=Object.freeze(["pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon"]);
   const TARGET_ID_SET=new Set(TARGET_IDS);
+  const LEGACY_PUBLIC_SLIME_EXEMPT=new Set(["slime","d20","ceo","merchant"]);
 
   const number=value=>Number(value)||0;
   const integer=value=>Math.max(0,Math.floor(number(value)));
@@ -156,7 +157,7 @@
   }
 
   function legacyPublicSlimeReady(ctx={}){
-    const ids=Array.isArray(ctx.publicSlimeCandidateIds)?ctx.publicSlimeCandidateIds:[];
+    const ids=Array.isArray(ctx.publicSlimeCandidateIds)?ctx.publicSlimeCandidateIds:(Array.isArray(ctx.classIds)?ctx.classIds.filter(id=>!LEGACY_PUBLIC_SLIME_EXEMPT.has(id)&&!ctx.classSecret?.[id]):[]);
     return ids.every(id=>isBaseUnlocked(id,ctx));
   }
 
