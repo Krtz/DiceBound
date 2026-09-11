@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 27504, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 27515, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "a58a6853cb0d66d5afc685c053239b92285ade8e2ee1730540eaf6aedb38551c",
+  "3edb393f5be5ee23e3692fd8f0e6235b493416fd3d0a870187129a9ed53410c7",
   "canonical class registry data drifted",
 );
 
@@ -48,7 +48,8 @@ assert.equal(registry.ranger.base.maxHp, 37);
 assert.equal(registry.ranger.base.crit, 0.15);
 assert.equal(registry.rogue.name, "Rogue");
 assert.equal(registry.rouge.name, "Rouge");
-assert.equal(registry.rouge.unlock, "Prestige once");
+assert.equal(registry.rouge.unlock, "Reach 10 Prestige points");
+assert.equal(registry.alchemist.unlock, "Use 15 potions across all runs");
 assert.equal(registry.ouroboros.base.doubleStrike, 1.2);
 assert.equal(registry.dragoon.ultimate.name, "Dragon Dive");
 assert.equal(registry.invoker.base.maxHp, 32);
@@ -75,7 +76,10 @@ assert.equal(unlocks.slimerouge.requirements[1].board, 6);
 assert.equal(unlocks.slime.type,"unlockedClassCount");
 assert.equal(unlocks.slime.minimum,10);
 assert.equal(unlocks.rouge.type,"prestige");
-assert.equal(unlocks.rouge.count,1);
+assert.equal(unlocks.rouge.count,10);
+assert.equal(unlocks.alchemist.type,"lifetimeStat");
+assert.equal(unlocks.alchemist.stat,"potionsUsed");
+assert.equal(unlocks.alchemist.minimum,15);
 assert.equal(unlocks.merchant.minimum,1);
 assert.equal(unlocks.rogue.requirements[0].minimum,5000);
 assert.equal(unlocks.rogue.requirements[1].board,3);
@@ -92,7 +96,7 @@ assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
 snapshot(passives, 4003, "a30c68d063cf474784f6c7102ea73cc16d90779ae9830a3dee99781b105e7567", "class passive registry");
 snapshot(Array.from(classes.tagVocabulary), 324, "69c32f490683a7bb3e2f3858af62440b3784c1eeeffa853ba1929076b588f945", "class tag vocabulary");
-snapshot(unlocks, 2037, "e5ad74d47a796c68790b2b099c3c40c1caa125de660c8f12a3cfe7df96ecbbf0", "class unlock registry");
+snapshot(unlocks, 2038, "1dc560d02a97edd6292042a1e036d818c700ae035acdcb8dacb66a14dfd92658", "class unlock registry");
 snapshot(mechanics, 1386, "46eac9f42a39e5441a3b1131f15aada424f69abb988be1e66f8230eb478eef35", "class mechanics registry");
 snapshot(ultimateSupport, 307, "3d6a941f90c1609e96473d6de9f454e2e8fe99b9915620728ef7243946d425e2", "ultimate support registry");
 
