@@ -44,24 +44,28 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Stage validated files
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force validated/runtime/js/events | Out-Null
-          New-Item -ItemType Directory -Force validated/runtime/js | Out-Null
-          New-Item -ItemType Directory -Force validated/tools/fixtures | Out-Null
-          New-Item -ItemType Directory -Force validated/tools | Out-Null
-          Copy-Item runtime/js/dicebound.js validated/runtime/js/dicebound.js
-          Copy-Item runtime/js/events/merchant-stock.js validated/runtime/js/events/merchant-stock.js
-          Copy-Item runtime/js/module-manifest.json validated/runtime/js/module-manifest.json
-          Copy-Item runtime/index.html validated/runtime/index.html
-          Copy-Item tools/fixtures/merchant_stock_0_6_6_23.json validated/tools/fixtures/merchant_stock_0_6_6_23.json
-          Copy-Item tools/test_merchant_stock_extraction_boundary.py validated/tools/test_merchant_stock_extraction_boundary.py
-          Copy-Item tools/test_merchant_stock_resolution_browser.js validated/tools/test_merchant_stock_resolution_browser.js
-      - name: Upload validated extraction
-        uses: actions/upload-artifact@v4
+      - name: Mint release app token
+        id: release_app_token
+        uses: actions/create-github-app-token@v3
         with:
-          name: merchant-stock-extraction-validated
-          path: validated
-          if-no-files-found: error
-          retention-days: 7
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - name: Commit validated extraction
+        shell: pwsh
+        env:
+          APP_TOKEN: ${{ steps.release_app_token.outputs.token }}
+        run: |
+          Remove-Item tools/tmp_apply_merchant_stock_extraction.py -Force
+          Remove-Item .github/workflows/tmp-merchant-stock-extraction.yml -Force
+          Remove-Item .github/workflows/tmp-merchant-stock-probe.yml -Force
+          git config user.name "DiceBound Release App"
+          git config user.email "release-app@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw "Extraction transform produced no committed changes." }
+          git commit -m "Beta 0.6.6.24: wire Merchant stock owner and retire legacy ladder"
+          git remote set-url origin "https://x-access-token:$env:APP_TOKEN@github.com/Krtz/DiceBound.git"
+          git push origin HEAD:arch/0.6.6.24-merchant-stock-resolution
