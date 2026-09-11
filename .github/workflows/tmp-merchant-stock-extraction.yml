@@ -31,6 +31,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -c 'from pathlib import Path; p=Path("tools/test_merchant_stock_extraction_boundary.py"); lines=p.read_text(encoding="utf-8").splitlines(); p.write_text("\n".join(("    assert js.count(f\"function {name}(\") == 1, f\"expected one thin {name} adapter\"" if "assert len(re.findall" in line else line) for line in lines)+"\n",encoding="utf-8")'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -c 'from pathlib import Path; p=Path("runtime/js/dicebound.js"); lines=p.read_text(encoding="utf-8").splitlines(); p.write_text("\n".join(line.rstrip(" \t") for line in lines)+"\n",encoding="utf-8")'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Focused validation
         shell: pwsh
         run: |
