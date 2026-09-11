@@ -67,5 +67,6 @@ jobs:
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { throw "Extraction transform produced no committed changes." }
           git commit -m "Beta 0.6.6.24: wire Merchant stock owner and retire legacy ladder"
+          git config --local --unset-all http.https://github.com/.extraheader
           git remote set-url origin "https://x-access-token:$env:APP_TOKEN@github.com/Krtz/DiceBound.git"
           git push origin HEAD:arch/0.6.6.24-merchant-stock-resolution
