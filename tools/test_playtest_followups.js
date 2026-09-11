@@ -16,9 +16,11 @@ assert.equal(rarities.isPowerupRarityAtLeast("epic", "epic"), true);
 assert.equal(rarities.isPowerupRarityAtLeast("rare", "epic"), false);
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
+const merchantStock = fs.readFileSync(path.join(root, "runtime", "js", "events", "merchant-stock.js"), "utf8");
 const equipment = fs.readFileSync(path.join(root, "runtime", "js", "items", "equipment.js"), "utf8");
-assert.match(monolith, /name:"Unbound Impossible Relic",desc:"Reveal one Rare\+ powerup\."/);
-assert.match(monolith, /DB_RARITIES\.isPowerupRarityAtLeast\(u\.rarity,"rare"\)/, "Unbound Impossible Relic must use the rarity policy owner");
+assert.match(merchantStock, /name:"Unbound Impossible Relic",desc:"Reveal one Rare\+ powerup\."/);
+assert.match(merchantStock, /isPowerupRarityAtLeast\(u\.rarity,"rare"\)/, "Unbound Impossible Relic must use the injected rarity policy owner");
+assert.doesNotMatch(monolith, /name:"Unbound Impossible Relic",desc:"Reveal one Rare\+ powerup\."/, "Merchant catalog policy must not drift back into the compatibility monolith");
 assert.doesNotMatch(monolith, /Prefix: \$\{item\.prefix\}/, "player-facing gear details still print a standalone Prefix line");
 assert.doesNotMatch(monolith, /Suffix: \$\{item\.suffix\}/, "player-facing gear details still print a standalone Suffix line");
 assert.match(equipment, /prefix:/, "equipment must retain semantic prefix data");
