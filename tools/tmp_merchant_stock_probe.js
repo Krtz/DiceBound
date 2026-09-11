@@ -14,45 +14,11 @@ function serveRuntime(){return new Promise((resolve,reject)=>{const server=http.
 async function waitJson(url,timeout=15000){const end=Date.now()+timeout;while(Date.now()<end){try{const r=await fetch(url);if(r.ok)return r.json();}catch(_){}await sleep(100);}throw new Error(`timeout ${url}`);}
 async function connect(url){const origin=new URL(url).origin,end=Date.now()+15000;let target;while(Date.now()<end&&!target){const xs=await waitJson(`http://127.0.0.1:${DEBUG_PORT}/json/list`);target=xs.find(x=>x.type==="page"&&x.webSocketDebuggerUrl&&x.url.startsWith(origin));if(!target)await sleep(100);}if(!target)throw new Error("Edge target missing");const socket=new WebSocket(target.webSocketDebuggerUrl),pending=new Map();let id=0;await new Promise((resolve,reject)=>{socket.addEventListener("open",resolve,{once:true});socket.addEventListener("error",reject,{once:true});});socket.addEventListener("message",ev=>{const m=JSON.parse(String(ev.data)),p=pending.get(m.id);if(!p)return;pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);});function send(method,params={}){return new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});socket.send(JSON.stringify({id:n,method,params}));});}async function evaluate(expression){const r=await send("Runtime.evaluate",{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;}return {socket,send,evaluate};}
 async function main(){const profile=fs.mkdtempSync(path.join(os.tmpdir(),"dicebound-merchant-stock-probe-")),{server,url}=await serveRuntime();let child,page;try{child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-sandbox","--no-first-run","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});page=await connect(url);await page.send("Runtime.enable");const end=Date.now()+20000;while(Date.now()<end){if(await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundRng&&!!window.DiceboundBoardTileDispatch"))break;await sleep(100);}const result=await page.evaluate(`(async()=>{
-  window.DiceboundRng.seed('merchant-stock-template');
-  document.getElementById('campGoBtn')?.click();
-  await new Promise(r=>setTimeout(r,250));
-  document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');
-  const template=window.DiceboundRunResumeTest.snapshot();
-  const cases=[
-    {name:'board1',board:1,position:11},
-    {name:'board2',board:2,position:23},
-    {name:'board3',board:3,position:31},
-    {name:'board4',board:4,position:37},
-    {name:'board5',board:5,position:43},
-    {name:'board6',board:6,position:49},
-    {name:'board4-free',board:4,position:37,free:true},
-    {name:'board5-discount',board:5,position:43,discount:.25},
-    {name:'board4-nightmare',board:4,position:37,nightmare:true},
-    {name:'board4-hell',board:4,position:37,hell:true}
-  ];
+  const fnv=text=>{let h=2166136261>>>0;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16).padStart(8,'0');};
+  window.DiceboundRng.seed('merchant-stock-template');document.getElementById('campGoBtn')?.click();await new Promise(r=>setTimeout(r,250));document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');const template=window.DiceboundRunResumeTest.snapshot();
+  const cases=[{name:'board1',board:1,position:11},{name:'board2',board:2,position:23},{name:'board3',board:3,position:31},{name:'board4',board:4,position:37},{name:'board5',board:5,position:43},{name:'board6',board:6,position:49},{name:'board4-free',board:4,position:37,free:true},{name:'board5-discount',board:5,position:43,discount:.25},{name:'board4-nightmare',board:4,position:37,nightmare:true},{name:'board4-hell',board:4,position:37,hell:true}];
   const outputs=[];
-  for(const c of cases){
-    const cp=structuredClone(template),idx=Math.min(c.position,cp.run.tiles.length-2);
-    cp.run.boardLevel=c.board;cp.run.nightmareMode=!!c.nightmare;cp.run.hellMode=!!c.hell;
-    cp.run.player.position=idx;cp.run.player.gold=99999;cp.run.player.shopDiscount=c.discount||0;cp.run.player.freeMerchantRun=!!c.free;
-    cp.run.tiles[idx]={type:'merchant',cleared:false,packSize:1};
-    cp.run.merchant={faceClicks:[],faceTotal:1,bossPrimed:false,bossDefeatedThisBoard:false};
-    window.DiceboundRunResumeTest.restore(cp);await new Promise(r=>setTimeout(r,20));
-    document.getElementById('merchantOverlay')?.classList.add('hidden');
-    window.DiceboundRng.seed('merchant-stock-oracle:'+c.name);
-    const before=window.DiceboundRng.snapshot();
-    window.DiceboundBoardTileDispatch.dispatch();await new Promise(r=>setTimeout(r,60));
-    const offers=[...document.querySelectorAll('#shopGrid .shop-item')].map(btn=>({
-      name:btn.querySelector('.shop-item-name')?.textContent||'',
-      desc:btn.querySelector('.shop-item-desc')?.textContent||'',
-      price:btn.querySelector('.shop-price')?.textContent||'',
-      comparison:btn.querySelector('.shop-compare')?.textContent||''
-    }));
-    const after=window.DiceboundRng.snapshot();
-    outputs.push({name:c.name,board:c.board,position:idx,nightmare:!!c.nightmare,hell:!!c.hell,free:!!c.free,discount:c.discount||0,title:document.getElementById('merchantTitle')?.textContent||'',subtitle:document.getElementById('merchantSubtitle')?.textContent||'',offers,rng:{beforeCalls:before.calls,afterCalls:after.calls,state:after.state,delta:after.calls-before.calls}});
-    document.getElementById('merchantOverlay')?.classList.add('hidden');
-  }
+  for(const c of cases){const cp=structuredClone(template),idx=Math.min(c.position,cp.run.tiles.length-2);cp.run.boardLevel=c.board;cp.run.nightmareMode=!!c.nightmare;cp.run.hellMode=!!c.hell;cp.run.player.position=idx;cp.run.player.gold=99999;cp.run.player.shopDiscount=c.discount||0;cp.run.player.freeMerchantRun=!!c.free;cp.run.tiles[idx]={type:'merchant',cleared:false,packSize:1};cp.run.merchant={faceClicks:[],faceTotal:1,bossPrimed:false,bossDefeatedThisBoard:false};window.DiceboundRunResumeTest.restore(cp);await new Promise(r=>setTimeout(r,20));document.getElementById('merchantOverlay')?.classList.add('hidden');window.DiceboundRng.seed('merchant-stock-oracle:'+c.name);const before=window.DiceboundRng.snapshot();window.DiceboundBoardTileDispatch.dispatch();await new Promise(r=>setTimeout(r,60));const offers=[...document.querySelectorAll('#shopGrid .shop-item')].map(btn=>({name:btn.querySelector('.shop-item-name')?.textContent||'',desc:btn.querySelector('.shop-item-desc')?.textContent||'',price:btn.querySelector('.shop-price')?.textContent||'',comparison:btn.querySelector('.shop-compare')?.textContent||''}));const title=document.getElementById('merchantTitle')?.textContent||'',subtitle=document.getElementById('merchantSubtitle')?.textContent||'',after=window.DiceboundRng.snapshot(),signature=fnv(JSON.stringify({title,subtitle,offers}));outputs.push({name:c.name,signature,title,offerCount:offers.length,rngCalls:after.calls-before.calls,rngState:after.state});document.getElementById('merchantOverlay')?.classList.add('hidden');}
   return {version:window.DiceboundVersion?.version,cases:outputs};
 })()`);console.log('MERCHANT_STOCK_ORACLE_BEGIN');console.log(JSON.stringify(result,null,2));console.log('MERCHANT_STOCK_ORACLE_END');}finally{try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}}}
 main().catch(e=>{console.error(e);process.exitCode=1;});
