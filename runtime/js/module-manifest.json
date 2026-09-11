@@ -57,6 +57,7 @@
     "progression-achievements",
     "event-rewards",
     "merchant-transactions",
+    "merchant-stock",
     "artifacts",
     "loot",
     "powerup-registry",
@@ -658,6 +659,19 @@
       "requires": [],
       "provides": [
         "DiceboundMerchantTransaction"
+      ]
+    },
+    {
+      "id": "merchant-stock",
+      "path": "js/events/merchant-stock.js",
+      "domain": "events/merchant-stock-catalog-pricing-and-gear-offers",
+      "status": "extracted",
+      "requires": [
+        "item-rarities",
+        "item-equipment"
+      ],
+      "provides": [
+        "DiceboundMerchantStock"
       ]
     },
     {
