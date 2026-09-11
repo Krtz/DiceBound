@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.23
+
+### Merchant UI ownership (#313)
+- `runtime/js/ui/merchant.js` now owns Merchant offer rendering and purchase interaction orchestration while `events/merchant-transaction.js` remains authoritative for reservation, commit and active Legendary-choice state.
+- Removed the original Merchant renderer plus six historical `renderMerchant` replacement implementations from `dicebound.js`, leaving one thin compatibility adapter.
+- Preserved stock identity, sold/reserved state, weaker-gear confirmation, Sovereign/Legendary choice/refund semantics, Gold accounting and Merchant return behavior; stock generation, price formulas, gear generation, RNG, Board routing and Merchant balance are unchanged.
+- Focused transaction/ownership guards plus the real Windows Edge Merchant regression pass; runtime architecture is 69 modules (68 extracted + one compatibility monolith), and the validator reports the monolith at 752,414 bytes / 7,465 physical lines.
+
 ## Beta 0.6.6.22
 
 ### Class Unlock Resolution ownership (#314)

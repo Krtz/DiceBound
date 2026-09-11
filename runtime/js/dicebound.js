@@ -1046,19 +1046,12 @@
   }
 
 
+  // Merchant presentation is owned by ui/merchant.js; this lexical adapter
+  // remains only for legacy callers inside the compatibility monolith.
+  let dbMerchantUi=null;
   function renderMerchant(){
-    $("merchantGold").textContent=player.gold;const notice=$("merchantNotice");notice.classList.toggle("show",!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;
-    const grid=$("shopGrid");grid.innerHTML="";
-    currentMerchantItems.forEach(item=>{
-      const price=merchantPrice(item.base),btn=document.createElement("button");btn.className=`shop-item${item.sold?" sold":""}`;btn.disabled=item.sold||player.gold<price;
-      const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:"";
-      btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?"SOLD":price+"g"}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;
-      btn.addEventListener("click",()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`))return;}player.gold-=price;const result=item.buy();item.sold=true;sfx.coin();
-        if(item.id==="relic"&&result)currentMerchantNotice=`🔮 <b>Sealed Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;
-        else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;
-        if(["attack","armor","charm"].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,"merchant","Merchant");
-        addLog(`Bought <b>${item.name}</b> for ${price} gold.`);showToast(item.id==="relic"&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();});grid.appendChild(btn);
-    });
+    if(!dbMerchantUi)throw new Error('Merchant UI owner is not configured.');
+    return dbMerchantUi.render();
   }
 
   const blessingPool=[
@@ -1530,7 +1523,7 @@
 
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
   const getHeirloomSlotsV15=getHeirloomSlots;getHeirloomSlots=function(){const source=runTalentSnapshot;if(!source)return getHeirloomSlotsV15();return 1+(Number(source.legacy_heirloom)||0)+((meta.prestige?.count||0)>=20?1:0);};
-  
+
   const openStartScreenV15=openStartScreen;openStartScreen=function(){runTalentSnapshot=null;openStartScreenV15();};
 
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
@@ -1545,9 +1538,6 @@
 
   // Sovereign Relic now actually lets the player choose one of three Legendaries.
   const merchantCatalogV15=merchantCatalog;merchantCatalog=function(){const catalog=merchantCatalogV15();if(boardLevel===4){const relic=catalog.find(x=>x.id==="relic");if(relic){relic.desc="Choose one of three random Legendary powerups.";relic.alphaChooseLegendary=true;}}return catalog;};
-  renderMerchant=function(){
-    $("merchantGold").textContent=player.gold;const notice=$("merchantNotice");notice.classList.toggle("show",!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$("shopGrid");grid.innerHTML="";currentMerchantItems.forEach(item=>{const price=merchantPrice(item.base),btn=document.createElement("button");btn.className=`shop-item${item.sold?" sold":""}`;btn.disabled=item.sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:"";btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?"SOLD":price+"g"}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;btn.addEventListener("click",()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`))return;}player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);if(item.alphaChooseLegendary){currentMerchantNotice="👑 <b>Sovereign Relic purchased.</b> Choose one Legendary power.";renderMerchant();showPowerupChoice("Sovereign Relic",()=>{currentMerchantNotice="👑 <b>Sovereign Relic claimed.</b> The chosen Legendary is active for this run.";updateHUD();renderMerchant();},u=>u.rarity==="legendary","Choose one of three Legendary powers. This time the word choose is legally binding.");return;}const result=item.buy();if(item.id==="relic"&&result)currentMerchantNotice=`🔮 <b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(["attack","armor","charm"].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,"merchant","Merchant");showToast(item.id==="relic"&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();});grid.appendChild(btn);});
-  };
 
   // Track board/class feats; victory ownership now lives in combat/victory-resolution.
   const loseGameV15=loseGame;loseGame=function(){clearBloodOverhealTemp();return loseGameV15();};
@@ -1654,7 +1644,7 @@
     const cls=CLASSES[classId]||CLASSES.ranger,p=portraitPalette[classId]||["#1b2740","#65dcff",cls.icon||"🎲"],bg=p[0],accent=p[1],sig=p[2];
     return `<svg viewBox="0 0 64 64" role="img" aria-label="${cls.name} portrait"><defs><linearGradient id="g_${classId}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="${accent}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#09111f"/><rect x="4" y="4" width="56" height="56" rx="12" fill="url(#g_${classId})" opacity=".95"/><circle cx="32" cy="25" r="12" fill="#f0c69b"/><path d="M17 54c4-11 11-16 15-16s11 5 15 16" fill="none" stroke="#122033" stroke-width="11" stroke-linecap="round"/><path d="M20 54c4-9 9-14 12-14 4 0 9 5 12 14" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="9" stroke-linecap="round"/><path d="M18 23c2-10 8-16 14-16 7 0 13 6 15 16-4-3-10-5-15-5-5 0-10 2-14 5z" fill="rgba(12,22,36,.72)"/><circle cx="28" cy="24.5" r="1.5" fill="#1b1b1f"/><circle cx="36" cy="24.5" r="1.5" fill="#1b1b1f"/><path d="M27 30c3 2 7 2 10 0" fill="none" stroke="#8b4b3a" stroke-width="1.6" stroke-linecap="round"/><circle cx="50" cy="50" r="9" fill="rgba(9,17,31,.72)"/><text x="50" y="53" text-anchor="middle" font-size="12">${sig}</text></svg>`;
   }
-  function applyClassPortrait(el,classId,combat=false){if(!el)return;el.classList.add(combat?"combat-portrait":"class-portrait");el.innerHTML=classPortraitSVG(classId);}  
+  function applyClassPortrait(el,classId,combat=false){if(!el)return;el.classList.add(combat?"combat-portrait":"class-portrait");el.innerHTML=classPortraitSVG(classId);}
   function classBoardMarkerSrc(classId){const root=(window.DiceboundAssets?.paths?.uiClassMarkers)||"assets/ui/class-markers";return `${root}/${classId}.png`;}
   function applyClassBoardMarker(el,classId){
     if(!el)return;
@@ -1719,8 +1709,8 @@
 
 
 
-  async function bloodmageExsanguinate(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;const paid=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos("attack");updateCombatUI();await animateClassAttack("crit");let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(currentEnemy,damage);const ring=applyMythicRingPulse();setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${dealt} damage.${ring?` ${ring}`:""}`);sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);} 
-  async function bloodmageReplenish(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.combatActionCount++;const selfHeal=healPlayer(Math.ceil(player.maxHp*.16));const enemyHeal=Math.min(currentEnemy.maxHp-currentEnemy.hp,Math.ceil(currentEnemy.maxHp*.14));currentEnemy.hp+=enemyHeal;player.ultimateCharge=clamp(player.ultimateCharge+20,0,100);const ring=applyMythicRingPulse();setCombatText(`💉 Replenish restores ${selfHeal} HP to you and ${enemyHeal} HP to ${currentEnemy.name}.${ring?` ${ring}`:""}`);updateCombatUI();await delay(700);await resolveEnemyResponse(false);} 
+  async function bloodmageExsanguinate(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;const paid=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos("attack");updateCombatUI();await animateClassAttack("crit");let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(currentEnemy,damage);const ring=applyMythicRingPulse();setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${dealt} damage.${ring?` ${ring}`:""}`);sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);}
+  async function bloodmageReplenish(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.combatActionCount++;const selfHeal=healPlayer(Math.ceil(player.maxHp*.16));const enemyHeal=Math.min(currentEnemy.maxHp-currentEnemy.hp,Math.ceil(currentEnemy.maxHp*.14));currentEnemy.hp+=enemyHeal;player.ultimateCharge=clamp(player.ultimateCharge+20,0,100);const ring=applyMythicRingPulse();setCombatText(`💉 Replenish restores ${selfHeal} HP to you and ${enemyHeal} HP to ${currentEnemy.name}.${ring?` ${ring}`:""}`);updateCombatUI();await delay(700);await resolveEnemyResponse(false);}
   $("attackBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageExsanguinate();}},true);
   $("guardBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageReplenish();}},true);
   $("ultimateBtn").addEventListener("click",e=>{if(player.classId==="bloodmage"){e.preventDefault();e.stopImmediatePropagation();useUltimate();}},true);
@@ -1801,7 +1791,7 @@
   };
 
 
-  
+
 
   const effectiveDodgeChanceV12=effectiveDodgeChance;
   effectiveDodgeChance=function(){const base=effectiveDodgeChanceV12();return classIdentityActive("monk")?1-(1-base)*(1-base):base;};
@@ -1986,7 +1976,7 @@
   function identityFlash(text){const head=document.querySelector("#combatOverlay .combat-head");if(!head)return;const el=document.createElement("div");el.className="identity-flash";el.textContent=text;head.appendChild(el);setTimeout(()=>el.remove(),1050);}
 
   // ---- reset/setup for identity state ---------------------------------------
-  
+
 
   // Slime can borrow broad class powers only when the power actually works with
   // mechanics Slime possesses. Pure stat/class-flavour powers remain eligible;
@@ -2262,7 +2252,7 @@
   function cycleTrainerPokemon(){if(!classIdentityActive("pokemontrainer")||combatBusy)return;const roster=player.trainerRoster||[];if(!roster.length)return;player.trainerActiveIndex=((player.trainerActiveIndex||0)+1)%roster.length;const id=activeTrainerPetId();identityFlash(`${PETS[id].icon} Go, ${PETS[id].name}!`);setCombatText(`🧢 You switch to ${PETS[id].icon} ${PETS[id].name}. Switching does not spend your turn.`);updateCombatUI();}
   $("specialAttackBtn")?.addEventListener("click",e=>{if(classIdentityActive("pokemontrainer")){e.preventDefault();e.stopImmediatePropagation();cycleTrainerPokemon();}},true);
 
-  
+
 
 
 
@@ -2349,7 +2339,7 @@
   ];for(const t of v16Talents)if(!talents.some(x=>x.id===t.id))talents.push(t);
 
   // ---- Per-run identity state ----------------------------------------------
-  
+
 
   // ---- Companion differentiation -------------------------------------------
   const PET_STAT_BONUSES={
@@ -2384,7 +2374,6 @@
     else{const consolation=modifiedGold(Math.round(9*scale));player.gold+=consolation;text=`No match. The machine spits out ${consolation} consolation gold.`;sfx.coin();}const cookieChance=.09+gameplayTalentRank("fortune_cookie")*.02+Math.min(.06,(boardLevel-1)*.012);if(random()<cookieChance){meta.petCookies++;saveMeta();text+=` A rare pet cookie drops from the machine!`;showToast("🍪 Pet cookie found!");}$("slotResult").textContent=text;addLog(`<b>Event:</b> ${text}`);updateMetaUI();};
 
   // ---- Sovereign Relic: force a visible choice flow ------------------------
-  renderMerchant=function(){$("merchantGold").textContent=player.gold;const notice=$("merchantNotice");notice.classList.toggle("show",!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$("shopGrid");grid.innerHTML="";currentMerchantItems.forEach(item=>{const price=merchantPrice(item.base),btn=document.createElement("button");btn.className=`shop-item${item.sold?" sold":""}`;btn.disabled=item.sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:"";btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?"SOLD":price+"g"}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;btn.addEventListener("click",()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`))return;}player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);if(item.alphaChooseLegendary||item.id==="relic"&&/Sovereign|Legendary Contract/.test(item.name||"")){currentMerchantNotice="👑 <b>Sovereign Relic purchased.</b> Your Legendary choice is waiting.";renderMerchant();$("merchantOverlay").classList.add("hidden");setTimeout(()=>showPowerupChoice("Sovereign Relic",()=>{currentMerchantNotice="👑 <b>Sovereign Relic claimed.</b> The chosen Legendary is active for this run.";$("merchantOverlay").classList.remove("hidden");updateHUD();renderMerchant();},u=>u.rarity==="legendary","Choose one of three Legendary powers. No random auto-pick."),0);return;}const result=item.buy();if(item.id==="relic"&&result)currentMerchantNotice=`🔮 <b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(["attack","armor","charm"].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,"merchant","Merchant");showToast(item.id==="relic"&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();});grid.appendChild(btn);});};
 
   // ---- Preserve valuable end-run gear warnings -----------------------------
   let v16PreciousWarningAcknowledged=false;
@@ -2454,7 +2443,6 @@
   function v17LegendaryPool(){return eligibleUpgrades(u=>u.rarity==="legendary");}
   function v17LegendaryChoices(){const pool=[...v17LegendaryPool()],out=[];while(pool.length&&out.length<3){const i=rand(0,pool.length-1);out.push(pool.splice(i,1)[0]);}return out;}
   function v17OpenLegendaryChoice(source,onComplete=()=>{}){$("powerupTitle").textContent=source;$('powerupSubtitle').textContent="Choose one of three Legendary powers. The purchase is already paid for.";const grid=$("powerupGrid");grid.innerHTML="";const choices=v17LegendaryChoices();if(!choices.length){const d=document.createElement("div");d.className="merchant-notice show";d.innerHTML="No eligible Legendary powers remain for this class this run. The contract refunds 100% of its price.";grid.appendChild(d);$("powerupOverlay").classList.remove("hidden");setTimeout(()=>{$("powerupOverlay").classList.add("hidden");onComplete(false);},650);return;}choices.forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn legendary`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose <b>${up.name}</b>.`);showToast(`Legendary: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete(up);});grid.appendChild(btn);});$("merchantOverlay")?.classList.add("hidden");$("powerupOverlay").classList.remove("hidden");}
-  renderMerchant=function(){$("merchantGold").textContent=player.gold;const notice=$("merchantNotice");notice.classList.toggle("show",!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$("shopGrid");grid.innerHTML="";currentMerchantItems.forEach(item=>{const price=merchantPrice(item.base),btn=document.createElement("button");btn.className=`shop-item${item.sold?" sold":""}`;btn.disabled=item.sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:"";btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?"SOLD":price+"g"}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;btn.addEventListener("click",()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`))return;}player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);const chooser=item.alphaChooseLegendary||(/Sovereign Relic|Legendary Contract/i.test(item.name||""));if(chooser){currentMerchantNotice=`👑 <b>${item.name} purchased.</b> Choose one Legendary power.`;renderMerchant();v17OpenLegendaryChoice(item.name,chosen=>{if(!chosen){player.gold+=price;item.sold=false;currentMerchantNotice=`👑 No eligible Legendary remained, so ${price} gold was refunded.`;}else currentMerchantNotice=`👑 <b>${item.name} claimed:</b> ${chosen.name}.`;$("merchantOverlay").classList.remove("hidden");updateHUD();renderMerchant();});return;}const result=item.buy?.();if(item.id==="relic"&&result)currentMerchantNotice=`🔮 <b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(["attack","armor","charm"].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,"merchant","Merchant");showToast(item.id==="relic"&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();});grid.appendChild(btn);});};
 
   // ---- Wheel scales with road depth ---------------------------------------
   function v17WheelScale(){return 1+(boardLevel-1)*.24+(player.position/Math.max(1,currentTileCount()-1))*.16;}
@@ -2471,7 +2459,7 @@
 
   // ---- Ninja Smoke ---------------------------------------------------------
   if(!upgrades.some(u=>u.id==="ninja_smoke_step"))upgrades.push({id:"ninja_smoke_step",classId:"ninja",rarity:"epic",unique:true,icon:"🌫️🥷",name:"Vanishing Point",desc:"Unique: Smoke Execution needs one fewer Smoke stack.",tags:["dodgy","precision","unique"],apply(){player.ninjaSmokeNeed=2;player.ninjaSmoke=Math.min(player.ninjaSmoke||0,2);}});
-  
+
 
   // ---- Prismatic Birthright runtime migration -----------------------------
   const prismaticTalent=talents.find(t=>t.id==="element_prismatic");if(prismaticTalent){prismaticTalent.cost=2;prismaticTalent.maxRank=3;prismaticTalent.desc="Start each run with an elemental class weapon unless an heirloom weapon replaces it. Rank 1 Common · Rank 2 Uncommon · Rank 3 Rare.";prismaticTalent.requires=[req("element_attunement",2)];}
@@ -2649,7 +2637,7 @@
     if(now>last){const extra=now-last;player.maxHp+=extra;player.hp=Math.min(player.maxHp,player.hp+extra);}
     player._v18BloodmageMaxHp=player.maxHp;
   }
-  
+
 
   // ---- Guard, Replenish and pet-turn behavior ------------------------------
 
@@ -2908,25 +2896,6 @@
   function v19OpenLegendaryContract(source,onComplete=()=>{}){
     return v17OpenLegendaryChoice(source,onComplete);
   }
-  renderMerchant=function(){
-    $("merchantGold").textContent=player.gold;const notice=$("merchantNotice");notice.classList.toggle("show",!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$("shopGrid");grid.innerHTML="";
-    currentMerchantItems.forEach(item=>{const price=merchantPrice(item.base),btn=document.createElement("button");btn.className=`shop-item${item.sold?" sold":""}`;btn.disabled=item.sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:"";btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?"SOLD":price+"g"}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;
-      btn.addEventListener("click",async()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!(await diceboundConfirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:"Buy weaker gear?",confirmLabel:"Buy anyway",danger:true})))return;}
-        player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);
-        const chooser=item.alphaChooseLegendary||/Sovereign Relic|Legendary Contract/i.test(item.name||"");
-        if(chooser){
-          currentMerchantNotice=`👑 <b>${item.name} purchased.</b> Choose one Legendary power.`;renderMerchant();
-          v19OpenLegendaryContract(item.name||"Legendary Contract",chosen=>{
-            if(!chosen){player.gold+=price;item.sold=false;currentMerchantNotice=`👑 No eligible Legendary powers remain; ${price} gold was refunded.`;}
-            else currentMerchantNotice=`👑 <b>${item.name} claimed:</b> ${chosen.name}.`;
-            $("merchantOverlay").classList.remove("hidden");showToast(chosen?`Legendary: ${chosen.name}`:"Relic refunded");updateHUD();renderMerchant();
-          });
-          return;
-        }
-        const result=item.buy?.();if(item.id==="relic"&&result)currentMerchantNotice=`🔮 <b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(["attack","armor","charm"].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,"merchant","Merchant");showToast(item.id==="relic"&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();
-      });grid.appendChild(btn);
-    });
-  };
 
   // ---- Pet switching rules -------------------------------------------------
   // Beastmaster predates the class-tag pass, so make its pet identity explicit.
@@ -2946,7 +2915,7 @@
   }
 
   // ---- Runtime reset hooks -------------------------------------------------
-  
+
 
   // Show Paladin Grace through the standard class resource component.
 
@@ -3258,7 +3227,7 @@
     sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
   };
 
-  
+
 
   /*
     Full eligible-powerup picker. Unlike getUpgradeChoices(), this deliberately
@@ -3568,7 +3537,7 @@
 
   // Base talent code already grants +1 Fast Travel XP/rank; add two more here
   // so Road Wisdom's real total is the documented +3/rank.
-  
+
 
   // Camp owns its own scene dimensions and refresh.  Keep only the inherited
   // domain refreshes that this historical checkpoint still needs.
@@ -3757,7 +3726,7 @@
   if(CLASSES.fighter){CLASSES.fighter.base.attack=5;CLASSES.fighter.base.guardPower=.67;CLASSES.fighter.stats='38 HP · 5 ATK · 2 DEF';}
   if(CLASSES.paladin){CLASSES.paladin.base.maxHp=52;CLASSES.paladin.base.attack=7;CLASSES.paladin.base.defense=5;CLASSES.paladin.base.guardPower=.78;CLASSES.paladin.stats='52 HP · 7 ATK · 5 DEF · DEFENSE/HEALING SCALING';}
   if(CLASSES.beastmaster){CLASSES.beastmaster.base.maxHp=42;CLASSES.beastmaster.base.attack=7;CLASSES.beastmaster.base.crit=.10;CLASSES.beastmaster.stats='42 HP · 7 ATK · 1 DEF · STRONG PET SCALING';CLASSES.beastmaster.desc='A late-unlock companion commander. Its own attacks are reliable, while pet Bond, pet damage and double-pet attacks become a genuinely dangerous second damage engine.';}
-  
+
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
   function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
@@ -4098,7 +4067,7 @@
   /* SECOND OPINION / EXPANDED HORIZONS ------------------------------------ */
   // Keep a stable per-run snapshot. Rerolls track consumption separately, so
   // refreshing a chooser cannot erase or accidentally refill the talent.
-  
+
   attachPowerupRerollV16=function(grid,reroll){
     if(!grid)return;grid.querySelectorAll('.powerup-reroll-btn').forEach(x=>x.remove());
     const total=Math.max(0,Number(player.v26SecondOpinionRank??gameplayTalentRank('fortune_powerup_rerolls'))||0),spent=Math.max(0,Number(player.v26SecondOpinionSpent)||0),remaining=Math.max(0,total-spent);player.powerupRerolls=remaining;
@@ -4214,7 +4183,7 @@
     if(Math.abs(desired-old)>.0000001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+(desired-old));player.v27OuroGoldEchoApplied=desired;}
     v18SyncOuroborosAttack();
   }
-  
+
   const applyUpgradeV27Base=applyUpgrade;applyUpgrade=function(up,source){const r=applyUpgradeV27Base(up,source);v27SyncOuroborosEconomy();return r;};
   const updateHUDV27OuroBase=updateHUD;updateHUD=function(){v27SyncOuroborosEconomy();const r=updateHUDV27OuroBase();if(classIdentityActive('ouroboros')&&$('attackText'))$('attackText').textContent='10';return r;};
 
@@ -4354,7 +4323,7 @@
     if(mechanics.has('smoke')){player.ninjaSmoke=player.ninjaSmoke||0;player.ninjaSmokeNeed=player.ninjaSmokeNeed||3;}
     if(mechanics.has('alchemy')){player.alchemistBrewCounter=player.alchemistBrewCounter||0;player.alchemistBrewNeed=player.alchemistBrewNeed||3;player.alchemistFlaskBonus=player.alchemistFlaskBonus||0;}
   }
-  
+
 
   const eligibleUpgradesV28Base=eligibleUpgrades;
   eligibleUpgrades=function(filter=()=>true){
@@ -4997,54 +4966,35 @@
     choices.forEach(up=>{const btn=document.createElement('button');btn.type='button';btn.className='choice-btn legendary';btn.innerHTML=choiceHTML(up);btn.addEventListener('click',()=>{if(settled)return;settled=true;applyUpgrade(up,source);addLog(`<b>${source}:</b> chose <b>${up.name}</b>.`);showToast(`Legendary: ${up.name}`);overlay.classList.add('hidden');updateHUD();onComplete(up);},{once:true});grid.appendChild(btn);});
     $('merchantOverlay')?.classList.add('hidden');overlay.classList.remove('hidden');
   }
-  renderMerchant=function(){
-    $('merchantGold').textContent=player.gold;const notice=$('merchantNotice');notice.classList.toggle('show',!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$('shopGrid');grid.innerHTML='';
-    currentMerchantItems.forEach(item=>{const price=merchantPrice(item.base),btn=document.createElement('button');btn.className=`shop-item${item.sold?' sold':''}`;btn.disabled=item.sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:'';btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${item.sold?'SOLD':price+'g'}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;
-      btn.addEventListener('click',async()=>{if(item.sold||player.gold<price)return;if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!(await diceboundConfirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true})))return;}
-        player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);
-        const chooser=item.alphaChooseLegendary||/Sovereign Relic|Legendary Contract/i.test(item.name||'');
-        if(chooser){
-          currentMerchantNotice=`👑 <b>${item.name} purchased.</b> Choose one Legendary power.`;renderMerchant();
-          $('merchantOverlay').classList.add('hidden');
-          setTimeout(()=>db0410OpenSovereignChoice(item.name||'Legendary Contract',chosen=>{
-            if(!chosen){player.gold+=price;item.sold=false;currentMerchantNotice=`👑 No eligible Legendary powers remain; ${price} gold was refunded.`;}
-            else currentMerchantNotice=`👑 <b>${item.name} claimed:</b> ${chosen.name}.`;
-            $('merchantOverlay').classList.remove('hidden');showToast(chosen?`Legendary: ${chosen.name}`:'Relic refunded');updateHUD();renderMerchant();
-          }),0);
-          return;
-        }
-        const result=item.buy?.();if(item.id==='relic'&&result)currentMerchantNotice=`🔮 <b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`🧰 Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(['attack','armor','charm'].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant');showToast(item.id==='relic'&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();
-      });grid.appendChild(btn);
-    });
-  };
 
   // Final Merchant renderer: transaction ownership lives in
   // DiceboundMerchantTransaction, not in transient buttons or delayed UI.
-  renderMerchant=function(){
-    const visit=db0646MerchantVisitForCurrentStock();
-    $('merchantGold').textContent=player.gold;const notice=$('merchantNotice');notice.classList.toggle('show',!!currentMerchantNotice);notice.innerHTML=currentMerchantNotice;const grid=$('shopGrid');grid.innerHTML='';
-    currentMerchantItems.forEach((item,index)=>{const key=db0646MerchantTransaction.offerKey(item,index),price=merchantPrice(item.base),sold=item.sold||!db0646MerchantTransaction.canPurchase(visit,key),btn=document.createElement('button');btn.className=`shop-item${sold?' sold':''}`;btn.disabled=sold||player.gold<price;const comparison=item.gear?`<div class="shop-compare">${formatGearComparison(item.gear,player.equipment[item.gear.slot])}</div>`:'';btn.innerHTML=`<div class="shop-item-top"><span class="shop-item-icon">${item.icon}</span><span class="shop-price">${sold?'SOLD':price+'g'}</span></div><div class="shop-item-name">${item.name}</div><div class="shop-item-desc">${item.desc}</div>${comparison}`;
-      btn.addEventListener('click',async()=>{
-        if(item.sold||player.gold<price)return;
-        const reservation=db0646MerchantTransaction.reservePurchase(visit,key);if(!reservation.ok)return;
-        if(item.gear){const current=player.equipment[item.gear.slot];if(current&&gearPowerScore(item.gear)<gearPowerScore(current)&&!(await diceboundConfirm(`${item.gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}))){db0646MerchantTransaction.cancelReservation(visit,reservation.token);renderMerchant();return;}}
-        if(player.gold<price){db0646MerchantTransaction.cancelReservation(visit,reservation.token);renderMerchant();return;}
-        const chooser=item.alphaChooseLegendary||/Sovereign Relic|Legendary Contract/i.test(item.name||''),purchase=chooser?db0646MerchantTransaction.beginChoice(visit,reservation.token):db0646MerchantTransaction.commitPurchase(visit,reservation.token);if(!purchase.ok){db0646MerchantTransaction.cancelReservation(visit,reservation.token);return;}
-        player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);
-        if(chooser){
-          currentMerchantNotice=`<b>${item.name} purchased.</b> Choose one Legendary power.`;renderMerchant();$('merchantOverlay').classList.add('hidden');
-          setTimeout(()=>{if(!db0646MerchantTransaction.hasActiveChoice(visit))return;db0410OpenSovereignChoice(item.name||'Legendary Contract',chosen=>{
-            if(!db0646MerchantTransaction.settleChoice(visit,purchase.token).ok)return;
-            if(!chosen){player.gold+=price;currentMerchantNotice=`No eligible Legendary powers remain; ${price} gold was refunded. This Merchant offer remains sold.`;}
-            else currentMerchantNotice=`<b>${item.name} claimed:</b> ${chosen.name}.`;
-            $('merchantOverlay').classList.remove('hidden');showToast(chosen?`Legendary: ${chosen.name}`:'Relic refunded');updateHUD();renderMerchant();
-          });},0);
-          return;
-        }
-        const result=item.buy?.();if(item.id==='relic'&&result)currentMerchantNotice=`<b>Relic opened:</b> ${rarityInfo[result.rarity].label} <b>${result.name}</b><br>${result.desc}`;else if(item.gear)currentMerchantNotice=`Equipped <b>${item.gear.name}</b>.<br>${formatBonuses(item.gear)}`;if(['attack','armor','charm'].includes(item.id))recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant');showToast(item.id==='relic'&&result?`${rarityInfo[result.rarity].label}: ${result.name}`:item.name);updateHUD();renderMerchant();
-      });grid.appendChild(btn);
-    });
-  };
+    const dbMerchantUiOwner=window.DiceboundMerchantUi;
+  if(!dbMerchantUiOwner)throw new Error('DiceboundMerchantUi must load before dicebound.js');
+  dbMerchantUi=dbMerchantUiOwner.createController({
+    $:id=>$(id),
+    getPlayer:()=>player,
+    getItems:()=>currentMerchantItems,
+    getNotice:()=>currentMerchantNotice,
+    setNotice:value=>{currentMerchantNotice=value;},
+    priceFor:base=>merchantPrice(base),
+    getVisit:()=>db0646MerchantVisitForCurrentStock(),
+    transaction:db0646MerchantTransaction,
+    formatGearComparison:(item,current)=>formatGearComparison(item,current),
+    gearPowerScore:item=>gearPowerScore(item),
+    confirmWeakerGear:(gear,current)=>diceboundConfirm(`${gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}),
+    chargeOffer:(item,price)=>{player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);},
+    refundOffer:price=>{player.gold+=price;},
+    applyOffer:item=>item.buy?.(),
+    recordRunBuff:item=>recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant'),
+    formatBonuses:item=>formatBonuses(item),
+    rarityInfoFor:rarity=>rarityInfo[rarity],
+    showToast:(...args)=>showToast(...args),
+    updateHud:()=>updateHUD(),
+    openLegendaryChoice:(source,done)=>db0410OpenSovereignChoice(source,done),
+    setMerchantVisible:visible=>$('merchantOverlay').classList.toggle('hidden',!visible),
+    schedule:(fn,ms)=>setTimeout(fn,ms)
+  });
 
   window.DiceboundMerchantTransactionTest=Object.freeze({
     prepareSovereign:()=>{
@@ -6029,7 +5979,7 @@
   }
   const db060EquipItemBase=equipItem;
   equipItem=function(item,silent=false){db060ClearGearTransform();const r=db060EquipItemBase(item,silent);db060ApplyGearTransform();renderEquipment();updateHUD();return r;};
-  
+
 
   // Attack/Defense powerup cross-feed.
   const db060ApplyUpgradeBase=applyUpgrade;
@@ -6441,7 +6391,7 @@
     db06421SyncMana({baseMaxMana,currentMana});
     return result;
   };
-  
+
   function db06421ManaEquipmentExercise(){
     try{
       window.DiceboundRng.seed('db06421-mana-equipment');resetPlayer('sorcerer');gameStarted=true;rollLocked=false;generateBoard();buildBoard();
@@ -6870,7 +6820,7 @@
   function dbFriendSyncDragoonPresentation(){return dbCombatPresentation?.syncDragoonPresentation();}
   function dbFriendDragoonLandPresentation(){return dbCombatPresentation?.dragoonLandPresentation();}
   function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
-  
+
   function dbFriendEnsureDragoonJumpButton(){return dbCombatPresentation?.ensureDragoonJumpButton();}
   async function dbFriendDragoonLanding(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
