@@ -1,15 +1,15 @@
 {
   "assetCount": 428,
-  "browserContentHash": "b0f08e13a1e4ef61fa1b7b964e2badd5c428d72ab0414552c984c023446b410a",
-  "buildId": "dicebound-0.6.6.22-dev-b0f08e13a1e4ef61",
+  "browserContentHash": "9d8b3c404307eea9bcde842ed8c91197df8cfd1e0cb8078014f90960a62b6797",
+  "buildId": "dicebound-0.6.6.23-dev-9d8b3c404307eea9",
   "channel": "Beta",
-  "contentFileCount": 499,
+  "contentFileCount": 500,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.6.22.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.23.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -79,12 +79,13 @@
     "js/ui/prestige-moon.js",
     "js/ui/achievements.js",
     "js/ui/info-guide.js",
+    "js/ui/merchant.js",
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "b0f08e13a1e4ef61fa1b7b964e2badd5c428d72ab0414552c984c023446b410a",
+  "sourceHash": "9d8b3c404307eea9bcde842ed8c91197df8cfd1e0cb8078014f90960a62b6797",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.6.22",
+  "version": "0.6.6.23",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.22",
+  "version": "0.6.6.23",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -77,6 +77,7 @@
     "js/ui/prestige-moon.js",
     "js/ui/achievements.js",
     "js/ui/info-guide.js",
+    "js/ui/merchant.js",
     "js/dicebound.js"
   ],
   "gameBundle": "js/dicebound.js",

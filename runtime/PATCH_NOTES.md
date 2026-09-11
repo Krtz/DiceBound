@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.23
+
+## Beta 0.6.6.23 Merchant UI ownership (#313)
+- `ui/merchant.js` is now the authoritative Merchant offer presentation and purchase-interaction owner; the original renderer plus six superseded `renderMerchant` replacement implementations are retired from `dicebound.js`.
+- Merchant transaction reservation, commit and Legendary-choice settlement remain owned by `events/merchant-transaction.js`; stock generation, prices, gear generation, RNG, Board routing and secret-Merchant progression remain in their existing domain owners.
+- The compatibility monolith keeps one thin `renderMerchant()` adapter. Focused transaction/boundary/shadow guards and the real Windows Edge Merchant regression preserve sold/reserved state, weaker-gear confirmation, Sovereign/Legendary choice flow, refunds and exact stock-array visit identity.
+- Architecture-only: no Merchant balance, item odds, RNG, save/checkpoint or Board behavior change is intended. Runtime architecture is 69 modules (68 extracted + one compatibility monolith), with the validator measuring `dicebound.js` at 752,414 bytes / 7,465 physical lines.
+
 # Unreleased — Beta 0.6.6.22
 
 ## Beta 0.6.6.22 Class Unlock Resolution ownership (#314)
