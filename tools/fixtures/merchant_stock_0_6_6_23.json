@@ -1,0 +1,16 @@
+{
+  "version": "0.6.6.23",
+  "hash": "fnv1a32-json-title-subtitle-offers",
+  "cases": [
+    {"name":"board1","signature":"1391420e","title":"Roadside Merchant","offerCount":4,"rngCalls":7,"rngState":1462090107},
+    {"name":"board2","signature":"7987e95a","title":"Astral Merchant","offerCount":6,"rngCalls":12,"rngState":2080317437},
+    {"name":"board3","signature":"598d0af0","title":"Impossible Merchant","offerCount":8,"rngCalls":20,"rngState":3831164434},
+    {"name":"board4","signature":"c5c11337","title":"Crownroad Merchant","offerCount":10,"rngCalls":39,"rngState":26542074},
+    {"name":"board5","signature":"75d2f34e","title":"Ouroboros Exchange","offerCount":11,"rngCalls":59,"rngState":2281342347},
+    {"name":"board6","signature":"bfd06580","title":"Merchant at the End of Mathematics","offerCount":12,"rngCalls":33,"rngState":1955604322},
+    {"name":"board4-free","signature":"d152fcb6","title":"The Merchant Owes You Everything","offerCount":10,"rngCalls":32,"rngState":1247384476},
+    {"name":"board5-discount","signature":"1bd1cbfb","title":"Ouroboros Exchange","offerCount":11,"rngCalls":37,"rngState":51959829},
+    {"name":"board4-nightmare","signature":"2a856bfc","title":"Crownroad Merchant","offerCount":10,"rngCalls":30,"rngState":2679971589},
+    {"name":"board4-hell","signature":"adec6a06","title":"Crownroad Merchant","offerCount":10,"rngCalls":31,"rngState":556382992}
+  ]
+}
