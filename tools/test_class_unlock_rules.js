@@ -107,9 +107,8 @@ assert.equal(observed.changed,false);assert.equal(observed.highestGold,50);asser
 observed=R.recordObservedProgress(baseContext({gameStarted:true,storedHighestGold:50,facts:{maxLifesteal:.5},player:{gold:5000,lifeSteal:2}}));
 assert.equal(observed.changed,true);assert.equal(observed.highestGold,5000);assert.equal(observed.facts.maxLifesteal,2);
 
-// Freeze the cumulative historical dynamic-attempt order. The commit callback
-// intentionally re-checks mayCommitUnlock against live state, matching the thin
-// runtime transaction adapter used after extraction.
+// Freeze the cumulative historical dynamic-attempt order. The early public-Slime
+// attempt remains ineligible here; Slime first commits during the later 0.6.3.1 pass.
 const dynamicState={
   persistedUnlocks:{sorcerer:true,fighter:true,monk:true,clown:true},
   facts:{board3MinibossDefeated:true,board3BossDefeated:true,board4MinibossDefeated:true,beastmasterBoard5Cleared:true,roadMerchantSecretBossDefeated:true,maxLifesteal:2,manaSpenderCasts:100},
@@ -133,7 +132,7 @@ const result=R.resolveDynamic({
   }
 });
 assert.deepEqual(Array.from(result.attempted),[
-  "d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue","slime",
+  "d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue",
   "summoner","pokemontrainer","alchemist","ouroboros","ceo","alchemist","alchemist","alchemist","alchemist",
   "pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon"
 ]);
