@@ -14,6 +14,7 @@ require("../runtime/js/events/merchant-transaction.js");
 const transactions = window.DiceboundMerchantTransaction;
 const source = fs.readFileSync(require.resolve("../runtime/js/events/merchant-transaction.js"), "utf8");
 const monolith = fs.readFileSync("runtime/js/dicebound.js", "utf8");
+const merchantUi = fs.readFileSync("runtime/js/ui/merchant.js", "utf8");
 
 // Merchant gear descriptions and comparisons still run through two historical
 // equipment-identity helper names in the compatibility monolith. They were
@@ -81,7 +82,11 @@ assert.equal(transactions.canPurchase(secondVisit, sovereignKey), true);
 assert.match(source, /if \(hasActiveChoice\(previous\)\) return previous;/, "active choices must freeze Merchant visit state");
 assert.match(source, /visitsByStock\.get\(offers\)/, "Merchant open must be able to adopt the renderer-created visit for exact stock identity");
 assert.match(monolith, /DiceboundMerchantTransaction must load before dicebound\.js/, "Merchant renderer is not wired to the transaction owner");
-assert.match(monolith, /db0646MerchantTransaction\.beginChoice/, "Sovereign choice is not transaction-guarded");
+assert.match(merchantUi, /tx\.beginChoice/, "Sovereign choice is not transaction-guarded by the Merchant UI owner");
 assert.match(monolith, /db0646MerchantTransaction\.beginVisit/, "Merchant re-entry is not transaction-guarded");
+assert.match(monolith, /function renderMerchant\(\)\{[\s\S]*?dbMerchantUi\.render\(\)/, "compatibility renderer is not a thin Merchant UI adapter");
+assert.doesNotMatch(monolith, /renderMerchant\s*=\s*function/, "historical Merchant renderer replacement ownership returned to the monolith");
+assert.match(merchantUi, /tx\.reservePurchase/, "Merchant UI owner must reserve offers through the transaction owner");
+assert.match(merchantUi, /tx\.settleChoice/, "Merchant UI owner must settle Legendary choices through the transaction owner");
 
 console.log("merchant transaction tests passed");

@@ -70,6 +70,7 @@
     "ui-prestige-moon",
     "ui-achievements",
     "ui-info-guide",
+    "ui-merchant",
     "dicebound-monolith"
   ],
   "modules": [
@@ -845,6 +846,18 @@
       ],
       "provides": [
         "DiceboundInfoGuide"
+      ]
+    },
+    {
+      "id": "ui-merchant",
+      "path": "js/ui/merchant.js",
+      "domain": "ui/merchant-offer-presentation-and-purchase-interaction-orchestration",
+      "status": "extracted",
+      "requires": [
+        "merchant-transactions"
+      ],
+      "provides": [
+        "DiceboundMerchantUi"
       ]
     },
     {
