@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.25
+
+## Beta 0.6.6.25 Board + Run subsystem facade (#322)
+- Added `run/facade.js` as the one ordinary public `DiceboundRun` boundary over the existing Board registry, movement, tile dispatch, generation, transition, Player Initialization, Run Lifecycle and Run Completion owners; those focused modules remain authoritative internals.
+- `dicebound.js` now obtains/configures Board + Run behavior through the facade instead of coordinating eight public implementation globals directly, and its manifest dependencies collapse from seven Board/Run implementation modules to one `run-facade` dependency.
+- Permanent facade, anti-shadow, content-registry and architecture guards prevent the old fragmented composition from returning while the existing deterministic Board/Run/checkpoint oracles preserve exact ordering and RNG behavior.
+- Architecture-only: no Board balance, Road Event, Merchant, Combat, class/Pet/powerup, RNG or save/checkpoint redesign is intended. The runtime graph is 71 modules (70 extracted + one compatibility monolith); normalized `dicebound.js` falls from 740,927 bytes / 7,432 lines to 739,724 bytes / 7,426 lines, with 552 named declarations and 108 historical base captures unchanged.
+
 # Unreleased — Beta 0.6.6.24
 
 ## Beta 0.6.6.24 Merchant Stock / Economy Resolution ownership (#318)
