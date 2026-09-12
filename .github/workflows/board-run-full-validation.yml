@@ -1,0 +1,80 @@
+name: Board Run Full Release Validation
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.25-board-run-facade
+
+permissions:
+  contents: read
+
+env:
+  WEBVIEW2_SDK_VERSION: "1.0.4129.50"
+
+jobs:
+  full-validation:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.7"
+
+      - name: Stage official WebView2 loader
+        shell: pwsh
+        run: |
+          $probe = Join-Path $env:RUNNER_TEMP "dicebound-webview2-sdk"
+          dotnet new classlib -n LoaderProbe -o $probe --force | Out-Host
+          dotnet add (Join-Path $probe "LoaderProbe.csproj") package Microsoft.Web.WebView2 --version $env:WEBVIEW2_SDK_VERSION | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "Could not restore Microsoft.Web.WebView2." }
+          $package = Get-Item (Join-Path $env:USERPROFILE ".nuget\packages\microsoft.web.webview2\$env:WEBVIEW2_SDK_VERSION")
+          $loader = Join-Path $package.FullName "build\native\x64\WebView2Loader.dll"
+          if (-not (Test-Path $loader)) { throw "Official x64 WebView2Loader.dll was not found at $loader" }
+          $sig = Get-AuthenticodeSignature $loader
+          if ($sig.Status -ne "Valid") { throw "WebView2Loader.dll signature is not valid: $($sig.Status)" }
+          "WEBVIEW2_LOADER_DLL=$loader" >> $env:GITHUB_ENV
+
+      - name: Validate full committed runtime source
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -eq 0) { go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+
+      - name: Build and validate native release without publishing
+        shell: pwsh
+        run: |
+          $project = Get-Content .\wrapper-source\config\project.json -Raw | ConvertFrom-Json
+          .\Build-DiceBoundRelease.ps1 `
+            -Version $project.version `
+            -Channel $project.channel `
+            -SkipSourceStamp `
+            -RequireSignedLoader
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Confirm source stayed clean
+        shell: pwsh
+        run: |
+          git diff --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git diff
+            throw "Full validation changed committed source."
+          }
