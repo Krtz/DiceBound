@@ -82,5 +82,5 @@
     inspect
   });
 
-  root.DiceboundRun=api;
+  window.DiceboundRun=api;
 })(window);
