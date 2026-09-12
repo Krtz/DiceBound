@@ -71,4 +71,28 @@ const missing={...fakeWindow};delete missing.DiceboundBoardMovement;delete missi
 assert.throws(()=>vm.runInNewContext(source,{window:missing,console}),/DiceboundRun requires DiceboundBoardMovement/,
   "Facade should fail fast when an internal owner is missing from load order");
 
-console.log("Run facade delegation tests passed.");
+const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
+const forbiddenGlobals=[
+  "DiceboundBoards","DiceboundBoardMovement","DiceboundBoardTileDispatch","DiceboundBoardGeneration",
+  "DiceboundBoardTransition","DiceboundPlayerInitialization","DiceboundRunLifecycle","DiceboundRunCompletion"
+];
+for(const name of forbiddenGlobals){
+  assert.ok(!monolith.includes(name),`dicebound.js must consume DiceboundRun instead of internal owner ${name}`);
+}
+for(const alias of [
+  "dbBoardMovement","dbBoardTileDispatch","dbBoardGeneration","dbBoardTransition",
+  "dbPlayerInitialization","dbRunLifecycle","dbRunCompletion"
+]){
+  assert.doesNotMatch(monolith,new RegExp(`\\b${alias}\\b`),`dicebound.js retained internal Run alias ${alias}`);
+}
+assert.ok(monolith.includes("window.DiceboundRun"),"dicebound.js must bootstrap through DiceboundRun");
+
+const manifest=JSON.parse(fs.readFileSync(path.join(root,"runtime/js/module-manifest.json"),"utf8"));
+const monolithEntry=manifest.modules.find(module=>module.id==="dicebound-monolith");
+assert.ok(monolithEntry,"module manifest is missing dicebound-monolith");
+assert.ok(monolithEntry.requires.includes("run-facade"),"dicebound-monolith must require run-facade");
+for(const id of ["board-registry","board-movement","board-tile-dispatch","board-generation","board-transition","run-lifecycle","run-completion"]){
+  assert.ok(!monolithEntry.requires.includes(id),`dicebound-monolith must not require internal Run module ${id}`);
+}
+
+console.log("Run facade delegation and monolith-boundary tests passed.");
