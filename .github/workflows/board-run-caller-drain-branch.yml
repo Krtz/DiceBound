@@ -2,8 +2,7 @@ name: Board Run Caller Drain Branch Helper
 
 on:
   push:
-    branches:
-      - arch/0.6.6.25-board-run-facade
+    branches: [arch/0.6.6.25-board-run-facade]
 
 permissions:
   contents: write
@@ -13,137 +12,83 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
+        with: {node-version: '22'}
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+        with: {python-version: '3.x'}
 
       - name: Drain Board and Run callers through DiceboundRun
         run: |
           python - <<'PY'
-          import json
-          import re
+          import json,re
           from pathlib import Path
 
-          def replace_once(text, old, new, label):
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly 1 match, got {count}')
-              return text.replace(old, new, 1)
+          def one(text,old,new,label):
+              count=text.count(old)
+              if count!=1: raise SystemExit(f'{label}: expected 1 match, got {count}')
+              return text.replace(old,new,1)
 
-          path = Path('runtime/js/dicebound.js')
-          text = path.read_text(encoding='utf-8')
-
-          identity = '  const APP_IDENTITY=window.DiceboundVersion;\n  if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");\n'
-          identity_new = identity + '  const dbRun=window.DiceboundRun;\n  if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");\n'
-          text = replace_once(text, identity, identity_new, 'Run facade bootstrap')
-          text = replace_once(text, '  let dbPlayerInitialization=null;\n', '', 'legacy player initializer slot')
-
-          text = replace_once(
-              text,
-              '  const DB317_BOARD_REGISTRY_RAW=window.DiceboundBoards?.createRegistry?.();\n  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundBoards must load before dicebound.js");',
-              '  const DB317_BOARD_REGISTRY_RAW=dbRun.createBoardRegistry();\n  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundRun must provide the board registry before dicebound.js");',
-              'board registry bootstrap',
-          )
-
-          configs = [
+          p=Path('runtime/js/dicebound.js'); text=p.read_text(encoding='utf-8')
+          identity='  const APP_IDENTITY=window.DiceboundVersion;\n  if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");\n'
+          text=one(text,identity,identity+'  const dbRun=window.DiceboundRun;\n  if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");\n','facade bootstrap')
+          text=one(text,'  let dbPlayerInitialization=null;\n','','legacy player initializer slot')
+          text=one(text,'  const DB317_BOARD_REGISTRY_RAW=window.DiceboundBoards?.createRegistry?.();\n  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundBoards must load before dicebound.js");','  const DB317_BOARD_REGISTRY_RAW=dbRun.createBoardRegistry();\n  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundRun must provide the board registry before dicebound.js");','board registry')
+          for alias,owner,part in [
               ('dbBoardTileDispatch','DiceboundBoardTileDispatch','tileDispatch'),
               ('dbBoardGeneration','DiceboundBoardGeneration','generation'),
               ('dbRunCompletion','DiceboundRunCompletion','completion'),
               ('dbBoardTransition','DiceboundBoardTransition','transition'),
               ('dbBoardMovement','DiceboundBoardMovement','movement'),
-              ('dbRunLifecycle','DiceboundRunLifecycle','lifecycle'),
-          ]
-          for alias, owner, part in configs:
-              text = replace_once(text, f'  const {alias}=window.{owner}?.configure({{', f'  dbRun.configure({{{part}:{{', f'{alias} configure opening')
-              text = replace_once(text, f"  }});\n  if(!{alias})throw new Error('{owner} must load before dicebound.js');", '  }});', f'{alias} configure closing')
+              ('dbRunLifecycle','DiceboundRunLifecycle','lifecycle')]:
+              text=one(text,f'  const {alias}=window.{owner}?.configure({{',f'  dbRun.configure({{{part}:{{',f'{alias} open')
+              text=one(text,f"  }});\n  if(!{alias})throw new Error('{owner} must load before dicebound.js');",'  }});',f'{alias} close')
+          for old,new in [
+              ('dbBoardTileDispatch.dispatch()','dbRun.dispatchTile()'),
+              ('dbRunCompletion.completeFinalRoad()','dbRun.completeFinalRoad()'),
+              ('dbBoardMovement.state','dbRun.boardState'),
+              ('dbBoardMovement.move(','dbRun.move('),
+              ('dbBoardGeneration.enemyForPosition(','dbRun.enemyForPosition('),
+              ('dbBoardGeneration.generate(','dbRun.generateBoard('),
+              ('dbBoardTransition.advance()','dbRun.advanceBoard()'),
+              ('dbRunLifecycle.startFreshRun(','dbRun.startFreshRun(')]: text=text.replace(old,new)
+          text=one(text,"  const dbPlayerInitializationOwner=window.DiceboundPlayerInitialization;\n  if(!dbPlayerInitializationOwner)throw new Error('DiceBound requires the player initialization owner before dicebound.js');\n  dbPlayerInitialization=dbPlayerInitializationOwner.configure({",'  dbRun.configurePlayerInitialization({','player init config')
+          text=one(text,"  function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}",'  function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}','resetPlayer')
+          forbidden=['DiceboundBoards','DiceboundBoardMovement','DiceboundBoardTileDispatch','DiceboundBoardGeneration','DiceboundBoardTransition','DiceboundPlayerInitialization','DiceboundRunLifecycle','DiceboundRunCompletion','dbBoardMovement','dbBoardTileDispatch','dbBoardGeneration','dbBoardTransition','dbPlayerInitialization','dbRunLifecycle','dbRunCompletion']
+          for token in forbidden:
+              if re.search(rf'\b{re.escape(token)}\b',text): raise SystemExit(f'monolith still references {token}')
+          p.write_text(text,encoding='utf-8')
 
-          text = text.replace('dbBoardTileDispatch.dispatch()', 'dbRun.dispatchTile()')
-          text = text.replace('dbRunCompletion.completeFinalRoad()', 'dbRun.completeFinalRoad()')
-          text = text.replace('dbBoardMovement.state', 'dbRun.boardState')
-          text = text.replace('dbBoardMovement.move(', 'dbRun.move(')
-          text = text.replace('dbBoardGeneration.enemyForPosition(', 'dbRun.enemyForPosition(')
-          text = text.replace('dbBoardGeneration.generate(', 'dbRun.generateBoard(')
-          text = text.replace('dbBoardTransition.advance()', 'dbRun.advanceBoard()')
-          text = text.replace('dbRunLifecycle.startFreshRun(', 'dbRun.startFreshRun(')
+          mp=Path('runtime/js/module-manifest.json'); manifest=json.loads(mp.read_text(encoding='utf-8'))
+          mono=next(m for m in manifest['modules'] if m['id']=='dicebound-monolith')
+          internal={'board-registry','board-movement','board-tile-dispatch','board-generation','board-transition','run-lifecycle','run-completion'}
+          original=list(mono['requires']); positions=[i for i,d in enumerate(original) if d in internal]
+          if not positions or 'run-facade' in original: raise SystemExit('unexpected monolith dependency state')
+          filtered=[d for d in original if d not in internal]; filtered.insert(min(positions),'run-facade'); mono['requires']=filtered
+          mp.write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
 
-          text = replace_once(
-              text,
-              "  const dbPlayerInitializationOwner=window.DiceboundPlayerInitialization;\n  if(!dbPlayerInitializationOwner)throw new Error('DiceBound requires the player initialization owner before dicebound.js');\n  dbPlayerInitialization=dbPlayerInitializationOwner.configure({",
-              '  dbRun.configurePlayerInitialization({',
-              'player initialization facade configuration',
-          )
-          text = replace_once(
-              text,
-              "  function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}",
-              '  function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}',
-              'resetPlayer facade call',
-          )
+          test_blocks={
+            'tools/test_board_generation.js':('''for(const adapter of [\n  "const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({",\n  "function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}",\n  "function generateBoard(){return dbBoardGeneration.generate();}"\n])assert.ok(monolith.includes(adapter),`missing Board-generation composition adapter: ${adapter}`);''','''for(const adapter of [\n  "dbRun.configure({generation:{",\n  "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",\n  "function generateBoard(){return dbRun.generateBoard();}"\n])assert.ok(monolith.includes(adapter),`missing Board-generation facade composition: ${adapter}`);'''),
+            'tools/test_board_movement.js':('''for(const adapter of [\n  "const dbBoardMovement=window.DiceboundBoardMovement?.configure({",\n  "board:dbBoardMovement.state",\n  "await dbBoardMovement.move("\n])assert.ok(monolith.includes(adapter),`missing board-movement composition adapter: ${adapter}`);''','''for(const adapter of [\n  "dbRun.configure({movement:{",\n  "board:dbRun.boardState",\n  "await dbRun.move("\n])assert.ok(monolith.includes(adapter),`missing board-movement facade composition: ${adapter}`);'''),
+            'tools/test_board_tile_dispatch.js':('''for(const adapter of [\n  "const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({",\n  "dispatchTile:()=>dbBoardTileDispatch.dispatch()",\n  "dbBoardTileDispatch.dispatch()"\n])assert.ok(monolith.includes(adapter),`missing board tile-dispatch composition adapter: ${adapter}`);''','''for(const adapter of [\n  "dbRun.configure({tileDispatch:{",\n  "dispatchTile:()=>dbRun.dispatchTile()",\n  "dbRun.dispatchTile()"\n])assert.ok(monolith.includes(adapter),`missing board tile-dispatch facade composition: ${adapter}`);'''),
+            'tools/test_board_transition.js':('''for(const adapter of [\n  "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",\n  "function advanceToNextBoard(){return dbBoardTransition.advance();}",\n  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()"\n])assert.ok(monolith.includes(adapter),`missing board-transition composition adapter: ${adapter}`);''','''for(const adapter of [\n  "dbRun.configure({transition:{",\n  "function advanceToNextBoard(){return dbRun.advanceBoard();}",\n  "completeFinalRoad:()=>dbRun.completeFinalRoad()"\n])assert.ok(monolith.includes(adapter),`missing board-transition facade composition: ${adapter}`);'''),
+            'tools/test_run_lifecycle.js':('''for(const required of [\n  "const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({",\n  "function startNewGame(){return dbRunLifecycle.startFreshRun();}",\n  "dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle composition adapter: ${required}`);''','''for(const required of [\n  "dbRun.configure({lifecycle:{",\n  "function startNewGame(){return dbRun.startFreshRun();}",\n  "dbRun.startFreshRun({beforeFreshRun:()=>{"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle facade composition: ${required}`);'''),
+            'tools/test_run_completion.js':('''for(const required of [\n  "const dbRunCompletion=window.DiceboundRunCompletion?.configure({",\n  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",\n  "function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion composition: ${required}`);''','''for(const required of [\n  "dbRun.configure({completion:{",\n  "completeFinalRoad:()=>dbRun.completeFinalRoad()",\n  "function completeSixthRoadV19(){return dbRun.completeFinalRoad();}"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion facade composition: ${required}`);''')}
+          for filename,(old,new) in test_blocks.items():
+              q=Path(filename); q.write_text(one(q.read_text(encoding='utf-8'),old,new,filename),encoding='utf-8')
 
-          forbidden_globals = ['DiceboundBoards','DiceboundBoardMovement','DiceboundBoardTileDispatch','DiceboundBoardGeneration','DiceboundBoardTransition','DiceboundPlayerInitialization','DiceboundRunLifecycle','DiceboundRunCompletion']
-          forbidden_aliases = ['dbBoardMovement','dbBoardTileDispatch','dbBoardGeneration','dbBoardTransition','dbPlayerInitialization','dbRunLifecycle','dbRunCompletion']
-          for token in forbidden_globals + forbidden_aliases:
-              if re.search(rf'\b{re.escape(token)}\b', text):
-                  raise SystemExit(f'monolith still references internal Run token {token}')
-          if 'window.DiceboundRun' not in text:
-              raise SystemExit('monolith lost DiceboundRun bootstrap')
-          path.write_text(text, encoding='utf-8')
-
-          manifest_path = Path('runtime/js/module-manifest.json')
-          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
-          monolith = next(module for module in manifest['modules'] if module['id'] == 'dicebound-monolith')
-          internal = {'board-registry','board-movement','board-tile-dispatch','board-generation','board-transition','run-lifecycle','run-completion'}
-          original = list(monolith['requires'])
-          positions = [i for i, dep in enumerate(original) if dep in internal]
-          if not positions:
-              raise SystemExit('dicebound-monolith had no direct Board/Run dependencies to drain')
-          if 'run-facade' in original:
-              raise SystemExit('dicebound-monolith unexpectedly already requires run-facade')
-          insert_at = min(positions)
-          filtered = [dep for dep in original if dep not in internal]
-          filtered.insert(insert_at, 'run-facade')
-          monolith['requires'] = filtered
-          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-
-          # Preserve the deterministic owner tests while updating only their
-          # monolith-composition assertions to the new public facade boundary.
-          replacements = {
-              'tools/test_board_generation.js': (
-                  '''for(const adapter of [\n  "const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({",\n  "function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}",\n  "function generateBoard(){return dbBoardGeneration.generate();}"\n])assert.ok(monolith.includes(adapter),`missing Board-generation composition adapter: ${adapter}`);''',
-                  '''for(const adapter of [\n  "dbRun.configure({generation:{",\n  "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",\n  "function generateBoard(){return dbRun.generateBoard();}"\n])assert.ok(monolith.includes(adapter),`missing Board-generation facade composition: ${adapter}`);'''
-              ),
-              'tools/test_board_movement.js': (
-                  '''for(const adapter of [\n  "const dbBoardMovement=window.DiceboundBoardMovement?.configure({",\n  "board:dbBoardMovement.state",\n  "await dbBoardMovement.move("\n])assert.ok(monolith.includes(adapter),`missing board-movement composition adapter: ${adapter}`);''',
-                  '''for(const adapter of [\n  "dbRun.configure({movement:{",\n  "board:dbRun.boardState",\n  "await dbRun.move("\n])assert.ok(monolith.includes(adapter),`missing board-movement facade composition: ${adapter}`);'''
-              ),
-              'tools/test_board_tile_dispatch.js': (
-                  '''for(const adapter of [\n  "const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({",\n  "dispatchTile:()=>dbBoardTileDispatch.dispatch()",\n  "dbBoardTileDispatch.dispatch()"\n])assert.ok(monolith.includes(adapter),`missing board tile-dispatch composition adapter: ${adapter}`);''',
-                  '''for(const adapter of [\n  "dbRun.configure({tileDispatch:{",\n  "dispatchTile:()=>dbRun.dispatchTile()",\n  "dbRun.dispatchTile()"\n])assert.ok(monolith.includes(adapter),`missing board tile-dispatch facade composition: ${adapter}`);'''
-              ),
-              'tools/test_board_transition.js': (
-                  '''for(const adapter of [\n  "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",\n  "function advanceToNextBoard(){return dbBoardTransition.advance();}",\n  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()"\n])assert.ok(monolith.includes(adapter),`missing board-transition composition adapter: ${adapter}`);''',
-                  '''for(const adapter of [\n  "dbRun.configure({transition:{",\n  "function advanceToNextBoard(){return dbRun.advanceBoard();}",\n  "completeFinalRoad:()=>dbRun.completeFinalRoad()"\n])assert.ok(monolith.includes(adapter),`missing board-transition facade composition: ${adapter}`);'''
-              ),
-              'tools/test_run_lifecycle.js': (
-                  '''for(const required of [\n  "const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({",\n  "function startNewGame(){return dbRunLifecycle.startFreshRun();}",\n  "dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle composition adapter: ${required}`);''',
-                  '''for(const required of [\n  "dbRun.configure({lifecycle:{",\n  "function startNewGame(){return dbRun.startFreshRun();}",\n  "dbRun.startFreshRun({beforeFreshRun:()=>{"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle facade composition: ${required}`);'''
-              ),
-              'tools/test_run_completion.js': (
-                  '''for(const required of [\n  "const dbRunCompletion=window.DiceboundRunCompletion?.configure({",\n  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",\n  "function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion composition: ${required}`);''',
-                  '''for(const required of [\n  "dbRun.configure({completion:{",\n  "completeFinalRoad:()=>dbRun.completeFinalRoad()",\n  "function completeSixthRoadV19(){return dbRun.completeFinalRoad();}"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion facade composition: ${required}`);'''
-              ),
-          }
-          for filename,(old,new) in replacements.items():
-              test_path=Path(filename)
-              test_text=test_path.read_text(encoding='utf-8')
-              test_text=replace_once(test_text,old,new,f'{filename} composition assertion')
-              test_path.write_text(test_text,encoding='utf-8')
+          vp=Path('tools/validate_runtime_architecture.py'); v=vp.read_text(encoding='utf-8')
+          v=one(v,"expected_reset_adapter = \"function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}\"","expected_reset_adapter = \"function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}\"",'validator reset adapter')
+          for old,new in [
+              ('const dbBoardMovement=window.DiceboundBoardMovement?.configure({','dbRun.configure({movement:{'),('board:dbBoardMovement.state','board:dbRun.boardState'),('await dbBoardMovement.move(','await dbRun.move('),
+              ('const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({','dbRun.configure({tileDispatch:{'),('dispatchTile:()=>dbBoardTileDispatch.dispatch()','dispatchTile:()=>dbRun.dispatchTile()'),('dbBoardTileDispatch.dispatch()','dbRun.dispatchTile()'),
+              ('const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({','dbRun.configure({generation:{'),('function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}','function enemyForPosition(index){return dbRun.enemyForPosition(index);}'),('function generateBoard(){return dbBoardGeneration.generate();}','function generateBoard(){return dbRun.generateBoard();}'),
+              ('const dbBoardTransition=window.DiceboundBoardTransition?.configure({','dbRun.configure({transition:{'),('function advanceToNextBoard(){return dbBoardTransition.advance();}','function advanceToNextBoard(){return dbRun.advanceBoard();}'),('completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()','completeFinalRoad:()=>dbRun.completeFinalRoad()'),
+              ('const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({','dbRun.configure({lifecycle:{'),('function startNewGame(){return dbRunLifecycle.startFreshRun();}','function startNewGame(){return dbRun.startFreshRun();}'),('dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{','dbRun.startFreshRun({beforeFreshRun:()=>{'),
+              ('const dbRunCompletion=window.DiceboundRunCompletion?.configure({','dbRun.configure({completion:{'),('function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}','function completeSixthRoadV19(){return dbRun.completeFinalRoad();}')]:
+              if old not in v: raise SystemExit(f'validator legacy contract missing: {old}')
+              v=v.replace(old,new)
+          vp.write_text(v,encoding='utf-8')
           PY
 
       - name: Refresh runtime manifest hashes
@@ -166,38 +111,22 @@ jobs:
           git diff --check
 
       - name: Materialize validated commit object
-        env:
-          GH_TOKEN: ${{ github.token }}
+        env: {GH_TOKEN: '${{ github.token }}'}
         run: |
           python - <<'PY'
-          import base64
-          import json
-          import os
-          import subprocess
-          import urllib.request
+          import base64,json,os,subprocess,urllib.request
           from pathlib import Path
-
-          repo = os.environ['GITHUB_REPOSITORY']
-          token = os.environ['GH_TOKEN']
-          parent = os.environ['GITHUB_SHA']
-          api_root = f'https://api.github.com/repos/{repo}/git'
-
-          def post(path, payload):
-              req = urllib.request.Request(api_root + path, data=json.dumps(payload).encode('utf-8'), headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'}, method='POST')
-              with urllib.request.urlopen(req) as response:
-                  return json.load(response)
-
-          changed = subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMRT','HEAD'], text=True).splitlines()
-          if not changed:
-              raise SystemExit('No caller-drain changes were produced')
+          repo=os.environ['GITHUB_REPOSITORY']; token=os.environ['GH_TOKEN']; parent=os.environ['GITHUB_SHA']; api=f'https://api.github.com/repos/{repo}/git'
+          def post(path,payload):
+              req=urllib.request.Request(api+path,data=json.dumps(payload).encode(),headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req) as r:return json.load(r)
+          changed=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMRT','HEAD'],text=True).splitlines()
+          if not changed: raise SystemExit('no caller-drain changes')
           entries=[]
-          for filename in changed:
-              raw=Path(filename).read_bytes()
-              blob=post('/blobs', {'content':base64.b64encode(raw).decode('ascii'),'encoding':'base64'})
-              entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
-          base_tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
-          tree=post('/trees',{'base_tree':base_tree,'tree':entries})
+          for f in changed:
+              blob=post('/blobs',{'content':base64.b64encode(Path(f).read_bytes()).decode(),'encoding':'base64'})
+              entries.append({'path':f,'mode':'100644','type':'blob','sha':blob['sha']})
+          tree=post('/trees',{'base_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'tree':entries})
           commit=post('/commits',{'message':'architecture: drain monolith Board and Run callers','tree':tree['sha'],'parents':[parent]})
-          print('CHANGED_FILES=' + ','.join(changed))
-          print(f"REMOTE_COMMIT_SHA={commit['sha']}")
+          print('CHANGED_FILES='+','.join(changed)); print('REMOTE_COMMIT_SHA='+commit['sha'])
           PY
