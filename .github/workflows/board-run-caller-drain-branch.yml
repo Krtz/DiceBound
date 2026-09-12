@@ -1,0 +1,208 @@
+name: Board Run Caller Drain Branch Helper
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.25-board-run-facade
+
+permissions:
+  contents: write
+
+jobs:
+  transform-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Drain Board and Run callers through DiceboundRun
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, got {count}')
+              return text.replace(old, new, 1)
+
+          path = Path('runtime/js/dicebound.js')
+          text = path.read_text(encoding='utf-8')
+
+          identity = '  const APP_IDENTITY=window.DiceboundVersion;\n  if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");\n'
+          identity_new = identity + '  const dbRun=window.DiceboundRun;\n  if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");\n'
+          text = replace_once(text, identity, identity_new, 'Run facade bootstrap')
+          text = replace_once(text, '  let dbPlayerInitialization=null;\n', '', 'legacy player initializer slot')
+
+          text = replace_once(
+              text,
+              '  const DB317_BOARD_REGISTRY_RAW=window.DiceboundBoards?.createRegistry?.();\n  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundBoards must load before dicebound.js");',
+              '  const DB317_BOARD_REGISTRY_RAW=dbRun.createBoardRegistry();\n  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundRun must provide the board registry before dicebound.js");',
+              'board registry bootstrap',
+          )
+
+          configs = [
+              ('dbBoardTileDispatch','DiceboundBoardTileDispatch','tileDispatch'),
+              ('dbBoardGeneration','DiceboundBoardGeneration','generation'),
+              ('dbRunCompletion','DiceboundRunCompletion','completion'),
+              ('dbBoardTransition','DiceboundBoardTransition','transition'),
+              ('dbBoardMovement','DiceboundBoardMovement','movement'),
+              ('dbRunLifecycle','DiceboundRunLifecycle','lifecycle'),
+          ]
+          for alias, owner, part in configs:
+              text = replace_once(
+                  text,
+                  f'  const {alias}=window.{owner}?.configure({{',
+                  f'  dbRun.configure({{{part}:{{',
+                  f'{alias} configure opening',
+              )
+              text = replace_once(
+                  text,
+                  f"  }});\n  if(!{alias})throw new Error('{owner} must load before dicebound.js');",
+                  '  }});',
+                  f'{alias} configure closing',
+              )
+
+          text = text.replace('dbBoardTileDispatch.dispatch()', 'dbRun.dispatchTile()')
+          text = text.replace('dbRunCompletion.completeFinalRoad()', 'dbRun.completeFinalRoad()')
+          text = text.replace('dbBoardMovement.state', 'dbRun.boardState')
+          text = text.replace('dbBoardMovement.move(', 'dbRun.move(')
+          text = text.replace('dbBoardGeneration.enemyForPosition(', 'dbRun.enemyForPosition(')
+          text = text.replace('dbBoardGeneration.generate(', 'dbRun.generateBoard(')
+          text = text.replace('dbBoardTransition.advance()', 'dbRun.advanceBoard()')
+          text = text.replace('dbRunLifecycle.startFreshRun(', 'dbRun.startFreshRun(')
+
+          text = replace_once(
+              text,
+              "  const dbPlayerInitializationOwner=window.DiceboundPlayerInitialization;\n  if(!dbPlayerInitializationOwner)throw new Error('DiceBound requires the player initialization owner before dicebound.js');\n  dbPlayerInitialization=dbPlayerInitializationOwner.configure({",
+              '  dbRun.configurePlayerInitialization({',
+              'player initialization facade configuration',
+          )
+          text = replace_once(
+              text,
+              "  function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}",
+              '  function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}',
+              'resetPlayer facade call',
+          )
+
+          forbidden_globals = [
+              'DiceboundBoards','DiceboundBoardMovement','DiceboundBoardTileDispatch','DiceboundBoardGeneration',
+              'DiceboundBoardTransition','DiceboundPlayerInitialization','DiceboundRunLifecycle','DiceboundRunCompletion',
+          ]
+          forbidden_aliases = [
+              'dbBoardMovement','dbBoardTileDispatch','dbBoardGeneration','dbBoardTransition',
+              'dbPlayerInitialization','dbRunLifecycle','dbRunCompletion',
+          ]
+          for token in forbidden_globals + forbidden_aliases:
+              if re.search(rf'\b{re.escape(token)}\b', text):
+                  raise SystemExit(f'monolith still references internal Run token {token}')
+          if 'window.DiceboundRun' not in text:
+              raise SystemExit('monolith lost DiceboundRun bootstrap')
+          path.write_text(text, encoding='utf-8')
+
+          manifest_path = Path('runtime/js/module-manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          monolith = next(module for module in manifest['modules'] if module['id'] == 'dicebound-monolith')
+          internal = {
+              'board-registry','board-movement','board-tile-dispatch','board-generation',
+              'board-transition','run-lifecycle','run-completion',
+          }
+          original = list(monolith['requires'])
+          positions = [i for i, dep in enumerate(original) if dep in internal]
+          if not positions:
+              raise SystemExit('dicebound-monolith had no direct Board/Run dependencies to drain')
+          if 'run-facade' in original:
+              raise SystemExit('dicebound-monolith unexpectedly already requires run-facade')
+          insert_at = min(positions)
+          filtered = [dep for dep in original if dep not in internal]
+          removed_before = sum(1 for i in positions if i < insert_at)
+          insert_at -= removed_before
+          filtered.insert(insert_at, 'run-facade')
+          monolith['requires'] = filtered
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Refresh runtime manifest hashes
+        run: python tools/refresh_runtime_manifest.py
+
+      - name: Focused Board and Run validation
+        run: |
+          node tools/test_run_facade.js
+          node tools/test_board_generation.js
+          node tools/test_board_movement.js
+          node tools/test_board_tile_dispatch.js
+          node tools/test_board_transition.js
+          node tools/test_player_initialization.js
+          node tools/test_run_lifecycle.js
+          node tools/test_run_completion.js
+          node tools/test_run_checkpoint.js
+          python tools/test_shadow_ownership_drain.py
+          python tools/validate_runtime_architecture.py
+          python tools/test_runtime_manifest_hash.py
+          git diff --check
+
+      - name: Materialize validated commit object
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import subprocess
+          import urllib.request
+          from pathlib import Path
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          parent = os.environ['GITHUB_SHA']
+          api_root = f'https://api.github.com/repos/{repo}/git'
+
+          def post(path, payload):
+              req = urllib.request.Request(
+                  api_root + path,
+                  data=json.dumps(payload).encode('utf-8'),
+                  headers={
+                      'Authorization': f'Bearer {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                      'Content-Type': 'application/json',
+                  },
+                  method='POST',
+              )
+              with urllib.request.urlopen(req) as response:
+                  return json.load(response)
+
+          changed = subprocess.check_output(
+              ['git','diff','--name-only','--diff-filter=ACMRT','HEAD'], text=True
+          ).splitlines()
+          if not changed:
+              raise SystemExit('No caller-drain changes were produced')
+
+          entries=[]
+          for filename in changed:
+              raw=Path(filename).read_bytes()
+              blob=post('/blobs', {'content':base64.b64encode(raw).decode('ascii'),'encoding':'base64'})
+              entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
+
+          base_tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+          tree=post('/trees',{'base_tree':base_tree,'tree':entries})
+          commit=post('/commits',{
+              'message':'architecture: drain monolith Board and Run callers',
+              'tree':tree['sha'],
+              'parents':[parent],
+          })
+          print('CHANGED_FILES=' + ','.join(changed))
+          print(f"REMOTE_COMMIT_SHA={commit['sha']}")
+          PY
