@@ -1,0 +1,61 @@
+name: Normalize Board Run Candidate Source
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.25-board-run-facade
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Normalize and regenerate 0.6.6.25 metadata
+        run: |
+          python tools/set_project_version.py --version 0.6.6.25 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.6.25 --channel Beta --development-state Unreleased
+          python tools/prepare_release.py --version 0.6.6.25 --channel Beta --output-dir wrapper-source/release/generated
+          python tools/validate_version_identity.py --version 0.6.6.25 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+          python tools/validate_runtime_architecture.py
+          python tools/test_runtime_manifest_hash.py
+          git diff --check
+
+      - name: Materialize normalized candidate commit
+        id: materialize
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64, json, os, subprocess, urllib.request
+          from pathlib import Path
+
+          repo=os.environ['GITHUB_REPOSITORY']; token=os.environ['GH_TOKEN']; parent=os.environ['GITHUB_SHA']
+          api=f'https://api.github.com/repos/{repo}/git'
+          def post(path,payload):
+              req=urllib.request.Request(api+path,data=json.dumps(payload).encode(),headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req) as r:return json.load(r)
+          changed=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMRT','HEAD'],text=True).splitlines()
+          expected={'runtime/build-info.json','runtime/build-manifest.json','runtime/index.html','runtime/js/version.js','wrapper-source/config/project.json','wrapper-source/wrappers/webview2/native-go/main.go'}
+          unexpected=set(changed)-expected
+          if unexpected: raise SystemExit('unexpected normalized-source changes: '+','.join(sorted(unexpected)))
+          if not changed: raise SystemExit('normalization produced no source changes')
+          entries=[]
+          for filename in changed:
+              blob=post('/blobs',{'content':base64.b64encode(Path(filename).read_bytes()).decode(),'encoding':'base64'})
+              entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
+          base_tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
+          tree=post('/trees',{'base_tree':base_tree,'tree':entries})
+          commit=post('/commits',{'message':'build: normalize Beta 0.6.6.25 source metadata','tree':tree['sha'],'parents':[parent]})
+          print('CHANGED_FILES='+','.join(changed))
+          print('REMOTE_COMMIT_SHA='+commit['sha'])
+          PY
