@@ -54,6 +54,7 @@
     "js/run/player-initialization.js",
     "js/run/lifecycle.js",
     "js/run/completion.js",
+    "js/run/facade.js",
     "js/combat/enemies.js",
     "js/combat/guardians.js",
     "js/items/rarities.js",
