@@ -18,6 +18,14 @@ with tempfile.TemporaryDirectory() as tmp:
         "runtime source hash must not depend on Windows CRLF checkout conversion"
     )
 
+    json_lf = root / "build-info-lf.json"
+    json_crlf = root / "build-info-crlf.json"
+    json_lf.write_bytes(b'{\n  "version": "0.6.6.25"\n}\n')
+    json_crlf.write_bytes(b'{\r\n  "version": "0.6.6.25"\r\n}\r\n')
+    assert sha256_runtime_file(json_lf) == sha256_runtime_file(json_crlf), (
+        "generated JSON metadata hash must not depend on Windows CRLF checkout conversion"
+    )
+
     binary_lf = root / "art-lf.png"
     binary_crlf = root / "art-crlf.png"
     binary_lf.write_bytes(b"binary\nasset")
