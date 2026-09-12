@@ -1,0 +1,98 @@
+name: Board Run Facade Branch Helper
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.25-board-run-facade
+
+permissions:
+  contents: write
+
+jobs:
+  wire-and-validate:
+    if: github.actor != 'github-actions[bot]' || !contains(github.event.head_commit.message, 'wire Board and Run facade load graph')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Wire facade into authoritative load graph
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest_path = Path('runtime/js/module-manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+
+          if 'run-facade' not in manifest['loadOrder']:
+              at = manifest['loadOrder'].index('run-completion') + 1
+              manifest['loadOrder'].insert(at, 'run-facade')
+
+          if not any(module['id'] == 'run-facade' for module in manifest['modules']):
+              facade = {
+                  'id': 'run-facade',
+                  'path': 'js/run/facade.js',
+                  'domain': 'run/public-board-and-run-subsystem-facade',
+                  'status': 'extracted',
+                  'requires': [
+                      'board-registry',
+                      'board-movement',
+                      'board-tile-dispatch',
+                      'board-generation',
+                      'board-transition',
+                      'run-player-initialization',
+                      'run-lifecycle',
+                      'run-completion',
+                  ],
+                  'provides': ['DiceboundRun'],
+              }
+              at = next(i for i, module in enumerate(manifest['modules']) if module['id'] == 'run-completion') + 1
+              manifest['modules'].insert(at, facade)
+
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+          index_path = Path('runtime/index.html')
+          index = index_path.read_text(encoding='utf-8')
+          marker = '  <script src="js/run/completion.js"></script>\n'
+          facade_tag = '  <script src="js/run/facade.js"></script>\n'
+          if facade_tag not in index:
+              if marker not in index:
+                  raise SystemExit('Could not locate run/completion.js script tag')
+              index = index.replace(marker, marker + facade_tag, 1)
+              index_path.write_text(index, encoding='utf-8')
+          PY
+
+      - name: Focused Board and Run tests
+        run: |
+          node tools/test_run_facade.js
+          node tools/test_board_generation.js
+          node tools/test_board_movement.js
+          node tools/test_board_tile_dispatch.js
+          node tools/test_board_transition.js
+          node tools/test_player_initialization.js
+          node tools/test_run_lifecycle.js
+          node tools/test_run_completion.js
+          python tools/test_shadow_ownership_drain.py
+          python tools/validate_runtime_architecture.py
+
+      - name: Commit load graph wiring
+        run: |
+          if git diff --quiet; then
+            echo 'Load graph already wired.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add runtime/js/module-manifest.json runtime/index.html
+          git commit -m 'architecture: wire Board and Run facade load graph'
+          git push
