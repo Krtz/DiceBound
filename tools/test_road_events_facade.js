@@ -12,7 +12,10 @@ const MONOLITH_PATH=path.join(ROOT,"runtime","js","dicebound.js");
 const MANIFEST_PATH=path.join(ROOT,"runtime","js","module-manifest.json");
 const source=fs.readFileSync(FACADE_PATH,"utf8");
 
-const sandbox={window:{},console};
+let treasureConfig=null;
+const treasureCalls=[];
+const treasureApi=Object.freeze({owner:"events/treasure",open:(...args)=>{treasureCalls.push(args);return "internal-treasure-result";}});
+const sandbox={window:{DiceboundRoadEventTreasure:{configure(config){treasureConfig=config;return treasureApi;}}},console};
 vm.createContext(sandbox);
 vm.runInContext(source,sandbox,{filename:FACADE_PATH});
 const api=sandbox.window.DiceboundRoadEvents;
@@ -29,8 +32,17 @@ for(const name of names){const key=`open${name}`;assert.equal(api[key]("fixture"
 assert.deepEqual(calls,names.map(name=>[`open${name}`,"fixture",name]));
 assert.deepEqual({...api.inspect().configured},{slot:true,wheel:true,treasure:true,blessing:true,mystic:true,bloodwell:true,gambler:true});
 
+// Once an extracted Treasure runtime is supplied, the facade must prefer its internal
+// owner over the migration fallback callback while keeping the same public API.
+const treasureRuntime={fixture:true};
+assert.equal(api.configure({treasure:treasureRuntime}),api);
+assert.equal(treasureConfig,treasureRuntime);
+assert.equal(api.openTreasure("internal"),"internal-treasure-result");
+assert.deepEqual(treasureCalls,[["internal"]]);
+assert.equal(api.inspect().internals.treasure,"events/treasure");
+
 // The facade is composition/delegation only. Gameplay RNG, DOM implementation and
-// reward values belong to internals/monolith during migration, never to this boundary.
+// reward values belong to internal owners/remaining migration code, never the facade.
 for(const forbidden of ["Math.random","DiceboundRng","document.","getElementById","querySelector","player.","tiles[","setTimeout(","+70 gold","Miracle Engine","Sacrifice 20%"]){
   assert.equal(source.includes(forbidden),false,`Road Events facade absorbed implementation detail: ${forbidden}`);
 }
@@ -41,10 +53,12 @@ const facadeModule=manifest.modules.find(m=>m.id==="road-events-facade");
 assert.ok(facadeModule,"module manifest must register road-events-facade");
 assert.equal(facadeModule.path,"js/events/facade.js");
 assert.ok((facadeModule.provides||[]).includes("DiceboundRoadEvents"));
+assert.ok((facadeModule.requires||[]).includes("road-event-treasure"),"Road Events facade must declare its extracted Treasure internal");
 const monolithModule=manifest.modules.find(m=>m.id==="dicebound-monolith");
 assert.ok((monolithModule.requires||[]).includes("road-events-facade"),"monolith must depend on the public Road Events boundary");
 for(const required of [
   "const dbRoadEvents=window.DiceboundRoadEvents;",
+  "treasure:{",
   "openEvent:()=>dbRoadEvents.openSlot()",
   "openWheelEvent:()=>dbRoadEvents.openWheel()",
   "openTreasure:()=>dbRoadEvents.openTreasure()",
@@ -52,23 +66,20 @@ for(const required of [
   "openMystic:()=>dbRoadEvents.openMystic()",
   "openBloodwell:()=>dbRoadEvents.openBloodwell()",
   "openGambler:()=>dbRoadEvents.openGambler()"
-])assert.ok(monolith.includes(required),`dicebound.js is missing Road Events facade routing: ${required}`);
+])assert.ok(monolith.includes(required),`dicebound.js is missing Road Events facade composition/routing: ${required}`);
 
-// Slot/Wheel use differently named facade adapters, so their former Board/Run callback
-// text should disappear completely. The five same-name event functions remain exactly
-// once as legitimate private adapters inside dbRoadEvents.configure until their lifecycle
-// implementations are extracted; a second occurrence would mean Board/Run bypassed the facade.
-for(const retired of ["openEvent:()=>openEvent()","openWheelEvent:()=>openWheelEvent()"]){
-  assert.equal(monolith.split(retired).length-1,0,`Board/Run still routes directly to Road Event implementation: ${retired}`);
+for(const retired of ["openEvent:()=>openEvent()","openWheelEvent:()=>openWheelEvent()","openTreasure:()=>openTreasure()"]){
+  assert.equal(monolith.split(retired).length-1,0,`Road Events extraction still exposes a retired direct adapter: ${retired}`);
 }
+// The four not-yet-extracted same-name lifecycles remain exactly once as private facade
+// adapters. A second occurrence would mean Board/Run bypassed the facade.
 for(const adapter of [
-  "openTreasure:()=>openTreasure()",
   "openBlessing:()=>openBlessing()",
   "openMystic:()=>openMystic()",
   "openBloodwell:()=>openBloodwell()",
   "openGambler:()=>openGambler()"
 ]){
-  assert.equal(monolith.split(adapter).length-1,1,`Road Event adapter must occur exactly once behind DiceboundRoadEvents: ${adapter}`);
+  assert.equal(monolith.split(adapter).length-1,1,`Road Event migration adapter must occur exactly once behind DiceboundRoadEvents: ${adapter}`);
 }
 
-console.log("Road Events facade delegation and routing-boundary tests passed.");
+console.log("Road Events facade delegation, extracted Treasure composition and routing-boundary tests passed.");
