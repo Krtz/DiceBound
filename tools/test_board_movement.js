@@ -76,10 +76,10 @@ function makeRuntime(road,{loadedSixes=false,modifier=value=>value}={}){
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
-  "const dbBoardMovement=window.DiceboundBoardMovement?.configure({",
-  "board:dbBoardMovement.state",
-  "await dbBoardMovement.move("
-])assert.ok(monolith.includes(adapter),`missing board-movement composition adapter: ${adapter}`);
+  "dbRun.configure({movement:{",
+  "board:dbRun.boardState",
+  "await dbRun.move("
+])assert.ok(monolith.includes(adapter),`missing board-movement facade composition: ${adapter}`);
 for(const retired of [
   "const BoardState=Object.freeze({",
   "const BoardUI=Object.freeze({",

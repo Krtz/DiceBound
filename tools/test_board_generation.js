@@ -130,10 +130,10 @@ assert.equal(boardOneAfterCleanup.random.draws(),boardOneBeforeCleanup.random.dr
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
-  "const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({",
-  "function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}",
-  "function generateBoard(){return dbBoardGeneration.generate();}"
-])assert.ok(monolith.includes(adapter),`missing Board-generation composition adapter: ${adapter}`);
+  "dbRun.configure({generation:{",
+  "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",
+  "function generateBoard(){return dbRun.generateBoard();}"
+])assert.ok(monolith.includes(adapter),`missing Board-generation facade composition: ${adapter}`);
 for(const retired of [
   "function drawSpecialIndexes(",
   "function plannedPackSize(",

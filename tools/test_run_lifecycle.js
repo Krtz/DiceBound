@@ -25,10 +25,10 @@ for(const required of [
   "runtime.afterClassStart?.({wasRandom,chosen,context});runtime.scheduleCheckpoint?.();"
 ])assert.ok(source.includes(required),`run lifecycle is missing required ownership behavior: ${required}`);
 for(const required of [
-  "const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({",
-  "function startNewGame(){return dbRunLifecycle.startFreshRun();}",
-  "dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{"
-])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle composition adapter: ${required}`);
+  "dbRun.configure({lifecycle:{",
+  "function startNewGame(){return dbRun.startFreshRun();}",
+  "dbRun.startFreshRun({beforeFreshRun:()=>{"
+])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle facade composition: ${required}`);
 for(const retired of [
   "const startNewGameV15=startNewGame;",
   "const startNewGameV16GuardReset=startNewGame;",

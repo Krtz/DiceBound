@@ -77,10 +77,10 @@ assert.equal(duplicate.calls.filter(call=>call==="ui:end-with-gear").length,1,"t
 assert.equal(duplicate.state.firstCompletions,1,"sixth-clear accounting must run exactly once");
 
 for(const required of [
-  "const dbRunCompletion=window.DiceboundRunCompletion?.configure({",
-  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",
-  "function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}"
-])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion composition: ${required}`);
+  "dbRun.configure({completion:{",
+  "completeFinalRoad:()=>dbRun.completeFinalRoad()",
+  "function completeSixthRoadV19(){return dbRun.completeFinalRoad();}"
+])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion facade composition: ${required}`);
 for(const retired of [
   "const showEndV15Patch=showEnd;",
   "function completeFifthRoadV16()",

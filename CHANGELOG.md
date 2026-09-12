@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.25
+
+### Board + Run subsystem facade (#322)
+- Added `runtime/js/run/facade.js` as the single ordinary public `DiceboundRun` subsystem boundary while retaining the eight existing Board/Run files as focused internal owners.
+- Drained direct Board/Run implementation-global coordination from `dicebound.js`: Board registry, movement, tile dispatch, generation, transition, player initialization, fresh-run lifecycle and completion now route through the facade; the monolith's seven direct Board/Run manifest dependencies become one `run-facade` dependency.
+- Added permanent facade delegation and anti-regression guards, and updated existing composition assertions so they protect the new public boundary without weakening the exact Board-generation, movement, dispatch, transition, 24-case Player Initialization, lifecycle, completion and checkpoint oracles.
+- Updated browser/native packaging to include the facade. Direct Windows Edge startup and the native WebView2 release build/validation remain part of the acceptance gate. No gameplay, balance, RNG, save/checkpoint, Road Event, Merchant or Combat behavior change is intended.
+- Architecture measurement: runtime graph 70 → 71 scripts (69 → 70 extracted/internal plus one monolith); normalized `dicebound.js` 740,927 → 739,724 bytes and 7,432 → 7,426 lines; 552 named declarations and 108 historical base captures remain unchanged.
+
 ## Beta 0.6.6.24
 
 ### Merchant Stock / Economy Resolution ownership (#318)

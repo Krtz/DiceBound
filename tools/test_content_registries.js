@@ -79,7 +79,8 @@ const monolith = fs.readFileSync(path.join(__dirname, "..", "runtime", "js", "di
 for (const owner of ["BOARD_REGISTRY", "EQUIPMENT_REGISTRY", "ACHIEVEMENT_REGISTRY"]) {
   assert.doesNotMatch(monolith, new RegExp(`const\\s+DB317_${owner}_RAW\\s*=\\s*[\\[{]`), `${owner} data is still owned by the monolith`);
 }
-assert.match(monolith, /window\.DiceboundBoards\?\.createRegistry\?\.\(\)/);
+assert.match(monolith, /dbRun\.createBoardRegistry\(\)/);
+assert.doesNotMatch(monolith, /window\.DiceboundBoards\?\.createRegistry\?\.\(\)/, "Board registry must be consumed through DiceboundRun rather than the internal Board owner");
 assert.match(monolith, /window\.DiceboundEquipment\?\.createRegistry\?\.\(\)/);
 assert.match(monolith, /window\.DiceboundAchievements\?\.createRegistry\?\.\(\)/);
 assert.doesNotMatch(monolith, /const\s+EQUIPMENT_SLOTS\s*=\s*\["weapon"/, "equipment slots are still duplicated in the monolith");

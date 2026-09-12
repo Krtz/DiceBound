@@ -104,10 +104,10 @@ assert.ok(failure.calls.some(call=>call[0]==="combatBusy"&&call[1]===false),"des
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
-  "const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({",
-  "dispatchTile:()=>dbBoardTileDispatch.dispatch()",
-  "dbBoardTileDispatch.dispatch()"
-])assert.ok(monolith.includes(adapter),`missing board tile-dispatch composition adapter: ${adapter}`);
+  "dbRun.configure({tileDispatch:{",
+  "dispatchTile:()=>dbRun.dispatchTile()",
+  "dbRun.dispatchTile()"
+])assert.ok(monolith.includes(adapter),`missing board tile-dispatch facade composition: ${adapter}`);
 for(const retired of [
   "function resolveTile(",
   "const resolveTileV24Base=resolveTile;",
