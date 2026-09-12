@@ -61,18 +61,8 @@ jobs:
               ('dbRunLifecycle','DiceboundRunLifecycle','lifecycle'),
           ]
           for alias, owner, part in configs:
-              text = replace_once(
-                  text,
-                  f'  const {alias}=window.{owner}?.configure({{',
-                  f'  dbRun.configure({{{part}:{{',
-                  f'{alias} configure opening',
-              )
-              text = replace_once(
-                  text,
-                  f"  }});\n  if(!{alias})throw new Error('{owner} must load before dicebound.js');",
-                  '  }});',
-                  f'{alias} configure closing',
-              )
+              text = replace_once(text, f'  const {alias}=window.{owner}?.configure({{', f'  dbRun.configure({{{part}:{{', f'{alias} configure opening')
+              text = replace_once(text, f"  }});\n  if(!{alias})throw new Error('{owner} must load before dicebound.js');", '  }});', f'{alias} configure closing')
 
           text = text.replace('dbBoardTileDispatch.dispatch()', 'dbRun.dispatchTile()')
           text = text.replace('dbRunCompletion.completeFinalRoad()', 'dbRun.completeFinalRoad()')
@@ -96,14 +86,8 @@ jobs:
               'resetPlayer facade call',
           )
 
-          forbidden_globals = [
-              'DiceboundBoards','DiceboundBoardMovement','DiceboundBoardTileDispatch','DiceboundBoardGeneration',
-              'DiceboundBoardTransition','DiceboundPlayerInitialization','DiceboundRunLifecycle','DiceboundRunCompletion',
-          ]
-          forbidden_aliases = [
-              'dbBoardMovement','dbBoardTileDispatch','dbBoardGeneration','dbBoardTransition',
-              'dbPlayerInitialization','dbRunLifecycle','dbRunCompletion',
-          ]
+          forbidden_globals = ['DiceboundBoards','DiceboundBoardMovement','DiceboundBoardTileDispatch','DiceboundBoardGeneration','DiceboundBoardTransition','DiceboundPlayerInitialization','DiceboundRunLifecycle','DiceboundRunCompletion']
+          forbidden_aliases = ['dbBoardMovement','dbBoardTileDispatch','dbBoardGeneration','dbBoardTransition','dbPlayerInitialization','dbRunLifecycle','dbRunCompletion']
           for token in forbidden_globals + forbidden_aliases:
               if re.search(rf'\b{re.escape(token)}\b', text):
                   raise SystemExit(f'monolith still references internal Run token {token}')
@@ -114,10 +98,7 @@ jobs:
           manifest_path = Path('runtime/js/module-manifest.json')
           manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
           monolith = next(module for module in manifest['modules'] if module['id'] == 'dicebound-monolith')
-          internal = {
-              'board-registry','board-movement','board-tile-dispatch','board-generation',
-              'board-transition','run-lifecycle','run-completion',
-          }
+          internal = {'board-registry','board-movement','board-tile-dispatch','board-generation','board-transition','run-lifecycle','run-completion'}
           original = list(monolith['requires'])
           positions = [i for i, dep in enumerate(original) if dep in internal]
           if not positions:
@@ -126,11 +107,43 @@ jobs:
               raise SystemExit('dicebound-monolith unexpectedly already requires run-facade')
           insert_at = min(positions)
           filtered = [dep for dep in original if dep not in internal]
-          removed_before = sum(1 for i in positions if i < insert_at)
-          insert_at -= removed_before
           filtered.insert(insert_at, 'run-facade')
           monolith['requires'] = filtered
           manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+
+          # Preserve the deterministic owner tests while updating only their
+          # monolith-composition assertions to the new public facade boundary.
+          replacements = {
+              'tools/test_board_generation.js': (
+                  '''for(const adapter of [\n  "const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({",\n  "function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}",\n  "function generateBoard(){return dbBoardGeneration.generate();}"\n])assert.ok(monolith.includes(adapter),`missing Board-generation composition adapter: ${adapter}`);''',
+                  '''for(const adapter of [\n  "dbRun.configure({generation:{",\n  "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",\n  "function generateBoard(){return dbRun.generateBoard();}"\n])assert.ok(monolith.includes(adapter),`missing Board-generation facade composition: ${adapter}`);'''
+              ),
+              'tools/test_board_movement.js': (
+                  '''for(const adapter of [\n  "const dbBoardMovement=window.DiceboundBoardMovement?.configure({",\n  "board:dbBoardMovement.state",\n  "await dbBoardMovement.move("\n])assert.ok(monolith.includes(adapter),`missing board-movement composition adapter: ${adapter}`);''',
+                  '''for(const adapter of [\n  "dbRun.configure({movement:{",\n  "board:dbRun.boardState",\n  "await dbRun.move("\n])assert.ok(monolith.includes(adapter),`missing board-movement facade composition: ${adapter}`);'''
+              ),
+              'tools/test_board_tile_dispatch.js': (
+                  '''for(const adapter of [\n  "const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({",\n  "dispatchTile:()=>dbBoardTileDispatch.dispatch()",\n  "dbBoardTileDispatch.dispatch()"\n])assert.ok(monolith.includes(adapter),`missing board tile-dispatch composition adapter: ${adapter}`);''',
+                  '''for(const adapter of [\n  "dbRun.configure({tileDispatch:{",\n  "dispatchTile:()=>dbRun.dispatchTile()",\n  "dbRun.dispatchTile()"\n])assert.ok(monolith.includes(adapter),`missing board tile-dispatch facade composition: ${adapter}`);'''
+              ),
+              'tools/test_board_transition.js': (
+                  '''for(const adapter of [\n  "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",\n  "function advanceToNextBoard(){return dbBoardTransition.advance();}",\n  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()"\n])assert.ok(monolith.includes(adapter),`missing board-transition composition adapter: ${adapter}`);''',
+                  '''for(const adapter of [\n  "dbRun.configure({transition:{",\n  "function advanceToNextBoard(){return dbRun.advanceBoard();}",\n  "completeFinalRoad:()=>dbRun.completeFinalRoad()"\n])assert.ok(monolith.includes(adapter),`missing board-transition facade composition: ${adapter}`);'''
+              ),
+              'tools/test_run_lifecycle.js': (
+                  '''for(const required of [\n  "const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({",\n  "function startNewGame(){return dbRunLifecycle.startFreshRun();}",\n  "dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle composition adapter: ${required}`);''',
+                  '''for(const required of [\n  "dbRun.configure({lifecycle:{",\n  "function startNewGame(){return dbRun.startFreshRun();}",\n  "dbRun.startFreshRun({beforeFreshRun:()=>{"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle facade composition: ${required}`);'''
+              ),
+              'tools/test_run_completion.js': (
+                  '''for(const required of [\n  "const dbRunCompletion=window.DiceboundRunCompletion?.configure({",\n  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",\n  "function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion composition: ${required}`);''',
+                  '''for(const required of [\n  "dbRun.configure({completion:{",\n  "completeFinalRoad:()=>dbRun.completeFinalRoad()",\n  "function completeSixthRoadV19(){return dbRun.completeFinalRoad();}"\n])assert.ok(monolith.includes(required),`dicebound.js is missing run-completion facade composition: ${required}`);'''
+              ),
+          }
+          for filename,(old,new) in replacements.items():
+              test_path=Path(filename)
+              test_text=test_path.read_text(encoding='utf-8')
+              test_text=replace_once(test_text,old,new,f'{filename} composition assertion')
+              test_path.write_text(test_text,encoding='utf-8')
           PY
 
       - name: Refresh runtime manifest hashes
@@ -170,39 +183,21 @@ jobs:
           api_root = f'https://api.github.com/repos/{repo}/git'
 
           def post(path, payload):
-              req = urllib.request.Request(
-                  api_root + path,
-                  data=json.dumps(payload).encode('utf-8'),
-                  headers={
-                      'Authorization': f'Bearer {token}',
-                      'Accept': 'application/vnd.github+json',
-                      'X-GitHub-Api-Version': '2022-11-28',
-                      'Content-Type': 'application/json',
-                  },
-                  method='POST',
-              )
+              req = urllib.request.Request(api_root + path, data=json.dumps(payload).encode('utf-8'), headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'}, method='POST')
               with urllib.request.urlopen(req) as response:
                   return json.load(response)
 
-          changed = subprocess.check_output(
-              ['git','diff','--name-only','--diff-filter=ACMRT','HEAD'], text=True
-          ).splitlines()
+          changed = subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMRT','HEAD'], text=True).splitlines()
           if not changed:
               raise SystemExit('No caller-drain changes were produced')
-
           entries=[]
           for filename in changed:
               raw=Path(filename).read_bytes()
               blob=post('/blobs', {'content':base64.b64encode(raw).decode('ascii'),'encoding':'base64'})
               entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
-
           base_tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()
           tree=post('/trees',{'base_tree':base_tree,'tree':entries})
-          commit=post('/commits',{
-              'message':'architecture: drain monolith Board and Run callers',
-              'tree':tree['sha'],
-              'parents':[parent],
-          })
+          commit=post('/commits',{'message':'architecture: drain monolith Board and Run callers','tree':tree['sha'],'parents':[parent]})
           print('CHANGED_FILES=' + ','.join(changed))
           print(f"REMOTE_COMMIT_SHA={commit['sha']}")
           PY
