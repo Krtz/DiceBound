@@ -19,13 +19,14 @@ for(const owner of [
 
 const calls=[];
 const call=(name,...args)=>{calls.push([name,...args]);return `${name}:result`;};
+const boardState={owner:"movement-state"};
 const fakeWindow={
   DiceboundBoards:{owner:"board/registry",createRegistry:(...args)=>call("boards.createRegistry",...args)},
-  DiceboundBoardMovement:{owner:"board/movement",configure:x=>call("movement.configure",x),move:(...args)=>call("movement.move",...args),planMove:(...args)=>call("movement.planMove",...args)},
+  DiceboundBoardMovement:{owner:"board/movement",state:boardState,configure:x=>call("movement.configure",x),move:(...args)=>call("movement.move",...args),planMove:(...args)=>call("movement.planMove",...args)},
   DiceboundBoardTileDispatch:{owner:"board/tile-dispatch",configure:x=>call("dispatch.configure",x),dispatch:(...args)=>call("dispatch.dispatch",...args)},
   DiceboundBoardGeneration:{owner:"board/generation",configure:x=>call("generation.configure",x),generate:(...args)=>call("generation.generate",...args),activateFinalRules:(...args)=>call("generation.activateFinalRules",...args),enemyForPosition:(...args)=>call("generation.enemyForPosition",...args)},
   DiceboundBoardTransition:{owner:"board/transition",configure:x=>call("transition.configure",x),advance:(...args)=>call("transition.advance",...args)},
-  DiceboundPlayerInitialization:{owner:"run/player-initialization",configure:(...args)=>call("player.configure",...args)},
+  DiceboundPlayerInitialization:{owner:"run/player-initialization",configure:(...args)=>{call("player.configure",...args);return {initialize:(...initArgs)=>call("player.initialize",...initArgs)};}},
   DiceboundRunLifecycle:{owner:"run/lifecycle",configure:x=>call("lifecycle.configure",x),startFreshRun:(...args)=>call("lifecycle.startFreshRun",...args)},
   DiceboundRunCompletion:{owner:"run/completion",configure:x=>call("completion.configure",x),completeFinalRoad:(...args)=>call("completion.completeFinalRoad",...args)}
 };
@@ -35,15 +36,21 @@ const run=fakeWindow.DiceboundRun;
 assert.ok(Object.isFrozen(run),"Run facade should be frozen");
 assert.strictEqual(run.apiVersion,1);
 assert.strictEqual(run.owner,"run");
+assert.strictEqual(run.boardState,boardState,"Run facade should expose the authoritative movement diagnostic state");
+assert.strictEqual(run.inspect().playerInitializationConfigured,false);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(run.inspect().internalOwners)),{
   boards:"board/registry",movement:"board/movement",tileDispatch:"board/tile-dispatch",generation:"board/generation",
   transition:"board/transition",playerInitialization:"run/player-initialization",lifecycle:"run/lifecycle",completion:"run/completion"
 });
+assert.throws(()=>run.initializePlayer("ranger"),/player initialization is not configured/,
+  "initializePlayer should fail fast before configuration");
 
 const parts={movement:{m:1},tileDispatch:{d:1},generation:{g:1},transition:{t:1},lifecycle:{l:1},completion:{c:1}};
 assert.strictEqual(run.configure(parts),run,"configure should preserve fluent facade identity");
 assert.strictEqual(run.createBoardRegistry(),"boards.createRegistry:result");
-assert.strictEqual(run.configurePlayerInitialization({p:1}),"player.configure:result");
+assert.strictEqual(run.configurePlayerInitialization({p:1}),run,"player initialization configuration should preserve facade identity");
+assert.strictEqual(run.inspect().playerInitializationConfigured,true);
+assert.strictEqual(run.initializePlayer("ranger"),"player.initialize:result");
 assert.strictEqual(run.move(6,6,false),"movement.move:result");
 assert.strictEqual(run.planMove(4,4),"movement.planMove:result");
 assert.strictEqual(run.dispatchTile(),"dispatch.dispatch:result");
@@ -56,7 +63,7 @@ assert.strictEqual(run.completeFinalRoad(),"completion.completeFinalRoad:result"
 
 assert.deepStrictEqual(calls.map(entry=>entry[0]),[
   "movement.configure","dispatch.configure","generation.configure","transition.configure","lifecycle.configure","completion.configure",
-  "boards.createRegistry","player.configure","movement.move","movement.planMove","dispatch.dispatch","generation.generate",
+  "boards.createRegistry","player.configure","player.initialize","movement.move","movement.planMove","dispatch.dispatch","generation.generate",
   "generation.activateFinalRules","generation.enemyForPosition","transition.advance","lifecycle.startFreshRun","completion.completeFinalRoad"
 ]);
 
