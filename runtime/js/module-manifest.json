@@ -47,6 +47,7 @@
     "run-player-initialization",
     "run-lifecycle",
     "run-completion",
+    "run-facade",
     "combat-enemies",
     "combat-guardians",
     "item-rarities",
@@ -551,6 +552,25 @@
       ],
       "provides": [
         "DiceboundRunCompletion"
+      ]
+    },
+    {
+      "id": "run-facade",
+      "path": "js/run/facade.js",
+      "domain": "run/public-board-and-run-subsystem-facade",
+      "status": "extracted",
+      "requires": [
+        "board-registry",
+        "board-movement",
+        "board-tile-dispatch",
+        "board-generation",
+        "board-transition",
+        "run-player-initialization",
+        "run-lifecycle",
+        "run-completion"
+      ],
+      "provides": [
+        "DiceboundRun"
       ]
     },
     {
