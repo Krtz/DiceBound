@@ -1,0 +1,24 @@
+name: Road Events Oracle Capture
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.26-road-events-oracle
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capture released Road Events behavior
+        shell: pwsh
+        run: |
+          $env:DICEBOUND_CAPTURE_ROAD_EVENTS = "1"
+          node tools/test_road_events_oracle.js
