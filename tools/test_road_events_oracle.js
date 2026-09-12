@@ -80,7 +80,7 @@ async function main(){
       }
 
       // Bloodwell freezes two different sacrifice->different-stat-reward flows.
-      for(const c of [{name:'bloodwell-hp',needle:'15%'},{name:'bloodwell-potion',needle:'1 potion'}]){
+      for(const c of [{name:'bloodwell-hp',needle:'20%'},{name:'bloodwell-potion',needle:'1 potion'}]){
         const x=restore(c.name,'bloodwell');dispatch();await wait();const buttons=[...document.querySelectorAll('#bloodwellGrid button')],btn=buttons.find(b=>(b.textContent||'').includes(c.needle));if(!btn)throw new Error('Bloodwell option missing: '+c.needle);btn.click();await wait();snap(c.name,x.before,{choice:(btn.textContent||'').trim()});document.getElementById('bloodwellOverlay')?.classList.add('hidden');
       }
 
