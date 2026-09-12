@@ -5,6 +5,17 @@
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbRoadEvents=window.DiceboundRoadEvents;
+  if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");
+  dbRoadEvents.configure({
+    openSlot:()=>openEvent(),
+    openWheel:()=>openWheelEvent(),
+    openTreasure:()=>openTreasure(),
+    openBlessing:()=>openBlessing(),
+    openMystic:()=>openMystic(),
+    openBloodwell:()=>openBloodwell(),
+    openGambler:()=>openGambler()
+  });
   const MERCHANT_SPACING = 12;
   const STATIC_CAMP_TILES = [10,30,55,70,90];
   const POWERUP_TILE_COUNT = 5;
@@ -297,16 +308,16 @@
     toast:showToast,
     returnToRoad:()=>returnToRoad(),
     startCombat:kind=>startCombat(kind),
-    openEvent:()=>openEvent(),
-    openWheelEvent:()=>openWheelEvent(),
+    openEvent:()=>dbRoadEvents.openSlot(),
+    openWheelEvent:()=>dbRoadEvents.openWheel(),
     openFreePowerup:()=>openFreePowerup(),
-    openTreasure:()=>openTreasure(),
+    openTreasure:()=>dbRoadEvents.openTreasure(),
     useCamp:()=>useCamp(),
     openMerchant:()=>openMerchant(),
-    openBlessing:()=>openBlessing(),
-    openMystic:()=>openMystic(),
-    openBloodwell:()=>openBloodwell(),
-    openGambler:()=>openGambler(),
+    openBlessing:()=>dbRoadEvents.openBlessing(),
+    openMystic:()=>dbRoadEvents.openMystic(),
+    openBloodwell:()=>dbRoadEvents.openBloodwell(),
+    openGambler:()=>dbRoadEvents.openGambler(),
     clearDevilPrimed:()=>{meta.devilPrimed=false;saveMeta();},
     logDiagnostic:(level,category,message,data)=>v25Log(level,category,message,data),
     debugState:()=>v25State(),
