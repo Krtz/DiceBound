@@ -84,12 +84,53 @@ jobs:
           python tools/test_shadow_ownership_drain.py
           python tools/validate_runtime_architecture.py
 
-      - name: Stage validated commit on scratch ref
+      - name: Materialize validated commit object
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add runtime/js/module-manifest.json runtime/index.html
-          if ! git diff --cached --quiet; then
-            git commit -m 'architecture: wire Board and Run facade load graph'
-          fi
-          git push --force origin HEAD:refs/heads/tmp-board-run-facade-wiring
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          import subprocess
+          import urllib.request
+          from pathlib import Path
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          parent = os.environ['GITHUB_SHA']
+          api_root = f'https://api.github.com/repos/{repo}/git'
+
+          def post(path, payload):
+              req = urllib.request.Request(
+                  api_root + path,
+                  data=json.dumps(payload).encode('utf-8'),
+                  headers={
+                      'Authorization': f'Bearer {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                      'Content-Type': 'application/json',
+                  },
+                  method='POST',
+              )
+              with urllib.request.urlopen(req) as response:
+                  return json.load(response)
+
+          entries = []
+          for path in ('runtime/js/module-manifest.json', 'runtime/index.html'):
+              raw = Path(path).read_bytes()
+              blob = post('/blobs', {
+                  'content': base64.b64encode(raw).decode('ascii'),
+                  'encoding': 'base64',
+              })
+              entries.append({'path': path, 'mode': '100644', 'type': 'blob', 'sha': blob['sha']})
+
+          base_tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
+          tree = post('/trees', {'base_tree': base_tree, 'tree': entries})
+          commit = post('/commits', {
+              'message': 'architecture: wire Board and Run facade load graph',
+              'tree': tree['sha'],
+              'parents': [parent],
+          })
+          print(f"REMOTE_COMMIT_SHA={commit['sha']}")
+          PY
