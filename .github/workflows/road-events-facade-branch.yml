@@ -38,9 +38,10 @@ jobs:
 
           monolith_path=Path("runtime/js/dicebound.js")
           text=monolith_path.read_text(encoding="utf-8")
-          anchor='  const dbRun=window.DiceboundRun;\n  if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");\n'
-          configured=anchor + '''  const dbRoadEvents=window.DiceboundRoadEvents;\n  if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");\n  dbRoadEvents.configure({\n    openSlot:()=>openEvent(),\n    openWheel:()=>openWheelEvent(),\n    openTreasure:()=>openTreasure(),\n    openBlessing:()=>openBlessing(),\n    openMystic:()=>openMystic(),\n    openBloodwell:()=>openBloodwell(),\n    openGambler:()=>openGambler()\n  });\n'''
-          text=one(text,anchor,configured,"Road Events facade bootstrap")
+
+          # Rewire the seven Board/Run destination callbacks before inserting the
+          # facade's own adapters; otherwise identical adapter text creates an
+          # ambiguous second match for Treasure/Blessing/Mystic/etc.
           routes={
             'openEvent:()=>openEvent()':'openEvent:()=>dbRoadEvents.openSlot()',
             'openWheelEvent:()=>openWheelEvent()':'openWheelEvent:()=>dbRoadEvents.openWheel()',
@@ -52,6 +53,10 @@ jobs:
           }
           for old,new in routes.items():
               text=one(text,old,new,f"tile dispatch route {old}")
+
+          anchor='  const dbRun=window.DiceboundRun;\n  if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");\n'
+          configured=anchor + '''  const dbRoadEvents=window.DiceboundRoadEvents;\n  if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");\n  dbRoadEvents.configure({\n    openSlot:()=>openEvent(),\n    openWheel:()=>openWheelEvent(),\n    openTreasure:()=>openTreasure(),\n    openBlessing:()=>openBlessing(),\n    openMystic:()=>openMystic(),\n    openBloodwell:()=>openBloodwell(),\n    openGambler:()=>openGambler()\n  });\n'''
+          text=one(text,anchor,configured,"Road Events facade bootstrap")
           monolith_path.write_text(text,encoding="utf-8")
 
           manifest_path=Path("runtime/js/module-manifest.json")
