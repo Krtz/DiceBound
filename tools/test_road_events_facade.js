@@ -53,14 +53,22 @@ for(const required of [
   "openBloodwell:()=>dbRoadEvents.openBloodwell()",
   "openGambler:()=>dbRoadEvents.openGambler()"
 ])assert.ok(monolith.includes(required),`dicebound.js is missing Road Events facade routing: ${required}`);
-for(const retired of [
-  "openEvent:()=>openEvent()",
-  "openWheelEvent:()=>openWheelEvent()",
+
+// Slot/Wheel use differently named facade adapters, so their former Board/Run callback
+// text should disappear completely. The five same-name event functions remain exactly
+// once as legitimate private adapters inside dbRoadEvents.configure until their lifecycle
+// implementations are extracted; a second occurrence would mean Board/Run bypassed the facade.
+for(const retired of ["openEvent:()=>openEvent()","openWheelEvent:()=>openWheelEvent()"]){
+  assert.equal(monolith.split(retired).length-1,0,`Board/Run still routes directly to Road Event implementation: ${retired}`);
+}
+for(const adapter of [
   "openTreasure:()=>openTreasure()",
   "openBlessing:()=>openBlessing()",
   "openMystic:()=>openMystic()",
   "openBloodwell:()=>openBloodwell()",
   "openGambler:()=>openGambler()"
-])assert.equal(monolith.includes(retired),false,`Board/Run still routes directly to Road Event implementation: ${retired}`);
+]){
+  assert.equal(monolith.split(adapter).length-1,1,`Road Event adapter must occur exactly once behind DiceboundRoadEvents: ${adapter}`);
+}
 
 console.log("Road Events facade delegation and routing-boundary tests passed.");
