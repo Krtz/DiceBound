@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   wire-and-validate:
-    if: github.actor != 'github-actions[bot]' || !contains(github.event.head_commit.message, 'wire Board and Run facade load graph')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,14 +84,12 @@ jobs:
           python tools/test_shadow_ownership_drain.py
           python tools/validate_runtime_architecture.py
 
-      - name: Commit load graph wiring
+      - name: Stage validated commit on scratch ref
         run: |
-          if git diff --quiet; then
-            echo 'Load graph already wired.'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add runtime/js/module-manifest.json runtime/index.html
-          git commit -m 'architecture: wire Board and Run facade load graph'
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m 'architecture: wire Board and Run facade load graph'
+          fi
+          git push --force origin HEAD:refs/heads/tmp-board-run-facade-wiring
