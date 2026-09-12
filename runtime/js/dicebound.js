@@ -3,6 +3,8 @@
 
   const APP_IDENTITY=window.DiceboundVersion;
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
+  const dbRun=window.DiceboundRun;
+  if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
   const MERCHANT_SPACING = 12;
   const STATIC_CAMP_TILES = [10,30,55,70,90];
   const POWERUP_TILE_COUNT = 5;
@@ -11,7 +13,6 @@
   // its runtime callbacks. These stable adapters deliberately stay safe
   // during that bootstrap window instead of recreating a wrapper chain.
   let dbInfoGuide=null;
-  let dbPlayerInitialization=null;
   const DB_EQUIPMENT_CONFIG=window.DiceboundEquipment?.createRegistry?.();
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
   const EQUIPMENT_SLOTS=[...DB_EQUIPMENT_CONFIG.slots];
@@ -96,8 +97,8 @@
   const DB317_CLASS_PASSIVES_RAW=window.DiceboundClasses?.createPassiveRegistry?.();
   if(!DB317_CLASS_PASSIVES_RAW)throw new Error("DiceboundClasses passive registry must load before dicebound.js");
   const CLASS_PASSIVES=db317Readonly(DB317_CLASS_PASSIVES_RAW);
-  const DB317_BOARD_REGISTRY_RAW=window.DiceboundBoards?.createRegistry?.();
-  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundBoards must load before dicebound.js");
+  const DB317_BOARD_REGISTRY_RAW=dbRun.createBoardRegistry();
+  if(!DB317_BOARD_REGISTRY_RAW)throw new Error("DiceboundRun must provide the board registry before dicebound.js");
   const BOARD_REGISTRY=db317Readonly(DB317_BOARD_REGISTRY_RAW);
   const DB317_SPECIAL_ENEMIES_RAW=window.DiceboundEnemies?.createSpecialRegistry?.();
   if(!DB317_SPECIAL_ENEMIES_RAW)throw new Error("DiceboundEnemies special registry must load before dicebound.js");
@@ -286,7 +287,7 @@
   });
   const ProgressionUI=Object.freeze({render(result){updateHUD?.();return result;}});
 
-  const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({
+  dbRun.configure({tileDispatch:{
     getRoad:()=>({player,tiles,boardLevel,merchantBossPrimed,merchantBossDefeatedThisBoard}),
     setRollLocked:value=>{rollLocked=!!value;},
     setCombatBusy:value=>{combatBusy=!!value;},
@@ -310,10 +311,9 @@
     logDiagnostic:(level,category,message,data)=>v25Log(level,category,message,data),
     debugState:()=>v25State(),
     trace:(name,work)=>v25TraceCommand(name,work,'detailed')
-  });
-  if(!dbBoardTileDispatch)throw new Error('DiceboundBoardTileDispatch must load before dicebound.js');
+  }});
 
-  const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({
+  dbRun.configure({generation:{
     getState:()=>({boardLevel}),
     getModeState:()=>({hellMode,devilPrimed:!!meta.devilPrimed}),
     getEnemyPool:()=>enemyPool,
@@ -338,10 +338,9 @@
       finally{meta.purchased=live;}
     },
     setRoad:next=>{tiles=next.tiles;merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;merchantFaceTotal=next.merchantFaceTotal;}
-  });
-  if(!dbBoardGeneration)throw new Error('DiceboundBoardGeneration must load before dicebound.js');
+  }});
 
-  const dbRunCompletion=window.DiceboundRunCompletion?.configure({
+  dbRun.configure({completion:{
     clearCheckpoint:()=>dbRunClearCheckpoint(),
     isCompleting:()=>v19CompletingSixth,
     beforeCompletion:()=>({unlockSlimeRouge:!!player.v28StartedRandom&&isClassUnlocked('slime')&&!meta.unlocks?.slimerouge}),
@@ -354,10 +353,9 @@
     presentTerminalEnd:detail=>dbRunPresentFinalEnd(detail),
     recordFirstCompletion:()=>{ensureAlphaMeta().fullVictories++;meta.board6Clears=(meta.board6Clears||0)+1;saveMeta();},
     afterCompletion:detail=>dbRunApplySixthRoadCompletion(detail)
-  });
-  if(!dbRunCompletion)throw new Error('DiceboundRunCompletion must load before dicebound.js');
+  }});
 
-  const dbBoardTransition=window.DiceboundBoardTransition?.configure({
+  dbRun.configure({transition:{
     getRoad:()=>({player,boardLevel}),
     setBoardLevel:value=>{boardLevel=value;},
     resetEncounter:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
@@ -365,17 +363,16 @@
     applyTheme:()=>applyRunTheme(),
     rebuildBoard:()=>{generateBoard();buildBoard();},
     getBoardDefinition:level=>db317Board(level),
-    completeFinalRoad:()=>dbRunCompletion.completeFinalRoad(),
+    completeFinalRoad:()=>dbRun.completeFinalRoad(),
     log:addLog,
     toast:showToast,
     playHoly:()=>sfx.holy(),
     updateHud:updateHUD,
     placePawn,
     schedule:(work,ms)=>setTimeout(work,ms)
-  });
-  if(!dbBoardTransition)throw new Error('DiceboundBoardTransition must load before dicebound.js');
+  }});
 
-  const dbBoardMovement=window.DiceboundBoardMovement?.configure({
+  dbRun.configure({movement:{
     getRoad:()=>({player,tiles,boardLevel,hellMode,devilPrimed:!!meta.devilPrimed}),
     currentTileCount:()=>currentTileCount(),
     currentMinibossTile:()=>currentMinibossTile(),
@@ -392,11 +389,10 @@
     placePawn,
     updateHud:updateHUD,
     delay,
-    dispatchTile:()=>dbBoardTileDispatch.dispatch()
-  });
-  if(!dbBoardMovement)throw new Error('DiceboundBoardMovement must load before dicebound.js');
+    dispatchTile:()=>dbRun.dispatchTile()
+  }});
 
-  const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({
+  dbRun.configure({lifecycle:{
     clearCheckpoint:()=>dbRunClearCheckpoint(),
     seedNewRun:()=>dbRunSeedNewRun(),
     beforeFreshRun:options=>options?.beforeFreshRun?.(),
@@ -425,8 +421,7 @@
     announceRandomClass:chosen=>addLog(`🎲 Random class selected <b>${chosen.icon} ${chosen.name}</b> for this run.`),
     afterClassStart:detail=>dbRunApplyClassStartEffects(detail),
     scheduleCheckpoint:()=>dbRunScheduleCheckpoint()
-  });
-  if(!dbRunLifecycle)throw new Error('DiceboundRunLifecycle must load before dicebound.js');
+  }});
 
   const CombatUI=Object.freeze({
     renderStrike(result){const critNote=result.critTiers?` · Critical ×${result.critTiers+1}`:'',execNote=result.executed?' · EXECUTION':'';setCombatText(`${result.burst||''}${result.label}${critNote}: ${result.dealt} damage${execNote}${result.heal?` · ${result.heal} lifesteal`:''}.${result.elementMessage?` ${result.elementMessage}`:''}`);result.critTiers?sfx.crit():sfx.hit();updateCombatUI();return result;}
@@ -458,7 +453,7 @@
       return result;
     }
   });
-  Object.defineProperty(window,'DiceboundStateArchitecture',{value:Object.freeze({events:DiceboundStateEvents,progression:ProgressionState,board:dbBoardMovement.state,victory:BattleVictoryState,victoryUI:BattleVictoryUI,identity:Object.freeze({id:classIdentityId,active:classIdentityActive,hasMechanic:classHasMechanic,capabilities:slimeRougeCapabilities})}),configurable:false});
+  Object.defineProperty(window,'DiceboundStateArchitecture',{value:Object.freeze({events:DiceboundStateEvents,progression:ProgressionState,board:dbRun.boardState,victory:BattleVictoryState,victoryUI:BattleVictoryUI,identity:Object.freeze({id:classIdentityId,active:classIdentityActive,hasMechanic:classHasMechanic,capabilities:slimeRougeCapabilities})}),configurable:false});
   const player = {
     classId:"ranger",position:0,level:1,xp:0,xpNext:20,hp:32,maxHp:32,attack:6,defense:1,
     gold:0,potions:1,crit:.15,luck:0,postFightHeal:0,goldBonus:0,
@@ -1278,8 +1273,8 @@
   }
   function mythicalSetSummary(){const count=mythicalSetCount();return `${count}/5 Impossible Road pieces · 3 pieces: +15% all damage and +15% elemental proc chance · 4 pieces: begin battles with at least 50 ultimate, one barrier and +25% pet double chance · 5 pieces: +30% all damage, +25% elemental power, and guardian specials deal 25% less damage.`;}
 
-  function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}
-  function generateBoard(){return dbBoardGeneration.generate();}
+  function enemyForPosition(index){return dbRun.enemyForPosition(index);}
+  function generateBoard(){return dbRun.generateBoard();}
   function tileMeta(tile){if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];}
   function buildBoard(){
     const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=tileMeta(tile),el=document.createElement("div");el.className=`tile ${tile.type}`;el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
@@ -1289,7 +1284,7 @@
     const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;$("rollBtn").disabled=rollLocked||!gameStarted;$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
   }
   async function rollDice(){
-    if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbBoardMovement.move(value+bonus,value,bonus>0,chosen);
+    if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
   }
   function startCombat(kind="normal"){
     if(!dbCombatEncounterLifecycle)throw new Error('Combat encounter-lifecycle owner is not configured.');
@@ -1332,7 +1327,7 @@
   function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
-  function startNewGame(){return dbRunLifecycle.startFreshRun();}
+  function startNewGame(){return dbRun.startFreshRun();}
   function showEnd(victory){rollLocked=true;gameStarted=false;const earned=finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
 
 
@@ -1433,9 +1428,9 @@
   async function resolveEnemyResponse(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.resolveEnemyResponse(...args);}
   function applyCombatPlayerDamage(raw){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.applyPlayerDamage(raw);}
 
-  function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}
+  function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}
 
-  function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbBoardTileDispatch.dispatch();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
+  function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbRun.dispatchTile();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
 
   /* SEMANTIC OWNER — Progression, achievements, board expansion and early run lifecycle. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1: achievements, classes, stats and combat polish ---------- */
@@ -1708,7 +1703,7 @@
   $("guardBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageReplenish();}},true);
   $("ultimateBtn").addEventListener("click",e=>{if(player.classId==="bloodmage"){e.preventDefault();e.stopImmediatePropagation();useUltimate();}},true);
 
-  const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbBoardMovement.move(value,value,false,true);};
+  const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);};
   $("rollBtn").addEventListener("click",e=>{if(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked){e.preventDefault();e.stopImmediatePropagation();rollDice();}},true);
 
   function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
@@ -2901,7 +2896,7 @@
     if($("roll2Btn"))return;const one=$("rollBtn");if(!one)return;one.textContent="🎲 Roll 1d6";const two=document.createElement("button");two.id="roll2Btn";two.className="main-btn double-dice-btn";two.textContent="🎲🎲 Roll 2d6";two.addEventListener("click",rollTwoDice);one.parentElement.insertBefore(two,one.nextSibling);
   }
   async function rollTwoDice(){
-    if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling","double-mode");for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}let a=rand(1,6),b=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){a=await chooseDieResult();b=await chooseDieResult();chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;if(hasMythicPiece("boots")&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast("🥾 Titanstep!");}const total=a+b;addLog(`${chosen?"Fate bends. You choose":"Double Dice rolls"} <b>${a} + ${b} = ${total}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.`);await dbBoardMovement.move(total+bonus,total,bonus>0,chosen);
+    if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling","double-mode");for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}let a=rand(1,6),b=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){a=await chooseDieResult();b=await chooseDieResult();chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;if(hasMythicPiece("boots")&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast("🥾 Titanstep!");}const total=a+b;addLog(`${chosen?"Fate bends. You choose":"Double Dice rolls"} <b>${a} + ${b} = ${total}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.`);await dbRun.move(total+bonus,total,bonus>0,chosen);
   }
   v19EnsureDoubleDiceButton();
   const updateHUDV19Base=updateHUD;
@@ -2955,7 +2950,7 @@
 
   // The historical callers still use this name, but board-transition.js now
   // owns the complete Board 5 -> 6 / final-road transition contract.
-  function advanceToNextBoard(){return dbBoardTransition.advance();}
+  function advanceToNextBoard(){return dbRun.advanceBoard();}
   let v19CompletingSixth=false;
   function dbRunPresentFinalEnd({earned,context}){
     const modePrefix=context.mode==='Normal'?'':`${context.mode} `;
@@ -2969,7 +2964,7 @@
     if(!before?.unlockSlimeRouge)return;
     unlockClass('slimerouge');addLog('<b>🔴 Something red crawls out of the random road.</b> Slime Rouge has been unlocked.');showToast('🔴 SECRET CLASS UNLOCKED · Slime Rouge',3800,true);
   }
-  function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}
+  function completeSixthRoadV19(){return dbRun.completeFinalRoad();}
 
   // Board-6 guardian labels in the road HUD.
   const updateHUDV19RoadBase=updateHUD;
@@ -3455,7 +3450,7 @@
     let a=rand(1,6),b=rand(1,6),chosen=false;if(v22ShouldChooseRoll()){[a,b]=await v22ChooseDice(2,meta.debugAlwaysChooseRolls?'Debug fate':'Fate');chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}
     let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;
     if(hasMythicPiece('boots')&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast('🥾 Titanstep!');}
-    const total=a+b;addLog(`${chosen?(meta.debugAlwaysChooseRolls?'Debug fate chooses':'Fate bends. You choose'):'Double Dice rolls'} <b>${a} + ${b} = ${total}</b>${bonus?' and Long Stride adds <b>+1</b>':''}.`);await dbBoardMovement.move(total+bonus,total,bonus>0,chosen);
+    const total=a+b;addLog(`${chosen?(meta.debugAlwaysChooseRolls?'Debug fate chooses':'Fate bends. You choose'):'Double Dice rolls'} <b>${a} + ${b} = ${total}</b>${bonus?' and Long Stride adds <b>+1</b>':''}.`);await dbRun.move(total+bonus,total,bonus>0,chosen);
   }
   function v22WireDoubleDice(){
     const old=$('roll2Btn');if(!old||old.dataset.v22Wired)return;const fresh=old.cloneNode(true);fresh.dataset.v22Wired='1';old.replaceWith(fresh);fresh.addEventListener('click',v22RollTwoDice);
@@ -3908,7 +3903,7 @@
     const die=$('dice');if(die?.classList.contains('rolling'))return false;
     v25Recoveries++;v25LastRecovery=Date.now();v25Log('errors','recovery','Recovering stuck road state',{reason,tile:tiles[player.position],state:v25State()});
     if(pendingLevelUps>0){openLevelUp();return true;}
-    const tile=tiles[player.position];if(tile&&!tile.cleared&&!['empty','start'].includes(tile.type)){rollLocked=true;try{dbBoardTileDispatch.dispatch();}catch(e){v25Log('errors','recovery','resolveTile failed during recovery',{error:String(e),state:v25State()});rollLocked=false;updateHUD();}return true;}
+    const tile=tiles[player.position];if(tile&&!tile.cleared&&!['empty','start'].includes(tile.type)){rollLocked=true;try{dbRun.dispatchTile();}catch(e){v25Log('errors','recovery','resolveTile failed during recovery',{error:String(e),state:v25State()});rollLocked=false;updateHUD();}return true;}
     rollLocked=false;updateHUD();$('rollBtn')?.classList.add('debug-recovered');setTimeout(()=>$('rollBtn')?.classList.remove('debug-recovered'),900);showToast('🛠️ Road state recovered');return true;
   }
   setInterval(()=>{if(!gameStarted||!rollLocked||combatBusy||currentEnemy||v25VisibleBlocker()||$('dice')?.classList.contains('rolling')){v25StuckSince=0;return;}if(!v25StuckSince)v25StuckSince=Date.now();if(Date.now()-v25StuckSince>4200&&Date.now()-v25LastRecovery>5000){v25RecoverRoadState('automatic watchdog');v25StuckSince=0;}},1000);
@@ -4051,7 +4046,7 @@
   // it with a capture handler that never grants Long Stride on chosen results.
   $('rollBtn')?.addEventListener('click',async e=>{
     if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return;
-    e.preventDefault();e.stopImmediatePropagation();ensureAudio();rollLocked=true;updateHUD();const die=$('dice');die.classList.add('rolling');for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbBoardMovement.move(value,value,false,true);
+    e.preventDefault();e.stopImmediatePropagation();ensureAudio();rollLocked=true;updateHUD();const die=$('dice');die.classList.add('rolling');for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);
   },true);
 
   /* POISON AS A FIRST-CLASS VISIBLE STAT ---------------------------------- */
@@ -5455,7 +5450,7 @@
     finally{eligibleUpgrades=original;}
   }
   function v319RoadLockRecovery(){
-    v319ResetCareer();resetPlayer('ranger');gameStarted=true;generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;dbBoardTileDispatch.dispatch();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
+    v319ResetCareer();resetPlayer('ranger');gameStarted=true;generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;dbRun.dispatchTile();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
   }
   function v319PoorItems(n=500){v319ResetCareer();resetPlayer('ranger');let nulls=0,badSlots=0,wrongRarity=0;for(let i=0;i<n;i++){const item=generateEquipment('poor');if(!item)nulls++;else{if(!EQUIPMENT_SLOTS.includes(item.slot))badSlots++;if(item.rarity!=='poor')wrongRarity++;}}return {n,nulls,badSlots,wrongRarity};}
   function v319EnergyShield(){
@@ -6090,7 +6085,7 @@
   const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
   const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
   const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
-  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
+  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
   // Test-only exercise of the live final-boss path. It deliberately resets the
   // ephemeral test session after each capture; it is never exposed to player UI.
@@ -7413,9 +7408,7 @@
   dbCombatD20ChaosResolution.initializePlayerState();
 
   /* SEMANTIC OWNER — Player / per-run initialization (#311). */
-  const dbPlayerInitializationOwner=window.DiceboundPlayerInitialization;
-  if(!dbPlayerInitializationOwner)throw new Error('DiceBound requires the player initialization owner before dicebound.js');
-  dbPlayerInitialization=dbPlayerInitializationOwner.configure({
+  dbRun.configurePlayerInitialization({
     getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>getHeirloomSlots(),
     equipItem:(item,silent=false)=>equipItem(item,silent),gameplayTalentRank:id=>gameplayTalentRank(id),generateEquipment:(rarity,slot)=>generateEquipment(rarity,slot),

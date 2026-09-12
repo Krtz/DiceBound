@@ -163,7 +163,7 @@ def main() -> int:
         if required_player_init not in player_init_source:
             errors.append("player initialization owner is missing required ordered responsibility: " + required_player_init)
     if monolith_source:
-        expected_reset_adapter = "function resetPlayer(classId=selectedClassId){if(!dbPlayerInitialization)throw new Error('Player initialization owner is not configured.');return dbPlayerInitialization.initialize(classId);}"
+        expected_reset_adapter = "function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}"
         if expected_reset_adapter not in monolith_source:
             errors.append("dicebound.js must retain only the thin resetPlayer player-initialization adapter")
         for retired_reset_layer in ["resetPlayer=function", "resetPlayerV15=", "resetPlayerV12=", "resetPlayerV13=", "resetPlayerV15Patch=", "resetPlayerV16Base=", "resetPlayerV17Base=", "resetPlayerV18Base=", "resetPlayerV19Base=", "resetPlayerV21Base=", "resetPlayerV23TalentBase=", "resetPlayerV24Base=", "resetPlayerV26TalentBase=", "resetPlayerV27Base=", "resetPlayerV28Base=", "db060ResetPlayerBase=", "db06421ResetPlayerBase=", "dbFriendResetPlayerBase="]:
@@ -618,9 +618,9 @@ def main() -> int:
             )
     if monolith_source:
         for expected_board_movement_adapter in [
-            "const dbBoardMovement=window.DiceboundBoardMovement?.configure({",
-            "board:dbBoardMovement.state",
-            "await dbBoardMovement.move(",
+            "dbRun.configure({movement:{",
+            "board:dbRun.boardState",
+            "await dbRun.move(",
         ]:
             if expected_board_movement_adapter not in monolith_source:
                 errors.append("dicebound.js must use the board-movement composition owner")
@@ -669,9 +669,9 @@ def main() -> int:
             )
     if monolith_source:
         for expected_board_tile_dispatch_adapter in [
-            "const dbBoardTileDispatch=window.DiceboundBoardTileDispatch?.configure({",
-            "dispatchTile:()=>dbBoardTileDispatch.dispatch()",
-            "dbBoardTileDispatch.dispatch()",
+            "dbRun.configure({tileDispatch:{",
+            "dispatchTile:()=>dbRun.dispatchTile()",
+            "dbRun.dispatchTile()",
             "trace:(name,work)=>v25TraceCommand(name,work,'detailed')",
         ]:
             if expected_board_tile_dispatch_adapter not in monolith_source:
@@ -720,9 +720,9 @@ def main() -> int:
             )
     if monolith_source:
         for expected_board_generation_adapter in [
-            "const dbBoardGeneration=window.DiceboundBoardGeneration?.configure({",
-            "function enemyForPosition(index){return dbBoardGeneration.enemyForPosition(index);}",
-            "function generateBoard(){return dbBoardGeneration.generate();}",
+            "dbRun.configure({generation:{",
+            "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",
+            "function generateBoard(){return dbRun.generateBoard();}",
         ]:
             if expected_board_generation_adapter not in monolith_source:
                 errors.append("dicebound.js must use the board-generation composition owner")
@@ -776,9 +776,9 @@ def main() -> int:
             )
     if monolith_source:
         for expected_board_transition_adapter in [
-            "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",
-            "function advanceToNextBoard(){return dbBoardTransition.advance();}",
-            "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",
+            "dbRun.configure({transition:{",
+            "function advanceToNextBoard(){return dbRun.advanceBoard();}",
+            "completeFinalRoad:()=>dbRun.completeFinalRoad()",
         ]:
             if expected_board_transition_adapter not in monolith_source:
                 errors.append("dicebound.js must use the board-transition composition owner")
@@ -863,9 +863,9 @@ def main() -> int:
             )
     if monolith_source:
         for expected_run_lifecycle_adapter in [
-            "const dbRunLifecycle=window.DiceboundRunLifecycle?.configure({",
-            "function startNewGame(){return dbRunLifecycle.startFreshRun();}",
-            "dbRunLifecycle.startFreshRun({beforeFreshRun:()=>{",
+            "dbRun.configure({lifecycle:{",
+            "function startNewGame(){return dbRun.startFreshRun();}",
+            "dbRun.startFreshRun({beforeFreshRun:()=>{",
         ]:
             if expected_run_lifecycle_adapter not in monolith_source:
                 errors.append("dicebound.js must use the run-lifecycle composition owner")
@@ -932,9 +932,9 @@ def main() -> int:
             )
     if monolith_source:
         for expected_run_completion_adapter in [
-            "const dbRunCompletion=window.DiceboundRunCompletion?.configure({",
-            "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()",
-            "function completeSixthRoadV19(){return dbRunCompletion.completeFinalRoad();}",
+            "dbRun.configure({completion:{",
+            "completeFinalRoad:()=>dbRun.completeFinalRoad()",
+            "function completeSixthRoadV19(){return dbRun.completeFinalRoad();}",
         ]:
             if expected_run_completion_adapter not in monolith_source:
                 errors.append("dicebound.js must use the run-completion composition owner")

@@ -67,10 +67,10 @@ assert.deepEqual(finalRoad.calls.map(call=>call[0]),["completeFinalRoad"],"Board
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
-  "const dbBoardTransition=window.DiceboundBoardTransition?.configure({",
-  "function advanceToNextBoard(){return dbBoardTransition.advance();}",
-  "completeFinalRoad:()=>dbRunCompletion.completeFinalRoad()"
-])assert.ok(monolith.includes(adapter),`missing board-transition composition adapter: ${adapter}`);
+  "dbRun.configure({transition:{",
+  "function advanceToNextBoard(){return dbRun.advanceBoard();}",
+  "completeFinalRoad:()=>dbRun.completeFinalRoad()"
+])assert.ok(monolith.includes(adapter),`missing board-transition facade composition: ${adapter}`);
 for(const retired of [
   "advanceToNextBoard=function",
   "const advanceToNextBoardV15Patch=advanceToNextBoard;",
