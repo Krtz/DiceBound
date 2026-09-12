@@ -25,6 +25,7 @@
     lifecycle:requireOwner('DiceboundRunLifecycle',root.DiceboundRunLifecycle),
     completion:requireOwner('DiceboundRunCompletion',root.DiceboundRunCompletion)
   });
+  let playerInitializer=null;
 
   function configure(parts={}){
     if(parts.movement)internal.movement.configure(parts.movement);
@@ -37,7 +38,15 @@
   }
 
   function createBoardRegistry(){return internal.boards.createRegistry();}
-  function configurePlayerInitialization(deps={}){return internal.playerInitialization.configure(deps);}
+  function configurePlayerInitialization(deps={}){
+    playerInitializer=internal.playerInitialization.configure(deps);
+    if(!playerInitializer?.initialize)throw new Error('DiceboundRun player initialization configuration did not provide initialize()');
+    return api;
+  }
+  function initializePlayer(...args){
+    if(!playerInitializer?.initialize)throw new Error('DiceboundRun player initialization is not configured');
+    return playerInitializer.initialize(...args);
+  }
   function move(...args){return internal.movement.move(...args);}
   function planMove(...args){return internal.movement.planMove(...args);}
   function dispatchTile(...args){return internal.tileDispatch.dispatch(...args);}
@@ -51,6 +60,7 @@
   function inspect(){
     return Object.freeze({
       owner:OWNER,
+      playerInitializationConfigured:!!playerInitializer?.initialize,
       internalOwners:Object.freeze({
         boards:internal.boards.owner||'board/registry',
         movement:internal.movement.owner,
@@ -70,6 +80,7 @@
     configure,
     createBoardRegistry,
     configurePlayerInitialization,
+    initializePlayer,
     move,
     planMove,
     dispatchTile,
@@ -79,6 +90,7 @@
     advanceBoard,
     startFreshRun,
     completeFinalRoad,
+    get boardState(){return internal.movement.state;},
     inspect
   });
 
