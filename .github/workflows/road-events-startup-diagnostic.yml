@@ -1,0 +1,31 @@
+name: Road Events Startup Diagnostic
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.26-road-events-oracle
+
+jobs:
+  diagnose:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate migrated tree
+        shell: pwsh
+        run: |
+          python tools/migrate_road_events_lifecycle.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/patch_road_events_lazy_bind.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py
+      - name: Browser startup diagnostic
+        shell: pwsh
+        run: |
+          node tools/test_file_startup_browser.js
