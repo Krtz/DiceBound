@@ -7,20 +7,22 @@
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
   const dbItemGenerationOwner=window.DiceboundItemGeneration;
   if(!dbItemGenerationOwner)throw new Error("dicebound.js requires DiceboundItemGeneration before loading.");
+  const dbItemOperationsOwner=window.DiceboundItemOperations;
+  if(!dbItemOperationsOwner)throw new Error("dicebound.js requires DiceboundItemOperations before loading.");
   const dbItems=window.DiceboundItems;
   if(!dbItems)throw new Error("dicebound.js requires DiceboundItems before loading.");
-  let dbItemGeneration=null;
+  let dbItemGeneration=null,dbItemOperations=null;
   dbItems.configure({
     generateEquipment:(rarity=null,slot=null)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateEquipment(rarity,slot);},
     generateLegendary:(slot=null,preferUndiscovered=false)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateLegendary(slot,preferUndiscovered);},
     rollGearRarity:bonus=>rollGearRarity(bonus),
     openLoot:(item,done)=>openLoot(item,done),
-    equip:(item,silent=false)=>equipItem(item,silent),
-    sellValue:item=>itemSellValue(item),
-    rawSellValue:item=>v14RawSellValue(item),
-    score:item=>gearPowerScore(item),
+    equip:(item,silent=false)=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.equip(item,silent);},
+    sellValue:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.sellValue(item);},
+    rawSellValue:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.rawSellValue(item);},
+    score:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.score(item);},
     formatBonuses:item=>formatBonuses(item),
-    formatComparison:(item,current)=>formatGearComparison(item,current)
+    formatComparison:(item,current)=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.formatComparison(item,current);}
   });
   const dbRoadEvents=window.DiceboundRoadEvents;
   if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");
@@ -592,38 +594,17 @@
     if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
     player.hp=clamp(player.hp,1,player.maxHp);
   }
-  function gearPowerScore(item){
-    if(!item)return 0;const w={attack:7,defense:8,maxHp:.55,crit:45,dodge:38,lifeSteal:45,luck:18,goldBonus:20,potionPower:15,bossDamage:34,doubleStrike:42,classBurst:30,extraStepChance:18,damageBonus:50,flatReduction:11};
-    let score=(rarityValues[item.rarity]||0)*3+(item.element?7:0)+(item.mythical?100:0);Object.entries(item.bonuses||{}).forEach(([k,v])=>score+=Math.abs(v)*(w[k]||2));return score;
-  }
-  function equipItem(item,silent=false){
-    const old=player.equipment[item.slot];if(old)applyItemStats(old,-1);
-    player.equipment[item.slot]=JSON.parse(JSON.stringify(item));applyItemStats(item,1);
-    if(!silent){sfx.level();showToast(`Equipped ${item.name}`);addLog(`Equipped <b>${item.name}</b> (${rarityInfo[item.rarity].label}).`);}
-    renderEquipment();updateHUD();
-  }
+  function gearPowerScore(item){return dbItems.score(item);}
+  function equipItem(item,silent=false){return dbItems.equip(item,silent);}
   function renderEquipment(){
     beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();
   }
-  function itemSellValue(item){return 10+rarityValues[item.rarity]*14+Math.floor(player.position/5);}
+  function itemSellValue(item){return dbItems.sellValue(item);}
   function closeLoot(){
     $("lootOverlay").classList.add("hidden");const cb=pendingLootCallback;pendingLootItem=null;pendingLootCallback=null;if(cb)cb();
   }
   function equipmentDropChance(boss=false){return boss?1:.34+Math.min(.18,player.position*.0025);}
-  function formatGearComparison(item,current){
-    if(!current)return `<b>Equipped:</b> Empty ${SLOT_LABELS[item.slot]} slot.<br><span class="better">Everything on this item is new.</span>`;
-    const keys=new Set([...Object.keys(item.bonuses||{}),...Object.keys(current.bonuses||{})]);
-    const deltas=[];
-    keys.forEach(key=>{
-      const diff=(item.bonuses?.[key]||0)-(current.bonuses?.[key]||0);
-      if(Math.abs(diff)<.0001)return;
-      const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
-      const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage"};
-      const value=key==="luck"?Math.abs(Math.round(diff*100)):pct?`${Math.abs(Math.round(diff*100))}%`:Math.abs(Math.round(diff*100)/100);
-      deltas.push(`<span class="${diff>0?"better":"worse"}">${diff>0?"+":"−"}${value} ${names[key]||key}</span>`);
-    });
-    return `<b>Equipped:</b> ${current.icon} ${current.name}<br>${formatBonuses(current)}<br><b>Change:</b> ${deltas.length?deltas.join(" · "):'<span class="same">No numerical change</span>'}`;
-  }
+  function formatGearComparison(item,current){return dbItems.formatComparison(item,current);}
 
   /* #209 / #40: equipment and Heirloom presentation is owned by
      ui/equipment-heirlooms.js. The monolith supplies runtime facts and the
@@ -1704,8 +1685,6 @@
 
   const effectiveDodgeChanceV12=effectiveDodgeChance;
   effectiveDodgeChance=function(){const base=effectiveDodgeChanceV12();return classIdentityActive("monk")?1-(1-base)*(1-base):base;};
-  const itemSellValueV12=itemSellValue;
-  itemSellValue=function(item){const base=itemSellValueV12(item);return classIdentityActive("merchant")?Math.round(base*2):base;};
   const damageEnemyV12=damageEnemy;
   damageEnemy=function(enemy,amount,ignoreDefense=false){if(classIdentityActive("berserker")&&player.maxHp>0)amount=DB_EFFECTIVE_STATS.scaleBerserkerRageDamage(amount,player);return damageEnemyV12(enemy,amount,ignoreDefense);};
 
@@ -2025,10 +2004,6 @@
     return spent;
   }
 
-  const gearPowerScorePreV14=gearPowerScore;
-  function v14FallbackPower(item){if(!item)return 0;if(Number(item.spentPower)>0)return Number(item.spentPower);if(Number(item.itemPower)>0)return Number(item.itemPower);const floor={common:13,uncommon:23,rare:37,epic:58,legendary:90,mythical:135,omega:175}[item.rarity]||25;return Math.max(floor,Math.round(gearPowerScorePreV14(item)*.72));}
-  function v14RawSellValue(item){const p=v14FallbackPower(item),mult={common:.80,uncommon:.90,rare:1,epic:1.10,legendary:1.25,mythical:1.45,omega:1.70}[item.rarity]||1;return Math.max(8,Math.round((12+p*1.45+p*p*.042)*mult));}
-  itemSellValue=function(item){const base=v14RawSellValue(item);return classIdentityActive("merchant")?Math.round(base*2):base;};
 
 
 
@@ -2041,9 +2016,7 @@
 
   // Later boards become meaningful progression walls instead of a Board-1 check followed by a snowball.
 
-  // Better item comparison: actual hidden point budget is useful internally, while players still judge the visible rolls.
-  const gearPowerScoreV14Base=gearPowerScorePreV14;
-  gearPowerScore=function(item){if(!item)return 0;const visible=gearPowerScoreV14Base(item),budget=v14FallbackPower(item);return visible+budget*.9;};
+  // Item score/value ownership now lives behind DiceboundItems.
 
   // Update rarity/explanation text without exposing the hidden number itself.
 
@@ -2101,14 +2074,6 @@
   function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(poor|common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
   function v15GenerateEquipmentFromSeedCode(code){return window.DiceboundEquipment.generateOrdinaryFromSeedCode(code,{parseSeedCode:v15ParseSeedCode,seedRng:v14SeedRng,seedInt:v14SInt,seedPick:v14SPick,hashSeed:v14HashSeed,rarityBudgets:V14_RARITY_BUDGETS,affixTiers:V14_RARITY_AFFIX_TIER,prefixes:V14_PREFIXES,suffixes:V14_SUFFIXES,elementKeys:ELEMENT_KEYS,elementChanceForRarity,pickAffix:window.DiceboundEquipment.pickOrdinaryAffix,spendBase:v14SpendBase,gearIcon,baseName:window.DiceboundEquipment.ordinaryBaseName});}
 
-  const gearPowerScoreV15Visible=gearPowerScorePreV14;
-  gearPowerScore=function(item){if(!item)return 0;const visible=gearPowerScoreV15Visible(item),actual=v14FallbackPower(item),elementBonus=item.element?10:0;return visible+actual*2.15+elementBonus;};
-  formatGearComparison=function(item,current){if(!current)return `<b>Empty slot.</b> Equipping this item will not replace anything.`;const score=gearPowerScore(item)-gearPowerScore(current),deltas=[];const keys=new Set([...Object.keys(current.bonuses||{}),...Object.keys(item.bonuses||{})]);keys.forEach(k=>{const d=(item.bonuses?.[k]||0)-(current.bonuses?.[k]||0);if(Math.abs(d)>.0001)deltas.push(`${STAT_LABELS[k]||k} ${formatBonusValue(k,d)}`);});const quality=score>12?'<span class="better">Overall quality: stronger</span>':score<-12?'<span class="worse">Overall quality: weaker</span>':'<span class="same">Overall quality: similar</span>';return `${quality}<br>${deltas.length?deltas.join(" · "):'<span class="same">No numerical stat change</span>'}`;};
-
-
-
-  const equipItemV15Patch=equipItem;
-  equipItem=function(item,silent=false){const old=player.equipment?.[item.slot],willSell=!silent&&old&&old.id!==item.id,sale=willSell?itemSellValue(old):0;equipItemV15Patch(item,silent);if(willSell){player.gold+=sale;ensureAlphaMeta().goldEarned+=sale;statsLastGold=player.gold;sfx.coin();addLog(`Auto-sold replaced <b>${old.name}</b> for <b>${sale} gold</b>.`);showToast(`Equipped ${item.name} · old gear +${sale}g`);updateHUD();}};
   {const oldBtn=$("equipLootBtn");if(oldBtn){const neo=oldBtn.cloneNode(true);oldBtn.replaceWith(neo);neo.addEventListener("click",async()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot],delta=current?gearPowerScore(pendingLootItem)-gearPowerScore(current):999;if(current&&delta<0&&!(await diceboundConfirm(`${pendingLootItem.name} rolls lower overall quality than ${current.name} after considering its hidden quality budget and visible stats. Replace it anyway? ${current.name} will automatically be sold for ${itemSellValue(current)} gold.`,{title:"Replace stronger gear?",confirmLabel:"Replace anyway",danger:true})))return;equipItem(pendingLootItem);closeLoot();});}}
 
   // ---- Summoner & Pokémon Trainer runtime ----------------------------------
@@ -3470,8 +3435,6 @@
     if(p<.45+boost*.58)return 'common';
     return 'poor';
   };
-  v14RawSellValue=function(item){const p=v14FallbackPower(item),mult={poor:.68,common:.82,uncommon:.98,rare:1.16,epic:1.40,legendary:2.15,artifact:2.6,mythical:3.1,omega:4.2}[item?.rarity]||1;return Math.max(6,Math.round((10+p*1.45+p*p*.042)*mult));};
-  itemSellValue=function(item){return v14RawSellValue(item);};
 
   // Board merchants understand the shifted ordinary rarity ladder. They can
   // sell Poor→Epic generated gear; handcrafted Legendary+ pieces never enter
@@ -3623,7 +3586,6 @@
   /* v2.4 compatibility hardening: old callers cannot generate random
      handcrafted Legendary gear, Merchant keeps double resale, and the board
      set card uses the authoritative Artifact-tier table. */
-  itemSellValue=function(item){const base=v14RawSellValue(item);return classIdentityActive('merchant')?Math.round(base*2):base;};
 
   /* v2.4 final presentation consistency ----------------------------------- */
   function v24RefreshDebugLabels(){
@@ -5654,8 +5616,6 @@
   function db060GenerateLegendary(forcedSlot=null,preferUndiscovered=false){return dbItems.generateLegendary(forcedSlot,preferUndiscovered);}
 
   // Generated Legendary effects count as real item value in comparisons.
-  const db060GearScoreBase=gearPowerScore;
-  gearPowerScore=function(item){return db060GearScoreBase(item)+(item?.legendaryEffectId?180:0);};
   const db060FormatBonusesBase=formatBonuses;
   formatBonuses=function(item){const base=db060FormatBonusesBase(item);if(!item?.legendaryEffectId)return base;const e=DB060_EFFECT_BY_ID[item.legendaryEffectId];return `${base} · LEGENDARY EFFECT: ${e?.name||item.legendaryEffectName} — ${e?.desc||item.legendaryEffectDesc||''}`;};
 
@@ -5722,8 +5682,6 @@
     if(db060HasEffect('reverse_engineering')){const totals=Object.values(player.equipment||{}).reduce((a,i)=>{a.attack+=Number(i?.bonuses?.attack)||0;a.defense+=Number(i?.bonuses?.defense)||0;return a;},{attack:0,defense:0});const aAdj=totals.defense-totals.attack,dAdj=totals.attack-totals.defense;player.attack+=aAdj;player.defense+=dAdj;player._db060GearSwapAttackAdj=aAdj;player._db060GearSwapDefenseAdj=dAdj;}
     if(db060HasEffect('glass_fortress')){const penalty=Math.max(1,Math.floor(player.maxHp*.30));player.maxHp=Math.max(1,player.maxHp-penalty);player.hp=Math.min(player.hp,player.maxHp);player._db060GlassHpPenalty=penalty;}
   }
-  const db060EquipItemBase=equipItem;
-  equipItem=function(item,silent=false){db060ClearGearTransform();const r=db060EquipItemBase(item,silent);db060ApplyGearTransform();renderEquipment();updateHUD();return r;};
 
 
   // Attack/Defense powerup cross-feed.
@@ -6109,19 +6067,6 @@
     const base=db06314FormatBonusesBase(item),intrinsic=db06314IntrinsicParts(item);
     return intrinsic?`${base} · INTRINSIC (${intrinsic.identity.displayName}): ${intrinsic.values.join(' · ')}`:base;
   };
-  const db06314GearScoreBase=gearPowerScore;
-  gearPowerScore=function(item){
-    const weights={attack:7,defense:8,maxHp:.55,maxMana:.7,crit:45,dodge:38,lifeSteal:45,luck:18,goldBonus:20,potionPower:15,bossDamage:34,doubleStrike:42,classBurst:30,extraStepChance:18,damageBonus:50,flatReduction:11,elementProcBonus:45};
-    return db06314GearScoreBase(item)+Object.entries(db06314Equipment.intrinsicBonusesForItem(item)).reduce((score,[key,value])=>score+Math.abs(value)*(weights[key]||2),0);
-  };
-  formatGearComparison=function(item,current){
-    if(!current)return '<b>Empty slot.</b> Equipping this item will not replace anything.';
-    const score=gearPowerScore(item)-gearPowerScore(current),incoming=db06314Equipment.allBonusesForItem(item),equipped=db06314Equipment.allBonusesForItem(current),deltas=[];
-    const keys=new Set([...Object.keys(equipped),...Object.keys(incoming)]);
-    keys.forEach(key=>{const delta=(incoming[key]||0)-(equipped[key]||0);if(Math.abs(delta)>.0001){const label=db06314BonusLabel(key,Math.abs(delta)).replace(/^\+/,'');deltas.push(`<span class="${delta>0?'better':'worse'}">${delta>0?'+':'−'}${label}</span>`);}});
-    const quality=score>12?'<span class="better">Overall quality: stronger</span>':score<-12?'<span class="worse">Overall quality: weaker</span>':'<span class="same">Overall quality: similar</span>';
-    return `${quality}<br>${deltas.length?deltas.join(' · '):'<span class="same">No numerical stat change</span>'}`;
-  };
   window.DiceboundEquipmentIdentityTest=Object.freeze({
     identity:id=>db06314Equipment.equipmentIdentity(id),
     art:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item)||null,
@@ -6140,13 +6085,15 @@
     const snapshot=DB_EFFECTIVE_STATS.manaResourceSnapshot({baseMaxMana,currentMana,usesMana:db06421UsesMana(),equipmentMana:db06421EquipmentMana()});
     player.maxMana=snapshot.maxMana;player.mana=snapshot.mana;return snapshot;
   }
-  const db06421EquipItemBase=equipItem;
-  equipItem=function(item,silent=false){
-    const priorEquipmentMana=db06421UsesMana()?db06421EquipmentMana():0,baseMaxMana=Math.max(0,(Number(player.maxMana)||0)-priorEquipmentMana),currentMana=Number(player.mana)||0;
-    const result=db06421EquipItemBase(item,silent);
-    db06421SyncMana({baseMaxMana,currentMana});
-    return result;
-  };
+  dbItemOperations=dbItemOperationsOwner.createController({
+    getPlayer:()=>player,getMeta:()=>meta,rarityValues,equipmentApi:db06314Equipment,
+    classIdentityActive:id=>classIdentityActive(id),bonusLabel:(key,value)=>db06314BonusLabel(key,value),
+    applyItemStats:(item,sign)=>applyItemStats(item,sign),clearGearTransform:()=>db060ClearGearTransform(),applyGearTransform:()=>db060ApplyGearTransform(),
+    usesMana:()=>db06421UsesMana(),equipmentMana:()=>db06421EquipmentMana(),syncMana:snapshot=>db06421SyncMana(snapshot),
+    ensureAlphaMeta:()=>ensureAlphaMeta(),setStatsLastGold:value=>{statsLastGold=value;},rarityLabel:rarity=>rarityInfo[rarity].label,
+    sfxLevel:()=>sfx.level(),sfxCoin:()=>sfx.coin(),showToast:text=>showToast(text),addLog:text=>addLog(text),
+    renderEquipment:()=>renderEquipment(),updateHUD:()=>updateHUD()
+  });
 
   function db06421ManaEquipmentExercise(){
     try{
