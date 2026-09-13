@@ -77,7 +77,7 @@ for (const id of rarityIds) {
   assert.ok(Number.isFinite(rarityInfo[id].weight) && rarityInfo[id].weight >= 0);
   assert.ok(Number.isFinite(rarityValues[id]) && rarityValues[id] > 0);
 }
-snapshot(rarityInfo, 373, "0021f2cd1701fb1a166b635daef19a15581eabde347fd232e1b7ff7832c862eb", "rarity info");
+snapshot(rarityInfo, 373, "0021f2cd1704fb1a166b635daef19a15581eabde347fd232e1b7ff7832c862eb", "rarity info");
 snapshot(rarityValues, 104, "979528d13f2cbf11dd002d5930004e048996ee0ec5159e272712453c30448d7c", "rarity values");
 
 const secondPets = petsApi.createRegistry();
