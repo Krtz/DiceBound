@@ -50,7 +50,7 @@ jobs:
           Remove-Item Env:DICEBOUND_CAPTURE_PETS -ErrorAction SilentlyContinue
           node tools/test_pets_oracle.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node tools/test_pet_chooser_ui.js
+          node tools/test_pet_chooser.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_combat_pet_turn_resolution.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
