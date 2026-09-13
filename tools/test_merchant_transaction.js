@@ -16,10 +16,8 @@ const source = fs.readFileSync(require.resolve("../runtime/js/events/merchant-tr
 const monolith = fs.readFileSync("runtime/js/dicebound.js", "utf8");
 const merchantUi = fs.readFileSync("runtime/js/ui/merchant.js", "utf8");
 
-// Merchant gear descriptions and comparisons still run through two historical
-// equipment-identity helper names in the compatibility monolith. They were
-// accidentally deleted while their callers remained live; keep the bridge
-// deterministic until that presentation responsibility is fully extracted.
+// Intrinsic-bonus presentation still uses the historical compatibility helper,
+// while overall gear comparison now belongs to the public DiceboundItems boundary.
 assert.equal(window.db06314BonusLabel("attack", 3), "+3 Attack");
 assert.equal(window.db06314BonusLabel("crit", .15), "+15% Crit");
 assert.deepEqual(window.db06314IntrinsicParts({ equipmentId: fakeIdentity.id }), {
@@ -28,7 +26,7 @@ assert.deepEqual(window.db06314IntrinsicParts({ equipmentId: fakeIdentity.id }),
 });
 assert.equal(window.db06314IntrinsicParts({ equipmentId: "unknown" }), null);
 assert.match(monolith, /db06314IntrinsicParts\(item\)/, "live equipment formatter no longer consumes the compatibility bridge");
-assert.match(monolith, /db06314BonusLabel\(key,Math\.abs\(delta\)\)/, "live equipment comparison no longer consumes the compatibility bridge");
+assert.match(monolith, /formatGearComparison\s*=\s*\(item,current\)=>dbItems\.formatComparison\(item,current\)/, "live equipment comparison is not routed through DiceboundItems");
 
 // Merchant integration regression: renderMerchant() establishes the visit for
 // currentMerchantItems before the outer openMerchant() wrapper returns. The
