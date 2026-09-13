@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.27
+
+## Beta 0.6.6.27 Items subsystem ownership (#320)
+- Added `DiceboundItems` as the ordinary public Items boundary over focused generation and operations owners while keeping rarity, equipment identity, consumables, Artifacts, Loot and Equipment/Heirloom presentation in their existing focused modules.
+- Retired the historical equipment-generation ladder and the layered score/sell/equip/comparison wrapper stack from `dicebound.js`; ordinary callers now route through the Items boundary.
+- Preserved released 0.6.6.26 behavior with a permanent 23-case exact output/state/RNG oracle, including generated Legendary effect selection, Merchant x2 resale, Board → Treasure handoff, direct special-rarity demotion quirks and the malformed-but-non-null invalid-rarity compatibility path.
+- Architecture-only: no rarity odds, point budgets, affix weights, elemental odds, Merchant balance, Artifact/Mythical/Omega design, save/checkpoint semantics or gameplay tuning is intended. Runtime graph is 77 modules (76 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 694,385 bytes / 7,130 physical lines, down from 709,513 bytes / 7,267 lines in released 0.6.6.26.
+
 # Unreleased — Beta 0.6.6.26
 
 ## Beta 0.6.6.26 Road Events subsystem facade (#324)

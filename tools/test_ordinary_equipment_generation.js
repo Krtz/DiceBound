@@ -53,7 +53,9 @@ assert.equal(invalidSlot.calls,3,"invalid forced slot changed fallback RNG call 
 assert.equal(forced.actual.slot,"weapon");assert.ok(equipment.createRegistry().slots.includes(unforced.actual.slot));assert.ok(equipment.createRegistry().slots.includes(invalidSlot.actual.slot));
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
-assert.match(monolith,/DiceboundEquipment\.generateOrdinaryFromSeedCode/,"monolith is not delegating deterministic construction");
-assert.match(monolith,/DiceboundEquipment\.generateOrdinaryItem/,"monolith is not delegating ordinary-item normalization");
+const generation=fs.readFileSync(path.join(root,"runtime/js/items/generation.js"),"utf8");
+assert.match(monolith,/DiceboundEquipment\.generateOrdinaryFromSeedCode/,"composition is not delegating deterministic construction");
+assert.match(generation,/ordinaryApi\.generateOrdinaryItem/,"Items generation owner is not delegating ordinary-item normalization");
+assert.doesNotMatch(monolith,/DiceboundEquipment\.generateOrdinaryItem/,"ordinary-item generation ownership leaked back into the monolith");
 assert.doesNotMatch(monolith,/function v15AffixForClass\(/,"old ordinary-affix construction helper remains in the monolith");
-console.log("PASS #127 ordinary equipment generation preserves seeded outputs, object shape and outer RNG order");
+console.log("PASS #127 ordinary equipment generation preserves seeded outputs, object shape, outer RNG order, and Items ownership");

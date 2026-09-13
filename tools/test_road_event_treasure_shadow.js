@@ -27,7 +27,7 @@ for(const retired of [
 
 for(const required of [
   "treasure:{",
-  "generateLegendary:(slot,preferUndiscovered)=>db060GenerateLegendary(slot,preferUndiscovered)",
+  "generateLegendary:(slot,preferUndiscovered)=>dbItems.generateLegendary(slot,preferUndiscovered)",
   "openTreasure:()=>dbRoadEvents.openTreasure()"
 ])assert.ok(monolith.includes(required),`Treasure composition is missing: ${required}`);
 
