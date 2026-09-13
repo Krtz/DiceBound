@@ -686,6 +686,8 @@
     getTilesMovedThisRun:()=>tilesMovedThisRun,isNightmare:()=>!!nightmareMode,updateMetaUI:()=>updateMetaUI(),
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
     storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
+    getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
+    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),isClassUnlocked:id=>isClassUnlocked(id),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,getAchievementGateRewards:()=>db0512GateRewards,
     checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
   });
   const talentRank=id=>dbProgression.talentRank(id);
@@ -1264,15 +1266,7 @@
     {id:"elemental_predator",rarity:"epic",icon:"🌈🐺",name:"Elemental Predator",desc:"Deal +20% elemental damage and +10% damage against elemental monsters.",apply(){player.elementDamageBonus+=.20;player.elementalEnemyDamage=(player.elementalEnemyDamage||0)+.10;}}
   );
 
-  function achievementGateUnlocked(gate){
-    if(!gate)return true;
-    if(gate==="prestige10")return (meta.prestige?.count||0)>=10;
-    if(gate==="road2")return isClassUnlocked("clown");
-    if(gate==="road3")return !!meta.nightmareUnlocked;
-    if(gate==="road4")return (meta.board4Clears||0)>0;
-    if(gate==="nature_master")return (meta.elementProgress?.nature||0)>=PET_UNLOCK_REQUIREMENT;
-    return !!meta.achievements?.[gate];
-  }
+  function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}
   function eligibleUpgrades(filter=()=>true){return upgrades.filter(u=>{const classOk=!u.classId&&!u.classIds||player.classId==="slime"||u.classId===player.classId||(u.classIds||[]).includes(player.classId);return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});}
 
   function dbClassUnlockFacts(){meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;}
@@ -1395,10 +1389,6 @@
     {id:"slime_apotheosis",classId:"slime",rarity:"legendary",achievementGate:"slime_lvl5",icon:"🟢👑",name:"Royal Jelly",desc:"Achievement-locked: +25 max HP, +4 Attack and +18% Echo Strike.",apply(){player.maxHp+=25;player.hp+=25;player.attack+=4;player.doubleStrike+=.18;}}
   );
   const goldenLaw=upgrades.find(u=>u.id==="legendary_golden_law");if(goldenLaw){goldenLaw.achievementGate="merchant1";goldenLaw.desc="Achievement-locked: defeat the Road Merchant once. Gain +100% gold and every 100 gold grants +1 attack for this run.";}
-
-  const gateV15=achievementGateUnlocked;
-  achievementGateUnlocked=function(gate){
-    if(!gate)return true;ensureAlphaMeta();if(gate==="merchant1")return (meta.merchantKills||0)>=1;if(gate==="ranger_b1")return hasBoardClear("ranger",1);if(gate==="sorcerer_b2")return hasBoardClear("sorcerer",2);if(gate==="slime_lvl5")return (meta.stats.classMaxLevel.slime||0)>=5;if(gate==="heal1000")return meta.stats.healingDone>=1000;if(gate==="gold1500")return meta.stats.highestGold>=4000;if(gate==="menagerie")return Object.values(meta.pets||{}).every(p=>p.unlocked);if(gate==="paladin_oath")return hasBoardClear("fighter",3)&&hasBoardClear("cleric",3);return gateV15(gate);};
 
   CLASSES.ceo.unlock="Secret: reach 300% Boss Damage";
   Object.assign(CLASSES.ranger,{scaleNotes:"Attack is the core stat; Crit is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive."});
@@ -2621,12 +2611,6 @@
       if(leg){leg.achievementGate=`class_b4:${id}`;classMasteryGate[leg.id]={board:4,id};if(!/Board 4 mastery/i.test(leg.desc))leg.desc=`Board 4 mastery: ${leg.desc}`;}
     });
   }
-  const achievementGateUnlockedV19Base=achievementGateUnlocked;
-  achievementGateUnlocked=function(gate){
-    if(typeof gate==="string"&&gate.startsWith("class_b3:"))return hasBoardClear(gate.slice(9),3);
-    if(typeof gate==="string"&&gate.startsWith("class_b4:"))return hasBoardClear(gate.slice(9),4);
-    return achievementGateUnlockedV19Base(gate);
-  };
   v19AssignMasteryGates();
 
   // ---- Impossible Road: seven-piece progression ---------------------------
@@ -4120,66 +4104,7 @@
   },true);
   dbBeta01SyncDifficultyAtmosphere();
   window.DiceboundBeta01=Object.freeze({difficultyMode:dbBeta01DifficultyMode,syncDifficultyAtmosphere:dbBeta01SyncDifficultyAtmosphere});
-  /* ========================================================================
-     Alpha v3.1.7 — registry-driven achievement presentation
-     Milestone achievement content comes only from ACHIEVEMENT_REGISTRY.
-     Class unlock cards derive from CLASSES + CLASS_UNLOCK_REGISTRY and class
-     mastery cards derive from canonical powerup achievementGate metadata.
-     ======================================================================== */
-  function db317AchievementDone(a){
-    const stats=ensureAlphaMeta(),parts=String(a.condition||"").split(":"),kind=parts[0];
-    if(kind==="runsStarted")return (stats.runsStarted||0)>0||gameStarted;
-    if(kind==="boardClear")return hasBoardClear(parts[1],Number(parts[2]));
-    if(kind==="classUnlocked")return isClassUnlocked(parts[1]);
-    if(kind==="nightmareUnlocked")return !!meta.nightmareUnlocked;
-    if(kind==="board4Clears")return (meta.board4Clears||0)>0;
-    if(kind==="board5Clears")return (meta.board5Clears||0)>0;
-    if(kind==="classLevel")return (stats.classMaxLevel?.[parts[1]]||0)>=Number(parts[2]||0);
-    if(kind==="healingDone")return (stats.healingDone||0)>=Number(parts[1]||0);
-    if(kind==="highestGold")return Math.max(stats.highestGold||0,player?.gold||0)>=Number(parts[1]||0);
-    if(kind==="elementProgress")return (meta.elementProgress?.[parts[1]]||0)>=Number(parts[2]||0);
-    if(kind==="allPetsUnlocked")return Object.values(meta.pets||{}).every(p=>p.unlocked);
-    if(kind==="prestige")return (meta.prestige?.count||0)>=Number(parts[1]||0);
-    if(kind==="setPieces")return mythicalSetCount()>=Number(parts[1]||0);
-    if(kind==="merchantKills")return (meta.merchantKills||0)>=Number(parts[1]||0);
-    if(kind==="hellUnlocked")return !!meta.hellUnlocked;
-    if(kind==="heirloomStorageUnlocked")return !!meta.heirloomStorageUnlocked||v24StorageUnlocked?.();
-    if(kind==="legendaryRelics")return (meta.legendaryRelics||[]).length>=Number(parts[1]||0);
-    if(kind==="devilBossKills")return (meta.devilBossKills||0)>=Number(parts[1]||0);
-    if(kind==="devilHornsFound")return !!meta.devilHornsFound;
-    if(kind==="potionsUsed")return (stats.potionsUsed||0)>=Number(parts[1]||0);
-    return !!meta.achievements?.[a.id];
-  }
-  function db317AchievementConditionText(a){
-    const p=String(a.condition||"").split(":"),kind=p[0];
-    if(kind==="runsStarted")return "Begin any run.";
-    if(kind==="boardClear")return `Clear Board ${p[2]} as ${CLASSES[p[1]]?.name||p[1]}.`;
-    if(kind==="classUnlocked")return `Unlock ${CLASSES[p[1]]?.name||p[1]}.`;
-    if(kind==="nightmareUnlocked")return "Unlock Nightmare Mode.";
-    if(kind==="board4Clears")return "Clear Board 4.";
-    if(kind==="board5Clears")return "Clear Board 5.";
-    if(kind==="classLevel")return `Reach run level ${p[2]} as ${CLASSES[p[1]]?.name||p[1]}.`;
-    if(kind==="healingDone")return `Heal ${Number(p[1]).toLocaleString()} HP across all runs.`;
-    if(kind==="highestGold")return `Hold ${Number(p[1]).toLocaleString()} gold at once.`;
-    if(kind==="elementProgress")return `Accumulate ${Number(p[2]).toLocaleString()} ${ELEMENTS[p[1]]?.name||p[1]} damage/healing.`;
-    if(kind==="allPetsUnlocked")return "Unlock every companion.";
-    if(kind==="prestige")return `Reach ${p[1]} Prestige.`;
-    if(kind==="setPieces")return `Equip ${p[1]} pieces of the Impossible Road set.`;
-    if(kind==="merchantKills")return `Defeat the Road Merchant ${p[1]} time${Number(p[1])===1?"":"s"}.`;
-    if(kind==="hellUnlocked")return "Unlock Hell Mode.";
-    if(kind==="heirloomStorageUnlocked")return "Unlock permanent Heirloom Storage.";
-    if(kind==="legendaryRelics")return `Discover ${p[1]} named Mythical road relic${Number(p[1])===1?"":"s"}.`;
-    if(kind==="devilBossKills")return `Defeat the Pale Devil ${p[1]} time${Number(p[1])===1?"":"s"}.`;
-    if(kind==="devilHornsFound")return "Find the Devil's Horns Omega hat.";
-    if(kind==="potionsUsed")return `Consume ${p[1]} potions across all runs.`;
-    return "Complete the listed achievement condition.";
-  }
-  function db317AchievementRewardText(a){
-    if(!a.reward)return "";const [type,id]=String(a.reward).split(":");
-    if(type==="class")return ` · unlocks ${CLASSES[id]?.name||id}`;
-    if(type==="powerup")return ` · unlocks ${upgrades.find(u=>u.id===id)?.name||id}`;
-    return "";
-  }
+  /* Alpha v3.1.7 Achievement policy is now owned by DiceboundProgression. */
   /* ========================================================================
      Alpha v3.2.4 — touch/mobile UI contract
      ======================================================================== */
@@ -5433,25 +5358,7 @@
     if(legendary){legendary.achievementGate=`class_b5:${id}`;(db0512ClassMastery[id]??=[]).push({board:5,id:legendary.id});}
   });
 
-  const db0512AchievementGateBase=achievementGateUnlocked;
-  achievementGateUnlocked=function(gate){
-    if(typeof gate==='string'&&gate.startsWith('achievement:')){
-      const id=gate.slice('achievement:'.length),a=ACHIEVEMENT_REGISTRY.find(x=>x.id===id);
-      return !!a&&db317AchievementDone(a);
-    }
-    if(typeof gate==='string'&&gate.startsWith('class_b2:'))return hasBoardClear(gate.slice(9),2);
-    if(typeof gate==='string'&&gate.startsWith('class_b5:'))return hasBoardClear(gate.slice(9),5);
-    return db0512AchievementGateBase(gate);
-  };
-
-  // Achievement completion state also controls the newly-gated powerups.
-  const db0512AchievementRewardBase=db317AchievementRewardText;
-  db317AchievementRewardText=function(a){
-    const base=db0512AchievementRewardBase(a),ids=db0512GateRewards[a?.id]||[];
-    const names=ids.map(id=>upgrades.find(u=>u.id===id)?.name).filter(Boolean).filter(name=>!base.includes(name));
-    if(!names.length)return base;
-    return `${base}${base?' · also':' ·'} unlocks ${names.join(', ')}`;
-  };
+  // Achievement-gated reward copy is resolved by DiceboundProgression.
 
   window.DiceboundBeta0512Test=Object.freeze({
     globalGates:()=>Object.entries(db0512GlobalPowerGates).map(([id,a])=>({id,name:upgrades.find(u=>u.id===id)?.name,achievement:a,unlocked:achievementGateUnlocked(`achievement:${a}`)})),
@@ -5860,9 +5767,7 @@
     const state=meta.campReveals;
     return {achievementTrophy:!!state?.achievementTrophy,talentStar:!!state?.talentStar,prestigeMoon:!!state?.prestigeMoon};
   }
-  function db0633AchievementCount(){
-    return ACHIEVEMENT_REGISTRY.reduce((count,achievement)=>count+(db317AchievementDone(achievement)?1:0),0);
-  }
+  function db0633AchievementCount(){return dbProgression.achievementCount();}
   function db0633ReconcileCampReveals(options={}){
     const current=db0633CurrentCampRevealState();
     const next=db0633ReconcileCampRevealState(current,{
@@ -6222,15 +6127,6 @@
     if(!meta.settings.achievementGroups||typeof meta.settings.achievementGroups!=='object')meta.settings.achievementGroups={};
     return meta.settings.achievementGroups;
   }
-  function db064PowerupGateDone(gate){return achievementGateUnlocked(gate);}
-  function db064HeroMasteryEntries(classId){
-    return upgrades.filter(upgrade=>(upgrade.classId===classId||(upgrade.classIds||[]).includes(classId))&&!!upgrade.achievementGate)
-      .map(upgrade=>{
-        const gate=String(upgrade.achievementGate),match=/^class_b(\d+):/.exec(gate),achievement=gate.startsWith('achievement:')?ACHIEVEMENT_REGISTRY.find(entry=>entry.id===gate.slice('achievement:'.length)):ACHIEVEMENT_REGISTRY.find(entry=>entry.id===gate);
-        const condition=match?`Clear Board ${match[1]} as this hero.`:achievement?db317AchievementConditionText(achievement):'Complete this hero’s listed unlock condition.';
-        return {id:`hero-talent:${classId}:${upgrade.id}`,name:`${upgrade.icon||'✨'} ${upgrade.name}`,description:`${condition} Unlocks this hero-specific talent.`,done:db064PowerupGateDone(gate)};
-      });
-  }
   const dbAchievementsUi=window.DiceboundAchievementsUi;
   if(!dbAchievementsUi)throw new Error('DiceBound requires the Achievements UI module before dicebound.js');
   dbAchievementsUi.configure({
@@ -6238,9 +6134,9 @@
     getRegistry:()=>ACHIEVEMENT_REGISTRY,
     getClasses:()=>Object.values(CLASSES),
     isClassUnlocked,
-    isDone:db317AchievementDone,
-    descriptionFor:achievement=>db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),
-    heroMasteryEntries:db064HeroMasteryEntries,
+    isDone:achievement=>dbProgression.achievementDone(achievement),
+    descriptionFor:achievement=>dbProgression.achievementConditionText(achievement)+dbProgression.achievementRewardText(achievement),
+    heroMasteryEntries:classId=>dbProgression.heroMasteryEntries(classId),
     getOpenState:db064AchievementUiSettings,
     setOpenState:(id,open)=>{db064AchievementUiSettings()[id]=!!open;saveMeta();}
   });
@@ -7123,12 +7019,12 @@
     prestigeDomainPurchase:id=>{const result=DB_PRESTIGE.purchase(meta.prestige,id,random);if(result.ok)meta.prestige=result.prestige;return dbRunClone(result);},
     prestigeDomainRefund:()=>{const result=DB_PRESTIGE.refundAll(meta.prestige);meta.prestige=result.prestige;return dbRunClone(result);},
     checkpointHas:()=>DB_RUN_CHECKPOINT.has(),
-    achievementDone:id=>{const achievement=ACHIEVEMENT_REGISTRY.find(entry=>entry.id===id);return !!achievement&&db317AchievementDone(achievement);},
-    achievementConditionText:id=>{const achievement=ACHIEVEMENT_REGISTRY.find(entry=>entry.id===id);return achievement?db317AchievementConditionText(achievement):null;},
-    achievementRewardText:id=>{const achievement=ACHIEVEMENT_REGISTRY.find(entry=>entry.id===id);return achievement?db317AchievementRewardText(achievement):null;},
-    achievementGate:gate=>achievementGateUnlocked(gate),
-    heroMastery:classId=>dbRunClone(db064HeroMasteryEntries(classId)),
-    achievementCount:()=>db0633AchievementCount(),
+    achievementDone:id=>dbProgression.achievementDone(id),
+    achievementConditionText:id=>dbProgression.achievementConditionText(id),
+    achievementRewardText:id=>dbProgression.achievementRewardText(id),
+    achievementGate:gate=>dbProgression.achievementGateUnlocked(gate),
+    heroMastery:classId=>dbRunClone(dbProgression.heroMasteryEntries(classId)),
+    achievementCount:()=>dbProgression.achievementCount(),
     unlockClass:id=>unlockClass(id),
     classUnlockFeedbackState:()=>dbRunClone(window.DiceboundClassUnlockFeedback?.state?.()||null),
     logHtml:()=>String($('log')?.innerHTML||'')

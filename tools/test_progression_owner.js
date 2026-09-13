@@ -36,6 +36,17 @@ for(const shadow of [
   "v19PrestigeKeepCapacity",
   "pendingPrestige",
   "prestigeCandidateItems",
-  "v27CompletePrestigeNoChoice"
+  "v27CompletePrestigeNoChoice",
+  "function db317AchievementDone(a)",
+  "function db317AchievementConditionText(a)",
+  "function db317AchievementRewardText(a)",
+  "const gateV15=achievementGateUnlocked",
+  "achievementGateUnlockedV19Base",
+  "db0512AchievementGateBase",
+  "db0512AchievementRewardBase",
+  "function db064HeroMasteryEntries(classId)"
 ])assert.ok(!monolith.includes(shadow),`retired Progression semantic shadow remains: ${shadow}`);
-console.log("Progression owner PASS: Talent/Legacy/final Prestige semantics route through DiceboundProgression.");
+for(const owned of ["achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked","heroMasteryEntries","achievementCount"])assert.ok(lifecycle.includes(owned),`Progression Achievement owner capability missing: ${owned}`);
+assert.ok(monolith.includes("function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}"),"ordinary powerup gates must route through DiceboundProgression");
+assert.ok(monolith.includes("isDone:achievement=>dbProgression.achievementDone(achievement)"),"Achievements UI must consume Progression completion policy");
+console.log("Progression owner PASS: Talent/Legacy/Prestige/Achievement semantics route through DiceboundProgression.");
