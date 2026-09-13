@@ -114,8 +114,10 @@ async function main(){
     assertCoverage(actual);
     if(CAPTURE){console.log("ROAD_EVENTS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("ROAD_EVENTS_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
-    assert.deepEqual(actual,fixture);
-    console.log(`Road Events oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.version}.`);
+    assert.equal(fixture.version,"0.6.6.25","Road Events fixture must remain the released 0.6.6.25 baseline");
+    assert.ok(actual.version,"runtime version must be exposed while executing the baseline oracle");
+    assert.deepEqual(actual.cases,fixture.cases);
+    console.log(`Road Events oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.version} baseline on runtime ${actual.version}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }
