@@ -26,175 +26,18 @@ jobs:
       - name: Drain Road Events lifecycle from monolith
         shell: pwsh
         run: |
-          @'
-          import json,re
-          from pathlib import Path
-
-          def cut(text,start,end,label):
-              a=text.find(start)
-              if a<0: raise SystemExit(f'{label}: start marker missing')
-              b=text.find(end,a+len(start))
-              if b<0: raise SystemExit(f'{label}: end marker missing')
-              return text[:a]+text[b:]
-          def subline(text,pattern,repl,label,count=1):
-              out,n=re.subn(pattern,repl,text,count=count,flags=re.M)
-              if n!=count: raise SystemExit(f'{label}: expected {count}, got {n}')
-              return out
-
-          p=Path('runtime/js/dicebound.js')
-          text=p.read_bytes().decode('utf-8').replace('\r\n','\n')
-
-          start=text.find('  dbRoadEvents.configure({\n')
-          end=text.find('  const MERCHANT_SPACING = 12;',start)
-          if start<0 or end<0: raise SystemExit('Road Events composition block markers missing')
-          composition='''  dbRoadEvents.configure({
-    treasure:{
-      getPlayer:()=>player,
-      getBoardLevel:()=>boardLevel,
-      getTiles:()=>tiles,
-      currentTileCount:()=>currentTileCount(),
-      isHell:()=>hellMode,
-      isNightmare:()=>nightmareMode,
-      random:()=>random(),
-      rand:(a,b)=>rand(a,b),
-      modifiedGold:value=>modifiedGold(value),
-      clamp:(value,min,max)=>clamp(value,min,max),
-      refreshTile:index=>refreshTile(index),
-      coin:()=>sfx.coin(),
-      addLog:text=>addLog(text),
-      showToast:(...args)=>showToast(...args),
-      updateHUD:()=>updateHUD(),
-      returnToRoad:()=>returnToRoad(),
-      rollGearRarity:bonus=>rollGearRarity(bonus),
-      generateEquipment:rarity=>generateEquipment(rarity),
-      openLoot:(item,done)=>openLoot(item,done),
-      generateLegendary:(slot,preferUndiscovered)=>db060GenerateLegendary(slot,preferUndiscovered)
-    },
-    lifecycle:{
-      $:id=>$(id),
-      getPlayer:()=>player,
-      getMeta:()=>meta,
-      getTiles:()=>tiles,
-      getBoardLevel:()=>boardLevel,
-      currentTileCount:()=>currentTileCount(),
-      random:()=>random(),
-      rand:(a,b)=>rand(a,b),
-      pick:values=>pick(values),
-      delay:ms=>delay(ms),
-      tone:(...args)=>tone(...args),
-      sfxRoll:()=>sfx.roll(),
-      sfxLevel:()=>sfx.level(),
-      sfxCoin:()=>sfx.coin(),
-      sfxHoly:()=>sfx.holy(),
-      modifiedGold:value=>modifiedGold(value),
-      gameplayTalentRank:id=>gameplayTalentRank(id),
-      saveMeta:()=>saveMeta(),
-      updateMetaUI:()=>updateMetaUI(),
-      refreshTile:index=>refreshTile(index),
-      addLog:text=>addLog(text),
-      showToast:(...args)=>showToast(...args),
-      updateHUD:()=>updateHUD(),
-      returnToRoad:()=>returnToRoad(),
-      activePetName:()=>activePetDef().name,
-      eligibleUpgrades:filter=>eligibleUpgrades(filter),
-      applyRandomHighRarity:(...args)=>applyRandomHighRarity(...args),
-      applyUpgrade:(...args)=>applyUpgrade(...args),
-      rarityLabel:rarity=>rarityInfo[rarity]?.label||rarity,
-      forceLevels:n=>forceLevels(n),
-      recordRunBuff:(...args)=>recordRunBuff(...args),
-      effectiveDodgeChance:()=>effectiveDodgeChance(),
-      fallbackRarityPool:wanted=>v27FallbackRarityPool(wanted),
-      startCombat:kind=>startCombat(kind),
-      art:(...args)=>beta043Art(...args)
-    }
-  });
-'''
-          text=text[:start]+composition+text[end:]
-
-          text=text.replace('  let currentMysticBuff = null;\n','')
-          text=text.replace('  let wheelRotation = 0;\n','')
-          text=text.replace('  let wheelBusy = false;\n','')
-
-          text=cut(text,'  function openEvent(){\n','  function grantLegacyXp(amount){','base Slot/Wheel/Blessing/Mystic cluster')
-          text=cut(text,'  function openBloodwell(){\n','  function openInfo(){','base Bloodwell/Gambler cluster')
-          text=cut(text,'  // ---- Wheel scales with road depth ---------------------------------------','  // ---- Explicit late-road difficulty curve --------------------------------','v17 wheel patch')
-          text=subline(text,r'^  const openBloodwellV11=.*?;$\n?','', 'v11 Bloodwell wrapper')
-          text=subline(text,r'^  const openBloodwellV17Base=.*?;$\n?','', 'v17 Bloodwell wrapper')
-          text=subline(text,r'^  openGambler=function\(\)\{const grid=\$\("gambleGrid"\).*?;$\n?','', 'pity Gambler override')
-          text=subline(text,r'^  const restoration=wheelRewards\.find\(.*?;$\n?','', 'old Restoration override')
-
-          beta_start="  openGambler=function(){\n    const grid=$('gambleGrid');"
-          a=text.find(beta_start)
-          if a<0: raise SystemExit('Beta043 Gambler override start missing')
-          b=text.find('\n  };',a)
-          if b<0: raise SystemExit('Beta043 Gambler override end missing')
-          text=text[:a]+text[b+5:]
-
-          text=subline(text,r'^  function beta03RollMysticRarity\(\).*?$\n?','', 'Mystic rarity roll helper')
-          text=subline(text,r'^  openMystic=function\(\).*?$\n?','', 'final Mystic override')
-          text=cut(text,'  function db064EventGold(source,multiplier=1){','  const db064PurseTalent=','db064 Slot/Wheel patch')
-
-          # Event UI listeners move with the lifecycle owner.
-          for old in [
-              '$("spinBtn").addEventListener("click",spinEvent);',
-              '$("wheelSpinBtn").addEventListener("click",spinFortuneWheel);',
-              '$("eventContinueBtn").addEventListener("click",()=>{$("eventOverlay").classList.add("hidden");returnToRoad();});',
-              '$("wheelContinueBtn").addEventListener("click",()=>{$("wheelOverlay").classList.add("hidden");returnToRoad();});'
-          ]:
-              if text.count(old)!=1: raise SystemExit(f'event listener marker count {text.count(old)}: {old}')
-              text=text.replace(old,'',1)
-          text=cut(text,'  $("acceptMysticBtn").addEventListener("click",()=>{\n','  $("merchantContinueBtn")','Mystic listeners')
-
-          # Resume/runtime test hooks now address the facade/internal inspection API.
-          text=text.replace('currentMysticBuff=null;','')
-          text=text.replace('wheelBusy=false;','')
-          resume_old='pendingDiceChoiceResolve=null;combatBusy=false;runFinalized=false;'
-          if text.count(resume_old)!=1: raise SystemExit(f'resume transient marker count {text.count(resume_old)}')
-          text=text.replace(resume_old,'pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;',1)
-          mystic_re=r'^    mysticFallback:\(\)=>\{.*?\},$'
-          mystic_new="    mysticFallback:()=>{const states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);const oldCounts=player.upgradeCounts||{};player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});dbRoadEvents.openMystic();const r=window.DiceboundRoadEventLifecycle.inspect().mysticRarity;$('mysticOverlay')?.classList.add('hidden');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;dbRoadEvents.resetTransient();return r;},"
-          text,n=re.subn(mystic_re,mystic_new,text,count=1,flags=re.M)
-          if n!=1: raise SystemExit(f'mysticFallback debug hook count {n}')
-
-          p.write_bytes(text.encode('utf-8'))
-
-          # Expose only diagnostic current-rarity state for the existing deterministic hook.
-          lp=Path('runtime/js/events/lifecycle.js')
-          life=lp.read_bytes().decode('utf-8').replace('\r\n','\n')
-          old="function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff});}"
-          new="function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff,mysticRarity:currentMysticBuff?.rarity||null});}"
-          if life.count(old)!=1: raise SystemExit(f'lifecycle inspect marker count {life.count(old)}')
-          lp.write_bytes(life.replace(old,new,1).encode('utf-8'))
-
-          manifest_path=Path('runtime/js/module-manifest.json')
-          manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
-          if not any(m.get('id')=='road-event-lifecycle' for m in manifest['modules']):
-              facade_index=next(i for i,m in enumerate(manifest['modules']) if m.get('id')=='road-events-facade')
-              manifest['modules'].insert(facade_index,{
-                  'id':'road-event-lifecycle','path':'js/events/lifecycle.js','domain':'events/interactive-road-event-lifecycle',
-                  'status':'extracted','requires':['event-rewards'],'provides':['DiceboundRoadEventLifecycle']
-              })
-          facade=next(m for m in manifest['modules'] if m.get('id')=='road-events-facade')
-          if 'road-event-lifecycle' not in facade['requires']: facade['requires'].append('road-event-lifecycle')
-          load=manifest['loadOrder']
-          if 'road-event-lifecycle' not in load: load.insert(load.index('road-events-facade'),'road-event-lifecycle')
-          manifest_path.write_bytes((json.dumps(manifest,indent=2)+'\n').encode('utf-8'))
-
-          index_path=Path('runtime/index.html')
-          index=index_path.read_bytes().decode('utf-8').replace('\r\n','\n')
-          if 'js/events/lifecycle.js' not in index:
-              marker='<script src="js/events/facade.js"></script>'
-              if index.count(marker)!=1: raise SystemExit('facade script marker not unique')
-              index=index.replace(marker,'<script src="js/events/lifecycle.js"></script>\n'+marker,1)
-          index_path.write_bytes(index.encode('utf-8'))
-          '@ | python -
-
+          python tools/migrate_road_events_lifecycle.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           @'
           from pathlib import Path
-          for name in ['runtime/build-info.json','runtime/build-manifest.json','runtime/index.html','runtime/js/dicebound.js','runtime/js/module-manifest.json','runtime/js/events/lifecycle.js']:
-              p=Path(name);p.write_bytes(p.read_bytes().replace(b'\r\n',b'\n'))
+          for name in [
+              'runtime/build-info.json','runtime/build-manifest.json','runtime/index.html',
+              'runtime/js/dicebound.js','runtime/js/module-manifest.json','runtime/js/events/lifecycle.js'
+          ]:
+              p=Path(name)
+              p.write_bytes(p.read_bytes().replace(b'\r\n',b'\n'))
           '@ | python -
 
       - name: Validate full Road Events migration
@@ -239,16 +82,24 @@ jobs:
           @'
           import base64,json,os,subprocess,urllib.request
           from pathlib import Path
-          repo=os.environ['GITHUB_REPOSITORY'];token=os.environ['GH_TOKEN'];parent=os.environ['GITHUB_SHA'];api=f"https://api.github.com/repos/{repo}/git"
+          repo=os.environ['GITHUB_REPOSITORY']
+          token=os.environ['GH_TOKEN']
+          parent=os.environ['GITHUB_SHA']
+          api=f"https://api.github.com/repos/{repo}/git"
           def post(path,payload):
-              req=urllib.request.Request(api+path,data=json.dumps(payload).encode(),headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},method='POST')
+              req=urllib.request.Request(api+path,data=json.dumps(payload).encode(),headers={
+                  'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json',
+                  'X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},method='POST')
               with urllib.request.urlopen(req) as r:return json.load(r)
           changed=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMRT','HEAD'],text=True).splitlines()
           if not changed: raise SystemExit('no Road Events lifecycle migration changes produced')
           entries=[]
           for filename in changed:
-              raw=Path(filename).read_bytes();blob=post('/blobs',{'content':base64.b64encode(raw).decode(),'encoding':'base64'});entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
+              raw=Path(filename).read_bytes()
+              blob=post('/blobs',{'content':base64.b64encode(raw).decode(),'encoding':'base64'})
+              entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
           tree=post('/trees',{'base_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'tree':entries})
           commit=post('/commits',{'message':'architecture: extract remaining Road Events lifecycle','tree':tree['sha'],'parents':[parent]})
-          print('CHANGED_FILES='+','.join(changed));print('REMOTE_COMMIT_SHA='+commit['sha'])
+          print('CHANGED_FILES='+','.join(changed))
+          print('REMOTE_COMMIT_SHA='+commit['sha'])
           '@ | python -
