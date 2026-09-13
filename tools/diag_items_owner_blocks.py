@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
+import sys
 from pathlib import Path
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
+except Exception:
+    pass
 
 path=Path('runtime/js/dicebound.js')
 lines=path.read_text(encoding='utf-8').splitlines()
