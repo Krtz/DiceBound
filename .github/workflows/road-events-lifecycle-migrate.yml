@@ -111,17 +111,12 @@ jobs:
 '''
           text=text[:start]+composition+text[end:]
 
-          # Event-local state moves with the lifecycle owner.
           text=text.replace('  let currentMysticBuff = null;\n','')
           text=text.replace('  let wheelRotation = 0;\n','')
           text=text.replace('  let wheelBusy = false;\n','')
 
-          # Base Slot/Wheel/Blessing/Mystic implementation cluster.
           text=cut(text,'  function openEvent(){\n','  function grantLegacyXp(amount){','base Slot/Wheel/Blessing/Mystic cluster')
-          # Base Bloodwell/Gambler implementation cluster.
           text=cut(text,'  function openBloodwell(){\n','  function openInfo(){','base Bloodwell/Gambler cluster')
-
-          # Historical/runtime patch layers now represented directly by lifecycle.js.
           text=cut(text,'  // ---- Wheel scales with road depth ---------------------------------------','  // ---- Explicit late-road difficulty curve --------------------------------','v17 wheel patch')
           text=subline(text,r'^  const openBloodwellV11=.*?;$\n?','', 'v11 Bloodwell wrapper')
           text=subline(text,r'^  const openBloodwellV17Base=.*?;$\n?','', 'v17 Bloodwell wrapper')
@@ -137,17 +132,123 @@ jobs:
 
           text=subline(text,r'^  function beta03RollMysticRarity\(\).*?$\n?','', 'Mystic rarity roll helper')
           text=subline(text,r'^  openMystic=function\(\).*?$\n?','', 'final Mystic override')
-
-          # 0.6.4 event reward patch: retain public reward-policy/test hook, remove
-          # local event application/mutation code now owned by lifecycle.js.
           text=cut(text,'  function db064EventGold(source,multiplier=1){','  const db064PurseTalent=','db064 Slot/Wheel patch')
-          text='  const db064PurseTalent='+text.split('  const db064PurseTalent=',1)[1]
 
-          # The previous cut retained from the purse marker to EOF but dropped the
-          # prefix; restore the pre-patch prefix from a sentinel saved in Git is not
-          # possible here, so abort if the IIFE header disappeared.
-          if not text.startswith('(() => {'):
-              raise SystemExit('db064 patch cut damaged monolith prefix')
+          # Event UI listeners move with the lifecycle owner.
+          for old in [
+              '$("spinBtn").addEventListener("click",spinEvent);',
+              '$("wheelSpinBtn").addEventListener("click",spinFortuneWheel);',
+              '$("eventContinueBtn").addEventListener("click",()=>{$("eventOverlay").classList.add("hidden");returnToRoad();});',
+              '$("wheelContinueBtn").addEventListener("click",()=>{$("wheelOverlay").classList.add("hidden");returnToRoad();});'
+          ]:
+              if text.count(old)!=1: raise SystemExit(f'event listener marker count {text.count(old)}: {old}')
+              text=text.replace(old,'',1)
+          text=cut(text,'  $("acceptMysticBtn").addEventListener("click",()=>{\n','  $("merchantContinueBtn")','Mystic listeners')
+
+          # Resume/runtime test hooks now address the facade/internal inspection API.
+          text=text.replace('currentMysticBuff=null;','')
+          text=text.replace('wheelBusy=false;','')
+          resume_old='pendingDiceChoiceResolve=null;combatBusy=false;runFinalized=false;'
+          if text.count(resume_old)!=1: raise SystemExit(f'resume transient marker count {text.count(resume_old)}')
+          text=text.replace(resume_old,'pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;',1)
+          mystic_re=r'^    mysticFallback:\(\)=>\{.*?\},$'
+          mystic_new="    mysticFallback:()=>{const states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);const oldCounts=player.upgradeCounts||{};player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});dbRoadEvents.openMystic();const r=window.DiceboundRoadEventLifecycle.inspect().mysticRarity;$('mysticOverlay')?.classList.add('hidden');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;dbRoadEvents.resetTransient();return r;},"
+          text,n=re.subn(mystic_re,mystic_new,text,count=1,flags=re.M)
+          if n!=1: raise SystemExit(f'mysticFallback debug hook count {n}')
 
           p.write_bytes(text.encode('utf-8'))
+
+          # Expose only diagnostic current-rarity state for the existing deterministic hook.
+          lp=Path('runtime/js/events/lifecycle.js')
+          life=lp.read_bytes().decode('utf-8').replace('\r\n','\n')
+          old="function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff});}"
+          new="function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff,mysticRarity:currentMysticBuff?.rarity||null});}"
+          if life.count(old)!=1: raise SystemExit(f'lifecycle inspect marker count {life.count(old)}')
+          lp.write_bytes(life.replace(old,new,1).encode('utf-8'))
+
+          manifest_path=Path('runtime/js/module-manifest.json')
+          manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+          if not any(m.get('id')=='road-event-lifecycle' for m in manifest['modules']):
+              facade_index=next(i for i,m in enumerate(manifest['modules']) if m.get('id')=='road-events-facade')
+              manifest['modules'].insert(facade_index,{
+                  'id':'road-event-lifecycle','path':'js/events/lifecycle.js','domain':'events/interactive-road-event-lifecycle',
+                  'status':'extracted','requires':['event-rewards'],'provides':['DiceboundRoadEventLifecycle']
+              })
+          facade=next(m for m in manifest['modules'] if m.get('id')=='road-events-facade')
+          if 'road-event-lifecycle' not in facade['requires']: facade['requires'].append('road-event-lifecycle')
+          load=manifest['loadOrder']
+          if 'road-event-lifecycle' not in load: load.insert(load.index('road-events-facade'),'road-event-lifecycle')
+          manifest_path.write_bytes((json.dumps(manifest,indent=2)+'\n').encode('utf-8'))
+
+          index_path=Path('runtime/index.html')
+          index=index_path.read_bytes().decode('utf-8').replace('\r\n','\n')
+          if 'js/events/lifecycle.js' not in index:
+              marker='<script src="js/events/facade.js"></script>'
+              if index.count(marker)!=1: raise SystemExit('facade script marker not unique')
+              index=index.replace(marker,'<script src="js/events/lifecycle.js"></script>\n'+marker,1)
+          index_path.write_bytes(index.encode('utf-8'))
+          '@ | python -
+
+          python tools/refresh_runtime_manifest.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          from pathlib import Path
+          for name in ['runtime/build-info.json','runtime/build-manifest.json','runtime/index.html','runtime/js/dicebound.js','runtime/js/module-manifest.json','runtime/js/events/lifecycle.js']:
+              p=Path(name);p.write_bytes(p.read_bytes().replace(b'\r\n',b'\n'))
+          '@ | python -
+
+      - name: Validate full Road Events migration
+        shell: pwsh
+        run: |
+          node --check runtime/js/events/lifecycle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_events_lifecycle_shadow.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_events_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_event_treasure.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_event_treasure_shadow.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_events_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_event_reward_policy.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_board_tile_dispatch.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_run_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_run_checkpoint.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_powerup_services.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_loot_module.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_runtime_manifest_hash.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize validated Road Events lifecycle migration
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          @'
+          import base64,json,os,subprocess,urllib.request
+          from pathlib import Path
+          repo=os.environ['GITHUB_REPOSITORY'];token=os.environ['GH_TOKEN'];parent=os.environ['GITHUB_SHA'];api=f"https://api.github.com/repos/{repo}/git"
+          def post(path,payload):
+              req=urllib.request.Request(api+path,data=json.dumps(payload).encode(),headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req) as r:return json.load(r)
+          changed=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMRT','HEAD'],text=True).splitlines()
+          if not changed: raise SystemExit('no Road Events lifecycle migration changes produced')
+          entries=[]
+          for filename in changed:
+              raw=Path(filename).read_bytes();blob=post('/blobs',{'content':base64.b64encode(raw).decode(),'encoding':'base64'});entries.append({'path':filename,'mode':'100644','type':'blob','sha':blob['sha']})
+          tree=post('/trees',{'base_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),'tree':entries})
+          commit=post('/commits',{'message':'architecture: extract remaining Road Events lifecycle','tree':tree['sha'],'parents':[parent]})
+          print('CHANGED_FILES='+','.join(changed));print('REMOTE_COMMIT_SHA='+commit['sha'])
           '@ | python -
