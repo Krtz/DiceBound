@@ -1,0 +1,74 @@
+name: Pets oracle capture
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.28-pets-oracle
+
+permissions:
+  contents: write
+
+jobs:
+  capture-and-replay:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch test-only Pet characterization surface
+        shell: pwsh
+        run: |
+          python tools/patch_pets_oracle_test_surface.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.27 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture frozen 0.6.6.27 Pet fixture
+        shell: pwsh
+        run: |
+          $env:DICEBOUND_CAPTURE_PETS='1'
+          node tools/test_pets_oracle.js | Tee-Object -FilePath pets-capture.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          from pathlib import Path
+          raw=Path('pets-capture.txt').read_text(encoding='utf-8')
+          start=raw.index('PETS_FIXTURE_BEGIN')+len('PETS_FIXTURE_BEGIN')
+          end=raw.index('PETS_FIXTURE_END',start)
+          payload=raw[start:end].strip()+"\n"
+          out=Path('tools/fixtures/pets_0_6_6_27.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(payload,encoding='utf-8',newline='\n')
+          print(f'wrote {out}')
+          '@ | python -
+      - name: Replay Pet oracle and focused validation
+        shell: pwsh
+        run: |
+          Remove-Item Env:DICEBOUND_CAPTURE_PETS -ErrorAction SilentlyContinue
+          node tools/test_pets_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_pet_chooser_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_combat_pet_turn_resolution.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_player_initialization.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_runtime_manifest_hash.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Materialize exact tested oracle surface and fixture
+        shell: pwsh
+        run: |
+          Remove-Item pets-capture.txt -ErrorAction SilentlyContinue
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add runtime/js/dicebound.js runtime/build-info.json runtime/build-manifest.json tools/fixtures/pets_0_6_6_27.json
+          if (git diff --cached --quiet) { Write-Host 'No materialization changes.'; exit 0 }
+          git commit -m 'test: freeze released 0.6.6.27 Pet lifecycle oracle'
+          git push origin HEAD:arch/0.6.6.28-pets-oracle
