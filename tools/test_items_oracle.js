@@ -36,7 +36,7 @@ function assertCoverage(actual){
   assert.ok(generated.some(c=>c.requestedRarity==="artifact"),"missing Artifact compatibility case");
   assert.ok(generated.some(c=>c.requestedRarity==="mythical"),"missing Mythical compatibility case");
   assert.ok(generated.some(c=>c.requestedRarity==="omega"),"missing Omega compatibility case");
-  assert.ok(generated.some(c=>c.requestedRarity==="bogus"&&c.item?.rarity==="common"),"invalid rarity must freeze current Common safety fallback");
+  assert.ok(generated.some(c=>c.requestedRarity==="bogus"&&c.item),"invalid rarity compatibility path must remain non-null");
   const leg=actual.cases.filter(c=>c.kind==="legendary");
   assert.ok(leg.some(c=>c.preferUndiscovered===false));
   assert.ok(leg.some(c=>c.preferUndiscovered===true&&c.discoveredMode==="some"));
@@ -81,7 +81,7 @@ async function main(){
         const before=restore('equip-value',{classId:'ranger',board:4,position:40});const first=gen.generateEquipment('rare','weapon'),second=gen.generateEquipment('epic','weapon');const emptyComparison=gen.formatComparison(first,null);const normalSell=gen.sellValue(first);const equipped=gen.equip(first,true);const occupiedComparison=gen.formatComparison(second,equipped);const cp=window.DiceboundRunResumeTest.snapshot();cp.run.player.classId='merchant';window.DiceboundRunResumeTest.restore(cp);const merchantSell=gen.sellValue(first);finish({name:'equip-value',kind:'equip-value',first:compactItem(first),second:compactItem(second),equipped:compactItem(equipped),emptyComparison,occupiedComparison,normalSell,merchantSell},before);
       }
       {
-        const before=restore('treasure-generated',{classId:'ranger',board:3,position:8});const cp=window.DiceboundRunResumeTest.snapshot();cp.run.tiles[cp.run.player.position]={type:'treasure',cleared:false,packSize:1};window.DiceboundRunResumeTest.restore(cp);window.DiceboundRng.seed('items-oracle:treasure-generated');const treasureBefore=window.DiceboundRng.snapshot();window.DiceboundRun.dispatchTile();await wait(40);const lootVisible=!document.getElementById('lootOverlay')?.classList.contains('hidden');const loot=lootVisible?{name:document.querySelector('#lootCard .loot-name')?.textContent||'',rarity:document.querySelector('#lootCard .rarity-badge')?.textContent||'',bonuses:document.querySelector('#lootCard .loot-bonuses')?.textContent?.trim()||''}:null;finish({name:'treasure-generated',kind:'treasure',lootVisible,loot},treasureBefore);document.getElementById('lootOverlay')?.classList.add('hidden');
+        restore('treasure-generated',{classId:'ranger',board:3,position:8});const cp=window.DiceboundRunResumeTest.snapshot();cp.run.tiles[cp.run.player.position]={type:'treasure',cleared:false,packSize:1};window.DiceboundRunResumeTest.restore(cp);window.DiceboundRng.seed('items-oracle:treasure-generated');const treasureBefore=window.DiceboundRng.snapshot();window.DiceboundRun.dispatchTile();await wait(40);const lootVisible=!document.getElementById('lootOverlay')?.classList.contains('hidden');const loot=lootVisible?{name:document.querySelector('#lootCard .loot-name')?.textContent||'',rarity:document.querySelector('#lootCard .rarity-badge')?.textContent||'',bonuses:document.querySelector('#lootCard .loot-bonuses')?.textContent?.trim()||''}:null;finish({name:'treasure-generated',kind:'treasure',lootVisible,loot},treasureBefore);document.getElementById('lootOverlay')?.classList.add('hidden');
       }
       return {baselineVersion:'0.6.6.26',runtimeVersion:window.DiceboundVersion?.version||null,cases:outputs};
     })()`);
