@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.26
+
+### Road Events subsystem facade (#324)
+- Added `runtime/js/events/facade.js` as the single ordinary public `DiceboundRoadEvents` boundary, backed by focused Treasure and interactive lifecycle internals rather than duplicated implementations.
+- Routed Slots, Wheel, Treasure, Blessing, Mystic, Bloodwell and Gambler through the subsystem facade while keeping Board + Run responsible only for arrival/routing and leaving Powerups, Items and Combat as separate collaborators.
+- Removed migrated Road Event lifecycle implementations, patch-era wrapper chains, event-local transient state/listeners and stale Slot/Wheel overrides from `dicebound.js`; preserved Merchant ownership after explicitly guarding the extraction boundary.
+- Added a permanent 46-case exact released-0.6.6.25 Road Events oracle covering output/state/RNG behavior, plus facade/Treasure/anti-shadow tests. The shipped Slot animation RNG consumption remains deliberately frozen.
+- Architecture measurement: runtime graph 71 → 74 modules (70 → 73 extracted/internal plus one monolith); normalized `dicebound.js` 739,724 → 709,513 bytes and 7,426 → 7,267 lines. No event balance, reward odds, Board placement, save/checkpoint, Powerup/Items or Combat behavior change is intended.
+
 ## Beta 0.6.6.25
 
 ### Board + Run subsystem facade (#322)

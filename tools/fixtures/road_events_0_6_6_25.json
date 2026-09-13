@@ -1,0 +1,1329 @@
+{
+  "version": "0.6.6.25",
+  "cases": [
+    {
+      "name": "slot-a",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 670,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 50,
+      "rngState": 2882394818,
+      "symbols": [
+        "⭐",
+        "Gold coins",
+        "Gold coins"
+      ],
+      "result": "Two coins: +70 gold.",
+      "signature": "4b367b3c"
+    },
+    {
+      "name": "slot-b",
+      "player": {
+        "hp": 48,
+        "maxHp": 57,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 49,
+      "rngState": 1101161862,
+      "symbols": [
+        "❤️",
+        "❤️",
+        "❤️"
+      ],
+      "result": "Jackpot! +20 max HP and heal 20.",
+      "signature": "79154f60"
+    },
+    {
+      "name": "slot-c",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 50,
+      "rngState": 2915950056,
+      "symbols": [
+        "🛡️",
+        "🛡️",
+        "💀"
+      ],
+      "result": "Two shields: reduce incoming damage by 2.",
+      "signature": "48049887"
+    },
+    {
+      "name": "slot-d",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 618,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 51,
+      "rngState": 502881430,
+      "symbols": [
+        "Gold coins",
+        "❤️",
+        "💀"
+      ],
+      "result": "No match. The machine pays 18 consolation gold.",
+      "signature": "295f7fb5"
+    },
+    {
+      "name": "slot-e",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.22999999999999998,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 50,
+      "rngState": 2949505294,
+      "symbols": [
+        "⭐",
+        "⭐",
+        "⚔️"
+      ],
+      "result": "Two stars: +8% critical chance.",
+      "signature": "ab403ae8"
+    },
+    {
+      "name": "slot-f",
+      "player": {
+        "hp": 48,
+        "maxHp": 57,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 49,
+      "rngState": 1168272338,
+      "symbols": [
+        "❤️",
+        "❤️",
+        "❤️"
+      ],
+      "result": "Jackpot! +20 max HP and heal 20.",
+      "signature": "9fee76d0"
+    },
+    {
+      "name": "slot-g",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 618,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 1,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 51,
+      "rngState": 519659049,
+      "symbols": [
+        "⚔️",
+        "Gold coins",
+        "❤️"
+      ],
+      "result": "No match. The machine pays 18 consolation gold. A rare pet cookie drops from the machine!",
+      "signature": "02aa6103"
+    },
+    {
+      "name": "slot-h",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 5,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 49,
+      "rngState": 933385672,
+      "symbols": [
+        "🛡️",
+        "🛡️",
+        "🛡️"
+      ],
+      "result": "Jackpot! +4 defense permanently.",
+      "signature": "e8fbd20d"
+    },
+    {
+      "name": "slot-i",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 618,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 1,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 51,
+      "rngState": 284772383,
+      "symbols": [
+        "❤️",
+        "Gold coins",
+        "💀"
+      ],
+      "result": "No match. The machine pays 18 consolation gold. A rare pet cookie drops from the machine!",
+      "signature": "4cf77449"
+    },
+    {
+      "name": "slot-j",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 618,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 1,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 51,
+      "rngState": 335105240,
+      "symbols": [
+        "Gold coins",
+        "💀",
+        "⚔️"
+      ],
+      "result": "No match. The machine pays 18 consolation gold. A rare pet cookie drops from the machine!",
+      "signature": "ee800ddb"
+    },
+    {
+      "name": "slot-lucky",
+      "player": {
+        "hp": 48,
+        "maxHp": 57,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0.5,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 49,
+      "rngState": 645394876,
+      "symbols": [
+        "❤️",
+        "❤️",
+        "❤️"
+      ],
+      "result": "Jackpot! +20 max HP and heal 20.",
+      "signature": "d09d18f2"
+    },
+    {
+      "name": "wheel-a",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 465705705,
+      "result": "🎁 Rare Gift: The wheel reveals Legendary Legend of the Prismatic Road: Gain +35% elemental proc chance and +60% elemental power this run.",
+      "signature": "a7ea395b"
+    },
+    {
+      "name": "wheel-b",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 7,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 2945884807,
+      "result": "🧪 Alchemist's Bundle: Gain 3 potions.",
+      "signature": "67365d99"
+    },
+    {
+      "name": "wheel-c",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 7,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 2962662426,
+      "result": "🧪 Alchemist's Bundle: Gain 3 potions.",
+      "signature": "38364b28"
+    },
+    {
+      "name": "treasure-a",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 632,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 7,
+      "rngState": 2866862408,
+      "lootVisible": true,
+      "loot": {
+        "name": "Nimble Leather Harness",
+        "rarity": "Poor",
+        "bonuses": "+1% Dodge+0% Crit"
+      },
+      "signature": "fe8d9953"
+    },
+    {
+      "name": "treasure-b",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 637,
+        "potions": 5,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 7,
+      "rngState": 2816529551,
+      "lootVisible": true,
+      "loot": {
+        "name": "Sturdy Bronze Full Helm",
+        "rarity": "Poor",
+        "bonuses": "+1 Defense+3 Max HP+2% Crit"
+      },
+      "signature": "1296eedc"
+    },
+    {
+      "name": "treasure-c",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 624,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 3,
+      "rngState": 4096978510,
+      "lootVisible": false,
+      "loot": null,
+      "signature": "3db17740"
+    },
+    {
+      "name": "treasure-d",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 626,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 3,
+      "rngState": 4046645653,
+      "lootVisible": false,
+      "loot": null,
+      "signature": "faa9b81b"
+    },
+    {
+      "name": "blessing-a",
+      "player": {
+        "hp": 62,
+        "maxHp": 62,
+        "attack": 14,
+        "defense": 3,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 3,
+      "rngState": 3002968164,
+      "offers": [
+        "Avatar of War",
+        "Miracle Engine",
+        "Divine Ascension"
+      ],
+      "signature": "cf2a4eeb"
+    },
+    {
+      "name": "blessing-b",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 3,
+      "rngState": 2952635307,
+      "offers": [
+        "Seraph's Aegis",
+        "Avatar of War",
+        "Divine Ascension"
+      ],
+      "signature": "820fdc69"
+    },
+    {
+      "name": "blessing-c",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 4,
+      "rngState": 506011443,
+      "offers": [
+        "Seraph's Aegis",
+        "Divine Ascension",
+        "Saint of Fortune"
+      ],
+      "signature": "ee31ad58"
+    },
+    {
+      "name": "blessing-d",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0.15,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 8,
+      "rngState": 3486974542,
+      "offers": [
+        "Miracle Engine",
+        "Divine Ascension",
+        "Saint of Fortune"
+      ],
+      "signature": "ebc37c70"
+    },
+    {
+      "name": "mystic-a",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1655751799,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Predator's Rhythm"
+      },
+      "signature": "8bee0ab8"
+    },
+    {
+      "name": "mystic-b",
+      "player": {
+        "hp": 51,
+        "maxHp": 51,
+        "attack": 10,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1605418942,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Titan's Blood"
+      },
+      "signature": "16c90a04"
+    },
+    {
+      "name": "mystic-c",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1622196561,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Called Shot at Fate"
+      },
+      "signature": "72b2b50f"
+    },
+    {
+      "name": "mystic-d",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0.28,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1571863704,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Vampiric Edge"
+      },
+      "signature": "71193645"
+    },
+    {
+      "name": "mystic-e",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.25,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0.5
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1588641323,
+      "offer": {
+        "rarity": "Epic",
+        "name": "Godslayer"
+      },
+      "signature": "2610deac"
+    },
+    {
+      "name": "mystic-f",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0.15,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1538308466,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Golden Idol"
+      },
+      "signature": "0672f110"
+    },
+    {
+      "name": "mystic-g",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0.15,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1555086085,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Golden Idol"
+      },
+      "signature": "0c06363e"
+    },
+    {
+      "name": "mystic-h",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0.4,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1504753228,
+      "offer": {
+        "rarity": "Epic",
+        "name": "Echo Chamber"
+      },
+      "signature": "f094cdb0"
+    },
+    {
+      "name": "mystic-i",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1521530847,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Berserker Heart"
+      },
+      "signature": "80c723d3"
+    },
+    {
+      "name": "mystic-j",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1471197990,
+      "offer": {
+        "rarity": "Epic",
+        "name": "Phoenix Feather"
+      },
+      "signature": "70614f58"
+    },
+    {
+      "name": "mystic-k",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1487975609,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Predator's Rhythm"
+      },
+      "signature": "9f03e915"
+    },
+    {
+      "name": "mystic-l",
+      "player": {
+        "hp": 51,
+        "maxHp": 51,
+        "attack": 10,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1437642752,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Titan's Blood"
+      },
+      "signature": "b0cd58d5"
+    },
+    {
+      "name": "mystic-m",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0.15,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1454420371,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Golden Idol"
+      },
+      "signature": "bb24ddd2"
+    },
+    {
+      "name": "mystic-n",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0.8,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1404087514,
+      "offer": {
+        "rarity": "Legendary",
+        "name": "Legend of Repetition"
+      },
+      "signature": "1e703a47"
+    },
+    {
+      "name": "mystic-o",
+      "player": {
+        "hp": 27,
+        "maxHp": 27,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 2,
+      "rngState": 1420865133,
+      "offer": {
+        "rarity": "Rare",
+        "name": "Predator's Rhythm"
+      },
+      "signature": "de519ae4"
+    },
+    {
+      "name": "bloodwell-hp",
+      "player": {
+        "hp": 28,
+        "maxHp": 29,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0.08,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 1247312222,
+      "choice": "🩸Sacrifice 20% max HPReceive a random increase in a different stat.",
+      "signature": "afcbe6bd"
+    },
+    {
+      "name": "bloodwell-potion",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 3,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0.15,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 4133397315,
+      "choice": "🩸Sacrifice 1 potionReceive a random increase in a different stat.",
+      "signature": "78f1fe88"
+    },
+    {
+      "name": "gambler-decline",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 600,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 0,
+      "rngState": 3713803415,
+      "result": "You politely decline.",
+      "signature": "b8f61713"
+    },
+    {
+      "name": "gambler-a",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 300,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 3995212615,
+      "result": "Tails! You lose 300 gold.",
+      "signature": "c8d145e2"
+    },
+    {
+      "name": "gambler-b",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 300,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 3978434996,
+      "result": "Tails! You lose 300 gold.",
+      "signature": "cd2cdc8c"
+    },
+    {
+      "name": "gambler-c",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 300,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 3961657377,
+      "result": "Tails! You lose 300 gold.",
+      "signature": "8b850f19"
+    },
+    {
+      "name": "gambler-d",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 300,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 3944879758,
+      "result": "Tails! You lose 300 gold.",
+      "signature": "43637fc8"
+    },
+    {
+      "name": "gambler-e",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 900,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 3928102139,
+      "result": "Heads! You win 300 gold.",
+      "signature": "e1af41ec"
+    },
+    {
+      "name": "gambler-f",
+      "player": {
+        "hp": 28,
+        "maxHp": 37,
+        "attack": 6,
+        "defense": 1,
+        "gold": 300,
+        "potions": 4,
+        "luck": 0,
+        "crit": 0.15,
+        "dodge": 0.08,
+        "lifeSteal": 0,
+        "doubleStrike": 0,
+        "bossDamage": 0
+      },
+      "petCookies": 0,
+      "tile": {
+        "type": "empty",
+        "cleared": true
+      },
+      "rngCalls": 1,
+      "rngState": 3911324520,
+      "result": "Tails! You lose 300 gold.",
+      "signature": "9ecdbbd4"
+    }
+  ]
+}

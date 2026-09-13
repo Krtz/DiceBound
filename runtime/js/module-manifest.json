@@ -57,6 +57,9 @@
     "progression-prestige",
     "progression-achievements",
     "event-rewards",
+    "road-event-treasure",
+    "road-event-lifecycle",
+    "road-events-facade",
     "merchant-transactions",
     "merchant-stock",
     "artifacts",
@@ -672,6 +675,42 @@
       ]
     },
     {
+      "id": "road-event-treasure",
+      "path": "js/events/treasure.js",
+      "domain": "events/treasure-lifecycle-and-memory-cache",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundRoadEventTreasure"
+      ]
+    },
+    {
+      "id": "road-event-lifecycle",
+      "path": "js/events/lifecycle.js",
+      "domain": "events/interactive-road-event-lifecycle",
+      "status": "extracted",
+      "requires": [
+        "event-rewards"
+      ],
+      "provides": [
+        "DiceboundRoadEventLifecycle"
+      ]
+    },
+    {
+      "id": "road-events-facade",
+      "path": "js/events/facade.js",
+      "domain": "events/public-road-events-subsystem-facade",
+      "status": "extracted",
+      "requires": [
+        "event-rewards",
+        "road-event-treasure",
+        "road-event-lifecycle"
+      ],
+      "provides": [
+        "DiceboundRoadEvents"
+      ]
+    },
+    {
       "id": "merchant-transactions",
       "path": "js/events/merchant-transaction.js",
       "domain": "events/merchant-visit-transactions",
@@ -934,6 +973,7 @@
         "progression-prestige",
         "progression-achievements",
         "event-rewards",
+        "road-events-facade",
         "artifacts",
         "loot",
         "powerup-registry",
