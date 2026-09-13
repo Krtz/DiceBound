@@ -52,13 +52,15 @@ const document={
   getElementById:id=>nodes[id]||null,
   querySelectorAll:()=>[]
 };
+const progressionCalls=[];
 const context=vm.createContext({
   Math,Number,Object,
   meta:{campReveals:{}},
   document,
   innerWidth:0,
   innerHeight:0,
-  $:id=>nodes[id]||null
+  $:id=>nodes[id]||null,
+  dbProgression:{prestigeOffer:total=>{progressionCalls.push(total);return 9000+Number(total);}}
 });
 context.window=context;
 vm.runInContext(campSource,context,{filename:"ui/camp.js"});
@@ -82,8 +84,9 @@ assert.equal(api.reconcile({}, {...fresh,prestigeOfferPoints:0}).prestigeMoon,fa
 assert.equal(api.reconcile({}, {...fresh,prestigeOfferPoints:1}).prestigeMoon,true,"a one-point Prestige offer must reveal the Moon");
 assert.equal(api.reconcile({}, {...fresh,prestigeCount:1}).talentStar,true,"a previously Prestiged save must reconcile the Star");
 assert.equal(api.reconcile({}, {...fresh,prestigeCount:1}).prestigeMoon,true,"a previously Prestiged save must reconcile the Moon");
-assert.equal(api.prestige(8),0);
-assert.equal(api.prestige(9),1);
+assert.equal(api.prestige(8),9008,"Camp compatibility helper must delegate Prestige offer calculation to DiceboundProgression");
+assert.equal(api.prestige(9),9009,"Camp compatibility helper must preserve the facade result without rebuilding policy");
+assert.deepEqual(progressionCalls,[8,9],"Camp compatibility helper must delegate each Prestige offer query exactly once");
 
 const permanent=api.reconcile({achievementTrophy:true,talentStar:true,prestigeMoon:true},fresh);
 assert.deepEqual(JSON.parse(JSON.stringify(permanent)),{achievementTrophy:true,talentStar:true,prestigeMoon:true},"Camp reveals must never regress");
@@ -104,5 +107,5 @@ assert.equal(stars.children[2].id,"campMoonBtn","Moon position must remain after
 assert.match(campSource,/syncProgressionReveals/);
 assert.match(campSource,/find\(entry\.id\)\?\.remove\(\)/,"hidden Camp objects must be physically removed by the Camp owner");
 assert.doesNotMatch(source,/db0633CampObjectMarkup|db0633AttachCampObject|db0633BindCampObject/,"the monolith must not recreate Camp controls");
-assert.match(source,/db0633PrestigeOfferPoints\(total\)/,"the live Prestige completion path must use the shared authoritative offer helper");
-console.log("Camp progression reveals pass: thresholds, permanence, advanced-save reconciliation and absent hidden DOM controls");
+assert.match(source,/function db0633PrestigeOfferPoints\(total=.*\)\{return dbProgression\.prestigeOffer\(total\);\}/,"the live Camp/Prestige compatibility path must delegate to the Progression facade");
+console.log("Camp progression reveals pass: thresholds, permanence, facade delegation, advanced-save reconciliation and absent hidden DOM controls");
