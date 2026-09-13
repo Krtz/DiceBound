@@ -5,11 +5,14 @@
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbItemGenerationOwner=window.DiceboundItemGeneration;
+  if(!dbItemGenerationOwner)throw new Error("dicebound.js requires DiceboundItemGeneration before loading.");
   const dbItems=window.DiceboundItems;
   if(!dbItems)throw new Error("dicebound.js requires DiceboundItems before loading.");
+  let dbItemGeneration=null;
   dbItems.configure({
-    generateEquipment:(rarity=null,slot=null)=>generateEquipment(rarity,slot),
-    generateLegendary:(slot=null,preferUndiscovered=false)=>db060GenerateLegendary(slot,preferUndiscovered),
+    generateEquipment:(rarity=null,slot=null)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateEquipment(rarity,slot);},
+    generateLegendary:(slot=null,preferUndiscovered=false)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateLegendary(slot,preferUndiscovered);},
     rollGearRarity:bonus=>rollGearRarity(bonus),
     openLoot:(item,done)=>openLoot(item,done),
     equip:(item,silent=false)=>equipItem(item,silent),
@@ -567,42 +570,7 @@
   function elementChanceForRarity(rarity){return {common:.16,uncommon:.26,rare:.38,epic:.52,legendary:.70,mythical:1}[rarity]||0;}
   function maybeAddElement(item){if(item.slot!=="weapon"||random()>=elementChanceForRarity(item.rarity))return item;item.element=pick(ELEMENT_KEYS);return item;}
   function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
-  function generateEquipment(forceRarity=null,forcedSlot=null){
-    const rarity=forceRarity||rollGearRarity(0),tier=rarityValues[rarity],slot=forcedSlot||pick(EQUIPMENT_SLOTS),progress=Math.floor(player.position/16);
-    const names=(gearNames[slot]&&gearNames[slot][player.classId])||gearNames[slot];
-    const item={id:`gear_${Date.now()}_${random().toString(36).slice(2,8)}`,slot,rarity,icon:gearIcon(slot),name:`${rarityPrefixes[rarity]} ${pick(names)}`,bonuses:{}};
-    const power=tier+Math.floor(progress/2);
-    if(slot==="weapon")item.bonuses.attack=Math.max(1,power+rand(0,1));
-    if(slot==="offhand"){
-      if(player.classId==="fighter")item.bonuses.defense=Math.max(1,Math.ceil(power*.65));
-      else if(player.classId==="ranger")item.bonuses.crit=.015*tier+.005*progress;
-      else if(player.classId==="sorcerer")item.bonuses.attack=Math.max(1,Math.ceil(power*.55));
-      else if(player.classId==="monk"){item.bonuses.doubleStrike=.012*tier;item.bonuses.dodge=.008*tier;}
-      else if(player.classId==="clown")item.bonuses.luck=.025*tier;
-      else if(player.classId==="rouge")item.bonuses.lifeSteal=.014*tier;
-      else if(player.classId==="berserker")item.bonuses.attack=Math.max(1,Math.ceil(power*.55));
-      else if(player.classId==="turtle")item.bonuses.defense=Math.max(1,Math.ceil(power*.8));
-      else if(player.classId==="frog")item.bonuses.doubleStrike=.015*tier;
-      else if(player.classId==="d20")item.bonuses.luck=.03*tier;
-      else if(player.classId==="slime")item.bonuses.maxHp=2*tier;
-    }
-    if(slot==="boots")item.bonuses.dodge=.012*tier+.003*progress;
-    if(slot==="legs")item.bonuses.maxHp=3*tier+progress*2;
-    if(slot==="chest")item.bonuses.defense=Math.max(1,Math.ceil(tier*.55)+Math.floor(progress/3));
-    if(slot==="hat")item.bonuses.crit=.01*tier+.002*progress;
-    if(slot==="ring")item.bonuses.goldBonus=.04*tier;
-    if(slot==="amulet")item.bonuses.lifeSteal=.018*tier;
-    if(tier>=3){
-      const secondary=pick(["maxHp","attack","crit","luck","potionPower","bossDamage"]);
-      if(secondary==="maxHp")item.bonuses.maxHp=(item.bonuses.maxHp||0)+tier*2;
-      if(secondary==="attack")item.bonuses.attack=(item.bonuses.attack||0)+Math.max(1,tier-2);
-      if(secondary==="crit")item.bonuses.crit=(item.bonuses.crit||0)+.01*(tier-1);
-      if(secondary==="luck")item.bonuses.luck=(item.bonuses.luck||0)+.035*(tier-2);
-      if(secondary==="potionPower")item.bonuses.potionPower=(item.bonuses.potionPower||0)+.12*(tier-2);
-      if(secondary==="bossDamage")item.bonuses.bossDamage=(item.bonuses.bossDamage||0)+.08*(tier-2);
-    }
-    return maybeAddElement(item);
-  }
+  function generateEquipment(forceRarity=null,forcedSlot=null){return dbItems.generateEquipment(forceRarity,forcedSlot);}
   function generateMythicalBoots(){return {id:`mythical_boots_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"boots",rarity:"mythical",mythical:true,mythicPiece:"boots",setName:"Impossible Road",uniqueEffect:"Titanstep: rolling 5 or 6 restores 5% max HP and grants 10 ultimate charge.",icon:"🥾",name:"Titanstep, Boots of the Astral Road",bonuses:{maxHp:20,defense:3,dodge:.15,extraStepChance:.25}};}
   function generateMythicalAmulet(){return {id:`mythical_amulet_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"mythical",mythical:true,mythicPiece:"amulet",setName:"Impossible Road",uniqueEffect:"Devourer's Gaze: once per battle below 35% HP, consume 12% of every living enemy's max HP and heal for half the damage.",icon:"👁️",name:"The Devourer's Last Eye",bonuses:{maxHp:30,attack:8,crit:.15,luck:.20,lifeSteal:.10,bossDamage:.50}};}
   function generateMythicalPants(){return {id:`mythical_legs_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"legs",rarity:"mythical",mythical:true,mythicPiece:"legs",setName:"Impossible Road",uniqueEffect:"Paradox Loop: every third player action restores 6% max HP and grants 15 ultimate charge.",icon:"👖",name:"Paradox Weave, Legguards Outside Time",bonuses:{maxHp:34,defense:5,attack:5,doubleStrike:.16,luck:.14}};}
@@ -2057,22 +2025,6 @@
     return spent;
   }
 
-  const generateEquipmentV13=generateEquipment;
-  generateEquipment=function(forceRarity=null,forcedSlot=null){
-    const rarity=forceRarity||rollGearRarity(0);
-    if(!V14_RARITY_BUDGETS[rarity])return generateEquipmentV13(forceRarity,forcedSlot);
-    const slot=forcedSlot||pick(EQUIPMENT_SLOTS),seed=`${Date.now()}_${random().toString(36).slice(2,10)}_${player.classId}_${boardLevel}_${player.position}`,R=v14SeedRng(seed),range=V14_RARITY_BUDGETS[rarity];
-    const depthBonus=Math.min(8,Math.floor((boardLevel-1)*1.5+player.position/32)),budget=v14SInt(R,range[0],range[1])+depthBonus,maxTier=V14_RARITY_AFFIX_TIER[rarity],bonuses={};
-    const prefix=v14WeightedAffix(R,V14_PREFIXES,slot),prefixTier=Math.max(1,Math.min(maxTier,v14SInt(R,Math.max(1,maxTier-1),maxTier)));let spent=0;
-    if(prefix&&prefix.cost(prefixTier)<=budget){prefix.apply(bonuses,prefixTier);spent+=prefix.cost(prefixTier);}
-    let suffix=null,suffixTier=0;const suffixChance={common:.45,uncommon:.72,rare:1,epic:1,legendary:1}[rarity];
-    if(R()<suffixChance){suffix=v14WeightedAffix(R,V14_SUFFIXES,slot);suffixTier=Math.max(1,Math.min(maxTier,v14SInt(R,Math.max(1,maxTier-1),maxTier)));while(suffixTier>1&&suffix&&spent+suffix.cost(suffixTier)>budget-4)suffixTier--;if(suffix&&spent+suffix.cost(suffixTier)<=budget){suffix.apply(bonuses,suffixTier);spent+=suffix.cost(suffixTier);}else suffix=null;}
-    const item={id:`gear_${v14HashSeed(seed).toString(36)}_${Date.now()}`,seed,itemPower:budget,slot,rarity,icon:gearIcon(slot),name:"",bonuses,prefix:prefix?prefix.names[prefixTier-1]:null,suffix:suffix?suffix.names[suffixTier-1]:null,affixTier:prefixTier,suffixTier};
-    spent+=v14SpendBase(item,R,budget-spent);item.spentPower=spent;const base=v14BaseName(slot,R);item.name=`${item.prefix?item.prefix+" ":""}${base}${item.suffix?" "+item.suffix:""}`;
-    if(item.slot==="weapon"&&R()<elementChanceForRarity(rarity))item.element=v14SPick(R,ELEMENT_KEYS);
-    return item;
-  };
-
   const gearPowerScorePreV14=gearPowerScore;
   function v14FallbackPower(item){if(!item)return 0;if(Number(item.spentPower)>0)return Number(item.spentPower);if(Number(item.itemPower)>0)return Number(item.itemPower);const floor={common:13,uncommon:23,rare:37,epic:58,legendary:90,mythical:135,omega:175}[item.rarity]||25;return Math.max(floor,Math.round(gearPowerScorePreV14(item)*.72));}
   function v14RawSellValue(item){const p=v14FallbackPower(item),mult={common:.80,uncommon:.90,rare:1,epic:1.10,legendary:1.25,mythical:1.45,omega:1.70}[item.rarity]||1;return Math.max(8,Math.round((12+p*1.45+p*p*.042)*mult));}
@@ -2148,7 +2100,6 @@
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
   function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(poor|common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
   function v15GenerateEquipmentFromSeedCode(code){return window.DiceboundEquipment.generateOrdinaryFromSeedCode(code,{parseSeedCode:v15ParseSeedCode,seedRng:v14SeedRng,seedInt:v14SInt,seedPick:v14SPick,hashSeed:v14HashSeed,rarityBudgets:V14_RARITY_BUDGETS,affixTiers:V14_RARITY_AFFIX_TIER,prefixes:V14_PREFIXES,suffixes:V14_SUFFIXES,elementKeys:ELEMENT_KEYS,elementChanceForRarity,pickAffix:window.DiceboundEquipment.pickOrdinaryAffix,spendBase:v14SpendBase,gearIcon,baseName:window.DiceboundEquipment.ordinaryBaseName});}
-  generateEquipment=function(forceRarity=null,forcedSlot=null){const rarity=forceRarity||rollGearRarity(0);if(!V14_RARITY_BUDGETS[rarity])return generateEquipmentV13(forceRarity,forcedSlot);const slot=forcedSlot||pick(EQUIPMENT_SLOTS),classId=player.classId,qualityBoost=Math.min(8,Math.floor((boardLevel-1)*1.5+player.position/32)),core=`${Math.floor(random()*0xffffffff).toString(36)}${Math.floor(random()*0xffffffff).toString(36)}`,code=v15SeedCode(rarity,slot,classId,qualityBoost,core);return v15GenerateEquipmentFromSeedCode(code);};
 
   const gearPowerScoreV15Visible=gearPowerScorePreV14;
   gearPowerScore=function(item){if(!item)return 0;const visible=gearPowerScoreV15Visible(item),actual=v14FallbackPower(item),elementBonus=item.element?10:0;return visible+actual*2.15+elementBonus;};
@@ -3672,11 +3623,6 @@
   /* v2.4 compatibility hardening: old callers cannot generate random
      handcrafted Legendary gear, Merchant keeps double resale, and the board
      set card uses the authoritative Artifact-tier table. */
-  const generateEquipmentV24OrdinaryBase=generateEquipment;
-  generateEquipment=function(forceRarity=null,forcedSlot=null){
-    if(forceRarity&&['legendary','artifact','mythical','omega'].includes(forceRarity))forceRarity='epic';
-    return generateEquipmentV24OrdinaryBase(forceRarity,forcedSlot);
-  };
   itemSellValue=function(item){const base=v14RawSellValue(item);return classIdentityActive('merchant')?Math.round(base*2):base;};
 
   /* v2.4 final presentation consistency ----------------------------------- */
@@ -3871,26 +3817,7 @@
     return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};
   };
 
-  // Equipment generation should *never* return null to a caller. If any future
-  // rarity/parser mismatch slips through, transparently fall back to a Common
-  // item and log enough context to identify the bad request.
-  const generateEquipmentV251Base=generateEquipment;
-  generateEquipment=function(forceRarity=null,forcedSlot=null){
-    let item=null;
-    try{item=generateEquipmentV251Base(forceRarity,forcedSlot);}catch(e){
-      v25Log('errors','loot','Equipment generation threw',{error:String(e),stack:e?.stack||'',forceRarity,forcedSlot,state:v25State()});
-    }
-    if(item&&EQUIPMENT_SLOTS.includes(item.slot))return item;
-    v25Log('errors','loot','Invalid/null generated equipment; using Common fallback',{forceRarity,forcedSlot,item,state:v25State()});
-    try{item=generateEquipmentV251Base('common',forcedSlot||pick(EQUIPMENT_SLOTS));}catch(e){
-      v25Log('errors','loot','Common equipment fallback threw',{error:String(e),stack:e?.stack||'',state:v25State()});
-    }
-    if(item&&EQUIPMENT_SLOTS.includes(item.slot))return item;
-    // Last-resort valid object. This should never be reached, but keeping the
-    // contract intact is preferable to bricking a career because loot failed.
-    const slot=forcedSlot&&EQUIPMENT_SLOTS.includes(forcedSlot)?forcedSlot:pick(EQUIPMENT_SLOTS);
-    return {id:`gear_failsafe_${Date.now()}_${random().toString(36).slice(2,7)}`,slot,rarity:'common',icon:gearIcon(slot),name:`Reliable ${SLOT_LABELS[slot]}`,bonuses:{maxHp:5},failsafe:true};
-  };
+  // Equipment no-null compatibility is owned by items/generation.js.
 
   // Loot UI is also defensive now. Invalid rewards are skipped and their
   // continuation callback still fires so victory resolution can finish.
@@ -5713,54 +5640,18 @@
     return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};
   };
 
-  const DB060_LEGENDARY_EFFECTS=Object.freeze([
-    Object.freeze({id:'twin_surge',name:'Twin Surge',icon:'⚡⚡',classes:['sorcerer'],desc:'Arcane Surge hits twice. Each hit deals 70% of the normal Surge hit.'}),
-    Object.freeze({id:'sword_and_shield',name:'Sword and Shield',icon:'⚔️🛡️',desc:'Powerups that increase Attack also grant the same Defense; Defense increases also grant the same Attack.'}),
-    Object.freeze({id:'perfect_specimen',name:'Perfect Specimen',icon:'♾️💪',classes:['ouroboros'],desc:'Ouroboros stabilizes at 30 Attack instead of 10 before excess Attack converts into Echo.'}),
-    Object.freeze({id:'echo_chamber',name:'Echo Chamber',icon:'🎯➡️🔁',desc:'During attacks, all Crit chance is converted one-for-one into Echo Strike chance.'}),
-    Object.freeze({id:'critical_feedback',name:'Critical Feedback',icon:'💥🔋',desc:'Every critical Echo Strike grants 8 Ultimate charge.'}),
-    Object.freeze({id:'blood_price',name:'Blood Price',icon:'🩸📈',classes:['bloodmage'],desc:'Exsanguinate deals 15% more damage and permanently builds +8% all damage for the rest of that battle.'}),
-    Object.freeze({id:'glass_fortress',name:'Glass Fortress',icon:'🏰🪟',desc:'Defense counts double against incoming damage, but maximum HP is reduced by 30% while equipped.'}),
-    Object.freeze({id:'second_barrel',name:'Second Barrel',icon:'🔫🔫',desc:'Gun elemental procs fire a second shot at 65% elemental power.'}),
-    Object.freeze({id:'elemental_roulette',name:'Elemental Roulette',icon:'🎰🌈',desc:'Every non-Echo basic strike guarantees one random elemental proc.'}),
-    Object.freeze({id:'prismatic_weapon',name:'Prismatic Weapon',icon:'🌈⚔️',desc:'Whenever your weapon element activates, all six DiBo core elements also erupt at 40% power.'}),
-    Object.freeze({id:'loaded_sixes',name:'Loaded Sixes',icon:'🎲6️⃣',desc:'A movement roll totaling exactly 6 gains +6 additional movement.'}),
-    Object.freeze({id:'last_stand',name:'Last Stand',icon:'❤️‍🔥🛡️',desc:'Once per battle, lethal damage instead leaves you at 25% HP and raises 3 Barriers.'}),
-    Object.freeze({id:'vampires_bargain',name:"Vampire's Bargain",icon:'🧛📜',desc:'Lifesteal above 100% becomes an equal bonus to strike damage.'}),
-    Object.freeze({id:'iron_echo',name:'Iron Echo',icon:'🔁🛡️',desc:'Every damaging Echo grants +1 Defense for the rest of the battle.'}),
-    Object.freeze({id:'recursive_poison',name:'Recursive Poison',icon:'☠️♻️',desc:'After Poison ticks, every surviving poisoned enemy has a 35% chance to gain another Poison stack.'}),
-    Object.freeze({id:'perfect_guard',name:'Perfect Guard',icon:'🛡️🔁',desc:'Guard counter damage can Echo using your Echo Strike chance.'}),
-    Object.freeze({id:'hoarders_arsenal',name:"Hoarder's Arsenal",icon:'💰⚔️',desc:'Every 500 gold adds +1 damage to every basic and Echo strike, regardless of class.'}),
-    Object.freeze({id:'unstable_ultimate',name:'Unstable Ultimate',icon:'💥70',desc:'Ultimates can be used at 70 charge, but deal 75% normal damage.'}),
-    Object.freeze({id:'pet_mirror',name:'Pet Mirror',icon:'🐾🪞',desc:'After your companion attacks, it has a 25% chance to repeat your most recent elemental proc at 65% power.'}),
-    Object.freeze({id:'reverse_engineering',name:'Reverse Engineering',icon:'⚙️↔️',desc:'All Attack and Defense granted by equipped gear swap places while this item is equipped.'})
-  ]);
-  const DB060_EFFECT_BY_ID=Object.freeze(Object.fromEntries(DB060_LEGENDARY_EFFECTS.map(e=>[e.id,e])));
-  function db060HasEffect(id){return Object.values(player.equipment||{}).some(item=>item?.legendaryEffectId===id);}
-  function db060EligibleEffects(){const id=classIdentityId();return DB060_LEGENDARY_EFFECTS.filter(e=>!e.classes||e.classes.includes(id));}
+  const DB060_LEGENDARY_EFFECTS=dbItemGenerationOwner.effects;
+  const DB060_EFFECT_BY_ID=dbItemGenerationOwner.effectById;
   meta.legendaryEffectsDiscovered=Array.isArray(meta.legendaryEffectsDiscovered)?meta.legendaryEffectsDiscovered:[];
-  function db060ChooseEffect(preferUndiscovered=false){
-    let pool=db060EligibleEffects();
-    if(preferUndiscovered){const unseen=pool.filter(e=>!meta.legendaryEffectsDiscovered.includes(e.id));if(unseen.length)pool=unseen;}
-    return pick(pool.length?pool:DB060_LEGENDARY_EFFECTS);
-  }
-  function db060AttachLegendaryEffect(item,effect=null){
-    if(!item)return item;const e=effect||db060ChooseEffect(false);item.rarity='legendary';item.legendaryGenerated=true;item.legendaryEffectId=e.id;item.legendaryEffectName=e.name;item.legendaryEffectDesc=e.desc;item.uniqueEffect=`${e.icon} ${e.name}: ${e.desc}`;item.v24Rarity=true;return item;
-  }
-  function db060RawGeneratedGear(rarity,forcedSlot=null){
-    return window.DiceboundEquipment.generateOrdinaryItem({rarity,forcedSlot,slots:EQUIPMENT_SLOTS,pick,random,classId:player.classId,seedCode:v15SeedCode,generateFromSeedCode:v15GenerateEquipmentFromSeedCode,rarityBudgets:V14_RARITY_BUDGETS,clamp});
-  }
-  function db060GenerateLegendary(forcedSlot=null,preferUndiscovered=false){
-    let item=db060RawGeneratedGear('legendary',forcedSlot);if(!item){item=db060RawGeneratedGear('epic',forcedSlot);if(item)item.rarity='legendary';}
-    return db060AttachLegendaryEffect(item,db060ChooseEffect(preferUndiscovered));
-  }
-  const db060GenerateEquipmentFallback=generateEquipment;
-  generateEquipment=function(forceRarity=null,forcedSlot=null){
-    const rarity=forceRarity||rollGearRarity(0);
-    if(rarity==='legendary')return db060GenerateLegendary(forcedSlot,false);
-    if(['poor','common','uncommon','rare','epic'].includes(rarity))return db060RawGeneratedGear(rarity,forcedSlot)||db060GenerateEquipmentFallback(rarity,forcedSlot);
-    return db060GenerateEquipmentFallback(forceRarity,forcedSlot);
-  };
+  dbItemGeneration=dbItemGenerationOwner.createController({
+    getPlayer:()=>player,getMeta:()=>meta,getBoardLevel:()=>boardLevel,getClassIdentityId:()=>classIdentityId(),
+    slots:EQUIPMENT_SLOTS,slotLabels:SLOT_LABELS,rarityValues,gearNames,rarityPrefixes,rarityBudgets:V14_RARITY_BUDGETS,elementKeys:ELEMENT_KEYS,
+    rollGearRarity:bonus=>rollGearRarity(bonus),pick:list=>pick(list),random:()=>random(),rand:(min,max)=>rand(min,max),clamp:(value,min,max)=>clamp(value,min,max),
+    gearIcon:slot=>gearIcon(slot),elementChanceForRarity:rarity=>elementChanceForRarity(rarity),seedCode:v15SeedCode,generateFromSeedCode:v15GenerateEquipmentFromSeedCode,
+    ordinaryApi:window.DiceboundEquipment,logError:(message,data)=>v25Log('errors','loot',message,data),stateForLog:()=>v25State()
+  });
+  function db060HasEffect(id){return dbItemGeneration.hasEffect(id);}
+  function db060GenerateLegendary(forcedSlot=null,preferUndiscovered=false){return dbItems.generateLegendary(forcedSlot,preferUndiscovered);}
 
   // Generated Legendary effects count as real item value in comparisons.
   const db060GearScoreBase=gearPowerScore;
@@ -5878,7 +5769,7 @@
   // It deliberately exposes the current final wrappers without changing ordinary callers.
   window.DiceboundItemsOracleTest=Object.freeze({
     generateEquipment:(rarity=null,slot=null)=>generateEquipment(rarity,slot),
-    generateLegendary:(slot=null,preferUndiscovered=false)=>db060GenerateLegendary(slot,preferUndiscovered),
+    generateLegendary:(slot=null,preferUndiscovered=false)=>dbItems.generateLegendary(slot,preferUndiscovered),
     sellValue:item=>itemSellValue(item),
     score:item=>gearPowerScore(item),
     formatComparison:(item,current)=>formatGearComparison(item,current),
@@ -5889,7 +5780,7 @@
   window.DiceboundBeta06Test=Object.freeze({
     budgets:()=>JSON.parse(JSON.stringify(V14_RARITY_BUDGETS)),
     legendaryEffects:()=>DB060_LEGENDARY_EFFECTS.map(e=>({id:e.id,name:e.name,classes:e.classes||null,desc:e.desc})),
-    generatedLegendary:()=>{const x=db060GenerateLegendary(null,false);return {name:x.name,slot:x.slot,rarity:x.rarity,itemPower:x.itemPower,effect:x.legendaryEffectName,seed:x.seedCode};},
+    generatedLegendary:()=>{const x=dbItems.generateLegendary(null,false);return {name:x.name,slot:x.slot,rarity:x.rarity,itemPower:x.itemPower,effect:x.legendaryEffectName,seed:x.seedCode};},
     memoryCacheOdds:()=>({normal:1/450,nightmare:1/300,hell:1/200}),
     artifactTable:()=>DB060_ARTIFACT_TABLE.map(x=>({slot:x.slot,weight:x.weight,label:x.label})),
     artifactRates:()=>JSON.parse(JSON.stringify(DB060_LOOT.artifactRates)),
@@ -6236,7 +6127,7 @@
     art:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item)||null,
     intrinsic:item=>db06314Equipment.intrinsicBonusesForItem(item),
     total:item=>db06314Equipment.allBonusesForItem(item),
-    generate:(rarity='common',slot='weapon')=>generateEquipment(rarity,slot)
+    generate:(rarity='common',slot='weapon')=>dbItems.generateEquipment(rarity,slot)
   });
 
   /* #215 — one effective Mana-cap policy for ordinary and authored equipment.

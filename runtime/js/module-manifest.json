@@ -53,6 +53,7 @@
     "item-rarities",
     "item-equipment",
     "item-consumables",
+    "item-generation",
     "items-facade",
     "progression-talents",
     "progression-prestige",
@@ -634,6 +635,19 @@
       ]
     },
     {
+      "id": "item-generation",
+      "path": "js/items/generation.js",
+      "domain": "items/ordinary-generated-legendary-and-compatibility-generation",
+      "status": "extracted",
+      "requires": [
+        "item-rarities",
+        "item-equipment"
+      ],
+      "provides": [
+        "DiceboundItemGeneration"
+      ]
+    },
+    {
       "id": "items-facade",
       "path": "js/items/facade.js",
       "domain": "items/public-items-subsystem-facade",
@@ -641,7 +655,8 @@
       "requires": [
         "item-rarities",
         "item-equipment",
-        "item-consumables"
+        "item-consumables",
+        "item-generation"
       ],
       "provides": [
         "DiceboundItems"
