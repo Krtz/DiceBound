@@ -66,7 +66,7 @@
     const rewards=prestigeOffer(total),remainder=Math.max(0,Number(total)||0)%9;
     if(rewards<1)return false;
     const state=meta();state.prestige=PRESTIGE.award(state.prestige,rewards);state.purchased={};state.level=1;state.xp=0;state.xpNext=legacyXpForLevel(1);state.points=remainder;
-    call('clearPendingPrestige');call('hidePrestigeHeirloomOverlay');
+    call('hidePrestigeHeirloomOverlay');
     if(call('storageUnlocked'))call('syncStorage');
     const cap=call('getHeirloomSlots');state.heirlooms=(state.heirlooms||[]).slice(0,cap).map(item=>call('normalizeSavedItem',item));
     call('saveMeta');call('checkDynamicClassUnlocks');call('sfxHoly');call('showToast',`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);call('renderTalents');call('updateMetaUI');call('openStartScreen');return true;

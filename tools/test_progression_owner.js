@@ -19,13 +19,23 @@ for(const adapter of [
   "function allocatedTalentPoints(){return dbProgression.allocatedTalentPoints();}",
   "function talentAvailable(t){return dbProgression.talentAvailable(t);}",
   "function purchaseTalentNode(id){return dbProgression.purchaseTalent(id);}",
-  "function v27CompletePrestigeNoChoice(total){return dbProgression.completePrestige(total);}"
+  "async function prestigeTree(){",
+  "return dbProgression.completePrestige(total);"
 ])assert.ok(monolith.includes(adapter),`missing thin Progression adapter: ${adapter}`);
 for(const shadow of [
   "const talentRank=id=>Math.max(0,Number(meta.purchased[id])||0);",
   "function gameplayTalentRank(id){const source=runTalentSnapshot||meta.purchased||{};",
   "meta.xp+=amount;\n    while(meta.xp>=meta.xpNext)",
   "const travelAward=Math.max(0,Math.round(tilesMovedThisRun*(1+player.legacyXpBonus)))",
-  "function v27CompletePrestigeNoChoice(total){const rewards="
+  "function v27CompletePrestigeNoChoice(total){const rewards=",
+  "function openPrestigeHeirloomChoice(data)",
+  "function completePrestige(data",
+  "completePrestige=function",
+  "completePrestigeV24Base",
+  "dbRunCompletePrestigeBase",
+  "v19PrestigeKeepCapacity",
+  "pendingPrestige",
+  "prestigeCandidateItems",
+  "v27CompletePrestigeNoChoice"
 ])assert.ok(!monolith.includes(shadow),`retired Progression semantic shadow remains: ${shadow}`);
 console.log("Progression owner PASS: Talent/Legacy/final Prestige semantics route through DiceboundProgression.");

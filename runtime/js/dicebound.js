@@ -312,7 +312,6 @@
   let currentMerchantItems = [];
   let dbMerchantStock = null;
   let currentMerchantNotice = "";
-  let pendingPrestige = null;
   let selectedClassId = "ranger";
   let pendingLootItem = null;
   let pendingLootCallback = null;
@@ -326,7 +325,6 @@
   let tiles = [];
   let pendingDiceChoiceResolve = null;
   let nightmareMode = false;
-  let pendingPrestigeKeepIds = new Set();
 
   const DB_CORE_META=window.DiceboundCoreState?.createMetaService?.({classIds:Object.keys(CLASSES),petIds:Object.keys(PETS),elementIds:ELEMENT_KEYS,petUnlockRequirement:PET_UNLOCK_REQUIREMENT,saveService:window.DiceboundSave});
   if(!DB_CORE_META)throw new Error("DiceboundCoreState must load before dicebound.js");
@@ -686,7 +684,7 @@
     saveMeta:()=>saveMeta(),sfxLevel:()=>sfx.level(),showToast:(...args)=>showToast(...args),renderTalents:()=>renderTalents(),
     isRunFinalized:()=>runFinalized,setRunFinalized:value=>{runFinalized=!!value;},getLastLegacyAward:()=>lastLegacyAward,setLastLegacyAward:value=>{lastLegacyAward=value;},setLastGoldLegacyAward:value=>{lastGoldLegacyAward=value;},
     getTilesMovedThisRun:()=>tilesMovedThisRun,isNightmare:()=>!!nightmareMode,updateMetaUI:()=>updateMetaUI(),
-    clearPendingPrestige:()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();},hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
+    hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
     storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
     checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
   });
@@ -1141,7 +1139,6 @@
   );
 
   let merchantFaceClicks=new Set(),merchantFaceTotal=0,merchantBossPrimed=false,merchantBossDefeatedThisBoard=false,merchantBossBattle=false;
-  let prestigeCandidateItems=[];
   const currentTileCount=()=>db317Board(boardLevel).tiles;
   const currentCols=()=>boardLevel>=4?8:10;
   const currentRows=()=>boardLevel>=4?8:10;
@@ -1240,9 +1237,6 @@
   function renderLifetimeStats(){return dbInfoGuide?.renderStats();}
 
   function prestigeSummary(){return DB_PRESTIGE.inspect(meta.prestige||defaultPrestige()).permanentSummary;}
-  function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});prestigeOverlay.classList.remove("hidden");}
-  function completePrestige(data,keepIds=[]){const {rewards,remainder}=data,keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"],gained=[];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;gained.push(key);}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder+(data.unspent||0);pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();}
-  function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
@@ -1469,7 +1463,7 @@
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
   $("talentBtn").addEventListener("click",()=>openTalentTree());
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
-  $("prestigeKeepConfirmBtn").addEventListener("click",()=>{if(pendingPrestige)completePrestige(pendingPrestige,[...pendingPrestigeKeepIds]);});$("prestigeCancelBtn").addEventListener("click",()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");});
+
   window.addEventListener("resize",()=>placePawn(false));
   window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
 
@@ -1621,10 +1615,6 @@
   function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
   const openDebugMenuV11=openDebugMenu;openDebugMenu=function(){openDebugMenuV11();refreshDebugButtons();};
   const debugActionV11=debugAction;debugAction=function(action){if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}if(action==="omega_stone"&&gameStarted){equipItem(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");return;}return debugActionV11(action);};
-
-  completePrestige=function(data,keepIds=[]){const total=data.totalPoints??(allocatedTalentPoints()+(meta.points||0)),rewards=Math.floor(total/10),keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=0;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();};
-  prestigeTree=function(){const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/10);if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige all ${total} talent points? This includes ${unspent} unspent points. You gain ${rewards} permanent stat point${rewards===1?"":"s"}, your talent tree resets, and your leftover points are consumed so you do not keep extra talent points. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);};
-
 
 
   refreshDebugButtons();
@@ -2655,35 +2645,8 @@
   // Board 6 adds the seventh Impossible Road slot.
   function generateMythicalOffhand(){return {id:`mythical_offhand_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"offhand",rarity:"mythical",mythical:true,mythicPiece:"offhand",setName:"Impossible Road",uniqueEffect:"Event Horizon Ward: Guard grants 8 additional Ultimate; every third Guard also raises one Barrier.",icon:"🌌🛡️",name:"Event Horizon Ward, Offhand Beyond the Sixth Road",bonuses:{maxHp:30,defense:7,attack:7,crit:.10,doubleStrike:.12,bossDamage:.32,flatReduction:2}};}
 
-  // ---- Prestige: 9 points per reward and extra 60-Prestige heirloom -------
-  function v19PrestigeKeepCapacity(count=meta.prestige?.count||0){return 1+(count>=20?1:0)+(count>=60?1:0);}
+  // ---- Heirloom slot capacity retained after V27 Prestige no-choice flow --
   getHeirloomSlots=function(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0)+((meta.prestige?.count||0)>=60?1:0);};
-  completePrestige=function(data,keepIds=[]){
-    const total=data.totalPoints??(allocatedTalentPoints()+(meta.points||0)),rewards=Math.floor(total/9),keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"];
-    for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}
-    meta.prestige.count=(meta.prestige.count||0)+rewards;
-    const capacity=v19PrestigeKeepCapacity(meta.prestige.count),pool=data.candidates||prestigeCandidateItems||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);
-    const remainder=total%9;
-    meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();
-    $("prestigeHeirloomOverlay")?.classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();
-  };
-  openPrestigeHeirloomChoice=function(data){
-    const post=(meta.prestige?.count||0)+data.rewards,capacity=v19PrestigeKeepCapacity(post);
-    const pool=[...(meta.heirlooms||[]),...(data.wasInRun?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])];
-    const dedupe=new Map(pool.map(i=>[i.id,i]));prestigeCandidateItems=[...dedupe.values()];data.candidates=prestigeCandidateItems;pendingPrestige=data;pendingPrestigeKeepIds=new Set();
-    const prestigeOverlay=$("prestigeHeirloomOverlay"),prestigeGrid=$("prestigeKeepGrid")||$("prestigeHeirloomGrid"),prestigeConfirm=$("prestigeConfirmBtn")||$("prestigeKeepConfirmBtn"),prestigeSubtitle=$("prestigeHeirloomSubtitle")||$("prestigeHeirloomOverlay")?.querySelector(".subtitle");
-    if(!prestigeOverlay||!prestigeGrid||!prestigeConfirm)return;
-    if(prestigeSubtitle)prestigeSubtitle.textContent=`Choose up to ${capacity} survivor${capacity===1?"":"s"}. Selected items glow gold and show a large check mark.`;
-    const grid=prestigeGrid;grid.innerHTML="";
-    prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.type="button";b.className="prestige-keep-btn";b.dataset.keepId=item.id;b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span><em class="prestige-selected-label">Not selected</em>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id))pendingPrestigeKeepIds.delete(item.id);else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Keep at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);}const on=pendingPrestigeKeepIds.has(item.id);b.classList.toggle("kept",on);b.querySelector(".prestige-selected-label").textContent=on?"✓ SELECTED":"Not selected";prestigeConfirm.textContent=`Confirm ${pendingPrestigeKeepIds.size}/${capacity} selected`;});grid.appendChild(b);});
-    prestigeConfirm.textContent=`Confirm 0/${capacity} selected`;$("prestigeHeirloomOverlay").classList.remove("hidden");
-  };
-  prestigeTree=function(){
-    const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/9);if(rewards<1)return;
-    const post=(meta.prestige?.count||0)+rewards,keep=v19PrestigeKeepCapacity(post),remainder=total%9,warning=`Prestige all ${total} talent points? Every 9 points becomes 1 permanent Prestige point (${rewards} reward${rewards===1?"":"s"}). ${remainder?`${remainder} leftover talent point${remainder===1?"":"s"} will be returned after the reset. `:""}Talents and Legacy level reset, and you may keep up to ${keep} heirloom${keep===1?"":"s"}.${gameStarted?" THIS ENDS THE CURRENT RUN AND RETURNS TO THE BETWEEN-RUNS HUB.":""}`;
-    if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);
-  };
-
 
   // ---- Compact status markers ---------------------------------------------
   // Once stacks become numerous, a number is much more readable than a row of
@@ -2852,7 +2815,7 @@
     sovereign:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");player.gold=99999;currentMerchantItems=[{id:"v19_relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];renderMerchant();return true;},
     board6:()=>{gameStarted=true;runFinalized=false;boardLevel=6;player.position=0;generateBoard();buildBoard();return {tiles:tiles.length,mini:tiles[currentMinibossTile()-1]?.enemyBase?.name,last:tiles.at(-1)?.type};},
     doubleDice:()=>{meta.doubleDiceUnlocked=true;updateHUD();return {visible:$("roll2Btn")?.style.display!=="none",label:$("roll2Btn")?.textContent};},
-    prestige:()=>({pointsPerPrestige:9,capacity20:v19PrestigeKeepCapacity(20),capacity60:v19PrestigeKeepCapacity(60),tenPointRemainder:10%9}),
+    prestige:()=>({pointsPerPrestige:9,capacity20:2,capacity60:3,tenPointRemainder:10%9}),
     set:()=>({summary:mythicalSetSummary(),offhand:generateMythicalOffhand()}),
     petSwitch:()=>({classId:player.classId,petTagged:v19PetTaggedClass(),gameStarted,beastmasterTagged:(CLASSES.beastmaster.tags||[]).includes("pet")}),
     paladinGrace:()=>{meta.unlocks.paladin=true;resetPlayer("paladin");player.hp=Math.max(1,player.maxHp-20);healPlayer(10);return {grace:player.paladinGrace,hp:player.hp};},
@@ -3513,8 +3476,6 @@
     if(!v24StorageUnlocked())return;const byId=new Map((meta.heirloomStorage||[]).map(i=>[i.id,normalizeSavedItem(i)]));(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));meta.heirloomStorage=[...byId.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();
   }
   function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE),text:'Storage Slot I purchased'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE),text:'Storage Slot II purchased'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
-  const completePrestigeV24Base=completePrestige;
-  completePrestige=function(data,keepIds=[]){const unlocked=v24StorageUnlocked(),before=(meta.heirloomStorage||[]).map(normalizeSavedItem),chosen=(data?.candidates||[]).filter(i=>keepIds.includes(i.id)).map(normalizeSavedItem);const result=completePrestigeV24Base(data,keepIds);if(unlocked){meta.heirloomStorageUnlocked=true;const map=new Map([...before,...chosen].map(i=>[i.id,i]));meta.heirloomStorage=[...map.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();}return result;};
 
   /* MODULE: Pale Devil ritual / secret boss ------------------------------- */
   function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
@@ -3960,8 +3921,7 @@
 
   /* RANDOM CLASS ----------------------------------------------------------- */
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
-  function v27CompletePrestigeNoChoice(total){return dbProgression.completePrestige(total);}
-  prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
+  async function prestigeTree(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return dbProgression.completePrestige(total);}
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
 
@@ -5225,7 +5185,7 @@
   }
   function v319PoisonOverflow(seed='poison-319',chance=2.4,n=1000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');const vals=[];for(let i=0;i<n;i++)vals.push(rollTieredProc(chance));return {seed,chance,n,min:Math.min(...vals),max:Math.max(...vals),average:vals.reduce((a,b)=>a+b,0)/n,first:vals.slice(0,20)};}
   function v319Prestige(seed='prestige-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();meta.points=18;const before=meta.prestige.count||0;v27CompletePrestigeNoChoice(18);const permanent=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'].reduce((n,k)=>n+(meta.prestige[k]||0),0);return {before,after:meta.prestige.count,permanent,points:meta.points,level:meta.level};
+    window.DiceboundRng.seed(seed);v319ResetCareer();meta.points=18;const before=meta.prestige.count||0;dbProgression.completePrestige(18);const permanent=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'].reduce((n,k)=>n+(meta.prestige[k]||0),0);return {before,after:meta.prestige.count,permanent,points:meta.points,level:meta.level};
   }
   function v319StorageSaveReload(){
     v319ResetCareer();meta.heirloomStorageUnlocked=true;meta.board5Clears=1;meta.prestige.count=5;meta.merchantKills=1;const item={id:'test_heirloom_319',slot:'weapon',rarity:'epic',icon:'🧪',name:'Regression Blade',bonuses:{attack:9}};meta.heirloomStorage=[item];meta.heirlooms=[item];const capacity=v24StorageCapacity();saveMeta();meta.heirloomStorage=[];meta.heirlooms=[];const loaded=window.DiceboundSave.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;return {capacity,stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length,id:meta.heirloomStorage?.[0]?.id||null};
@@ -5806,7 +5766,7 @@
       tiles=dbRunClone(run.tiles);boardLevel=Number(run.boardLevel)||1;selectedClassId=String(run.selectedClassId||player.classId||'ranger');nightmareMode=!!run.nightmareMode;hellMode=!!run.hellMode;
       rolls=Math.max(0,Number(run.rolls)||0);tilesMovedThisRun=Math.max(0,Number(run.tilesMovedThisRun)||0);runTalentSnapshot=dbRunClone(run.runTalentSnapshot);statsLastHp=run.statsLastHp??null;statsLastGold=run.statsLastGold??null;
       merchantFaceClicks=new Set(run.merchant?.faceClicks||[]);merchantFaceTotal=Math.max(0,Number(run.merchant?.faceTotal)||0);merchantBossPrimed=!!run.merchant?.bossPrimed;merchantBossDefeatedThisBoard=!!run.merchant?.bossDefeatedThisBoard;merchantBossBattle=false;
-      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
+      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
       window.DiceboundRng.restore(checkpoint.rng);dbRunOwnedSeed=checkpoint.rng.seed;
       gameStarted=true;rollLocked=false;dbRunCloseOverlays();applyRunTheme();buildBoard();
       if($('log'))$('log').innerHTML=String(run.logHtml||'');
@@ -5838,7 +5798,6 @@
   const dbRunUpdateHudBase=updateHUD;updateHUD=function(...args){const result=dbRunUpdateHudBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
   const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
   const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
-  const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
   document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
   // Test-only exercise of the live final-boss path. It deliberately resets the
@@ -7157,7 +7116,7 @@
     grantLegacyXp:amount=>grantLegacyXp(amount),
     finalizeRun:()=>finalizeRun(),
     prestigeOffer:total=>db0633PrestigeOfferPoints(total),
-    completePrestige:total=>v27CompletePrestigeNoChoice(total),
+    completePrestige:total=>dbProgression.completePrestige(total),
     setPrestige:value=>{meta.prestige=DB_PRESTIGE.normalize(dbRunClone(value||{}));return dbRunClone(meta.prestige);},
     rawPrestige:()=>dbRunClone(meta.prestige||{}),
     prestigeInspect:()=>dbRunClone(DB_PRESTIGE.inspect(meta.prestige)),

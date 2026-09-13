@@ -32,7 +32,9 @@ assert.match(monolith,/DB_PRESTIGE\.purchase\(meta\.prestige,id,random\)/,'only 
 assert.match(monolith,/DB_PRESTIGE\.refundAll\(meta\.prestige\)/,'Refund All must route through the domain transaction owner');
 assert.match(monolith,/function openPrestigeMoon\(\)\{return window\.DiceboundPrestigeMoon\?\.open\?\.\(\)\|\|null;\}/,'monolith should retain only a thin Moon open adapter');
 assert.match(progression,/state\.prestige=PRESTIGE\.award\(state\.prestige,rewards\)/,'Progression owner must award Prestige currency during the reset transaction');
-assert.match(monolith,/function v27CompletePrestigeNoChoice\(total\)\{return dbProgression\.completePrestige\(total\);\}/,'compatibility runtime must delegate the final reset transaction to DiceboundProgression');
+assert.match(monolith,/async function prestigeTree\(\)/,'final Prestige entry should be the single live entry point');
+assert.match(monolith,/return dbProgression\.completePrestige\(total\);/,'final Prestige entry must delegate directly to DiceboundProgression');
+assert.doesNotMatch(monolith,/v27CompletePrestigeNoChoice/,'retired V27 Prestige alias must not remain');
 assert.match(monolith,/const p=DB_PRESTIGE\.statTotals\(meta\.prestige\|\|defaultPrestige\(\)\)/,'effective player stats must use the single Prestige totals path');
 assert.doesNotMatch(monolith,/setTimeout\(\(\)=>\{const box=document\.querySelector\('\.prestige-box'\)/,'retired hidden Prestige popup mutation must not remain live');
 assert.match(camp,/openPrestigeMoon/,'Camp must open the Moon destination through its configured action');
