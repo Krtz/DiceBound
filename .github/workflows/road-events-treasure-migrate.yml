@@ -38,11 +38,9 @@ jobs:
               return text[:a]+text[b:]
 
           p=Path('runtime/js/dicebound.js')
-          raw=p.read_bytes()
-          text=raw.decode('utf-8')
-          eol='\r\n' if '\r\n' in text else '\n'
+          text=p.read_bytes().decode('utf-8').replace('\r\n','\n')
+          eol='\n'
 
-          # Route the facade's Treasure entry directly into the extracted owner runtime.
           old='    openTreasure:()=>openTreasure(),'
           if text.count(old)!=1: raise SystemExit(f"Treasure facade adapter count {text.count(old)}")
           treasure_cfg=eol.join([
@@ -71,8 +69,6 @@ jobs:
           ])
           text=text.replace(old,treasure_cfg,1)
 
-          # Remove every historical Treasure implementation layer. The extracted owner
-          # contains the final 0.6 behavior and intentionally omits the retired v24 cache.
           text=cut(text,'  function openTreasure(){','  function useCamp(){','base Treasure')
           text=cut(text,'  openTreasure=function(){const progress=','  // ---- Summoner & Pokémon Trainer runtime','scaled Treasure')
           text=cut(text,'  const openTreasureV24Base=openTreasure;','  /* MODULE: Artifact-tier Impossible Road','v24 Treasure wrapper')
@@ -97,19 +93,29 @@ jobs:
           load=manifest['loadOrder']
           if 'road-event-treasure' not in load:
               load.insert(load.index('road-events-facade'),'road-event-treasure')
-          manifest_path.write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+          manifest_path.write_bytes((json.dumps(manifest,indent=2)+'\n').encode('utf-8'))
 
           index_path=Path('runtime/index.html')
-          index=index_path.read_text(encoding='utf-8')
+          index=index_path.read_bytes().decode('utf-8').replace('\r\n','\n')
           if 'js/events/treasure.js' not in index:
               marker='<script src="js/events/facade.js"></script>'
               if index.count(marker)!=1: raise SystemExit('facade script marker not unique')
               index=index.replace(marker,'<script src="js/events/treasure.js"></script>\n'+marker,1)
-          index_path.write_text(index,encoding='utf-8')
+          index_path.write_bytes(index.encode('utf-8'))
           '@ | python -
 
           python tools/refresh_runtime_manifest.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          @'
+          from pathlib import Path
+          for name in [
+              'runtime/build-info.json','runtime/build-manifest.json','runtime/index.html',
+              'runtime/js/dicebound.js','runtime/js/module-manifest.json'
+          ]:
+              p=Path(name)
+              p.write_bytes(p.read_bytes().replace(b'\r\n',b'\n'))
+          '@ | python -
 
       - name: Validate Treasure migration
         shell: pwsh
