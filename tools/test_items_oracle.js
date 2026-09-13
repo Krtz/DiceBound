@@ -59,7 +59,8 @@ async function main(){
     const actual=await page.evaluate(`(async()=>{
       const wait=ms=>new Promise(r=>setTimeout(r,ms));
       const clone=x=>x==null?x:JSON.parse(JSON.stringify(x));
-      const compactItem=item=>item?{id:item.id,seed:item.seed||null,seedCode:item.seedCode||null,equipmentId:item.equipmentId||null,name:item.name,slot:item.slot,rarity:item.rarity,itemPower:item.itemPower??null,spentPower:item.spentPower??null,prefix:item.prefix??null,suffix:item.suffix??null,affixTier:item.affixTier??null,suffixTier:item.suffixTier??null,element:item.element??null,bonuses:clone(item.bonuses||{}),legendaryGenerated:!!item.legendaryGenerated,legendaryEffectId:item.legendaryEffectId||null,legendaryEffectName:item.legendaryEffectName||null,legendaryEffectDesc:item.legendaryEffectDesc||null,uniqueEffect:item.uniqueEffect||null,v24Rarity:!!item.v24Rarity}:null;
+      const stableId=id=>typeof id==='string'?id.replace(/^gear_\\d+_/,'gear_<time>_'):id;
+      const compactItem=item=>item?{id:stableId(item.id),seed:item.seed||null,seedCode:item.seedCode||null,equipmentId:item.equipmentId||null,name:item.name,slot:item.slot,rarity:item.rarity,itemPower:item.itemPower??null,spentPower:item.spentPower??null,prefix:item.prefix??null,suffix:item.suffix??null,affixTier:item.affixTier??null,suffixTier:item.suffixTier??null,element:item.element??null,bonuses:clone(item.bonuses||{}),legendaryGenerated:!!item.legendaryGenerated,legendaryEffectId:item.legendaryEffectId||null,legendaryEffectName:item.legendaryEffectName||null,legendaryEffectDesc:item.legendaryEffectDesc||null,uniqueEffect:item.uniqueEffect||null,v24Rarity:!!item.v24Rarity}:null;
       document.getElementById('campGoBtn')?.click();await wait(250);document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');
       window.DiceboundRng.seed('items-template');const template=window.DiceboundRunResumeTest.snapshot();
       const outputs=[];
