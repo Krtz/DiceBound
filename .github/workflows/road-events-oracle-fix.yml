@@ -1,0 +1,37 @@
+name: Road Events Oracle Baseline Fix
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.26-road-events-oracle
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-validate:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch oracle baseline semantics
+        shell: pwsh
+        run: |
+          python tools/patch_road_events_oracle_baseline.py
+          node tools/test_road_events_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Materialize exact validated test fix
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/materialize_road_events_oracle_fix.py
