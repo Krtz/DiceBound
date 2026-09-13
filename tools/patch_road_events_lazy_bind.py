@@ -10,9 +10,6 @@ def cut(text,start,end,label):
     if b<0: raise SystemExit(f'{label}: end marker missing')
     return text[:a]+text[b:]
 
-# Lifecycle listeners must bind after the monolith has finished bootstrapping its
-# DOM/runtime adapters. Also absorb the Bloodwell/Gambler leave controls so the
-# lifecycle owner truly owns all six interactive event surfaces.
 p=ROOT/'runtime/js/events/lifecycle.js'
 text=p.read_bytes().decode('utf-8').replace('\r\n','\n')
 old="function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};bind();return api;}"
@@ -30,8 +27,6 @@ if text.count(bind_anchor)!=1: raise SystemExit(f'leave-listener bind anchor cou
 text=text.replace(bind_anchor,bind_extra,1)
 p.write_bytes(text.encode('utf-8'))
 
-# Remove startup/listener/patch residue whose authoritative behavior now lives
-# inside the extracted lifecycle owner.
 mono=ROOT/'runtime/js/dicebound.js'
 source=mono.read_bytes().decode('utf-8').replace('\r\n','\n')
 startup='generateBoard();buildBoard();renderClassChoices();renderEquipment();syncWheelIcons();updateHUD();updateMetaUI();'
@@ -45,5 +40,22 @@ for old in [
     if source.count(old)!=1: raise SystemExit(f'stale leave listener count {source.count(old)}')
     source=source.replace(old,'',1)
 source=cut(source,'  // ---- Slot rewards scale modestly -----------------------------------------','  // ---- Sovereign Relic: force a visible choice flow ------------------------','retired v16 Slot reward override')
+
+# The historical Slot/Wheel/Blessing/Mystic block happened to contain the small
+# Merchant presentation adapter between Wheel and Blessing. Restore that unrelated
+# adapter verbatim; Road Events must not steal or delete Merchant ownership.
+if 'let dbMerchantUi=null;' not in source:
+    marker='  function grantLegacyXp(amount){'
+    if source.count(marker)!=1: raise SystemExit(f'grantLegacyXp marker count {source.count(marker)}')
+    merchant="""  // Merchant presentation is owned by ui/merchant.js; this lexical adapter
+  // remains only for legacy callers inside the compatibility monolith.
+  let dbMerchantUi=null;
+  function renderMerchant(){
+    if(!dbMerchantUi)throw new Error('Merchant UI owner is not configured.');
+    return dbMerchantUi.render();
+  }
+
+"""
+    source=source.replace(marker,merchant+marker,1)
 mono.write_bytes(source.encode('utf-8'))
-print('Road Events listener binding is lazy and startup/leave/Slot patch residue is drained.')
+print('Road Events lifecycle drain preserves Merchant and owns its startup/leave hooks.')
