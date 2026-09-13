@@ -1,0 +1,2954 @@
+{
+  "baselineVersion": "0.6.6.28",
+  "runtimeVersion": "0.6.6.28",
+  "cases": [
+    {
+      "name": "talent-baseline",
+      "kind": "talent",
+      "roadborn": 0,
+      "missing": 0,
+      "allocated": 0,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 0,
+          "purchased": {},
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 475433693
+    },
+    {
+      "name": "talent-prereq-denied",
+      "kind": "talent",
+      "available": false,
+      "result": false,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 10,
+          "purchased": {},
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 1316729231
+    },
+    {
+      "name": "talent-purchase",
+      "kind": "talent",
+      "available": true,
+      "result": true,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 2,
+          "purchased": {
+            "roadborn": 1
+          },
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 997095497
+    },
+    {
+      "name": "talent-max-denied",
+      "kind": "talent",
+      "result": false,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 3,
+          "purchased": {
+            "roadborn": 1
+          },
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 402561944
+    },
+    {
+      "name": "talent-repair",
+      "kind": "talent",
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 0,
+          "purchased": {
+            "survival_armor": 1,
+            "survival_vitality": 2,
+            "roadborn": 1
+          },
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 520222175
+    },
+    {
+      "name": "talent-accounting",
+      "kind": "talent",
+      "allocated": 6,
+      "unspent": 7,
+      "total": 13,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 7,
+          "purchased": {
+            "roadborn": 1,
+            "survival_vitality": 2,
+            "power_attack": 3
+          },
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2510596979
+    },
+    {
+      "name": "talent-run-snapshot",
+      "kind": "talent",
+      "duringRun": {
+        "liveRank": 1,
+        "gameplayRank": 0
+      },
+      "nextRun": {
+        "gameplayRank": 1
+      },
+      "state": {
+        "gameStarted": true,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 10,
+          "purchased": {
+            "roadborn": 1,
+            "power_attack": 1
+          },
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 3676843430
+    },
+    {
+      "name": "legacy-below",
+      "kind": "legacy",
+      "amount": 9,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 9,
+          "xpNext": 10,
+          "points": 0,
+          "purchased": {},
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 996421726
+    },
+    {
+      "name": "legacy-one-level",
+      "kind": "legacy",
+      "amount": 10,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 2,
+          "xp": 0,
+          "xpNext": 12,
+          "points": 1,
+          "purchased": {},
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2015903160
+    },
+    {
+      "name": "legacy-multi-level",
+      "kind": "legacy",
+      "amount": 23,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 3,
+          "xp": 1,
+          "xpNext": 14,
+          "points": 2,
+          "purchased": {},
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 194165089
+    },
+    {
+      "name": "run-finalize-legacy",
+      "kind": "legacy",
+      "award": 43,
+      "state": {
+        "gameStarted": true,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 4,
+          "xp": 7,
+          "xpNext": 16,
+          "points": 3,
+          "purchased": {},
+          "prestige": {
+            "count": 0,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 1,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 17,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 245,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 1,
+          "bestTiles": 17
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2210646213
+    },
+    {
+      "name": "prestige-offers",
+      "kind": "prestige",
+      "offers": [
+        [
+          0,
+          0
+        ],
+        [
+          8,
+          0
+        ],
+        [
+          9,
+          1
+        ],
+        [
+          17,
+          1
+        ],
+        [
+          18,
+          2
+        ],
+        [
+          20,
+          2
+        ],
+        [
+          27,
+          3
+        ]
+      ],
+      "rngCalls": 0,
+      "rngState": 4192161720
+    },
+    {
+      "name": "prestige-reset-exact",
+      "kind": "prestige",
+      "total": 9,
+      "result": true,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 0,
+          "purchased": {},
+          "prestige": {
+            "count": 3,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 2,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 1143082880
+    },
+    {
+      "name": "prestige-reset-remainder",
+      "kind": "prestige",
+      "total": 11,
+      "result": true,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 2,
+          "purchased": {},
+          "prestige": {
+            "count": 2,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 1,
+              "purchases": []
+            }
+          },
+          "heirlooms": [],
+          "heirloomStorage": [],
+          "heirloomStorageUnlocked": false,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2533578796
+    },
+    {
+      "name": "prestige-storage-checkpoint",
+      "kind": "prestige",
+      "total": 9,
+      "result": true,
+      "checkpointBefore": true,
+      "checkpointAfter": false,
+      "state": {
+        "gameStarted": false,
+        "runTalentSnapshot": null,
+        "meta": {
+          "level": 1,
+          "xp": 0,
+          "xpNext": 10,
+          "points": 0,
+          "purchased": {},
+          "prestige": {
+            "count": 5,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 4,
+              "purchases": []
+            }
+          },
+          "heirlooms": [
+            {
+              "id": "oracle-ring",
+              "slot": "ring",
+              "rarity": "rare",
+              "name": "Oracle Ring",
+              "icon": "💍",
+              "bonuses": {
+                "attack": 1
+              }
+            }
+          ],
+          "heirloomStorage": [
+            {
+              "id": "oracle-ring",
+              "slot": "ring",
+              "rarity": "rare",
+              "name": "Oracle Ring",
+              "icon": "💍",
+              "bonuses": {
+                "attack": 1
+              }
+            }
+          ],
+          "heirloomStorageUnlocked": true,
+          "unlocks": {
+            "ranger": true,
+            "sorcerer": false,
+            "fighter": false,
+            "monk": false,
+            "clown": false,
+            "rouge": false,
+            "berserker": false,
+            "turtle": false,
+            "frog": false,
+            "d20": false,
+            "slime": false,
+            "vampire": false,
+            "ninja": false,
+            "ceo": false,
+            "merchant": false,
+            "cleric": false,
+            "paladin": false,
+            "beastmaster": false,
+            "rogue": false,
+            "bloodmage": false,
+            "summoner": false,
+            "pokemontrainer": false,
+            "alchemist": false,
+            "ouroboros": false,
+            "dragoon": false,
+            "invoker": false,
+            "slimerouge": false
+          },
+          "classUnlockFacts": {
+            "board3MinibossDefeated": false,
+            "board3BossDefeated": false,
+            "board4MinibossDefeated": false,
+            "beastmasterBoard5Cleared": false,
+            "roadMerchantSecretBossDefeated": false,
+            "maxLifesteal": 0,
+            "manaSpenderCasts": 0
+          },
+          "stats": {
+            "runsStarted": 1,
+            "runsFinished": 0,
+            "fullVictories": 0,
+            "deaths": 0,
+            "rolls": 0,
+            "tilesTraveled": 0,
+            "damageDealt": 0,
+            "healingDone": 0,
+            "goldEarned": 0,
+            "goldSpent": 0,
+            "highestGold": 1,
+            "enemiesDefeated": 0,
+            "bossesDefeated": 0,
+            "minibossesDefeated": 0,
+            "powerupsTaken": 0,
+            "highestRunLevel": 1,
+            "boardClears": {},
+            "classMaxLevel": {
+              "ranger": 1
+            },
+            "damageTaken": 0,
+            "potionsUsed": 0
+          },
+          "elementProgress": {
+            "fire": 0,
+            "ice": 0,
+            "electric": 0,
+            "light": 0,
+            "void": 0,
+            "nature": 0,
+            "donut": 0,
+            "tech": 0,
+            "metal": 0,
+            "coffee": 0,
+            "gun": 0,
+            "radiation": 0
+          },
+          "devilHornsFound": false,
+          "nightmareUnlocked": false,
+          "hellUnlocked": false,
+          "runs": 0,
+          "bestTiles": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 1832580985
+    },
+    {
+      "name": "moon-held",
+      "kind": "moon",
+      "inspect": {
+        "owner": "progression/prestige",
+        "count": 3,
+        "spent": 0,
+        "refundableSpent": 0,
+        "unspent": 3,
+        "held": {
+          "maxHp": 1,
+          "attack": 1,
+          "defense": 1,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "purchased": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "totals": {
+          "maxHp": 1,
+          "attack": 1,
+          "defense": 1,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "heldSummary": "+3 Max HP · +1 Attack · +1 Defense",
+        "permanent": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "permanentSummary": "No permanent Prestige stats yet.",
+        "purchasedNodes": [],
+        "nodes": [
+          {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top",
+            "purchased": false,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper",
+            "purchased": false,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle",
+            "purchased": false,
+            "available": false,
+            "affordable": false,
+            "unavailableReason": "Requires Unlock Heirloom Storage."
+          },
+          {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower",
+            "purchased": false,
+            "available": false,
+            "affordable": false,
+            "unavailableReason": "Requires Unlock Heirloom Storage."
+          },
+          {
+            "id": "moon-forge",
+            "label": "Build Moon Forge",
+            "detail": "A persistent lunar smithy will become the home of Prestige crafting.",
+            "cost": null,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "structure",
+            "placement": "left",
+            "unavailableReason": "Moon Forge cost is awaiting balance approval.",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          }
+        ]
+      },
+      "rngCalls": 0,
+      "rngState": 2167390360
+    },
+    {
+      "name": "moon-random-stats",
+      "kind": "moon",
+      "result": {
+        "ok": true,
+        "node": {
+          "id": "five-random-stats",
+          "label": "Buy Stats",
+          "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+          "cost": 1,
+          "repeatable": true,
+          "refundable": true,
+          "kind": "random-stat-bundle",
+          "placement": "top"
+        },
+        "prestige": {
+          "count": 1,
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0,
+          "moon": {
+            "legacySpent": 0,
+            "purchases": [
+              {
+                "nodeId": "five-random-stats",
+                "cost": 1,
+                "stats": {
+                  "maxHp": 0,
+                  "attack": 2,
+                  "defense": 0,
+                  "crit": 1,
+                  "dodge": 2,
+                  "luck": 0,
+                  "lifeSteal": 0
+                }
+              }
+            ]
+          }
+        },
+        "stats": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 2,
+          "luck": 0,
+          "lifeSteal": 0
+        }
+      },
+      "inspect": {
+        "owner": "progression/prestige",
+        "count": 1,
+        "spent": 1,
+        "refundableSpent": 1,
+        "unspent": 0,
+        "held": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "purchased": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 2,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "totals": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 2,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "heldSummary": "No held Prestige Point bonus yet.",
+        "permanent": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 2,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "permanentSummary": "+2 Attack · +1% Crit · +2% Dodge",
+        "purchasedNodes": [
+          "five-random-stats"
+        ],
+        "nodes": [
+          {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top",
+            "purchased": true,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle",
+            "purchased": false,
+            "available": false,
+            "affordable": false,
+            "unavailableReason": "Requires Unlock Heirloom Storage."
+          },
+          {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower",
+            "purchased": false,
+            "available": false,
+            "affordable": false,
+            "unavailableReason": "Requires Unlock Heirloom Storage."
+          },
+          {
+            "id": "moon-forge",
+            "label": "Build Moon Forge",
+            "detail": "A persistent lunar smithy will become the home of Prestige crafting.",
+            "cost": null,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "structure",
+            "placement": "left",
+            "unavailableReason": "Moon Forge cost is awaiting balance approval.",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          }
+        ]
+      },
+      "rngCalls": 5,
+      "rngState": 1691496763
+    },
+    {
+      "name": "moon-storage-chain",
+      "kind": "moon",
+      "results": [
+        {
+          "ok": true,
+          "node": {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper"
+          },
+          "prestige": {
+            "count": 8,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": [
+                {
+                  "nodeId": "heirloom-storage",
+                  "cost": 1,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                }
+              ]
+            }
+          },
+          "stats": {
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0
+          }
+        },
+        {
+          "ok": true,
+          "node": {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle"
+          },
+          "prestige": {
+            "count": 8,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": [
+                {
+                  "nodeId": "heirloom-storage",
+                  "cost": 1,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                },
+                {
+                  "nodeId": "heirloom-slot-i",
+                  "cost": 2,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                }
+              ]
+            }
+          },
+          "stats": {
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0
+          }
+        },
+        {
+          "ok": true,
+          "node": {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower"
+          },
+          "prestige": {
+            "count": 8,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": [
+                {
+                  "nodeId": "heirloom-storage",
+                  "cost": 1,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                },
+                {
+                  "nodeId": "heirloom-slot-i",
+                  "cost": 2,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                },
+                {
+                  "nodeId": "heirloom-slot-ii",
+                  "cost": 5,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                }
+              ]
+            }
+          },
+          "stats": {
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0
+          }
+        }
+      ],
+      "inspect": {
+        "owner": "progression/prestige",
+        "count": 8,
+        "spent": 8,
+        "refundableSpent": 0,
+        "unspent": 0,
+        "held": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "purchased": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "totals": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "heldSummary": "No held Prestige Point bonus yet.",
+        "permanent": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "permanentSummary": "No permanent Prestige stats yet.",
+        "purchasedNodes": [
+          "heirloom-storage",
+          "heirloom-slot-i",
+          "heirloom-slot-ii"
+        ],
+        "nodes": [
+          {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper",
+            "purchased": true,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle",
+            "purchased": true,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower",
+            "purchased": true,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "moon-forge",
+            "label": "Build Moon Forge",
+            "detail": "A persistent lunar smithy will become the home of Prestige crafting.",
+            "cost": null,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "structure",
+            "placement": "left",
+            "unavailableReason": "Moon Forge cost is awaiting balance approval.",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          }
+        ]
+      },
+      "rngCalls": 0,
+      "rngState": 4239438536
+    },
+    {
+      "name": "moon-refund",
+      "kind": "moon",
+      "results": [
+        {
+          "ok": true,
+          "node": {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper"
+          },
+          "prestige": {
+            "count": 5,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": [
+                {
+                  "nodeId": "heirloom-storage",
+                  "cost": 1,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                }
+              ]
+            }
+          },
+          "stats": {
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0
+          }
+        },
+        {
+          "ok": true,
+          "node": {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top"
+          },
+          "prestige": {
+            "count": 5,
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 0,
+            "crit": 0,
+            "dodge": 0,
+            "luck": 0,
+            "lifeSteal": 0,
+            "moon": {
+              "legacySpent": 0,
+              "purchases": [
+                {
+                  "nodeId": "heirloom-storage",
+                  "cost": 1,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 0,
+                    "crit": 0,
+                    "dodge": 0,
+                    "luck": 0,
+                    "lifeSteal": 0
+                  }
+                },
+                {
+                  "nodeId": "five-random-stats",
+                  "cost": 1,
+                  "stats": {
+                    "maxHp": 0,
+                    "attack": 0,
+                    "defense": 1,
+                    "crit": 0,
+                    "dodge": 1,
+                    "luck": 2,
+                    "lifeSteal": 1
+                  }
+                }
+              ]
+            }
+          },
+          "stats": {
+            "maxHp": 0,
+            "attack": 0,
+            "defense": 1,
+            "crit": 0,
+            "dodge": 1,
+            "luck": 2,
+            "lifeSteal": 1
+          }
+        }
+      ],
+      "refund": {
+        "prestige": {
+          "count": 5,
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0,
+          "moon": {
+            "legacySpent": 0,
+            "purchases": [
+              {
+                "nodeId": "heirloom-storage",
+                "cost": 1,
+                "stats": {
+                  "maxHp": 0,
+                  "attack": 0,
+                  "defense": 0,
+                  "crit": 0,
+                  "dodge": 0,
+                  "luck": 0,
+                  "lifeSteal": 0
+                }
+              }
+            ]
+          }
+        },
+        "refunded": 1
+      },
+      "inspect": {
+        "owner": "progression/prestige",
+        "count": 5,
+        "spent": 1,
+        "refundableSpent": 0,
+        "unspent": 4,
+        "held": {
+          "maxHp": 1,
+          "attack": 1,
+          "defense": 1,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "purchased": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "totals": {
+          "maxHp": 1,
+          "attack": 1,
+          "defense": 1,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "heldSummary": "+3 Max HP · +1 Attack · +1 Defense · +1% Crit",
+        "permanent": {
+          "maxHp": 0,
+          "attack": 0,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "permanentSummary": "No permanent Prestige stats yet.",
+        "purchasedNodes": [
+          "heirloom-storage"
+        ],
+        "nodes": [
+          {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top",
+            "purchased": false,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper",
+            "purchased": true,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle",
+            "purchased": false,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "moon-forge",
+            "label": "Build Moon Forge",
+            "detail": "A persistent lunar smithy will become the home of Prestige crafting.",
+            "cost": null,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "structure",
+            "placement": "left",
+            "unavailableReason": "Moon Forge cost is awaiting balance approval.",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          }
+        ]
+      },
+      "rngCalls": 5,
+      "rngState": 1762318918
+    },
+    {
+      "name": "moon-normalize",
+      "kind": "moon",
+      "first": {
+        "owner": "progression/prestige",
+        "count": 4,
+        "spent": 2,
+        "refundableSpent": 1,
+        "unspent": 2,
+        "held": {
+          "maxHp": 1,
+          "attack": 1,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "purchased": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 2,
+          "lifeSteal": 0
+        },
+        "totals": {
+          "maxHp": 1,
+          "attack": 3,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 2,
+          "lifeSteal": 0
+        },
+        "heldSummary": "+3 Max HP · +1 Attack",
+        "permanent": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 2,
+          "lifeSteal": 0
+        },
+        "permanentSummary": "+2 Attack · +1% Crit · +4 Luck",
+        "purchasedNodes": [
+          "five-random-stats",
+          "heirloom-storage"
+        ],
+        "nodes": [
+          {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top",
+            "purchased": true,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper",
+            "purchased": true,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle",
+            "purchased": false,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "moon-forge",
+            "label": "Build Moon Forge",
+            "detail": "A persistent lunar smithy will become the home of Prestige crafting.",
+            "cost": null,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "structure",
+            "placement": "left",
+            "unavailableReason": "Moon Forge cost is awaiting balance approval.",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          }
+        ]
+      },
+      "second": {
+        "owner": "progression/prestige",
+        "count": 4,
+        "spent": 2,
+        "refundableSpent": 1,
+        "unspent": 2,
+        "held": {
+          "maxHp": 1,
+          "attack": 1,
+          "defense": 0,
+          "crit": 0,
+          "dodge": 0,
+          "luck": 0,
+          "lifeSteal": 0
+        },
+        "purchased": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 2,
+          "lifeSteal": 0
+        },
+        "totals": {
+          "maxHp": 1,
+          "attack": 3,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 2,
+          "lifeSteal": 0
+        },
+        "heldSummary": "+3 Max HP · +1 Attack",
+        "permanent": {
+          "maxHp": 0,
+          "attack": 2,
+          "defense": 0,
+          "crit": 1,
+          "dodge": 0,
+          "luck": 2,
+          "lifeSteal": 0
+        },
+        "permanentSummary": "+2 Attack · +1% Crit · +4 Luck",
+        "purchasedNodes": [
+          "five-random-stats",
+          "heirloom-storage"
+        ],
+        "nodes": [
+          {
+            "id": "five-random-stats",
+            "label": "Buy Stats",
+            "detail": "Spend 1 Prestige Point to gain 5 permanent random stat points.",
+            "cost": 1,
+            "repeatable": true,
+            "refundable": true,
+            "kind": "random-stat-bundle",
+            "placement": "top",
+            "purchased": true,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-storage",
+            "label": "Unlock Heirloom Storage",
+            "detail": "Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.",
+            "cost": 1,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "heirloom-storage",
+            "placement": "right-upper",
+            "purchased": true,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-i",
+            "label": "Heirloom Storage Slot I",
+            "detail": "Permanently add one extra Heirloom Storage slot.",
+            "cost": 2,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-middle",
+            "purchased": false,
+            "available": true,
+            "affordable": true
+          },
+          {
+            "id": "heirloom-slot-ii",
+            "label": "Heirloom Storage Slot II",
+            "detail": "Permanently add one more Heirloom Storage slot.",
+            "cost": 5,
+            "repeatable": false,
+            "refundable": false,
+            "requires": "heirloom-storage",
+            "kind": "heirloom-storage-slot",
+            "placement": "right-lower",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          },
+          {
+            "id": "moon-forge",
+            "label": "Build Moon Forge",
+            "detail": "A persistent lunar smithy will become the home of Prestige crafting.",
+            "cost": null,
+            "repeatable": false,
+            "refundable": false,
+            "kind": "structure",
+            "placement": "left",
+            "unavailableReason": "Moon Forge cost is awaiting balance approval.",
+            "purchased": false,
+            "available": true,
+            "affordable": false
+          }
+        ]
+      },
+      "rngCalls": 0,
+      "rngState": 3694585762
+    },
+    {
+      "name": "achievement-run",
+      "kind": "achievement",
+      "done": true,
+      "rngCalls": 0,
+      "rngState": 3724010712
+    },
+    {
+      "name": "achievement-board",
+      "kind": "achievement",
+      "done": true,
+      "rngCalls": 0,
+      "rngState": 727439261
+    },
+    {
+      "name": "achievement-nature",
+      "kind": "achievement",
+      "done": true,
+      "rngCalls": 0,
+      "rngState": 1631807132
+    },
+    {
+      "name": "achievement-prestige",
+      "kind": "achievement",
+      "done": true,
+      "rngCalls": 0,
+      "rngState": 4024323646
+    },
+    {
+      "name": "achievement-secret",
+      "kind": "achievement",
+      "done": true,
+      "rngCalls": 0,
+      "rngState": 298101591
+    },
+    {
+      "name": "achievement-copy",
+      "kind": "achievement",
+      "condition": "Clear Board 1 as Ranger.",
+      "reward": " · unlocks Crownshot",
+      "secretCondition": "Find the Devil's Horns Omega hat.",
+      "rngCalls": 0,
+      "rngState": 2436526990
+    },
+    {
+      "name": "achievement-gates",
+      "kind": "achievement",
+      "achievement": true,
+      "classB2": true,
+      "classB5": true,
+      "rngCalls": 0,
+      "rngState": 2036643569
+    },
+    {
+      "name": "hero-mastery",
+      "kind": "achievement",
+      "entries": [
+        {
+          "id": "hero-talent:ranger:ranger_tempest",
+          "name": "🌪️ Tempest Archer",
+          "description": "Clear Board 4 as this hero. Unlocks this hero-specific talent.",
+          "done": false
+        },
+        {
+          "id": "hero-talent:ranger:ranger_high_ground",
+          "name": "🦅 High Ground",
+          "description": "Clear Board 3 as this hero. Unlocks this hero-specific talent.",
+          "done": false
+        },
+        {
+          "id": "hero-talent:ranger:ranger_crownshot",
+          "name": "🏹👑 Crownshot",
+          "description": "Complete this hero’s listed unlock condition. Unlocks this hero-specific talent.",
+          "done": true
+        }
+      ],
+      "rngCalls": 0,
+      "rngState": 462435977
+    },
+    {
+      "name": "achievement-count",
+      "kind": "achievement",
+      "count": 4,
+      "rngCalls": 0,
+      "rngState": 3469219910
+    },
+    {
+      "name": "class-unlock-commit",
+      "kind": "class-unlock",
+      "result": true,
+      "unlocked": true,
+      "feedback": {
+        "pending": [
+          "invoker"
+        ],
+        "acknowledged": [],
+        "activeId": null
+      },
+      "log": "<p><b>Class unlocked:</b> 🔵🟢🔴 Invoker!</p><p><b>Ranger</b> begins the four-road adventure.</p>",
+      "rngCalls": 0,
+      "rngState": 3296355124
+    }
+  ]
+}
