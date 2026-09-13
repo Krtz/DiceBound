@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.27
+
+### Items subsystem facade and ownership (#320)
+- Added `runtime/js/items/facade.js` as the single ordinary public `DiceboundItems` boundary, backed by focused `items/generation.js` and `items/operations.js` owners rather than patch-era wrapper ladders.
+- Routed Road Event Treasure, Merchant stock and Run player initialization through the Items boundary, and retired the historical generated-equipment plus score/value/equip/comparison shadow implementations from `dicebound.js`.
+- Added a permanent 23-case exact released-0.6.6.26 Items oracle plus facade/generation/operations ownership guards; shipped RNG order, generated Legendary behavior, Merchant resale semantics and compatibility quirks are frozen exactly.
+- Architecture measurement: runtime graph 74 → 77 modules (73 → 76 extracted/internal plus one monolith); normalized `dicebound.js` 709,513 → 694,385 bytes and 7,267 → 7,130 lines. No gameplay, rarity, Merchant balance, Artifact/Mythical/Omega design or save/checkpoint behavior change is intended.
+
 ## Beta 0.6.6.26
 
 ### Road Events subsystem facade (#324)
