@@ -1,0 +1,69 @@
+name: Items Facade Seam
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.27-items-oracle
+
+permissions:
+  contents: write
+
+jobs:
+  seam-and-validate:
+    runs-on: windows-2022
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Stage Items facade seam
+        shell: pwsh
+        run: |
+          python tools/patch_items_facade_seam.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.26 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate Items facade seam and frozen behavior
+        shell: pwsh
+        run: |
+          node tools/test_items_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_items_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_ordinary_equipment_generation.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_equipment_identity_registry.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_loot_module.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_artifacts_module.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_event_treasure.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_road_events_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_merchant_stock_resolution_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_player_initialization.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_run_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_runtime_manifest_hash.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Materialize exact validated seam
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/materialize_items_facade_seam.py
