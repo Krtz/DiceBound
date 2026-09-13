@@ -2,6 +2,25 @@ from pathlib import Path
 import re
 
 PATH=Path('runtime/js/dicebound.js')
+TEST_PATH=Path('tools/test_progression_oracle.js')
+
+# A bare Prestige {count:N} is intentionally normalized as legacy-earned points
+# that are already spent. The Moon transaction characterization cases need to
+# model newly available/unspent points explicitly so their purchases exercise
+# the released transaction path rather than the legacy compatibility path.
+test_text=TEST_PATH.read_text(encoding='utf-8')
+moon_replacements={
+    "restore('moon-held');progression.setPrestige({count:3});": "restore('moon-held');progression.setPrestige({count:3,moon:{legacySpent:0,purchases:[]}});",
+    "restore('moon-random-stats');progression.setPrestige({count:1});": "restore('moon-random-stats');progression.setPrestige({count:1,moon:{legacySpent:0,purchases:[]}});",
+    "restore('moon-storage-chain');progression.setPrestige({count:8});": "restore('moon-storage-chain');progression.setPrestige({count:8,moon:{legacySpent:0,purchases:[]}});",
+    "restore('moon-refund');progression.setPrestige({count:5});": "restore('moon-refund');progression.setPrestige({count:5,moon:{legacySpent:0,purchases:[]}});",
+}
+for old,new in moon_replacements.items():
+    if test_text.count(old)!=1:
+        raise SystemExit(f'expected exactly one Progression Moon oracle setup: {old}')
+    test_text=test_text.replace(old,new,1)
+TEST_PATH.write_text(test_text,encoding='utf-8',newline='\n')
+
 text=PATH.read_text(encoding='utf-8')
 if 'window.DiceboundProgressionOracleTest=Object.freeze({' in text:
     raise SystemExit('Progression oracle seam already present')
@@ -67,4 +86,4 @@ if not match:
     raise SystemExit('outer dicebound IIFE closing marker not found')
 text=text[:match.start()]+surface+text[match.start():]
 PATH.write_text(text,encoding='utf-8',newline='\n')
-print('Progression characterization seam added.')
+print('Progression characterization seam and explicit Moon test states added.')
