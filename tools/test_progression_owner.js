@@ -44,9 +44,17 @@ for(const shadow of [
   "achievementGateUnlockedV19Base",
   "db0512AchievementGateBase",
   "db0512AchievementRewardBase",
-  "function db064HeroMasteryEntries(classId)"
+  "function db064HeroMasteryEntries(classId)",
+  "DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,dbClassUnlockContext())",
+  "DB_CLASS_UNLOCK_RULES.recordObservedProgress(dbClassUnlockContext())",
+  "DB_CLASS_UNLOCK_RULES.resolveDynamic({getContext:()=>dbClassUnlockContext()",
+  "function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES",
+  "if(id===\"bloodmage\"){meta.bloodmageUnlocked=true"
 ])assert.ok(!monolith.includes(shadow),`retired Progression semantic shadow remains: ${shadow}`);
-for(const owned of ["achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked","heroMasteryEntries","achievementCount"])assert.ok(lifecycle.includes(owned),`Progression Achievement owner capability missing: ${owned}`);
+for(const owned of ["achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked","heroMasteryEntries","achievementCount","isClassUnlocked","commitClassUnlock","unlockClass","checkDynamicClassUnlocks"])assert.ok(lifecycle.includes(owned),`Progression owner capability missing: ${owned}`);
 assert.ok(monolith.includes("function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}"),"ordinary powerup gates must route through DiceboundProgression");
 assert.ok(monolith.includes("isDone:achievement=>dbProgression.achievementDone(achievement)"),"Achievements UI must consume Progression completion policy");
-console.log("Progression owner PASS: Talent/Legacy/Prestige/Achievement semantics route through DiceboundProgression.");
+assert.ok(monolith.includes("function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}"),"ordinary class eligibility must route through DiceboundProgression");
+assert.ok(monolith.includes("function unlockClass(id){return dbProgression.unlockClass(id);}"),"ordinary class unlock commits must route through DiceboundProgression");
+assert.ok(monolith.includes("function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}"),"dynamic class scans must route through DiceboundProgression");
+console.log("Progression owner PASS: Talent/Legacy/Prestige/Achievement/class-unlock orchestration routes through DiceboundProgression.");

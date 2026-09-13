@@ -344,13 +344,8 @@
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
-  function commitClassUnlock(id){
-    if(id==="bloodmage"){meta.bloodmageUnlocked=true;meta.unlocks=meta.unlocks||{};meta.unlocks.bloodmage=true;saveMeta();renderClassChoices();return true;}
-    if(!CLASSES[id]||meta.unlocks?.[id])return false;
-    meta.unlocks=meta.unlocks||{};meta.unlocks[id]=true;saveMeta();
-    const cls=CLASSES[id],unlockFeedback=window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id);if(gameStarted)addLog(`<b>Class unlocked:</b> ${cls.icon} ${cls.name}!`);showToast(unlockFeedback?.toast||`NEW CLASS UNLOCKED · ${cls.icon} ${cls.name}`,3400,true);renderClassChoices();return true;
-  }
-  function unlockClass(id){if(!DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,dbClassUnlockContext()))return false;return commitClassUnlock(id);}
+  function commitClassUnlock(id){return dbProgression.commitClassUnlock(id);}
+  function unlockClass(id){return dbProgression.unlockClass(id);}
 
   /* ========================================================================
      Alpha v3.1.9 — state/render contracts
@@ -687,8 +682,11 @@
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
     storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
-    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),isClassUnlocked:id=>isClassUnlocked(id),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,getAchievementGateRewards:()=>db0512GateRewards,
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
+    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,getAchievementGateRewards:()=>db0512GateRewards,
+    getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
+    classUnlockRecordObservedProgress:ctx=>DB_CLASS_UNLOCK_RULES.recordObservedProgress(ctx),classUnlockResolveDynamic:options=>DB_CLASS_UNLOCK_RULES.resolveDynamic(options),
+    classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>renderClassChoices(),addLog:html=>addLog(html),
+    sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
   });
   const talentRank=id=>dbProgression.talentRank(id);
 
@@ -1168,7 +1166,7 @@
   }
   importOldSaveIfNeeded();
 
-  function isClassUnlocked(id){return DB_CLASS_UNLOCK_RULES.isUnlocked(id,dbClassUnlockContext());}
+  function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}
   // Thin composition adapter only.  The real Class chooser, including
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
   function renderClassChoices(){return window.DiceboundClassChooser?.render();}
@@ -1285,13 +1283,7 @@
       hasBoardClear:(classId,board)=>hasBoardClear(classId,board)
     };
   }
-  function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES.isBaseUnlocked(id,dbClassUnlockContext());}
-  function checkDynamicClassUnlocks(){
-    const observed=DB_CLASS_UNLOCK_RULES.recordObservedProgress(dbClassUnlockContext());
-    if(observed.changed){const stats=ensureAlphaMeta();stats.highestGold=observed.highestGold;meta.classUnlockFacts=observed.facts;}
-    DB_CLASS_UNLOCK_RULES.resolveDynamic({getContext:()=>dbClassUnlockContext(),unlock:id=>unlockClass(id)});
-    if(observed.changed)saveMeta();
-  }
+  function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}
 
   function playElementAnimation(key,target=currentEnemy,enemySource=false){
     const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;
@@ -7025,7 +7017,7 @@
     achievementGate:gate=>dbProgression.achievementGateUnlocked(gate),
     heroMastery:classId=>dbRunClone(dbProgression.heroMasteryEntries(classId)),
     achievementCount:()=>dbProgression.achievementCount(),
-    unlockClass:id=>unlockClass(id),
+    unlockClass:id=>dbProgression.unlockClass(id),
     classUnlockFeedbackState:()=>dbRunClone(window.DiceboundClassUnlockFeedback?.state?.()||null),
     logHtml:()=>String($('log')?.innerHTML||'')
   });

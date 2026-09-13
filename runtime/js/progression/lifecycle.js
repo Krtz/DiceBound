@@ -1,7 +1,8 @@
 /* DiceBound Progression public subsystem owner.
  *
- * This is the semantic owner for Talent/Legacy progression and the final
- * Prestige reset transaction. Focused registries/domains remain separate:
+ * This is the semantic owner for Talent/Legacy progression, final Prestige
+ * reset, Achievement policy and class-unlock orchestration. Focused
+ * registries/domains remain separate:
  * progression/talents.js owns Talent data and progression/prestige.js owns
  * Prestige currency/Moon purchase math. The compatibility runtime supplies
  * composition callbacks for persistence, presentation and active-run state.
@@ -69,7 +70,7 @@
     call('hidePrestigeHeirloomOverlay');
     if(call('storageUnlocked'))call('syncStorage');
     const cap=call('getHeirloomSlots');state.heirlooms=(state.heirlooms||[]).slice(0,cap).map(item=>call('normalizeSavedItem',item));
-    call('saveMeta');call('checkDynamicClassUnlocks');call('sfxHoly');call('showToast',`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);call('renderTalents');call('updateMetaUI');call('openStartScreen');return true;
+    call('saveMeta');checkDynamicClassUnlocks();call('sfxHoly');call('showToast',`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);call('renderTalents');call('updateMetaUI');call('openStartScreen');return true;
   }
 
   function achievementRegistry(){return call('getAchievementRegistry');}
@@ -83,7 +84,7 @@
     const state=meta(),stats=call('ensureAlphaMeta'),parts=String(a.condition||'').split(':'),kind=parts[0],player=call('getPlayer');
     if(kind==='runsStarted')return (stats.runsStarted||0)>0||call('getGameStarted');
     if(kind==='boardClear')return call('hasBoardClear',parts[1],Number(parts[2]));
-    if(kind==='classUnlocked')return call('isClassUnlocked',parts[1]);
+    if(kind==='classUnlocked')return isClassUnlocked(parts[1]);
     if(kind==='nightmareUnlocked')return !!state.nightmareUnlocked;
     if(kind==='board4Clears')return (state.board4Clears||0)>0;
     if(kind==='board5Clears')return (state.board5Clears||0)>0;
@@ -152,7 +153,7 @@
     const spec=call('getPowerupGateRegistry')?.[text];
     if(spec){
       if(spec.type==='prestige')return (state.prestige?.count||0)>=Number(spec.minimum||0);
-      if(spec.type==='classUnlocked')return call('isClassUnlocked',spec.classId);
+      if(spec.type==='classUnlocked')return isClassUnlocked(spec.classId);
       if(spec.type==='flag')return !!state[spec.field];
       if(spec.type==='counter')return (state[spec.field]||0)>=Number(spec.minimum||0);
       if(spec.type==='elementProgress')return (state.elementProgress?.[spec.element]||0)>=Number(spec.minimum||0);
@@ -176,13 +177,35 @@
 
   function achievementCount(){return achievementRegistry().reduce((count,achievement)=>count+(achievementDone(achievement)?1:0),0);}
 
+  function classUnlockContext(){return call('getClassUnlockContext');}
+  function isClassUnlocked(id){return call('classUnlockIsUnlocked',id,classUnlockContext());}
+  function commitClassUnlock(id){
+    const state=meta(),classRegistry=classes();
+    if(id==='bloodmage'){
+      state.bloodmageUnlocked=true;state.unlocks=state.unlocks||{};state.unlocks.bloodmage=true;call('saveMeta');call('renderClassChoices');return true;
+    }
+    if(!classRegistry[id]||state.unlocks?.[id])return false;
+    state.unlocks=state.unlocks||{};state.unlocks[id]=true;call('saveMeta');
+    const cls=classRegistry[id],unlockFeedback=call('classUnlockFeedback',id);
+    if(call('getGameStarted'))call('addLog',`<b>Class unlocked:</b> ${cls.icon} ${cls.name}!`);
+    call('showToast',unlockFeedback?.toast||`NEW CLASS UNLOCKED · ${cls.icon} ${cls.name}`,3400,true);call('renderClassChoices');return true;
+  }
+  function unlockClass(id){if(!call('classUnlockMayCommit',id,classUnlockContext()))return false;return commitClassUnlock(id);}
+  function checkDynamicClassUnlocks(){
+    const observed=call('classUnlockRecordObservedProgress',classUnlockContext());
+    if(observed.changed){const stats=call('ensureAlphaMeta');stats.highestGold=observed.highestGold;meta().classUnlockFacts=observed.facts;}
+    call('classUnlockResolveDynamic',{getContext:()=>classUnlockContext(),unlock:id=>unlockClass(id)});
+    if(observed.changed)call('saveMeta');
+  }
+
   function inspect(){return Object.freeze({owner:OWNER,configured:Object.freeze(Object.fromEntries(Object.entries(runtime).map(([key,value])=>[key,typeof value==='function'])))});}
 
   const api=Object.freeze({
     owner:OWNER,apiVersion:1,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,
-    achievementDone,achievementConditionText,achievementRewardText,achievementGateUnlocked,heroMasteryEntries,achievementCount
+    achievementDone,achievementConditionText,achievementRewardText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
+    isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks
   });
   window.DiceboundProgression=api;
 })();
