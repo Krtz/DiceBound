@@ -59,6 +59,9 @@ jobs:
           node --check runtime/js/dicebound.js
           node tools/test_progression_owner.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Host "Running browser startup smoke for exception diagnostics"
+          node tools/smoke_run_resume_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_progression_oracle.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
