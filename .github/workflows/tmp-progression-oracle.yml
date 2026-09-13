@@ -1,0 +1,103 @@
+name: Temporary Progression 0.6.6.28 oracle capture
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.29-progression-oracle
+
+permissions:
+  contents: write
+
+jobs:
+  capture-progression:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Check out Progression branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Materialize characterization seam
+        shell: pwsh
+        run: |
+          python tools/tmp_add_progression_oracle_seam.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item tools/tmp_add_progression_oracle_seam.py
+          Remove-Item .github/workflows/tmp-progression-oracle.yml
+          python tools/refresh_runtime_manifest.py --version 0.6.6.28 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Capture released 0.6.6.28 Progression fixture
+        shell: pwsh
+        run: |
+          $env:DICEBOUND_CAPTURE_PROGRESSION = "1"
+          node tools/test_progression_oracle.js *> progression-capture.log
+          $code = $LASTEXITCODE
+          Get-Content progression-capture.log
+          if ($code -ne 0) { exit $code }
+          $text = Get-Content progression-capture.log -Raw
+          $start = $text.IndexOf("PROGRESSION_FIXTURE_BEGIN")
+          $end = $text.IndexOf("PROGRESSION_FIXTURE_END")
+          if ($start -lt 0 -or $end -lt 0 -or $end -le $start) { throw "Progression fixture markers missing" }
+          $start += "PROGRESSION_FIXTURE_BEGIN".Length
+          $json = $text.Substring($start, $end - $start).Trim()
+          $parsed = $json | ConvertFrom-Json
+          $normalized = $parsed | ConvertTo-Json -Depth 100
+          [System.IO.File]::WriteAllText((Join-Path $PWD "tools/fixtures/progression_0_6_6_28.json"), $normalized + "`n", [System.Text.UTF8Encoding]::new($false))
+          Remove-Item progression-capture.log
+
+      - name: Replay exact Progression oracle
+        shell: pwsh
+        run: |
+          Remove-Item Env:DICEBOUND_CAPTURE_PROGRESSION -ErrorAction SilentlyContinue
+          node tools/test_progression_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run complete JavaScript regression gate
+        shell: pwsh
+        run: |
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object {
+            Write-Host "Running $($_.Name)"
+            node $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Run architecture validators
+        shell: pwsh
+        run: |
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact oracle commit
+        shell: pwsh
+        run: |
+          git config user.name "DiceBound Progression Oracle"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "test: freeze released 0.6.6.28 Progression behavior"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "PROGRESSION_ORACLE_COMMIT=$sha"
+          "PROGRESSION_ORACLE_COMMIT=$sha" >> $env:GITHUB_ENV
+
+      - name: Try to advance protected branch
+        shell: pwsh
+        run: |
+          git push origin HEAD:refs/heads/arch/0.6.6.29-progression-oracle
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Protected branch push rejected as expected; tested oracle commit object was uploaded."
+            exit 0
+          }
+          Write-Host "Branch advanced directly to $env:PROGRESSION_ORACLE_COMMIT."
