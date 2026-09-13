@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.26
+
+## Beta 0.6.6.26 Road Events subsystem facade (#324)
+- Added the public `DiceboundRoadEvents` facade over focused Treasure and interactive lifecycle internals for Slots, Wheel, Blessing, Mystic, Bloodwell and Gambler; Board + Run remains arrival/routing-only.
+- Drained the migrated Road Event lifecycle, patch-wrapper chains, event-local transient state and destination listeners from `dicebound.js`; Treasure retains its exact 0.6 Memory Cache ordering and hidden Bloodmage entry still delegates to Combat.
+- Added a permanent 46-case released-0.6.6.25 characterization oracle plus facade, Treasure and anti-shadow guards. Exact observable state, tile/cookie effects, RNG call counts and final RNG state are frozen, including the shipped Slot animation RNG quirk.
+- Architecture-only: no event odds/reward values, Board placement, Powerup/Items behavior, Combat behavior, checkpoint/save schema or UI redesign is intended. Runtime graph is 74 modules (73 extracted + one compatibility monolith); normalized `dicebound.js` is 709,513 bytes / 7,267 lines, down from 739,724 bytes / 7,426 lines in released 0.6.6.25.
+
 # Unreleased — Beta 0.6.6.25
 
 ## Beta 0.6.6.25 Board + Run subsystem facade (#322)
