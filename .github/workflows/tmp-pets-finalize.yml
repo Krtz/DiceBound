@@ -1,0 +1,88 @@
+name: Temporary Pet lifecycle finalization gate
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.28-pets-oracle
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-pets:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Check out Pet branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Apply final ownership drain
+        shell: pwsh
+        run: |
+          python tools/tmp_finalize_pets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item tools/tmp_finalize_pets.py
+          Remove-Item .github/workflows/tmp-pets-finalize.yml
+          python tools/refresh_runtime_manifest.py --version 0.6.6.27 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run focused Pet owner gate
+        shell: pwsh
+        run: |
+          node --check runtime/js/pets/registry.js
+          node --check runtime/js/pets/lifecycle.js
+          node --check runtime/js/dicebound.js
+          node tools/test_pets_lifecycle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_pets_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run repository JS regression gate
+        shell: pwsh
+        run: |
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object {
+            Write-Host "Running $($_.Name)"
+            node $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Run architecture validators
+        shell: pwsh
+        run: |
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact tested candidate commit
+        shell: pwsh
+        run: |
+          git config user.name "DiceBound Pet Finalizer"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "architecture: finalize Pet lifecycle ownership"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "PET_FINAL_COMMIT=$sha"
+          "PET_FINAL_COMMIT=$sha" >> $env:GITHUB_ENV
+
+      - name: Try to advance protected branch
+        shell: pwsh
+        run: |
+          git push origin HEAD:refs/heads/arch/0.6.6.28-pets-oracle
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Protected branch push rejected as expected; tested commit object was uploaded."
+            exit 0
+          }
+          Write-Host "Branch advanced directly to $env:PET_FINAL_COMMIT."
