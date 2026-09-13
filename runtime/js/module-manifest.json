@@ -53,6 +53,7 @@
     "item-rarities",
     "item-equipment",
     "item-consumables",
+    "items-facade",
     "progression-talents",
     "progression-prestige",
     "progression-achievements",
@@ -633,6 +634,20 @@
       ]
     },
     {
+      "id": "items-facade",
+      "path": "js/items/facade.js",
+      "domain": "items/public-items-subsystem-facade",
+      "status": "extracted",
+      "requires": [
+        "item-rarities",
+        "item-equipment",
+        "item-consumables"
+      ],
+      "provides": [
+        "DiceboundItems"
+      ]
+    },
+    {
       "id": "progression-talents",
       "path": "js/progression/talents.js",
       "domain": "progression/talents",
@@ -679,7 +694,9 @@
       "path": "js/events/treasure.js",
       "domain": "events/treasure-lifecycle-and-memory-cache",
       "status": "extracted",
-      "requires": [],
+      "requires": [
+        "items-facade"
+      ],
       "provides": [
         "DiceboundRoadEventTreasure"
       ]
@@ -726,8 +743,7 @@
       "domain": "events/merchant-stock-catalog-pricing-and-gear-offers",
       "status": "extracted",
       "requires": [
-        "item-rarities",
-        "item-equipment"
+        "items-facade"
       ],
       "provides": [
         "DiceboundMerchantStock"
@@ -989,7 +1005,8 @@
         "ui-prestige-moon",
         "ui-achievements",
         "ui-info-guide",
-        "combat-victory-resolution"
+        "combat-victory-resolution",
+        "items-facade"
       ],
       "provides": []
     }

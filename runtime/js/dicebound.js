@@ -5,6 +5,20 @@
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbItems=window.DiceboundItems;
+  if(!dbItems)throw new Error("dicebound.js requires DiceboundItems before loading.");
+  dbItems.configure({
+    generateEquipment:(rarity=null,slot=null)=>generateEquipment(rarity,slot),
+    generateLegendary:(slot=null,preferUndiscovered=false)=>db060GenerateLegendary(slot,preferUndiscovered),
+    rollGearRarity:bonus=>rollGearRarity(bonus),
+    openLoot:(item,done)=>openLoot(item,done),
+    equip:(item,silent=false)=>equipItem(item,silent),
+    sellValue:item=>itemSellValue(item),
+    rawSellValue:item=>v14RawSellValue(item),
+    score:item=>gearPowerScore(item),
+    formatBonuses:item=>formatBonuses(item),
+    formatComparison:(item,current)=>formatGearComparison(item,current)
+  });
   const dbRoadEvents=window.DiceboundRoadEvents;
   if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");
   dbRoadEvents.configure({
@@ -25,10 +39,10 @@
       showToast:(...args)=>showToast(...args),
       updateHUD:()=>updateHUD(),
       returnToRoad:()=>returnToRoad(),
-      rollGearRarity:bonus=>rollGearRarity(bonus),
-      generateEquipment:rarity=>generateEquipment(rarity),
-      openLoot:(item,done)=>openLoot(item,done),
-      generateLegendary:(slot,preferUndiscovered)=>db060GenerateLegendary(slot,preferUndiscovered)
+      rollGearRarity:bonus=>dbItems.rollGearRarity(bonus),
+      generateEquipment:rarity=>dbItems.generateEquipment(rarity),
+      openLoot:(item,done)=>dbItems.openLoot(item,done),
+      generateLegendary:(slot,preferUndiscovered)=>dbItems.generateLegendary(slot,preferUndiscovered)
     },
     lifecycle:{
       $:id=>$(id),
@@ -4814,8 +4828,8 @@
   if(!dbMerchantStockOwner)throw new Error('DiceboundMerchantStock must load before dicebound.js');
   dbMerchantStock=dbMerchantStockOwner.createController({
     getPlayer:()=>player,getBoardLevel:()=>boardLevel,random:()=>random(),pick:list=>pick(list),
-    rollGearRarity:bonus=>rollGearRarity(bonus),generateEquipment:(rarity,slot)=>generateEquipment(rarity,slot),
-    rawSellValue:item=>v14RawSellValue(item),equipItem:item=>equipItem(item),formatBonuses:item=>formatBonuses(item),
+    rollGearRarity:bonus=>dbItems.rollGearRarity(bonus),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
+    rawSellValue:item=>dbItems.rawSellValue(item),equipItem:item=>dbItems.equip(item),formatBonuses:item=>dbItems.formatBonuses(item),
     getSlotLabel:slot=>SLOT_LABELS[slot],clamp:(value,min,max)=>clamp(value,min,max),eligibleUpgrades:filter=>eligibleUpgrades(filter),
     isPowerupRarityAtLeast:(rarity,floor)=>DB_RARITIES.isPowerupRarityAtLeast(rarity,floor),
     applyUpgrade:(up,source)=>applyUpgrade(up,source),applyRandomHighRarity:(source,announce)=>applyRandomHighRarity(source,announce)
@@ -7263,7 +7277,7 @@
   dbRun.configurePlayerInitialization({
     getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>getHeirloomSlots(),
-    equipItem:(item,silent=false)=>equipItem(item,silent),gameplayTalentRank:id=>gameplayTalentRank(id),generateEquipment:(rarity,slot)=>generateEquipment(rarity,slot),
+    equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
     classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
     syncActivePetBonus:force=>syncActivePetBonusV16(force),syncBloodmageHpPassive:initial=>v18SyncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
