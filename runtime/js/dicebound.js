@@ -5860,6 +5860,17 @@
   // topping it up from 1 to 10 after the reward is resolved.
   // (The literal formula is also replaced in the source packaging script.)
 
+  // Test-only characterization surface for the Items subsystem migration.
+  // It deliberately exposes the current final wrappers without changing ordinary callers.
+  window.DiceboundItemsOracleTest=Object.freeze({
+    generateEquipment:(rarity=null,slot=null)=>generateEquipment(rarity,slot),
+    generateLegendary:(slot=null,preferUndiscovered=false)=>db060GenerateLegendary(slot,preferUndiscovered),
+    sellValue:item=>itemSellValue(item),
+    score:item=>gearPowerScore(item),
+    formatComparison:(item,current)=>formatGearComparison(item,current),
+    equip:(item,silent=true)=>{equipItem(item,silent);return JSON.parse(JSON.stringify(player.equipment[item.slot]));}
+  });
+
   // GUIDE / DEBUG -----------------------------------------------------------
   window.DiceboundBeta06Test=Object.freeze({
     budgets:()=>JSON.parse(JSON.stringify(V14_RARITY_BUDGETS)),
