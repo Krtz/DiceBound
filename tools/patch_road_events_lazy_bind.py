@@ -3,6 +3,13 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 
+def cut(text,start,end,label):
+    a=text.find(start)
+    if a<0: raise SystemExit(f'{label}: start marker missing')
+    b=text.find(end,a+len(start))
+    if b<0: raise SystemExit(f'{label}: end marker missing')
+    return text[:a]+text[b:]
+
 # Lifecycle listeners must bind after the monolith has finished bootstrapping its
 # DOM/runtime adapters. Also absorb the Bloodwell/Gambler leave controls so the
 # lifecycle owner truly owns all six interactive event surfaces.
@@ -23,8 +30,8 @@ if text.count(bind_anchor)!=1: raise SystemExit(f'leave-listener bind anchor cou
 text=text.replace(bind_anchor,bind_extra,1)
 p.write_bytes(text.encode('utf-8'))
 
-# The old bundle synchronized Wheel icons once during global startup. The new
-# owner synchronizes them every time Wheel opens, so the startup call is stale.
+# Remove startup/listener/patch residue whose authoritative behavior now lives
+# inside the extracted lifecycle owner.
 mono=ROOT/'runtime/js/dicebound.js'
 source=mono.read_bytes().decode('utf-8').replace('\r\n','\n')
 startup='generateBoard();buildBoard();renderClassChoices();renderEquipment();syncWheelIcons();updateHUD();updateMetaUI();'
@@ -37,5 +44,6 @@ for old in [
 ]:
     if source.count(old)!=1: raise SystemExit(f'stale leave listener count {source.count(old)}')
     source=source.replace(old,'',1)
+source=cut(source,'  // ---- Slot rewards scale modestly -----------------------------------------','  // ---- Sovereign Relic: force a visible choice flow ------------------------','retired v16 Slot reward override')
 mono.write_bytes(source.encode('utf-8'))
-print('Road Events listener binding is lazy and startup/leave hooks belong to the lifecycle owner.')
+print('Road Events listener binding is lazy and startup/leave/Slot patch residue is drained.')
