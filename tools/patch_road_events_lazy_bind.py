@@ -10,6 +10,9 @@ def cut(text,start,end,label):
     if b<0: raise SystemExit(f'{label}: end marker missing')
     return text[:a]+text[b:]
 
+def canonicalize_blank_lines(text):
+    return '\n'.join('' if not line.strip() else line for line in text.split('\n'))
+
 p=ROOT/'runtime/js/events/lifecycle.js'
 text=p.read_bytes().decode('utf-8').replace('\r\n','\n')
 old="function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};bind();return api;}"
@@ -25,7 +28,7 @@ bind_anchor="    node('declineMysticBtn').addEventListener('click',declineMystic
 bind_extra=bind_anchor+"    node('bloodwellLeaveBtn').addEventListener('click',()=>{clearTile();node('bloodwellOverlay').classList.add('hidden');requireFn('returnToRoad')();});\n    node('gamblerLeaveBtn').addEventListener('click',()=>{node('gamblerOverlay').classList.add('hidden');clearTile();requireFn('returnToRoad')();});\n"
 if text.count(bind_anchor)!=1: raise SystemExit(f'leave-listener bind anchor count {text.count(bind_anchor)}')
 text=text.replace(bind_anchor,bind_extra,1)
-p.write_bytes(text.encode('utf-8'))
+p.write_bytes(canonicalize_blank_lines(text).encode('utf-8'))
 
 mono=ROOT/'runtime/js/dicebound.js'
 source=mono.read_bytes().decode('utf-8').replace('\r\n','\n')
@@ -57,5 +60,5 @@ if 'let dbMerchantUi=null;' not in source:
 
 """
     source=source.replace(marker,merchant+marker,1)
-mono.write_bytes(source.encode('utf-8'))
-print('Road Events lifecycle drain preserves Merchant and owns its startup/leave hooks.')
+mono.write_bytes(canonicalize_blank_lines(source).encode('utf-8'))
+print('Road Events lifecycle drain preserves Merchant, owns its startup/leave hooks, and emits canonical blank lines.')
