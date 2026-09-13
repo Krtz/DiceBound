@@ -55,7 +55,7 @@ async function main(){
   try{
     child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-sandbox","--no-first-run","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
     page=await connect(url);await page.send("Runtime.enable");
-    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundProgressionOracleTest&&!!window.DiceboundRng&&!!window.DiceboundPrestige");if(ready)break;await sleep(100);}assert.ok(ready,"Progression oracle runtime surface did not become ready");
+    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundProgressionOracleTest&&!!window.DiceboundRng&&!!window.DiceboundPrestige&&!!window.DiceboundProgression");if(ready)break;await sleep(100);}assert.ok(ready,"Progression oracle runtime surface did not become ready");
 
     await page.evaluate("document.getElementById('campGoBtn')?.click();true");
     await sleep(300);

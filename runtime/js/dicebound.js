@@ -5,6 +5,9 @@
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbProgressionOwner=window.DiceboundProgression;
+  if(!dbProgressionOwner)throw new Error("dicebound.js requires DiceboundProgression before loading.");
+  let dbProgression=null;
   const dbPets=window.DiceboundPets;
   if(!dbPets)throw new Error("dicebound.js requires DiceboundPets before loading.");
   const dbPetLifecycleOwner=window.DiceboundPetLifecycle;
@@ -431,12 +434,7 @@
     merchantSpacing:()=>MERCHANT_SPACING,
     gameplayTalentRank:id=>gameplayTalentRank(id),
     roadTileType:(roll,level)=>window.DiceboundEventRewards.roadTileType(roll,level),
-    withRunTalentSnapshot:work=>{
-      if(!runTalentSnapshot)return work();
-      const live=meta.purchased;
-      try{meta.purchased=runTalentSnapshot;return work();}
-      finally{meta.purchased=live;}
-    },
+    withRunTalentSnapshot:work=>dbProgression.withRunTalentSnapshot(work),
     setRoad:next=>{tiles=next.tiles;merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;merchantFaceTotal=next.merchantFaceTotal;}
   }});
 
@@ -683,14 +681,19 @@
   });
 
   const req=(id,rank=1)=>({id,rank});
-  const talentRank=id=>Math.max(0,Number(meta.purchased[id])||0);
+  dbProgression=dbProgressionOwner.configure({
+    legacyXpForLevel:level=>legacyXpForLevel(level),getMeta:()=>meta,getPlayer:()=>player,getTalents:()=>talents,getRunTalentSnapshot:()=>runTalentSnapshot,setRunTalentSnapshot:value=>{runTalentSnapshot=value;return runTalentSnapshot;},
+    saveMeta:()=>saveMeta(),sfxLevel:()=>sfx.level(),showToast:(...args)=>showToast(...args),renderTalents:()=>renderTalents(),
+    isRunFinalized:()=>runFinalized,setRunFinalized:value=>{runFinalized=!!value;},getLastLegacyAward:()=>lastLegacyAward,setLastLegacyAward:value=>{lastLegacyAward=value;},setLastGoldLegacyAward:value=>{lastGoldLegacyAward=value;},
+    getTilesMovedThisRun:()=>tilesMovedThisRun,isNightmare:()=>!!nightmareMode,updateMetaUI:()=>updateMetaUI(),
+    clearPendingPrestige:()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();},hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
+    storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
+    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
+  });
+  const talentRank=id=>dbProgression.talentRank(id);
 
-  /* Alpha v3.1.7: talents are registry-owned. */
-  function repairTalentPrerequisites(){
-    const byId=Object.fromEntries(talents.map(t=>[t.id,t]));let changed=true,guard=0;
-    while(changed&&guard++<100){changed=false;for(const talent of talents){if(!talentRank(talent.id))continue;for(const r of talent.requires||[]){const reqTalent=byId[r.id];if(reqTalent&&talentRank(r.id)<r.rank){meta.purchased[r.id]=Math.min(reqTalent.maxRank,r.rank);changed=true;}}}}
-    if(changed===false)saveMeta();
-  }
+  /* Alpha v3.1.7: talents are registry-owned; lifecycle policy is Progression-owned. */
+  function repairTalentPrerequisites(){return dbProgression.repairTalentPrerequisites();}
   repairTalentPrerequisites();
 
   const customSoundState={};
@@ -1012,25 +1015,13 @@
     return dbMerchantUi.render();
   }
 
-  function grantLegacyXp(amount){
-    meta.xp+=amount;
-    while(meta.xp>=meta.xpNext){meta.xp-=meta.xpNext;meta.level++;meta.points++;meta.xpNext=legacyXpForLevel(meta.level);}
-  }
-  function finalizeRun(){
-    if(runFinalized)return lastLegacyAward;runFinalized=true;
-    const travelAward=Math.max(0,Math.round(tilesMovedThisRun*(1+player.legacyXpBonus)));lastGoldLegacyAward=Math.max(0,Math.floor(player.gold/10));lastLegacyAward=(travelAward+lastGoldLegacyAward)*(nightmareMode?5:1);
-    meta.runs++;meta.bestTiles=Math.max(meta.bestTiles,tilesMovedThisRun);grantLegacyXp(lastLegacyAward);saveMeta();updateMetaUI();return lastLegacyAward;
-  }
-  function allocatedTalentPoints(){return talents.reduce((sum,t)=>sum+talentRank(t.id)*t.cost,0);}
+  function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}
+  function finalizeRun(){return dbProgression.finalizeRun();}
+  function allocatedTalentPoints(){return dbProgression.allocatedTalentPoints();}
 
-  function talentAvailable(t){return (t.requires||[]).every(r=>talentRank(r.id)>=r.rank);}
+  function talentAvailable(t){return dbProgression.talentAvailable(t);}
   function requirementText(t){return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} rank ${r.rank}`;}).join(" + ");}
-  function purchaseTalentNode(id){
-    const t=talents.find(node=>node.id===id),rank=talentRank(id);
-    if(!t||rank>=t.maxRank||!talentAvailable(t)||meta.points<t.cost)return false;
-    meta.points-=t.cost;meta.purchased[t.id]=rank+1;saveMeta();sfx.level();showToast(`${t.name} rank ${rank+1} · activates next run`);
-    renderTalents();return true;
-  }
+  function purchaseTalentNode(id){return dbProgression.purchaseTalent(id);}
   // The extracted owner renders and navigates the Talent destination. These
   // adapters remain because existing lifecycle/composition callers still use
   // the historical function names.
@@ -1367,7 +1358,7 @@
   function ensureAlphaMeta(){
     const base=defaultLifetimeStats(),raw=meta.stats||{};meta.stats={...base,...raw,boardClears:{...(raw.boardClears||{})},classMaxLevel:{...(raw.classMaxLevel||{})}};meta.stats.damageTaken=Math.max(Number(meta.stats.damageTaken)||0,Number(meta.damageTaken)||0);meta.achievements={...(meta.achievements||{})};return meta.stats;
   }
-  function gameplayTalentRank(id){const source=runTalentSnapshot||meta.purchased||{};return Math.max(0,Number(source[id])||0);}
+  function gameplayTalentRank(id){return dbProgression.gameplayTalentRank(id);}
   function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function boardClearKey(classId,board,mode=boardClearMode()){return `${classId}:${mode}:b${board}`;}
   function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
@@ -3969,7 +3960,7 @@
 
   /* RANDOM CLASS ----------------------------------------------------------- */
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
-  function v27CompletePrestigeNoChoice(total){const rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;meta.prestige=DB_PRESTIGE.award(meta.prestige,rewards);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$('prestigeHeirloomOverlay')?.classList.add('hidden');if(v24StorageUnlocked?.()){v24SyncStorage?.();const cap=getHeirloomSlots();meta.heirlooms=(meta.heirlooms||[]).slice(0,cap).map(normalizeSavedItem);}else meta.heirlooms=(meta.heirlooms||[]).slice(0,getHeirloomSlots()).map(normalizeSavedItem);saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);renderTalents();updateMetaUI();openStartScreen();return true;}
+  function v27CompletePrestigeNoChoice(total){return dbProgression.completePrestige(total);}
   prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
@@ -5893,9 +5884,7 @@
     for(const candidate of DB0633_CAMP_TROPHY_TIERS)if(earned>=candidate.minimumAchievementCount)tier=candidate;
     return tier;
   }
-  function db0633PrestigeOfferPoints(total=allocatedTalentPoints()+(meta.points||0)){
-    return Math.max(0,Math.floor(Math.max(0,Number(total)||0)/9));
-  }
+  function db0633PrestigeOfferPoints(total=allocatedTalentPoints()+(meta.points||0)){return dbProgression.prestigeOffer(total);}
   function db0633ReconcileCampRevealState(current={},facts={}){
     const prior={achievementTrophy:!!current.achievementTrophy,talentStar:!!current.talentStar,prestigeMoon:!!current.prestigeMoon};
     const achievementCount=Math.max(0,Math.floor(Number(facts.achievementCount)||0));

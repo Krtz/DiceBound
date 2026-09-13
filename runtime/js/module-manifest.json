@@ -60,6 +60,7 @@
     "progression-talents",
     "progression-prestige",
     "progression-achievements",
+    "progression-lifecycle",
     "event-rewards",
     "road-event-treasure",
     "road-event-lifecycle",
@@ -720,6 +721,20 @@
       "requires": [],
       "provides": [
         "DiceboundAchievements"
+      ]
+    },
+    {
+      "id": "progression-lifecycle",
+      "path": "js/progression/lifecycle.js",
+      "domain": "progression/talent-legacy-prestige-lifecycle-and-public-facade",
+      "status": "extracted",
+      "requires": [
+        "core-state",
+        "progression-talents",
+        "progression-prestige"
+      ],
+      "provides": [
+        "DiceboundProgression"
       ]
     },
     {
