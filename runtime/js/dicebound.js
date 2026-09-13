@@ -5,6 +5,11 @@
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbPets=window.DiceboundPets;
+  if(!dbPets)throw new Error("dicebound.js requires DiceboundPets before loading.");
+  const dbPetLifecycleOwner=window.DiceboundPetLifecycle;
+  if(!dbPetLifecycleOwner)throw new Error("dicebound.js requires DiceboundPetLifecycle before loading.");
+  let dbPetLifecycle=null;
   const dbItemGenerationOwner=window.DiceboundItemGeneration;
   if(!dbItemGenerationOwner)throw new Error("dicebound.js requires DiceboundItemGeneration before loading.");
   const dbItemOperationsOwner=window.DiceboundItemOperations;
@@ -74,7 +79,7 @@
       showToast:(...args)=>showToast(...args),
       updateHUD:()=>updateHUD(),
       returnToRoad:()=>returnToRoad(),
-      activePetName:()=>activePetDef().name,
+      activePetName:()=>dbPets.activeDefinition().name,
       eligibleUpgrades:filter=>eligibleUpgrades(filter),
       applyRandomHighRarity:(...args)=>applyRandomHighRarity(...args),
       applyUpgrade:(...args)=>applyUpgrade(...args),
@@ -113,7 +118,7 @@
   };
   const ELEMENT_KEYS=Object.keys(ELEMENTS);
   const DIBO_ELEMENTS=["fire","ice","electric","nature","light","void"];
-  const PET_UNLOCK_REQUIREMENT=500;
+  const PET_UNLOCK_REQUIREMENT=dbPetLifecycleOwner.unlockRequirement;
   const GUARDIAN_SPECIAL_INTERVAL=5;
   const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';
   const DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i';
@@ -137,9 +142,25 @@
   const DB317_CLASSES_RAW=window.DiceboundClasses?.createRegistry();
   if(!DB317_CLASSES_RAW)throw new Error("DiceboundClasses must load before dicebound.js");
   const CLASSES=db317Readonly(DB317_CLASSES_RAW);
-  const DB317_PETS_RAW=window.DiceboundPets?.createRegistry();
+  const DB317_PETS_RAW=dbPets.createRegistry?.();
   if(!DB317_PETS_RAW)throw new Error("DiceboundPets must load before dicebound.js");
   const PETS=db317Readonly(DB317_PETS_RAW);
+  dbPetLifecycle=dbPetLifecycleOwner.configure({
+    getMeta:()=>meta,getPlayer:()=>player,getPets:()=>PETS,getElements:()=>ELEMENTS,isRunActive:()=>!!gameStarted,
+    classHasMechanic:id=>classHasMechanic(id),talentRank:id=>talentRank(id),rand:(min,max)=>rand(min,max),
+    saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    sfxLevel:()=>sfx.level(),sfxCoin:()=>sfx.coin(),sfxHoly:()=>sfx.holy(),showToast:(...args)=>showToast(...args),
+    addLog:text=>addLog(text),updateMetaUI:()=>updateMetaUI(),updateHUD:()=>updateHUD(),
+    renderPetCollection:()=>renderPetCollection(),refreshActivePetArt:()=>db059RefreshActivePetArt?.()
+  });
+  dbPets.configure({
+    activeDefinition:()=>dbPetLifecycle.activeDefinition(),activeState:()=>dbPetLifecycle.activeState(),bondLevel:id=>dbPetLifecycle.bondLevel(id),
+    bonusScale:id=>dbPetLifecycle.bonusScale(id),damageExtra:id=>dbPetLifecycle.damageExtra(id),displayDamage:id=>dbPetLifecycle.displayDamage(id),
+    bonusText:id=>dbPetLifecycle.bonusText(id),chooserState:()=>dbPetLifecycle.chooserState(),elementName:id=>dbPetLifecycle.elementName(id),
+    canSwitch:id=>dbPetLifecycle.canSwitch(id),select:id=>dbPetLifecycle.select(id),feed:count=>dbPetLifecycle.feed(count),
+    trackElementProgress:(key,amount)=>dbPetLifecycle.trackElementProgress(key,amount),syncActiveBonus:force=>dbPetLifecycle.syncActiveBonus(force),
+    shuffledPetIds:()=>dbPetLifecycle.shuffledPetIds()
+  });
   const DB_EFFECTIVE_STATS=window.DiceboundEffectiveStats;
   if(!DB_EFFECTIVE_STATS)throw new Error("DiceboundEffectiveStats must load before dicebound.js");
   const DB_POWERUP_SERVICES=window.DiceboundRuntimeServices?.createPowerupServices({
@@ -806,8 +827,8 @@
     if(hop){pawn.classList.add("hop");setTimeout(()=>pawn.classList.remove("hop"),150);}
   }
 
-  function activePetDef(){return PETS[meta.activePet]||PETS.neutral;}
-  function activePetState(){return meta.pets?.[meta.activePet]||meta.pets.neutral;}
+  function activePetDef(){return dbPets.activeDefinition();}
+  function activePetState(){return dbPets.activeState();}
   function petDamage(){if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
   function updateMetaUI(){
     const pet=activePetState(),def=activePetDef();
@@ -848,10 +869,7 @@
     await delay(mode==="crit"?520:mode==="echo"?350:({fighter:360,ranger:460,sorcerer:460,monk:420,clown:500,rouge:450,berserker:500}[player.classId]||460));enemy.classList.add("enemy-hit");await delay(130);enemy.classList.remove("enemy-hit");icon.classList.remove("attack-lunge");
   }
   function chargeUltimate(amount){player.ultimateCharge=clamp(player.ultimateCharge+amount,0,100);updateCombatUI();}
-  function trackElementProgress(key,amount){
-    if(!key||!ELEMENTS[key]||amount<=0)return;meta.elementProgress[key]=(meta.elementProgress[key]||0)+amount;const state=meta.pets[key];
-    if(state&&!state.unlocked&&meta.elementProgress[key]>=PET_UNLOCK_REQUIREMENT){state.unlocked=true;saveMeta();sfx.holy();showToast(`NEW PET UNLOCKED · ${PETS[key].icon} ${PETS[key].name}`,3400,true);addLog(`<b>Elemental companion unlocked:</b> ${PETS[key].name} after ${Math.floor(meta.elementProgress[key])} ${ELEMENTS[key].name} damage/healing.`);}else saveMeta();
-  }
+  function trackElementProgress(key,amount){return dbPets.trackElementProgress(key,amount);}
   async function petTurn(...args){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petTurn(...args);}
 
   async function animateUltimate(){
@@ -1023,7 +1041,7 @@
   // chrome live in ui/pet-chooser.js. Historical lifecycle callers retain this
   // one forwarding name while pet mechanics remain in this composition layer.
   function renderPetCollection(){return window.DiceboundPetChooser?.render?.()||null;}
-  function feedActivePet(count=1){const state=activePetState(),def=activePetDef(),actual=Math.min(count,meta.petCookies);if(actual<=0)return;meta.petCookies-=actual;state.xp+=actual*(1+player.cookieBondBonus);let levels=0;while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}saveMeta();checkDynamicClassUnlocks();levels?sfx.level():sfx.coin();showToast(levels?`${def.name} gained ${levels} level${levels===1?"":"s"}!`:`${def.name} ate ${actual} cookie${actual===1?"":"s"}`);updateMetaUI();}
+  function feedActivePet(count=1){return dbPets.feed(count);}
 
   function renderRunBuffs(){
     const grid=$("buffGrid");grid.innerHTML="";const cls=CLASSES[player.classId],gold=currentGoldSnapshot();
@@ -2077,7 +2095,7 @@
   {const oldBtn=$("equipLootBtn");if(oldBtn){const neo=oldBtn.cloneNode(true);oldBtn.replaceWith(neo);neo.addEventListener("click",async()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot],delta=current?gearPowerScore(pendingLootItem)-gearPowerScore(current):999;if(current&&delta<0&&!(await diceboundConfirm(`${pendingLootItem.name} rolls lower overall quality than ${current.name} after considering its hidden quality budget and visible stats. Replace it anyway? ${current.name} will automatically be sold for ${itemSellValue(current)} gold.`,{title:"Replace stronger gear?",confirmLabel:"Replace anyway",danger:true})))return;equipItem(pendingLootItem);closeLoot();});}}
 
   // ---- Summoner & Pokémon Trainer runtime ----------------------------------
-  function shuffledPetIds(){const arr=Object.keys(PETS);for(let i=arr.length-1;i>0;i--){const j=rand(0,i),t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr;}
+  function shuffledPetIds(){return dbPets.shuffledPetIds();}
   function trainerPetDamage(id){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.trainerPetDamage(id);}
   function petElementFor(id){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petElementFor(id);}
   function activeTrainerPetId(){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.activeTrainerPetId();}
@@ -2177,10 +2195,8 @@
 
 
   // ---- Companion differentiation -------------------------------------------
-  const PET_STAT_BONUSES={
-    fire:{label:"+1 Attack",apply(s){player.attack+=s},remove(s){player.attack-=s},v:1},ice:{label:"+1 Defense",apply(s){player.defense+=s},remove(s){player.defense-=s},v:1},electric:{label:"+3% Crit",apply(s){player.crit+=s},remove(s){player.crit-=s},v:.03},light:{label:"+5 Max HP",apply(s){player.maxHp+=s;player.hp+=s},remove(s){player.maxHp=Math.max(1,player.maxHp-s);player.hp=Math.min(player.hp,player.maxHp)},v:5},void:{label:"+3% Echo",apply(s){player.doubleStrike+=s},remove(s){player.doubleStrike-=s},v:.03},nature:{label:"+10% Potion Healing",apply(s){player.potionPower+=s},remove(s){player.potionPower-=s},v:.10},donut:{label:"+3 Max HP & +5% Potion Healing",apply(){player.maxHp+=3;player.hp+=3;player.potionPower+=.05},remove(){player.maxHp=Math.max(1,player.maxHp-3);player.hp=Math.min(player.hp,player.maxHp);player.potionPower-=.05},v:0},tech:{label:"+8% Boss Damage",apply(s){player.bossDamage+=s},remove(s){player.bossDamage-=s},v:.08},metal:{label:"+1 Flat Damage Reduction",apply(s){player.flatReduction+=s},remove(s){player.flatReduction-=s},v:1},coffee:{label:"+4 Luck",apply(s){player.luck+=s},remove(s){player.luck-=s},v:.04},radiation:{label:"+6% Element Power",apply(s){player.elementDamageBonus+=s},remove(s){player.elementDamageBonus-=s},v:.06}
-  };
-  function syncActivePetBonusV16(force=false){if(!gameStarted&&!force)return;const next=meta.activePet||"neutral",prev=player._activePetBonusId;if(prev===next&&!force)return;if(prev&&prev!=="neutral"&&PET_STAT_BONUSES[prev]){const b=PET_STAT_BONUSES[prev];b.remove(b.v);}player._activePetBonusId=next;if(next!=="neutral"&&PET_STAT_BONUSES[next]){const b=PET_STAT_BONUSES[next];b.apply(b.v);}}
+  // Pet stat identities and their V1.7 bond scaling are owned by pets/lifecycle.js.
+  function syncActivePetBonusV16(force=false){return dbPets.syncActiveBonus(force);}
 
   // ---- Powerup rerolls ------------------------------------------------------
   function attachPowerupRerollV16(grid,reroll){if(!grid)return;const b=document.createElement("button");b.className="powerup-reroll-btn";b.disabled=(player.powerupRerolls||0)<=0;b.textContent=`🔄 Reroll choices · ${player.powerupRerolls||0} remaining`;b.addEventListener("click",()=>{if((player.powerupRerolls||0)<=0)return;player.powerupRerolls--;sfx.roll();reroll();});grid.appendChild(b);}
@@ -2254,13 +2270,7 @@
     .poison-count-compact{font-weight:950;color:#a9f08b;letter-spacing:-.02em}
   `;document.head.appendChild(v17Style);
 
-  // ---- Pet bond scaling ----------------------------------------------------
-  function v17PetBondLevel(id){return Math.max(1,Number(meta.pets?.[id]?.level)||1);}
-  function v17PetBonusScale(id){return 1+Math.min(.50,Math.floor((v17PetBondLevel(id)-1)/5)*.08);}
-  function v17PetDamageExtra(id){return id&&id!=="neutral"?2+Math.floor((v17PetBondLevel(id)-1)/10):0;}
-  function v17PetBonusText(id){const b=PET_STAT_BONUSES[id],lv=v17PetBondLevel(id),scale=v17PetBonusScale(id);if(!b)return `Bonus: +${v17PetDamageExtra(id)} base pet damage · Bond Lv ${lv}`;return `Bonus: +${v17PetDamageExtra(id)} base pet damage · ${b.label} (${Math.round(scale*100)}% bond scaling) · Bond Lv ${lv}`;}
-  // Replace the v1.6 flat active-pet bonus with a slowly bond-scaled version.
-  syncActivePetBonusV16=function(force=false){if(!gameStarted&&!force)return;const next=meta.activePet||"neutral",prev=player._activePetBonusId,prevScale=player._v17PetBonusScale||1;if(prev&&prev!=="neutral"&&PET_STAT_BONUSES[prev]){const b=PET_STAT_BONUSES[prev];if(prev==="donut"){player.maxHp=Math.max(1,player.maxHp-3*prevScale);player.hp=Math.min(player.hp,player.maxHp);player.potionPower-=.05*prevScale;}else b.remove(b.v*prevScale);}player._activePetBonusId=next;player._v17PetBonusScale=v17PetBonusScale(next);if(next!=="neutral"&&PET_STAT_BONUSES[next]){const b=PET_STAT_BONUSES[next],scale=player._v17PetBonusScale;if(next==="donut"){player.maxHp+=3*scale;player.hp+=3*scale;player.potionPower+=.05*scale;}else b.apply(b.v*scale);}};
+  // ---- Pet bond scaling is owned by DiceboundPets / pets/lifecycle.js. -----
 
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
   const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){resonantTalent.name="Resonant Carapace";resonantTalent.desc="Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.";resonantTalent.maxRank=3;}
@@ -2609,12 +2619,6 @@
     endless19.desc="Each rank improves many class signatures: Ranger Mark cap, Monk Combo cap, Turtle Guard chain, Fighter Counterblow power, Mana building, Cleric/Paladin healing resources, Summoner spirits and Alchemist flasks.";
   }
 
-  // ---- Trigger companion finally gets a reason to be selected -------------
-  // Gun pet was the only elemental companion without an active stat identity.
-  if(PETS.gun&&!PET_STAT_BONUSES.gun){
-    PET_STAT_BONUSES.gun={label:"+5% Crit & +2 Luck",v:1,apply(s){player.crit+=.05*s;player.luck+=.02*s;},remove(s){player.crit-=.05*s;player.luck-=.02*s;}};
-  }
-
   // ---- Powerup wording and mastery gates ----------------------------------
   // Character powerups only last for the current run. Avoid saying
   // "permanently" in their descriptions; account-level systems retain that
@@ -2720,7 +2724,7 @@
   // Summoner and Pokémon Trainer already carry the `pet` tag in their definitions.
   CLASSES.beastmaster.tags=Array.from(new Set([...(CLASSES.beastmaster.tags||[]),"pet"]));
   function v19PetTaggedClass(){return classHasMechanic("pet");}
-  function v19CanSwitchPet(petId){return !gameStarted||v19PetTaggedClass()||meta.activePet===petId;}
+  function v19CanSwitchPet(petId){return dbPets.canSwitch(petId);}
 
   // ---- Paladin: healing stores Grace, Grace empowers Guard ----------------
   // This deliberately fuses Cleric's healing feedback loop with Fighter's
@@ -3198,24 +3202,14 @@
   if(!db064PetChooser)throw new Error('DiceBound requires the Pet chooser UI module before dicebound.js');
   db064PetChooser.configure({
     find:$,
-    getState:()=>({
-      pets:Object.values(PETS),petStates:meta.pets||{},elementProgress:meta.elementProgress||{},
-      activePetId:meta.activePet,cookies:meta.petCookies||0,unlockRequirement:PET_UNLOCK_REQUIREMENT,
-      runActive:!!gameStarted
-    }),
-    canSwitch:id=>v19CanSwitchPet(id),
-    damageFor:(id,state)=>{
-      const petState=state.petStates?.[id]||{level:1};
-      return 1+Math.ceil((petState.level||1)*.8)+(id!=='neutral'?v17PetDamageExtra(id):0);
-    },
-    bonusFor:(id)=>id==='neutral'?'Neutral companion · no stat bonus':v17PetBonusText(id),
-    elementName:id=>ELEMENTS[id]?.name||'elemental',
+    getState:()=>dbPets.chooserState(),
+    canSwitch:id=>dbPets.canSwitch(id),
+    damageFor:id=>dbPets.displayDamage(id),
+    bonusFor:id=>id==='neutral'?'Neutral companion · no stat bonus':dbPets.bonusText(id),
+    elementName:id=>dbPets.elementName(id),
     resolvePetArt:id=>window.DiceboundAssets?.resolvePetArt?.(id),
-    selectPet:id=>{
-      if(!v19CanSwitchPet(id)||meta.activePet===id||!meta.pets?.[id]?.unlocked)return false;
-      const def=PETS[id]||PETS.neutral;meta.activePet=id;saveMeta();if(gameStarted)syncActivePetBonusV16();updateMetaUI();updateHUD();showToast(`${def.icon} ${def.name} selected`);return true;
-    },
-    feed:count=>feedActivePet(count),
+    selectPet:id=>dbPets.select(id),
+    feed:count=>dbPets.feed(count),
     afterRender:()=>{db059RefreshActivePetArt();v22UpdateCamp();}
   });
   // #186 / #209: the extracted Talent owner owns the constellation surface,
@@ -3917,16 +3911,6 @@
     const procToast=Object.values(ELEMENTS).some(e=>s.startsWith(`${e.icon} ${e.spell}`))||/^☢️\s*-?\d+\s*DEF/.test(s);
     if(procToast)return;
     return showToastV27Base(text,...args);
-  };
-  // Feeding and pet level-ups are quiet too. The campsite/pet card updates
-  // immediately, which is enough feedback without queueing extra toasts.
-  feedActivePet=function(count=1){
-    const state=activePetState(),def=activePetDef(),actual=Math.min(Math.max(0,Math.floor(count||0)),meta.petCookies||0);if(actual<=0)return;
-    meta.petCookies-=actual;state.xp+=actual*(1+(player.cookieBondBonus||0));let levels=0;
-    while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}
-    saveMeta();checkDynamicClassUnlocks();levels?sfx.level():sfx.coin();
-    addLog(`${def.icon} ${def.name} ate <b>${actual}</b> cookie${actual===1?'':'s'}${levels?` and gained <b>${levels}</b> level${levels===1?'':'s'}`:''}.`);
-    updateMetaUI();renderPetCollection?.();
   };
 
   /* LEGENDARY DESIGN: RARITY != UNIQUE ------------------------------------ */
@@ -5723,6 +5707,34 @@
   // topping it up from 1 to 10 after the reward is resolved.
   // (The literal formula is also replaced in the source packaging script.)
 
+  // Test-only characterization surface for the Pet subsystem migration.
+  // It deliberately exposes the current final Pet lifecycle wrappers without changing ordinary callers.
+  window.DiceboundPetsOracleTest=Object.freeze({
+    snapshot:()=>({
+      activePet:meta.activePet,petCookies:meta.petCookies,gameStarted:!!gameStarted,classId:player.classId,
+      activeState:JSON.parse(JSON.stringify(activePetState()||null)),
+      elementProgress:JSON.parse(JSON.stringify(meta.elementProgress||{})),
+      player:{attack:player.attack,defense:player.defense,crit:player.crit,doubleStrike:player.doubleStrike,maxHp:player.maxHp,hp:player.hp,potionPower:player.potionPower,bossDamage:player.bossDamage,flatReduction:player.flatReduction,luck:player.luck,elementDamageBonus:player.elementDamageBonus,cookieBondBonus:player.cookieBondBonus,_activePetBonusId:player._activePetBonusId||null,_v17PetBonusScale:player._v17PetBonusScale||null}
+    }),
+    setRunActive:value=>{gameStarted=!!value;return gameStarted;},
+    setPetLevel:(id,level)=>{const state=meta.pets?.[id];if(!state)return false;state.level=level;return true;},
+    setPetState:(id,next)=>{if(!meta.pets?.[id])return false;Object.assign(meta.pets[id],next||{});return true;},
+    setCookieBondBonus:value=>{player.cookieBondBonus=Number(value)||0;return player.cookieBondBonus;},
+    lockPet:id=>{if(!meta.pets?.[id])return false;meta.pets[id].unlocked=false;return true;},
+    feed:count=>dbPets.feed(count),
+    trackElement:(key,amount)=>dbPets.trackElementProgress(key,amount),
+    canSwitch:id=>dbPets.canSwitch(id),
+    select:id=>window.DiceboundPetChooser.select(id),
+    damage:(id=meta.activePet)=>{const previous=meta.activePet;meta.activePet=id;try{return petDamage();}finally{meta.activePet=previous;}},
+    bonusScale:id=>dbPets.bonusScale(id),
+    damageExtra:id=>dbPets.damageExtra(id),
+    bonusText:id=>dbPets.bonusText(id),
+    syncBonus:(force=false)=>dbPets.syncActiveBonus(force),
+    forceActivePet:id=>{meta.activePet=id;return meta.activePet;},
+    playerStats:()=>({attack:player.attack,defense:player.defense,crit:player.crit,doubleStrike:player.doubleStrike,maxHp:player.maxHp,hp:player.hp,potionPower:player.potionPower,bossDamage:player.bossDamage,flatReduction:player.flatReduction,luck:player.luck,elementDamageBonus:player.elementDamageBonus,_activePetBonusId:player._activePetBonusId||null,_v17PetBonusScale:player._v17PetBonusScale||null}),
+    shuffledPetIds:()=>dbPets.shuffledPetIds()
+  });
+
   // Test-only characterization surface for the Items subsystem migration.
   // It deliberately exposes the current final wrappers without changing ordinary callers.
   window.DiceboundItemsOracleTest=Object.freeze({
@@ -6458,12 +6470,6 @@
 
   const dbFriendUpdateMetaUiBase=updateMetaUI;
   updateMetaUI=function(...args){const result=dbFriendUpdateMetaUiBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
-  const dbFriendFeedActivePetBase=feedActivePet;
-  feedActivePet=function(count=1){
-    const state=activePetState?.(),beforeCookies=Number(meta.petCookies)||0,beforeXp=Number(state?.xp)||0,beforeLevel=Number(state?.level)||1;
-    const result=dbFriendFeedActivePetBase(count),after=activePetState?.(),changed=(Number(meta.petCookies)||0)!==beforeCookies||Number(after?.xp)!==beforeXp||Number(after?.level)!==beforeLevel;
-    db059RefreshActivePetArt?.();return changed?Object.freeze({ok:true,spent:Math.max(0,beforeCookies-(Number(meta.petCookies)||0)),level:Number(after?.level)||1}):false;
-  };
   function dbFriendHealAtCamp(){
     const max=Math.max(1,Math.floor(Number(player?.maxHp)||1));
     if(Number(player?.hp)>=max)return false;
@@ -6617,7 +6623,7 @@
     healPlayer:amount=>healPlayer(amount),
     triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
     setPetDoubleBonus:()=>v19SetPetDoubleBonus(),
-    petBondLevel:id=>v17PetBondLevel(id),
+    petBondLevel:id=>dbPets.bondLevel(id),
     hasLegendaryEffect:id=>db060HasEffect(id),
     getLastElement:()=>player._db060LastElement
   });
@@ -7117,8 +7123,8 @@
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>getHeirloomSlots(),
     equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
-    classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
-    syncActivePetBonus:force=>syncActivePetBonusV16(force),syncBloodmageHpPassive:initial=>v18SyncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
+    classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>dbPets.shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
+    syncActivePetBonus:force=>dbPets.syncActiveBonus(force),syncBloodmageHpPassive:initial=>v18SyncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
     slimeRougeDonorPool:()=>v318SlimeRougeDonorPool(),getSlimeRougeRuntime:()=>SlimeRougeRuntime,initIdentitySupport:id=>v32InitIdentitySupport(id),initUltimateSupport:id=>v318InitUltimateSupport(id),
     classMechanicsFor:id=>classMechanicsFor(id),getUltimateSupportMechanics:id=>window.DiceboundContent?.ultimateSupportMechanics?.[id]||[],addLog:text=>addLog(text),
     applyGearTransform:()=>db060ApplyGearTransform(),syncMana:args=>db06421SyncMana(args),resetDragoonState:()=>dbFriendResetDragoonState(),

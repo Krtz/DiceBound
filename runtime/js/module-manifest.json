@@ -39,6 +39,7 @@
     "progression-class-unlock-rules",
     "progression-class-unlock-feedback",
     "pets-registry",
+    "pet-lifecycle",
     "board-registry",
     "board-movement",
     "board-tile-dispatch",
@@ -461,6 +462,18 @@
       "requires": [],
       "provides": [
         "DiceboundPets"
+      ]
+    },
+    {
+      "id": "pet-lifecycle",
+      "path": "js/pets/lifecycle.js",
+      "domain": "pets/lifecycle-progression-switching-bond-and-active-bonus",
+      "status": "extracted",
+      "requires": [
+        "pets-registry"
+      ],
+      "provides": [
+        "DiceboundPetLifecycle"
       ]
     },
     {
@@ -1036,7 +1049,8 @@
         "ui-achievements",
         "ui-info-guide",
         "combat-victory-resolution",
-        "items-facade"
+        "items-facade",
+        "pet-lifecycle"
       ],
       "provides": []
     }

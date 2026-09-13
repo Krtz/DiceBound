@@ -1,15 +1,15 @@
 {
   "assetCount": 428,
-  "browserContentHash": "53d1c1bfc521747d03fd8ae8aa37c3d07f7ad0992563b6797bc78a959ad5f0ee",
-  "buildId": "dicebound-0.6.6.27-dev-53d1c1bfc521747d",
+  "browserContentHash": "f65fe0a79a546087cc03e6d811a457785b09f18973e53c09ced08edd23737089",
+  "buildId": "dicebound-0.6.6.28-dev-f65fe0a79a546087",
   "channel": "Beta",
-  "contentFileCount": 508,
+  "contentFileCount": 509,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.6.27.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.28.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -48,6 +48,7 @@
     "js/progression/class-unlock-rules.js",
     "js/progression/class-unlock-feedback.js",
     "js/pets/registry.js",
+    "js/pets/lifecycle.js",
     "js/board/registry.js",
     "js/board/movement.js",
     "js/board/tile-dispatch.js",
@@ -91,9 +92,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "53d1c1bfc521747d03fd8ae8aa37c3d07f7ad0992563b6797bc78a959ad5f0ee",
+  "sourceHash": "f65fe0a79a546087cc03e6d811a457785b09f18973e53c09ced08edd23737089",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.6.27",
+  "version": "0.6.6.28",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }

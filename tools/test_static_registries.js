@@ -22,9 +22,11 @@ const enemiesApi = context.window.DiceboundEnemies;
 const raritiesApi = context.window.DiceboundRarities;
 for (const [name, api] of [["pets", petsApi], ["enemies", enemiesApi], ["rarities", raritiesApi]]) {
   assert.ok(api, `${name} module did not publish its API`);
-  assert.equal(api.apiVersion, name === "enemies" ? 2 : 1);
+  const expectedVersion=name === "enemies" || name === "pets" ? 2 : 1;
+  assert.equal(api.apiVersion, expectedVersion);
   assert.ok(Object.isFrozen(api), `${name} API is mutable`);
 }
+assert.equal(petsApi.owner,"pets/facade","Pet registry compatibility must live on the public Pet facade");
 assert.ok(Object.isFrozen(petsApi.ids));
 assert.ok(Object.isFrozen(raritiesApi.ids));
 
@@ -106,7 +108,7 @@ for (const [rawOwner, opener] of [["PETS", "\\{"], ["ENEMY_POOL", "\\["], ["RARI
 }
 assert.doesNotMatch(monolith, /const\s+DB317_CLASS_TAGS_RAW\s*=\s*\{/);
 assert.match(monolith, /DB317_CLASS_TAGS_RAW=Object\.fromEntries\(Object\.entries\(DB317_CLASSES_RAW\)/);
-assert.match(monolith, /window\.DiceboundPets\?\.createRegistry\(\)/);
+assert.match(monolith, /dbPets\.createRegistry\?\.\(\)/,'composition monolith must obtain Pet identities through the public Pet facade');
 assert.match(monolith, /window\.DiceboundEnemies\?\.createNormalRegistry\(\)/);
 assert.match(monolith, /window\.DiceboundEnemies\?\.createSpecialRegistry\?\.\(\)/);
 assert.match(monolith, /window\.DiceboundRarities\?\.createInfoRegistry\(\)/);

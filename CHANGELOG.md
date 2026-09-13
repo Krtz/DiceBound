@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.28
+
+### Pets subsystem facade and lifecycle ownership (#327)
+- Expanded `DiceboundPets` from the static Pet registry boundary into the ordinary public Pets facade while retaining registry compatibility; the new focused `runtime/js/pets/lifecycle.js` owns unlock progression, feeding/bond levels, switching policy, active-Pet bonuses/formulas and Trainer roster shuffling.
+- Routed Pet chooser actions/read models and Player Initialization collaboration through the facade while keeping `combat/pet-turn-resolution.js` Combat-owned; retired the historical V1.6/V1.7 stat-bonus chain, the later V27 feed implementation, the Friends feed wrapper and dead V1.7 forwarding aliases from `dicebound.js`.
+- Added a permanent 18-case exact released-0.6.6.27 Pet oracle plus focused final-feed API/presentation guards covering quiet feed logging, frozen return values, chooser/art refresh behavior and anti-shadow ownership.
+- Architecture-only: no Pet balance, unlock threshold, cookie rewards, class design, combat, save/checkpoint or chooser redesign is intended. Runtime graph is 78 modules (77 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 692,187 bytes / 7,136 physical lines versus 694,385 bytes / 7,130 lines in released 0.6.6.27.
+
 ## Beta 0.6.6.27
 
 ### Items subsystem facade and ownership (#320)

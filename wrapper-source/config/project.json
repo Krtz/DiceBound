@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.27",
+  "version": "0.6.6.28",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -46,6 +46,7 @@
     "js/progression/class-unlock-rules.js",
     "js/progression/class-unlock-feedback.js",
     "js/pets/registry.js",
+    "js/pets/lifecycle.js",
     "js/board/registry.js",
     "js/board/movement.js",
     "js/board/tile-dispatch.js",

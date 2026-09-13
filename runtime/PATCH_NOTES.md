@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.28
+
+## Beta 0.6.6.28 Pets subsystem ownership (#327)
+- `DiceboundPets` is now the ordinary public Pets boundary over the existing registry plus focused lifecycle mechanics; `pets/lifecycle.js` owns unlocks, cookies/bond progression, switching/selection, active-Pet bonuses and exact Trainer shuffling while Combat retains Pet-turn resolution.
+- Pet chooser and Run player initialization collaborate through the facade, and the old V1.6/V1.7 bonus implementation, V27 feed override, Friends feed wrapper and dead V1.7 aliases are removed from `dicebound.js` rather than surviving as shadow ownership.
+- A permanent 18-case released-0.6.6.27 output/state/RNG oracle freezes bond/damage formulas, feeding, the 500-point unlock threshold, Camp/run switching, Fire/Donut bonuses, chooser state and 12-draw Trainer shuffle; the focused owner test additionally freezes the final quiet-feed log, frozen result object and Pet presentation refresh contract.
+- No Pet balance, unlock/cookie tuning, class/Pet redesign, Combat ownership, save/checkpoint schema or chooser UI redesign is intended. Runtime graph is 78 modules (77 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 692,187 bytes / 7,136 lines.
+
 # Unreleased — Beta 0.6.6.27
 
 ## Beta 0.6.6.27 Items subsystem ownership (#320)
