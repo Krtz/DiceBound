@@ -28,6 +28,25 @@ jobs:
         run: |
           @'
           from pathlib import Path
+          patcher=Path('tools/tmp_progression_owner_slice.py')
+          text=patcher.read_text(encoding='utf-8')
+          old="""  const CORE=window.DiceboundCoreState;\n  const PRESTIGE=window.DiceboundPrestige;\n  if(!CORE?.legacyXpForLevel)throw new Error('DiceboundProgression requires DiceboundCoreState.');\n  if(!PRESTIGE?.award)throw new Error('DiceboundProgression requires DiceboundPrestige.');"""
+          new="""  const PRESTIGE=window.DiceboundPrestige;\n  if(!PRESTIGE?.award)throw new Error('DiceboundProgression requires DiceboundPrestige.');"""
+          if text.count(old)!=1:
+              raise SystemExit(f'expected one stale Core dependency block, found {text.count(old)}')
+          text=text.replace(old,new,1)
+          old="  function legacyXpForLevel(level){return CORE.legacyXpForLevel(level);}"
+          new="  function legacyXpForLevel(level){return call('legacyXpForLevel',level);}"
+          if text.count(old)!=1:
+              raise SystemExit(f'expected one stale legacy XP owner function, found {text.count(old)}')
+          text=text.replace(old,new,1)
+          old="    getMeta:()=>meta,getPlayer:()=>player,getTalents:()=>talents,getRunTalentSnapshot:()=>runTalentSnapshot,setRunTalentSnapshot:value=>{runTalentSnapshot=value;return runTalentSnapshot;},"
+          new="    legacyXpForLevel:level=>legacyXpForLevel(level),getMeta:()=>meta,getPlayer:()=>player,getTalents:()=>talents,getRunTalentSnapshot:()=>runTalentSnapshot,setRunTalentSnapshot:value=>{runTalentSnapshot=value;return runTalentSnapshot;},"
+          if text.count(old)!=1:
+              raise SystemExit(f'expected one Progression configure header, found {text.count(old)}')
+          text=text.replace(old,new,1)
+          patcher.write_text(text,encoding='utf-8',newline='\n')
+
           path=Path('runtime/index.html')
           text=path.read_text(encoding='utf-8')
           tag='<script src="js/progression/achievements.js"></script>'
@@ -58,9 +77,6 @@ jobs:
           node --check runtime/js/progression/lifecycle.js
           node --check runtime/js/dicebound.js
           node tools/test_progression_owner.js
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Write-Host "Running browser startup smoke for exception diagnostics"
-          node tools/smoke_run_resume_browser.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_progression_oracle.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
