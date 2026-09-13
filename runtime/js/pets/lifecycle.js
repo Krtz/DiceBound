@@ -9,7 +9,8 @@
     if(!nextRuntime||typeof nextRuntime!=="object")throw new Error("Pet lifecycle runtime is required.");
     const required=[
       "getMeta","getPlayer","getPets","getElements","isRunActive","classHasMechanic","talentRank","rand",
-      "saveMeta","checkDynamicClassUnlocks","sfxLevel","sfxCoin","sfxHoly","showToast","addLog","updateMetaUI","updateHUD"
+      "saveMeta","checkDynamicClassUnlocks","sfxLevel","sfxCoin","sfxHoly","showToast","addLog","updateMetaUI","updateHUD",
+      "renderPetCollection","refreshActivePetArt"
     ];
     for(const name of required)if(typeof nextRuntime[name]!=="function")throw new Error(`Pet lifecycle runtime missing ${name}().`);
     runtime=nextRuntime;
@@ -90,14 +91,24 @@
     r.updateMetaUI();r.updateHUD();r.showToast(`${def.icon} ${def.name} selected`);return true;
   }
 
+  // Final released 0.6.6.27 semantics combine the quiet V27 feed replacement
+  // with the Friends-patch presentation/return wrapper. Feeding logs instead of
+  // queueing a toast, refreshes both chooser/card art surfaces, and returns the
+  // small frozen result object used by the final compatibility layer.
   function feed(count=1){
-    const r=rt(),m=meta(),p=player(),state=activeState(),def=activeDefinition(),actual=Math.min(count,m.petCookies);
-    if(actual<=0)return;
-    m.petCookies-=actual;state.xp+=actual*(1+p.cookieBondBonus);let levels=0;
-    while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}
-    r.saveMeta();r.checkDynamicClassUnlocks();levels?r.sfxLevel():r.sfxCoin();
-    r.showToast(levels?`${def.name} gained ${levels} level${levels===1?"":"s"}!`:`${def.name} ate ${actual} cookie${actual===1?"":"s"}`);
-    r.updateMetaUI();
+    const r=rt(),m=meta(),p=player(),state=activeState(),def=activeDefinition();
+    const beforeCookies=Number(m.petCookies)||0,beforeXp=Number(state?.xp)||0,beforeLevel=Number(state?.level)||1;
+    const actual=Math.min(Math.max(0,Math.floor(count||0)),beforeCookies);
+    if(actual>0){
+      m.petCookies-=actual;state.xp+=actual*(1+(p.cookieBondBonus||0));let levels=0;
+      while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}
+      r.saveMeta();r.checkDynamicClassUnlocks();levels?r.sfxLevel():r.sfxCoin();
+      r.addLog(`${def.icon} ${def.name} ate <b>${actual}</b> cookie${actual===1?'':'s'}${levels?` and gained <b>${levels}</b> level${levels===1?'':'s'}`:''}.`);
+      r.updateMetaUI();r.renderPetCollection();
+    }
+    const changed=(Number(m.petCookies)||0)!==beforeCookies||Number(state?.xp)!==beforeXp||Number(state?.level)!==beforeLevel;
+    r.refreshActivePetArt();
+    return changed?Object.freeze({ok:true,spent:Math.max(0,beforeCookies-(Number(m.petCookies)||0)),level:Number(state?.level)||1}):false;
   }
 
   function trackElementProgress(key,amount){
