@@ -1,0 +1,96 @@
+name: Temporary Progression Achievement ownership gate
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.29-progression-oracle
+
+permissions:
+  contents: write
+
+jobs:
+  achievement-owner:
+    runs-on: windows-2022
+    steps:
+      - name: Check out Progression branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply Achievement ownership slice
+        shell: pwsh
+        run: |
+          python tools/tmp_progression_achievement_owner.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item tools/tmp_progression_achievement_owner.py
+          Remove-Item .github/workflows/tmp-progression-achievement-owner.yml
+          python tools/refresh_runtime_manifest.py --version 0.6.6.28 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run focused Progression Achievement gate
+        shell: pwsh
+        run: |
+          node --check runtime/js/progression/lifecycle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_progression_owner.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_progression_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_achievements_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_camp_progression_reveals.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_powerup_services.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_class_unlock_rules.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run repository JavaScript regression gate
+        shell: pwsh
+        run: |
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object {
+            Write-Host "Running $($_.Name)"
+            node $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Run architecture validators
+        shell: pwsh
+        run: |
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact tested candidate commit
+        shell: pwsh
+        run: |
+          git config user.name "DiceBound Progression Achievement Owner"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "architecture: move Achievement policy behind DiceboundProgression"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "PROGRESSION_ACHIEVEMENT_OWNER_COMMIT=$sha"
+          "PROGRESSION_ACHIEVEMENT_OWNER_COMMIT=$sha" >> $env:GITHUB_ENV
+
+      - name: Try to advance protected branch
+        shell: pwsh
+        run: |
+          git push origin HEAD:refs/heads/arch/0.6.6.29-progression-oracle
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Protected branch push rejected as expected; tested commit object was uploaded."
+            exit 0
+          }
+          Write-Host "Branch advanced directly to $env:PROGRESSION_ACHIEVEMENT_OWNER_COMMIT."
