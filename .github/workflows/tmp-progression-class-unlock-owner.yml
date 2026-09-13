@@ -25,8 +25,11 @@ jobs:
       - name: Apply class-unlock ownership slice
         shell: pwsh
         run: |
+          python tools/tmp_fix_progression_class_unlock_patcher.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/tmp_progression_class_unlock_owner.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item tools/tmp_fix_progression_class_unlock_patcher.py
           Remove-Item tools/tmp_progression_class_unlock_owner.py
           Remove-Item .github/workflows/tmp-progression-class-unlock-owner.yml
           python tools/refresh_runtime_manifest.py --version 0.6.6.28 --channel Beta --development-state Unreleased
