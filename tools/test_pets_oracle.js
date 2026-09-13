@@ -44,11 +44,15 @@ async function main(){
   try{
     child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-sandbox","--no-first-run","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
     page=await connect(url);await page.send("Runtime.enable");
-    const end=Date.now()+20000;while(Date.now()<end){if(await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundPetsOracleTest&&!!window.DiceboundPetChooser&&!!window.DiceboundRng"))break;await sleep(100);}
-    const actual=await page.evaluate(`(async()=>{
-      const clone=x=>x==null?x:JSON.parse(JSON.stringify(x));
-      const wait=ms=>new Promise(r=>setTimeout(r,ms));
-      document.getElementById('campGoBtn')?.click();await wait(250);document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');
+    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundPetsOracleTest&&!!window.DiceboundPetChooser&&!!window.DiceboundRng");if(ready)break;await sleep(100);}assert.ok(ready,"Pet oracle runtime surface did not become ready");
+
+    // Keep UI boot timing out of the characterization expression. A long-lived
+    // async Runtime.evaluate promise is occasionally collected by headless Edge.
+    await page.evaluate("document.getElementById('campGoBtn')?.click();true");
+    await sleep(300);
+    await page.evaluate("document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');true");
+
+    const actual=await page.evaluate(`(()=>{
       window.DiceboundRng.seed('pets-template');const template=window.DiceboundRunResumeTest.snapshot();
       const outputs=[],pet=window.DiceboundPetsOracleTest;
       const restore=(name,{classId='ranger',activePet='neutral',runActive=true}={})=>{const cp=structuredClone(template);cp.run.player.classId=classId;cp.meta.activePet=activePet;for(const id of Object.keys(cp.meta.pets||{})){cp.meta.pets[id].unlocked=true;cp.meta.pets[id].level=1;cp.meta.pets[id].xp=0;cp.meta.pets[id].xpNext=2;}cp.meta.petCookies=20;for(const key of Object.keys(cp.meta.elementProgress||{}))cp.meta.elementProgress[key]=0;window.DiceboundRunResumeTest.restore(cp);pet.setRunActive(runActive);window.DiceboundRng.seed('pets-oracle:'+name);return window.DiceboundRng.snapshot();};
