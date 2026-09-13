@@ -51,7 +51,7 @@
     else third=random()<odds.pairFromMiss?second:pick(SLOT_SYMBOLS);
     return [first,second,third];
   }
-  function openSlot(){
+  function openSlot(){bind();
     node('eventOverlay').classList.remove('hidden');node('spinBtn').style.display='block';node('eventContinueBtn').style.display='none';node('slotResult').textContent='The machine waits...';
     [1,2,3].forEach(n=>{node(`reel${n}`).textContent='❔';node(`reel${n}`).classList.remove('spinning');});
   }
@@ -111,7 +111,7 @@
     ];
   }
   function syncWheelIcons(){const rewards=wheelRewards();[...node('fortuneWheel').querySelectorAll('span')].forEach((el,i)=>{if(rewards[i])el.textContent=rewards[i].icon;});}
-  function openWheel(){syncWheelIcons();wheelBusy=false;node('wheelOverlay').classList.remove('hidden');node('wheelSpinBtn').style.display='block';node('wheelContinueBtn').style.display='none';node('wheelResult').textContent='The wheel waits for a victim.';requireFn('addLog')('You find the <b>Wheel of Fortune</b>.');}
+  function openWheel(){bind();syncWheelIcons();wheelBusy=false;node('wheelOverlay').classList.remove('hidden');node('wheelSpinBtn').style.display='block';node('wheelContinueBtn').style.display='none';node('wheelResult').textContent='The wheel waits for a victim.';requireFn('addLog')('You find the <b>Wheel of Fortune</b>.');}
   async function spinWheel(){
     if(wheelBusy)return;wheelBusy=true;node('wheelSpinBtn').disabled=true;const rewards=wheelRewards(),index=requireFn('rand')(0,rewards.length-1),reward=rewards[index];
     const current=((wheelRotation%360)+360)%360,target=((360-(index*45+22.5))%360+360)%360,delta=1440+((target-current+360)%360);
@@ -131,7 +131,7 @@
       {icon:'🌌',name:'Miracle Engine',description(){const n=3+p.blessingBonus;return `Receive ${n} random Rare or Epic powerups immediately. Every granted buff will be listed by name`+(p.blessingBonus?` (Favored Mortal total bonus: +${p.blessingBonus} powerup${p.blessingBonus===1?'':'s'}).`:'.');},apply(){const gifts=[];for(let i=0;i<3+p.blessingBonus;i++)gifts.push(requireFn('applyRandomHighRarity')('Miracle Engine',false));return gifts;}}
     ];
   }
-  function openBlessing(){
+  function openBlessing(){bind();
     requireFn('sfxHoly')();const pool=blessingPool(),choices=[];while(choices.length<3){const b=pick(pool);if(!choices.includes(b))choices.push(b);}const grid=node('blessingGrid');grid.innerHTML='';
     choices.forEach(blessing=>{const btn=document.createElement('button');btn.className='blessing-btn';btn.innerHTML=`<span class="blessing-icon">${blessing.icon}</span><span class="blessing-name">${blessing.name}</span><span class="blessing-desc">${blessing.description()}</span>`;
       btn.addEventListener('click',()=>{const result=blessing.apply();requireFn('recordRunBuff')(blessing.icon,blessing.name,blessing.description(),'divine','Blessing from God');clearTile();node('blessingOverlay').classList.add('hidden');requireFn('addLog')(`Received the divine blessing <b>${blessing.name}</b>.`);if(Array.isArray(result)&&result.length){const names=result.map(up=>`${requireFn('rarityLabel')(up.rarity)} ${up.name}`).join(', ');requireFn('addLog')(`<b>Miracle Engine granted:</b> ${names}.`);requireFn('showToast')(`Miracle: ${result.map(up=>up.name).join(' · ')}`);}else requireFn('showToast')(blessing.name);requireFn('updateHUD')();requireFn('returnToRoad')();});grid.appendChild(btn);});
@@ -140,7 +140,7 @@
 
   // MYSTIC -----------------------------------------------------------------
   function clearMysticTile(){clearTile();node('mysticOverlay').classList.add('hidden');currentMysticBuff=null;requireFn('returnToRoad')();}
-  function openMystic(){
+  function openMystic(){bind();
     const roll=random(),wanted=roll<.10?'legendary':roll<.40?'epic':'rare',choice=requireFn('fallbackRarityPool')(wanted);
     currentMysticBuff=choice.pool.length?pick(choice.pool):null;
     if(!currentMysticBuff){requireFn('addLog')('<b>Mystic:</b> no eligible powerups remain. The Mystic leaves without taking your HP.');requireFn('returnToRoad')();return;}
@@ -154,7 +154,7 @@
   function declineMystic(){requireFn('addLog')("You refuse the Mystic's bargain.");clearMysticTile();}
 
   // BLOODWELL --------------------------------------------------------------
-  function openBloodwell(){
+  function openBloodwell(){bind();
     const p=player(),stats=node('bloodwellStats');if(stats)stats.innerHTML=`<div class="stat"><span>HP</span><strong>${Math.round(p.hp)} / ${Math.round(p.maxHp)}</strong></div><div class="stat"><span>Potions</span><strong>${p.potions}</strong></div><div class="stat"><span>Attack</span><strong>${Math.round(p.attack)}</strong></div><div class="stat"><span>Defense</span><strong>${Math.round(p.defense)}</strong></div><div class="stat"><span>Luck</span><strong>${Math.round(p.luck*100)}</strong></div><div class="stat"><span>Crit</span><strong>${Math.round(p.crit*100)}%</strong></div><div class="stat"><span>Dodge</span><strong>${Math.round(requireFn('effectiveDodgeChance')()*100)}%</strong></div><div class="stat"><span>Lifesteal</span><strong>${Math.round(p.lifeSteal*100)}%</strong></div><div class="stat"><span>Echo</span><strong>${Math.round(p.doubleStrike*100)}%</strong></div><div class="stat"><span>Boss dmg</span><strong>${Math.round(p.bossDamage*100)}%</strong></div>`;
     const options=[
       {id:'hp',label:'Sacrifice 20% max HP',ok:p.maxHp>15,apply(){const n=Math.max(5,Math.ceil(p.maxHp*.20));p.maxHp=Math.max(1,p.maxHp-n);p.hp=Math.min(p.hp,p.maxHp);return ['maxHp',n];}},
@@ -170,7 +170,7 @@
 
   // GAMBLER ----------------------------------------------------------------
   function finishGambler(msg){node('gambleResult').textContent=msg;requireFn('addLog')(`<b>Gambler:</b> ${msg}`);requireFn('showToast')(msg);clearTile();requireFn('updateHUD')();setTimeout(()=>{node('gamblerOverlay').classList.add('hidden');requireFn('returnToRoad')();},700);}
-  function openGambler(){
+  function openGambler(){bind();
     const p=player(),grid=node('gambleGrid');grid.innerHTML='';node('gambleResult').textContent=`You carry ${p.gold} gold.`;
     [0,.25,.5,1].forEach(percent=>{const wager=Math.floor(p.gold*percent),b=document.createElement('button');b.className='choice-btn uncommon';b.innerHTML=`<span class="choice-icon">${requireFn('art')('coins','Coins','db-art-choice')||'🪙'}</span><span class="choice-name">Bet ${Math.round(percent*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;b.addEventListener('click',()=>{if(percent===0){finishGambler('You politely decline.');return;}const actual=Math.floor(p.gold*percent),win=random()<.5;if(win){p.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{p.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}});grid.appendChild(b);});
     const subtitle=document.querySelector('#gamblerOverlay .subtitle');if(subtitle&&!document.querySelector('#gamblerOverlay .gambler-art'))subtitle.insertAdjacentHTML('afterend',`<div class="gambler-art">${requireFn('art')('gambler','Gambler','db-art-portrait')}${requireFn('art')('coins','Coins','db-art-choice')}</div>`);
@@ -185,11 +185,13 @@
     node('wheelContinueBtn').addEventListener('click',()=>{node('wheelOverlay').classList.add('hidden');requireFn('returnToRoad')();});
     node('acceptMysticBtn').addEventListener('click',acceptMystic);
     node('declineMysticBtn').addEventListener('click',declineMystic);
+    node('bloodwellLeaveBtn').addEventListener('click',()=>{clearTile();node('bloodwellOverlay').classList.add('hidden');requireFn('returnToRoad')();});
+    node('gamblerLeaveBtn').addEventListener('click',()=>{node('gamblerOverlay').classList.add('hidden');clearTile();requireFn('returnToRoad')();});
     return api;
   }
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};bind();return api;}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};return api;}
   function resetTransient(){currentMysticBuff=null;wheelBusy=false;}
-  function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff});}
+  function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff,mysticRarity:currentMysticBuff?.rarity||null});}
 
   const api=Object.freeze({configure,openSlot,openWheel,openBlessing,openMystic,openBloodwell,openGambler,spinSlot,spinWheel,applySlotReward,resetTransient,inspect,owner:OWNER});
   window.DiceboundRoadEventLifecycle=api;

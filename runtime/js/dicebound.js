@@ -8,8 +8,6 @@
   const dbRoadEvents=window.DiceboundRoadEvents;
   if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");
   dbRoadEvents.configure({
-    openSlot:()=>openEvent(),
-    openWheel:()=>openWheelEvent(),
     treasure:{
       getPlayer:()=>player,
       getBoardLevel:()=>boardLevel,
@@ -32,10 +30,43 @@
       openLoot:(item,done)=>openLoot(item,done),
       generateLegendary:(slot,preferUndiscovered)=>db060GenerateLegendary(slot,preferUndiscovered)
     },
-    openBlessing:()=>openBlessing(),
-    openMystic:()=>openMystic(),
-    openBloodwell:()=>openBloodwell(),
-    openGambler:()=>openGambler()
+    lifecycle:{
+      $:id=>$(id),
+      getPlayer:()=>player,
+      getMeta:()=>meta,
+      getTiles:()=>tiles,
+      getBoardLevel:()=>boardLevel,
+      currentTileCount:()=>currentTileCount(),
+      random:()=>random(),
+      rand:(a,b)=>rand(a,b),
+      pick:values=>pick(values),
+      delay:ms=>delay(ms),
+      tone:(...args)=>tone(...args),
+      sfxRoll:()=>sfx.roll(),
+      sfxLevel:()=>sfx.level(),
+      sfxCoin:()=>sfx.coin(),
+      sfxHoly:()=>sfx.holy(),
+      modifiedGold:value=>modifiedGold(value),
+      gameplayTalentRank:id=>gameplayTalentRank(id),
+      saveMeta:()=>saveMeta(),
+      updateMetaUI:()=>updateMetaUI(),
+      refreshTile:index=>refreshTile(index),
+      addLog:text=>addLog(text),
+      showToast:(...args)=>showToast(...args),
+      updateHUD:()=>updateHUD(),
+      returnToRoad:()=>returnToRoad(),
+      activePetName:()=>activePetDef().name,
+      eligibleUpgrades:filter=>eligibleUpgrades(filter),
+      applyRandomHighRarity:(...args)=>applyRandomHighRarity(...args),
+      applyUpgrade:(...args)=>applyUpgrade(...args),
+      rarityLabel:rarity=>rarityInfo[rarity]?.label||rarity,
+      forceLevels:n=>forceLevels(n),
+      recordRunBuff:(...args)=>recordRunBuff(...args),
+      effectiveDodgeChance:()=>effectiveDodgeChance(),
+      fallbackRarityPool:wanted=>v27FallbackRarityPool(wanted),
+      startCombat:kind=>startCombat(kind),
+      art:(...args)=>beta043Art(...args)
+    }
   });
   const MERCHANT_SPACING = 12;
   const STATIC_CAMP_TILES = [10,30,55,70,90];
@@ -237,10 +268,7 @@
   let currentEnemyTile = null;
   let currentMerchantItems = [];
   let dbMerchantStock = null;
-  let currentMysticBuff = null;
   let currentMerchantNotice = "";
-  let wheelRotation = 0;
-  let wheelBusy = false;
   let pendingPrestige = null;
   let selectedClassId = "ranger";
   let pendingLootItem = null;
@@ -995,107 +1023,12 @@
     tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();
   }
 
-  function openEvent(){
-    $("eventOverlay").classList.remove("hidden");$("spinBtn").style.display="block";$("eventContinueBtn").style.display="none";$("slotResult").textContent="The machine waits...";
-    [1,2,3].forEach(n=>{$(`reel${n}`).textContent="❔";$(`reel${n}`).classList.remove("spinning");});
-  }
-  function slotSymbolHTML(symbol){
-    if(symbol!=="🪙")return symbol;
-    const src=window.DiceboundAssets?.resolveUiIcon?.("coins")?.image||"assets/ui/icons/coins.png";
-    return `<img class="slot-coin-art" src="${src}" alt="Gold coins">`;
-  }
-  function setSlotReelSymbol(reel,symbol){if(reel)reel.innerHTML=slotSymbolHTML(symbol);}
-  function generateSlotResult(){
-    const symbols=["⚔️","❤️","🪙","🛡️","⭐","💀"],first=pick(symbols),odds=window.DiceboundEventRewards.slotMatchOdds(player.luck);
-    const second=random()<odds.secondMatch?first:pick(symbols);let third;
-    if(second===first)third=random()<odds.tripleFromPair?first:pick(symbols);else third=random()<odds.pairFromMiss?second:pick(symbols);
-    return [first,second,third];
-  }
-  async function spinEvent(){
-    const btn=$("spinBtn");btn.disabled=true;const reels=[$("reel1"),$("reel2"),$("reel3")];reels.forEach(r=>r.classList.add("spinning"));const symbols=["⚔️","❤️","🪙","🛡️","⭐","💀"];
-    for(let i=0;i<18;i++){reels.forEach((r,j)=>{if(i<12+j*3)setSlotReelSymbol(r,pick(symbols));});tone(220+i*12,.03,"square",.012);await delay(60+i*5);}
-    const result=generateSlotResult();for(let i=0;i<3;i++){setSlotReelSymbol(reels[i],result[i]);reels[i].classList.remove("spinning");tone(480+i*110,.08,"triangle",.025);await delay(180);}
-    applySlotReward(result);tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);btn.style.display="none";$("eventContinueBtn").style.display="block";btn.disabled=false;updateHUD();
-  }
-  function applySlotReward(result){
-    const counts={};result.forEach(s=>counts[s]=(counts[s]||0)+1);const triple=Object.keys(counts).find(k=>counts[k]===3),pair=Object.keys(counts).find(k=>counts[k]===2);let text="";
-    if(triple){
-      switch(triple){
-        case "⚔️":player.attack+=3;text="Jackpot! +3 attack permanently.";break;
-        case "❤️":player.maxHp+=12;player.hp=Math.min(player.maxHp,player.hp+12);text="Jackpot! +12 max HP and heal 12.";break;
-        case "🪙":{const g=modifiedGold(80);player.gold+=g;text=`Jackpot! +${g} gold.`;break;}
-        case "🛡️":player.defense+=2;text="Jackpot! +2 defense permanently.";break;
-        case "⭐":player.attack+=3;player.maxHp+=10;player.hp+=10;player.crit+=.07;text="Legendary jackpot! +3 attack, +10 max HP and +7% crit.";break;
-        case "💀":{const loss=Math.max(1,Math.floor(player.hp*.28));player.hp=Math.max(1,player.hp-loss);text=`Triple skulls! You lose ${loss} HP.`;break;}
-      }sfx.level();
-    }else if(pair){
-      switch(pair){
-        case "⚔️":player.attack+=1;text="Two swords: +1 attack permanently.";break;
-        case "❤️":{const heal=Math.min(player.maxHp-player.hp,12);player.hp+=heal;text=`Two hearts: heal ${heal} HP.`;break;}
-        case "🪙":{const g=modifiedGold(30);player.gold+=g;text=`Two coins: +${g} gold.`;break;}
-        case "🛡️":player.flatReduction+=1;text="Two shields: reduce incoming damage by 1.";break;
-        case "⭐":player.crit+=.05;text="Two stars: +5% critical chance.";break;
-        case "💀":{const loss=Math.max(1,Math.floor(player.hp*.12));player.hp=Math.max(1,player.hp-loss);text=`Two skulls: lose ${loss} HP.`;break;}
-      }tone(650,.15,"triangle",.04,950);
-    }else{const consolation=modifiedGold(9);player.gold+=consolation;text=`No match. The machine spits out ${consolation} consolation gold.`;sfx.coin();}
-    const cookieChance=.09+gameplayTalentRank("fortune_cookie")*.02;
-    if(random()<cookieChance){meta.petCookies++;saveMeta();text+=` A rare pet cookie drops from the machine!`;showToast("🍪 Pet cookie found!");}
-    $("slotResult").textContent=text;addLog(`<b>Event:</b> ${text}`);updateMetaUI();
-  }
-
-  const wheelRewards=[
-    {icon:"🪙",name:"Golden Rain",apply(){const g=modifiedGold(70);player.gold+=g;return `The wheel grants ${g} gold.`;}},
-    {icon:"❤️",name:"Restoration",apply(){const heal=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*.55));player.hp+=heal;return `The wheel restores ${heal} HP.`;}},
-    {icon:"🍪",name:"Companion Cookie",apply(){meta.petCookies++;saveMeta();return `A permanent pet cookie drops for ${activePetDef().name}.`;}},
-    {icon:"⚔️",name:"Sharpened Fate",apply(){player.attack+=2;return "Gain +2 attack for this run.";}},
-    {icon:"🎁",name:"Rare Gift",apply(){const up=applyRandomHighRarity();return `The wheel reveals ${rarityInfo[up.rarity].label} ${up.name}: ${up.desc}`;}},
-    {icon:"🧪",name:"Alchemist's Bundle",apply(){player.potions+=3;return "Gain 3 potions.";}},
-    {icon:"⭐",name:"Lucky Star",apply(){player.crit+=.08;player.luck+=.08;return "Gain +8% crit and +8 Luck.";}},
-    {icon:"💀",name:"Cruel Turn",apply(){const loss=Math.max(1,Math.floor(player.hp*.18));player.hp=Math.max(1,player.hp-loss);return `The wheel takes ${loss} HP.`;}}
-  ];
-  function openWheelEvent(){
-    syncWheelIcons();wheelBusy=false;$("wheelOverlay").classList.remove("hidden");$("wheelSpinBtn").style.display="block";$("wheelContinueBtn").style.display="none";$("wheelResult").textContent="The wheel waits for a victim.";addLog("You find the <b>Wheel of Fortune</b>.");
-  }
-  function syncWheelIcons(){
-    [...$("fortuneWheel").querySelectorAll("span")].forEach((el,i)=>{if(wheelRewards[i])el.textContent=wheelRewards[i].icon;});
-  }
-  async function spinFortuneWheel(){
-    if(wheelBusy)return;wheelBusy=true;$("wheelSpinBtn").disabled=true;const index=rand(0,wheelRewards.length-1),reward=wheelRewards[index];
-    const current=((wheelRotation%360)+360)%360,target=((360-(index*45+22.5))%360+360)%360,delta=1440+((target-current+360)%360);
-    wheelRotation+=delta;$("fortuneWheel").style.transform=`rotate(${wheelRotation}deg)`;sfx.roll();await delay(2850);
-    const result=reward.apply();$("wheelResult").textContent=`${reward.icon} ${reward.name}: ${result}`;addLog(`<b>Wheel:</b> ${reward.name} — ${result}`);showToast(reward.name);sfx.level();
-    tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);$("wheelSpinBtn").style.display="none";$("wheelContinueBtn").style.display="block";$("wheelSpinBtn").disabled=false;updateHUD();
-  }
-
-
   // Merchant presentation is owned by ui/merchant.js; this lexical adapter
   // remains only for legacy callers inside the compatibility monolith.
   let dbMerchantUi=null;
   function renderMerchant(){
     if(!dbMerchantUi)throw new Error('Merchant UI owner is not configured.');
     return dbMerchantUi.render();
-  }
-
-  const blessingPool=[
-    {icon:"🌟",name:"Divine Ascension",description(){const n=5+player.blessingBonus;return `Instantly gain ${n} levels and choose ${n} powerups`+(player.blessingBonus?` (Favored Mortal total bonus: +${player.blessingBonus} level${player.blessingBonus===1?"":"s"} and +${player.blessingBonus} choice${player.blessingBonus===1?"":"s"}).`:".");},apply(){forceLevels(5+player.blessingBonus);}},
-    {icon:"⚔️",name:"Avatar of War",description(){const atk=8+player.blessingBonus*2,hp=25+player.blessingBonus*8;return `Gain +${atk} attack, +2 defense, +${hp} max HP and heal fully`+(player.blessingBonus?` (Favored Mortal total bonus: +${player.blessingBonus*2} attack and +${player.blessingBonus*8} max HP).`:".");},apply(){player.attack+=8+player.blessingBonus*2;player.defense+=2;player.maxHp+=25+player.blessingBonus*8;player.hp=player.maxHp;}},
-    {icon:"💰",name:"Saint of Fortune",description(){const gold=150+player.blessingBonus*50,pots=2+player.blessingBonus;return `Gain ${gold} gold, +15% crit, +25 Luck and ${pots} potions`+(player.blessingBonus?` (Favored Mortal total bonus: +${player.blessingBonus*50} gold and +${player.blessingBonus} potion${player.blessingBonus===1?"":"s"}).`:".");},apply(){player.gold+=modifiedGold(150+player.blessingBonus*50);player.crit+=.15;player.luck+=.25;player.potions+=2+player.blessingBonus;}},
-    {icon:"🪽",name:"Seraph's Aegis",description(){const revives=2+player.blessingBonus,reduction=2+player.blessingBonus;return `Gain ${revives} revives, block the first hit of every battle and reduce damage by ${reduction}`+(player.blessingBonus?` (Favored Mortal adds +${player.blessingBonus} revive${player.blessingBonus===1?"":"s"} and +${player.blessingBonus} flat damage reduction).`:".");},apply(){player.revives+=2+player.blessingBonus;player.firstHitBlocks+=1;player.flatReduction+=2+player.blessingBonus;}},
-    {icon:"🌌",name:"Miracle Engine",description(){const n=3+player.blessingBonus;return `Receive ${n} random Rare or Epic powerups immediately. Every granted buff will be listed by name`+(player.blessingBonus?` (Favored Mortal total bonus: +${player.blessingBonus} powerup${player.blessingBonus===1?"":"s"}).`:".");},apply(){const gifts=[];for(let i=0;i<3+player.blessingBonus;i++)gifts.push(applyRandomHighRarity("Miracle Engine",false));return gifts;}}
-  ];
-
-  function openBlessing(){
-    sfx.holy();const choices=[];while(choices.length<3){const b=pick(blessingPool);if(!choices.includes(b))choices.push(b);}const grid=$("blessingGrid");grid.innerHTML="";
-    choices.forEach(blessing=>{const btn=document.createElement("button");btn.className="blessing-btn";btn.innerHTML=`<span class="blessing-icon">${blessing.icon}</span><span class="blessing-name">${blessing.name}</span><span class="blessing-desc">${blessing.description()}</span>`;
-      btn.addEventListener("click",()=>{const result=blessing.apply();recordRunBuff(blessing.icon,blessing.name,blessing.description(),"divine","Blessing from God");tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);$("blessingOverlay").classList.add("hidden");addLog(`Received the divine blessing <b>${blessing.name}</b>.`);if(Array.isArray(result)&&result.length){const names=result.map(up=>`${rarityInfo[up.rarity].label} ${up.name}`).join(", ");addLog(`<b>Miracle Engine granted:</b> ${names}.`);showToast(`Miracle: ${result.map(up=>up.name).join(" · ")}`);}else showToast(blessing.name);updateHUD();returnToRoad();});grid.appendChild(btn);});
-    $("blessingOverlay").classList.remove("hidden");addLog("You step into a <b>Blessing from God</b>.");
-  }
-
-  function clearMysticTile(){tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);$("mysticOverlay").classList.add("hidden");currentMysticBuff=null;returnToRoad();}
-  function openMystic(){
-    currentMysticBuff=pick(eligibleUpgrades(u=>u.rarity==="legendary"));
-    $("mysticOffer").innerHTML=`<div class="loot-top"><div class="loot-icon">${currentMysticBuff.icon}</div><div><div class="rarity-badge">Legendary</div><div class="loot-name">${currentMysticBuff.name}</div></div></div><div class="loot-bonuses">${currentMysticBuff.desc}</div>`;
-    $("mysticOverlay").classList.remove("hidden");addLog("A hooded <b>Mystic</b> offers forbidden power.");
   }
 
   function grantLegacyXp(amount){
@@ -1329,19 +1262,6 @@
   async function winCombat(...args){if(!dbCombatVictoryResolution)throw new Error('Combat Victory-resolution owner is not configured.');return dbCombatVictoryResolution.winCombat(...args);}
   function applyRunTheme(){const themes={1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},2:{bg1:"#2a2105",bg2:"#130f02",glow1:"rgba(255,221,69,.25)",glow2:"rgba(255,152,45,.12)",board1:"#594817",board2:"#2d240b"},3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},4:{bg1:"#160522",bg2:"#07020b",glow1:"rgba(196,88,255,.30)",glow2:"rgba(255,70,173,.15)",board1:"#3f1357",board2:"#1b0828"}},t=themes[boardLevel]||themes[1],r=document.documentElement.style;for(const [k,v] of Object.entries(t))r.setProperty(`--run-${k.replace(/([A-Z])/g,"-$1").toLowerCase()}`,v);}
 
-  function openBloodwell(){
-    const stats=$("bloodwellStats");if(stats)stats.innerHTML=`<div class="stat"><span>HP</span><strong>${Math.round(player.hp)} / ${Math.round(player.maxHp)}</strong></div><div class="stat"><span>Potions</span><strong>${player.potions}</strong></div><div class="stat"><span>Attack</span><strong>${Math.round(player.attack)}</strong></div><div class="stat"><span>Defense</span><strong>${Math.round(player.defense)}</strong></div><div class="stat"><span>Luck</span><strong>${Math.round(player.luck*100)}</strong></div><div class="stat"><span>Crit</span><strong>${Math.round(player.crit*100)}%</strong></div><div class="stat"><span>Dodge</span><strong>${Math.round(effectiveDodgeChance()*100)}%</strong></div><div class="stat"><span>Lifesteal</span><strong>${Math.round(player.lifeSteal*100)}%</strong></div><div class="stat"><span>Echo</span><strong>${Math.round(player.doubleStrike*100)}%</strong></div><div class="stat"><span>Boss dmg</span><strong>${Math.round(player.bossDamage*100)}%</strong></div>`;
-    const options=[
-      {id:"hp",label:"Sacrifice 20% max HP",ok:player.maxHp>15,apply(){const n=Math.max(5,Math.ceil(player.maxHp*.20));player.maxHp=Math.max(1,player.maxHp-n);player.hp=Math.min(player.hp,player.maxHp);return [`maxHp`,n];}},
-      {id:"potion",label:"Sacrifice 1 potion",ok:player.potions>0,apply(){player.potions--;return ["potions",1];}},
-      {id:"luck",label:"Sacrifice 5 Luck",ok:player.luck>=.05,apply(){player.luck-=.05;return ["luck",5];}},
-      {id:"attack",label:"Sacrifice 2 Attack",ok:player.attack>3,apply(){player.attack-=2;return ["attack",2];}},
-      {id:"defense",label:"Sacrifice 2 Defense",ok:player.defense>1,apply(){player.defense-=2;return ["defense",2];}}
-    ],grid=$("bloodwellGrid");grid.innerHTML="";options.forEach(o=>{const b=document.createElement("button");b.className="choice-btn rare";b.disabled=!o.ok;b.innerHTML=`<span class="choice-icon">🩸</span><span class="choice-name">${o.label}</span><span class="choice-desc">Receive a random increase in a different stat.</span>`;b.addEventListener("click",()=>{const [lost]=o.apply(),pool=["maxHp","attack","defense","luck","crit","dodge","lifeSteal","doubleStrike","bossDamage","potions"].filter(k=>k!==lost),gain=pick(pool),labels={maxHp:"+12 max HP",attack:"+3 attack",defense:"+3 defense",luck:"+8 Luck",crit:"+12% Crit",dodge:"+12% raw Dodge",lifeSteal:"+15% Lifesteal",doubleStrike:"+15% Echo Strike",bossDamage:"+25% Boss Damage",potions:"+3 potions"};if(gain==="maxHp"){player.maxHp+=12;player.hp+=12;}if(gain==="attack")player.attack+=3;if(gain==="defense")player.defense+=3;if(gain==="luck")player.luck+=.08;if(gain==="crit")player.crit+=.12;if(gain==="dodge")player.dodge+=.12;if(gain==="lifeSteal")player.lifeSteal+=.15;if(gain==="doubleStrike")player.doubleStrike+=.15;if(gain==="bossDamage")player.bossDamage+=.25;if(gain==="potions")player.potions+=3;recordRunBuff("🩸","Bloodwell Exchange",`${o.label} → ${labels[gain]}`,"special","Bloodwell");tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);$("bloodwellOverlay").classList.add("hidden");showToast(labels[gain]);addLog(`<b>Bloodwell:</b> ${o.label}; received ${labels[gain]}.`);updateHUD();returnToRoad();});grid.appendChild(b);});$("bloodwellOverlay").classList.remove("hidden");
-  }
-  function openGambler(){const grid=$("gambleGrid");grid.innerHTML="";$("gambleResult").textContent=`You carry ${player.gold} gold.`;[0,.25,.5,1].forEach(p=>{const wager=Math.floor(player.gold*p),b=document.createElement("button");b.className="choice-btn uncommon";b.innerHTML=`<span class="choice-icon">🪙</span><span class="choice-name">Bet ${Math.round(p*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;b.addEventListener("click",()=>{if(p===0){finishGambler("You politely decline.");return;}const actual=Math.floor(player.gold*p),win=random()<.5;if(win){player.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{player.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}});grid.appendChild(b);});$("gamblerOverlay").classList.remove("hidden");}
-  function finishGambler(msg){$("gambleResult").textContent=msg;addLog(`<b>Gambler:</b> ${msg}`);showToast(msg);tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);updateHUD();setTimeout(()=>{$("gamblerOverlay").classList.add("hidden");returnToRoad();},700);}
-
   function openInfo(){return dbInfoGuide?.open();}
   function renderInfo(){return dbInfoGuide?.render();}
   function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}
@@ -1564,18 +1484,14 @@
   // Ensure transferred v14 saves gain the new Gun companion/progress fields immediately.
   saveMeta();
 
-  $("startBtn").addEventListener("click",startNewGame);$("nightmareToggle").addEventListener("click",()=>{if(!meta.nightmareUnlocked)return;nightmareMode=!nightmareMode;renderClassChoices();});$("rollBtn").addEventListener("click",rollDice);$("outsidePotionBtn").addEventListener("click",usePotionOutsideCombat);$("attackBtn").addEventListener("click",playerAttack);$("guardBtn").addEventListener("click",guardAction);$("potionBtn").addEventListener("click",usePotion);$("ultimateBtn").addEventListener("click",useUltimate);$("spinBtn").addEventListener("click",spinEvent);$("wheelSpinBtn").addEventListener("click",spinFortuneWheel);
+  $("startBtn").addEventListener("click",startNewGame);$("nightmareToggle").addEventListener("click",()=>{if(!meta.nightmareUnlocked)return;nightmareMode=!nightmareMode;renderClassChoices();});$("rollBtn").addEventListener("click",rollDice);$("outsidePotionBtn").addEventListener("click",usePotionOutsideCombat);$("attackBtn").addEventListener("click",playerAttack);$("guardBtn").addEventListener("click",guardAction);$("potionBtn").addEventListener("click",usePotion);$("ultimateBtn").addEventListener("click",useUltimate);
   $("equipLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot];if(current&&gearPowerScore(pendingLootItem)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${pendingLootItem.name} appears weaker overall than ${current.name}. Replace it anyway?`))return;equipItem(pendingLootItem);closeLoot();});
   $("sellLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const value=itemSellValue(pendingLootItem);player.gold+=value;sfx.coin();addLog(`Sold <b>${pendingLootItem.name}</b> for ${value} gold.`);showToast(`+${value} gold`);updateHUD();closeLoot();});
-  $("eventContinueBtn").addEventListener("click",()=>{$("eventOverlay").classList.add("hidden");returnToRoad();});
-  $("wheelContinueBtn").addEventListener("click",()=>{$("wheelOverlay").classList.add("hidden");returnToRoad();});
+
+
   $("feedPetBtn").addEventListener("click",()=>feedActivePet(1));
   $("feedAllPetBtn").addEventListener("click",()=>feedActivePet(meta.petCookies));
   $("debugTrigger").addEventListener("click",openDebugMenu);$("debugCloseBtn").addEventListener("click",()=>$("debugOverlay").classList.add("hidden"));$("debugGrid").addEventListener("click",e=>{const btn=e.target.closest("[data-debug]");if(btn)debugAction(btn.dataset.debug);});
-  $("acceptMysticBtn").addEventListener("click",()=>{
-    if(!currentMysticBuff)return;player.maxHp=Math.max(1,player.maxHp-10);player.hp=Math.min(player.hp,player.maxHp);const buff=currentMysticBuff;applyUpgrade(buff,"The Mystic");sfx.holy();addLog(`The Mystic takes <b>10 max HP</b>. You gain <b>${buff.name}</b> (Legendary).`);showToast(`Legendary: ${buff.name}`);clearMysticTile();
-  });
-  $("declineMysticBtn").addEventListener("click",()=>{addLog("You refuse the Mystic's bargain.");clearMysticTile();});
   $("merchantContinueBtn").addEventListener("click",()=>{tiles[player.position].cleared=false;refreshTile(player.position);$("merchantOverlay").classList.add("hidden");returnToRoad();});
   $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
@@ -1586,10 +1502,8 @@
   window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
 
 
-  $("bloodwellLeaveBtn").addEventListener("click",()=>{tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);$("bloodwellOverlay").classList.add("hidden");returnToRoad();});
-  $("gamblerLeaveBtn").addEventListener("click",()=>{$("gamblerOverlay").classList.add("hidden");tiles[player.position].type="empty";tiles[player.position].cleared=true;refreshTile(player.position);returnToRoad();});
 
-  generateBoard();buildBoard();renderClassChoices();renderEquipment();syncWheelIcons();updateHUD();updateMetaUI();
+  generateBoard();buildBoard();renderClassChoices();renderEquipment();updateHUD();updateMetaUI();
   // Historically the first-run timer prepared the Guide tab but did not open
   // the surface. Keep that timing contract explicit now that openInfo is a
   // stable module adapter rather than a captured legacy wrapper.
@@ -1740,7 +1654,6 @@
   prestigeTree=function(){const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/10);if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige all ${total} talent points? This includes ${unspent} unspent points. You gain ${rewards} permanent stat point${rewards===1?"":"s"}, your talent tree resets, and your leftover points are consumed so you do not keep extra talent points. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);};
 
 
-  const openBloodwellV11=openBloodwell;openBloodwell=function(){openBloodwellV11();if((meta.merchantKills||0)>=1){const grid=$("bloodwellGrid");if(grid&&!grid.querySelector("[data-bloodmage]")){const b=document.createElement("button");b.className="choice-btn legendary";b.dataset.bloodmage="1";b.innerHTML=`<span class="choice-icon">🩸</span><span class="choice-name">Challenge the hidden Bloodmage</span><span class="choice-desc">The blood icon trembles. Begin a secret boss fight. A 5% Omega drop may await.</span>`;b.addEventListener("click",()=>{$("bloodwellOverlay").classList.add("hidden");startCombat("bloodmage");});grid.prepend(b);}}};
 
   refreshDebugButtons();
   saveMeta();
@@ -1824,9 +1737,7 @@
   applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
 
 
-  openGambler=function(){const grid=$("gambleGrid");grid.innerHTML="";if(player.gold<=0){player.gold=100;$("gambleResult").textContent="The Gambler stares at your empty purse, sighs theatrically, and hands you 100 gold out of pity.";addLog("<b>Gambler:</b> You had no gold, so the Gambler takes pity and gives you <b>100 gold</b>.");showToast("🪙 Pity fund: +100 gold");updateHUD();}else $("gambleResult").textContent=`You carry ${player.gold} gold.`;[0,.25,.5,1].forEach(p=>{const wager=Math.floor(player.gold*p),b=document.createElement("button");b.className="choice-btn uncommon";b.innerHTML=`<span class="choice-icon">🪙</span><span class="choice-name">Bet ${Math.round(p*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;b.addEventListener("click",()=>{if(p===0){finishGambler("You politely decline.");return;}const actual=Math.floor(player.gold*p),win=random()<.5;if(win){player.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{player.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}});grid.appendChild(b);});$("gamblerOverlay").classList.remove("hidden");};
 
-  const restoration=wheelRewards.find(r=>r.name==="Restoration");if(restoration)restoration.apply=function(){if(player.hp>=player.maxHp){player.maxHp+=10;player.hp+=10;return "You were already at full HP, so Restoration permanently adds +10 max HP for this run instead.";}const heal=healPlayer(Math.ceil(player.maxHp*.55));return `The wheel restores ${heal} HP.`;};
 
 
 
@@ -2361,12 +2272,6 @@
   const handlePlayerDeathV16Base=handlePlayerDeath;
   handlePlayerDeath=function(){if(player.hp<=0&&player.secondSun&&!player.secondSunUsedBoards?.[boardLevel]){player.secondSunUsedBoards=player.secondSunUsedBoards||{};player.secondSunUsedBoards[boardLevel]=true;player.hp=1;combatBusy=false;sfx.holy();const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];let holy="";if(target){const r=triggerElementEffect("light",target,{forced:true,source:"Second Sun"});holy=r?.message||"Holy erupts across the pack.";}addLog(`<b>Second Sun!</b> Death is refused on Board ${boardLevel}.`);setCombatText(`☀️☀️ Second Sun returns you at 1 HP. ${holy}`);updateCombatUI();if(!livingEnemies().length)return winCombat();return;}return handlePlayerDeathV16Base();};
 
-  // ---- Slot rewards scale modestly -----------------------------------------
-  applySlotReward=function(result){const counts={};result.forEach(s=>counts[s]=(counts[s]||0)+1);const triple=Object.keys(counts).find(k=>counts[k]===3),pair=Object.keys(counts).find(k=>counts[k]===2),progress=player.position/Math.max(1,currentTileCount()-1),scale=1+(boardLevel-1)*.12+progress*.08;let text="";
-    if(triple){switch(triple){case "⚔️":{const n=3+(boardLevel>=4?1:0);player.attack+=n;text=`Jackpot! +${n} attack permanently.`;break;}case "❤️":{const n=Math.round(12*scale);player.maxHp+=n;player.hp=Math.min(player.maxHp,player.hp+n);text=`Jackpot! +${n} max HP and heal ${n}.`;break;}case "🪙":{const g=modifiedGold(Math.round(80*scale));player.gold+=g;text=`Jackpot! +${g} gold.`;break;}case "🛡️":{const n=2+(boardLevel>=4?1:0);player.defense+=n;text=`Jackpot! +${n} defense permanently.`;break;}case "⭐":{const hp=Math.round(10*scale),crit=.07+(boardLevel-1)*.005;player.attack+=3+(boardLevel>=5?1:0);player.maxHp+=hp;player.hp+=hp;player.crit+=crit;text=`Legendary jackpot! Attack, +${hp} max HP and +${Math.round(crit*100)}% crit scale with the road.`;break;}case "💀":{const loss=Math.max(1,Math.floor(player.hp*.28));player.hp=Math.max(1,player.hp-loss);text=`Triple skulls! You lose ${loss} HP.`;break;}}sfx.level();}
-    else if(pair){switch(pair){case "⚔️":{const n=1+(boardLevel>=5?1:0);player.attack+=n;text=`Two swords: +${n} attack permanently.`;break;}case "❤️":{const amount=Math.round(12*scale),heal=Math.min(player.maxHp-player.hp,amount);player.hp+=heal;text=`Two hearts: heal ${heal} HP.`;break;}case "🪙":{const g=modifiedGold(Math.round(30*scale));player.gold+=g;text=`Two coins: +${g} gold.`;break;}case "🛡️":{const n=1+(boardLevel>=4?1:0);player.flatReduction+=n;text=`Two shields: reduce incoming damage by ${n}.`;break;}case "⭐":{const c=.05+(boardLevel-1)*.004;player.crit+=c;text=`Two stars: +${Math.round(c*100)}% critical chance.`;break;}case "💀":{const loss=Math.max(1,Math.floor(player.hp*.12));player.hp=Math.max(1,player.hp-loss);text=`Two skulls: lose ${loss} HP.`;break;}}tone(650,.15,"triangle",.04,950);}
-    else{const consolation=modifiedGold(Math.round(9*scale));player.gold+=consolation;text=`No match. The machine spits out ${consolation} consolation gold.`;sfx.coin();}const cookieChance=.09+gameplayTalentRank("fortune_cookie")*.02+Math.min(.06,(boardLevel-1)*.012);if(random()<cookieChance){meta.petCookies++;saveMeta();text+=` A rare pet cookie drops from the machine!`;showToast("🍪 Pet cookie found!");}$("slotResult").textContent=text;addLog(`<b>Event:</b> ${text}`);updateMetaUI();};
-
   // ---- Sovereign Relic: force a visible choice flow ------------------------
 
   // ---- Preserve valuable end-run gear warnings -----------------------------
@@ -2438,16 +2343,6 @@
   function v17LegendaryChoices(){const pool=[...v17LegendaryPool()],out=[];while(pool.length&&out.length<3){const i=rand(0,pool.length-1);out.push(pool.splice(i,1)[0]);}return out;}
   function v17OpenLegendaryChoice(source,onComplete=()=>{}){$("powerupTitle").textContent=source;$('powerupSubtitle').textContent="Choose one of three Legendary powers. The purchase is already paid for.";const grid=$("powerupGrid");grid.innerHTML="";const choices=v17LegendaryChoices();if(!choices.length){const d=document.createElement("div");d.className="merchant-notice show";d.innerHTML="No eligible Legendary powers remain for this class this run. The contract refunds 100% of its price.";grid.appendChild(d);$("powerupOverlay").classList.remove("hidden");setTimeout(()=>{$("powerupOverlay").classList.add("hidden");onComplete(false);},650);return;}choices.forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn legendary`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose <b>${up.name}</b>.`);showToast(`Legendary: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete(up);});grid.appendChild(btn);});$("merchantOverlay")?.classList.add("hidden");$("powerupOverlay").classList.remove("hidden");}
 
-  // ---- Wheel scales with road depth ---------------------------------------
-  function v17WheelScale(){return 1+(boardLevel-1)*.24+(player.position/Math.max(1,currentTileCount()-1))*.16;}
-  const wGold=wheelRewards.find(x=>x.name==="Golden Rain");if(wGold)wGold.apply=function(){const g=modifiedGold(Math.round(70*v17WheelScale()));player.gold+=g;return `The wheel grants ${g} gold.`;};
-  const wRest=wheelRewards.find(x=>x.name==="Restoration");if(wRest)wRest.apply=function(){const sc=v17WheelScale();if(player.hp>=player.maxHp){const hp=Math.max(10,Math.round(10*sc));player.maxHp+=hp;player.hp+=hp;return `Full health converts Restoration into +${hp} max HP.`;}const heal=Math.min(player.maxHp-player.hp,Math.ceil(player.maxHp*Math.min(.85,.50+.06*boardLevel)));player.hp+=heal;return `The wheel restores ${heal} HP.`;};
-  const wCookie=wheelRewards.find(x=>x.name==="Companion Cookie");if(wCookie)wCookie.apply=function(){const n=1+Math.floor((boardLevel-1)/2);meta.petCookies+=n;saveMeta();return `${n} permanent pet cookie${n===1?"":"s"} drop for ${activePetDef().name}.`;};
-  const wAtk=wheelRewards.find(x=>x.name==="Sharpened Fate");if(wAtk)wAtk.apply=function(){const n=2+Math.floor((boardLevel-1)/2);player.attack+=n;return `Gain +${n} attack for this run.`;};
-  const wGift=wheelRewards.find(x=>x.name==="Rare Gift");if(wGift)wGift.apply=function(){const filter=boardLevel>=5?(u=>u.rarity==="legendary"):boardLevel>=3?(u=>u.rarity==="epic"||u.rarity==="legendary"):(u=>u.rarity==="rare"||u.rarity==="epic"||u.rarity==="legendary"),pool=eligibleUpgrades(filter),up=pool.length?pick(pool):applyRandomHighRarity();if(pool.length)applyUpgrade(up,"Wheel of Fortune");return `The wheel reveals ${rarityInfo[up.rarity].label} ${up.name}: ${up.desc}`;};
-  const wPots=wheelRewards.find(x=>x.name==="Alchemist's Bundle");if(wPots)wPots.apply=function(){const n=3+Math.floor((boardLevel-1)*1.5);player.potions+=n;return `Gain ${n} potions.`;};
-  const wLuck=wheelRewards.find(x=>x.name==="Lucky Star");if(wLuck)wLuck.apply=function(){const c=.08+(boardLevel-1)*.012,l=.08+(boardLevel-1)*.015;player.crit+=c;player.luck+=l;return `Gain +${Math.round(c*100)}% Crit and +${Math.round(l*100)} Luck.`;};
-
   // ---- Explicit late-road difficulty curve --------------------------------
   // Soften the historical Board-4-only overboost by compensating it, then let v1.7's monotonic layer rebuild the curve.
 
@@ -2464,7 +2359,6 @@
   useCamp=function(){const tile=tiles[player.position];if(player.hp>=player.maxHp){tile.cleared=true;tile.type="empty";refreshTile(player.position);const pool=eligibleUpgrades(u=>u.rarity==="common"||u.rarity==="uncommon");if(pool.length){const up=pick(pool);applyUpgrade(up,"Campfire Inspiration");sfx.holy();addLog(`<b>Camp:</b> Already fully rested, so the quiet fire grants <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`🔥 ${up.name}`);}else{player.maxHp+=5;player.hp+=5;showToast("🔥 +5 max HP");}updateHUD();returnToRoad();return;}const heal=Math.max(1,Math.round(player.maxHp*.38)),actual=Math.min(heal,player.maxHp-player.hp);player.hp+=actual;tile.cleared=true;tile.type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();};
 
   // ---- Bloodmage secrecy + boss tuning ------------------------------------
-  const openBloodwellV17Base=openBloodwell;openBloodwell=function(){openBloodwellV17Base();const grid=$("bloodwellGrid"),old=grid?.querySelector('[data-bloodmage]');if(old)old.remove();const art=$("bloodwellOverlay")?.querySelector('.start-art');if(!art)return;art.classList.toggle('bloodmage-secret-ready',(meta.merchantKills||0)>=1);art.title=(meta.merchantKills||0)>=1?"The blood icon seems to be watching you.":"";if((meta.merchantKills||0)>=1&&!art.dataset.v17Bloodmage){art.dataset.v17Bloodmage="1";art.addEventListener('click',()=>{if((meta.merchantKills||0)<1||$("bloodwellOverlay").classList.contains("hidden"))return;$("bloodwellOverlay").classList.add("hidden");startCombat("bloodmage");});}};
 
   // ---- D20: show the roll, pause, then let the calling attack resolve ------
 
@@ -4169,8 +4063,6 @@
 
   /* MYSTIC & MINIBOSS POWERUP REWARDS ------------------------------------- */
   function v27FallbackRarityPool(wanted){const order=['legendary','epic','rare','uncommon','common','poor'],start=Math.max(0,order.indexOf(wanted));for(let i=start;i<order.length;i++){const pool=eligibleUpgrades(u=>u.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}for(let i=start-1;i>=0;i--){const pool=eligibleUpgrades(u=>u.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}return {rarity:null,pool:[]};}
-  function beta03RollMysticRarity(){const p=random();return p<.10?'legendary':p<.40?'epic':'rare';}
-  openMystic=function(){const wanted=beta03RollMysticRarity(),choice=v27FallbackRarityPool(wanted);currentMysticBuff=choice.pool.length?pick(choice.pool):null;if(!currentMysticBuff){addLog('<b>Mystic:</b> no eligible powerups remain. The Mystic leaves without taking your HP.');returnToRoad();return;}const label=rarityInfo[currentMysticBuff.rarity]?.label||currentMysticBuff.rarity;$('mysticOffer').className=`loot-card ${currentMysticBuff.rarity}`;$('mysticOffer').innerHTML=`<div class="loot-top"><div class="loot-icon">${currentMysticBuff.icon}</div><div><div class="rarity-badge">${label}</div><div class="loot-name">${currentMysticBuff.name}</div></div></div><div class="loot-bonuses">${currentMysticBuff.desc}</div>`;const sub=$('mysticOverlay')?.querySelector('.subtitle');if(sub)sub.textContent=`Mystic rarity: 60% Rare · 30% Epic · 10% Legendary. Lose 10% maximum HP for the rest of this run to accept this ${label} gift.`;$('mysticOverlay').classList.remove('hidden');addLog(`A hooded <b>Mystic</b> rolls a ${label} power from the 60/30/10 forbidden table.`);};
 
   function beta03MinibossBaseTable(level=boardLevel){return level<=1?{legendary:.08,epic:.32,rare:.76,uncommon:.95}:level===2?{legendary:.14,epic:.58,rare:.86,uncommon:.97}:{legendary:.22,epic:.58,rare:.86,uncommon:.97};}
   function beta03MinibossOddsText(level=boardLevel){return level<=1?'8% Legendary · 24% Epic · 44% Rare · 19% Uncommon · 5% Common':level===2?'14% Legendary · 44% Epic · 28% Rare · 11% Uncommon · 3% Common':'22% Legendary · 36% Epic · 28% Rare · 11% Uncommon · 3% Common';}
@@ -4215,7 +4107,7 @@
     goldenLawOuro:()=>{meta.unlocks.ouroboros=true;resetPlayer('ouroboros');player.gold=1000;const u=v27Upgrade('legendary_golden_law');applyUpgrade(u,'test');updateHUD();return {attack:player.attack,echo:player.doubleStrike,goldScale:player.goldAttackScale,ouroScale:player.v27OuroGoldEchoScale};},
     shieldAegis:()=>{resetPlayer('ranger');gameStarted=true;currentEnemies=[{name:'Heal Dummy',icon:'x',hp:100,maxHp:100,attack:1,defense:0}];currentEnemy=currentEncounterLead=currentEnemies[0];applyUpgrade(v27Upgrade('legendary_crimson_aegis_v27'),'test');player.hp=player.maxHp-1;player.energyShield=0;healPlayer(101);v24UpdateShieldBars();return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield,style:getComputedStyle($('energyShieldFill')).backgroundImage};},
     nightmareBoss:()=>{resetPlayer('ranger');gameStarted=true;boardLevel=2;nightmareMode=true;hellMode=false;generateBoard();buildBoard();player.position=tiles.length-1;startCombat('final');return {barrier:currentEnemy.enemyBarrier||0,dodge:currentEnemy.dodge||0,boss:!!currentEnemy.boss};},
-    mysticFallback:()=>{const states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);const oldCounts=player.upgradeCounts||{};player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});openMystic();const r=currentMysticBuff?.rarity||null;$('mysticOverlay')?.classList.add('hidden');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;currentMysticBuff=null;return r;},
+    mysticFallback:()=>{const states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);const oldCounts=player.upgradeCounts||{};player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});dbRoadEvents.openMystic();const r=window.DiceboundRoadEventLifecycle.inspect().mysticRarity;$('mysticOverlay')?.classList.add('hidden');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;dbRoadEvents.resetTransient();return r;},
     prestigeFlow:()=>{const oldConfirm=window.confirm,before=meta.prestige?.count||0;window.confirm=()=>true;meta.points=9;meta.heirloomStorageUnlocked=true;meta.heirloomStorage=[{id:'keep',slot:'ring',rarity:'common',name:'Stored Test Ring',icon:'💍',bonuses:{}}];meta.heirlooms=[normalizeSavedItem(meta.heirloomStorage[0])];prestigeTree();window.confirm=oldConfirm;return {prestige:(meta.prestige?.count||0)-before,storage:(meta.heirloomStorage||[]).length,chooserVisible:!$('prestigeHeirloomOverlay').classList.contains('hidden')};},
     flatAttackOuro:()=>{meta.unlocks.ouroboros=true;resetPlayer('ouroboros');const before=player.doubleStrike;applyUpgrade(v27Upgrade('attack_uncommon_v24'),'test');return {attack:player.attack,deltaEcho:player.doubleStrike-before};},
     exhaustedFallback:()=>{const oldCounts=player.upgradeCounts||{},states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});const f=v27FallbackRarityPool('legendary');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;return {rarity:f.rarity,count:f.pool.length};},
@@ -4796,24 +4688,7 @@
     return tileMetaBeta043Base(tile);
   };
 
-  openGambler=function(){
-    const grid=$('gambleGrid');grid.innerHTML='';
-    $('gambleResult').textContent=`You carry ${player.gold} gold.`;
-    [0,.25,.5,1].forEach(p=>{
-      const wager=Math.floor(player.gold*p),b=document.createElement('button');
-      b.className='choice-btn uncommon';
-      b.innerHTML=`<span class="choice-icon">${beta043Art('coins','Coins','db-art-choice')||'🪙'}</span><span class="choice-name">Bet ${Math.round(p*100)}%</span><span class="choice-desc">${wager} gold on a coinflip.</span>`;
-      b.addEventListener('click',()=>{
-        if(p===0){finishGambler('You politely decline.');return;}
-        const actual=Math.floor(player.gold*p),win=random()<.5;
-        if(win){player.gold+=actual;finishGambler(`Heads! You win ${actual} gold.`);}else{player.gold-=actual;finishGambler(`Tails! You lose ${actual} gold.`);}
-      });
-      grid.appendChild(b);
-    });
-    const subtitle=document.querySelector('#gamblerOverlay .subtitle');
-    if(subtitle&&!document.querySelector('#gamblerOverlay .gambler-art'))subtitle.insertAdjacentHTML('afterend',`<div class="gambler-art">${beta043Art('gambler','Gambler','db-art-portrait')}${beta043Art('coins','Coins','db-art-choice')}</div>`);
-    $('gamblerOverlay').classList.remove('hidden');
-  };
+
 
 
 
@@ -6054,7 +5929,7 @@
       tiles=dbRunClone(run.tiles);boardLevel=Number(run.boardLevel)||1;selectedClassId=String(run.selectedClassId||player.classId||'ranger');nightmareMode=!!run.nightmareMode;hellMode=!!run.hellMode;
       rolls=Math.max(0,Number(run.rolls)||0);tilesMovedThisRun=Math.max(0,Number(run.tilesMovedThisRun)||0);runTalentSnapshot=dbRunClone(run.runTalentSnapshot);statsLastHp=run.statsLastHp??null;statsLastGold=run.statsLastGold??null;
       merchantFaceClicks=new Set(run.merchant?.faceClicks||[]);merchantFaceTotal=Math.max(0,Number(run.merchant?.faceTotal)||0);merchantBossPrimed=!!run.merchant?.bossPrimed;merchantBossDefeatedThisBoard=!!run.merchant?.bossDefeatedThisBoard;merchantBossBattle=false;
-      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMysticBuff=null;currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;wheelBusy=false;combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
+      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
       window.DiceboundRng.restore(checkpoint.rng);dbRunOwnedSeed=checkpoint.rng.seed;
       gameStarted=true;rollLocked=false;dbRunCloseOverlays();applyRunTheme();buildBoard();
       if($('log'))$('log').innerHTML=String(run.logHtml||'');
@@ -6508,42 +6383,6 @@
      runtime applies its existing effective-Gold calculation exactly once. */
   const db064FriendsEventRewards=window.DiceboundEventRewards;
   if(!db064FriendsEventRewards)throw new Error('DiceBound requires the event reward policy domain.');
-  function db064EventGold(source,multiplier=1){
-    return modifiedGold(db064FriendsEventRewards.goldBaseFor(source,player.level,multiplier));
-  }
-  function db064ApplySlotReward(result){
-    const counts={};result.forEach(symbol=>counts[symbol]=(counts[symbol]||0)+1);
-    const triple=Object.keys(counts).find(symbol=>counts[symbol]===3),pair=Object.keys(counts).find(symbol=>counts[symbol]===2);let text='';
-    if(triple){
-      switch(triple){
-        case '⚔️':player.attack+=5;text='Jackpot! +5 attack permanently.';break;
-        case '❤️':player.maxHp+=20;player.hp=Math.min(player.maxHp,player.hp+20);text='Jackpot! +20 max HP and heal 20.';break;
-        case '🪙':{const gold=db064EventGold('slotJackpot');player.gold+=gold;text=`Jackpot! +${gold} gold.`;break;}
-        case '🛡️':player.defense+=4;text='Jackpot! +4 defense permanently.';break;
-        case '⭐':player.attack+=5;player.maxHp+=18;player.hp+=18;player.crit+=.10;text='Legendary jackpot! +5 attack, +18 max HP and +10% crit.';break;
-        case '💀':{const loss=Math.max(1,Math.floor(player.hp*.25));player.hp=Math.max(1,player.hp-loss);text=`Triple skulls! You lose ${loss} HP.`;break;}
-      }
-      sfx.level();
-    }else if(pair){
-      switch(pair){
-        case '⚔️':player.attack+=2;text='Two swords: +2 attack permanently.';break;
-        case '❤️':{const heal=Math.min(player.maxHp-player.hp,18);player.hp+=heal;text=`Two hearts: heal ${heal} HP.`;break;}
-        case '🪙':{const gold=db064EventGold('slotPair');player.gold+=gold;text=`Two coins: +${gold} gold.`;break;}
-        case '🛡️':player.flatReduction+=2;text='Two shields: reduce incoming damage by 2.';break;
-        case '⭐':player.crit+=.08;text='Two stars: +8% critical chance.';break;
-        case '💀':{const loss=Math.max(1,Math.floor(player.hp*.10));player.hp=Math.max(1,player.hp-loss);text=`Two skulls: lose ${loss} HP.`;break;}
-      }
-      tone(650,.15,'triangle',.04,950);
-    }else{
-      const gold=db064EventGold('slotPity');player.gold+=gold;text=`No match. The machine pays ${gold} consolation gold.`;sfx.coin();
-    }
-    const cookieChance=.14+gameplayTalentRank('fortune_cookie')*.03;
-    if(random()<cookieChance){meta.petCookies++;saveMeta();text+=' A rare pet cookie drops from the machine!';showToast('🍪 Pet cookie found!');}
-    $('slotResult').textContent=text;addLog(`<b>Slots:</b> ${text}`);updateMetaUI();
-  }
-  applySlotReward=db064ApplySlotReward;
-  const db064GoldenRain=wheelRewards.find(reward=>reward.name==='Golden Rain');
-  if(db064GoldenRain)db064GoldenRain.apply=function(){const gold=db064EventGold('wheel');player.gold+=gold;return `The wheel grants ${gold} gold.`;};
   const db064PurseTalent=talents.find(talent=>talent.id==='fortune_gold');
   if(db064PurseTalent)db064PurseTalent.desc='Each rank adds 35% of the level-scaled event-Gold reward at run start (25 Gold per rank at level 1) and +5% Gold Gain.';
   window.DiceboundEventRewardTest=Object.freeze({

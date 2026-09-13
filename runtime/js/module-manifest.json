@@ -58,6 +58,7 @@
     "progression-achievements",
     "event-rewards",
     "road-event-treasure",
+    "road-event-lifecycle",
     "road-events-facade",
     "merchant-transactions",
     "merchant-stock",
@@ -684,13 +685,26 @@
       ]
     },
     {
+      "id": "road-event-lifecycle",
+      "path": "js/events/lifecycle.js",
+      "domain": "events/interactive-road-event-lifecycle",
+      "status": "extracted",
+      "requires": [
+        "event-rewards"
+      ],
+      "provides": [
+        "DiceboundRoadEventLifecycle"
+      ]
+    },
+    {
       "id": "road-events-facade",
       "path": "js/events/facade.js",
       "domain": "events/public-road-events-subsystem-facade",
       "status": "extracted",
       "requires": [
         "event-rewards",
-        "road-event-treasure"
+        "road-event-treasure",
+        "road-event-lifecycle"
       ],
       "provides": [
         "DiceboundRoadEvents"
