@@ -10,7 +10,28 @@
   dbRoadEvents.configure({
     openSlot:()=>openEvent(),
     openWheel:()=>openWheelEvent(),
-    openTreasure:()=>openTreasure(),
+    treasure:{
+      getPlayer:()=>player,
+      getBoardLevel:()=>boardLevel,
+      getTiles:()=>tiles,
+      currentTileCount:()=>currentTileCount(),
+      isHell:()=>hellMode,
+      isNightmare:()=>nightmareMode,
+      random:()=>random(),
+      rand:(a,b)=>rand(a,b),
+      modifiedGold:value=>modifiedGold(value),
+      clamp:(value,min,max)=>clamp(value,min,max),
+      refreshTile:index=>refreshTile(index),
+      coin:()=>sfx.coin(),
+      addLog:text=>addLog(text),
+      showToast:(...args)=>showToast(...args),
+      updateHUD:()=>updateHUD(),
+      returnToRoad:()=>returnToRoad(),
+      rollGearRarity:bonus=>rollGearRarity(bonus),
+      generateEquipment:rarity=>generateEquipment(rarity),
+      openLoot:(item,done)=>openLoot(item,done),
+      generateLegendary:(slot,preferUndiscovered)=>db060GenerateLegendary(slot,preferUndiscovered)
+    },
     openBlessing:()=>openBlessing(),
     openMystic:()=>openMystic(),
     openBloodwell:()=>openBloodwell(),
@@ -969,12 +990,6 @@
     addLog("A <b>Power Shrine</b> offers a free gift.");
   }
 
-  function openTreasure(){
-    const base=rand(16,34)+Math.floor(player.position/3),gold=modifiedGold(base);player.gold+=gold;let extra="";
-    if(random()<.34){player.potions++;extra=" and a potion";}
-    tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.coin();addLog(`Found a chest with <b>${gold} gold</b>${extra}.`);showToast(`+${gold} gold${extra}`);updateHUD();
-    const done=()=>{returnToRoad();};if(random()<.72)openLoot(generateEquipment(),done);else done();
-  }
   function useCamp(){
     const heal=Math.max(1,Math.round(player.maxHp*.38)),actual=Math.min(heal,player.maxHp-player.hp);player.hp+=actual;
     tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();
@@ -2219,8 +2234,6 @@
   const equipItemV15Patch=equipItem;
   equipItem=function(item,silent=false){const old=player.equipment?.[item.slot],willSell=!silent&&old&&old.id!==item.id,sale=willSell?itemSellValue(old):0;equipItemV15Patch(item,silent);if(willSell){player.gold+=sale;ensureAlphaMeta().goldEarned+=sale;statsLastGold=player.gold;sfx.coin();addLog(`Auto-sold replaced <b>${old.name}</b> for <b>${sale} gold</b>.`);showToast(`Equipped ${item.name} · old gear +${sale}g`);updateHUD();}};
   {const oldBtn=$("equipLootBtn");if(oldBtn){const neo=oldBtn.cloneNode(true);oldBtn.replaceWith(neo);neo.addEventListener("click",async()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot],delta=current?gearPowerScore(pendingLootItem)-gearPowerScore(current):999;if(current&&delta<0&&!(await diceboundConfirm(`${pendingLootItem.name} rolls lower overall quality than ${current.name} after considering its hidden quality budget and visible stats. Replace it anyway? ${current.name} will automatically be sold for ${itemSellValue(current)} gold.`,{title:"Replace stronger gear?",confirmLabel:"Replace anyway",danger:true})))return;equipItem(pendingLootItem);closeLoot();});}}
-
-  openTreasure=function(){const progress=player.position/Math.max(1,currentTileCount()-1),mult=[0,1,1.35,1.72,2.12,2.58][boardLevel]||2.58,base=rand(18,36)+Math.round(progress*16),gold=modifiedGold(Math.round(base*mult));player.gold+=gold;let extras=[];const potionChance=.28+(boardLevel-1)*.055;if(random()<potionChance){const count=boardLevel>=4&&random()<.20?2:1;player.potions+=count;extras.push(`${count} potion${count===1?"":"s"}`);}tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.coin();addLog(`Board ${boardLevel} treasure yields <b>${gold} gold</b>${extras.length?` and ${extras.join(", ")}`:""}.`);showToast(`Treasure: +${gold} gold${extras.length?` · ${extras.join(", ")}`:""}`);updateHUD();const gearChance=clamp(.68+(boardLevel-1)*.055,0,.92),done=()=>returnToRoad();if(random()<gearChance){const rarity=rollGearRarity(.05+(boardLevel-1)*.10+progress*.06);openLoot(generateEquipment(rarity),done);}else done();};
 
   // ---- Summoner & Pokémon Trainer runtime ----------------------------------
   function shuffledPetIds(){const arr=Object.keys(PETS);for(let i=arr.length-1;i>0;i--){const j=rand(0,i),t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr;}
@@ -3644,16 +3657,6 @@
   const V24_LEGENDARY_RELICS=[generateAxelsCoffeeMug,generateKratzHeadphones,generateKellysJeanJacket];
   function v24HasLegendaryRelic(id){return (meta.legendaryRelics||[]).includes(id)||(meta.heirloomStorage||[]).some(x=>x?.specialLegendary&&x.name===id)||(meta.heirlooms||[]).some(x=>x?.specialLegendary&&x.name===id);}
   function v24RandomLegendaryRelic(){const candidates=V24_LEGENDARY_RELICS.map(fn=>fn()).filter(i=>!v24HasLegendaryRelic(i.name));return candidates.length?pick(candidates):pick(V24_LEGENDARY_RELICS)();}
-
-  const openTreasureV24Base=openTreasure;
-  openTreasure=function(){
-    // Memory Cache is intentionally microscopic. Legendary relics are special
-    // discoveries, not the next ordinary loot rarity.
-    if(boardLevel>=4&&random()<(hellMode?.0025:.0015)){
-      const item=v24RandomLegendaryRelic();if(tiles[player.position]){tiles[player.position].cleared=true;tiles[player.position].type='empty';refreshTile(player.position);}addLog(`<b>The treasure chest contains no gold.</b> Inside is something strangely familiar: ${item.icon} <b>${item.name}</b>.`);showToast('🌟 A memory from another road…',3000,true);return openLoot(item,()=>returnToRoad());
-    }
-    return openTreasureV24Base();
-  };
 
   /* MODULE: Artifact-tier Impossible Road --------------------------------- */
   function v24Artifactize(item){
@@ -5889,18 +5892,6 @@
   for(const item of Object.values(player.equipment||{}))if(db060NamedMythicals.has(item?.name)&&item.rarity!=='mythical'){db060MythicalizeNamed(item);db060MigratedNamed=true;}
   if(db060MigratedNamed)saveMeta();
 
-  // MEMORY CACHE ------------------------------------------------------------
-  // Board 4+ Treasure: Normal 1/450, Nightmare 1/300, Hell 1/200.
-  function db060MemoryCacheChance(){return hellMode?1/200:nightmareMode?1/300:1/450;}
-  // Bypass the retired v24 Memory Cache wrapper; otherwise a failed 0.6 cache roll
-  // could still fall through into the old named-Legendary cache roll.
-  const db060OpenTreasureBase=openTreasureV24Base;
-  openTreasure=function(){
-    if(boardLevel>=4&&random()<db060MemoryCacheChance()){
-      const item=db060GenerateLegendary(null,true);if(tiles[player.position]){tiles[player.position].cleared=true;tiles[player.position].type='empty';refreshTile(player.position);}addLog(`<b>MEMORY CACHE.</b> The chest remembers a version of this road where ${item.icon} <b>${item.name}</b> was Legendary.`);showToast('🌟 MEMORY CACHE · Legendary gear',3200,true);return openLoot(item,()=>returnToRoad());
-    }
-    return db060OpenTreasureBase();
-  };
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
   // weighted set piece from this table; independent slot rolls are retired.

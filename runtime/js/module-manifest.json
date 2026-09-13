@@ -57,6 +57,7 @@
     "progression-prestige",
     "progression-achievements",
     "event-rewards",
+    "road-event-treasure",
     "road-events-facade",
     "merchant-transactions",
     "merchant-stock",
@@ -673,12 +674,23 @@
       ]
     },
     {
+      "id": "road-event-treasure",
+      "path": "js/events/treasure.js",
+      "domain": "events/treasure-lifecycle-and-memory-cache",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundRoadEventTreasure"
+      ]
+    },
+    {
       "id": "road-events-facade",
       "path": "js/events/facade.js",
       "domain": "events/public-road-events-subsystem-facade",
       "status": "extracted",
       "requires": [
-        "event-rewards"
+        "event-rewards",
+        "road-event-treasure"
       ],
       "provides": [
         "DiceboundRoadEvents"
