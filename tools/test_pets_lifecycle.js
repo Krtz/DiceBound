@@ -31,7 +31,7 @@ let meta={
   elementProgress:Object.fromEntries(pets.ids.filter(id=>id!=='neutral').map(id=>[id,0]))
 };
 let player={attack:6,defense:1,crit:.15,doubleStrike:0,maxHp:37,hp:37,potionPower:0,bossDamage:0,flatReduction:0,luck:0,elementDamageBonus:0,cookieBondBonus:0,_activePetBonusId:'neutral',_v17PetBonusScale:1};
-let runActive=false,petClass=false,saveCount=0,unlockChecks=0,levelSfx=0,coinSfx=0,holySfx=0,metaUpdates=0,hudUpdates=0;
+let runActive=false,petClass=false,saveCount=0,unlockChecks=0,levelSfx=0,coinSfx=0,holySfx=0,metaUpdates=0,hudUpdates=0,petCollectionRenders=0,activePetArtRefreshes=0;
 const toasts=[],logs=[];
 let randCalls=0;
 
@@ -42,7 +42,8 @@ lifecycle.configure({
   rand:(min,max)=>{randCalls++;return min;},
   saveMeta:()=>{saveCount++;},checkDynamicClassUnlocks:()=>{unlockChecks++;},
   sfxLevel:()=>{levelSfx++;},sfxCoin:()=>{coinSfx++;},sfxHoly:()=>{holySfx++;},
-  showToast:(...args)=>toasts.push(args),addLog:text=>logs.push(text),updateMetaUI:()=>{metaUpdates++;},updateHUD:()=>{hudUpdates++;}
+  showToast:(...args)=>toasts.push(args),addLog:text=>logs.push(text),updateMetaUI:()=>{metaUpdates++;},updateHUD:()=>{hudUpdates++;},
+  renderPetCollection:()=>{petCollectionRenders++;},refreshActivePetArt:()=>{activePetArtRefreshes++;}
 });
 pets.configure({
   activeDefinition:()=>lifecycle.activeDefinition(),activeState:()=>lifecycle.activeState(),
@@ -61,9 +62,13 @@ meta.pets.fire.level=36;assert.equal(pets.bonusScale('fire'),1.5);assert.equal(p
 assert.equal(pets.bonusText('fire'),'Bonus: +5 base pet damage · +1 Attack (150% bond scaling) · Bond Lv 36');
 
 meta.pets.fire={unlocked:true,level:1,xp:1,xpNext:2,progress:0};meta.petCookies=20;player.cookieBondBonus=0;
-pets.feed(6);
+const feedResult=pets.feed(6);
 assert.deepEqual(JSON.parse(JSON.stringify(meta.pets.fire)),{unlocked:true,level:3,xp:2,xpNext:4,progress:0});
 assert.equal(meta.petCookies,14);assert.equal(saveCount,1);assert.equal(unlockChecks,1);assert.equal(levelSfx,1);assert.equal(coinSfx,0);
+assert.equal(feedResult.ok,true);assert.equal(feedResult.spent,6);assert.equal(feedResult.level,3);assert.equal(Object.isFrozen(feedResult),true,'feed result must retain the final frozen compatibility contract');
+assert.equal(toasts.length,0,'feeding must remain quiet instead of queueing a toast');assert(logs.at(-1).includes('ate <b>6</b> cookies'));
+assert.equal(petCollectionRenders,1,'successful feeding must refresh the Pet collection');assert.equal(activePetArtRefreshes,1,'feeding must refresh active Pet art');
+meta.petCookies=0;const noFeed=pets.feed(1);assert.equal(noFeed,false);assert.equal(petCollectionRenders,1,'no-op feed must not rerender the collection');assert.equal(activePetArtRefreshes,2,'final wrapper semantics refresh active Pet art even for a no-op feed');
 
 meta.pets.fire.unlocked=false;meta.elementProgress.fire=0;holySfx=0;
 pets.trackElementProgress('fire',499);assert.equal(meta.pets.fire.unlocked,false);
@@ -99,8 +104,15 @@ assert.match(monolith,/const dbPets=window\.DiceboundPets;/,'monolith must consu
 assert.match(monolith,/const dbPetLifecycleOwner=window\.DiceboundPetLifecycle;/,'monolith must configure focused Pet lifecycle owner');
 assert.match(monolith,/shuffledPetIds:\(\)=>dbPets\.shuffledPetIds\(\)/,'Player Initialization must collaborate through Pet facade');
 assert.match(monolith,/syncActivePetBonus:force=>dbPets\.syncActiveBonus\(force\)/,'Player Initialization must route active Pet sync through facade');
+assert.match(monolith,/renderPetCollection:\(\)=>renderPetCollection\(\),refreshActivePetArt:\(\)=>db059RefreshActivePetArt\?\.\(\)/,'Pet lifecycle composition must provide final feed presentation callbacks');
+assert.doesNotMatch(monolith,/feedActivePet=function\(count=1\)/,'late feed implementation reassignments must be retired');
+assert.doesNotMatch(monolith,/dbFriendFeedActivePetBase/,'Friends feed compatibility wrapper must be retired');
+assert.doesNotMatch(monolith,/function v17PetBondLevel\(/,'dead V1.7 Pet bond aliases must be retired');
+assert.doesNotMatch(monolith,/function v17PetBonusScale\(/,'dead V1.7 Pet bonus-scale aliases must be retired');
+assert.doesNotMatch(monolith,/function v17PetDamageExtra\(/,'dead V1.7 Pet damage aliases must be retired');
+assert.doesNotMatch(monolith,/function v17PetBonusText\(/,'dead V1.7 Pet text aliases must be retired');
 assert.doesNotMatch(monolith,/const PET_STAT_BONUSES=\{/,'historical Pet stat-bonus implementation must leave the monolith');
 assert.doesNotMatch(monolith,/syncActivePetBonusV16=function\(/,'V1.7 active-Pet shadow reassignment must be retired');
 assert.doesNotMatch(monolith,/PET_STAT_BONUSES\.gun/,'late Gun Pet shadow bonus must be retired');
 
-console.log('Pet lifecycle owner PASS: progression, switching, bond bonuses, facade routing and anti-shadow guards');
+console.log('Pet lifecycle owner PASS: progression, switching, final feed API/presentation, facade routing and anti-shadow guards');

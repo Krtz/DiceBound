@@ -150,7 +150,8 @@
     classHasMechanic:id=>classHasMechanic(id),talentRank:id=>talentRank(id),rand:(min,max)=>rand(min,max),
     saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
     sfxLevel:()=>sfx.level(),sfxCoin:()=>sfx.coin(),sfxHoly:()=>sfx.holy(),showToast:(...args)=>showToast(...args),
-    addLog:text=>addLog(text),updateMetaUI:()=>updateMetaUI(),updateHUD:()=>updateHUD()
+    addLog:text=>addLog(text),updateMetaUI:()=>updateMetaUI(),updateHUD:()=>updateHUD(),
+    renderPetCollection:()=>renderPetCollection(),refreshActivePetArt:()=>db059RefreshActivePetArt?.()
   });
   dbPets.configure({
     activeDefinition:()=>dbPetLifecycle.activeDefinition(),activeState:()=>dbPetLifecycle.activeState(),bondLevel:id=>dbPetLifecycle.bondLevel(id),
@@ -2269,11 +2270,7 @@
     .poison-count-compact{font-weight:950;color:#a9f08b;letter-spacing:-.02em}
   `;document.head.appendChild(v17Style);
 
-  // ---- Pet bond scaling ----------------------------------------------------
-  function v17PetBondLevel(id){return dbPets.bondLevel(id);}
-  function v17PetBonusScale(id){return dbPets.bonusScale(id);}
-  function v17PetDamageExtra(id){return dbPets.damageExtra(id);}
-  function v17PetBonusText(id){return dbPets.bonusText(id);}
+  // ---- Pet bond scaling is owned by DiceboundPets / pets/lifecycle.js. -----
 
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
   const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){resonantTalent.name="Resonant Carapace";resonantTalent.desc="Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.";resonantTalent.maxRank=3;}
@@ -3914,16 +3911,6 @@
     const procToast=Object.values(ELEMENTS).some(e=>s.startsWith(`${e.icon} ${e.spell}`))||/^☢️\s*-?\d+\s*DEF/.test(s);
     if(procToast)return;
     return showToastV27Base(text,...args);
-  };
-  // Feeding and pet level-ups are quiet too. The campsite/pet card updates
-  // immediately, which is enough feedback without queueing extra toasts.
-  feedActivePet=function(count=1){
-    const state=activePetState(),def=activePetDef(),actual=Math.min(Math.max(0,Math.floor(count||0)),meta.petCookies||0);if(actual<=0)return;
-    meta.petCookies-=actual;state.xp+=actual*(1+(player.cookieBondBonus||0));let levels=0;
-    while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.xpNext=2+Math.floor(state.level*.7);levels++;}
-    saveMeta();checkDynamicClassUnlocks();levels?sfx.level():sfx.coin();
-    addLog(`${def.icon} ${def.name} ate <b>${actual}</b> cookie${actual===1?'':'s'}${levels?` and gained <b>${levels}</b> level${levels===1?'':'s'}`:''}.`);
-    updateMetaUI();renderPetCollection?.();
   };
 
   /* LEGENDARY DESIGN: RARITY != UNIQUE ------------------------------------ */
@@ -6483,12 +6470,6 @@
 
   const dbFriendUpdateMetaUiBase=updateMetaUI;
   updateMetaUI=function(...args){const result=dbFriendUpdateMetaUiBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
-  const dbFriendFeedActivePetBase=feedActivePet;
-  feedActivePet=function(count=1){
-    const state=activePetState?.(),beforeCookies=Number(meta.petCookies)||0,beforeXp=Number(state?.xp)||0,beforeLevel=Number(state?.level)||1;
-    const result=dbFriendFeedActivePetBase(count),after=activePetState?.(),changed=(Number(meta.petCookies)||0)!==beforeCookies||Number(after?.xp)!==beforeXp||Number(after?.level)!==beforeLevel;
-    db059RefreshActivePetArt?.();return changed?Object.freeze({ok:true,spent:Math.max(0,beforeCookies-(Number(meta.petCookies)||0)),level:Number(after?.level)||1}):false;
-  };
   function dbFriendHealAtCamp(){
     const max=Math.max(1,Math.floor(Number(player?.maxHp)||1));
     if(Number(player?.hp)>=max)return false;
