@@ -5723,6 +5723,34 @@
   // topping it up from 1 to 10 after the reward is resolved.
   // (The literal formula is also replaced in the source packaging script.)
 
+  // Test-only characterization surface for the Pet subsystem migration.
+  // It deliberately exposes the current final Pet lifecycle wrappers without changing ordinary callers.
+  window.DiceboundPetsOracleTest=Object.freeze({
+    snapshot:()=>({
+      activePet:meta.activePet,petCookies:meta.petCookies,gameStarted:!!gameStarted,classId:player.classId,
+      activeState:JSON.parse(JSON.stringify(activePetState()||null)),
+      elementProgress:JSON.parse(JSON.stringify(meta.elementProgress||{})),
+      player:{attack:player.attack,defense:player.defense,crit:player.crit,doubleStrike:player.doubleStrike,maxHp:player.maxHp,hp:player.hp,potionPower:player.potionPower,bossDamage:player.bossDamage,flatReduction:player.flatReduction,luck:player.luck,elementDamageBonus:player.elementDamageBonus,cookieBondBonus:player.cookieBondBonus,_activePetBonusId:player._activePetBonusId||null,_v17PetBonusScale:player._v17PetBonusScale||null}
+    }),
+    setRunActive:value=>{gameStarted=!!value;return gameStarted;},
+    setPetLevel:(id,level)=>{const state=meta.pets?.[id];if(!state)return false;state.level=level;return true;},
+    setPetState:(id,next)=>{if(!meta.pets?.[id])return false;Object.assign(meta.pets[id],next||{});return true;},
+    setCookieBondBonus:value=>{player.cookieBondBonus=Number(value)||0;return player.cookieBondBonus;},
+    lockPet:id=>{if(!meta.pets?.[id])return false;meta.pets[id].unlocked=false;return true;},
+    feed:count=>feedActivePet(count),
+    trackElement:(key,amount)=>trackElementProgress(key,amount),
+    canSwitch:id=>v19CanSwitchPet(id),
+    select:id=>window.DiceboundPetChooser.select(id),
+    damage:(id=meta.activePet)=>{const previous=meta.activePet;meta.activePet=id;try{return petDamage();}finally{meta.activePet=previous;}},
+    bonusScale:id=>v17PetBonusScale(id),
+    damageExtra:id=>v17PetDamageExtra(id),
+    bonusText:id=>v17PetBonusText(id),
+    syncBonus:(force=false)=>syncActivePetBonusV16(force),
+    forceActivePet:id=>{meta.activePet=id;return meta.activePet;},
+    playerStats:()=>({attack:player.attack,defense:player.defense,crit:player.crit,doubleStrike:player.doubleStrike,maxHp:player.maxHp,hp:player.hp,potionPower:player.potionPower,bossDamage:player.bossDamage,flatReduction:player.flatReduction,luck:player.luck,elementDamageBonus:player.elementDamageBonus,_activePetBonusId:player._activePetBonusId||null,_v17PetBonusScale:player._v17PetBonusScale||null}),
+    shuffledPetIds:()=>shuffledPetIds()
+  });
+
   // Test-only characterization surface for the Items subsystem migration.
   // It deliberately exposes the current final wrappers without changing ordinary callers.
   window.DiceboundItemsOracleTest=Object.freeze({

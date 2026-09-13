@@ -3,13 +3,13 @@
   "version": "0.6.6.27",
   "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6.6.27-dev-53d1c1bfc521747d",
-  "browserContentHash": "53d1c1bfc521747d03fd8ae8aa37c3d07f7ad0992563b6797bc78a959ad5f0ee",
+  "buildId": "dicebound-0.6.6.27-dev-a67aa4868a98a639",
+  "browserContentHash": "a67aa4868a98a639028f8b014bae0945e19ee55baf8c92948de46ee96b273b93",
   "assetRegistryVersion": 22,
   "payloadFileCount": 507,
   "assetPayloadCount": 428,
   "files": {
-    "build-info.json": "34a843dd418207e50aff0982f19ab06c425b8295b36aba15e620e27d0e019a95",
+    "build-info.json": "9d27016aa32a314d2b9629695ed1ba6f4233f533d9be5b0f2fd809de0ddad18a",
     "index.html": "b36d79677da5c042174b476cec1478ca3af86b42d28a7f7012c1c0c447bd117c",
     "css/dicebound.css": "332019d7e73fa7a1588e0120799b26932f1f608f689725d617622be8fec07ffd",
     "js/version.js": "4f67f7207a07c2a36dc5b30c5c126a4e5b089f5cd86c6e158ff8b4a5146e1a1a",
@@ -88,7 +88,7 @@
     "js/ui/achievements.js": "488d8f4cac6f19464f7223f5fb099ef2756f25e9154ae9efc65a739d21011718",
     "js/ui/info-guide.js": "543557349a75f9350e15b3bf3ebddb7615182eb59d3de64ff64a8fd1f4dd8fb7",
     "js/ui/merchant.js": "ac8c6f49274a4fc860cb415a28f727e4df902c3f74af9e7af78a264614241fb6",
-    "js/dicebound.js": "556a4be32c545bfdc18442df86397f57b42b527493670b27388cb88709f532fe"
+    "js/dicebound.js": "5f10f0c7db65c4b1a73f22ed1ae81a743e1b20d2e7c5e714f44adbe7257f06f4"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",

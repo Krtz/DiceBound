@@ -1,7 +1,7 @@
 {
   "assetCount": 428,
-  "browserContentHash": "53d1c1bfc521747d03fd8ae8aa37c3d07f7ad0992563b6797bc78a959ad5f0ee",
-  "buildId": "dicebound-0.6.6.27-dev-53d1c1bfc521747d",
+  "browserContentHash": "a67aa4868a98a639028f8b014bae0945e19ee55baf8c92948de46ee96b273b93",
+  "buildId": "dicebound-0.6.6.27-dev-a67aa4868a98a639",
   "channel": "Beta",
   "contentFileCount": 508,
   "developmentState": "Unreleased",
@@ -91,7 +91,7 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "53d1c1bfc521747d03fd8ae8aa37c3d07f7ad0992563b6797bc78a959ad5f0ee",
+  "sourceHash": "a67aa4868a98a639028f8b014bae0945e19ee55baf8c92948de46ee96b273b93",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
   "version": "0.6.6.27",
   "wrapperContractVersion": 1,
