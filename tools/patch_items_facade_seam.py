@@ -24,7 +24,7 @@ for module_id in ('road-event-treasure','merchant-stock'):
     module=next(m for m in manifest['modules'] if m.get('id')==module_id)
     module['requires']=[r for r in module.get('requires',[]) if r not in ('item-rarities','item-equipment')]
     if 'items-facade' not in module['requires']: module['requires'].append('items-facade')
-monolith=next(m for m in manifest['modules'] if m.get('id')=='monolith')
+monolith=next(m for m in manifest['modules'] if m.get('path')=='js/dicebound.js')
 if 'items-facade' not in monolith.get('requires',[]): monolith['requires'].append('items-facade')
 load=manifest['loadOrder']
 load.insert(load.index('item-consumables')+1,'items-facade')
