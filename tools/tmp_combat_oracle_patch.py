@@ -61,14 +61,23 @@ surface=r'''  // Test-only characterization surface for the Combat subsystem mig
   }
   window.DiceboundCombatOracleTest=Object.freeze({
     snapshot:dbCombatOracleSnapshot,cleanup:dbCombatOracleCleanup,dismissTransient:dbCombatOracleDismissTransient,setup:dbCombatOracleSetup,prepareEncounter:dbCombatOraclePrepareEncounter,
+    onEvent:(name,listener)=>DiceboundStateEvents.on(name,listener),
     startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>playerAttack(...args),guard:(...args)=>guardAction(...args),channel:(...args)=>occultChannelAttack(...args),spell:(...args)=>occultSpellAttack(...args),ultimate:(...args)=>useUltimate(...args),petTurn:(...args)=>petTurn(...args),enemyResponse:(...args)=>resolveEnemyResponse(...args),
     element:(key,options={})=>triggerElementEffect(key,currentEnemy,options),heal:(amount,options)=>healPlayer(amount,options),chaos:action=>rollD20Chaos(action),win:(...args)=>winCombat(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
   });
 
 '''
-# Fix two deliberate formatting-sensitive expressions after raw insertion construction.
 surface=surface.replace("boardLevel=Math.max(1,Math.min(6,Math.floor(Number(spec.board)||1));", "boardLevel=Math.max(1,Math.min(6,Math.floor(Number(spec.board)||1)));")
 surface=surface.replace("const tileIndex=Math.max(1,Math.floor(Number(spec.tileIndex)||1);", "const tileIndex=Math.max(1,Math.floor(Number(spec.tileIndex)||1));")
 text=text.replace(anchor,surface+anchor,1)
 path.write_text(text,encoding='utf-8',newline='\n')
+
+# StateEvents is a classic-script lexical owner rather than a window property.
+# Route event capture through the characterization seam so the browser harness
+# does not depend on accidental global-object publication.
+test_path=Path('tools/test_combat_oracle.js')
+test=test_path.read_text(encoding='utf-8')
+test=test.replace("&&!!window.DiceboundRng&&!!window.DiceboundStateEvents", "&&!!window.DiceboundRng")
+test=test.replace("window.DiceboundStateEvents.on(", "combat.onEvent(")
+test_path.write_text(test,encoding='utf-8',newline='\n')
 print('Combat oracle characterization surface inserted')
