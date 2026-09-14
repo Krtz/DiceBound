@@ -1,0 +1,573 @@
+{
+  "baseline": "0.6.6.31",
+  "presentation": {
+    "owner": "combat/presentation",
+    "cases": {
+      "ranger": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌧️ Arrow Storm",
+          "disabled": false,
+          "tip": "Ranger ultimate."
+        },
+        "special": {
+          "hidden": true,
+          "className": "combat-btn special action-tooltip",
+          "text": "",
+          "tip": "",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": false,
+        "resource": {
+          "type": "mark",
+          "name": "Marks on target",
+          "value": 4,
+          "max": 5,
+          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "ninja": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌘 Thousand Shadows",
+          "disabled": false,
+          "tip": "Ninja ultimate."
+        },
+        "special": {
+          "hidden": true,
+          "className": "combat-btn special action-tooltip",
+          "text": "",
+          "tip": "",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": false,
+        "resource": {
+          "type": "smoke",
+          "name": "Smoke",
+          "value": 2,
+          "max": 3,
+          "note": "Every critical tier grants 1 Smoke — a double crit grants 2, triple crit 3, including Echoes. At 3, the next basic strike becomes Smoke Execution.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "bloodmage": {
+        "attack": {
+          "text": "🩸 Bloodletting",
+          "disabled": false,
+          "tip": "A normal basic attack with extra Lifesteal. Bloodletting restores HP so you can spend that HP as fuel on Exsanguinate."
+        },
+        "guard": {
+          "text": "💉 Replenish",
+          "disabled": false,
+          "tip": "Replenish heals you and the selected enemy, grants 20 Ultimate, and counts as Guard for the incoming enemy response."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "☄️ Sanguine Cataclysm",
+          "disabled": false,
+          "tip": "Bloodmage ultimate."
+        },
+        "special": {
+          "hidden": false,
+          "className": "combat-btn special action-tooltip",
+          "text": "🩸 Exsanguinate",
+          "tip": "Spend 12% max HP without killing yourself to deal a brutal blood-fuelled attack.",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": true,
+        "resource": {
+          "type": "blood",
+          "name": "Blood fuel (HP)",
+          "value": 51,
+          "max": 100,
+          "note": "Bloodmage has no Mana. Your HP bar is your spell resource; Bloodletting restores fuel and Exsanguinate spends it.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "summoner": {
+        "attack": {
+          "text": "✨ Spirit Bolt",
+          "disabled": false,
+          "tip": "Spirit Bolt is your Mana-building attack. It deals about 82% normal basic damage and grants up to 20 Mana."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them. Guard also channels up to 6 Mana."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌌 Grand Convergence",
+          "disabled": false,
+          "tip": "Summoner ultimate."
+        },
+        "special": {
+          "hidden": false,
+          "className": "combat-btn special action-tooltip",
+          "text": "🐾 Conjure (35) · 1/3",
+          "tip": "Spend 35 Mana to conjure a spirit. Conjure immediately makes your active companion and every spirit attack with a small temporary damage boost.",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": true,
+        "resource": {
+          "type": "mana",
+          "name": "Mana / Spirit Circle",
+          "value": 40,
+          "max": 120,
+          "note": "Build a spirit circle. Active spirits: 🔥 Ember.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "trainer": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌈 Stampede",
+          "disabled": false,
+          "tip": "Trainer ultimate."
+        },
+        "special": {
+          "hidden": false,
+          "className": "combat-btn special action-tooltip",
+          "text": "🔄 Switch · ❄️ Frost",
+          "tip": "Switch to the next creature in your six-member roster without spending a combat turn. The active creature attacks harder and can call a roster assist.",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": true,
+        "resource": {
+          "type": "mana",
+          "name": "Six-creature roster",
+          "value": 2,
+          "max": 3,
+          "note": "Run roster: 🔥 Ember · ▶ ❄️ Frost · 🌿 Sprout",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "clericReady": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "✨ Divine Intervention",
+          "disabled": false,
+          "tip": "Cleric ultimate."
+        },
+        "special": {
+          "hidden": false,
+          "className": "combat-btn special action-tooltip faith",
+          "text": "☀️ Consecration",
+          "tip": "At 100 Faith: heal, raise a Barrier and damage the enemy pack. Healing builds Faith.",
+          "disabled": false,
+          "ready": true
+        },
+        "hasSpecial": true,
+        "resource": {
+          "type": "mana",
+          "name": "Faith",
+          "value": 100,
+          "max": 100,
+          "note": "Healing builds Faith. Consecration becomes available at 100.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "alchemist": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "⚗️ Grand Elixir",
+          "disabled": false,
+          "tip": "Alchemist ultimate."
+        },
+        "special": {
+          "hidden": false,
+          "className": "combat-btn special action-tooltip alchemist-special",
+          "text": "🧪 Volatile Flask (3)",
+          "tip": "Consume 1 potion to damage the enemy pack. Damage scales with the same Potion Healing bonuses that increase your 23 HP drink.",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": true,
+        "resource": {
+          "type": "mana",
+          "name": "Combat Distillery",
+          "value": 2,
+          "max": 3,
+          "note": "Every 3 basic attacks creates a potion. Drink them to heal or throw them with Volatile Flask.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "slimeBorrowedUltimate": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌧️ Arrow Storm",
+          "disabled": false,
+          "tip": "Borrowed Ranger ultimate — description:ranger"
+        },
+        "special": {
+          "hidden": true,
+          "className": "combat-btn special action-tooltip",
+          "text": "",
+          "tip": "",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": false,
+        "resource": null,
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "unstableUltimate70": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌧️ Arrow Storm",
+          "disabled": false,
+          "tip": "Unstable Ultimate: usable at 70 charge for 75% normal damage. Current charge: 70."
+        },
+        "special": {
+          "hidden": true,
+          "className": "combat-btn special action-tooltip",
+          "text": "",
+          "tip": "",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": false,
+        "resource": {
+          "type": "mark",
+          "name": "Marks on target",
+          "value": 4,
+          "max": 5,
+          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "dragoonLanding": {
+        "attack": {
+          "text": "🐉 Land",
+          "disabled": false,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": true,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": true,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🐲 Dragon Dive",
+          "disabled": true,
+          "tip": "Dragoon ultimate."
+        },
+        "special": {
+          "hidden": true,
+          "className": "combat-btn special action-tooltip",
+          "text": "",
+          "tip": "",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": false,
+        "resource": null,
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      },
+      "busyRanger": {
+        "attack": {
+          "text": "⚔️ Attack",
+          "disabled": true,
+          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": true,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them."
+        },
+        "potion": {
+          "text": null,
+          "disabled": true,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌧️ Arrow Storm",
+          "disabled": true,
+          "tip": "Ranger ultimate."
+        },
+        "special": {
+          "hidden": true,
+          "className": "combat-btn special action-tooltip",
+          "text": "",
+          "tip": "",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": false,
+        "resource": {
+          "type": "mark",
+          "name": "Marks on target",
+          "value": 4,
+          "max": 5,
+          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
+      }
+    },
+    "statuses": {
+      "compact": "<span class=\"status-dot barrier\" title=\"Barrier\"></span><span class=\"status-dot barrier\" title=\"Barrier\"></span><span class=\"status-dot poison\" title=\"Poison\"></span><span class=\"status-dot poison\" title=\"Poison\"></span><span class=\"status-dot poison\" title=\"Poison\"></span><span class=\"status-affinity\" title=\"Fire affinity\">🔥</span>",
+      "counted": "<span class=\"status-count barrier-count\" title=\"5 Barrier stacks\">🛡️ 5</span><span class=\"status-count poison-count\" title=\"6 Poison stacks\">☠️ 6</span><span class=\"status-affinity\" title=\"Ice affinity\">❄️</span>",
+      "empty": ""
+    },
+    "rngCalls": 0
+  },
+  "vfx": {
+    "effects": {
+      "nature": {
+        "frames": [
+          "assets/combat/effects/nature/nature-poison-vines-01.png",
+          "assets/combat/effects/nature/nature-poison-vines-02.png",
+          "assets/combat/effects/nature/nature-poison-vines-03.png",
+          "assets/combat/effects/nature/nature-poison-vines-04.png",
+          "assets/combat/effects/nature/nature-poison-vines-05.png",
+          "assets/combat/effects/nature/nature-poison-vines-06.png",
+          "assets/combat/effects/nature/nature-poison-vines-07.png",
+          "assets/combat/effects/nature/nature-poison-vines-08.png"
+        ],
+        "frameDurationMs": 75,
+        "alt": "Thorny poison vines erupt, lash, and recede"
+      },
+      "donut": {
+        "frames": [
+          "assets/combat/effects/donut/donut-proc-rain-01.png",
+          "assets/combat/effects/donut/donut-proc-rain-02.png",
+          "assets/combat/effects/donut/donut-proc-rain-03.png",
+          "assets/combat/effects/donut/donut-proc-rain-04.png",
+          "assets/combat/effects/donut/donut-proc-rain-05.png",
+          "assets/combat/effects/donut/donut-proc-rain-06.png"
+        ],
+        "frameWidth": 362,
+        "frameHeight": 724,
+        "frameDurationMs": 240,
+        "durationMs": 1450,
+        "alt": "A magical cloud rains colorful donuts across the battlefield"
+      },
+      "livingNatureTargets": [
+        "living"
+      ],
+      "suppression": {
+        "before": false,
+        "during": true,
+        "after": false
+      }
+    },
+    "donut": {
+      "played": true,
+      "initial": [
+        {
+          "src": "assets/combat/effects/donut/donut-proc-rain-01.png",
+          "effect": "donutProcRain",
+          "target": "player",
+          "origin": "player",
+          "frame": 0
+        },
+        {
+          "src": "assets/combat/effects/donut/donut-proc-rain-01.png",
+          "effect": "donutProcRain",
+          "target": "enemy",
+          "origin": "player",
+          "frame": 0
+        }
+      ],
+      "timerCount": 6,
+      "frameOne": [
+        {
+          "src": "assets/combat/effects/donut/donut-proc-rain-02.png",
+          "effect": "donutProcRain",
+          "target": "player",
+          "origin": "player",
+          "frame": 1
+        },
+        {
+          "src": "assets/combat/effects/donut/donut-proc-rain-02.png",
+          "effect": "donutProcRain",
+          "target": "enemy",
+          "origin": "player",
+          "frame": 1
+        }
+      ]
+    },
+    "reducedMotionDonut": {
+      "played": true,
+      "timerCount": 1,
+      "initial": [
+        {
+          "src": "assets/combat/effects/donut/donut-proc-rain-01.png",
+          "effect": "donutProcRain",
+          "target": "player",
+          "origin": "enemy",
+          "frame": 0
+        },
+        {
+          "src": "assets/combat/effects/donut/donut-proc-rain-01.png",
+          "effect": "donutProcRain",
+          "target": "enemy",
+          "origin": "enemy",
+          "frame": 0
+        }
+      ]
+    },
+    "projectile": {
+      "firePlayed": true,
+      "fireInitial": {
+        "src": "assets/combat/effects/fire/fire-launch-01.png",
+        "left": "60px",
+        "top": "85px",
+        "transform": "translate(-50%,-50%) scale(.72)",
+        "timerCount": 3
+      },
+      "clearEpoch": 1,
+      "cancelledTimers": [
+        1,
+        2,
+        3
+      ],
+      "gunPlayed": true,
+      "gunInitial": {
+        "src": "assets/combat/effects/gun/gun_spawn_01_no_arm.png",
+        "left": "94px",
+        "top": "85px",
+        "transform": "translate(-50%,-50%) scale(.72)",
+        "timerCount": 7
+      },
+      "gunFire": {
+        "src": "assets/combat/effects/gun/gun_fire_02_no_arm.png",
+        "phase": "fire",
+        "transform": "translate(-50%,-50%) scale(.82)"
+      },
+      "gunTravel": {
+        "src": "assets/combat/effects/gun/gun_bullet_tracer_05.png",
+        "phase": "travel",
+        "left": "410px",
+        "top": "170px",
+        "transform": "translate(-50%,-50%) scale(1)"
+      }
+    }
+  }
+}

@@ -36,7 +36,9 @@ assert mono.count('function updateCombatUI(') == 1, 'updateCombatUI must have ex
 assert not re.search(r'(?m)^\s*updateCombatUI\s*=', mono), 'updateCombatUI reassignment chain must not return'
 assert mono.count('function renderEnemyParty(') == 1, 'renderEnemyParty must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*renderEnemyParty\s*=', mono), 'renderEnemyParty reassignment chain must not return'
-assert "dbCombatPresentation=dbCombatPresentationOwner.configure({" in mono, 'combat presentation owner is not configured'
+assert "dbCombatView.configurePresentation({" in mono, 'combat presentation must be configured through Combat View'
+assert not re.search(r"(?<![\w$])dbCombatPresentation(?![\w$])", mono), 'peer-public Combat Presentation variable returned'
+assert not re.search(r"(?<![\w$])dbCombatVfx(?![\w$])", mono), 'peer-public Combat VFX variable returned'
 
 encounter_retired = [
     'startCombatV13','startCombatV15Patch','startCombatV16Base','startCombatV17Base','startCombatV18Base','startCombatV19Base','startCombatV19SetBase',

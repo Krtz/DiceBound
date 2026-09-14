@@ -33,6 +33,7 @@
     "combat-encounter-lifecycle",
     "combat-turn-resolution",
     "combat-vfx",
+    "combat-view-facade",
     "classes-registry",
     "classes-invoker",
     "combat-mana-action-resolution",
@@ -418,6 +419,19 @@
       ],
       "provides": [
         "DiceboundCombatVfx"
+      ]
+    },
+    {
+      "id": "combat-view-facade",
+      "path": "js/combat/view-facade.js",
+      "domain": "combat/public-presentation-vfx-facade",
+      "status": "extracted",
+      "requires": [
+        "combat-presentation",
+        "combat-vfx"
+      ],
+      "provides": [
+        "DiceboundCombatView"
       ]
     },
     {
