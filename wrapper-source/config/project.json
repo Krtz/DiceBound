@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.6.28",
+  "version": "0.6.6.29",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -67,6 +67,7 @@
     "js/progression/talents.js",
     "js/progression/prestige.js",
     "js/progression/achievements.js",
+    "js/progression/lifecycle.js",
     "js/events/reward-policy.js",
     "js/events/treasure.js",
     "js/events/lifecycle.js",

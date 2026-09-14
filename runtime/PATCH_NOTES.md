@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.29
+
+## Beta 0.6.6.29 Progression subsystem ownership (#329)
+- `DiceboundProgression` is now the ordinary public Progression boundary for Talent/Legacy, final Prestige reset, Prestige Moon state transactions, Achievement policy and class-unlock orchestration; the focused Talent, Prestige, Achievement and class-unlock modules remain authoritative specialist internals.
+- Historical Talent/Legacy/final-Prestige implementations, layered Achievement gate/reward wrappers and class-unlock transaction/dynamic-scan shadows are drained from `dicebound.js`; Camp/Trophy/Moon/Run and ordinary callers now collaborate through the facade instead of rebuilding policy locally.
+- A permanent 30-case released-0.6.6.28 output/state/RNG oracle freezes Talent snapshots and prerequisites, Legacy awards, Prestige reset and Moon behavior, Achievement copy/gates/mastery/count and class-unlock commit behavior. Focused ownership tests additionally prevent the retired monolith ladders and direct Moon state transaction path from returning.
+- No progression balance, Talent effects/costs, Legacy rates, Prestige conversion, Moon Forge design, Achievement rewards, class unlock thresholds, RNG order/state, save/checkpoint behavior or UI redesign is intended. Runtime graph is 79 modules (78 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 676,782 bytes / 7,025 lines.
+
 # Unreleased — Beta 0.6.6.28
 
 ## Beta 0.6.6.28 Pets subsystem ownership (#327)
