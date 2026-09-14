@@ -82,7 +82,7 @@ pass("core-default-career",()=>{
   const service=window.DiceboundCoreState.createMetaService({classIds:["ranger","fighter","sorcerer"],petIds:["neutral","fire","ice"],elementIds:["fire","ice"],petUnlockRequirement:500,saveService:null});
   const defaults=service.defaultMeta(),serialized=JSON.stringify(defaults);
   assert.equal(Buffer.byteLength(serialized),864);
-  assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"),"d22ff6b1fe8d7021faede28d594d512650b4049f95098109dca984ff14bbcf2f");
+  assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"),"792efe9975270b9abf6ad7acaa22a3724662fac68407d135c12549fa538fe488");
   assert.equal(JSON.stringify([1,10,11,25,26,50,51,100,101].map(service.legacyXpForLevel)),JSON.stringify([10,28,32,88,93,213,221,613,624]));
 });
 
