@@ -34,6 +34,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/tmp_merchant_facade_fix.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/set_project_version.py --version 0.6.6.29 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.29 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
 
       - name: Run focused Merchant ownership and exact Edge gates
