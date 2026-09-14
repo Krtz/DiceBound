@@ -1,0 +1,836 @@
+{
+  "baselineVersion": "0.6.6.32",
+  "runtimeVersion": "0.6.6.32",
+  "cases": [
+    {
+      "name": "catalog",
+      "count": 208,
+      "uniqueCount": 14,
+      "gatedCount": 56,
+      "first": [
+        {
+          "id": "hp",
+          "name": "Toughness",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "attack",
+          "name": "Sharper Blade",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "defense",
+          "name": "Iron Skin",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "potion",
+          "name": "Field Alchemy",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "purse",
+          "name": "Heavy Purse",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "last": [
+        {
+          "id": "uncommon_field_surgeon_v514",
+          "name": "Field Surgeon",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "uncommon_boss_badge_v514",
+          "name": "Boss Hunter's Badge",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "uncommon_elemental_relay_v514",
+          "name": "Elemental Relay",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "uncommon_leeching_fang_v514",
+          "name": "Leeching Fang",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "uncommon_fortune_broker_v514",
+          "name": "Fortune Broker",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "rngCalls": 0,
+      "rngState": 360776600
+    },
+    {
+      "name": "ranger-eligibility",
+      "count": 79,
+      "ids": [
+        "hp",
+        "attack",
+        "defense",
+        "potion",
+        "purse",
+        "mending",
+        "crit",
+        "luck",
+        "heal",
+        "gold",
+        "brew",
+        "stride",
+        "scholar",
+        "vampire",
+        "echo",
+        "thorns",
+        "dodge",
+        "ward",
+        "barrier",
+        "merchant",
+        "berserk",
+        "execute",
+        "phoenix",
+        "idol",
+        "titan",
+        "godslayer",
+        "ranger_quickdraw",
+        "ranger_echo",
+        "ranger_predator",
+        "ranger_fate",
+        "ranger_nature_affinity",
+        "evasive_bulwark",
+        "legendary_worldheart",
+        "legendary_prismatic",
+        "rare_glass_needle",
+        "rare_echo_chamber",
+        "rare_dragon_mark",
+        "rare_stormstep",
+        "rare_prism_lens",
+        "rare_pack_hunter",
+        "rare_ultimate_vessel",
+        "rare_red_flask",
+        "ranger_thorn_volley",
+        "shared_skirmisher",
+        "venom_edge",
+        "toxicology",
+        "thorn_venom",
+        "gunpowder_luck",
+        "attack_common_v24",
+        "attack_uncommon_v24",
+        "hp_common_v24",
+        "hp_uncommon_v24",
+        "defense_common_v24",
+        "defense_uncommon_v24",
+        "crit_uncommon_v24",
+        "echo_uncommon_v24",
+        "true_legend_echo_v24",
+        "true_legend_element_v24",
+        "treasure_sense_common_v25",
+        "treasure_sense_uncommon_v25",
+        "venom_edge_rare_v25",
+        "scholar_common_v26",
+        "scholar_uncommon_v26",
+        "thorns_common_v26",
+        "legendary_crimson_aegis_v27",
+        "legendary_adamant_v27",
+        "legendary_wanderer_v27",
+        "poor_lucky_pebble_v514",
+        "poor_cracked_scope_v514",
+        "poor_faint_echo_v514",
+        "poor_weak_tonic_v514",
+        "poor_monster_notes_v514",
+        "poor_folded_map_v514",
+        "poor_cheap_venom_v514",
+        "uncommon_field_surgeon_v514",
+        "uncommon_boss_badge_v514",
+        "uncommon_elemental_relay_v514",
+        "uncommon_leeching_fang_v514",
+        "uncommon_fortune_broker_v514"
+      ],
+      "rngCalls": 0,
+      "rngState": 683643548
+    },
+    {
+      "name": "slime-borrowing",
+      "count": 85,
+      "ninja": [
+        "ninja_electric_affinity",
+        "shared_skirmisher",
+        "thorn_venom"
+      ],
+      "fighter": [
+        "fighter_resolve",
+        "fighter_fortress",
+        "fighter_metal_affinity",
+        "armored_assault",
+        "shared_vanguard"
+      ],
+      "rngCalls": 0,
+      "rngState": 4065972229
+    },
+    {
+      "name": "slime-rouge-compatibility",
+      "count": 88,
+      "classOwned": [
+        "fighter_resolve",
+        "fighter_fortress",
+        "ranger_quickdraw",
+        "ranger_echo",
+        "ranger_fate",
+        "fighter_metal_affinity",
+        "ranger_nature_affinity",
+        "armored_assault",
+        "evasive_bulwark",
+        "ninja_electric_affinity",
+        "fighter_battering_line",
+        "ranger_thorn_volley",
+        "ninja_smoke_math",
+        "ninja_five_shadows",
+        "shared_vanguard",
+        "shared_skirmisher",
+        "thorn_venom",
+        "reactive_carapace"
+      ],
+      "rngCalls": 0,
+      "rngState": 2213938661
+    },
+    {
+      "name": "achievement-gate",
+      "locked": false,
+      "unlocked": true,
+      "gateBefore": false,
+      "gateAfter": true,
+      "rngCalls": 0,
+      "rngState": 1525406760
+    },
+    {
+      "name": "unique-exclusion",
+      "id": "execute",
+      "initial": true,
+      "after": false,
+      "rngCalls": 0,
+      "rngState": 1722722551
+    },
+    {
+      "name": "weighted-three",
+      "choices": [
+        {
+          "id": "scholar",
+          "name": "Scholar's Sigil",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "poor_monster_notes_v514",
+          "name": "Monster Notes",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "venom_edge",
+          "name": "Venom Edge",
+          "rarity": "common",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "rngCalls": 3,
+      "rngState": 3499672196
+    },
+    {
+      "name": "weighted-four",
+      "choices": [
+        {
+          "id": "poor_lucky_pebble_v514",
+          "name": "Lucky Pebble",
+          "rarity": "poor",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "rare_glass_needle",
+          "name": "Glass Needle",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "stride",
+          "name": "Long Stride",
+          "rarity": "common",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "attack_common_v24",
+          "name": "Sharpened Steel",
+          "rarity": "common",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "rngCalls": 4,
+      "rngState": 908199655
+    },
+    {
+      "name": "apply-normal",
+      "applied": {
+        "id": "attack",
+        "name": "Sharper Blade",
+        "rarity": "poor",
+        "classId": null,
+        "classIds": [],
+        "unique": false,
+        "achievementGate": null
+      },
+      "rngCalls": 0,
+      "rngState": 2239693041,
+      "state": {
+        "boardLevel": 1,
+        "nightmareMode": false,
+        "hellMode": false,
+        "pendingLevelUps": 0,
+        "player": {
+          "classId": "ranger",
+          "level": 1,
+          "position": 0,
+          "hp": 37,
+          "maxHp": 37,
+          "attack": 11,
+          "defense": 1,
+          "luck": 0,
+          "gold": 1,
+          "goldBonus": 0,
+          "crit": 0.15,
+          "doubleStrike": 0,
+          "bossDamage": 0,
+          "lifeSteal": 0,
+          "elementProcBonus": 0,
+          "elementDamageBonus": 0,
+          "levelChoiceBonus": 0,
+          "rangerMarkMax": 3,
+          "loadedSix": false,
+          "goldAttackScale": 0,
+          "upgradeCounts": {
+            "attack": 1
+          },
+          "runBuffs": [
+            {
+              "icon": "⚔️",
+              "name": "Sharper Blade",
+              "desc": "Gain +1 Attack this run.",
+              "rarity": "poor",
+              "source": "Oracle Normal"
+            }
+          ]
+        },
+        "meta": {
+          "petCookies": 0,
+          "achievements": {}
+        }
+      }
+    },
+    {
+      "name": "apply-unique",
+      "applied": {
+        "id": "legendary_golden_law",
+        "name": "Golden Law",
+        "rarity": "legendary",
+        "classId": null,
+        "classIds": [],
+        "unique": true,
+        "achievementGate": "merchant1"
+      },
+      "rngCalls": 0,
+      "rngState": 2277383053,
+      "state": {
+        "boardLevel": 1,
+        "nightmareMode": false,
+        "hellMode": false,
+        "pendingLevelUps": 0,
+        "player": {
+          "classId": "ranger",
+          "level": 1,
+          "position": 0,
+          "hp": 37,
+          "maxHp": 37,
+          "attack": 6,
+          "defense": 1,
+          "luck": 0,
+          "gold": 1,
+          "goldBonus": 1.5,
+          "crit": 0.15,
+          "doubleStrike": 0,
+          "bossDamage": 0,
+          "lifeSteal": 0,
+          "elementProcBonus": 0,
+          "elementDamageBonus": 0,
+          "levelChoiceBonus": 0,
+          "rangerMarkMax": 3,
+          "loadedSix": false,
+          "goldAttackScale": 0.01,
+          "upgradeCounts": {
+            "legendary_golden_law": 1
+          },
+          "runBuffs": [
+            {
+              "icon": "⚖️🪙",
+              "name": "Golden Law",
+              "desc": "Gain +100% gold. Every 100 gold grants +1 effective Attack; Ouroboros converts that growth into +10% Echo Strike instead.",
+              "rarity": "legendary",
+              "source": "Oracle Unique"
+            }
+          ]
+        },
+        "meta": {
+          "petCookies": 0,
+          "achievements": {}
+        }
+      }
+    },
+    {
+      "name": "apply-d20",
+      "applied": {
+        "id": "attack",
+        "name": "Sharper Blade",
+        "rarity": "poor",
+        "classId": null,
+        "classIds": [],
+        "unique": false,
+        "achievementGate": null
+      },
+      "rngCalls": 1,
+      "rngState": 3303605125,
+      "state": {
+        "boardLevel": 1,
+        "nightmareMode": false,
+        "hellMode": false,
+        "pendingLevelUps": 0,
+        "player": {
+          "classId": "d20",
+          "level": 1,
+          "position": 0,
+          "hp": 100,
+          "maxHp": 100,
+          "attack": 11,
+          "defense": 1,
+          "luck": 0,
+          "gold": 1,
+          "goldBonus": 0,
+          "crit": 0.15,
+          "doubleStrike": 0,
+          "bossDamage": 0,
+          "lifeSteal": 0,
+          "elementProcBonus": 0,
+          "elementDamageBonus": 0,
+          "levelChoiceBonus": 0,
+          "rangerMarkMax": 3,
+          "loadedSix": false,
+          "goldAttackScale": 0,
+          "upgradeCounts": {
+            "attack": 1
+          },
+          "runBuffs": [
+            {
+              "icon": "⚔️",
+              "name": "Sharper Blade",
+              "desc": "Gain +1 Attack this run. · Powerup d20 rolled 9: the gift resolves normally.",
+              "rarity": "poor",
+              "source": "Oracle D20"
+            }
+          ]
+        },
+        "meta": {
+          "petCookies": 0,
+          "achievements": {}
+        }
+      }
+    },
+    {
+      "name": "random-high-rarity",
+      "applied": {
+        "id": "execute",
+        "name": "Executioner",
+        "rarity": "epic",
+        "classId": null,
+        "classIds": [],
+        "unique": true,
+        "achievementGate": null
+      },
+      "rngCalls": 1,
+      "rngState": 2558387352,
+      "state": {
+        "boardLevel": 1,
+        "nightmareMode": false,
+        "hellMode": false,
+        "pendingLevelUps": 0,
+        "player": {
+          "classId": "ranger",
+          "level": 1,
+          "position": 0,
+          "hp": 37,
+          "maxHp": 37,
+          "attack": 6,
+          "defense": 1,
+          "luck": 0,
+          "gold": 1,
+          "goldBonus": 0,
+          "crit": 0.15,
+          "doubleStrike": 0,
+          "bossDamage": 0,
+          "lifeSteal": 0,
+          "elementProcBonus": 0,
+          "elementDamageBonus": 0,
+          "levelChoiceBonus": 0,
+          "rangerMarkMax": 3,
+          "loadedSix": false,
+          "goldAttackScale": 0,
+          "upgradeCounts": {
+            "execute": 1
+          },
+          "runBuffs": [
+            {
+              "icon": "🪓",
+              "name": "Executioner",
+              "desc": "Unique: automatically execute enemies at or below 20% HP.",
+              "rarity": "epic",
+              "source": "Oracle Relic"
+            }
+          ]
+        },
+        "meta": {
+          "petCookies": 0,
+          "achievements": {}
+        }
+      }
+    },
+    {
+      "name": "legendary-choices",
+      "choices": [
+        {
+          "id": "legendary_wanderer_v27",
+          "name": "Legend of the Endless Mile",
+          "rarity": "legendary",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "legendary_worldheart",
+          "name": "Worldheart",
+          "rarity": "legendary",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "legendary_adamant_v27",
+          "name": "Adamant Testament",
+          "rarity": "legendary",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "rngCalls": 3,
+      "rngState": 515256734
+    },
+    {
+      "name": "legendary-repeatable-pool",
+      "count": 6,
+      "ids": [
+        "legendary_worldheart",
+        "legendary_prismatic",
+        "true_legend_echo_v24",
+        "true_legend_element_v24",
+        "legendary_adamant_v27",
+        "legendary_wanderer_v27"
+      ],
+      "rngCalls": 0,
+      "rngState": 4214294639
+    },
+    {
+      "name": "fallback-rarity",
+      "legendary": {
+        "rarity": "legendary",
+        "ids": [
+          "legendary_worldheart",
+          "legendary_prismatic",
+          "true_legend_echo_v24",
+          "true_legend_element_v24",
+          "legendary_crimson_aegis_v27",
+          "legendary_adamant_v27",
+          "legendary_wanderer_v27"
+        ]
+      },
+      "epic": {
+        "rarity": "epic",
+        "ids": [
+          "execute",
+          "phoenix",
+          "godslayer",
+          "rare_echo_chamber",
+          "venom_edge_rare_v25"
+        ]
+      },
+      "poor": {
+        "rarity": "poor",
+        "ids": [
+          "hp",
+          "attack",
+          "defense",
+          "potion",
+          "purse",
+          "mending",
+          "heal",
+          "gold",
+          "scholar",
+          "thorns",
+          "poor_lucky_pebble_v514",
+          "poor_cracked_scope_v514",
+          "poor_faint_echo_v514",
+          "poor_weak_tonic_v514",
+          "poor_monster_notes_v514",
+          "poor_folded_map_v514",
+          "poor_cheap_venom_v514"
+        ]
+      },
+      "rngCalls": 0,
+      "rngState": 797848517
+    },
+    {
+      "name": "miniboss-three",
+      "choices": [
+        {
+          "id": "vampire",
+          "name": "Vampiric Edge",
+          "rarity": "rare",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "berserk",
+          "name": "Berserker Heart",
+          "rarity": "rare",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "titan",
+          "name": "Titan's Blood",
+          "rarity": "rare",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "rngCalls": 6,
+      "rngState": 2018492328
+    },
+    {
+      "name": "miniboss-four",
+      "choices": [
+        {
+          "id": "phoenix",
+          "name": "Phoenix Feather",
+          "rarity": "epic",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "legendary_crimson_aegis_v27",
+          "name": "Crimson Aegis",
+          "rarity": "legendary",
+          "classId": null,
+          "classIds": [],
+          "unique": true,
+          "achievementGate": null
+        },
+        {
+          "id": "rare_glass_needle",
+          "name": "Glass Needle",
+          "rarity": "uncommon",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        },
+        {
+          "id": "venom_edge_rare_v25",
+          "name": "Venom Edge: Black Fang",
+          "rarity": "epic",
+          "classId": null,
+          "classIds": [],
+          "unique": false,
+          "achievementGate": null
+        }
+      ],
+      "rngCalls": 8,
+      "rngState": 3026597186
+    },
+    {
+      "name": "level-ui-three",
+      "ui": {
+        "subtitle": "Choose 1 of 3 powerups for this run.",
+        "choices": [
+          {
+            "name": "Venom Edge",
+            "rarity": "common"
+          },
+          {
+            "name": "Folded Road Map",
+            "rarity": "poor"
+          },
+          {
+            "name": "Fortune Broker",
+            "rarity": "uncommon"
+          }
+        ],
+        "reroll": "🔄 Reroll choices · 0 remaining",
+        "overlayHidden": false
+      },
+      "rngCalls": 3,
+      "rngState": 2633141114
+    },
+    {
+      "name": "level-ui-four",
+      "ui": {
+        "subtitle": "Choose 1 of 4 powerups. 2 levels are waiting.",
+        "choices": [
+          {
+            "name": "Roadside Mending",
+            "rarity": "poor"
+          },
+          {
+            "name": "Folded Road Map",
+            "rarity": "poor"
+          },
+          {
+            "name": "Barbed Armor",
+            "rarity": "common"
+          },
+          {
+            "name": "Treasure Sense",
+            "rarity": "poor"
+          }
+        ],
+        "reroll": "🔄 Reroll choices · 0 remaining",
+        "overlayHidden": false
+      },
+      "rngCalls": 4,
+      "rngState": 3128355745
+    },
+    {
+      "name": "all-eligible-ui",
+      "ui": {
+        "title": "Powerups Oracle",
+        "subtitle": "Choose one powerup from every option currently eligible for 🏹 Ranger. Locked, class-ineligible and already-consumed Unique powers are omitted.",
+        "countText": "",
+        "count": 79,
+        "first": [
+          "Adamant Testament",
+          "Crimson Aegis",
+          "Legend of Repetition",
+          "Legend of the Endless Mile",
+          "Legend of the Prismatic Road",
+          "Prismatic Sovereignty",
+          "Worldheart",
+          "Echo Chamber"
+        ],
+        "last": [
+          "Roadside Mending",
+          "Scholar's Sigil",
+          "Second Wind",
+          "Sharper Blade",
+          "Spiked Armor",
+          "Toughness",
+          "Treasure Sense",
+          "Weak Tonic"
+        ],
+        "overlayHidden": false
+      },
+      "rngCalls": 0,
+      "rngState": 4187082087
+    },
+    {
+      "name": "perfected-signature",
+      "ranger": {
+        "desc": "Perfected Signature — Ranger: maximum Marks +2.",
+        "classId": "ranger"
+      },
+      "sorcerer": {
+        "desc": "Perfected Signature — Sorcerer: +25 Max Mana, +6 Mana from Channel Bolt, and +10% Arcane Surge chance.",
+        "classId": "sorcerer"
+      },
+      "rngCalls": 0,
+      "rngState": 3330438060
+    }
+  ]
+}

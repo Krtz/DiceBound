@@ -13,6 +13,8 @@
   const dbProgressionOwner=window.DiceboundProgression;
   if(!dbProgressionOwner)throw new Error("dicebound.js requires DiceboundProgression before loading.");
   let dbProgression=null;
+  const dbPowerups=window.DiceboundPowerups;
+  if(!dbPowerups)throw new Error("dicebound.js requires DiceboundPowerups before loading.");
   const dbPets=window.DiceboundPets;
   if(!dbPets)throw new Error("dicebound.js requires DiceboundPets before loading.");
   const dbPetLifecycleOwner=window.DiceboundPetLifecycle;
@@ -88,14 +90,14 @@
       updateHUD:()=>updateHUD(),
       returnToRoad:()=>returnToRoad(),
       activePetName:()=>dbPets.activeDefinition().name,
-      eligibleUpgrades:filter=>eligibleUpgrades(filter),
-      applyRandomHighRarity:(...args)=>applyRandomHighRarity(...args),
-      applyUpgrade:(...args)=>applyUpgrade(...args),
+      eligibleUpgrades:filter=>dbPowerups.eligible(filter),
+      applyRandomHighRarity:(...args)=>dbPowerups.applyRandomHighRarity(...args),
+      applyUpgrade:(...args)=>dbPowerups.apply(...args),
       rarityLabel:rarity=>rarityInfo[rarity]?.label||rarity,
       forceLevels:n=>forceLevels(n),
       recordRunBuff:(...args)=>recordRunBuff(...args),
       effectiveDodgeChance:()=>effectiveDodgeChance(),
-      fallbackRarityPool:wanted=>v27FallbackRarityPool(wanted),
+      fallbackRarityPool:wanted=>dbPowerups.fallbackRarityPool(wanted),
       startCombat:kind=>startCombat(kind),
       art:(...args)=>beta043Art(...args)
     }
@@ -189,8 +191,8 @@
       describeCurrent:()=>window.DiceboundPerfectedSignature?.describeCurrent?.()||"Perfected Signature adapts to the current class."
     }
   });
-  const DB317_POWERUPS_RAW=window.DiceboundPowerupRegistry?.createRegistry(DB_POWERUP_SERVICES);
-  if(!DB317_POWERUPS_RAW)throw new Error("DiceboundPowerupRegistry must load before dicebound.js");
+  const DB317_POWERUPS_RAW=dbPowerups.createRegistry(DB_POWERUP_SERVICES);
+  if(!DB317_POWERUPS_RAW)throw new Error("DiceboundPowerups must provide the powerup registry before dicebound.js");
   const upgrades=db317Readonly(DB317_POWERUPS_RAW);
   const DB317_TALENTS_RAW=window.DiceboundTalents?.createRegistry();
   if(!DB317_TALENTS_RAW)throw new Error("DiceboundTalents must load before dicebound.js");
@@ -933,45 +935,10 @@
     if(!player.runBuffs)player.runBuffs=[];
     player.runBuffs.push({icon,name,desc,rarity,source});
   }
-  function applyUpgrade(up,source="Powerup"){
-    player.upgradeCounts=player.upgradeCounts||{};player.upgradeCounts[up.id]=(player.upgradeCounts[up.id]||0)+1;
-    let copies=1,chaosNote="";
-    if(classIdentityActive("d20")){
-      const roll=rand(1,20);
-      if(roll===1){const hurt=Math.max(1,Math.ceil(player.maxHp*.10));player.hp=Math.max(1,player.hp-hurt);chaosNote=`Powerup d20 rolled 1: the gift works, but probability bites for ${hurt} HP.`;}
-      else if(roll<=4){player.gold=Math.max(0,player.gold-rand(0,12));chaosNote=`Powerup d20 rolled ${roll}: the gift works with a small financial anomaly.`;}
-      else if(roll<=9){chaosNote=`Powerup d20 rolled ${roll}: the gift resolves normally.`;}
-      else if(roll<=13){const stat=pick(["attack","defense","maxHp","crit","luck"]);if(stat==="attack")player.attack++;if(stat==="defense")player.defense++;if(stat==="maxHp"){player.maxHp+=5;player.hp+=5;}if(stat==="crit")player.crit+=.04;if(stat==="luck")player.luck+=.05;chaosNote=`Powerup d20 rolled ${roll}: normal gift plus a random ${stat} bonus.`;}
-      else if(roll<=17){copies=up.unique?1:2;chaosNote=`Powerup d20 rolled ${roll}: probability duplicates the gift${up.unique?" into a safe bonus":""}.`;if(up.unique){player.ultimateCharge=clamp(player.ultimateCharge+25,0,100);}}
-      else if(roll===18){copies=up.unique?1:2;player.potions+=2;chaosNote="Powerup d20 rolled 18: doubled gift and two potions.";}
-      else if(roll===19){copies=up.unique?1:2;player.attack+=2;player.crit+=.10;chaosNote="Powerup d20 rolled 19: doubled gift, +2 Attack and +10% Crit.";}
-      else{copies=up.unique?1:3;player.hp=player.maxHp;meta.petCookies=(meta.petCookies||0)+1;saveMeta();chaosNote=`NATURAL 20: ${up.unique?"the unique gift awakens":"the gift applies three times"}, full heal and +1 pet cookie.`;}
-      addLog(`<b>Twenty-Sider powerup roll:</b> ${chaosNote}`);showToast(`🎲 ${chaosNote}`,3000,true);
-    }
-    for(let i=0;i<copies;i++)up.apply();checkDynamicClassUnlocks();recordRunBuff(up.icon,up.name,`${up.desc}${chaosNote?` · ${chaosNote}`:""}`,up.rarity,source);return up;
-  }
-  function weightedUpgrade(pool){
-    const weighted=pool.map(up=>{
-      let weight=rarityInfo[up.rarity].weight, luck=clamp(player.luck,0,1.5),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1);
-      if(up.rarity==="common")weight*=Math.max(.24,1-luck*.45-depth*.04);
-      if(up.rarity==="uncommon")weight*=1+luck*.45+depth*.05;
-      if(up.rarity==="rare")weight=(weight+Math.min(2.2,player.level*.07)+depth*.35)*(1+luck*2.8);
-      if(up.rarity==="epic")weight=(weight+Math.min(.65,player.level*.018)+depth*.10)*(1+luck*4.2);
-      if(up.rarity==="legendary")weight=(weight+Math.min(.08,player.level*.0015)+depth*.012)*(1+luck*6.2);
-      return {up,weight};
-    });
-    const total=weighted.reduce((a,b)=>a+b.weight,0);let roll=random()*total;
-    for(const entry of weighted){roll-=entry.weight;if(roll<=0)return entry.up;}
-    return weighted[weighted.length-1].up;
-  }
-  function getUpgradeChoices(filter=()=>true){
-    const pool=eligibleUpgrades(filter),choices=[];
-    while(choices.length<3&&pool.length){const chosen=weightedUpgrade(pool);choices.push(chosen);pool.splice(pool.indexOf(chosen),1);}
-    return choices;
-  }
-  function applyRandomHighRarity(source="Sealed Relic",announce=true){
-    const pool=eligibleUpgrades(u=>u.rarity==="rare"||u.rarity==="epic");const up=pick(pool);applyUpgrade(up,source);if(announce){addLog(`A ${source.toLowerCase()} grants <b>${up.name}</b>.`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);}return up;
-  }
+  function applyUpgrade(up,source="Powerup"){return dbPowerups.apply(up,source);}
+  function weightedUpgrade(pool){return dbPowerups.weighted(pool);}
+  function getUpgradeChoices(filter=()=>true){return dbPowerups.choices(filter,3);}
+  function applyRandomHighRarity(source="Sealed Relic",announce=true){return dbPowerups.applyRandomHighRarity(source,announce);}
   function openLevelUp(onComplete=null){
     sfx.level();$("levelSubtitle").textContent=pendingLevelUps>1?`Choose a powerup. ${pendingLevelUps} levels are waiting.`:"Choose one powerup for this run.";
     const grid=$("choiceGrid");grid.innerHTML="";
@@ -1253,7 +1220,18 @@
   );
 
   function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}
-  function eligibleUpgrades(filter=()=>true){return upgrades.filter(u=>{const classOk=!u.classId&&!u.classIds||player.classId==="slime"||u.classId===player.classId||(u.classIds||[]).includes(player.classId);return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});}
+  dbPowerups.configure({
+    getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>achievementGateUnlocked(gate),
+    slimeIdentityActive:()=>classIdentityActive("slime"),
+    slimePowerCompatible:u=>{const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));return dbPowerups.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps);},
+    slimeRougePowerCompatible:u=>v318SlimeRougePowerCompatible(u),
+    filterPowerupPoolForLuck:(pool,luck)=>DB_RARITIES.filterPowerupPoolForLuck?.(pool,luck),
+    getBoardLevel:()=>boardLevel,currentTileCount:()=>currentTileCount(),random:()=>random(),rand:(min,max)=>rand(min,max),pick:list=>pick(list),clamp:(value,min,max)=>clamp(value,min,max),
+    classIdentityActive:id=>classIdentityActive(id),hasLegendaryEffect:id=>db060HasEffect(id),saveMeta:()=>saveMeta(),addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),
+    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{ensureAlphaMeta().powerupsTaken++;saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
+    isNightmare:()=>!!nightmareMode,isHell:()=>!!hellMode,isGameStarted:()=>!!gameStarted
+  });
+  function eligibleUpgrades(filter=()=>true){return dbPowerups.eligible(filter);}
 
   function dbClassUnlockFacts(){meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;}
   function dbClassUnlockContext(){
@@ -1397,7 +1375,7 @@
 
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
   const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};
-  const applyUpgradeV15=applyUpgrade;applyUpgrade=function(up,source="Powerup"){const result=applyUpgradeV15(up,source);ensureAlphaMeta().powerupsTaken++;saveMeta();return result;};
+  // Powerup career accounting/save ordering is owned by DiceboundPowerups.
 
 
   // Custom ultimate art for the new classes.
@@ -1540,7 +1518,7 @@
   upgrades.forEach(inferUpgradeTags);
   function choiceHTML(up){inferUpgradeTags(up);return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc">${up.desc}</span><span class="choice-tags">${tagChips(up.tags,"power")}</span>`;}
 
-  eligibleUpgrades=function(filter=()=>true){return upgrades.filter(u=>{const classOk=(!u.classId&&!u.classIds)||u.classId===player.classId||(u.classIds||[]).includes(player.classId);return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});};
+  // Powerup eligibility is owned by DiceboundPowerups.
   openLevelUp=function(onComplete=null){sfx.level();$("levelSubtitle").textContent=pendingLevelUps>1?`Choose a powerup. ${pendingLevelUps} levels are waiting.`:"Choose one powerup for this run.";const grid=$("choiceGrid");grid.innerHTML="";getUpgradeChoices().forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,"Level Up");pendingLevelUps--;addLog(`Level ${player.level}: gained <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);updateHUD();if(pendingLevelUps>0)openLevelUp(onComplete);else{$("levelOverlay").classList.add("hidden");if(onComplete)onComplete();else{rollLocked=false;updateHUD();}}});grid.appendChild(btn);});$("levelOverlay").classList.remove("hidden");};
   showPowerupChoice=function(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){ $("powerupTitle").textContent=source;$("powerupSubtitle").textContent=subtitle;const grid=$("powerupGrid");grid.innerHTML="";getUpgradeChoices(filter).forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> gained ${up.name} (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete();});grid.appendChild(btn);});$("powerupOverlay").classList.remove("hidden");};
 
@@ -1839,7 +1817,7 @@
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};
     return (spec.requires||[]).every(req=>!req.startsWith("ultimate:")&&caps.has(req));
   }
-  eligibleUpgrades=function(filter=()=>true){return upgrades.filter(u=>{let classOk=(!u.classId&&!u.classIds)||u.classId===player.classId||(u.classIds||[]).includes(player.classId);if(classIdentityActive("slime")&&!classOk){const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));if(window.DiceboundPowerupBorrowing.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps))classOk=true;}return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});};
+  // Slime borrowing eligibility is owned by DiceboundPowerups.
 
   // ---- core class identity hooks --------------------------------------------
   const effectiveDodgeChanceV13=effectiveDodgeChance;
@@ -2034,7 +2012,7 @@
   // ---- Rarity/Luck and deterministic v1.5 seed codes -----------------------
   elementChanceForRarity=function(rarity){return {common:.28,uncommon:.39,rare:.52,epic:.66,legendary:.80,mythical:1,omega:1}[rarity]||.25;};
   rollGearRarity=function(bonus=0){const progress=player.position/Math.max(1,currentTileCount()-1),luck=Math.max(0,player.luck||0),luckDiminishing=1-Math.exp(-luck*.80),q=clamp((boardLevel-1)*.026+progress*.016+Math.max(0,bonus)*.075+luckDiminishing*.035+(nightmareMode?.014:0),0,.34),legendary=.0025+q*.012,epic=.018+q*.055,rare=.085+q*.16,uncommon=.27+q*.18,p=random();if(p<legendary)return "legendary";if(p<legendary+epic)return "epic";if(p<legendary+epic+rare)return "rare";if(p<legendary+epic+rare+uncommon)return "uncommon";return "common";};
-  weightedUpgrade=function(pool){const weighted=pool.map(up=>{let weight=rarityInfo[up.rarity].weight,rawLuck=Math.max(0,player.luck||0),luck=1-Math.exp(-rawLuck*.72),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1);if(up.rarity==="common")weight*=Math.max(.38,1-luck*.22-depth*.025);if(up.rarity==="uncommon")weight*=1+luck*.18+depth*.035;if(up.rarity==="rare")weight=(weight+Math.min(1.4,player.level*.045)+depth*.20)*(1+luck*.72);if(up.rarity==="epic")weight=(weight+Math.min(.35,player.level*.010)+depth*.055)*(1+luck*1.05);if(up.rarity==="legendary")weight=(weight+Math.min(.035,player.level*.0008)+depth*.006)*(1+luck*1.40);return {up,weight};});const total=weighted.reduce((a,b)=>a+b.weight,0);let roll=random()*total;for(const entry of weighted){roll-=entry.weight;if(roll<=0)return entry.up;}return weighted[weighted.length-1].up;};
+  weightedUpgrade=function(pool){return dbPowerups.weighted(pool);};
 
   function v15SafeClassId(id){return CLASSES[id]?id:"ranger";}
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
@@ -2228,8 +2206,8 @@
   // ---- Potion / Echo tooltips ----------------------------------------------
 
   // ---- Reliable Legendary choice flow -------------------------------------
-  function v17LegendaryPool(){return eligibleUpgrades(u=>u.rarity==="legendary");}
-  function v17LegendaryChoices(){const pool=[...v17LegendaryPool()],out=[];while(pool.length&&out.length<3){const i=rand(0,pool.length-1);out.push(pool.splice(i,1)[0]);}return out;}
+  function v17LegendaryPool(){return dbPowerups.eligible(u=>u.rarity==="legendary");}
+  function v17LegendaryChoices(){return dbPowerups.legendaryChoices();}
   function v17OpenLegendaryChoice(source,onComplete=()=>{}){$("powerupTitle").textContent=source;$('powerupSubtitle').textContent="Choose one of three Legendary powers. The purchase is already paid for.";const grid=$("powerupGrid");grid.innerHTML="";const choices=v17LegendaryChoices();if(!choices.length){const d=document.createElement("div");d.className="merchant-notice show";d.innerHTML="No eligible Legendary powers remain for this class this run. The contract refunds 100% of its price.";grid.appendChild(d);$("powerupOverlay").classList.remove("hidden");setTimeout(()=>{$("powerupOverlay").classList.add("hidden");onComplete(false);},650);return;}choices.forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn legendary`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose <b>${up.name}</b>.`);showToast(`Legendary: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete(up);});grid.appendChild(btn);});$("merchantOverlay")?.classList.add("hidden");$("powerupOverlay").classList.remove("hidden");}
 
   // ---- Explicit late-road difficulty curve --------------------------------
@@ -2444,10 +2422,7 @@
   // ---- Endless Form support hooks ------------------------------------------
 
   // ---- Level-up fourth choice ----------------------------------------------
-  function v18LevelChoices(){
-    const count=3+(player.levelChoiceBonus?1:0),pool=eligibleUpgrades(),choices=[];
-    while(choices.length<count&&pool.length){const chosen=weightedUpgrade(pool);choices.push(chosen);pool.splice(pool.indexOf(chosen),1);}return choices;
-  }
+  function v18LevelChoices(){return dbPowerups.levelChoices();}
   openLevelUp=function(onComplete=null){
     sfx.level();const count=3+(player.levelChoiceBonus?1:0);$("levelSubtitle").textContent=pendingLevelUps>1?`Choose 1 of ${count} powerups. ${pendingLevelUps} levels are waiting.`:`Choose 1 of ${count} powerups for this run.`;
     const grid=$("choiceGrid");grid.innerHTML="";v18LevelChoices().forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,"Level Up");pendingLevelUps--;addLog(`Level ${player.level}: gained <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);updateHUD();if(pendingLevelUps>0)openLevelUp(onComplete);else{$("levelOverlay").classList.add("hidden");if(onComplete)onComplete();else{rollLocked=false;updateHUD();}}});grid.appendChild(btn);});
@@ -2903,7 +2878,7 @@
     entry.apply();
     return entry;
   }
-  function powerupDisplayDesc(up){return window.DiceboundPowerupRegistry.describe(up,DB_POWERUP_SERVICES);}
+  function powerupDisplayDesc(up){return dbPowerups.describe(up);}
 
   // The authoritative registry is intentionally read-only. Its Perfected
   // Signature entry calls this stable runtime service instead of reaching into
@@ -2987,9 +2962,50 @@
     search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();cards.forEach(c=>c.style.display=!q||c.dataset.search.includes(q)?'':'none');updateCount();});
     updateCount();overlay.classList.remove('hidden');setTimeout(()=>search.focus(),0);return true;
   }
-  window.DiceboundPowerups=Object.freeze({
-    openAllEligible:(source='Special Powerup Selection',onComplete=()=>{},filter=()=>true)=>showAllEligiblePowerupSelection(source,onComplete,filter),
-    eligible:()=>eligibleUpgrades().slice(),
+  // Test-only characterization surface for the Powerups subsystem migration.
+  // It exposes the final released 0.6.6.32 behavior without changing ordinary
+  // callers so capture/replay can freeze eligibility, choice, application and
+  // exact RNG semantics before DiceboundPowerups ownership moves.
+  const dbPowerupsOracleSummary=up=>up?({id:up.id,name:up.name,rarity:up.rarity,classId:up.classId||null,classIds:[...(up.classIds||[])],unique:!!up.unique,achievementGate:up.achievementGate||null}):null;
+  const dbPowerupsOracleState=()=>({
+    boardLevel,nightmareMode:!!nightmareMode,hellMode:!!hellMode,pendingLevelUps,
+    player:{
+      classId:player.classId,level:player.level,position:player.position,hp:player.hp,maxHp:player.maxHp,attack:player.attack,defense:player.defense,
+      luck:player.luck,gold:player.gold,goldBonus:player.goldBonus,crit:player.crit,doubleStrike:player.doubleStrike,bossDamage:player.bossDamage,
+      lifeSteal:player.lifeSteal,elementProcBonus:player.elementProcBonus,elementDamageBonus:player.elementDamageBonus,levelChoiceBonus:player.levelChoiceBonus||0,
+      rangerMarkMax:player.rangerMarkMax||0,loadedSix:!!player.loadedSix,goldAttackScale:player.goldAttackScale||0,
+      upgradeCounts:dbRunClone(player.upgradeCounts||{}),runBuffs:dbRunClone(player.runBuffs||[])
+    },
+    meta:{petCookies:meta.petCookies||0,achievements:dbRunClone(meta.achievements||{})}
+  });
+  window.DiceboundPowerupsOracleTest=Object.freeze({
+    apiVersion:1,
+    state:()=>dbPowerupsOracleState(),
+    catalog:()=>upgrades.map(dbPowerupsOracleSummary),
+    eligible:(rarity=null)=>eligibleUpgrades(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
+    weighted:(ids=null)=>{const pool=ids?ids.map(id=>upgrades.find(u=>u.id===id)).filter(Boolean):eligibleUpgrades();return dbPowerupsOracleSummary(weightedUpgrade(pool));},
+    choices:(rarity=null)=>getUpgradeChoices(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
+    levelChoices:()=>v18LevelChoices().map(dbPowerupsOracleSummary),
+    apply:(id,source='Powerups Oracle')=>{const up=upgrades.find(u=>u.id===id);if(!up)throw new Error(`unknown powerup ${id}`);return dbPowerupsOracleSummary(applyUpgrade(up,source));},
+    randomHigh:(source='Powerups Oracle')=>dbPowerupsOracleSummary(applyRandomHighRarity(source,false)),
+    legendaryChoices:()=>v17LegendaryChoices().map(dbPowerupsOracleSummary),
+    sovereignChoices:()=>db0410LegendaryChoices().map(dbPowerupsOracleSummary),
+    fallbackRarity:wanted=>{const found=v27FallbackRarityPool(wanted);return {rarity:found.rarity,ids:found.pool.map(u=>u.id)};},
+    minibossRarity:()=>v27RollMinibossRarity(),
+    minibossChoices:()=>v27MinibossChoices().map(dbPowerupsOracleSummary),
+    setBoardLevel:value=>{boardLevel=Math.max(1,Number(value)||1);return boardLevel;},
+    setModes:(nightmare=false,hell=false)=>{nightmareMode=!!nightmare;hellMode=!!hell;return {nightmareMode,hellMode};},
+    setPendingLevelUps:value=>{pendingLevelUps=Math.max(0,Number(value)||0);return pendingLevelUps;},
+    levelUi:()=>{openLevelUp(()=>{});const grid=$("choiceGrid");return {subtitle:$("levelSubtitle")?.textContent||"",choices:[...grid.querySelectorAll("button.choice-btn")].map(b=>({name:b.querySelector('.choice-name')?.textContent||'',rarity:[...b.classList].find(x=>rarityInfo[x])||null})),reroll:grid.querySelector('.powerup-reroll-btn')?.textContent||null,overlayHidden:$("levelOverlay")?.classList.contains("hidden")??true};},
+    allEligibleUi:()=>{showAllEligiblePowerupSelection('Powerups Oracle',()=>{});const grid=$("powerupGrid");return {title:$("powerupTitle")?.textContent||"",subtitle:$("powerupSubtitle")?.textContent||"",names:[...grid.querySelectorAll("button.choice-btn")].map(b=>b.querySelector('.choice-name')?.textContent||''),countText:grid.querySelector('.powerup-selector-count')?.textContent||'',overlayHidden:$("powerupOverlay")?.classList.contains("hidden")??true};},
+    perfectedSignature:()=>{const up=perfectedSignatureForCurrentClass();return {name:up.name,desc:up.desc,classId:player.classId};},
+    closeOverlays:()=>{$("levelOverlay")?.classList.add("hidden");$("powerupOverlay")?.classList.add("hidden");return true;}
+  });
+  dbPowerups.configure({
+    renderLevelUp:onComplete=>openLevelUp(onComplete),
+    renderPowerupChoice:(source,onComplete,filter,subtitle)=>showPowerupChoice(source,onComplete,filter,subtitle),
+    renderLegendaryChoice:(source,onComplete)=>showLegendaryChoice(source,onComplete),
+    renderAllEligible:(source,onComplete,filter)=>showAllEligiblePowerupSelection(source,onComplete,filter),
     perfectedSignature:()=>({...perfectedSignatureForCurrentClass(),apply:undefined})
   });
 
@@ -3375,11 +3391,7 @@
     {id:'true_legend_element_v24',rarity:'legendary',icon:'🌈🌟',name:'Legend of the Prismatic Road',unique:true,desc:'Gain +20% elemental proc chance and +35% elemental power this run.',apply(){player.elementProcBonus=(player.elementProcBonus||0)+.20;player.elementDamageBonus=(player.elementDamageBonus||0)+.35;}}
   ];
   v24NewPowerups.forEach(up=>{if(!upgrades.some(x=>x.id===up.id))upgrades.push(up);});
-  weightedUpgrade=function(pool){
-    const order={poor:0,common:1,uncommon:2,rare:3,epic:4,legendary:5,artifact:6,mythical:7,omega:8};
-    const weighted=pool.map(up=>{const tier=order[up.rarity]??0,base=Math.max(0,rarityInfo[up.rarity]?.weight||0),rawLuck=Math.max(0,player.luck||0),luck=1-Math.exp(-rawLuck*.68),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1);let weight=base;if(tier<=1)weight*=Math.max(.30,1-luck*.20-depth*.018);else weight*=1+(tier-1)*(luck*.20+depth*.018);if(up.rarity==='legendary')weight+=Math.min(.018,player.level*.00035)+depth*.0016;return {up,weight};});
-    const total=weighted.reduce((s,x)=>s+x.weight,0);if(total<=0)return pool[0];let roll=random()*total;for(const e of weighted){roll-=e.weight;if(roll<=0)return e.up;}return weighted[weighted.length-1].up;
-  };
+  weightedUpgrade=function(pool){return dbPowerups.weighted(pool);};
 
   /* MODULE: handcrafted Legendary relics ---------------------------------- */
   function generateAxelsCoffeeMug(){return {id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'legendary',specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}};}
@@ -3757,7 +3769,7 @@
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
   const rollGearRarityV26Base=rollGearRarity;rollGearRarity=function(...args){const rarity=rollGearRarityV26Base.apply(this,args);return DB_RARITIES.promoteOrdinaryRarityForLuck?.(rarity,player.luck)||rarity;};
-  const weightedUpgradeV26Base=weightedUpgrade;weightedUpgrade=function(pool){const eligible=DB_RARITIES.filterPowerupPoolForLuck?.(pool,player.luck);return weightedUpgradeV26Base(Array.isArray(eligible)&&eligible.length?eligible:pool);};
+  // High-Luck Powerup pool filtering is owned by DiceboundPowerups.
 
   /* LONG STRIDE: FATE CHOICES ARE EXACT ----------------------------------- */
   // The legacy debug 1d6 capture path predates the shared fate rule. Replace
@@ -3849,7 +3861,7 @@
     v18SyncOuroborosAttack();
   }
 
-  const applyUpgradeV27Base=applyUpgrade;applyUpgrade=function(up,source){const r=applyUpgradeV27Base(up,source);v27SyncOuroborosEconomy();return r;};
+  // Ouroboros post-Powerup economy sync is owned by DiceboundPowerups.
   const updateHUDV27OuroBase=updateHUD;updateHUD=function(){v27SyncOuroborosEconomy();const r=updateHUDV27OuroBase();if(classIdentityActive('ouroboros')&&$('attackText'))$('attackText').textContent='10';return r;};
 
   /* EXTREME ECHO SPEED ----------------------------------------------------- */
@@ -3862,12 +3874,12 @@
   /* POISON COUNTER CLEANUP ------------------------------------------------- */
 
   /* MYSTIC & MINIBOSS POWERUP REWARDS ------------------------------------- */
-  function v27FallbackRarityPool(wanted){const order=['legendary','epic','rare','uncommon','common','poor'],start=Math.max(0,order.indexOf(wanted));for(let i=start;i<order.length;i++){const pool=eligibleUpgrades(u=>u.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}for(let i=start-1;i>=0;i--){const pool=eligibleUpgrades(u=>u.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}return {rarity:null,pool:[]};}
+  function v27FallbackRarityPool(wanted){return dbPowerups.fallbackRarityPool(wanted);}
 
-  function beta03MinibossBaseTable(level=boardLevel){return level<=1?{legendary:.08,epic:.32,rare:.76,uncommon:.95}:level===2?{legendary:.14,epic:.58,rare:.86,uncommon:.97}:{legendary:.22,epic:.58,rare:.86,uncommon:.97};}
-  function beta03MinibossOddsText(level=boardLevel){return level<=1?'8% Legendary · 24% Epic · 44% Rare · 19% Uncommon · 5% Common':level===2?'14% Legendary · 44% Epic · 28% Rare · 11% Uncommon · 3% Common':'22% Legendary · 36% Epic · 28% Rare · 11% Uncommon · 3% Common';}
-  function v27RollMinibossRarity(){const luck=Math.min(.12,Math.max(0,player.luck||0)*.025),bonus=(nightmareMode?.04:0)+(hellMode?.05:0),p=random(),t=beta03MinibossBaseTable();if(p<t.legendary+luck+bonus)return 'legendary';if(p<t.epic+luck+bonus)return 'epic';if(p<t.rare+luck*.5)return 'rare';if(p<t.uncommon)return 'uncommon';return 'common';}
-  function v27MinibossChoices(){const count=Math.max(3,3+(player.levelChoiceBonus||0)),out=[],used=new Set();for(let i=0;i<count;i++){let wanted=v27RollMinibossRarity(),found=v27FallbackRarityPool(wanted),pool=found.pool.filter(u=>!used.has(u.id));if(!pool.length)pool=found.pool;if(!pool.length)break;const u=pick(pool);used.add(u.id);out.push(u);}return out;}
+  function beta03MinibossBaseTable(level=boardLevel){return dbPowerups.minibossBaseTable(level);}
+  function beta03MinibossOddsText(level=boardLevel){return dbPowerups.minibossOddsText(level);}
+  function v27RollMinibossRarity(){return dbPowerups.rollMinibossRarity();}
+  function v27MinibossChoices(){return dbPowerups.minibossChoices();}
   function v27ShowMinibossReward(source,onComplete=()=>{}){const overlay=$('powerupOverlay'),grid=$('powerupGrid');if(!overlay||!grid){onComplete(false);return;}const render=()=>{grid.innerHTML='';const choices=v27MinibossChoices();if(!choices.length){addLog('<b>Miniboss boon:</b> no eligible powerups remain.');overlay.classList.add('hidden');onComplete(false);return;}$('powerupTitle').textContent='👑 Guardian Boon';$('powerupSubtitle').textContent=`Guardian reward base odds on Board ${boardLevel}: ${beta03MinibossOddsText()}. Luck and harder modes can still improve the roll.`;choices.forEach(up=>{const b=document.createElement('button');b.className=`choice-btn ${up.rarity}`;b.innerHTML=choiceHTML(up);b.addEventListener('click',()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose ${rarityInfo[up.rarity]?.label||up.rarity} <b>${up.name}</b>.`);overlay.classList.add('hidden');updateHUD();onComplete(up);});grid.appendChild(b);});attachPowerupRerollV16?.(grid,render);overlay.classList.remove('hidden');};render();}
   const showLegendaryChoiceV27Base=showLegendaryChoice;showLegendaryChoice=function(source,onComplete=()=>{}){if(String(source).toLowerCase().includes('miniboss'))return v27ShowMinibossReward(source,onComplete);const legends=eligibleUpgrades(u=>u.rarity==='legendary');if(!legends.length){const epics=eligibleUpgrades(u=>u.rarity==='epic');if(epics.length)return showPowerupChoice(source,onComplete,u=>u.rarity==='epic','Every eligible Legendary is exhausted. Choose an Epic power instead.');}return showLegendaryChoiceV27Base(source,onComplete);};
 
@@ -3958,7 +3970,7 @@
   function v318SlimeRougeDonorPool(){return Object.values(CLASSES).filter(c=>c.id!=='slime'&&c.id!=='slimerouge'&&isClassUnlocked(c.id));}
   function v318SlimeRougePowerCompatible(u){
     if(!u)return false;const owners=[u.classId,...(u.classIds||[])].filter(Boolean),unlocked=['slimerouge',...Object.keys(CLASSES).filter(id=>id!=='slimerouge'&&isClassUnlocked(id))];
-    if(!window.DiceboundPowerupBorrowing.ownershipAllowed(u,'slimerouge',unlocked))return false;
+    if(!dbPowerups.ownershipAllowed(u,'slimerouge',unlocked))return false;
     if(!owners.length||owners.includes('slimerouge'))return true;
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};const caps=slimeRougeCapabilities();
     return (spec.requires||[]).every(req=>req.startsWith('ultimate:')?player.slimeRougeUltimateClass===req.slice(9):caps.has(req));
@@ -3987,11 +3999,7 @@
   }
 
 
-  const eligibleUpgradesV28Base=eligibleUpgrades;
-  eligibleUpgrades=function(filter=()=>true){
-    if(player.classId!=='slimerouge')return eligibleUpgradesV28Base(filter);
-    return upgrades.filter(u=>v318SlimeRougePowerCompatible(u)&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u));
-  };
+  // Slime Rouge Powerup eligibility is owned by DiceboundPowerups.
 
   async function v318UseSlimeRougeUltimate(){
     if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;const donorId=player.slimeRougeUltimateClass||player.v28BorrowedUltimateClass||'ranger',identityId=player.slimeRougeIdentityClass||player.v28BorrowedPassiveClass;
@@ -4525,7 +4533,7 @@
   // ----- Sovereign / Contract hardening -----------------------------------
 
 
-  function db0410LegendaryChoices(){const pool=[...eligibleUpgrades(u=>u.rarity==='legendary')],out=[];while(pool.length&&out.length<3){const i=rand(0,pool.length-1);out.push(pool.splice(i,1)[0]);}return out;}
+  function db0410LegendaryChoices(){return dbPowerups.legendaryChoices();}
   function db0410EnsureSovereignOverlay(){
     let overlay=$('sovereignChoiceOverlay');if(overlay)return overlay;
     overlay=document.createElement('div');overlay.id='sovereignChoiceOverlay';overlay.className='overlay hidden';
@@ -4548,9 +4556,9 @@
       getPlayer:()=>player,getBoardLevel:()=>boardLevel,random:()=>random(),pick:list=>pick(list),
       rollGearRarity:bonus=>dbItems.rollGearRarity(bonus),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
       rawSellValue:item=>dbItems.rawSellValue(item),equipItem:item=>dbItems.equip(item),formatBonuses:item=>dbItems.formatBonuses(item),
-      getSlotLabel:slot=>SLOT_LABELS[slot],clamp:(value,min,max)=>clamp(value,min,max),eligibleUpgrades:filter=>eligibleUpgrades(filter),
+      getSlotLabel:slot=>SLOT_LABELS[slot],clamp:(value,min,max)=>clamp(value,min,max),eligibleUpgrades:filter=>dbPowerups.eligible(filter),
       isPowerupRarityAtLeast:(rarity,floor)=>DB_RARITIES.isPowerupRarityAtLeast(rarity,floor),
-      applyUpgrade:(up,source)=>applyUpgrade(up,source),applyRandomHighRarity:(source,announce)=>applyRandomHighRarity(source,announce)
+      applyUpgrade:(up,source)=>dbPowerups.apply(up,source),applyRandomHighRarity:(source,announce)=>dbPowerups.applyRandomHighRarity(source,announce)
     },
     state:{
       getItems:()=>currentMerchantItems,setItems:value=>{currentMerchantItems=value;},
@@ -5486,8 +5494,7 @@
 
 
   // Attack/Defense powerup cross-feed.
-  const db060ApplyUpgradeBase=applyUpgrade;
-  applyUpgrade=function(up,source){const active=db060HasEffect('sword_and_shield'),a0=player.attack,d0=player.defense,r=db060ApplyUpgradeBase(up,source);if(active){const a=Math.max(0,player.attack-a0),d=Math.max(0,player.defense-d0);if(a>0)player.defense+=a;if(d>0)player.attack+=d;if(a||d){addLog(`<b>⚔️🛡️ Sword and Shield:</b> converts the upgrade into +${d} Attack and +${a} Defense.`);showToast('⚔️🛡️ Sword and Shield');}}return r;};
+  // Sword-and-Shield Powerup cross-feed is owned by DiceboundPowerups.
 
   // Ouroboros base-30 identity.
   const db060OuroSyncBase=v18SyncOuroborosAttack;
@@ -5688,7 +5695,7 @@
 
 
   /* BETA 0.6.6.22 — class-unlock policy now resolves in progression/class-unlock-rules.js. */
-  if(!window.DiceboundPowerupBorrowing||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Progression/equipment rule modules must load before dicebound.js');
+  if(!dbPowerups||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Powerups/progression/equipment rule modules must load before dicebound.js');
   if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
   if(CLASSES.rogue)CLASSES.rogue.unlock='Hold 5,000 gold at one time and defeat the Board 3 miniboss';
   if(CLASSES.merchant)CLASSES.merchant.unlock='Defeat the Road Merchant secret boss once';
@@ -6493,9 +6500,9 @@
     clearEncounterState:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
     grantXp:xp=>grantXp(xp),
     getPendingLevelUps:()=>pendingLevelUps,
-    openLevelUp:done=>openLevelUp(done),
+    openLevelUp:done=>dbPowerups.openLevelUp(done),
     openCombatLootChain:(defeated,done)=>openCombatLootChain(defeated,done),
-    showLegendaryChoice:(source,done)=>showLegendaryChoice(source,done),
+    showLegendaryChoice:(source,done)=>dbPowerups.openLegendary(source,done),
     advanceToNextBoard:()=>advanceToNextBoard(),
     completeFinalRoad:()=>completeSixthRoadV19(),
     returnToRoad:()=>returnToRoad(),
