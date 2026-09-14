@@ -1,0 +1,155 @@
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MONO = ROOT / "runtime" / "js" / "dicebound.js"
+HARNESS = ROOT / "tools" / "test_powerups_oracle.js"
+
+source = MONO.read_text(encoding="utf-8")
+marker = "  window.DiceboundPowerups=Object.freeze({\n"
+if source.count(marker) != 1:
+    raise SystemExit(f"expected exactly one DiceboundPowerups facade marker, found {source.count(marker)}")
+if "window.DiceboundPowerupsOracleTest" in source:
+    raise SystemExit("Powerups oracle seam already exists")
+
+seam = r'''  // Test-only characterization surface for the Powerups subsystem migration.
+  // It exposes the final released 0.6.6.32 behavior without changing ordinary
+  // callers so capture/replay can freeze eligibility, choice, application and
+  // exact RNG semantics before DiceboundPowerups ownership moves.
+  const dbPowerupsOracleSummary=up=>up?({id:up.id,name:up.name,rarity:up.rarity,classId:up.classId||null,classIds:[...(up.classIds||[])],unique:!!up.unique,achievementGate:up.achievementGate||null}):null;
+  const dbPowerupsOracleState=()=>({
+    boardLevel,nightmareMode:!!nightmareMode,hellMode:!!hellMode,pendingLevelUps,
+    player:{
+      classId:player.classId,level:player.level,position:player.position,hp:player.hp,maxHp:player.maxHp,attack:player.attack,defense:player.defense,
+      luck:player.luck,gold:player.gold,goldBonus:player.goldBonus,crit:player.crit,doubleStrike:player.doubleStrike,bossDamage:player.bossDamage,
+      lifeSteal:player.lifeSteal,elementProcBonus:player.elementProcBonus,elementDamageBonus:player.elementDamageBonus,levelChoiceBonus:player.levelChoiceBonus||0,
+      rangerMarkMax:player.rangerMarkMax||0,loadedSix:!!player.loadedSix,goldAttackScale:player.goldAttackScale||0,
+      upgradeCounts:dbRunClone(player.upgradeCounts||{}),runBuffs:dbRunClone(player.runBuffs||[])
+    },
+    meta:{petCookies:meta.petCookies||0,achievements:dbRunClone(meta.achievements||{})}
+  });
+  window.DiceboundPowerupsOracleTest=Object.freeze({
+    apiVersion:1,
+    state:()=>dbPowerupsOracleState(),
+    catalog:()=>upgrades.map(dbPowerupsOracleSummary),
+    eligible:(rarity=null)=>eligibleUpgrades(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
+    weighted:(ids=null)=>{const pool=ids?ids.map(id=>upgrades.find(u=>u.id===id)).filter(Boolean):eligibleUpgrades();return dbPowerupsOracleSummary(weightedUpgrade(pool));},
+    choices:(rarity=null)=>getUpgradeChoices(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
+    levelChoices:()=>v18LevelChoices().map(dbPowerupsOracleSummary),
+    apply:(id,source='Powerups Oracle')=>{const up=upgrades.find(u=>u.id===id);if(!up)throw new Error(`unknown powerup ${id}`);return dbPowerupsOracleSummary(applyUpgrade(up,source));},
+    randomHigh:(source='Powerups Oracle')=>dbPowerupsOracleSummary(applyRandomHighRarity(source,false)),
+    legendaryChoices:()=>v17LegendaryChoices().map(dbPowerupsOracleSummary),
+    sovereignChoices:()=>db0410LegendaryChoices().map(dbPowerupsOracleSummary),
+    fallbackRarity:wanted=>{const found=v27FallbackRarityPool(wanted);return {rarity:found.rarity,ids:found.pool.map(u=>u.id)};},
+    minibossRarity:()=>v27RollMinibossRarity(),
+    minibossChoices:()=>v27MinibossChoices().map(dbPowerupsOracleSummary),
+    setBoardLevel:value=>{boardLevel=Math.max(1,Number(value)||1);return boardLevel;},
+    setModes:(nightmare=false,hell=false)=>{nightmareMode=!!nightmare;hellMode=!!hell;return {nightmareMode,hellMode};},
+    setPendingLevelUps:value=>{pendingLevelUps=Math.max(0,Number(value)||0);return pendingLevelUps;},
+    levelUi:()=>{openLevelUp(()=>{});const grid=$("choiceGrid");return {subtitle:$("levelSubtitle")?.textContent||"",choices:[...grid.querySelectorAll("button.choice-btn")].map(b=>({name:b.querySelector('.choice-name')?.textContent||'',rarity:[...b.classList].find(x=>rarityInfo[x])||null})),reroll:grid.querySelector('.powerup-reroll-btn')?.textContent||null,overlayHidden:$("levelOverlay")?.classList.contains("hidden")??true};},
+    allEligibleUi:()=>{showAllEligiblePowerupSelection('Powerups Oracle',()=>{});const grid=$("powerupGrid");return {title:$("powerupTitle")?.textContent||"",subtitle:$("powerupSubtitle")?.textContent||"",names:[...grid.querySelectorAll("button.choice-btn")].map(b=>b.querySelector('.choice-name')?.textContent||''),countText:grid.querySelector('.powerup-selector-count')?.textContent||'',overlayHidden:$("powerupOverlay")?.classList.contains("hidden")??true};},
+    perfectedSignature:()=>{const up=perfectedSignatureForCurrentClass();return {name:up.name,desc:up.desc,classId:player.classId};},
+    closeOverlays:()=>{$("levelOverlay")?.classList.add("hidden");$("powerupOverlay")?.classList.add("hidden");return true;}
+  });
+'''
+MONO.write_text(source.replace(marker, seam + marker), encoding="utf-8")
+
+harness = r'''#!/usr/bin/env node
+"use strict";
+
+// Beta 0.6.6.32 Powerups characterization/oracle harness.
+// Capture mode freezes the released eligibility/selection/application/UI/RNG
+// behavior before DiceboundPowerups ownership moves.
+
+const assert=require("node:assert/strict");
+const childProcess=require("node:child_process");
+const fs=require("node:fs");
+const http=require("node:http");
+const os=require("node:os");
+const path=require("node:path");
+
+const ROOT=path.join(__dirname,"..");
+const RUNTIME=path.join(ROOT,"runtime");
+const FIXTURE_PATH=path.join(__dirname,"fixtures","powerups_0_6_6_32.json");
+const EDGE=process.env.DICEBOUND_EDGE||"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+const DEBUG_PORT=Number(process.env.DICEBOUND_POWERUPS_DEBUG_PORT||19433);
+const CAPTURE=process.env.DICEBOUND_CAPTURE_POWERUPS==="1";
+const MIME={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".webp":"image/webp",".wav":"audio/wav"};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function serveRuntime(){return new Promise((resolve,reject)=>{const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new URL(req.url,"http://127.0.0.1").pathname),rel=pathname==="/"?"index.html":pathname.replace(/^\/+/,""),file=path.resolve(RUNTIME,rel);if(!file.startsWith(`${RUNTIME}${path.sep}`)&&file!==path.join(RUNTIME,"index.html")){res.writeHead(403).end();return;}fs.readFile(file,(err,data)=>{if(err){res.writeHead(404).end();return;}res.writeHead(200,{"Content-Type":MIME[path.extname(file).toLowerCase()]||"application/octet-stream","Cache-Control":"no-store"});res.end(data);});});server.once("error",reject);server.listen(0,"127.0.0.1",()=>resolve({server,url:`http://127.0.0.1:${server.address().port}/index.html`}));});}
+async function waitJson(url,timeout=15000){const end=Date.now()+timeout;while(Date.now()<end){try{const r=await fetch(url);if(r.ok)return r.json();}catch(_){}await sleep(100);}throw new Error(`timeout ${url}`);}
+async function connect(url){const origin=new URL(url).origin,end=Date.now()+15000;let target;while(Date.now()<end&&!target){const xs=await waitJson(`http://127.0.0.1:${DEBUG_PORT}/json/list`);target=xs.find(x=>x.type==="page"&&x.webSocketDebuggerUrl&&x.url.startsWith(origin));if(!target)await sleep(100);}if(!target)throw new Error("Edge target missing");const socket=new WebSocket(target.webSocketDebuggerUrl),pending=new Map();let id=0;await new Promise((resolve,reject)=>{socket.addEventListener("open",resolve,{once:true});socket.addEventListener("error",reject,{once:true});});socket.addEventListener("message",ev=>{const m=JSON.parse(String(ev.data)),p=pending.get(m.id);if(!p)return;pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);});function send(method,params={}){return new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});socket.send(JSON.stringify({id:n,method,params}));});}async function evaluate(expression){const r=await send("Runtime.evaluate",{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;}return {socket,send,evaluate};}
+
+function assertCoverage(actual){
+  assert.equal(actual.baselineVersion,"0.6.6.32");
+  const names=new Set(actual.cases.map(c=>c.name));
+  for(const name of ["catalog","ranger-eligibility","slime-borrowing","slime-rouge-compatibility","achievement-gate","unique-exclusion","weighted-three","weighted-four","apply-normal","apply-unique","apply-d20","random-high-rarity","legendary-choices","legendary-repeatable-pool","fallback-rarity","miniboss-three","miniboss-four","level-ui-three","level-ui-four","all-eligible-ui","perfected-signature"])assert.ok(names.has(name),`missing Powerups oracle case ${name}`);
+  assert.equal(actual.cases.find(c=>c.name==="catalog")?.count,208,"canonical released Powerup count drifted before migration");
+  assert.equal(actual.cases.find(c=>c.name==="weighted-three")?.rngCalls,3,"three weighted choices must consume exactly three RNG draws");
+  assert.equal(actual.cases.find(c=>c.name==="weighted-four")?.rngCalls,4,"four weighted choices must consume exactly four RNG draws");
+  assert.equal(actual.cases.find(c=>c.name==="apply-normal")?.rngCalls,0,"ordinary non-D20 Powerup application must not consume RNG");
+  assert.equal(actual.cases.find(c=>c.name==="apply-d20")?.rngCalls,1,"D20 Powerup application must consume exactly one RNG draw");
+  assert.equal(actual.cases.find(c=>c.name==="random-high-rarity")?.rngCalls,1,"random Rare/Epic reward must consume one selection RNG draw for non-D20");
+  assert.equal(actual.cases.find(c=>c.name==="legendary-choices")?.rngCalls,3,"three Legendary choices must consume exactly three RNG draws");
+  assert.equal(actual.cases.find(c=>c.name==="miniboss-three")?.rngCalls,6,"three miniboss choices must consume rarity+pick RNG per choice");
+  assert.equal(actual.cases.find(c=>c.name==="miniboss-four")?.rngCalls,8,"four miniboss choices must consume rarity+pick RNG per choice");
+  for(const name of ["catalog","ranger-eligibility","slime-borrowing","slime-rouge-compatibility","achievement-gate","unique-exclusion","fallback-rarity","all-eligible-ui","perfected-signature"])assert.equal(actual.cases.find(c=>c.name===name)?.rngCalls,0,`${name} must consume zero gameplay RNG`);
+}
+
+async function main(){
+  if(!CAPTURE)assert.ok(fs.existsSync(FIXTURE_PATH),`missing frozen Powerups fixture: ${FIXTURE_PATH}`);
+  const profile=fs.mkdtempSync(path.join(os.tmpdir(),"dicebound-powerups-oracle-"));
+  const {server,url}=await serveRuntime();let child,page;
+  try{
+    child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-sandbox","--no-first-run","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
+    page=await connect(url);await page.send("Runtime.enable");
+    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundProgressionOracleTest&&!!window.DiceboundPowerupsOracleTest&&!!window.DiceboundPowerups&&!!window.DiceboundRng");if(ready)break;await sleep(100);}assert.ok(ready,"Powerups oracle runtime surface did not become ready");
+    await page.evaluate("document.getElementById('campGoBtn')?.click();true");await sleep(300);await page.evaluate("document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');true");
+
+    const actual=await page.evaluate(`(()=>{
+      const clone=x=>x==null?x:JSON.parse(JSON.stringify(x));
+      window.DiceboundRng.seed('powerups-template');const template=window.DiceboundRunResumeTest.snapshot();
+      const power=window.DiceboundPowerupsOracleTest,progression=window.DiceboundProgressionOracleTest,outputs=[];
+      const restore=(name,{classId='ranger',playerPatch={},metaPatch={},board=1,nightmare=false,hell=false}={})=>{
+        const cp=structuredClone(template);cp.run.player.classId=classId;cp.run.selectedClassId=classId;window.DiceboundRunResumeTest.restore(cp);
+        progression.patchPlayer({classId,...clone(playerPatch)});if(metaPatch&&Object.keys(metaPatch).length)progression.patchMeta(clone(metaPatch));
+        power.setBoardLevel(board);power.setModes(nightmare,hell);power.closeOverlays();window.DiceboundRng.seed('powerups-oracle:'+name);return window.DiceboundRng.snapshot();
+      };
+      const finish=(record,before,includeState=false)=>{const after=window.DiceboundRng.snapshot();outputs.push({...record,rngCalls:after.calls-before.calls,rngState:after.state,...(includeState?{state:power.state()}:{})});};
+      const ids=xs=>xs.map(x=>x.id);
+
+      {const before=restore('catalog');const catalog=power.catalog();finish({name:'catalog',count:catalog.length,uniqueCount:catalog.filter(x=>x.unique).length,gatedCount:catalog.filter(x=>x.achievementGate).length,first:catalog.slice(0,5),last:catalog.slice(-5)},before);}
+      {const before=restore('ranger-eligibility');const list=power.eligible();finish({name:'ranger-eligibility',count:list.length,ids:ids(list)},before);}
+      {const before=restore('slime-borrowing',{classId:'slime',metaPatch:{unlocks:{ranger:true,fighter:true,ninja:true,slime:true}}});const list=power.eligible();finish({name:'slime-borrowing',count:list.length,ninja:list.filter(x=>x.classId==='ninja'||x.classIds.includes('ninja')).map(x=>x.id),fighter:list.filter(x=>x.classId==='fighter'||x.classIds.includes('fighter')).map(x=>x.id)},before);}
+      {const before=restore('slime-rouge-compatibility',{classId:'slimerouge',playerPatch:{slimeRougeIdentityClass:'ninja',slimeRougeUltimateClass:'fighter'},metaPatch:{unlocks:{ranger:true,fighter:true,ninja:true,slime:true,slimerouge:true}}});const list=power.eligible();finish({name:'slime-rouge-compatibility',count:list.length,classOwned:list.filter(x=>x.classId||x.classIds.length).map(x=>x.id)},before);}
+      {const before=restore('achievement-gate',{metaPatch:{achievements:{}}});const locked=power.eligible().some(x=>x.id==='plague_lord');progression.patchMeta({achievements:{nature_master:true}});const unlocked=power.eligible().some(x=>x.id==='plague_lord');finish({name:'achievement-gate',locked,unlocked,gate:progression.achievementGate('nature_master')},before);}
+      {const before=restore('unique-exclusion',{playerPatch:{upgradeCounts:{}}});const initial=power.eligible().some(x=>x.id==='legendary_golden_law');progression.patchPlayer({upgradeCounts:{legendary_golden_law:1}});const after=power.eligible().some(x=>x.id==='legendary_golden_law');finish({name:'unique-exclusion',initial,after},before);}
+      {const before=restore('weighted-three',{playerPatch:{luck:.37,level:18,position:11},board:3});const choices=power.choices();finish({name:'weighted-three',choices},before);}
+      {const before=restore('weighted-four',{playerPatch:{luck:.37,level:18,position:11,levelChoiceBonus:1},board:3});const choices=power.levelChoices();finish({name:'weighted-four',choices},before);}
+      {const before=restore('apply-normal',{playerPatch:{attack:10,upgradeCounts:{},runBuffs:[]}});const applied=power.apply('attack','Oracle Normal');finish({name:'apply-normal',applied},before,true);}
+      {const before=restore('apply-unique',{playerPatch:{goldBonus:.5,upgradeCounts:{},runBuffs:[]}});const applied=power.apply('legendary_golden_law','Oracle Unique');finish({name:'apply-unique',applied},before,true);}
+      {const before=restore('apply-d20',{classId:'d20',playerPatch:{attack:10,hp:100,maxHp:100,upgradeCounts:{},runBuffs:[]}});const applied=power.apply('attack','Oracle D20');finish({name:'apply-d20',applied},before,true);}
+      {const before=restore('random-high-rarity',{playerPatch:{upgradeCounts:{},runBuffs:[]}});const applied=power.randomHigh('Oracle Relic');finish({name:'random-high-rarity',applied},before,true);}
+      {const before=restore('legendary-choices');const choices=power.legendaryChoices();finish({name:'legendary-choices',choices},before);}
+      {const before=restore('legendary-repeatable-pool',{playerPatch:{upgradeCounts:{legendary_golden_law:1,legendary_crimson_aegis_v27:1,legendary_loaded_road:1,legendary_packbreaker:1,legendary_second_sun:1}}});const list=power.eligible('legendary');finish({name:'legendary-repeatable-pool',count:list.length,ids:ids(list)},before);}
+      {const before=restore('fallback-rarity');finish({name:'fallback-rarity',legendary:power.fallbackRarity('legendary'),epic:power.fallbackRarity('epic'),poor:power.fallbackRarity('poor')},before);}
+      {const before=restore('miniboss-three',{playerPatch:{luck:.2,levelChoiceBonus:0},board:2});const choices=power.minibossChoices();finish({name:'miniboss-three',choices},before);}
+      {const before=restore('miniboss-four',{playerPatch:{luck:.2,levelChoiceBonus:1},board:4,nightmare:true});const choices=power.minibossChoices();finish({name:'miniboss-four',choices},before);}
+      {const before=restore('level-ui-three',{playerPatch:{levelChoiceBonus:0,v26ExpandedHorizons:false},board:2});power.setPendingLevelUps(1);const ui=power.levelUi();finish({name:'level-ui-three',ui},before);power.closeOverlays();}
+      {const before=restore('level-ui-four',{playerPatch:{levelChoiceBonus:1,v26ExpandedHorizons:false},board:2});power.setPendingLevelUps(2);const ui=power.levelUi();finish({name:'level-ui-four',ui},before);power.closeOverlays();}
+      {const before=restore('all-eligible-ui');const ui=power.allEligibleUi();finish({name:'all-eligible-ui',ui:{title:ui.title,subtitle:ui.subtitle,countText:ui.countText,count:ui.names.length,first:ui.names.slice(0,8),last:ui.names.slice(-8),overlayHidden:ui.overlayHidden}},before);power.closeOverlays();}
+      {const before=restore('perfected-signature',{classId:'ranger'});const ranger=power.perfectedSignature();progression.patchPlayer({classId:'sorcerer'});const sorcerer=power.perfectedSignature();finish({name:'perfected-signature',ranger,sorcerer},before);}
+      return {baselineVersion:'0.6.6.32',runtimeVersion:window.DiceboundVersion?.version||null,cases:outputs};
+    })()`);
+    assertCoverage(actual);
+    if(CAPTURE){console.log("POWERUPS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("POWERUPS_FIXTURE_END");return;}
+    const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
+    assert.equal(fixture.baselineVersion,"0.6.6.32","Powerups fixture must remain the released 0.6.6.32 baseline");
+    assert.deepEqual(actual.cases,fixture.cases);
+    console.log(`Powerups oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
+  } finally {try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true});}
+}
+main().catch(err=>{console.error(err);process.exit(1);});
+'''
+HARNESS.write_text(harness, encoding="utf-8")
+print("Powerups oracle seam + harness materialized")
