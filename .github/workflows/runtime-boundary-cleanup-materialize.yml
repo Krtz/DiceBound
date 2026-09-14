@@ -35,6 +35,16 @@ jobs:
         run: |
           python tools/materialize_runtime_boundary_cleanup.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          from pathlib import Path
+          p=Path('tools/test_runtime_peer_boundaries.js')
+          s=p.read_text(encoding='utf-8')
+          old='const focusedIds=new Set([...peerIds,"runtime-facade","dicebound-monolith"]);'
+          new='const focusedIds=new Set([...peerIds,"native-http-host","wrapper-contract","runtime-facade","dicebound-monolith"]);'
+          if old not in s: raise SystemExit('Runtime peer-boundary focused-internal anchor drifted')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.34 --channel Beta --development-state Unreleased --notes "Runtime/Core/Persistence facade development for Beta 0.6.6.35."
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code 7ee569a3fe7068569af65ffe6da339b00d922828 -- tools/test_runtime_oracle.js
