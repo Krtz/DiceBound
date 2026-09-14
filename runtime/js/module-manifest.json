@@ -79,6 +79,7 @@
     "powerup-borrowing",
     "powerup-facade",
     "ui-camp",
+    "ui-camp-shell-policy",
     "ui-options",
     "ui-equipment-heirlooms",
     "ui-class-chooser",
@@ -985,6 +986,16 @@
       "provides": [
         "DiceboundCamp"
       ]
+    },
+    {
+      "id": "ui-camp-shell-policy",
+      "path": "js/ui/camp-shell.js",
+      "domain": "ui/camp-app-shell-lifecycle-meta-and-hud-policy",
+      "status": "extracted",
+      "requires": [
+        "ui-camp"
+      ],
+      "provides": []
     },
     {
       "id": "ui-options",
