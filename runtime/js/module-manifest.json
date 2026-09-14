@@ -36,6 +36,7 @@
     "classes-registry",
     "classes-invoker",
     "combat-mana-action-resolution",
+    "combat-facade",
     "progression-class-unlock-rules",
     "progression-class-unlock-feedback",
     "pets-registry",
@@ -454,6 +455,30 @@
       ],
       "provides": [
         "DiceboundCombatManaActionResolution"
+      ]
+    },
+    {
+      "id": "combat-facade",
+      "path": "js/combat/facade.js",
+      "domain": "combat/public-engine-facade",
+      "status": "extracted",
+      "requires": [
+        "combat-healing-resolution",
+        "combat-element-resolution",
+        "combat-d20-chaos-resolution",
+        "combat-strike-resolution",
+        "combat-attack-action-resolution",
+        "combat-ultimate-resolution",
+        "combat-guard-resolution",
+        "combat-pet-turn-resolution",
+        "combat-victory-resolution",
+        "combat-enemy-scaling-resolution",
+        "combat-encounter-lifecycle",
+        "combat-turn-resolution",
+        "combat-mana-action-resolution"
+      ],
+      "provides": [
+        "DiceboundCombat"
       ]
     },
     {

@@ -21,7 +21,7 @@ assert 'window.DiceboundEnemyScalingResolution=Object.freeze({apiVersion:1,confi
 assert 'if(boardLevel===6){const balance=db317Board(6).balance;' in enemy_scaling, 'Board 6 scaling must survive in the extracted owner'
 assert mono.count('function scaleEnemy(') == 1, 'scaleEnemy must have exactly one thin compatibility adapter'
 assert not re.search(r'(?<![\w$])scaleEnemy\s*=\s*function',mono), 'scaleEnemy reassignment chain returned'
-assert 'return dbEnemyScalingResolution.scale(...args);' in mono, 'scaleEnemy thin adapter must delegate to the owner'
+assert 'return dbCombat.scaleEnemy(...args);' in mono, 'scaleEnemy thin adapter must delegate through Combat'
 presentation_retired = [
     'updateCombatUIBase','updateCombatUIV12','updateCombatUIV13','updateCombatUIV15Patch','updateCombatUIV16Base',
     'updateCombatUIV17Base','updateCombatUIV17SmokeBase','updateCombatUIV18Base','updateCombatUIV19Base','updateCombatUIV24Base',
@@ -47,7 +47,7 @@ for symbol in encounter_retired:
     assert symbol not in mono, f"retired encounter-lifecycle owner returned to compatibility monolith: {symbol}"
 assert mono.count('function startCombat(') == 1, 'startCombat must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*startCombat\s*=', mono), 'startCombat reassignment chain must not return'
-assert "return dbCombatEncounterLifecycle.start(kind);" in mono, 'encounter lifecycle thin adapter is missing'
+assert "return dbCombat.startEncounter(kind);" in mono, 'Combat facade encounter adapter is missing'
 assert "dbCombatEncounterLifecycle=dbCombatEncounterOwner.configure({" in mono, 'encounter lifecycle owner is not configured by the composition root'
 
 combat_turn_retired = [
@@ -86,7 +86,7 @@ for symbol in ultimate_retired:
 assert mono.count('async function useUltimate(') == 1, 'useUltimate must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*useUltimate\s*=', mono), 'useUltimate reassignment chain must not return'
 assert "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" in mono, 'combat Ultimate-resolution owner is not configured by the composition root'
-assert "return dbCombatUltimateResolution.start(...args);" in mono, 'Ultimate thin adapter is missing'
+assert "return dbCombat.ultimate(...args);" in mono, 'Combat facade Ultimate adapter is missing'
 
 
 guard_retired = [
@@ -100,8 +100,8 @@ assert mono.count('async function identityGuardAction(') == 1, 'identityGuardAct
 assert not re.search(r'(?m)^  guardAction\s*=', mono), 'top-level guardAction reassignment chain must not return'
 assert not re.search(r'(?m)^  identityGuardAction\s*=', mono), 'identityGuardAction reassignment chain must not return'
 assert "dbCombatGuardResolution=dbCombatGuardOwner.configure({" in mono, 'combat Guard-resolution owner is not configured by the composition root'
-assert "return dbCombatGuardResolution.guardAction(...args);" in mono, 'Guard thin adapter is missing'
-assert "dbCombatGuardResolution.identityGuardAction" in mono, 'identity Guard thin adapter is missing'
+assert "return dbCombat.guard(...args);" in mono, 'Combat facade Guard adapter is missing'
+assert "dbCombat.identityGuard" in mono, 'Combat facade identity Guard adapter is missing'
 
 
 pet_retired = [
@@ -118,9 +118,9 @@ assert not re.search(r'(?m)^  petTurn\s*=', mono), 'top-level petTurn reassignme
 assert not re.search(r'(?m)^  petDamage\s*=', mono), 'top-level petDamage reassignment chain must not return'
 assert not re.search(r'(?m)^  trainerPetDamage\s*=', mono), 'top-level trainerPetDamage reassignment chain must not return'
 assert "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" in mono, 'combat Pet turn-resolution owner is not configured by the composition root'
-assert "return dbCombatPetTurnResolution.petTurn(...args);" in mono, 'Pet turn thin adapter is missing'
-assert "return dbCombatPetTurnResolution.petDamage();" in mono, 'Pet damage thin adapter is missing'
-assert "return dbCombatPetTurnResolution.trainerPetDamage(id);" in mono, 'Trainer Pet damage thin adapter is missing'
+assert "return dbCombat.petTurn(...args);" in mono, 'Combat facade Pet turn adapter is missing'
+assert "if(dbCombat)return dbCombat.petDamage();" in mono, 'Combat facade Pet damage adapter/fallback is missing'
+assert "return dbCombat.trainerPetDamage(id);" in mono, 'Combat facade Trainer Pet damage adapter is missing'
 
 victory_retired = [
     'winCombatV15','winCombatV15Patch','winCombatV16Base','winCombatV19Base','v266ResolveLateFinalBase',
@@ -132,7 +132,7 @@ for symbol in victory_retired:
 assert mono.count('async function winCombat(') == 1, 'winCombat must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^  winCombat\s*=\s*async function', mono), 'winCombat reassignment chain must not return'
 assert "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" in mono, 'combat Victory-resolution owner is not configured by the composition root'
-assert "return dbCombatVictoryResolution.winCombat(...args);" in mono, 'Victory thin adapter is missing'
+assert "return dbCombat.win(...args);" in mono, 'Combat facade Victory adapter is missing'
 
 
 consumables_retired = [
@@ -164,10 +164,10 @@ assert mono.count('function clearBloodOverhealTemp(') == 1, 'Blood Overheal clea
 assert mono.count('function v26ClearStoneBattle(') == 1, 'Stone cleanup must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*healPlayer\s*=\s*function', mono), 'healPlayer reassignment chain must not return'
 assert "dbCombatHealingResolution=dbCombatHealingOwner.configure({" in mono, 'Healing owner is not configured by the composition root'
-assert "dbCombatHealingResolution.healPlayer.apply(this,args)" in mono, 'healPlayer thin adapter is missing'
-assert "dbCombatHealingResolution.recordHealing.apply(this,args)" in mono, 'recordHealing thin adapter is missing'
-assert "dbCombatHealingResolution.clearBloodOverhealTemp.apply(this,args)" in mono, 'Blood Overheal cleanup adapter is missing'
-assert "dbCombatHealingResolution.clearStoneBattle.apply(this,args)" in mono, 'Stone cleanup adapter is missing'
+assert "return dbCombat.heal(...args);" in mono, 'Combat facade heal adapter is missing'
+assert "return dbCombat.recordHealing(...args);" in mono, 'Combat facade healing-record adapter is missing'
+assert "return dbCombat.clearBloodOverhealTemp(...args);" in mono, 'Combat facade Blood Overheal cleanup adapter is missing'
+assert "return dbCombat.clearStoneBattle(...args);" in mono, 'Combat facade Stone cleanup adapter is missing'
 
 
 element_retired = [
@@ -188,10 +188,10 @@ assert not re.search(r'(?m)^\s*triggerElementEffect\s*=\s*function', mono), 'tri
 assert not re.search(r'(?m)^\s*enemyElementProc\s*=\s*function', mono), 'enemyElementProc reassignment chain must not return'
 assert not re.search(r'(?m)^\s*triggerWeaponElement\s*=\s*function', mono), 'triggerWeaponElement reassignment chain must not return'
 assert "dbCombatElementResolution=dbCombatElementOwner.configure({" in mono, 'Element owner is not configured by the composition root'
-assert "dbCombatElementResolution.triggerElementEffect.apply(this,args)" in mono, 'triggerElementEffect thin adapter is missing'
-assert "dbCombatElementResolution.enemyElementProc.apply(this,args)" in mono, 'enemyElementProc thin adapter is missing'
-assert "dbCombatElementResolution.triggerWeaponElement.apply(this,args)" in mono, 'triggerWeaponElement thin adapter is missing'
-assert "dbCombatElementResolution.restoreEnemyElementDebuffs.apply(this,args)" in mono, 'enemy elemental cleanup adapter is missing'
+assert "return dbCombat.element(...args);" in mono, 'Combat facade element adapter is missing'
+assert "return dbCombat.enemyElementProc(...args);" in mono, 'Combat facade enemy element adapter is missing'
+assert "return dbCombat.triggerWeaponElement(...args);" in mono, 'Combat facade weapon-element adapter is missing'
+assert "return dbCombat.restoreEnemyElementDebuffs(...args);" in mono, 'Combat facade enemy-element cleanup adapter is missing'
 
 
 
@@ -206,8 +206,24 @@ assert mono.count('async function rollD20Chaos(action){') == 1, 'rollD20Chaos mu
 assert not re.search(r'(?m)^\s*rollD20Chaos\s*=\s*async function', mono), 'rollD20Chaos reassignment tower must not return'
 assert 'let dbCombatD20ChaosResolution=null;' in mono, 'D20 resolution composition handle is missing'
 assert 'dbCombatD20ChaosResolution=dbCombatD20ChaosOwner.configure({' in mono, 'D20 chaos owner is not configured by the composition root'
-assert 'return dbCombatD20ChaosResolution.rollD20Chaos(action);' in mono, 'D20 chaos thin adapter is missing'
+assert 'return dbCombat.chaos(action);' in mono, 'Combat facade D20 chaos adapter is missing'
 assert 'dbCombatD20ChaosResolution.initializePlayerState();' in mono, 'D20 state initialization bridge is missing'
+
+for direct_peer_call in [
+    'return dbEnemyScalingResolution.scale(...args);',
+    'return dbCombatEncounterLifecycle.start(kind);',
+    'return dbCombatUltimateResolution.start(...args);',
+    'return dbCombatGuardResolution.guardAction(...args);',
+    'return dbCombatPetTurnResolution.petTurn(...args);',
+    'if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();',
+    'return dbCombatPetTurnResolution.trainerPetDamage(id);',
+    'return dbCombatVictoryResolution.winCombat(...args);',
+    'dbCombatHealingResolution.healPlayer.apply(this,args)',
+    'dbCombatElementResolution.triggerElementEffect.apply(this,args)',
+    'return dbCombatD20ChaosResolution.rollD20Chaos(action);'
+]:
+    assert direct_peer_call not in mono, f'direct peer-public Combat call returned: {direct_peer_call}'
+assert 'dbCombat=dbCombatOwner.configure({' in mono, 'public Combat facade is not configured by the composition root'
 
 print('Monolith spring-clean guard PASS')
 

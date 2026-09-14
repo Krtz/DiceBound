@@ -68,7 +68,13 @@ else:
         )
     assert "DiceboundEnemyScalingResolution" in owner, "enemy-scaling owner export missing"
     assert "dbEnemyScalingResolution" in mono, "enemy-scaling composition binding missing"
-    assert re.search(r"return\s+dbEnemyScalingResolution\.scale\(", mono), (
-        "scaleEnemy thin adapter must delegate to the authoritative owner"
+    assert re.search(r"return\s+dbCombat\.scaleEnemy\(", mono), (
+        "scaleEnemy thin adapter must delegate through the public Combat facade"
     )
-    print("Enemy scaling extraction boundary PASS (authoritative owner + thin adapter)")
+    assert not re.search(r"return\s+dbEnemyScalingResolution\.scale\(", mono), (
+        "direct peer-public enemy-scaling adapter returned"
+    )
+    assert "scaling:dbEnemyScalingResolution" in mono, (
+        "focused enemy-scaling owner must remain composed behind DiceboundCombat"
+    )
+    print("Enemy scaling extraction boundary PASS (focused owner behind Combat facade)")

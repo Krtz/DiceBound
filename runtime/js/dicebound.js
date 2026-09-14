@@ -3,6 +3,9 @@
 
   const APP_IDENTITY=window.DiceboundVersion;
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
+  const dbCombatOwner=window.DiceboundCombat;
+  if(!dbCombatOwner)throw new Error("dicebound.js requires DiceboundCombat before loading.");
+  let dbCombat=null;
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
   const dbProgressionOwner=window.DiceboundProgression;
@@ -832,7 +835,7 @@
 
   function activePetDef(){return dbPets.activeDefinition();}
   function activePetState(){return dbPets.activeState();}
-  function petDamage(){if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
+  function petDamage(){if(dbCombat)return dbCombat.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
   function updateMetaUI(){
     const pet=activePetState(),def=activePetDef();
     $("talentPointTop").textContent=meta.points;
@@ -873,14 +876,14 @@
   }
   function chargeUltimate(amount){player.ultimateCharge=clamp(player.ultimateCharge+amount,0,100);updateCombatUI();}
   function trackElementProgress(key,amount){return dbPets.trackElementProgress(key,amount);}
-  async function petTurn(...args){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petTurn(...args);}
+  async function petTurn(...args){return dbCombat.petTurn(...args);}
 
   async function animateUltimate(){
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760}[player.classId]||620));enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");
   }
-  function currentWeaponElement(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.currentWeaponElement.apply(this,args);}
+  function currentWeaponElement(...args){return dbCombat.currentWeaponElement(...args);}
   function damageAll(amount,falloff=1){let total=0;livingEnemies().forEach(e=>{total+=damageEnemy(e,amount*(e===currentEnemy?1:falloff));});return total;}
-  function triggerWeaponElement(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.triggerWeaponElement.apply(this,args);}
+  function triggerWeaponElement(...args){return dbCombat.triggerWeaponElement(...args);}
   function triggerStrikeElements(target,chaos=null){
     const results=[];const weapon=triggerWeaponElement(target);if(weapon)results.push(weapon);
     Object.entries(player.classElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=triggerElementEffect(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"class affinity"});if(r)results.push(r);}});
@@ -890,28 +893,25 @@
     return {totalDamage:results.reduce((n,r)=>n+(r.totalDamage||0),0),heal:results.reduce((n,r)=>n+(r.heal||0),0),message:results.map(r=>r.message).join(" ")};
   }
 
-  async function rollD20Chaos(action){
-    if(!dbCombatD20ChaosResolution)throw new Error("D20 chaos-resolution owner is not configured.");
-    return dbCombatD20ChaosResolution.rollD20Chaos(action);
-  }
+  async function rollD20Chaos(action){return dbCombat.chaos(action);}
   function applyMythicPantsPulse(){
     if(!hasMythicPiece("legs"))return "";player.mythicActionCount++;if(player.mythicActionCount%3)return "";
     const heal=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.06)));player.hp+=heal;player.ultimateCharge=clamp(player.ultimateCharge+15,0,100);const note=`👖 Paradox Loop restores ${heal} HP and grants 15 ultimate.`;addCombatHistory(note);showToast("👖 Paradox Loop");return note;
   }
-  async function useUltimate(...args){if(!dbCombatUltimateResolution)throw new Error('Combat Ultimate-resolution owner is not configured.');return dbCombatUltimateResolution.start(...args);}
+  async function useUltimate(...args){return dbCombat.ultimate(...args);}
 
   function rollTieredProc(chance){const guaranteed=Math.floor(Math.max(0,chance)),fraction=Math.max(0,chance-guaranteed);return guaranteed+(random()<fraction?1:0);}
-  function strikeBaseDamage(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.strikeBaseDamage(...args);}
-  async function performStrike(...args){if(!dbCombatStrikes)throw new Error('Combat strike-resolution owner is not configured.');return dbCombatStrikes.performStrike(...args);}
+  function strikeBaseDamage(...args){return dbCombat.strikeBaseDamage(...args);}
+  async function performStrike(...args){return dbCombat.strike(...args);}
 
   let dbCombatElementResolution=null;
   let dbCombatHealingResolution=null;
   let dbConsumablesResolution=null;
   let dbCombatVictoryResolution=null;
   let dbCombatAttackResolution=null;
-  async function playerAttack(...args){if(!dbCombatAttackResolution)throw new Error('Combat Attack-action owner is not configured.');return dbCombatAttackResolution.playerAttack(...args);}
+  async function playerAttack(...args){return dbCombat.attack(...args);}
 
-  async function guardAction(...args){if(!dbCombatGuardResolution)throw new Error('Combat Guard-resolution owner is not configured.');return dbCombatGuardResolution.guardAction(...args);}
+  async function guardAction(...args){return dbCombat.guard(...args);}
   async function usePotion(...args){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.usePotion.apply(this,args);}
   function usePotionOutsideCombat(...args){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.usePotionOutsideCombat.apply(this,args);}
 
@@ -1203,10 +1203,7 @@
   async function rollDice(){
     if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
   }
-  function startCombat(kind="normal"){
-    if(!dbCombatEncounterLifecycle)throw new Error('Combat encounter-lifecycle owner is not configured.');
-    return dbCombatEncounterLifecycle.start(kind);
-  }
+  function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}
   function damageEnemy(enemy,amount,ignoreDefense=false){if(!enemy||enemy.hp<=0)return 0;if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);return 0;}const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0))),dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;return dealt;}
   function openCombatLootChain(defeated,done){
     const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?pick(["epic","legendary"]):defeated.miniBoss?pick(["rare","epic"]):null;openLoot(generateEquipment(rarity),done);}else done();},specials=[];let weapon=0,boots=0,amulet=0,pants=0,hat=0,merchant=.001;
@@ -1217,7 +1214,7 @@
   }
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
-  async function winCombat(...args){if(!dbCombatVictoryResolution)throw new Error('Combat Victory-resolution owner is not configured.');return dbCombatVictoryResolution.winCombat(...args);}
+  async function winCombat(...args){return dbCombat.win(...args);}
   function applyRunTheme(){const themes={1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},2:{bg1:"#2a2105",bg2:"#130f02",glow1:"rgba(255,221,69,.25)",glow2:"rgba(255,152,45,.12)",board1:"#594817",board2:"#2d240b"},3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},4:{bg1:"#160522",bg2:"#07020b",glow1:"rgba(196,88,255,.30)",glow2:"rgba(255,70,173,.15)",board1:"#3f1357",board2:"#1b0828"}},t=themes[boardLevel]||themes[1],r=document.documentElement.style;for(const [k,v] of Object.entries(t))r.setProperty(`--run-${k.replace(/([A-Z])/g,"-$1").toLowerCase()}`,v);}
 
   function openInfo(){return dbInfoGuide?.open();}
@@ -1287,16 +1284,16 @@
 
   // #309: enemy scaling/difficulty now has one authoritative owner.
   let dbEnemyScalingResolution=null;
-  function scaleEnemy(...args){if(!dbEnemyScalingResolution)throw new Error('Enemy scaling-resolution owner is not configured.');return dbEnemyScalingResolution.scale(...args);}
+  function scaleEnemy(...args){return dbCombat.scaleEnemy(...args);}
 
-  function triggerElementEffect(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.triggerElementEffect.apply(this,args);}
+  function triggerElementEffect(...args){return dbCombat.element(...args);}
 
   function applyPoisonTick(){
     let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;const dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}
     if(total){playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;
   }
 
-  function enemyElementProc(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.enemyElementProc.apply(this,args);}
+  function enemyElementProc(...args){return dbCombat.enemyElementProc(...args);}
 
   // Beta 0.6.6.0: enemy-response and enemy-turn orchestration is owned by
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
@@ -1311,9 +1308,9 @@
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
   let dbCombatTurns=null;
-  async function enemyTurn(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.enemyTurn(...args);}
-  async function resolveEnemyResponse(...args){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.resolveEnemyResponse(...args);}
-  function applyCombatPlayerDamage(raw){if(!dbCombatTurns)throw new Error('Combat turn-resolution owner is not configured.');return dbCombatTurns.applyPlayerDamage(raw);}
+  async function enemyTurn(...args){return dbCombat.enemyTurn(...args);}
+  async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}
+  function applyCombatPlayerDamage(raw){return dbCombat.applyPlayerDamage(raw);}
 
   function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}
 
@@ -1333,9 +1330,9 @@
   function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
   function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')||key===legacyBoardClearKey(classId,board)));}
   function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();checkDynamicClassUnlocks();}
-  function recordHealing(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.recordHealing.apply(this,args);}
-  function healPlayer(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.healPlayer.apply(this,args);}
-  function clearBloodOverhealTemp(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.clearBloodOverhealTemp.apply(this,args);}
+  function recordHealing(...args){return dbCombat.recordHealing(...args);}
+  function healPlayer(...args){return dbCombat.heal(...args);}
+  function clearBloodOverhealTemp(...args){return dbCombat.clearBloodOverhealTemp(...args);}
   function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
   // Preserve v15 save compatibility while enriching imported saves with Alpha fields.
@@ -1661,9 +1658,9 @@
 
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;if(enemySource){const el=document.createElement("div");el.className="enemy-proc-fx";el.innerHTML=`<span>${target?.icon||"👹"} → ${art}</span><small>ENEMY ELEMENT PROC</small>`;head.appendChild(el);setTimeout(()=>el.remove(),900);return;}const el=document.createElement("div");el.className=`element-proc-fx ${key}`;el.textContent=art;head.appendChild(el);setTimeout(()=>el.remove(),850);};
 
-  function affinityElementMultiplier(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.affinityElementMultiplier.apply(this,args);}
-  function elementHit(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.elementHit.apply(this,args);}
-  function elementHitAll(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.elementHitAll.apply(this,args);}
+  function affinityElementMultiplier(...args){return dbCombat.affinityElementMultiplier(...args);}
+  function elementHit(...args){return dbCombat.elementHit(...args);}
+  function elementHitAll(...args){return dbCombat.elementHitAll(...args);}
 
   applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
 
@@ -1859,9 +1856,9 @@
 
   // ---- occult attacks --------------------------------------------------------
   // Mana / occult action ownership lives in combat/mana-action-resolution.js.
-  function manaGain(amount){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.manaGain(amount);}
-  async function occultChannelAttack(...args){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.occultChannelAttack.apply(this,args);}
-  async function occultSpellAttack(...args){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.occultSpellAttack.apply(this,args);}
+  function manaGain(amount){return dbCombat.manaGain(amount);}
+  async function occultChannelAttack(...args){return dbCombat.channel(...args);}
+  async function occultSpellAttack(...args){return dbCombat.spell(...args);}
 
   async function bloodmageBloodletting(){if(combatBusy||!currentEnemy)return;const oldLS=player.lifeSteal;player.lifeSteal+=.12;identityFlash("🩸 Bloodletting restores fuel");try{await playerAttack();}finally{player.lifeSteal=oldLS;}updateCombatUI();}
 
@@ -1887,8 +1884,7 @@
 
   // Guard/potion identity wrappers.
   async function identityGuardAction(...args){
-    if(!dbCombatGuardResolution)throw new Error('Combat Guard-resolution owner is not configured.');
-    const invoke=(...inner)=>dbCombatGuardResolution.identityGuardAction(...inner);
+    const invoke=(...inner)=>dbCombat.identityGuard(...inner);
     if(typeof v25TraceCommand==='function')return v25TraceCommand('identityGuardAction',invoke,'detailed',args,this);
     return invoke(...args);
   }
@@ -2048,12 +2044,12 @@
 
   // ---- Summoner & Pokémon Trainer runtime ----------------------------------
   function shuffledPetIds(){return dbPets.shuffledPetIds();}
-  function trainerPetDamage(id){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.trainerPetDamage(id);}
-  function petElementFor(id){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.petElementFor(id);}
-  function activeTrainerPetId(){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.activeTrainerPetId();}
-  async function maybePetElementProc(id,target,source="Companion Spark"){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.maybePetElementProc(id,target,source);}
-  async function trainerStrike(id,target,scale=1,label="attacks"){if(!dbCombatPetTurnResolution)throw new Error("Combat Pet turn-resolution owner is not configured.");return dbCombatPetTurnResolution.trainerStrike(id,target,scale,label);}
-  async function summonerConjure(...args){if(!dbCombatManaActionResolution)throw new Error("Combat Mana action owner is not configured.");return dbCombatManaActionResolution.summonerConjure.apply(this,args);}
+  function trainerPetDamage(id){return dbCombat.trainerPetDamage(id);}
+  function petElementFor(id){return dbCombat.petElementFor(id);}
+  function activeTrainerPetId(){return dbCombat.activeTrainerPetId();}
+  async function maybePetElementProc(id,target,source="Companion Spark"){return dbCombat.maybePetElementProc(id,target,source);}
+  async function trainerStrike(id,target,scale=1,label="attacks"){return dbCombat.trainerStrike(id,target,scale,label);}
+  async function summonerConjure(...args){return dbCombat.summonerConjure(...args);}
   function cycleTrainerPokemon(){if(!classIdentityActive("pokemontrainer")||combatBusy)return;const roster=player.trainerRoster||[];if(!roster.length)return;player.trainerActiveIndex=((player.trainerActiveIndex||0)+1)%roster.length;const id=activeTrainerPetId();identityFlash(`${PETS[id].icon} Go, ${PETS[id].name}!`);setCombatText(`🧢 You switch to ${PETS[id].icon} ${PETS[id].name}. Switching does not spend your turn.`);updateCombatUI();}
   $("specialAttackBtn")?.addEventListener("click",e=>{if(classIdentityActive("pokemontrainer")){e.preventDefault();e.stopImmediatePropagation();cycleTrainerPokemon();}},true);
 
@@ -2116,7 +2112,7 @@
   meta.stats=meta.stats||defaultLifetimeStats();if(meta.stats.potionsUsed==null)meta.stats.potionsUsed=0;
   meta.unlocks=meta.unlocks||{};if(meta.unlocks.alchemist==null)meta.unlocks.alchemist=false;
 
-  function restoreRadiationDefenseV16(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.restoreRadiationDefense.apply(this,args);}
+  function restoreRadiationDefenseV16(...args){return dbCombat.restoreRadiationDefense(...args);}
 
   // Enemy affinity can never contradict its weakness.
 
@@ -3786,7 +3782,7 @@
 
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
-  function v26ClearStoneBattle(...args){if(!dbCombatHealingResolution)throw new Error('Healing-resolution owner is not configured.');return dbCombatHealingResolution.clearStoneBattle.apply(this,args);}
+  function v26ClearStoneBattle(...args){return dbCombat.clearStoneBattle(...args);}
 
   /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
   const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
@@ -3878,7 +3874,7 @@
 
   /* BRAIN HACK / RADIATION ------------------------------------------------- */
   const BETA03_FIREBALL_BURN_CHANCE=window.DiceboundCombatElementResolution.fireBurnChance,BETA03_BURN_CAP=window.DiceboundCombatElementResolution.fireBurnCap;
-  function beta03AddBurn(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.addEnemyBurn.apply(this,args);}
+  function beta03AddBurn(...args){return dbCombat.addEnemyBurn(...args);}
   if(ELEMENTS.fire)ELEMENTS.fire.description='Fireball deals elemental damage and has a 15% chance to add 1 Burn stack. Burn deals 1% enemy max HP per stack each turn and caps at 10 stacks.';
   if(ELEMENTS.tech)ELEMENTS.tech.description='Deals damage and lowers the target\'s current Attack by about 10% for the battle.';
   if(ELEMENTS.radiation)ELEMENTS.radiation.description='Deals light elemental damage and shreds Defense. At 0 Defense or below it keeps pushing Defense negative, making later hits deal more damage.';
@@ -5259,7 +5255,7 @@
   }
 
   // ENEMY ELEMENTAL PARITY — mechanical ownership lives in combat/element-resolution.js.
-  function db0511RestoreEnemyElementDebuffs(...args){if(!dbCombatElementResolution)throw new Error('Element-resolution owner is not configured.');return dbCombatElementResolution.restoreEnemyElementDebuffs.apply(this,args);}
+  function db0511RestoreEnemyElementDebuffs(...args){return dbCombat.restoreEnemyElementDebuffs(...args);}
   const db0511HandleDeathBase=handlePlayerDeath;
   handlePlayerDeath=function(...args){const r=db0511HandleDeathBase.apply(this,args);if(player.hp<=0)db0511RestoreEnemyElementDebuffs();return r;};
 
@@ -6922,6 +6918,16 @@
     clampQueuedHaste:before=>dbCombatElementResolution.clampQueuedHaste(before)
   });
   dbCombatD20ChaosResolution.initializePlayerState();
+
+  // Beta 0.6.6.31 — one ordinary public Combat Engine boundary. Focused
+  // resolution modules remain authoritative internals; presentation/VFX stay
+  // outside this facade for the separate Combat View ownership wave.
+  dbCombat=dbCombatOwner.configure({
+    encounter:dbCombatEncounterLifecycle,attack:dbCombatAttackResolution,guard:dbCombatGuardResolution,mana:dbCombatManaActionResolution,
+    ultimate:dbCombatUltimateResolution,petTurn:dbCombatPetTurnResolution,turns:dbCombatTurns,victory:dbCombatVictoryResolution,
+    elements:dbCombatElementResolution,healing:dbCombatHealingResolution,d20:dbCombatD20ChaosResolution,strikes:dbCombatStrikes,
+    scaling:dbEnemyScalingResolution
+  });
 
   /* SEMANTIC OWNER — Player / per-run initialization (#311). */
   dbRun.configurePlayerInitialization({

@@ -93,7 +93,8 @@ assert.doesNotMatch(monolith,/\bpetAttack\b/);
 const petOwner=fs.readFileSync(path.join(runtime,"combat","pet-turn-resolution.js"),"utf8");
 assert.match(petOwner,/hasLegendaryEffect\("pet_mirror"\)/,"Pet Mirror must remain in the extracted Pet turn owner");
 assert.match(monolith,/dbCombatPetTurnResolution=dbCombatPetTurnOwner\.configure\(\{/,"monolith must compose the extracted Pet turn owner");
-assert.match(monolith,/return dbCombatPetTurnResolution\.petTurn\(\.\.\.args\)/,"petTurn compatibility seam must delegate to the extracted owner");
+assert.match(monolith,/return dbCombat\.petTurn\(\.\.\.args\)/,"petTurn compatibility seam must delegate through the Combat facade");
+assert.doesNotMatch(monolith,/return dbCombatPetTurnResolution\.petTurn\(\.\.\.args\)/,"petTurn peer-public compatibility seam must stay drained");
 assert.doesNotMatch(monolith,/const db060PetTurnBase=petTurn/,"retired Pet Mirror wrapper returned to the monolith");
 const native=fs.readFileSync(path.join(__dirname,"..","wrapper-source","wrappers","webview2","native-go","main.go"),"utf8");
 for(const key of ["dicebound.run.primary","dicebound.run.backup","dicebound.run.backup.2","dicebound.run.backup.3"]){assert.ok(native.includes(`\"${key}\"`),`native storage does not enumerate ${key}`);}

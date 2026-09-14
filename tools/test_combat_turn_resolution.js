@@ -173,11 +173,16 @@ function makeHarness(options={}){
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
   "let dbCombatTurns=null;",
-  "return dbCombatTurns.enemyTurn(...args);",
-  "return dbCombatTurns.resolveEnemyResponse(...args);",
+  "return dbCombat.enemyTurn(...args);",
+  "return dbCombat.enemyResponse(...args);",
   "const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;",
-  "dbCombatTurns=dbCombatTurnOwner.configure({"
-])assert.ok(monolith.includes(adapter),`missing combat turn-resolution composition adapter: ${adapter}`);
+  "dbCombatTurns=dbCombatTurnOwner.configure({",
+  "turns:dbCombatTurns"
+])assert.ok(monolith.includes(adapter),`missing combat turn-resolution composition/facade route: ${adapter}`);
+for(const retiredAdapter of [
+  "return dbCombatTurns.enemyTurn(...args);",
+  "return dbCombatTurns.resolveEnemyResponse(...args);"
+])assert.ok(!monolith.includes(retiredAdapter),`direct peer-public turn adapter returned: ${retiredAdapter}`);
 for(const retired of [
   "v24ApplyDamage","v24ResolveNormalHits","v24AttackPattern","beta03TickEnemyBurns","db0511TickPlayerElementStatuses","db064ResolveWolfEchoes",
   "enemyTurnV11","enemyTurnV25DevilBase","db0511EnemyTurnBase","db060EnemyTurnBase","db064EnemyTurnBase","dbFriendEnemyTurnBase",
