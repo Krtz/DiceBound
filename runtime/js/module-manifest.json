@@ -73,6 +73,7 @@
     "loot",
     "powerup-registry",
     "powerup-borrowing",
+    "powerup-facade",
     "ui-camp",
     "ui-options",
     "ui-equipment-heirlooms",
@@ -912,6 +913,19 @@
       "requires": [],
       "provides": [
         "DiceboundPowerupBorrowing"
+      ]
+    },
+    {
+      "id": "powerup-facade",
+      "path": "js/powerups/facade.js",
+      "domain": "powerups/public-subsystem-facade",
+      "status": "extracted",
+      "requires": [
+        "powerup-registry",
+        "powerup-borrowing"
+      ],
+      "provides": [
+        "DiceboundPowerups"
       ]
     },
     {

@@ -106,4 +106,23 @@ assert.equal(power.openAllEligible(),"all");
 assert.equal(power.perfectedSignature().id,"perfected_signature");
 assert.equal(power.inspect().owner,"powerups/facade");
 
+
+const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
+const manifest=JSON.parse(fs.readFileSync(path.join(root,"runtime","js","module-manifest.json"),"utf8"));
+assert.match(monolith,/const dbPowerups=window\.DiceboundPowerups/);
+assert.doesNotMatch(monolith,/window\.DiceboundPowerups=Object\.freeze/);
+assert.doesNotMatch(monolith,/window\.DiceboundPowerupRegistry/);
+assert.doesNotMatch(monolith,/window\.DiceboundPowerupBorrowing/);
+for(const retired of ["applyUpgradeV15","applyUpgradeV27Base","db060ApplyUpgradeBase","weightedUpgradeV26Base","eligibleUpgradesV28Base"])assert.ok(!monolith.includes(retired),`retired Powerup wrapper remains: ${retired}`);
+assert.match(monolith,/eligibleUpgrades:filter=>dbPowerups\.eligible\(filter\)/);
+assert.match(monolith,/applyUpgrade:\(up,source\)=>dbPowerups\.apply\(up,source\)/);
+assert.match(monolith,/function applyUpgrade\(up,source="Powerup"\)\{return dbPowerups\.apply\(up,source\);\}/);
+assert.match(monolith,/function weightedUpgrade\(pool\)\{return dbPowerups\.weighted\(pool\);\}/);
+const facadeModule=manifest.modules.find(m=>m.id==="powerup-facade");
+assert.ok(facadeModule);
+assert.deepEqual(facadeModule.requires,["powerup-registry","powerup-borrowing"]);
+assert.deepEqual(facadeModule.provides,["DiceboundPowerups"]);
+assert.ok(manifest.loadOrder.indexOf("powerup-borrowing")<manifest.loadOrder.indexOf("powerup-facade"));
+assert.ok(manifest.loadOrder.indexOf("powerup-facade")<manifest.loadOrder.indexOf("dicebound-monolith"));
+
 console.log("Powerups facade owner PASS: registry/borrowing composition, eligibility, weighted RNG, application ordering and public UI boundary are deterministic");
