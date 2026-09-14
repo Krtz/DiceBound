@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.33
+
+## Beta 0.6.6.33 Powerups subsystem ownership (#346)
+- `DiceboundPowerups` is now the ordinary public Powerups boundary over focused registry and borrowing internals; ordinary runtime composition no longer exposes those specialists or monolith-local eligibility/application wrappers as peer subsystem APIs.
+- Eligibility, weighted/sample selection, normal/Unique/D20 application, high-rarity rewards, Legendary/miniboss/fallback choice policy, selector/description bridges and ordinary Merchant/Road collaboration route through the facade while neighboring subsystem authority stays separate.
+- A permanent 21-case exact released-0.6.6.32 Powerups output/state/RNG oracle plus facade/anti-shadow guards freezes eligibility, achievement/Unique gates, 3/4-choice weighting, application side effects, Legendary/miniboss/exhaustion behavior and selector semantics. Existing subsystem/browser/file suites remain authoritative.
+- No Powerup balance, class/Pet mechanics, Merchant/Road reward balance, RNG order/state, save/checkpoint behavior or UI redesign is intended. Runtime graph is 83 modules (82 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 675,358 bytes / 7,064 lines.
+
 # Unreleased — Beta 0.6.6.32
 
 ## Beta 0.6.6.32 Combat View subsystem ownership (#343)

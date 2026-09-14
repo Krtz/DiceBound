@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.33
+
+### Powerups subsystem facade and ownership (#346)
+- Added `runtime/js/powerups/facade.js` as the sole ordinary public `DiceboundPowerups` boundary while retaining `powerups/registry.js` and `powerups/borrowing.js` as focused specialist internals.
+- Routed Powerup eligibility, weighted ordinary choices, application ordering, random high-rarity rewards, Legendary/fallback/miniboss policy, selector/description bridges and ordinary Merchant/Road collaboration through `DiceboundPowerups`; historical application/weighted/Slime wrapper ownership and direct focused-global peering are drained from `dicebound.js`.
+- Added a permanent 21-case exact released-0.6.6.32 Powerups output/state/RNG oracle plus a focused facade ownership contract. The complete JavaScript/Python suite, existing subsystem oracles and browser/file regressions remain authoritative.
+- Architecture-only: no Powerup values, eligibility/gates, choice counts, RNG order/state, D20 behavior, Legendary/miniboss fallback semantics, class/Pet mechanics, Merchant/Road balance, save/checkpoint behavior or UI redesign is intended. Runtime graph is 83 modules (82 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 675,358 bytes / 7,064 physical lines versus 678,074 bytes / 7,057 lines in released 0.6.6.32.
+
 ## Beta 0.6.6.32
 
 ### Combat View subsystem facade and ownership (#343)
