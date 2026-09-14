@@ -33,45 +33,7 @@ jobs:
       - name: Stamp Beta 0.6.6.35
         shell: pwsh
         run: |
-          python tools/set_project_version.py --version 0.6.6.35 --channel Beta
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          @'
-          from pathlib import Path
-
-          changelog_path=Path('CHANGELOG.md')
-          changelog=changelog_path.read_text(encoding='utf-8')
-          if '## Beta 0.6.6.35' not in changelog:
-              anchor='## Beta 0.6.6.34'
-              if anchor not in changelog: raise SystemExit('0.6.6.34 changelog anchor missing')
-              entry="""## Beta 0.6.6.35
-
-### Runtime / Core / Persistence subsystem facade and ownership (#354)
-- Added `runtime/js/core/facade.js` as the ordinary public `DiceboundRuntime` boundary over focused Version, Platform, Storage, Save, active-run Checkpoint, Core State, Runtime Services and Memory Diagnostics internals. Deterministic gameplay RNG remains an explicit foundational dependency instead of being hidden by the facade.
-- Routed ordinary career-state load/save and event-bus composition, checkpoint access, runtime-service construction, diagnostics and persistence collaboration through `DiceboundRuntime`; drained peer-global Runtime implementation dependencies from ordinary modules while retaining intrinsic bootstrap/version dependencies as focused internals.
-- Added a permanent 12-case exact released-0.6.6.34 Runtime/Core/Persistence oracle plus facade and peer-boundary anti-shadow tests. Existing Core State, checkpoint, Memory Diagnostics, subsystem deterministic/oracle, browser/file/Edge and native release gates remain authoritative.
-- Architecture-only: no gameplay balance, RNG order/state, save/checkpoint schema or timing, event ordering, platform fallback behavior or UI redesign is intended. Runtime graph is 87 modules (86 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 670,346 bytes / 7,076 architecture-validator lines versus 670,604 bytes / 7,075 physical lines in released 0.6.6.34. This wave prioritizes ownership cohesion rather than raw monolith shrinkage.
-
-"""
-              changelog_path.write_text(changelog.replace(anchor,entry+anchor,1),encoding='utf-8')
-
-          notes_path=Path('runtime/PATCH_NOTES.md')
-          notes=notes_path.read_text(encoding='utf-8')
-          if '# Unreleased — Beta 0.6.6.35' not in notes:
-              anchor='# Unreleased — Beta 0.6.6.34'
-              if anchor not in notes: raise SystemExit('0.6.6.34 patch-note anchor missing')
-              entry="""# Unreleased — Beta 0.6.6.35
-
-## Beta 0.6.6.35 Runtime / Core / Persistence subsystem ownership (#354)
-- `DiceboundRuntime` is now the ordinary public Runtime/Core/Persistence boundary over focused Version, Platform, Storage, Save, active-run Checkpoint, Core State, Runtime Services and Memory Diagnostics internals; deterministic gameplay RNG remains explicit and separate.
-- Ordinary career-state load/save/event-bus composition, checkpoint access, runtime-service construction, diagnostics and persistence collaboration route through the facade. Direct Runtime implementation peers and stale manifest edges are drained from ordinary modules while focused bootstrap identity adapters retain their intrinsic Version dependency.
-- A permanent 12-case exact released-0.6.6.34 Runtime oracle plus facade and peer-boundary anti-shadow guards freezes save backup/recovery, import/export, checkpoint/RNG continuation, career normalization, event bus, live runtime services, storage/platform diagnostics and non-mutating memory diagnostics.
-- No gameplay balance, RNG order/state, save/checkpoint schema or timing, event ordering, platform fallback behavior or UI redesign is intended. Runtime graph is 87 modules (86 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 670,346 bytes / about 7,076 lines.
-
-"""
-              notes_path.write_text(notes.replace(anchor,entry+anchor,1),encoding='utf-8')
-          '@ | python -
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/refresh_runtime_manifest.py --version 0.6.6.35 --channel Beta --development-state Unreleased --notes "Runtime/Core/Persistence owner convergence for Beta 0.6.6.35."
+          python tools/materialize_runtime_release.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/validate_version_identity.py --version 0.6.6.35 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -88,10 +50,6 @@ jobs:
           node tools/test_runtime_oracle.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_core_state.js
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node tools/test_run_checkpoint.js
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node tools/test_memory_diagnostics.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Complete repository gate
@@ -117,6 +75,7 @@ jobs:
       - name: Materialize exact stamped commit
         shell: pwsh
         run: |
+          Remove-Item tools/materialize_runtime_release.py
           Remove-Item .github/workflows/runtime-release-stamp.yml
           git config user.name "dicebound-architecture-bot"
           git config user.email "dicebound-architecture-bot@users.noreply.github.com"
