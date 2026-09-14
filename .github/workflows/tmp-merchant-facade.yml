@@ -6,6 +6,7 @@ on:
       - arch/0.6.6.30-merchant-facade
     paths:
       - tools/tmp_merchant_facade_patch.py
+      - tools/tmp_merchant_facade_fix.py
       - .github/workflows/tmp-merchant-facade.yml
 
 permissions:
@@ -31,20 +32,31 @@ jobs:
         run: |
           python tools/tmp_merchant_facade_patch.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_merchant_facade_fix.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
 
       - name: Run focused Merchant ownership and exact Edge gates
         shell: pwsh
         run: |
           node --check runtime/js/events/merchant-facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_merchant_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_merchant_transaction.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/test_merchant_stock_extraction_boundary.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/test_merchant_ui_extraction_boundary.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/test_shadow_ownership_drain.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_merchant_stock_resolution.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_merchant_stock_resolution_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_merchant_browser.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -69,6 +81,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item tools/tmp_merchant_facade_patch.py -Force
+          Remove-Item tools/tmp_merchant_facade_fix.py -Force
           Remove-Item .github/workflows/tmp-merchant-facade.yml -Force
           git add -A
           git diff --cached --check
