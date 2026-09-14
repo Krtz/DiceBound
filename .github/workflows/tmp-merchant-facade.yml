@@ -79,7 +79,12 @@ jobs:
       - name: Report candidate architecture
         shell: pwsh
         run: |
-          python -c "from pathlib import Path; import json; p=Path('runtime/js/dicebound.js'); t=p.read_text(encoding='utf-8'); m=json.loads(Path('runtime/js/module-manifest.json').read_text(encoding='utf-8')); print(f'ARCHITECTURE modules={len(m[\"modules\"])} extracted={sum(1 for x in m[\"modules\"] if x.get(\"status\")==\"extracted\")} monolith_lines={len(t.splitlines())} monolith_bytes={len(t.replace(chr(13)+chr(10),chr(10)).encode())}')"
+          $manifest = Get-Content runtime/js/module-manifest.json -Raw | ConvertFrom-Json
+          $text = Get-Content runtime/js/dicebound.js -Raw
+          $lines = ($text -split "`n").Count
+          $bytes = [Text.Encoding]::UTF8.GetByteCount($text.Replace("`r`n", "`n"))
+          $extracted = @($manifest.modules | Where-Object { $_.status -eq 'extracted' }).Count
+          Write-Host "ARCHITECTURE modules=$($manifest.modules.Count) extracted=$extracted monolith_lines=$lines monolith_bytes=$bytes"
 
       - name: Materialize exact tested candidate
         shell: pwsh
