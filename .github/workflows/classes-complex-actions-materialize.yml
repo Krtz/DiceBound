@@ -6,6 +6,7 @@ on:
       - arch/0.6.6.34-classes-oracle
     paths:
       - tools/materialize_classes_complex_actions.py
+      - tools/fix_classes_complex_test.py
       - .github/workflows/classes-complex-actions-materialize.yml
 
 permissions:
@@ -35,6 +36,8 @@ jobs:
         shell: pwsh
         run: |
           python tools/materialize_classes_complex_actions.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/fix_classes_complex_test.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/classes/actions.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -102,6 +105,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item tools/materialize_classes_complex_actions.py -Force
+          Remove-Item tools/fix_classes_complex_test.py -Force
           Remove-Item .github/workflows/classes-complex-actions-materialize.yml -Force
           git status --short
           git diff --check
