@@ -8,11 +8,15 @@ if text.count(old)!=2:
     raise SystemExit(f'expected two stale action-owner assertion literals, found {text.count(old)}')
 text=text.replace(old,new)
 
+# Patch the stale transform *as written in the temporary materializer*. Its old
+# output still says "focused Classes actions ..." even though the permanent
+# Phase-E owner test now says "action mechanics" and declares runtime+actions
+# together. Replace that transform with one matching the actual Phase-E test.
 old_block='''test=replace_once(test,
 ''' + "'''" + '''const actionsModule=manifest.modules.find(entry=>entry.id==\"classes-actions\");
-assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.provides,[],\"focused Classes action mechanics should not publish a peer public facade\");''' + "'''" + ''',
+assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.provides,[],\"focused Classes actions should not publish a peer public facade\");''' + "'''" + ''',
 ''' + "'''" + '''const actionsModule=manifest.modules.find(entry=>entry.id==\"classes-actions\");
-assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.provides,[],\"focused Classes action mechanics should not publish a peer public facade\");
+assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.provides,[],\"focused Classes actions should not publish a peer public facade\");
 const hooksModule=manifest.modules.find(entry=>entry.id==\"classes-hooks\");
 assert.ok(hooksModule,\"classes-hooks manifest owner missing\");assert.equal(hooksModule.path,\"js/classes/hooks.js\");assert.deepEqual(hooksModule.provides,[],\"focused Classes hooks should not publish a peer public facade\");''' + "'''" + ''','classes runtime manifest hook assert')'''
 
