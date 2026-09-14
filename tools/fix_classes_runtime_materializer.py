@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import json
 from pathlib import Path
 
-path=Path(__file__).resolve().parent/'test_classes_runtime.js'
+root=Path(__file__).resolve().parents[1]
+path=root/'tools'/'test_classes_runtime.js'
 source=path.read_text(encoding='utf-8')
 replacements={
     'const module=manifest.modules.find(entry=>entry.id==="classes-runtime");':'const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime");',
@@ -15,4 +17,14 @@ for old,new in replacements.items():
         raise SystemExit(f'expected one test replacement for {old!r}, found {source.count(old)}')
     source=source.replace(old,new,1)
 path.write_text(source,encoding='utf-8')
-print('Classes runtime test CommonJS ambiguity fixed')
+
+project_path=root/'wrapper-source'/'config'/'project.json'
+project=json.loads(project_path.read_text(encoding='utf-8'))
+scripts=project.get('runtimeScripts') or []
+if 'js/classes/runtime.js' not in scripts:
+    try:index=scripts.index('js/classes/registry.js')+1
+    except ValueError as exc:raise SystemExit('project runtimeScripts missing classes registry') from exc
+    scripts.insert(index,'js/classes/runtime.js')
+project['runtimeScripts']=scripts
+project_path.write_text(json.dumps(project,indent=2)+'\n',encoding='utf-8')
+print('Classes runtime test and wrapper project script list fixed')
