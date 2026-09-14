@@ -38,6 +38,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $source = Get-Content runtime/js/dicebound.js -Raw
           $source = $source.Replace("required=[...(camp?.requiredSemanticIds||[])]", "required=typeof camp?.requiredSemanticIds==='function'?camp.requiredSemanticIds():[]")
+          $source = $source.Replace("dbCampShellOracleImg('campClassFigure')", "dbCampShellOracleImg('campClassIcon')")
+          $source = $source.Replace("dbCampShellOracleImg('campPetFigure')", "dbCampShellOracleImg('campPetIcon')")
           Set-Content runtime/js/dicebound.js -Value $source -NoNewline
           $test = Get-Content tools/test_camp_shell_oracle.js -Raw
           $test = $test.Replace("assert.equal(startup.presentRequired.length,startup.requiredCount);", "assert.ok(startup.presentRequired.length>=7,'released starter Camp must expose its seven always-available semantic controls');")
