@@ -1,0 +1,91 @@
+name: Temporary Combat release prep
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.31-combat-facade-oracle
+    paths:
+      - tools/tmp_combat_release_prep.py
+      - .github/workflows/tmp-combat-release-prep.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-combat-release:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - name: Check out Combat branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+
+      - name: Stamp Beta 0.6.6.31 and release notes
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.6.31 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_combat_release_prep.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.31 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run complete source validation
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Report architecture
+        shell: pwsh
+        run: |
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact tested Beta 0.6.6.31 candidate
+        shell: pwsh
+        run: |
+          Remove-Item tools/tmp_combat_release_prep.py -Force
+          Remove-Item .github/workflows/tmp-combat-release-prep.yml -Force
+          git add -A
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git config user.name "DiceBound Combat Release"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "release: prepare Beta 0.6.6.31"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "COMBAT_RELEASE_CANDIDATE=$sha"
+          git push origin "HEAD:refs/heads/arch/0.6.6.31-combat-facade-oracle"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Protected branch push rejected as expected; release candidate object was uploaded."
+            exit 0
+          }
