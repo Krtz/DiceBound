@@ -39,6 +39,8 @@ jobs:
         run: |
           python tools/materialize_powerups_facade.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/patch_powerups_facade_candidate.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/powerups/facade.js
           node --check runtime/js/dicebound.js
           node --check tools/test_powerups_facade.js
@@ -92,6 +94,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item tools/materialize_powerups_facade.py -Force
+          Remove-Item tools/patch_powerups_facade_candidate.py -Force
           Remove-Item .github/workflows/tmp-powerups-facade.yml -Force
           git status --short
           git diff --check
