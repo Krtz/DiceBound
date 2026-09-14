@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.31
+
+## Beta 0.6.6.31 Combat Engine subsystem ownership (#341)
+- `DiceboundCombat` is now the ordinary public Combat Engine boundary over focused deterministic engine internals; ordinary runtime callers no longer coordinate Attack, Mana, Guard, Ultimate, Strike, Element, Healing, Pet-turn, Encounter, Turn, Victory, D20 and enemy-scaling owners as peer subsystem APIs.
+- Combat Presentation/VFX remain separate boundaries. The engine facade only composes engine capabilities and preserves existing explicit presentation/VFX collaboration where shipped behavior requires it.
+- A permanent 14-case exact released-0.6.6.30 output/state/event/RNG oracle plus facade, focused-owner, anti-shadow and central architecture guards freeze the new boundary while the existing Combat deterministic and browser suites remain authoritative.
+- No combat balance, damage/healing math, Crit/Echo/Poison/Barrier/Dodge/Haste/element semantics, class/Pet action behavior, enemy/special ordering, target selection, reward ordering, RNG order/state, save/checkpoint behavior or Combat UI/VFX redesign is intended. Runtime graph is 81 modules (80 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 678,722 bytes / 7,060 lines.
+
 # Unreleased — Beta 0.6.6.30
 
 ## Beta 0.6.6.30 Merchant subsystem ownership (#321)

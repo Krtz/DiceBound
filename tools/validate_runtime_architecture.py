@@ -148,6 +148,37 @@ def main() -> int:
 
     monolith_id = next((m["id"] for m in modules if m.get("status") == "monolith"), None)
     monolith_source = sources.get(str(monolith_id), "") if monolith_id else ""
+    combat_facade_module = by_id.get("combat-facade")
+    if not combat_facade_module:
+        errors.append("Combat public facade combat-facade is missing from the runtime manifest")
+    else:
+        combat_facade_requires = set(combat_facade_module.get("requires") or [])
+        if combat_facade_module.get("path") != "js/combat/facade.js" or "DiceboundCombat" not in (combat_facade_module.get("provides") or []):
+            errors.append("combat-facade must own js/combat/facade.js and provide DiceboundCombat")
+        if position.get("combat-facade", -1) >= position.get(str(monolith_id), -1):
+            errors.append("combat-facade must load before the compatibility monolith")
+        if "combat-presentation" in combat_facade_requires or "combat-vfx" in combat_facade_requires:
+            errors.append("Combat Engine facade must keep Combat Presentation/VFX outside its dependency boundary")
+    if monolith_source:
+        for required_combat_facade_route in [
+            "const dbCombatOwner=window.DiceboundCombat;",
+            "dbCombat=dbCombatOwner.configure({",
+            "encounter:dbCombatEncounterLifecycle",
+            "attack:dbCombatAttackResolution",
+            "guard:dbCombatGuardResolution",
+            "mana:dbCombatManaActionResolution",
+            "ultimate:dbCombatUltimateResolution",
+            "petTurn:dbCombatPetTurnResolution",
+            "turns:dbCombatTurns",
+            "victory:dbCombatVictoryResolution",
+            "elements:dbCombatElementResolution",
+            "healing:dbCombatHealingResolution",
+            "d20:dbCombatD20ChaosResolution",
+            "strikes:dbCombatStrikes",
+            "scaling:dbEnemyScalingResolution",
+        ]:
+            if required_combat_facade_route not in monolith_source:
+                errors.append("dicebound.js is missing Combat facade composition route: " + required_combat_facade_route)
     player_init_module = by_id.get("run-player-initialization")
     player_init_source = sources.get("run-player-initialization", "")
     if not player_init_module:
@@ -981,8 +1012,10 @@ def main() -> int:
     if monolith_source:
         if "dbCombatEncounterLifecycle=dbCombatEncounterOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat encounter-lifecycle owner")
-        if monolith_source.count("function startCombat(") != 1 or "return dbCombatEncounterLifecycle.start(kind);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin startCombat encounter-lifecycle adapter")
+        if monolith_source.count("function startCombat(") != 1 or "return dbCombat.startEncounter(kind);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin startCombat adapter through DiceboundCombat")
+        if "return dbCombatEncounterLifecycle.start(kind);" in monolith_source:
+            errors.append("dicebound.js must not expose the encounter-lifecycle specialist as a peer-public startCombat seam")
         if re.search(r"(?m)^\s*startCombat\s*=", monolith_source):
             errors.append("dicebound.js retains a startCombat reassignment after encounter-lifecycle extraction")
         for symbol in ("startCombatV13","startCombatV15Patch","startCombatV16Base","startCombatV17Base","startCombatV18Base","startCombatV19Base","startCombatV19SetBase","startCombatV24Base","startCombatV25DevilBase","startCombatV26StoneBase","startCombatV27DifficultyBase","db0511StartCombatBase","db060StartCombatBase","db0635StartCombatBase","db064StartCombatBase","dbFriendStartCombatBase"):
@@ -1000,8 +1033,10 @@ def main() -> int:
     if monolith_source:
         if "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Ultimate-resolution owner")
-        if monolith_source.count("async function useUltimate(") != 1 or "return dbCombatUltimateResolution.start(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin useUltimate adapter")
+        if monolith_source.count("async function useUltimate(") != 1 or "return dbCombat.ultimate(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin useUltimate adapter through DiceboundCombat")
+        if "return dbCombatUltimateResolution.start(...args);" in monolith_source:
+            errors.append("dicebound.js must not expose the Ultimate specialist as a peer-public seam")
         if re.search(r"(?m)^\s*useUltimate\s*=", monolith_source):
             errors.append("dicebound.js retains a useUltimate reassignment after Ultimate extraction")
         for symbol in ("useUltimateV11","useUltimateV13","useUltimateV15Patch","useUltimateV16Base","useUltimateV17Base","useUltimateV18Base","useUltimateV25CroakBase","useUltimateV27SpeedBase","useUltimateV28Base","db060UseUltimateBase","dbFriendUltimateBase","dbFriendDragonDive","rerollClownGagV16"):
@@ -1020,10 +1055,12 @@ def main() -> int:
     if monolith_source:
         if "dbCombatGuardResolution=dbCombatGuardOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Guard-resolution owner")
-        if monolith_source.count("async function guardAction(") != 1 or "return dbCombatGuardResolution.guardAction(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin guardAction adapter")
-        if monolith_source.count("async function identityGuardAction(") != 1 or "dbCombatGuardResolution.identityGuardAction" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin traced identityGuardAction adapter")
+        if monolith_source.count("async function guardAction(") != 1 or "return dbCombat.guard(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin guardAction adapter through DiceboundCombat")
+        if monolith_source.count("async function identityGuardAction(") != 1 or "dbCombat.identityGuard" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin traced identityGuardAction adapter through DiceboundCombat")
+        if "return dbCombatGuardResolution.guardAction(...args);" in monolith_source or "dbCombatGuardResolution.identityGuardAction" in monolith_source:
+            errors.append("dicebound.js must not expose Guard specialists as peer-public action seams")
         if re.search(r"(?m)^  guardAction\s*=", monolith_source):
             errors.append("dicebound.js retains a top-level guardAction reassignment after Guard extraction")
         if re.search(r"(?m)^  identityGuardAction\s*=", monolith_source):
@@ -1047,12 +1084,18 @@ def main() -> int:
     if monolith_source:
         if "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Pet turn-resolution owner")
-        if monolith_source.count("async function petTurn(") != 1 or "return dbCombatPetTurnResolution.petTurn(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin petTurn adapter")
-        if monolith_source.count("function petDamage(") != 1 or "return dbCombatPetTurnResolution.petDamage();" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin petDamage adapter")
-        if monolith_source.count("function trainerPetDamage(") != 1 or "return dbCombatPetTurnResolution.trainerPetDamage(id);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin trainerPetDamage adapter")
+        if monolith_source.count("async function petTurn(") != 1 or "return dbCombat.petTurn(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin petTurn adapter through DiceboundCombat")
+        if monolith_source.count("function petDamage(") != 1 or "if(dbCombat)return dbCombat.petDamage();" not in monolith_source:
+            errors.append("dicebound.js must retain the Camp-safe petDamage fallback and route configured Combat through DiceboundCombat")
+        if monolith_source.count("function trainerPetDamage(") != 1 or "return dbCombat.trainerPetDamage(id);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin trainerPetDamage adapter through DiceboundCombat")
+        if any(peer in monolith_source for peer in (
+            "return dbCombatPetTurnResolution.petTurn(...args);",
+            "if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();",
+            "return dbCombatPetTurnResolution.trainerPetDamage(id);",
+        )):
+            errors.append("dicebound.js must not expose Pet-turn specialists as peer-public seams")
         for pattern, label in (
             (r"(?m)^  petTurn\s*=", "petTurn"),
             (r"(?m)^  petDamage\s*=", "petDamage"),
@@ -1079,8 +1122,10 @@ def main() -> int:
     if monolith_source:
         if "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Victory-resolution owner")
-        if monolith_source.count("async function winCombat(") != 1 or "return dbCombatVictoryResolution.winCombat(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin winCombat adapter")
+        if monolith_source.count("async function winCombat(") != 1 or "return dbCombat.win(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin winCombat adapter through DiceboundCombat")
+        if "return dbCombatVictoryResolution.winCombat(...args);" in monolith_source:
+            errors.append("dicebound.js must not expose the Victory specialist as a peer-public seam")
         if re.search(r"(?m)^  winCombat\s*=\s*async function", monolith_source):
             errors.append("dicebound.js retains a top-level winCombat reassignment after Victory extraction")
         for symbol in (
@@ -1121,13 +1166,22 @@ def main() -> int:
     if monolith_source:
         for expected_mana_adapter in [
             "const dbCombatManaActionOwner=window.DiceboundCombatManaActionResolution;",
-            "function manaGain(amount){if(!dbCombatManaActionResolution)",
-            "async function occultChannelAttack(...args){if(!dbCombatManaActionResolution)",
-            "async function occultSpellAttack(...args){if(!dbCombatManaActionResolution)",
-            "async function summonerConjure(...args){if(!dbCombatManaActionResolution)",
+            "function manaGain(amount){return dbCombat.manaGain(amount);}",
+            "async function occultChannelAttack(...args){return dbCombat.channel(...args);}",
+            "async function occultSpellAttack(...args){return dbCombat.spell(...args);}",
+            "async function summonerConjure(...args){return dbCombat.summonerConjure(...args);}",
+            "mana:dbCombatManaActionResolution",
         ]:
             if expected_mana_adapter not in monolith_source:
-                errors.append("dicebound.js must retain only the thin Mana action composition adapters")
+                errors.append("dicebound.js must retain only the thin Mana action composition adapters through DiceboundCombat")
+        for retired_mana_adapter in [
+            "return dbCombatManaActionResolution.manaGain(amount);",
+            "return dbCombatManaActionResolution.occultChannelAttack.apply(this,args);",
+            "return dbCombatManaActionResolution.occultSpellAttack.apply(this,args);",
+            "return dbCombatManaActionResolution.summonerConjure.apply(this,args);",
+        ]:
+            if retired_mana_adapter in monolith_source:
+                errors.append("dicebound.js must not expose the Mana specialist as a peer-public seam: " + retired_mana_adapter)
         for retired_mana_layer in [
             "occultChannelAttackV15Patch",
             "occultSpellAttackV15Patch",

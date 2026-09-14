@@ -242,11 +242,16 @@ function makeHarness(options={}){
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
   "let dbCombatStrikes=null;",
-  "return dbCombatStrikes.strikeBaseDamage(...args);",
-  "return dbCombatStrikes.performStrike(...args);",
+  "return dbCombat.strikeBaseDamage(...args);",
+  "return dbCombat.strike(...args);",
   "const dbCombatStrikeOwner=window.DiceboundCombatStrikeResolution;",
-  "dbCombatStrikes=dbCombatStrikeOwner.configure({"
-])assert.ok(monolith.includes(adapter),`missing strike-resolution composition adapter: ${adapter}`);
+  "dbCombatStrikes=dbCombatStrikeOwner.configure({",
+  "strikes:dbCombatStrikes"
+])assert.ok(monolith.includes(adapter),`missing strike-resolution composition/facade route: ${adapter}`);
+for(const retiredAdapter of [
+  "return dbCombatStrikes.strikeBaseDamage(...args);",
+  "return dbCombatStrikes.performStrike(...args);"
+])assert.ok(!monolith.includes(retiredAdapter),`direct peer-public strike adapter returned: ${retiredAdapter}`);
 for(const retired of [
   "strikeBaseDamageV13","strikeBaseDamageV15","strikeBaseDamageV26OuroBase","db060StrikeBaseDamageBase",
   "performStrikeV13","performStrikeV16Base","performStrikeV17Base","performStrikeV18Base","performStrikeV24Base","performStrikeV25PoisonBase",
