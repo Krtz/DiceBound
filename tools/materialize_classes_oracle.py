@@ -73,7 +73,7 @@ seam = r'''
     monkDodge:()=>{dbClassesOracleSetup('monk',{dodge:.10,monkCombo:3});return {chance:effectiveDodgeChance(),state:dbClassesOracleState()};},
     ninjaExecution:()=>{dbClassesOracleSetup('ninja',{attack:20,_ninjaExecution:true},[{hp:1000,maxHp:1000,defense:12}]);const dealt=damageEnemy(currentEnemy,100,false);return {dealt,state:dbClassesOracleState()};},
     ouroborosSync:()=>{dbClassesOracleSetup('ouroboros',{attack:37,doubleStrike:1.20});const before={attack:player.attack,doubleStrike:player.doubleStrike};v18SyncOuroborosAttack();return {before,after:{attack:player.attack,doubleStrike:player.doubleStrike},state:dbClassesOracleState()};},
-    invokerFormula:()=>{dbClassesOracleSetup('invoker');dbInvoker.afterPlayerAction('guard');dbInvoker.afterPlayerAction('generator');dbInvoker.afterPlayerAction('spender');return {active:dbInvoker.active(),state:dbClassesOracleClone(dbInvoker.state(false)),recipe:dbClassesOracleClone(dbInvoker.recipeInfo()),bonuses:dbClassesOracleClone(dbInvoker.actionBonuses()),identity:classIdentityId()};},
+    invokerFormula:()=>{dbClassesOracleSetup('invoker');dbInvoker.afterPlayerAction('guard');dbInvoker.afterPlayerAction('generator');dbInvoker.afterPlayerAction('spender');return {active:dbInvoker.active(),state:dbClassesOracleClone(dbInvoker._test.state(false)),recipe:dbClassesOracleClone(dbInvoker.recipeInfo()),bonuses:dbClassesOracleClone(dbInvoker.actionBonuses()),identity:classIdentityId()};},
     beastmasterButton:()=>{dbClassesOracleSetup('beastmaster');const before=player.beastStance;$('specialAttackBtn')?.click();return {before,after:player.beastStance,state:dbClassesOracleState()};}
   });
 '''
