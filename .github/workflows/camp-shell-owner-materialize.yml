@@ -7,6 +7,7 @@ on:
     paths:
       - tools/materialize_camp_shell_owner.py
       - tools/fix_camp_shell_owner_materializer.py
+      - wrapper-source/config/project.json
       - .github/workflows/camp-shell-owner-materialize.yml
 
 permissions:
@@ -38,6 +39,19 @@ jobs:
           python tools/fix_camp_shell_owner_materializer.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_camp_shell_owner.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          import json
+          from pathlib import Path
+          manifest_path=Path('runtime/js/module-manifest.json')
+          project_path=Path('wrapper-source/config/project.json')
+          manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+          project=json.loads(project_path.read_text(encoding='utf-8'))
+          by_id={entry['id']:entry for entry in manifest['modules']}
+          project['runtimeScripts']=[by_id[module_id]['path'] for module_id in manifest['loadOrder']]
+          project_path.write_text(json.dumps(project,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
+          print('Project runtimeScripts synchronized to module manifest')
+          '@ | python -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.35 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
