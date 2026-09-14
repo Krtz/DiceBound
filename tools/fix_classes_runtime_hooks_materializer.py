@@ -19,6 +19,19 @@ if end<0:
     raise SystemExit('stale umbrella-test rewrite end not found')
 end+=len(end_marker)
 materializer=materializer[:start]+"# Umbrella owner test is aligned by fix_classes_runtime_hooks_materializer.py.\n"+materializer[end:]
+
+# Focused hook assertions should test the released numerical behavior, not
+# JavaScript's binary floating-point spelling (0.36 materializes as
+# 0.3599999999999999). Keep a tight tolerance while preserving exact formulas.
+float_asserts={
+    'assert.equal(classes.legacyMonkDodge(.2),.36);':'assert.ok(Math.abs(classes.legacyMonkDodge(.2)-.36)<1e-12);',
+    'assert.equal(classes.identityDodgeAdjustments(.36),.414);':'assert.ok(Math.abs(classes.identityDodgeAdjustments(.36)-.414)<1e-12);',
+    'assert.equal(classes.identityDodgeAdjustments(.2),.32);':'assert.ok(Math.abs(classes.identityDodgeAdjustments(.2)-.32)<1e-12);'
+}
+for old,new in float_asserts.items():
+    if materializer.count(old)!=1:
+        raise SystemExit(f'focused float assertion drifted: {old!r} count={materializer.count(old)}')
+    materializer=materializer.replace(old,new,1)
 materializer_path.write_text(materializer,encoding='utf-8',newline='\n')
 
 text=owner_test_path.read_text(encoding='utf-8')
