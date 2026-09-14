@@ -54,7 +54,7 @@ classes.clearSlimeRougeRuntime();
 
 const actionTrace=[];
 const actionCallbacks={};
-for(const name of ["basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial"]){
+for(const name of ["basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"]){
   actionCallbacks[name]=()=>{actionTrace.push(name);return name;};
 }
 classes.configureActions(actionCallbacks);
@@ -71,6 +71,7 @@ assert.deepEqual(routed("bloodmage","special"),{result:"bloodmageSpecial",trace:
 assert.deepEqual(routed("rogue","special"),{result:"rogueSpecial",trace:["rogueSpecial"]});
 assert.deepEqual(routed("cleric","special"),{result:"clericSpecial",trace:["clericSpecial"]});
 assert.deepEqual(routed("beastmaster","special"),{result:"beastmasterSpecial",trace:["beastmasterSpecial"]});
+assert.deepEqual(routed("alchemist","special"),{result:"alchemistSpecial",trace:["alchemistSpecial"]});
 assert.deepEqual(routed("ranger","special"),{result:undefined,trace:[]});
 assert.throws(()=>classes.performAction("bogus"),/Unknown Classes combat action/);
 
@@ -103,6 +104,17 @@ assert.doesNotMatch(monolith,/function cycleBeastStance\(/,'Beastmaster stance m
 assert.match(monolith,/bloodmageAttack:\(\)=>dbClasses\.bloodmageBloodletting\(\)/);
 assert.match(monolith,/clericSpecial:\(\)=>dbClasses\.clericConsecration\(\)/);
 assert.match(monolith,/beastmasterSpecial:\(\)=>dbClasses\.cycleBeastStance\(\)/);
+assert.match(monolith,/bloodmageGuard:\(\)=>dbClasses\.bloodmageReplenish\(\)/);
+assert.match(monolith,/bloodmageSpecial:\(\)=>dbClasses\.bloodmageExsanguinate\(\)/);
+assert.match(monolith,/rogueSpecial:\(\)=>dbClasses\.rogueSteal\(\)/);
+assert.match(monolith,/alchemistSpecial:\(\)=>dbClasses\.alchemistVolatileFlask\(\)/);
+assert.doesNotMatch(monolith,/async function rogueSteal\(/,'Rogue Steal still lives in monolith');
+assert.doesNotMatch(monolith,/rogueSteal=async function/,'Rogue Steal override still lives in monolith');
+assert.doesNotMatch(monolith,/bloodmageReplenish=async function|async function bloodmageReplenish\(/,'Bloodmage Replenish still lives in monolith');
+assert.doesNotMatch(monolith,/bloodmageExsanguinate=async function|async function bloodmageExsanguinate\(/,'Bloodmage Exsanguinate still lives in monolith');
+assert.doesNotMatch(monolith,/db060BloodmageBase/,'Blood Price base-capture shadow still lives in monolith');
+assert.doesNotMatch(monolith,/alchemistVolatileFlaskV16/,'Alchemist Volatile Flask still lives in monolith');
+assert.doesNotMatch(monolith,/beta021RoguePowerStealChance/,'Rogue power-steal helper still lives in monolith');
 
 const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
 const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime"),actionsModule=manifest.modules.find(entry=>entry.id==="classes-actions");
@@ -111,4 +123,4 @@ assert.ok(actionsModule,"classes-actions manifest owner missing");assert.equal(a
 const order=manifest.loadOrder;assert.equal(order[order.indexOf("classes-registry")+1],"classes-runtime","Classes runtime must load immediately after registry facade");assert.equal(order[order.indexOf("classes-runtime")+1],"classes-actions","Classes actions must load immediately after runtime owner");
 const scripts=[...fs.readFileSync(indexPath,"utf8").matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match=>match[1]);assert.ok(scripts.indexOf("js/classes/registry.js")<scripts.indexOf("js/classes/runtime.js"));assert.ok(scripts.indexOf("js/classes/runtime.js")<scripts.indexOf("js/classes/actions.js"));assert.ok(scripts.indexOf("js/classes/actions.js")<scripts.indexOf("js/dicebound.js"));
 
-console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle, routing and simple action mechanics are owned behind DiceboundClasses");
+console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle, routing and bespoke action mechanics are owned behind DiceboundClasses");

@@ -61,7 +61,7 @@
   function configureActions(next={}){
     for(const name of [
       "basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate",
-      "manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial"
+      "manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"
     ]){
       if(typeof next?.[name]!=="function")throw new Error(`Classes action routing requires ${name}().`);
     }
@@ -85,6 +85,7 @@
       if(active("rogue"))return action.rogueSpecial();
       if(active("cleric"))return action.clericSpecial();
       if(active("beastmaster"))return action.beastmasterSpecial();
+      if(active("alchemist"))return action.alchemistSpecial();
       return undefined;
     }
     throw new Error(`Unknown Classes combat action: ${kind}`);

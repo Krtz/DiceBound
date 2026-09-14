@@ -1548,11 +1548,7 @@
 
 
 
-  async function bloodmageExsanguinate(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;const paid=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos("attack");updateCombatUI();await animateClassAttack("crit");let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));const dealt=damageEnemy(currentEnemy,damage);const ring=applyMythicRingPulse();setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${dealt} damage.${ring?` ${ring}`:""}`);sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);}
-  async function bloodmageReplenish(){if(combatBusy||!currentEnemy)return;combatBusy=true;player.combatActionCount++;const selfHeal=healPlayer(Math.ceil(player.maxHp*.16));const enemyHeal=Math.min(currentEnemy.maxHp-currentEnemy.hp,Math.ceil(currentEnemy.maxHp*.14));currentEnemy.hp+=enemyHeal;player.ultimateCharge=clamp(player.ultimateCharge+20,0,100);const ring=applyMythicRingPulse();setCombatText(`💉 Replenish restores ${selfHeal} HP to you and ${enemyHeal} HP to ${currentEnemy.name}.${ring?` ${ring}`:""}`);updateCombatUI();await delay(700);await resolveEnemyResponse(false);}
-  $("attackBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageExsanguinate();}},true);
-  $("guardBtn").addEventListener("click",e=>{if(classIdentityActive("bloodmage")){e.preventDefault();e.stopImmediatePropagation();bloodmageReplenish();}},true);
-  $("ultimateBtn").addEventListener("click",e=>{if(player.classId==="bloodmage"){e.preventDefault();e.stopImmediatePropagation();useUltimate();}},true);
+  // Bloodmage bespoke combat actions are owned by DiceboundClasses.
 
   const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);};
   $("rollBtn").addEventListener("click",e=>{if(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked){e.preventDefault();e.stopImmediatePropagation();rollDice();}},true);
@@ -1838,23 +1834,7 @@
   async function occultSpellAttack(...args){return dbCombat.spell(...args);}
 
 
-  function beta021RoguePowerStealChance(luck=player.luck){return clamp((Number(luck)||0)-.50,0,.50)*.70;}
-  async function rogueSteal(){
-    if(combatBusy||!currentEnemy||player.rogueStealUsed)return;combatBusy=true;player.rogueStealUsed=true;player.combatActionCount++;const chance=clamp(.48+player.luck*.22,.48,.78),success=random()<chance;let text="";
-    if(success){
-      const gold=modifiedGold(rand(10+boardLevel*4,22+boardLevel*8));player.gold+=gold;text=`🗡️ You steal ${gold} gold from ${currentEnemy.name}.`;
-      const powerChance=beta021RoguePowerStealChance(player.luck),powerRoll=powerChance>0?random():1;player._beta021LastStealPower={chance:powerChance,roll:powerRoll};
-      if(powerChance>0&&powerRoll<powerChance){
-        const choices=getUpgradeChoices();const stolen=choices.length?pick(choices):null;
-        if(stolen){applyUpgrade(stolen,"Rogue Steal");text+=` <b>Jackpot:</b> you also steal the powerup ${stolen.name}!`;showToast(`🗡️ Stolen powerup: ${stolen.name}`);}
-      }
-      if(random()<.18){player.potions++;text+=" You also somehow steal a potion.";}
-      identityFlash("🪙 Steal succeeded");sfx.coin();
-    }else{text=`🗡️ ${currentEnemy.name} catches your hand. You steal absolutely nothing.`;identityFlash("🚫 Caught!");}
-    setCombatText(text);updateHUD();updateCombatUI();await delay(620);await resolveEnemyResponse(false);
-  }
-
-
+  // Rogue Steal mechanics are owned by DiceboundClasses.
 
   // Guard/potion identity wrappers.
   async function identityGuardAction(...args){
@@ -1870,6 +1850,8 @@
   dbClasses.configureActionMechanics({
     getPlayer:()=>player,
     getCurrentEnemy:()=>currentEnemy,
+    getBoardLevel:()=>boardLevel,
+    getEncounterLead:()=>currentEncounterLead,
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
     basicAttack:()=>playerAttack(),
@@ -1877,27 +1859,53 @@
     updateCombatUI:()=>updateCombatUI(),
     healPlayer:amount=>healPlayer(amount),
     damageAll:(amount,falloff=1)=>damageAll(amount,falloff),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
     setCombatText:text=>setCombatText(text),
+    updateHUD:()=>updateHUD(),
     sfxHoly:()=>sfx.holy(),
+    sfxCoin:()=>sfx.coin(),
+    sfxHit:()=>sfx.hit(),
+    sfxCrit:()=>sfx.crit(),
     delay:ms=>delay(ms),
     livingEnemies:()=>livingEnemies(),
     winCombat:()=>winCombat(),
     resolveEnemyResponse:guarded=>resolveEnemyResponse(guarded),
-    isClassActive:id=>classIdentityActive(id)
+    isClassActive:id=>classIdentityActive(id),
+    random:()=>random(),
+    rand:(min,max)=>rand(min,max),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    modifiedGold:value=>modifiedGold(value),
+    getUpgradeChoices:()=>getUpgradeChoices(),
+    pick:values=>pick(values),
+    applyUpgrade:(upgrade,source)=>applyUpgrade(upgrade,source),
+    showToast:(...args)=>showToast(...args),
+    rollD20Chaos:kind=>rollD20Chaos(kind),
+    animateClassAttack:mode=>animateClassAttack(mode),
+    getSetDamageBonus:()=>v19SetDamageBonus(),
+    applyMythicRingPulse:()=>applyMythicRingPulse(),
+    selectFirstLivingEnemy:()=>setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0])),
+    hasEffect:id=>db060HasEffect(id),
+    addCombatHistory:text=>addCombatHistory(text),
+    potionHealValue:mult=>v16PotionHealValue(mult),
+    recordPotionUse:()=>{if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();},
+    chargeUltimate:amount=>chargeUltimate(amount),
+    pickElementKey:()=>pick(ELEMENT_KEYS),
+    triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options)
   });
   dbClasses.configureActions({
     basicAttack:()=>playerAttack(),
     manaAttack:()=>occultChannelAttack(),
     bloodmageAttack:()=>dbClasses.bloodmageBloodletting(),
     guard:()=>identityGuardAction(),
-    bloodmageGuard:()=>bloodmageReplenish(),
+    bloodmageGuard:()=>dbClasses.bloodmageReplenish(),
     potion:()=>identityPotionAction(),
     ultimate:()=>useUltimate(),
     manaSpecial:()=>occultSpellAttack(),
-    bloodmageSpecial:()=>bloodmageExsanguinate(),
-    rogueSpecial:()=>rogueSteal(),
+    bloodmageSpecial:()=>dbClasses.bloodmageExsanguinate(),
+    rogueSpecial:()=>dbClasses.rogueSteal(),
     clericSpecial:()=>dbClasses.clericConsecration(),
-    beastmasterSpecial:()=>dbClasses.cycleBeastStance()
+    beastmasterSpecial:()=>dbClasses.cycleBeastStance(),
+    alchemistSpecial:()=>dbClasses.alchemistVolatileFlask()
   });
 
   // Replace the four original action buttons once, removing old stacked listeners.
@@ -2136,10 +2144,9 @@
     {id:"alchemist_panacea_engine",classId:"alchemist",rarity:"legendary",icon:"⚗️🌈",name:"Panacea Engine",desc:"+75% Potion Healing. Volatile Flask has a 30% chance not to consume its potion.",tags:["alchemy","sustain","legendary"],apply(){player.potionPower+=.75;player.alchemistFreeFlask=(player.alchemistFreeFlask||0)+.30;}}
   );
   function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
-  function recordPotionUseV16(){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();}
-  async function alchemistVolatileFlaskV16(){if(combatBusy||!currentEnemy||player.potions<=0)return;combatBusy=true;player.guardCooldown=0;const free=random()<clamp(player.alchemistFreeFlask||0,0,.8);if(!free){player.potions--;recordPotionUseV16();}const healing=v16PotionHealValue(),raw=Math.round((healing*1.35+player.attack*.9)*(1+(player.alchemistFlaskBonus||0))),dealt=damageAll(raw,.72);let extra=free?" Panacea Engine preserves the potion.":"";if(random()<clamp(player.alchemistElementChance||0,0,.75)){const key=pick(ELEMENT_KEYS),target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0],r=triggerElementEffect(key,target,{forced:true,source:"Volatile Flask"});if(r)extra+=` ${r.message}`;}player.combatActionCount++;chargeUltimate(Math.round(player.ultimateAttackGain*.75));sfx.crit();setCombatText(`🧪 Volatile Flask consumes restorative potency as violence for ${dealt} total damage.${extra}`);updateCombatUI();await delay(720);if(!livingEnemies().length)return winCombat();await resolveEnemyResponse(false);}
+  // Volatile Flask consumption/action mechanics are owned by DiceboundClasses.
 
-  // ---- Talents --------------------------------------------------------------
+  // ---- Talents --------------------------------------------------------------  // ---- Talents --------------------------------------------------------------
   const v16Talents=[
     {id:"fortune_powerup_rerolls",branch:"Fortune",icon:"🔄✨",name:"Second Opinion",cost:1,maxRank:5,desc:"Each rank adds 1 Powerup Reroll at the start of every run.",requires:[req("fortune_luck",1)]},
     {id:"fighter_counter_reserve",branch:"Power",icon:"🛡️🛡️",name:"Counter Reserve",cost:2,maxRank:1,desc:"Fighter can bank up to 2 Counterblow stacks instead of 1.",requires:[req("power_attack",2)]},
@@ -2167,7 +2174,7 @@
 
 
   // ---- Combat UI clarity ----------------------------------------------------
-  $("specialAttackBtn")?.addEventListener("click",e=>{if(!classIdentityActive("alchemist"))return;e.preventDefault();e.stopImmediatePropagation();alchemistVolatileFlaskV16();},true);
+  // Alchemist Special now uses the shared DiceboundClasses action route.
 
   const updateHUDV16Base=updateHUD;updateHUD=function(){updateHUDV16Base();const d=$("defenseText");if(d){const pct=Math.round(defenseDamageReduction(player.defense)*100);d.classList.add("defense-tooltip");d.title=`${Math.round(player.defense)} Defense currently reduces ordinary incoming damage by about ${pct}%. Defense has diminishing returns; guardian specials receive only part of this reduction.`;const box=d.closest(".stat");if(box)box.title=d.title;}checkDynamicClassUnlocks();};
 
@@ -2425,29 +2432,7 @@
 
 
   // ---- Guard, Replenish and pet-turn behavior ------------------------------
-
-  // Replenish is a real defensive action now: the enemy response receives the
-  // same `guarded=true` flag as Guard, so ordinary hits and guardian specials
-  // are reduced by the Bloodmage's Guard Power after the mutual healing.
-  bloodmageReplenish=async function(){
-    if(combatBusy||!currentEnemy)return;combatBusy=true;player.combatActionCount++;
-    const selfHeal=healPlayer(Math.ceil(player.maxHp*.16)),enemyHeal=Math.min(currentEnemy.maxHp-currentEnemy.hp,Math.ceil(currentEnemy.maxHp*.14));
-    currentEnemy.hp+=enemyHeal;player.ultimateCharge=clamp(player.ultimateCharge+20,0,100);const ring=applyMythicRingPulse();
-    setCombatText(`💉 Replenish restores ${selfHeal} HP to you and ${enemyHeal} HP to ${currentEnemy.name}, then braces like Guard.${ring?` ${ring}`:""}`);
-    updateCombatUI();await delay(700);await resolveEnemyResponse(true);
-  };
-
-  // Exsanguinate keeps full damage on the selected enemy and splashes 65% of
-  // the calculated hit into one additional living enemy when a pack is present.
-  bloodmageExsanguinate=async function(){
-    if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;
-    const paid=Math.max(1,Math.ceil(player.maxHp*.12));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos("attack");updateCombatUI();await animateClassAttack("crit");
-    let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus()));if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));
-    const primary=currentEnemy,first=damageEnemy(primary,damage),second=livingEnemies().find(e=>e!==primary);let splash=0;if(second)splash=damageEnemy(second,Math.round(damage*.65));
-    const ring=applyMythicRingPulse(),total=first+splash;setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${first} to ${primary.name}${second?` and ${splash} to ${second.name}`:""} (${total} total).${ring?` ${ring}`:""}`);
-    sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  };
-
+  // Bloodmage Replenish and Exsanguinate are owned by DiceboundClasses.
 
   // ---- Endless Form support hooks ------------------------------------------
 
@@ -2518,10 +2503,10 @@
     ouroborosConversion:()=>{meta.unlocks.ouroboros=true;resetPlayer("ouroboros");const before=player.doubleStrike;player.attack+=5;updateHUD();return {attack:player.attack,before,after:player.doubleStrike,unlocked:isClassUnlocked("ouroboros")};},
     bloodmageHp:()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");const before=player.maxHp;player.maxHp+=10;player.hp+=10;updateHUD();return {before,after:player.maxHp,delta:player.maxHp-before};},
     levelChoices:()=>{resetPlayer("ranger");player.levelChoiceBonus=1;pendingLevelUps=1;openLevelUp();return {choices:$("choiceGrid").querySelectorAll("button.choice-btn").length,reroll:!!$("choiceGrid").querySelector(".powerup-reroll-btn")};},
-    replenishGuard:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let guarded=null;const old=resolveEnemyResponse;resolveEnemyResponse=async g=>{guarded=g;combatBusy=false;};try{await bloodmageReplenish();return {guarded,hp:player.hp,enemyHp:currentEnemy.hp};}finally{resolveEnemyResponse=old;}},
+    replenishGuard:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let guarded=null;const old=resolveEnemyResponse;resolveEnemyResponse=async g=>{guarded=g;combatBusy=false;};try{await dbClasses.bloodmageReplenish();return {guarded,hp:player.hp,enemyHp:currentEnemy.hp};}finally{resolveEnemyResponse=old;}},
     conjureRally:async()=>{meta.unlocks.summoner=true;Object.values(meta.pets).forEach(p=>p.unlocked=true);resetPlayer("summoner");player.mana=100;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let pet=0,response=0;const oldPet=petTurn,oldResponse=resolveEnemyResponse;petTurn=async()=>{pet++;};resolveEnemyResponse=async()=>{response++;combatBusy=false;};try{await summonerConjure();return {pet,response,spirits:player.summonerSpirits.length,mana:player.mana};}finally{petTurn=oldPet;resolveEnemyResponse=oldResponse;}},
     guardMana:async()=>{meta.unlocks.sorcerer=true;resetPlayer("sorcerer");player.mana=0;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;const old=guardAction;guardAction=async()=>{combatBusy=false;};try{await identityGuardAction();return {mana:player.mana,gain:player.guardManaGain};}finally{guardAction=old;}},
-    exsanguinateTwo:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy A",hp:1000,maxHp:1000,attack:1,defense:0},{name:"Dummy B",hp:1000,maxHp:1000,attack:1,defense:0}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;currentEncounterLead={boss:false};combatBusy=false;const oldResponse=resolveEnemyResponse,oldChaos=rollD20Chaos,oldAnim=animateClassAttack;resolveEnemyResponse=async()=>{combatBusy=false;};rollD20Chaos=async()=>({mult:1});animateClassAttack=async()=>{};try{await bloodmageExsanguinate();return {firstDamage:1000-currentEnemies[0].hp,secondDamage:1000-currentEnemies[1].hp};}finally{resolveEnemyResponse=oldResponse;rollD20Chaos=oldChaos;animateClassAttack=oldAnim;}},
+    exsanguinateTwo:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy A",hp:1000,maxHp:1000,attack:1,defense:0},{name:"Dummy B",hp:1000,maxHp:1000,attack:1,defense:0}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;currentEncounterLead={boss:false};combatBusy=false;const oldResponse=resolveEnemyResponse,oldChaos=rollD20Chaos,oldAnim=animateClassAttack;resolveEnemyResponse=async()=>{combatBusy=false;};rollD20Chaos=async()=>({mult:1});animateClassAttack=async()=>{};try{await dbClasses.bloodmageExsanguinate();return {firstDamage:1000-currentEnemies[0].hp,secondDamage:1000-currentEnemies[1].hp};}finally{resolveEnemyResponse=oldResponse;rollD20Chaos=oldChaos;animateClassAttack=oldAnim;}},
     healingNuzzle:async()=>{resetPlayer("ranger");player.petTurnHeal=2;player.hp=Math.max(1,player.maxHp-8);currentEnemies=[{name:"Dummy",hp:5000,maxHp:5000,attack:1,defense:0,weakness:"fire"}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;combatBusy=false;const before=player.hp,oldUpdate=updateCombatUI;updateCombatUI=()=>{};try{await petTurn();return {before,after:player.hp,healed:player.hp-before};}finally{updateCombatUI=oldUpdate;}}
   }});
 
@@ -2931,41 +2916,11 @@
   // Paladin's existing Grace gain happens inside the current healPlayer chain.
   // Add only the bonus portion afterwards so old healing/Faith hooks remain intact.
 
-  // Rogue: keep the established once-per-battle Steal cadence, but let the
-  // Perfected Signature directly improve the thing the button actually does.
-  rogueSteal=async function(){
-    if(combatBusy||!currentEnemy||player.rogueStealUsed)return;
-    combatBusy=true;player.rogueStealUsed=true;player.combatActionCount++;
-    const chance=clamp(.48+player.luck*.22+(player.rogueStealChanceBonus||0),.48,.93),success=random()<chance;let text='';
-    if(success){
-      const raw=rand(10+boardLevel*4,22+boardLevel*8),gold=modifiedGold(Math.max(1,Math.round(raw*(player.rogueStealGoldMult||1))));
-      player.gold+=gold;text=`🗡️ You steal ${gold} gold from ${currentEnemy.name}.`;
-      const powerChance=beta021RoguePowerStealChance(player.luck),powerRoll=powerChance>0?random():1;player._beta021LastStealPower={chance:powerChance,roll:powerRoll};
-      if(powerChance>0&&powerRoll<powerChance){
-        const choices=getUpgradeChoices(),stolen=choices.length?pick(choices):null;
-        if(stolen){applyUpgrade(stolen,'Rogue Steal');text+=` <b>Jackpot:</b> you also steal the powerup ${stolen.name}!`;showToast(`🗡️ Stolen powerup: ${stolen.name}`);}
-      }
-      if(random()<.18){player.potions++;text+=' You also somehow steal a potion.';}
-      identityFlash('🪙 Steal succeeded');sfx.coin();
-    }else{text=`🗡️ ${currentEnemy.name} catches your hand. You steal absolutely nothing.`;identityFlash('🚫 Caught!');}
-    setCombatText(text);updateHUD();updateCombatUI();await delay(620);await resolveEnemyResponse(false);
-  };
-
-  // Bloodmage: centralize Exsanguinate's signature multipliers in the action,
-  // so the card's 25% cheaper / 25% stronger wording is literally true.
-  bloodmageExsanguinate=async function(){
-    if(combatBusy||!currentEnemy)return;combatBusy=true;player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;
-    const costMult=player.bloodmageExsanguinateCostMult||1,damageMult=player.bloodmageExsanguinateDamageMult||1;
-    const paid=Math.max(1,Math.ceil(player.maxHp*.12*costMult));player.hp=Math.max(1,player.hp-paid);const chaos=await rollD20Chaos('attack');updateCombatUI();await animateClassAttack('crit');
-    let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+v19SetDamageBonus())*damageMult);if(currentEncounterLead?.boss)damage=Math.round(damage*(1+player.bossDamage));
-    const primary=currentEnemy,first=damageEnemy(primary,damage),second=livingEnemies().find(e=>e!==primary);let splash=0;if(second)splash=damageEnemy(second,Math.round(damage*.65));
-    const ring=applyMythicRingPulse(),total=first+splash;setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${first} to ${primary.name}${second?` and ${splash} to ${second.name}`:''} (${total} total).${ring?` ${ring}`:''}`);
-    sfx.hit();updateCombatUI();await delay(820);if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);
-  };
-
+  // Rogue Steal and final Bloodmage Exsanguinate signature behavior are owned by DiceboundClasses.
 
 
   /*
+    Full eligible-powerup picker.  /*
     Full eligible-powerup picker. Unlike getUpgradeChoices(), this deliberately
     does not sample or weight the pool: every powerup currently returned by
     eligibleUpgrades() is displayed once. That automatically respects class,
@@ -4217,12 +4172,12 @@
       const enemy={name:'Rage Dummy',hp:1000,maxHp:1000,defense:0,poisonStacks:0},dealt=damageEnemy(enemy,100,true);
       return {missing:Math.round((1-player.hp/player.maxHp)*100),dealt};
     },
-    roguePowerChance(luck=1){return beta021RoguePowerStealChance(luck);},
+    roguePowerChance(luck=1){return dbClasses.roguePowerStealChance(luck);},
     async rogueStealTrial(seed='beta021-rogue'){
       meta.unlocks.rogue=true;resetPlayer('rogue');player.luck=1;currentEnemies=[{name:'Pocket Dummy',hp:1000,maxHp:1000,attack:1,defense:0,gold:0,xp:0,weakness:'fire'}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;currentEncounterLead=currentEnemy;combatBusy=false;player.rogueStealUsed=false;
       const before=Object.values(player.upgradeCounts||{}).reduce((n,v)=>n+(Number(v)||0),0),oldResponse=resolveEnemyResponse,snap=window.DiceboundRng?.snapshot?.();
       resolveEnemyResponse=async()=>{combatBusy=false;};window.DiceboundRng?.seed?.(seed);
-      try{await rogueSteal();const after=Object.values(player.upgradeCounts||{}).reduce((n,v)=>n+(Number(v)||0),0);return {stolePowerup:after>before,before,after,gold:player.gold,potions:player.potions,luck:player.luck,powerChance:beta021RoguePowerStealChance(player.luck),rng:window.DiceboundRng?.snapshot?.(),stealRoll:player._beta021LastStealPower||null,text:$('combatText')?.textContent||''};}
+      try{await dbClasses.rogueSteal();const after=Object.values(player.upgradeCounts||{}).reduce((n,v)=>n+(Number(v)||0),0);return {stolePowerup:after>before,before,after,gold:player.gold,potions:player.potions,luck:player.luck,powerChance:dbClasses.roguePowerStealChance(player.luck),rng:window.DiceboundRng?.snapshot?.(),stealRoll:player._beta021LastStealPower||null,text:$('combatText')?.textContent||''};}
       finally{resolveEnemyResponse=oldResponse;if(snap)window.DiceboundRng?.restore?.(snap);combatBusy=false;}
     },
     ui(){return {systemGuide:[...document.querySelectorAll('#startOverlay .rule')].some(el=>/Systems guide/i.test(el.textContent||'')),petChooser:!!window.DiceboundPetChooser,classGrid:!!document.getElementById('classGrid')};}
@@ -5541,9 +5496,7 @@
 
   // Guard Echo.
 
-  // Blood Price.
-  const db060BloodmageBase=bloodmageExsanguinate;
-  bloodmageExsanguinate=async function(){if(!db060HasEffect('blood_price'))return db060BloodmageBase();const old=player.damageBonus||0;player.damageBonus=old+.15;try{return await db060BloodmageBase();}finally{player.damageBonus=(player.damageBonus||0)-.15;player.damageBonus+=.08;player._db060BloodPriceStacks=(player._db060BloodPriceStacks||0)+1;addCombatHistory(`🩸📈 Blood Price: +8% battle damage (${player._db060BloodPriceStacks} stack${player._db060BloodPriceStacks===1?'':'s'}).`);}};
+  // Blood Price is applied inside the DiceboundClasses Bloodmage action owner.
 
   // Defense doubling during actual incoming attacks.
 
@@ -7143,9 +7096,9 @@
     rogueSteal:(seed='classes-oracle-rogue')=>window.DiceboundBeta021Test.rogueStealTrial(seed),
     clericConsecration:async()=>{dbClassesOracleSetup('cleric',{maxHp:100,hp:40,attack:20,clericFaith:100,combatShield:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>dbClasses.clericConsecration());return dbClassesOracleState();},
     beastmasterStances:()=>{dbClassesOracleSetup('beastmaster');const sequence=[player.beastStance];for(let i=0;i<4;i++){dbClasses.cycleBeastStance();sequence.push(player.beastStance);}return {sequence,state:dbClassesOracleState()};},
-    bloodmageReplenish:async()=>{dbClassesOracleSetup('bloodmage',{maxHp:100,hp:40,ultimateCharge:0,combatActionCount:0},[{hp:600,maxHp:1000}]);await dbClassesOracleWithoutResponse(()=>bloodmageReplenish());return dbClassesOracleState();},
-    bloodmageExsanguinate:async()=>{dbClassesOracleSetup('bloodmage',{maxHp:100,hp:100,attack:20,ultimateCharge:0,combatActionCount:0},[{hp:5000,maxHp:5000,defense:3}]);await dbClassesOracleWithoutResponse(()=>bloodmageExsanguinate());return dbClassesOracleState();},
-    alchemistFlask:async()=>{dbClassesOracleSetup('alchemist',{maxHp:100,hp:100,attack:15,potions:3,potionPower:.50,alchemistFreeFlask:0,alchemistElementChance:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>alchemistVolatileFlaskV16());return dbClassesOracleState();},
+    bloodmageReplenish:async()=>{dbClassesOracleSetup('bloodmage',{maxHp:100,hp:40,ultimateCharge:0,combatActionCount:0},[{hp:600,maxHp:1000}]);await dbClassesOracleWithoutResponse(()=>dbClasses.bloodmageReplenish());return dbClassesOracleState();},
+    bloodmageExsanguinate:async()=>{dbClassesOracleSetup('bloodmage',{maxHp:100,hp:100,attack:20,ultimateCharge:0,combatActionCount:0},[{hp:5000,maxHp:5000,defense:3}]);await dbClassesOracleWithoutResponse(()=>dbClasses.bloodmageExsanguinate());return dbClassesOracleState();},
+    alchemistFlask:async()=>{dbClassesOracleSetup('alchemist',{maxHp:100,hp:100,attack:15,potions:3,potionPower:.50,alchemistFreeFlask:0,alchemistElementChance:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>dbClasses.alchemistVolatileFlask());return dbClassesOracleState();},
     monkDodge:()=>{dbClassesOracleSetup('monk',{dodge:.10,monkCombo:3});return {chance:effectiveDodgeChance(),state:dbClassesOracleState()};},
     ninjaExecution:()=>{dbClassesOracleSetup('ninja',{attack:20,_ninjaExecution:true},[{hp:1000,maxHp:1000,defense:12}]);const dealt=damageEnemy(currentEnemy,100,false);return {dealt,state:dbClassesOracleState()};},
     ouroborosSync:()=>{dbClassesOracleSetup('ouroboros',{attack:37,doubleStrike:1.20});const before={attack:player.attack,doubleStrike:player.doubleStrike};v18SyncOuroborosAttack();return {before,after:{attack:player.attack,doubleStrike:player.doubleStrike},state:dbClassesOracleState()};},
