@@ -7010,6 +7010,97 @@
   });
 
 
+  // Test-only characterization surface for the Camp / App Shell convergence.
+  // It freezes released 0.6.6.35 shell lifecycle/HUD behavior before the
+  // historical openStartScreen/updateMetaUI/updateHUD wrapper ladders move.
+  const dbCampShellOracleClone=value=>value==null?value:JSON.parse(JSON.stringify(value));
+  function dbCampShellOracleRng(action){
+    const before=window.DiceboundRng.snapshot(),result=action(),after=window.DiceboundRng.snapshot();
+    return {result:dbCampShellOracleClone(result),actionRngCalls:after.calls-before.calls,actionRngState:after.state};
+  }
+  function dbCampShellOracleHideBlocking(){
+    DB_RUN_BLOCKING_OVERLAYS.forEach(id=>$(id)?.classList.add('hidden'));
+    $('battleVictory')?.classList.add('hidden');
+    currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;pendingLevelUps=0;combatBusy=false;
+  }
+  function dbCampShellOracleStableRun(classId='ranger',board=3){
+    dbRunClearCheckpoint();dbClasses.clearSlimeRougeRuntime();resetPlayer(classId);boardLevel=board;nightmareMode=false;hellMode=false;
+    gameStarted=true;runFinalized=false;rollLocked=false;combatBusy=false;currentEnemy=null;pendingLevelUps=0;player.position=0;
+    dbCampShellOracleHideBlocking();$('startOverlay')?.classList.add('hidden');
+    return dbCampShellOracleShellState();
+  }
+  function dbCampShellOracleImg(id){const root=$(id);return root?.querySelector?.('img')?.getAttribute('src')||null;}
+  function dbCampShellOracleShellState(){
+    const camp=window.DiceboundCamp,required=typeof camp?.requiredSemanticIds==='function'?camp.requiredSemanticIds():[],present=required.filter(id=>!!$(id));
+    return {
+      gameStarted:!!gameStarted,rollLocked:!!rollLocked,combatBusy:!!combatBusy,boardLevel,position:player?.position??null,
+      overlayHidden:!!$('startOverlay')?.classList.contains('hidden'),campFullscreen:!!$('startOverlay')?.classList.contains('camp-fullscreen'),scene:!!$('campScene'),
+      requiredCount:required.length,presentRequired:present,
+      classStatus:String($('campClassStatus')?.textContent||''),petStatus:String($('campPetStatus')?.textContent||''),
+      nightmareStatus:String($('campNightmareBtn')?.querySelector('.camp-sub')?.textContent||''),hellStatus:String($('campHellBtn')?.querySelector('.camp-sub')?.textContent||''),
+      classArt:dbCampShellOracleImg('campClassIcon'),petArt:dbCampShellOracleImg('campPetIcon'),
+      floorText:String($('floorText')?.textContent||''),guardianText:String($('guardianText')?.textContent||''),
+      hpText:String($('hpText')?.textContent||''),attackText:String($('attackText')?.textContent||''),defenseText:String($('defenseText')?.textContent||''),goldText:String($('goldText')?.textContent||''),potionText:String($('potionText')?.textContent||''),
+      critText:String($('critText')?.textContent||''),dodgeText:String($('dodgeText')?.textContent||''),lifeStealText:String($('lifeStealText')?.textContent||''),luckText:String($('luckText')?.textContent||''),echoText:String($('echoText')?.textContent||''),bossDamageText:String($('bossDamageText')?.textContent||''),
+      heroArt:dbCampShellOracleImg('heroAvatar'),pawnArt:dbCampShellOracleImg('pawn'),combatArt:dbCampShellOracleImg('combatPlayerIcon'),
+      combatHidden:!!$('combatOverlay')?.classList.contains('hidden'),victoryHidden:!!$('battleVictory')?.classList.contains('hidden'),checkpoint:DB_RUN_CHECKPOINT.has()
+    };
+  }
+  function dbCampShellOracleStartup(){return dbCampShellOracleShellState();}
+  function dbCampShellOracleRecovery(){
+    window.DiceboundRng.seed('camp-shell-recovery-setup');
+    const before=window.DiceboundRng.snapshot(),result=window.DiceboundFriendsPatchTest.exerciseCampRecovery(),after=window.DiceboundRng.snapshot();
+    return {result:dbCampShellOracleClone(result),actionRngCalls:after.calls-before.calls,actionRngState:after.state,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleCheckpointReset(){
+    dbCampShellOracleStableRun('ranger',3);player.hp=1;const saved=dbRunWriteCheckpoint(),hadBefore=DB_RUN_CHECKPOINT.has();
+    const action=dbCampShellOracleRng(()=>openStartScreen());
+    return {saved,hadBefore,hasAfter:DB_RUN_CHECKPOINT.has(),hp:player.hp,maxHp:player.maxHp,actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleCampReset(){
+    dbCampShellOracleStableRun('invoker',3);dbClasses.invokerBeginCombat();dbClasses.invokerAfterPlayerAction('guard');
+    const invokerBefore=dbCampShellOracleClone(dbClasses._invokerTest.state(false));player.hp=Math.max(1,player.maxHp-7);
+    $('combatOverlay')?.classList.remove('hidden');$('battleVictory')?.classList.remove('hidden');if($('combatText'))$('combatText').textContent='Camp shell oracle combat residue';
+    const action=dbCampShellOracleRng(()=>openStartScreen()),invokerAfter=dbCampShellOracleClone(dbClasses._invokerTest.state(false));
+    return {invokerBefore,invokerAfter,hp:player.hp,maxHp:player.maxHp,combatText:String($('combatText')?.textContent||''),actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleMetaRefresh(){
+    dbCampShellOracleStableRun('ranger',3);openStartScreen();
+    const action=dbCampShellOracleRng(()=>updateMetaUI());
+    return {actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleHud(board,position,mode='normal'){
+    dbCampShellOracleStableRun('ranger',board);nightmareMode=mode==='nightmare'||mode==='hell';hellMode=mode==='hell';player.position=position;
+    const action=dbCampShellOracleRng(()=>updateHUD());
+    return {mode,mini:currentMinibossTile(),count:currentTileCount(),actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleHudBoard5Pre(){return dbCampShellOracleHud(5,0,'normal');}
+  function dbCampShellOracleHudBoard5Final(){dbCampShellOracleStableRun('ranger',5);return dbCampShellOracleHud(5,currentMinibossTile()-1,'normal');}
+  function dbCampShellOracleHudBoard6Pre(){return dbCampShellOracleHud(6,0,'normal');}
+  function dbCampShellOracleHudBoard6Final(){dbCampShellOracleStableRun('ranger',6);return dbCampShellOracleHud(6,currentMinibossTile()-1,'normal');}
+  function dbCampShellOracleHudHell(){return dbCampShellOracleHud(3,4,'hell');}
+  function dbCampShellOracleHudStats(){
+    dbCampShellOracleStableRun('ranger',3);Object.assign(player,{hp:23,maxHp:47,attack:17,defense:6,flatReduction:2,gold:123,potions:4,crit:.37,dodge:.11,lifeSteal:.19,luck:.42,doubleStrike:.88,bossDamage:.31});
+    const action=dbCampShellOracleRng(()=>updateHUD());
+    return {actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  async function dbCampShellOracleHudCheckpoint(){
+    dbCampShellOracleStableRun('ranger',3);dbRunClearCheckpoint();const action=dbCampShellOracleRng(()=>updateHUD());const immediate=DB_RUN_CHECKPOINT.has();
+    await new Promise(resolve=>setTimeout(resolve,260));
+    return {immediate,afterDelay:DB_RUN_CHECKPOINT.has(),loaded:!!DB_RUN_CHECKPOINT.load()?.checkpoint,actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleArtRefresh(){
+    dbCampShellOracleStableRun('ranger',2);const before={classArt:dbCampShellOracleImg('campClassIcon'),petArt:dbCampShellOracleImg('campPetIcon')};
+    const action=dbCampShellOracleRng(()=>openStartScreen());
+    return {before,after:{classArt:dbCampShellOracleImg('campClassIcon'),petArt:dbCampShellOracleImg('campPetIcon')},actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  window.DiceboundCampShellOracleTest=Object.freeze({
+    apiVersion:1,state:()=>dbCampShellOracleShellState(),startup:dbCampShellOracleStartup,recovery:dbCampShellOracleRecovery,checkpointReset:dbCampShellOracleCheckpointReset,campReset:dbCampShellOracleCampReset,metaRefresh:dbCampShellOracleMetaRefresh,
+    hudBoard5Pre:dbCampShellOracleHudBoard5Pre,hudBoard5Final:dbCampShellOracleHudBoard5Final,hudBoard6Pre:dbCampShellOracleHudBoard6Pre,hudBoard6Final:dbCampShellOracleHudBoard6Final,hudHell:dbCampShellOracleHudHell,hudStats:dbCampShellOracleHudStats,hudCheckpoint:dbCampShellOracleHudCheckpoint,artRefresh:dbCampShellOracleArtRefresh,
+    cleanup:()=>{dbRunClearCheckpoint();dbClasses.invokerResetCombat();dbCampShellOracleHideBlocking();openStartScreen();return true;}
+  });
+
+
   // Test-only characterization surface for the Classes subsystem migration.
   // This freezes released 0.6.6.33 class identity/capability/action behavior
   // before ordinary runtime ownership moves behind DiceboundClasses.
