@@ -6,6 +6,7 @@ on:
       - arch/0.6.6.36-camp-shell-oracle
     paths:
       - tools/materialize_camp_shell_owner.py
+      - tools/fix_camp_shell_owner_materializer.py
       - .github/workflows/camp-shell-owner-materialize.yml
 
 permissions:
@@ -34,6 +35,8 @@ jobs:
       - name: Materialize Camp/App-Shell owner
         shell: pwsh
         run: |
+          python tools/fix_camp_shell_owner_materializer.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_camp_shell_owner.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.35 --channel Beta --development-state Unreleased
@@ -93,6 +96,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item tools/materialize_camp_shell_owner.py
+          Remove-Item tools/fix_camp_shell_owner_materializer.py
           Remove-Item .github/workflows/camp-shell-owner-materialize.yml
           git config user.name "dicebound-architecture-bot"
           git config user.email "dicebound-architecture-bot@users.noreply.github.com"
