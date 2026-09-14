@@ -1283,7 +1283,6 @@
   let dbCombatStrikes=null;
   let dbCombatUltimateResolution=null;
   let dbCombatGuardResolution=null;
-  let dbInvoker=null;
   let dbCombatPetTurnResolution=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
@@ -6225,7 +6224,7 @@
     $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
   }
   const dbFriendReturnToRoadBase=returnToRoad;
-  returnToRoad=function(...args){dbInvoker?.resetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
+  returnToRoad=function(...args){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
 
   const dbFriendUpdateMetaUiBase=updateMetaUI;
   updateMetaUI=function(...args){const result=dbFriendUpdateMetaUiBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
@@ -6235,7 +6234,7 @@
     player.hp=max;updateHUD();return true;
   }
   const dbFriendOpenStartScreenBase=openStartScreen;
-  openStartScreen=function(...args){const result=dbFriendOpenStartScreenBase.apply(this,args);dbInvoker?.resetCombat();dbFriendHealAtCamp();dbFriendClearCombatPresentation();db059RefreshActivePetArt?.();return result;};
+  openStartScreen=function(...args){const result=dbFriendOpenStartScreenBase.apply(this,args);dbClasses.invokerResetCombat();dbFriendHealAtCamp();dbFriendClearCombatPresentation();db059RefreshActivePetArt?.();return result;};
   function dbFriendCampRecoveryExercise(){resetPlayer('ranger');player.hp=1;openStartScreen();return Object.freeze({hp:player.hp,maxHp:player.maxHp,campVisible:!$('startOverlay')?.classList.contains('hidden')});}
   function dbFriendBoardClearModeRegressionExercise(){
     const before={...(ensureAlphaMeta().boardClears||{})},modes={nightmare:nightmareMode,hell:hellMode};
@@ -6423,7 +6422,7 @@
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
-    afterPlayerAction:kind=>dbInvoker?.afterPlayerAction(kind)
+    afterPlayerAction:kind=>dbClasses.invokerAfterPlayerAction(kind)
   });
 
   const dbCombatVictoryOwner=window.DiceboundCombatVictoryResolution;
@@ -6499,8 +6498,8 @@
     hasLegendaryEffect:id=>db060HasEffect(id),
     showToast:text=>showToast(text),
     addCombatHistory:text=>addCombatHistory(text),
-    actionBonuses:()=>dbInvoker?.actionBonuses()||null,
-    afterPlayerAction:kind=>dbInvoker?.afterPlayerAction(kind==="attack"&&player._invokerPendingGenerator?"generator":kind),
+    actionBonuses:()=>dbClasses.invokerActionBonuses(),
+    afterPlayerAction:kind=>dbClasses.invokerAfterPlayerAction(kind==="attack"&&player._invokerPendingGenerator?"generator":kind),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
@@ -6521,9 +6520,9 @@
     isClassActive:id=>classIdentityActive(id),
     clamp:(value,min,max)=>clamp(value,min,max),
     playerAttack:(...args)=>playerAttack(...args),
-    invokerActive:()=>!!dbInvoker?.active(),
-    invokerGeneratorManaMultiplier:()=>dbInvoker?.generatorManaMultiplier?.()||1,
-    invokerElementalLance:()=>dbInvoker?.elementalLance(),
+    invokerActive:()=>dbClasses.invokerActive(),
+    invokerGeneratorManaMultiplier:()=>dbClasses.invokerGeneratorManaMultiplier(),
+    invokerElementalLance:()=>dbClasses.invokerElementalLance(),
     identityFlash:text=>identityFlash(text),
     updateCombatUI:()=>updateCombatUI(),
     animateClassAttack:mode=>animateClassAttack(mode),
@@ -6590,7 +6589,7 @@
     hasMythicPiece:slot=>hasMythicPiece(slot),
     hasLegendaryEffect:id=>db060HasEffect(id),
     rollTieredProc:chance=>rollTieredProc(chance),
-    afterPlayerAction:kind=>dbInvoker?.afterPlayerAction(kind),
+    afterPlayerAction:kind=>dbClasses.invokerAfterPlayerAction(kind),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
@@ -6617,8 +6616,8 @@
     syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
     setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getV26FastEcho:()=>!!window.__DB_V26_FAST_ECHO__,
     setV26FastEcho:value=>{window.__DB_V26_FAST_ECHO__=!!value;},getElementKeys:()=>ELEMENT_KEYS,
-    outgoingDamageMultiplier:()=>dbInvoker?.outgoingMultiplier()||1,
-    afterPlayerHit:(target,options)=>dbInvoker?.afterPlayerHit(target,options)
+    outgoingDamageMultiplier:()=>dbClasses.invokerOutgoingMultiplier(),
+    afterPlayerHit:(target,options)=>dbClasses.invokerAfterPlayerHit(target,options)
   });
 
   const dbCombatUltimateOwner=window.DiceboundCombatUltimateResolution;
@@ -6677,7 +6676,7 @@
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
-    invokeUltimate:()=>dbInvoker?.invokeUltimate(),
+    invokeUltimate:()=>dbClasses.invokerUltimate(),
   });
 
   dbCombatView.configurePresentation({
@@ -6752,7 +6751,7 @@
     restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
     clearBattleLegendaryTemps:()=>db060ClearBattleLegendaryTemps(),
     traceCoreStart:(kind,work)=>v25TraceCommand('startCombat',work,'events',[kind]),
-    onCombatStart:()=>dbInvoker?.beginCombat(),
+    onCombatStart:()=>dbClasses.invokerBeginCombat(),
     applyCombatBackground:()=>db0635ApplyCombatBackground(),
     syncBattleLog:()=>db064SyncBattleLog(),
     clearCombatPresentation:()=>dbFriendClearCombatPresentation(),
@@ -6803,12 +6802,10 @@
     wolfEchoChance:()=>db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode()),
     successfulDodgePresentation:()=>dbFriendSuccessfulDodgePresentation(),
     dragoonActive:()=>dbFriendDragoonActive(),
-    responseModifier:()=>dbInvoker?.responseModifier()
+    responseModifier:()=>dbClasses.invokerResponseModifier()
   });
 
-  const dbInvokerOwner=window.DiceboundInvoker;
-  if(!dbInvokerOwner)throw new Error('DiceBound requires the Invoker class owner before dicebound.js');
-  dbInvoker=dbInvokerOwner.configure({
+  dbClasses.configureInvoker({
     getPlayer:()=>player,getMeta:()=>meta,isClassActive:id=>classIdentityActive(id),getCurrentEnemy:()=>currentEnemy,getCurrentEnemies:()=>currentEnemies,
     livingEnemies:()=>livingEnemies(),getCombatBusy:()=>combatBusy,setCombatBusy:value=>{combatBusy=!!value;},
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),damageAll:(amount,falloff=1)=>damageAll(amount,falloff),healPlayer:amount=>healPlayer(amount),
@@ -7070,7 +7067,7 @@
     monkDodge:()=>{dbClassesOracleSetup('monk',{dodge:.10,monkCombo:3});return {chance:effectiveDodgeChance(),state:dbClassesOracleState()};},
     ninjaExecution:()=>{dbClassesOracleSetup('ninja',{attack:20,_ninjaExecution:true},[{hp:1000,maxHp:1000,defense:12}]);const dealt=damageEnemy(currentEnemy,100,false);return {dealt,state:dbClassesOracleState()};},
     ouroborosSync:()=>{dbClassesOracleSetup('ouroboros',{attack:37,doubleStrike:1.20});const before={attack:player.attack,doubleStrike:player.doubleStrike};dbClasses.syncOuroborosAttack();return {before,after:{attack:player.attack,doubleStrike:player.doubleStrike},state:dbClassesOracleState()};},
-    invokerFormula:()=>{dbClassesOracleSetup('invoker');dbInvoker.afterPlayerAction('guard');dbInvoker.afterPlayerAction('generator');dbInvoker.afterPlayerAction('spender');return {active:dbInvoker.active(),state:dbClassesOracleClone(dbInvoker._test.state(false)),recipe:dbClassesOracleClone(dbInvoker.recipeInfo()),bonuses:dbClassesOracleClone(dbInvoker.actionBonuses()),identity:classIdentityId()};},
+    invokerFormula:()=>{dbClassesOracleSetup('invoker');dbClasses.invokerAfterPlayerAction('guard');dbClasses.invokerAfterPlayerAction('generator');dbClasses.invokerAfterPlayerAction('spender');return {active:dbClasses.invokerActive(),state:dbClassesOracleClone(dbClasses._invokerTest.state(false)),recipe:dbClassesOracleClone(dbClasses.invokerRecipeInfo()),bonuses:dbClassesOracleClone(dbClasses.invokerActionBonuses()),identity:classIdentityId()};},
     beastmasterButton:()=>{dbClassesOracleSetup('beastmaster');const before=player.beastStance,button=$('specialAttackBtn');button?.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));return {before,after:player.beastStance,state:dbClassesOracleState()};}
   });
 

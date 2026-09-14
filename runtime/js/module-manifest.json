@@ -489,9 +489,7 @@
         "classes-registry",
         "combat-element-resolution"
       ],
-      "provides": [
-        "DiceboundInvoker"
-      ]
+      "provides": []
     },
     {
       "id": "combat-mana-action-resolution",

@@ -153,5 +153,7 @@
     if (!doc.getElementById("invoker-orb-style")) { const style = doc.createElement("style"); style.id = "invoker-orb-style"; style.textContent = ".invoker-orbs{margin:7px 0 4px;text-align:center}.invoker-orb-row{display:flex;justify-content:center;gap:6px}.invoker-orb{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:900;border:1px solid rgba(255,255,255,.65);box-shadow:0 0 12px currentColor}.invoker-orb.blue{background:#397eea}.invoker-orb.green{background:#32ad6e}.invoker-orb.red{background:#d24d45}.invoker-orb.empty{color:#8891a6;background:rgba(0,0,0,.2);box-shadow:none}.invoker-orbs small{font-size:9px;color:#d9dff3}"; doc.head.append(style); }
   }
   const api = Object.freeze({ owner: OWNER, apiVersion: 1, configure, active, ORB, RECIPE, recipeFor, recipeInfo, orbBonuses, actionBonuses, outgoingMultiplier, generatorManaMultiplier, afterPlayerAction, afterPlayerHit, responseModifier, elementalLance, invokeUltimate, beginCombat, resetCombat, render, _test: Object.freeze({ addOrb, state, scale }) });
-  window.DiceboundInvoker = api;
+  const facade=window.DiceboundClasses;
+  if(!facade?._installInvoker)throw new Error("classes/invoker.js requires DiceboundClasses facade before loading.");
+  facade._installInvoker(api);
 })();

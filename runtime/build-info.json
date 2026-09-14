@@ -1,7 +1,7 @@
 {
   "assetCount": 428,
-  "browserContentHash": "204c5e06b4c6270d2b8009338b0f4b1f1ca63e2e2291eef365fff065ddc888c7",
-  "buildId": "dicebound-0.6.6.33-dev-204c5e06b4c6270d",
+  "browserContentHash": "bd2c1b416955564dd4f9fd2586c7215789029811f6fcb31fa023f3ecacc193c5",
+  "buildId": "dicebound-0.6.6.33-dev-bd2c1b416955564d",
   "channel": "Beta",
   "contentFileCount": 517,
   "developmentState": "Unreleased",
@@ -9,7 +9,7 @@
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Classes lifecycle ownership checkpoint on released Beta 0.6.6.33 behavior.",
+  "notes": "Classes Invoker facade consolidation checkpoint on released Beta 0.6.6.33 behavior.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -100,7 +100,7 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "204c5e06b4c6270d2b8009338b0f4b1f1ca63e2e2291eef365fff065ddc888c7",
+  "sourceHash": "bd2c1b416955564dd4f9fd2586c7215789029811f6fcb31fa023f3ecacc193c5",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
   "version": "0.6.6.33",
   "wrapperContractVersion": 1,

@@ -1166,7 +1166,7 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null;
+  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null,invokerOwner=null,invokerRuntime=null;
   function installRuntime(owner){
     if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
     runtimeOwner=owner;
@@ -1209,6 +1209,27 @@
     return fn;
   }
   function callHook(name,...args){return requireHook(name)(...args);}
+  function installInvoker(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses Invoker owner is invalid.");
+    invokerOwner=owner;
+    return api;
+  }
+  function configureInvoker(next={}){
+    if(!invokerOwner)throw new Error("DiceboundClasses Invoker owner has not been installed.");
+    invokerRuntime=invokerOwner.configure(next);
+    return api;
+  }
+  function requireInvoker(name){
+    const fn=invokerRuntime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses Invoker capability ${name}() is not configured.`);
+    return fn;
+  }
+  function callInvoker(name,...args){return requireInvoker(name)(...args);}
+  function requireInvokerTest(name){
+    const fn=invokerRuntime?._test?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses Invoker test capability ${name}() is not configured.`);
+    return fn;
+  }
   function requireRuntime(name){
     const fn=runtime?.[name];
     if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
@@ -1228,6 +1249,7 @@
     configure,
     configureActionMechanics,
     configureRuntimeHooks,
+    configureInvoker,
     configureActions:next=>call("configureActions",next),
     performAction:kind=>call("performAction",kind),
     bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
@@ -1244,6 +1266,21 @@
     ninjaExecutionDamage:(amount,ignoreDefense=false)=>callHook("ninjaExecutionDamage",amount,ignoreDefense),
     syncOuroborosAttack:()=>callHook("syncOuroborosAttack"),
     syncOuroborosEconomy:()=>callHook("syncOuroborosEconomy"),
+    invokerActive:()=>invokerRuntime?.active?.()||false,
+    invokerRecipeFor:orbs=>callInvoker("recipeFor",orbs),
+    invokerRecipeInfo:()=>callInvoker("recipeInfo"),
+    invokerOrbBonuses:()=>callInvoker("orbBonuses"),
+    invokerActionBonuses:()=>invokerRuntime?.actionBonuses?.()||null,
+    invokerOutgoingMultiplier:()=>invokerRuntime?.outgoingMultiplier?.()||1,
+    invokerGeneratorManaMultiplier:()=>invokerRuntime?.generatorManaMultiplier?.()||1,
+    invokerAfterPlayerAction:kind=>invokerRuntime?.afterPlayerAction?.(kind),
+    invokerAfterPlayerHit:(target,options)=>invokerRuntime?.afterPlayerHit?.(target,options),
+    invokerResponseModifier:()=>invokerRuntime?.responseModifier?.()||null,
+    invokerElementalLance:()=>callInvoker("elementalLance"),
+    invokerUltimate:()=>callInvoker("invokeUltimate"),
+    invokerBeginCombat:()=>invokerRuntime?.beginCombat?.(),
+    invokerResetCombat:(...args)=>invokerRuntime?.resetCombat?.(...args),
+    invokerRender:()=>invokerRuntime?.render?.(),
     identityId:()=>call("identityId"),
     active:id=>call("active",id),
     mechanicsFor:id=>call("mechanicsFor",id),
@@ -1258,9 +1295,15 @@
     finishSlimeRougeBorrowing:()=>call("finishSlimeRougeBorrowing"),
     clearSlimeRougeRuntime:()=>call("clearSlimeRougeRuntime"),
     runtimeSnapshot:()=>call("snapshot"),
+    _invokerTest:Object.freeze({
+      addOrb:orb=>requireInvokerTest("addOrb")(orb),
+      state:(create=true)=>requireInvokerTest("state")(create),
+      scale:(raw,options)=>requireInvokerTest("scale")(raw,options)
+    }),
     _installRuntime:installRuntime,
     _installActions:installActions,
     _installHooks:installHooks,
+    _installInvoker:installInvoker,
   });
   window.DiceboundClasses=api;
 })();
