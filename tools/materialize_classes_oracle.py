@@ -74,7 +74,7 @@ seam = r'''
     ninjaExecution:()=>{dbClassesOracleSetup('ninja',{attack:20,_ninjaExecution:true},[{hp:1000,maxHp:1000,defense:12}]);const dealt=damageEnemy(currentEnemy,100,false);return {dealt,state:dbClassesOracleState()};},
     ouroborosSync:()=>{dbClassesOracleSetup('ouroboros',{attack:37,doubleStrike:1.20});const before={attack:player.attack,doubleStrike:player.doubleStrike};v18SyncOuroborosAttack();return {before,after:{attack:player.attack,doubleStrike:player.doubleStrike},state:dbClassesOracleState()};},
     invokerFormula:()=>{dbClassesOracleSetup('invoker');dbInvoker.afterPlayerAction('guard');dbInvoker.afterPlayerAction('generator');dbInvoker.afterPlayerAction('spender');return {active:dbInvoker.active(),state:dbClassesOracleClone(dbInvoker._test.state(false)),recipe:dbClassesOracleClone(dbInvoker.recipeInfo()),bonuses:dbClassesOracleClone(dbInvoker.actionBonuses()),identity:classIdentityId()};},
-    beastmasterButton:()=>{dbClassesOracleSetup('beastmaster');const before=player.beastStance;$('specialAttackBtn')?.click();return {before,after:player.beastStance,state:dbClassesOracleState()};}
+    beastmasterButton:()=>{dbClassesOracleSetup('beastmaster');const before=player.beastStance,button=$('specialAttackBtn');button?.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));return {before,after:player.beastStance,state:dbClassesOracleState()};}
   });
 '''
 
