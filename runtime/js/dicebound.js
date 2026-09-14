@@ -2987,6 +2987,45 @@
     search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();cards.forEach(c=>c.style.display=!q||c.dataset.search.includes(q)?'':'none');updateCount();});
     updateCount();overlay.classList.remove('hidden');setTimeout(()=>search.focus(),0);return true;
   }
+  // Test-only characterization surface for the Powerups subsystem migration.
+  // It exposes the final released 0.6.6.32 behavior without changing ordinary
+  // callers so capture/replay can freeze eligibility, choice, application and
+  // exact RNG semantics before DiceboundPowerups ownership moves.
+  const dbPowerupsOracleSummary=up=>up?({id:up.id,name:up.name,rarity:up.rarity,classId:up.classId||null,classIds:[...(up.classIds||[])],unique:!!up.unique,achievementGate:up.achievementGate||null}):null;
+  const dbPowerupsOracleState=()=>({
+    boardLevel,nightmareMode:!!nightmareMode,hellMode:!!hellMode,pendingLevelUps,
+    player:{
+      classId:player.classId,level:player.level,position:player.position,hp:player.hp,maxHp:player.maxHp,attack:player.attack,defense:player.defense,
+      luck:player.luck,gold:player.gold,goldBonus:player.goldBonus,crit:player.crit,doubleStrike:player.doubleStrike,bossDamage:player.bossDamage,
+      lifeSteal:player.lifeSteal,elementProcBonus:player.elementProcBonus,elementDamageBonus:player.elementDamageBonus,levelChoiceBonus:player.levelChoiceBonus||0,
+      rangerMarkMax:player.rangerMarkMax||0,loadedSix:!!player.loadedSix,goldAttackScale:player.goldAttackScale||0,
+      upgradeCounts:dbRunClone(player.upgradeCounts||{}),runBuffs:dbRunClone(player.runBuffs||[])
+    },
+    meta:{petCookies:meta.petCookies||0,achievements:dbRunClone(meta.achievements||{})}
+  });
+  window.DiceboundPowerupsOracleTest=Object.freeze({
+    apiVersion:1,
+    state:()=>dbPowerupsOracleState(),
+    catalog:()=>upgrades.map(dbPowerupsOracleSummary),
+    eligible:(rarity=null)=>eligibleUpgrades(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
+    weighted:(ids=null)=>{const pool=ids?ids.map(id=>upgrades.find(u=>u.id===id)).filter(Boolean):eligibleUpgrades();return dbPowerupsOracleSummary(weightedUpgrade(pool));},
+    choices:(rarity=null)=>getUpgradeChoices(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
+    levelChoices:()=>v18LevelChoices().map(dbPowerupsOracleSummary),
+    apply:(id,source='Powerups Oracle')=>{const up=upgrades.find(u=>u.id===id);if(!up)throw new Error(`unknown powerup ${id}`);return dbPowerupsOracleSummary(applyUpgrade(up,source));},
+    randomHigh:(source='Powerups Oracle')=>dbPowerupsOracleSummary(applyRandomHighRarity(source,false)),
+    legendaryChoices:()=>v17LegendaryChoices().map(dbPowerupsOracleSummary),
+    sovereignChoices:()=>db0410LegendaryChoices().map(dbPowerupsOracleSummary),
+    fallbackRarity:wanted=>{const found=v27FallbackRarityPool(wanted);return {rarity:found.rarity,ids:found.pool.map(u=>u.id)};},
+    minibossRarity:()=>v27RollMinibossRarity(),
+    minibossChoices:()=>v27MinibossChoices().map(dbPowerupsOracleSummary),
+    setBoardLevel:value=>{boardLevel=Math.max(1,Number(value)||1);return boardLevel;},
+    setModes:(nightmare=false,hell=false)=>{nightmareMode=!!nightmare;hellMode=!!hell;return {nightmareMode,hellMode};},
+    setPendingLevelUps:value=>{pendingLevelUps=Math.max(0,Number(value)||0);return pendingLevelUps;},
+    levelUi:()=>{openLevelUp(()=>{});const grid=$("choiceGrid");return {subtitle:$("levelSubtitle")?.textContent||"",choices:[...grid.querySelectorAll("button.choice-btn")].map(b=>({name:b.querySelector('.choice-name')?.textContent||'',rarity:[...b.classList].find(x=>rarityInfo[x])||null})),reroll:grid.querySelector('.powerup-reroll-btn')?.textContent||null,overlayHidden:$("levelOverlay")?.classList.contains("hidden")??true};},
+    allEligibleUi:()=>{showAllEligiblePowerupSelection('Powerups Oracle',()=>{});const grid=$("powerupGrid");return {title:$("powerupTitle")?.textContent||"",subtitle:$("powerupSubtitle")?.textContent||"",names:[...grid.querySelectorAll("button.choice-btn")].map(b=>b.querySelector('.choice-name')?.textContent||''),countText:grid.querySelector('.powerup-selector-count')?.textContent||'',overlayHidden:$("powerupOverlay")?.classList.contains("hidden")??true};},
+    perfectedSignature:()=>{const up=perfectedSignatureForCurrentClass();return {name:up.name,desc:up.desc,classId:player.classId};},
+    closeOverlays:()=>{$("levelOverlay")?.classList.add("hidden");$("powerupOverlay")?.classList.add("hidden");return true;}
+  });
   window.DiceboundPowerups=Object.freeze({
     openAllEligible:(source='Special Powerup Selection',onComplete=()=>{},filter=()=>true)=>showAllEligiblePowerupSelection(source,onComplete,filter),
     eligible:()=>eligibleUpgrades().slice(),
