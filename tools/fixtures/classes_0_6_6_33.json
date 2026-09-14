@@ -1,0 +1,2188 @@
+{
+  "baselineVersion": "0.6.6.33",
+  "runtimeVersion": "0.6.6.33",
+  "cases": [
+    {
+      "name": "metadata",
+      "result": {
+        "apiVersion": 2,
+        "ids": [
+          "ranger",
+          "sorcerer",
+          "fighter",
+          "monk",
+          "clown",
+          "rouge",
+          "berserker",
+          "turtle",
+          "frog",
+          "d20",
+          "slime",
+          "vampire",
+          "ninja",
+          "ceo",
+          "merchant",
+          "cleric",
+          "paladin",
+          "beastmaster",
+          "rogue",
+          "bloodmage",
+          "summoner",
+          "pokemontrainer",
+          "alchemist",
+          "ouroboros",
+          "dragoon",
+          "invoker",
+          "slimerouge"
+        ],
+        "tagVocabulary": [
+          "ranged",
+          "precision",
+          "evasive",
+          "occult",
+          "elemental",
+          "mana",
+          "melee",
+          "armored",
+          "guardian",
+          "combo",
+          "disciplined",
+          "weird",
+          "chaotic",
+          "burst",
+          "artful",
+          "vampiric",
+          "reckless",
+          "slow",
+          "dodgy",
+          "echo",
+          "poison",
+          "lucky",
+          "sticky",
+          "durable",
+          "sustain",
+          "wealth",
+          "holy",
+          "pet",
+          "pack",
+          "blood-fuel",
+          "strong",
+          "alchemy",
+          "secret",
+          "flex",
+          "airborne"
+        ],
+        "classes": {
+          "ranger": {
+            "id": "ranger",
+            "name": "Ranger",
+            "secret": false,
+            "unlock": "Always unlocked",
+            "stats": "37 HP · 6 ATK · 15% CRIT · 8% DODGE",
+            "tags": [
+              "ranged",
+              "precision",
+              "evasive"
+            ],
+            "base": {
+              "maxHp": 37,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.15,
+              "dodge": 0.08,
+              "luck": 0,
+              "doubleStrike": 0,
+              "guardPower": 0.52,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Marked Quarry",
+              "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
+            },
+            "ultimate": {
+              "name": "Arrow Storm",
+              "icon": "🌧️",
+              "desc": "Four rapid arrows dealing roughly 340% total damage to the entire pack."
+            }
+          },
+          "sorcerer": {
+            "id": "sorcerer",
+            "name": "Sorcerer",
+            "secret": false,
+            "unlock": "Defeat the Board 1 miniboss",
+            "stats": "31 HP · 7 ATK · 25/100 MANA · 5 LUCK",
+            "tags": [
+              "ranged",
+              "occult",
+              "elemental",
+              "mana"
+            ],
+            "base": {
+              "maxHp": 31,
+              "attack": 7,
+              "defense": 0,
+              "crit": 0.09,
+              "dodge": 0,
+              "luck": 0.05,
+              "doubleStrike": 0.05,
+              "guardPower": 0.5,
+              "classBurst": 0.2,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Arcane Reservoir",
+              "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal. Arcane Surge is a Signature Burst: each basic or Echo strike has your Signature Burst chance to deal 50% more damage."
+            },
+            "ultimate": {
+              "name": "Starfall",
+              "icon": "☄️",
+              "desc": "A 300% meteor that strikes the entire pack and restores 20% of damage dealt."
+            }
+          },
+          "fighter": {
+            "id": "fighter",
+            "name": "Fighter",
+            "secret": false,
+            "unlock": "Defeat the Board 1 dragon",
+            "stats": "44 HP · 5 ATK · 2 DEF",
+            "tags": [
+              "melee",
+              "armored",
+              "guardian"
+            ],
+            "base": {
+              "maxHp": 44,
+              "attack": 5,
+              "defense": 2,
+              "crit": 0.05,
+              "dodge": 0,
+              "luck": 0,
+              "doubleStrike": 0,
+              "guardPower": 0.67,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Counterstance",
+              "desc": "Guarding primes the Fighter's next basic attack for a heavy counterblow."
+            },
+            "ultimate": {
+              "name": "Titan Cleave",
+              "icon": "💥",
+              "desc": "A 260% cleave that hits up to two enemies and grants a Battle Barrier."
+            }
+          },
+          "monk": {
+            "id": "monk",
+            "name": "Monk",
+            "secret": false,
+            "unlock": "Defeat the Board 2 miniboss",
+            "stats": "39 HP · 7 ATK · 6% DODGE · 8% ECHO",
+            "tags": [
+              "melee",
+              "combo",
+              "disciplined"
+            ],
+            "base": {
+              "maxHp": 39,
+              "attack": 7,
+              "defense": 1,
+              "crit": 0.08,
+              "dodge": 0.06,
+              "luck": 0,
+              "doubleStrike": 0.08,
+              "guardPower": 0.58,
+              "classBurst": 0.14,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Flowing Combo",
+              "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+            },
+            "ultimate": {
+              "name": "Hundred Fists",
+              "icon": "👊",
+              "desc": "A storm of blows dealing 325% damage and restoring 10% max HP."
+            }
+          },
+          "clown": {
+            "id": "clown",
+            "name": "Clown",
+            "secret": false,
+            "unlock": "Defeat the Board 2 dragon",
+            "stats": "34 HP · 6 ATK · 12% CRIT · 8 LUCK",
+            "tags": [
+              "weird",
+              "chaotic",
+              "burst"
+            ],
+            "base": {
+              "maxHp": 34,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.12,
+              "dodge": 0.05,
+              "luck": 0.08,
+              "doubleStrike": 0.05,
+              "guardPower": 0.5,
+              "classBurst": 0.18,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Opening Gag",
+              "desc": "Every battle begins with a random comedy gimmick: shoes, pies, barriers, applause or chickens."
+            },
+            "ultimate": {
+              "name": "Final Punchline",
+              "icon": "🎪",
+              "desc": "A wildly variable area catastrophe that always grants a bonus effect."
+            }
+          },
+          "rouge": {
+            "id": "rouge",
+            "name": "Rouge",
+            "secret": false,
+            "unlock": "Reach 10 Prestige points",
+            "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT",
+            "tags": [
+              "weird",
+              "artful",
+              "occult",
+              "mana"
+            ],
+            "base": {
+              "maxHp": 36,
+              "attack": 7,
+              "defense": 1,
+              "crit": 0.12,
+              "dodge": 0.04,
+              "luck": 0.05,
+              "doubleStrike": 0.04,
+              "guardPower": 0.54,
+              "classBurst": 0.18,
+              "lifeSteal": 0.05
+            },
+            "passive": {
+              "name": "Painted Hexcraft",
+              "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+            },
+            "ultimate": {
+              "name": "Crimson Deluge",
+              "icon": "🌹",
+              "desc": "A 310% scarlet strike with powerful innate lifesteal."
+            }
+          },
+          "berserker": {
+            "id": "berserker",
+            "name": "Berserker",
+            "secret": false,
+            "unlock": "Take 1,000 total damage",
+            "stats": "51 HP · 8 ATK · 5% CRIT · RAGE",
+            "tags": [
+              "melee",
+              "vampiric",
+              "reckless"
+            ],
+            "base": {
+              "maxHp": 51,
+              "attack": 8,
+              "defense": 1,
+              "crit": 0.05,
+              "dodge": 0,
+              "luck": 0,
+              "doubleStrike": 0.03,
+              "guardPower": 0.56,
+              "classBurst": 0.22,
+              "lifeSteal": 0.03
+            },
+            "passive": {
+              "name": "Blood Rage",
+              "desc": "Every 1% missing HP grants +1% damage as Rage. The bar fills as your HP falls."
+            },
+            "ultimate": {
+              "name": "Ragequake",
+              "icon": "🌋",
+              "desc": "An area smash dealing 280% damage. Your current Rage multiplies it like all other Berserker damage."
+            }
+          },
+          "turtle": {
+            "id": "turtle",
+            "name": "Turtle",
+            "secret": false,
+            "unlock": "Reach more than 40 Defense during a run",
+            "stats": "55 HP · 4 ATK · 6 DEF",
+            "tags": [
+              "armored",
+              "slow",
+              "guardian"
+            ],
+            "base": {
+              "maxHp": 55,
+              "attack": 4,
+              "defense": 6,
+              "crit": 0.03,
+              "dodge": 0,
+              "luck": 0,
+              "doubleStrike": 0,
+              "guardPower": 0.78,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Shell Discipline",
+              "desc": "Guarding primes a crushing shell counter on the next basic attack. Starts with an extra Barrier and +1 Defense."
+            },
+            "ultimate": {
+              "name": "Shellquake",
+              "icon": "🐚",
+              "desc": "An area shell slam dealing 240% damage and granting two barriers."
+            }
+          },
+          "frog": {
+            "id": "frog",
+            "name": "Frog",
+            "secret": false,
+            "unlock": "Reach 150% Echo Strike during a run",
+            "stats": "38 HP · 6 ATK · 30% ECHO · 8% DODGE",
+            "tags": [
+              "weird",
+              "dodgy",
+              "echo",
+              "poison"
+            ],
+            "base": {
+              "maxHp": 38,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.08,
+              "dodge": 0.08,
+              "luck": 0.03,
+              "doubleStrike": 0.3,
+              "guardPower": 0.54,
+              "classBurst": 0.16,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Predatory Bounce",
+              "desc": "Echo-heavy attacks become especially vicious against enemies below half HP."
+            },
+            "ultimate": {
+              "name": "Croak Cascade",
+              "icon": "🌊",
+              "desc": "Six jumping strikes that independently target living enemies."
+            }
+          },
+          "d20": {
+            "id": "d20",
+            "name": "The Twenty-Sider",
+            "secret": true,
+            "unlock": "Raise DiBo to level 30",
+            "stats": "40 HP · 6 ATK · CHAOS D20",
+            "tags": [
+              "weird",
+              "chaotic",
+              "lucky"
+            ],
+            "base": {
+              "maxHp": 40,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.1,
+              "dodge": 0.05,
+              "luck": 0.1,
+              "doubleStrike": 0.1,
+              "guardPower": 0.55,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Probability Leak",
+              "desc": "Nearly every combat action rolls a visible d20. The class intentionally pauses so you can witness fate making mistakes."
+            },
+            "ultimate": {
+              "name": "Natural Twenty",
+              "icon": "🌠",
+              "desc": "Roll the action d20, then release a wildly scaling reality burst."
+            }
+          },
+          "slime": {
+            "id": "slime",
+            "name": "Slime",
+            "secret": false,
+            "unlock": "Unlock 10 classes in total",
+            "stats": "39 HP · 6 ATK · 1 DEF",
+            "tags": [
+              "weird",
+              "sticky",
+              "durable",
+              "poison"
+            ],
+            "base": {
+              "maxHp": 39,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.07,
+              "dodge": 0.04,
+              "luck": 0.04,
+              "doubleStrike": 0.04,
+              "guardPower": 0.54,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Borrowed Shapes",
+              "desc": "Has no privileged mechanic of its own. Instead it can learn many non-Ultimate class powers from other non-secret classes."
+            },
+            "ultimate": {
+              "name": "Ooze Everything",
+              "icon": "🫠",
+              "desc": "A 270% wave of slime that strikes the entire enemy pack."
+            }
+          },
+          "vampire": {
+            "id": "vampire",
+            "name": "Vampire",
+            "secret": false,
+            "unlock": "Exceed 100% Lifesteal and defeat the Board 3 final boss",
+            "stats": "41 HP · 7 ATK · 25/100 MANA · 28% LIFESTEAL",
+            "tags": [
+              "vampiric",
+              "occult",
+              "sustain",
+              "mana"
+            ],
+            "base": {
+              "maxHp": 41,
+              "attack": 7,
+              "defense": 1,
+              "crit": 0.09,
+              "dodge": 0.03,
+              "luck": 0.02,
+              "doubleStrike": 0.04,
+              "guardPower": 0.56,
+              "classBurst": 0.16,
+              "lifeSteal": 0.18
+            },
+            "passive": {
+              "name": "Night Hunger",
+              "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
+            },
+            "ultimate": {
+              "name": "Crimson Eclipse",
+              "icon": "🌑",
+              "desc": "Drain the entire pack for heavy damage and heal for 50% of damage dealt."
+            }
+          },
+          "ninja": {
+            "id": "ninja",
+            "name": "Ninja",
+            "secret": false,
+            "unlock": "Reach more than 100% Critical chance during a run",
+            "stats": "33 HP · 8 ATK · 28% CRIT · 12% DODGE",
+            "tags": [
+              "melee",
+              "dodgy",
+              "precision",
+              "poison"
+            ],
+            "base": {
+              "maxHp": 33,
+              "attack": 8,
+              "defense": 0,
+              "crit": 0.28,
+              "dodge": 0.12,
+              "luck": 0.03,
+              "doubleStrike": 0.12,
+              "guardPower": 0.5,
+              "classBurst": 0.22,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Smoke Counter",
+              "desc": "Critical hits build Smoke. At 3 Smoke, the next basic attack becomes a defense-piercing execution strike."
+            },
+            "ultimate": {
+              "name": "Thousand Shadows",
+              "icon": "🌘",
+              "desc": "Five independently critical strikes against the selected enemy, spilling to new targets on defeat."
+            }
+          },
+          "ceo": {
+            "id": "ceo",
+            "name": "CEO",
+            "secret": true,
+            "unlock": "Secret: reach 300% Boss Damage",
+            "stats": "46 HP · 9 ATK · 35% BOSS DAMAGE",
+            "tags": [
+              "weird",
+              "wealth",
+              "ranged"
+            ],
+            "base": {
+              "maxHp": 46,
+              "attack": 9,
+              "defense": 2,
+              "crit": 0.12,
+              "dodge": 0.02,
+              "luck": 0.1,
+              "doubleStrike": 0.05,
+              "guardPower": 0.6,
+              "classBurst": 0.2,
+              "lifeSteal": 0.05,
+              "bossDamage": 0.35
+            },
+            "passive": {
+              "name": "Executive Compensation",
+              "desc": "All gold gained is increased by +200%. Secret classes are allowed to be financially irresponsible."
+            },
+            "ultimate": {
+              "name": "Quarterly Annihilation",
+              "icon": "📉",
+              "desc": "A boardroom-wide attack scaling with Boss Damage and current gold."
+            }
+          },
+          "merchant": {
+            "id": "merchant",
+            "name": "Merchant",
+            "secret": true,
+            "unlock": "Defeat the Road Merchant secret boss once",
+            "stats": "52 HP · 10 ATK · 25/100 MANA · 20 LUCK · GOLD SCALING",
+            "tags": [
+              "wealth",
+              "occult",
+              "weird",
+              "mana"
+            ],
+            "base": {
+              "maxHp": 52,
+              "attack": 10,
+              "defense": 3,
+              "crit": 0.15,
+              "dodge": 0.05,
+              "luck": 0.2,
+              "doubleStrike": 0.1,
+              "guardPower": 0.66,
+              "classBurst": 0.22,
+              "lifeSteal": 0.08
+            },
+            "passive": {
+              "name": "Occult Accounting",
+              "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
+            },
+            "ultimate": {
+              "name": "Market Monopoly",
+              "icon": "🏦",
+              "desc": "Deals massive pack damage, grants gold and raises two barriers."
+            }
+          },
+          "cleric": {
+            "id": "cleric",
+            "name": "Cleric",
+            "secret": false,
+            "unlock": "Heal 1,000 HP across all runs",
+            "stats": "46 HP · 5 ATK · 2 DEF · HOLY SUSTAIN",
+            "tags": [
+              "holy",
+              "sustain",
+              "guardian"
+            ],
+            "base": {
+              "maxHp": 46,
+              "attack": 5,
+              "defense": 2,
+              "crit": 0.06,
+              "dodge": 0.02,
+              "luck": 0.03,
+              "doubleStrike": 0.03,
+              "guardPower": 0.64,
+              "classBurst": 0.24,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Faith",
+              "desc": "Healing builds Faith. At full Faith, the Cleric can cast a free Consecration during combat."
+            },
+            "ultimate": {
+              "name": "Divine Reckoning",
+              "icon": "☀️",
+              "desc": "Holy area damage plus a large self-heal. Overhealing can interact with effects that explicitly allow it."
+            }
+          },
+          "paladin": {
+            "id": "paladin",
+            "name": "Paladin",
+            "secret": false,
+            "unlock": "Defeat Board 3 with both Fighter and Cleric",
+            "stats": "60 HP · 7 ATK · 5 DEF · DEFENSE/HEALING SCALING",
+            "tags": [
+              "holy",
+              "armored",
+              "guardian"
+            ],
+            "base": {
+              "maxHp": 60,
+              "attack": 7,
+              "defense": 5,
+              "crit": 0.06,
+              "dodge": 0.01,
+              "luck": 0.02,
+              "doubleStrike": 0.02,
+              "guardPower": 0.78,
+              "classBurst": 0.2,
+              "lifeSteal": 0.02
+            },
+            "passive": {
+              "name": "Oathplate",
+              "desc": "Defense contributes 35% of its value to ordinary attack damage. The class remains deliberately stable and dependable."
+            },
+            "ultimate": {
+              "name": "Aegis Judgment",
+              "icon": "⚜️",
+              "desc": "Heavy holy area damage scaling with Attack and Defense, heals the Paladin and feeds Oath Grace, then raises barriers."
+            }
+          },
+          "beastmaster": {
+            "id": "beastmaster",
+            "name": "Beastmaster",
+            "secret": false,
+            "unlock": "Unlock every companion",
+            "stats": "48 HP · 7 ATK · 1 DEF · STRONG PET SCALING",
+            "tags": [
+              "pet",
+              "ranged",
+              "pack"
+            ],
+            "base": {
+              "maxHp": 48,
+              "attack": 7,
+              "defense": 1,
+              "crit": 0.1,
+              "dodge": 0.06,
+              "luck": 0.05,
+              "doubleStrike": 0.06,
+              "guardPower": 0.56,
+              "classBurst": 0.2,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Pack Orders",
+              "desc": "Can switch its companion between Aggressive, Defensive and Support stances during battle."
+            },
+            "ultimate": {
+              "name": "Call of the Pack",
+              "icon": "🐺",
+              "desc": "Calls a spectral pack for area damage based on Attack plus several times your active companion's damage."
+            }
+          },
+          "rogue": {
+            "id": "rogue",
+            "name": "Rogue",
+            "secret": false,
+            "unlock": "Hold 5,000 gold at one time and defeat the Board 3 miniboss",
+            "stats": "34 HP · 8 ATK · 22% CRIT · 14% DODGE",
+            "tags": [
+              "melee",
+              "dodgy",
+              "wealth"
+            ],
+            "base": {
+              "maxHp": 34,
+              "attack": 8,
+              "defense": 0,
+              "crit": 0.22,
+              "dodge": 0.14,
+              "luck": 0.08,
+              "doubleStrike": 0.12,
+              "guardPower": 0.5,
+              "classBurst": 0.24,
+              "lifeSteal": 0.03
+            },
+            "passive": {
+              "name": "Sticky Fingers",
+              "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
+            },
+            "ultimate": {
+              "name": "Grand Larceny",
+              "icon": "💎",
+              "desc": "A brutal single-target strike that steals gold after the hit."
+            }
+          },
+          "bloodmage": {
+            "id": "bloodmage",
+            "name": "Bloodmage",
+            "secret": true,
+            "unlock": "Secret: defeat the Bloodmage hidden inside a Bloodwell",
+            "stats": "39 HP · 9 ATK · 1 DEF · LIFE-FUELLED",
+            "tags": [
+              "occult",
+              "vampiric",
+              "weird",
+              "blood-fuel"
+            ],
+            "base": {
+              "maxHp": 39,
+              "attack": 9,
+              "defense": 1,
+              "crit": 0.12,
+              "dodge": 0.04,
+              "luck": 0.04,
+              "doubleStrike": 0.06,
+              "guardPower": 0.4,
+              "classBurst": 0.22,
+              "lifeSteal": 0.05
+            },
+            "passive": {
+              "name": "Blood Is Mana",
+              "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
+            },
+            "ultimate": {
+              "name": "Sanguine Cataclysm",
+              "icon": "🩸☄️",
+              "desc": "Deals heavy damage to every enemy, then restores a portion of the blood spilled."
+            }
+          },
+          "summoner": {
+            "id": "summoner",
+            "name": "Summoner",
+            "secret": false,
+            "unlock": "Raise any 3 companions to level 10",
+            "stats": "36 HP · 6 ATK · 35/120 MANA · SUMMONS",
+            "tags": [
+              "occult",
+              "mana",
+              "pet",
+              "pack",
+              "ranged"
+            ],
+            "base": {
+              "maxHp": 36,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.08,
+              "dodge": 0.05,
+              "luck": 0.08,
+              "doubleStrike": 0.05,
+              "guardPower": 0.54,
+              "classBurst": 0.18,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Spirit Circle",
+              "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
+            },
+            "ultimate": {
+              "name": "Grand Convergence",
+              "icon": "🌌",
+              "desc": "Calls a temporary full spirit circle and sends every summoned familiar crashing through the enemy pack."
+            }
+          },
+          "pokemontrainer": {
+            "id": "pokemontrainer",
+            "name": "Pokémon Trainer",
+            "secret": true,
+            "unlock": "Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty",
+            "stats": "46 HP · 8 ATK · 2 DEF · SIX-CREATURE ROSTER",
+            "tags": [
+              "pet",
+              "pack",
+              "weird",
+              "strong",
+              "lucky"
+            ],
+            "base": {
+              "maxHp": 46,
+              "attack": 8,
+              "defense": 2,
+              "crit": 0.12,
+              "dodge": 0.08,
+              "luck": 0.1,
+              "doubleStrike": 0.08,
+              "guardPower": 0.6,
+              "classBurst": 0.26,
+              "lifeSteal": 0.04
+            },
+            "passive": {
+              "name": "Six-Creature Draft",
+              "desc": "At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."
+            },
+            "ultimate": {
+              "name": "Six-Pack Stampede",
+              "icon": "🌈🐾",
+              "desc": "Every creature in the six-member roster attacks the entire pack in rapid succession."
+            }
+          },
+          "alchemist": {
+            "id": "alchemist",
+            "name": "Alchemist",
+            "secret": false,
+            "unlock": "Use 15 potions across all runs",
+            "stats": "39 HP · 6 ATK · 1 DEF · +50% POTION HEALING · +5%/LEVEL",
+            "tags": [
+              "alchemy",
+              "sustain",
+              "ranged",
+              "weird"
+            ],
+            "base": {
+              "maxHp": 39,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.08,
+              "dodge": 0.04,
+              "luck": 0.06,
+              "doubleStrike": 0.04,
+              "guardPower": 0.54,
+              "classBurst": 0.14,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Combat Distillery",
+              "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+            },
+            "ultimate": {
+              "name": "Grand Distillation",
+              "icon": "⚗️✨",
+              "desc": "Creates three potions, restores health and detonates an oversized restorative formula across the enemy pack."
+            }
+          },
+          "ouroboros": {
+            "id": "ouroboros",
+            "name": "Ouroboros",
+            "secret": true,
+            "unlock": "Secret: reach 400% Echo Strike during a run",
+            "stats": "48 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT",
+            "tags": [
+              "secret",
+              "weird",
+              "echo",
+              "poison",
+              "elemental",
+              "dodgy"
+            ],
+            "base": {
+              "maxHp": 48,
+              "attack": 10,
+              "defense": 2,
+              "crit": 0.08,
+              "dodge": 0.06,
+              "luck": 0.04,
+              "doubleStrike": 1.2,
+              "guardPower": 0.56,
+              "classBurst": 0.14,
+              "lifeSteal": 0.04
+            },
+            "ultimate": {
+              "name": "Infinite Return",
+              "icon": "♾️☠️",
+              "desc": "A chain of serpent strikes whose hit count scales with Echo Strike. Every hit adds Poison and can bounce through the pack."
+            }
+          },
+          "dragoon": {
+            "id": "dragoon",
+            "name": "Dragoon",
+            "secret": false,
+            "unlock": "Defeat the Board 4 miniboss once",
+            "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT · JUMP",
+            "tags": [
+              "melee",
+              "precision",
+              "evasive",
+              "burst"
+            ],
+            "base": {
+              "maxHp": 56,
+              "attack": 11,
+              "defense": 3,
+              "crit": 0.1,
+              "dodge": 0.04,
+              "luck": 0.04,
+              "doubleStrike": 0.04,
+              "guardPower": 0.6,
+              "classBurst": 0.12,
+              "lifeSteal": 0.02
+            },
+            "ultimate": {
+              "name": "Dragon Dive",
+              "icon": "🐉💥",
+              "desc": "A direct, decisive aerial dive against the selected target that uses the normal Ultimate and elemental rules."
+            }
+          },
+          "invoker": {
+            "id": "invoker",
+            "name": "Invoker",
+            "secret": false,
+            "unlock": "Cast 100 Mana-spender spells across your career.",
+            "stats": "32 HP · 6 ATK · 25/100 MANA · THREE ORBS",
+            "tags": [
+              "ranged",
+              "occult",
+              "mana",
+              "elemental",
+              "combo"
+            ],
+            "base": {
+              "maxHp": 32,
+              "attack": 6,
+              "defense": 0,
+              "crit": 0.08,
+              "dodge": 0.02,
+              "luck": 0.05,
+              "doubleStrike": 0.05,
+              "guardPower": 0.5,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "ultimate": {
+              "name": "Invoke",
+              "icon": "🔵🟢🔴",
+              "desc": "At 100 Ultimate, invoke the spell determined by your current three-orb formula."
+            }
+          },
+          "slimerouge": {
+            "id": "slimerouge",
+            "name": "Slime Rouge",
+            "secret": true,
+            "unlock": "Secret: clear Board 6 after beginning the run with Random while Slime is already unlocked",
+            "stats": "44 HP · 7 ATK · 1 DEF · RANDOM IDENTITY · RANDOM ULTIMATE",
+            "tags": [
+              "secret",
+              "weird",
+              "sticky",
+              "poison",
+              "flex"
+            ],
+            "base": {
+              "maxHp": 44,
+              "attack": 7,
+              "defense": 1,
+              "crit": 0.1,
+              "dodge": 0.06,
+              "luck": 0.06,
+              "doubleStrike": 0.1,
+              "guardPower": 0.56,
+              "classBurst": 0.1,
+              "lifeSteal": 0.05
+            },
+            "ultimate": {
+              "name": "Stolen Finale",
+              "icon": "🎭",
+              "desc": "A random unlocked class ultimate is selected independently at the beginning of every run and executes with the donor class's real behavior."
+            }
+          }
+        },
+        "passives": {
+          "invoker": {
+            "name": "Orb Invocation",
+            "desc": "Defend forms Blue, Mana generation forms Green, and Mana spending forms Red. Three active orbs empower you and define Invoke."
+          },
+          "ranger": {
+            "name": "Marked Quarry",
+            "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
+          },
+          "sorcerer": {
+            "name": "Arcane Reservoir",
+            "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal."
+          },
+          "fighter": {
+            "name": "Counterstance",
+            "desc": "Guarding primes the Fighter's next basic attack for a heavy counterblow."
+          },
+          "monk": {
+            "name": "Flowing Combo",
+            "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+          },
+          "clown": {
+            "name": "Opening Gag",
+            "desc": "Every battle begins with a random comedy gimmick: shoes, pies, barriers, applause or chickens."
+          },
+          "rouge": {
+            "name": "Painted Hexcraft",
+            "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+          },
+          "berserker": {
+            "name": "Blood Rage",
+            "desc": "Every 1% missing HP grants +1% damage as Rage. The bar fills as your HP falls."
+          },
+          "turtle": {
+            "name": "Shell Discipline",
+            "desc": "Guarding primes a crushing shell counter on the next basic attack. Starts with an extra Barrier and +1 Defense."
+          },
+          "frog": {
+            "name": "Predatory Bounce",
+            "desc": "Echo-heavy attacks become especially vicious against enemies below half HP."
+          },
+          "d20": {
+            "name": "Probability Leak",
+            "desc": "Nearly every combat action rolls a visible d20. The class intentionally pauses so you can witness fate making mistakes."
+          },
+          "slime": {
+            "name": "Borrowed Shapes",
+            "desc": "Has no privileged mechanic of its own. Instead it can learn many non-Ultimate class powers from other non-secret classes."
+          },
+          "vampire": {
+            "name": "Night Hunger",
+            "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
+          },
+          "ninja": {
+            "name": "Smoke Counter",
+            "desc": "Critical hits build Smoke. At 3 Smoke, the next basic attack becomes a defense-piercing execution strike."
+          },
+          "ceo": {
+            "name": "Executive Compensation",
+            "desc": "All gold gained is increased by +200%. Secret classes are allowed to be financially irresponsible."
+          },
+          "merchant": {
+            "name": "Occult Accounting",
+            "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
+          },
+          "cleric": {
+            "name": "Faith",
+            "desc": "Healing builds Faith. At full Faith, the Cleric can cast a free Consecration during combat."
+          },
+          "paladin": {
+            "name": "Oathplate",
+            "desc": "Defense contributes 35% of its value to ordinary attack damage. The class remains deliberately stable and dependable."
+          },
+          "beastmaster": {
+            "name": "Pack Orders",
+            "desc": "Can switch its companion between Aggressive, Defensive and Support stances during battle."
+          },
+          "rogue": {
+            "name": "Sticky Fingers",
+            "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
+          },
+          "bloodmage": {
+            "name": "Blood Is Mana",
+            "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
+          },
+          "summoner": {
+            "name": "Spirit Circle",
+            "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
+          },
+          "pokemontrainer": {
+            "name": "Six-Creature Draft",
+            "desc": "At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."
+          },
+          "alchemist": {
+            "name": "Combat Distillery",
+            "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+          },
+          "dragoon": {
+            "name": "Aerial Discipline",
+            "desc": "Jump is a real Airborne state: ordinary attacks cannot hit through one enemy response, then the next player action lands exactly once for a heavy strike."
+          }
+        },
+        "unlocks": {
+          "invoker": {
+            "type": "manaSpenderCasts",
+            "minimum": 100
+          },
+          "ranger": {
+            "type": "always"
+          },
+          "sorcerer": {
+            "type": "guardianDefeat",
+            "board": 1,
+            "guardian": "miniboss"
+          },
+          "fighter": {
+            "type": "guardianDefeat",
+            "board": 1,
+            "guardian": "boss"
+          },
+          "monk": {
+            "type": "guardianDefeat",
+            "board": 2,
+            "guardian": "miniboss"
+          },
+          "clown": {
+            "type": "guardianDefeat",
+            "board": 2,
+            "guardian": "boss"
+          },
+          "rouge": {
+            "type": "prestige",
+            "count": 10
+          },
+          "berserker": {
+            "type": "lifetimeStat",
+            "stat": "damageTaken",
+            "minimum": 1000
+          },
+          "turtle": {
+            "type": "runStat",
+            "stat": "defense",
+            "greaterThan": 40
+          },
+          "frog": {
+            "type": "runStat",
+            "stat": "doubleStrike",
+            "greaterThan": 1.499999
+          },
+          "d20": {
+            "type": "petLevel",
+            "pet": "neutral",
+            "minimum": 30
+          },
+          "slime": {
+            "type": "unlockedClassCount",
+            "minimum": 10
+          },
+          "vampire": {
+            "type": "compound",
+            "requirements": [
+              {
+                "type": "careerStat",
+                "stat": "maxLifesteal",
+                "greaterThan": 1
+              },
+              {
+                "type": "guardianDefeat",
+                "board": 3,
+                "guardian": "boss"
+              }
+            ]
+          },
+          "ninja": {
+            "type": "runStat",
+            "stat": "crit",
+            "greaterThan": 1
+          },
+          "ceo": {
+            "type": "runStat",
+            "stat": "bossDamage",
+            "minimum": 3
+          },
+          "merchant": {
+            "type": "secretBossKills",
+            "boss": "road-merchant",
+            "minimum": 1
+          },
+          "cleric": {
+            "type": "lifetimeStat",
+            "stat": "healingDone",
+            "minimum": 1000
+          },
+          "paladin": {
+            "type": "boardClears",
+            "requirements": [
+              {
+                "classId": "fighter",
+                "board": 3
+              },
+              {
+                "classId": "cleric",
+                "board": 3
+              }
+            ]
+          },
+          "beastmaster": {
+            "type": "allPetsUnlocked"
+          },
+          "rogue": {
+            "type": "compound",
+            "requirements": [
+              {
+                "type": "lifetimeStat",
+                "stat": "highestGold",
+                "minimum": 5000
+              },
+              {
+                "type": "guardianDefeat",
+                "board": 3,
+                "guardian": "miniboss"
+              }
+            ]
+          },
+          "bloodmage": {
+            "type": "secretBossKills",
+            "boss": "bloodmage-boss",
+            "minimum": 1
+          },
+          "summoner": {
+            "type": "petsAtLevel",
+            "count": 3,
+            "level": 10
+          },
+          "pokemontrainer": {
+            "type": "compound",
+            "requirements": [
+              {
+                "type": "allPetsAtLevel",
+                "level": 10
+              },
+              {
+                "type": "boardClear",
+                "classId": "beastmaster",
+                "board": 5
+              }
+            ]
+          },
+          "alchemist": {
+            "type": "lifetimeStat",
+            "stat": "potionsUsed",
+            "minimum": 15
+          },
+          "ouroboros": {
+            "type": "runStat",
+            "stat": "doubleStrike",
+            "minimum": 4
+          },
+          "dragoon": {
+            "type": "guardianDefeat",
+            "board": 4,
+            "guardian": "miniboss"
+          },
+          "slimerouge": {
+            "type": "compound",
+            "requirements": [
+              {
+                "type": "classUnlocked",
+                "classId": "slime"
+              },
+              {
+                "type": "randomRunBoardClear",
+                "board": 6
+              }
+            ]
+          }
+        },
+        "mechanics": {
+          "invoker": [
+            "mana",
+            "orb-sequence",
+            "ultimate",
+            "elemental",
+            "guard"
+          ],
+          "ranger": [
+            "marks",
+            "crit",
+            "evasion",
+            "ranged"
+          ],
+          "sorcerer": [
+            "mana",
+            "occult-spell",
+            "elemental",
+            "ranged",
+            "arcane-surge"
+          ],
+          "fighter": [
+            "counter",
+            "guard",
+            "barrier",
+            "melee"
+          ],
+          "monk": [
+            "combo",
+            "echo",
+            "evasion",
+            "melee"
+          ],
+          "clown": [
+            "chaos-gimmick",
+            "luck",
+            "burst"
+          ],
+          "rouge": [
+            "mana",
+            "occult-spell",
+            "crit",
+            "lifesteal"
+          ],
+          "berserker": [
+            "rage",
+            "low-hp",
+            "lifesteal",
+            "melee"
+          ],
+          "turtle": [
+            "guard-chain",
+            "guard",
+            "barrier",
+            "defense"
+          ],
+          "frog": [
+            "echo",
+            "poison",
+            "evasion",
+            "cascade"
+          ],
+          "d20": [
+            "d20-chaos",
+            "luck",
+            "echo"
+          ],
+          "slime": [
+            "flex",
+            "poison",
+            "generic-borrowing"
+          ],
+          "vampire": [
+            "mana",
+            "occult-spell",
+            "lifesteal",
+            "sustain"
+          ],
+          "ninja": [
+            "smoke",
+            "crit",
+            "evasion",
+            "poison"
+          ],
+          "ceo": [
+            "wealth",
+            "barrier",
+            "boss-damage"
+          ],
+          "merchant": [
+            "mana",
+            "occult-spell",
+            "wealth",
+            "shop"
+          ],
+          "cleric": [
+            "faith",
+            "healing",
+            "barrier",
+            "holy",
+            "blessed-attack"
+          ],
+          "paladin": [
+            "faith",
+            "healing",
+            "guard",
+            "holy",
+            "defense"
+          ],
+          "beastmaster": [
+            "pet",
+            "pet-switch",
+            "pack",
+            "stances"
+          ],
+          "rogue": [
+            "steal",
+            "wealth",
+            "evasion"
+          ],
+          "bloodmage": [
+            "blood-fuel",
+            "lifesteal",
+            "occult-spell"
+          ],
+          "summoner": [
+            "mana",
+            "pet",
+            "pack",
+            "spirits",
+            "conjure"
+          ],
+          "pokemontrainer": [
+            "pet",
+            "pack",
+            "roster",
+            "trainer-assist"
+          ],
+          "alchemist": [
+            "alchemy",
+            "flasks",
+            "potions",
+            "sustain"
+          ],
+          "ouroboros": [
+            "echo",
+            "poison",
+            "elemental",
+            "ouroboros-conversion"
+          ],
+          "dragoon": [
+            "airborne",
+            "jump",
+            "landing",
+            "melee"
+          ],
+          "slimerouge": [
+            "randomizer",
+            "flex",
+            "poison",
+            "generic-borrowing"
+          ]
+        },
+        "ultimateSupport": {
+          "ranger": [
+            "marks"
+          ],
+          "summoner": [
+            "spirits",
+            "pet",
+            "mana"
+          ],
+          "pokemontrainer": [
+            "roster",
+            "pet"
+          ],
+          "alchemist": [
+            "alchemy",
+            "potions"
+          ],
+          "cleric": [
+            "faith",
+            "healing"
+          ],
+          "paladin": [
+            "faith",
+            "healing"
+          ],
+          "ninja": [
+            "smoke",
+            "crit"
+          ],
+          "frog": [
+            "echo",
+            "cascade"
+          ],
+          "ouroboros": [
+            "echo",
+            "poison",
+            "ouroboros-conversion"
+          ],
+          "d20": [
+            "d20-chaos"
+          ]
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2952269695
+    },
+    {
+      "name": "normal-identity",
+      "result": {
+        "classId": "ranger",
+        "id": "ranger",
+        "active": true,
+        "mechanics": [
+          "marks",
+          "crit",
+          "evasion",
+          "ranged"
+        ],
+        "capabilities": [
+          "marks",
+          "crit",
+          "evasion",
+          "ranged"
+        ]
+      },
+      "rngCalls": 0,
+      "rngState": 2694288294
+    },
+    {
+      "name": "slime-rouge-identity",
+      "result": {
+        "identity": "summoner",
+        "ultimate": "pokemontrainer",
+        "mechanics": [
+          "randomizer",
+          "flex",
+          "poison",
+          "generic-borrowing",
+          "mana",
+          "pet",
+          "pack",
+          "spirits",
+          "conjure",
+          "roster",
+          "ultimate:pokemontrainer"
+        ],
+        "mana": 35,
+        "maxMana": 120,
+        "spirits": true,
+        "roster": 6
+      },
+      "rngCalls": 12,
+      "rngState": 1601249862
+    },
+    {
+      "name": "slime-rouge-ranger-marks",
+      "result": {
+        "identity": "ranger",
+        "marks": 1,
+        "resultType": "strike",
+        "domain": "combat"
+      },
+      "rngCalls": 15,
+      "rngState": 4051777345
+    },
+    {
+      "name": "slime-rouge-conjure",
+      "result": {
+        "identity": "summoner",
+        "beforeMana": 100,
+        "afterMana": 60,
+        "spirits": 1
+      },
+      "rngCalls": 5,
+      "rngState": 1012619529
+    },
+    {
+      "name": "slime-rouge-ultimate",
+      "result": {
+        "identity": "summoner",
+        "ultimate": "pokemontrainer",
+        "damage": 36,
+        "classRestored": true,
+        "charge": 0,
+        "roster": 6
+      },
+      "rngCalls": 12,
+      "rngState": 2651562363
+    },
+    {
+      "name": "berserker-rage",
+      "result": {
+        "missing": 40,
+        "dealt": 140
+      },
+      "rngCalls": 0,
+      "rngState": 483542319
+    },
+    {
+      "name": "rogue-steal",
+      "result": {
+        "stolePowerup": false,
+        "before": 0,
+        "after": 0,
+        "gold": 1,
+        "potions": 1,
+        "luck": 1,
+        "powerChance": 0.35,
+        "rng": {
+          "apiVersion": 1,
+          "mode": "seeded",
+          "seed": "classes-oracle-rogue-steal",
+          "state": 721515090,
+          "calls": 1
+        },
+        "stealRoll": null,
+        "text": "🗡️ Pocket Dummy catches your hand. You steal absolutely nothing."
+      },
+      "rngCalls": 0,
+      "rngState": 2482141550
+    },
+    {
+      "name": "cleric-consecration",
+      "result": {
+        "boardLevel": 3,
+        "nightmareMode": false,
+        "hellMode": false,
+        "combatBusy": false,
+        "identity": "cleric",
+        "capabilities": [
+          "faith",
+          "healing",
+          "barrier",
+          "holy",
+          "blessed-attack"
+        ],
+        "player": {
+          "classId": "cleric",
+          "hp": 62,
+          "maxHp": 100,
+          "attack": 20,
+          "defense": 2,
+          "dodge": 0.02,
+          "crit": 0.06,
+          "doubleStrike": 0.03,
+          "lifeSteal": 0,
+          "gold": 1,
+          "potions": 1,
+          "mana": 0,
+          "maxMana": 0,
+          "ultimateCharge": 0,
+          "combatShield": 1,
+          "combatActionCount": 1,
+          "clericFaith": 44,
+          "beastStance": "aggressive",
+          "monkCombo": 0,
+          "summonerSpirits": [],
+          "trainerRoster": [],
+          "upgradeCounts": {}
+        },
+        "enemies": [
+          {
+            "name": "Class Oracle Dummy 1",
+            "hp": 4969,
+            "maxHp": 5000,
+            "attack": 1,
+            "defense": 0,
+            "barrier": 0,
+            "poisonStacks": 0,
+            "rangerMarks": 0
+          },
+          {
+            "name": "Class Oracle Dummy 2",
+            "hp": 4977,
+            "maxHp": 5000,
+            "attack": 1,
+            "defense": 0,
+            "barrier": 0,
+            "poisonStacks": 0,
+            "rangerMarks": 0
+          }
+        ],
+        "text": "☀️ Consecration spends 100 Faith, heals 22 HP, raises a Barrier and deals 54 Light-touched damage across the pack.",
+        "meta": {
+          "potionsUsed": 0,
+          "manaSpenderCasts": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 153715819
+    },
+    {
+      "name": "beastmaster-stances",
+      "result": {
+        "sequence": [
+          "aggressive",
+          "defensive",
+          "support",
+          "aggressive",
+          "defensive"
+        ],
+        "state": {
+          "boardLevel": 3,
+          "nightmareMode": false,
+          "hellMode": false,
+          "combatBusy": false,
+          "identity": "beastmaster",
+          "capabilities": [
+            "pet",
+            "pet-switch",
+            "pack",
+            "stances"
+          ],
+          "player": {
+            "classId": "beastmaster",
+            "hp": 48,
+            "maxHp": 48,
+            "attack": 7,
+            "defense": 1,
+            "dodge": 0.06,
+            "crit": 0.1,
+            "doubleStrike": 0.06,
+            "lifeSteal": 0,
+            "gold": 1,
+            "potions": 1,
+            "mana": 0,
+            "maxMana": 0,
+            "ultimateCharge": 0,
+            "combatShield": 0,
+            "combatActionCount": 0,
+            "clericFaith": 0,
+            "beastStance": "defensive",
+            "monkCombo": 0,
+            "summonerSpirits": [],
+            "trainerRoster": [],
+            "upgradeCounts": {}
+          },
+          "enemies": [
+            {
+              "name": "Class Oracle Dummy 1",
+              "hp": 5000,
+              "maxHp": 5000,
+              "attack": 1,
+              "defense": 0,
+              "barrier": 0,
+              "poisonStacks": 0,
+              "rangerMarks": 0
+            }
+          ],
+          "text": "",
+          "meta": {
+            "potionsUsed": 0,
+            "manaSpenderCasts": 0
+          }
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 747816191
+    },
+    {
+      "name": "bloodmage-replenish",
+      "result": {
+        "boardLevel": 3,
+        "nightmareMode": false,
+        "hellMode": false,
+        "combatBusy": false,
+        "identity": "bloodmage",
+        "capabilities": [
+          "blood-fuel",
+          "lifesteal",
+          "occult-spell"
+        ],
+        "player": {
+          "classId": "bloodmage",
+          "hp": 117,
+          "maxHp": 161,
+          "attack": 9,
+          "defense": 1,
+          "dodge": 0.04,
+          "crit": 0.12,
+          "doubleStrike": 0.06,
+          "lifeSteal": 0.05,
+          "gold": 1,
+          "potions": 1,
+          "mana": 0,
+          "maxMana": 0,
+          "ultimateCharge": 20,
+          "combatShield": 0,
+          "combatActionCount": 1,
+          "clericFaith": 0,
+          "beastStance": "aggressive",
+          "monkCombo": 0,
+          "summonerSpirits": [],
+          "trainerRoster": [],
+          "upgradeCounts": {}
+        },
+        "enemies": [
+          {
+            "name": "Class Oracle Dummy 1",
+            "hp": 740,
+            "maxHp": 1000,
+            "attack": 1,
+            "defense": 0,
+            "barrier": 0,
+            "poisonStacks": 0,
+            "rangerMarks": 0
+          }
+        ],
+        "text": "💉 Replenish restores 16 HP to you and 140 HP to Class Oracle Dummy 1, then braces like Guard.",
+        "meta": {
+          "potionsUsed": 0,
+          "manaSpenderCasts": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 1680253079
+    },
+    {
+      "name": "bloodmage-exsanguinate",
+      "result": {
+        "boardLevel": 3,
+        "nightmareMode": false,
+        "hellMode": false,
+        "combatBusy": false,
+        "identity": "bloodmage",
+        "capabilities": [
+          "blood-fuel",
+          "lifesteal",
+          "occult-spell"
+        ],
+        "player": {
+          "classId": "bloodmage",
+          "hp": 149,
+          "maxHp": 161,
+          "attack": 20,
+          "defense": 1,
+          "dodge": 0.04,
+          "crit": 0.12,
+          "doubleStrike": 0.06,
+          "lifeSteal": 0.05,
+          "gold": 1,
+          "potions": 1,
+          "mana": 0,
+          "maxMana": 0,
+          "ultimateCharge": 0,
+          "combatShield": 0,
+          "combatActionCount": 1,
+          "clericFaith": 0,
+          "beastStance": "aggressive",
+          "monkCombo": 0,
+          "summonerSpirits": [],
+          "trainerRoster": [],
+          "upgradeCounts": {}
+        },
+        "enemies": [
+          {
+            "name": "Class Oracle Dummy 1",
+            "hp": 4931,
+            "maxHp": 5000,
+            "attack": 1,
+            "defense": 3,
+            "barrier": 0,
+            "poisonStacks": 0,
+            "rangerMarks": 0
+          }
+        ],
+        "text": "🩸 Exsanguinate spends 12 HP to deal 69 to Class Oracle Dummy 1 (69 total).",
+        "meta": {
+          "potionsUsed": 0,
+          "manaSpenderCasts": 0
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2869761385
+    },
+    {
+      "name": "alchemist-flask",
+      "result": {
+        "boardLevel": 3,
+        "nightmareMode": false,
+        "hellMode": false,
+        "combatBusy": false,
+        "identity": "alchemist",
+        "capabilities": [
+          "alchemy",
+          "flasks",
+          "potions",
+          "sustain"
+        ],
+        "player": {
+          "classId": "alchemist",
+          "hp": 100,
+          "maxHp": 100,
+          "attack": 15,
+          "defense": 1,
+          "dodge": 0.04,
+          "crit": 0.08,
+          "doubleStrike": 0.04,
+          "lifeSteal": 0,
+          "gold": 1,
+          "potions": 2,
+          "mana": 0,
+          "maxMana": 0,
+          "ultimateCharge": 13,
+          "combatShield": 0,
+          "combatActionCount": 1,
+          "clericFaith": 0,
+          "beastStance": "aggressive",
+          "monkCombo": 0,
+          "summonerSpirits": [],
+          "trainerRoster": [],
+          "upgradeCounts": {}
+        },
+        "enemies": [
+          {
+            "name": "Class Oracle Dummy 1",
+            "hp": 4946,
+            "maxHp": 5000,
+            "attack": 1,
+            "defense": 0,
+            "barrier": 0,
+            "poisonStacks": 0,
+            "rangerMarks": 0
+          },
+          {
+            "name": "Class Oracle Dummy 2",
+            "hp": 4961,
+            "maxHp": 5000,
+            "attack": 1,
+            "defense": 0,
+            "barrier": 0,
+            "poisonStacks": 0,
+            "rangerMarks": 0
+          }
+        ],
+        "text": "🧪 Volatile Flask consumes restorative potency as violence for 93 total damage.",
+        "meta": {
+          "potionsUsed": 1,
+          "manaSpenderCasts": 0
+        }
+      },
+      "rngCalls": 2,
+      "rngState": 4138259166
+    },
+    {
+      "name": "monk-dodge",
+      "result": {
+        "chance": 0.22755371900826454,
+        "state": {
+          "boardLevel": 3,
+          "nightmareMode": false,
+          "hellMode": false,
+          "combatBusy": false,
+          "identity": "monk",
+          "capabilities": [
+            "combo",
+            "echo",
+            "evasion",
+            "melee"
+          ],
+          "player": {
+            "classId": "monk",
+            "hp": 39,
+            "maxHp": 39,
+            "attack": 7,
+            "defense": 1,
+            "dodge": 0.1,
+            "crit": 0.08,
+            "doubleStrike": 0.08,
+            "lifeSteal": 0,
+            "gold": 1,
+            "potions": 1,
+            "mana": 0,
+            "maxMana": 0,
+            "ultimateCharge": 0,
+            "combatShield": 0,
+            "combatActionCount": 0,
+            "clericFaith": 0,
+            "beastStance": "aggressive",
+            "monkCombo": 3,
+            "summonerSpirits": [],
+            "trainerRoster": [],
+            "upgradeCounts": {}
+          },
+          "enemies": [
+            {
+              "name": "Class Oracle Dummy 1",
+              "hp": 5000,
+              "maxHp": 5000,
+              "attack": 1,
+              "defense": 0,
+              "barrier": 0,
+              "poisonStacks": 0,
+              "rangerMarks": 0
+            }
+          ],
+          "text": "",
+          "meta": {
+            "potionsUsed": 0,
+            "manaSpenderCasts": 0
+          }
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 656307251
+    },
+    {
+      "name": "ninja-execution",
+      "result": {
+        "dealt": 165,
+        "state": {
+          "boardLevel": 3,
+          "nightmareMode": false,
+          "hellMode": false,
+          "combatBusy": false,
+          "identity": "ninja",
+          "capabilities": [
+            "smoke",
+            "crit",
+            "evasion",
+            "poison"
+          ],
+          "player": {
+            "classId": "ninja",
+            "hp": 33,
+            "maxHp": 33,
+            "attack": 20,
+            "defense": 0,
+            "dodge": 0.16999999999999998,
+            "crit": 0.33,
+            "doubleStrike": 0.12,
+            "lifeSteal": 0,
+            "gold": 1,
+            "potions": 1,
+            "mana": 0,
+            "maxMana": 0,
+            "ultimateCharge": 0,
+            "combatShield": 0,
+            "combatActionCount": 0,
+            "clericFaith": 0,
+            "beastStance": "aggressive",
+            "monkCombo": 0,
+            "summonerSpirits": [],
+            "trainerRoster": [],
+            "upgradeCounts": {}
+          },
+          "enemies": [
+            {
+              "name": "Class Oracle Dummy 1",
+              "hp": 835,
+              "maxHp": 1000,
+              "attack": 1,
+              "defense": 12,
+              "barrier": 0,
+              "poisonStacks": 0,
+              "rangerMarks": 0
+            }
+          ],
+          "text": "",
+          "meta": {
+            "potionsUsed": 0,
+            "manaSpenderCasts": 0
+          }
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 2482886225
+    },
+    {
+      "name": "ouroboros-sync",
+      "result": {
+        "before": {
+          "attack": 37,
+          "doubleStrike": 1.2
+        },
+        "after": {
+          "attack": 10,
+          "doubleStrike": 3.9000000000000004
+        },
+        "state": {
+          "boardLevel": 3,
+          "nightmareMode": false,
+          "hellMode": false,
+          "combatBusy": false,
+          "identity": "ouroboros",
+          "capabilities": [
+            "echo",
+            "poison",
+            "elemental",
+            "ouroboros-conversion"
+          ],
+          "player": {
+            "classId": "ouroboros",
+            "hp": 48,
+            "maxHp": 48,
+            "attack": 10,
+            "defense": 2,
+            "dodge": 0.06,
+            "crit": 0.08,
+            "doubleStrike": 3.9000000000000004,
+            "lifeSteal": 0.04,
+            "gold": 1,
+            "potions": 1,
+            "mana": 0,
+            "maxMana": 0,
+            "ultimateCharge": 0,
+            "combatShield": 0,
+            "combatActionCount": 0,
+            "clericFaith": 0,
+            "beastStance": "aggressive",
+            "monkCombo": 0,
+            "summonerSpirits": [],
+            "trainerRoster": [],
+            "upgradeCounts": {}
+          },
+          "enemies": [
+            {
+              "name": "Class Oracle Dummy 1",
+              "hp": 5000,
+              "maxHp": 5000,
+              "attack": 1,
+              "defense": 0,
+              "barrier": 0,
+              "poisonStacks": 0,
+              "rangerMarks": 0
+            }
+          ],
+          "text": "",
+          "meta": {
+            "potionsUsed": 0,
+            "manaSpenderCasts": 0
+          }
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 3585754922
+    },
+    {
+      "name": "invoker-formula",
+      "result": {
+        "active": true,
+        "state": {
+          "orbs": [
+            "blue",
+            "green",
+            "red"
+          ],
+          "alacrity": 0,
+          "ghostDodge": 0,
+          "spirit": 0,
+          "spiritShred": {},
+          "firstTrinity": false,
+          "previousRecipe": "",
+          "doubleInvoke": false
+        },
+        "recipe": {
+          "name": "Deafening Blast",
+          "tip": "165% AoE; next response deals 35% less damage and delays a special."
+        },
+        "bonuses": {
+          "damage": 0.07,
+          "echo": 0.05,
+          "mana": 0.1,
+          "guard": 0.04
+        },
+        "identity": "invoker"
+      },
+      "rngCalls": 0,
+      "rngState": 4162159487
+    },
+    {
+      "name": "beastmaster-button",
+      "result": {
+        "before": "aggressive",
+        "after": "defensive",
+        "state": {
+          "boardLevel": 3,
+          "nightmareMode": false,
+          "hellMode": false,
+          "combatBusy": false,
+          "identity": "beastmaster",
+          "capabilities": [
+            "pet",
+            "pet-switch",
+            "pack",
+            "stances"
+          ],
+          "player": {
+            "classId": "beastmaster",
+            "hp": 48,
+            "maxHp": 48,
+            "attack": 7,
+            "defense": 1,
+            "dodge": 0.06,
+            "crit": 0.1,
+            "doubleStrike": 0.06,
+            "lifeSteal": 0,
+            "gold": 1,
+            "potions": 1,
+            "mana": 0,
+            "maxMana": 0,
+            "ultimateCharge": 0,
+            "combatShield": 0,
+            "combatActionCount": 0,
+            "clericFaith": 0,
+            "beastStance": "defensive",
+            "monkCombo": 0,
+            "summonerSpirits": [],
+            "trainerRoster": [],
+            "upgradeCounts": {}
+          },
+          "enemies": [
+            {
+              "name": "Class Oracle Dummy 1",
+              "hp": 5000,
+              "maxHp": 5000,
+              "attack": 1,
+              "defense": 0,
+              "barrier": 0,
+              "poisonStacks": 0,
+              "rangerMarks": 0
+            }
+          ],
+          "text": "",
+          "meta": {
+            "potionsUsed": 0,
+            "manaSpenderCasts": 0
+          }
+        }
+      },
+      "rngCalls": 0,
+      "rngState": 3624362194
+    }
+  ]
+}

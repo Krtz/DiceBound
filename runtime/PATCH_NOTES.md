@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.34
+
+## Beta 0.6.6.34 Classes subsystem ownership (#348)
+- `DiceboundClasses` is now the ordinary public Classes boundary over focused registry, runtime identity/capability, action-mechanics, hook/lifecycle and Invoker internals; ordinary runtime composition no longer exposes those specialists or monolith-local class policy as peer subsystem APIs.
+- Class identity/capabilities, Slime Rouge borrowing, Attack/Guard/Potion/Ultimate/Special routing, Rogue/Bloodmage/Cleric/Beastmaster/Alchemist mechanics, Monk/Clown/Berserker/Ninja/Ouroboros hooks, Bloodmage HP normalization, borrowed support initialization and Invoker collaboration route through the facade while generic Combat, Pets, Powerups and Progression ownership remains separate.
+- A permanent 18-case exact released-0.6.6.33 Classes output/state/RNG oracle plus focused runtime/lifecycle/action/hook/Invoker ownership guards freezes behavior. The 24-case Player Initialization oracle, deterministic Mana/Combat suites and existing subsystem/browser/file regressions remain authoritative.
+- No class balance, unlock requirements, passive/Ultimate semantics, Slime Rouge donor policy, Invoker formulas, RNG order/state, action/event ordering, save/checkpoint behavior or UI redesign is intended. Runtime graph is 86 modules (85 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 670,604 bytes / 7,075 lines.
+
 # Unreleased — Beta 0.6.6.33
 
 ## Beta 0.6.6.33 Powerups subsystem ownership (#346)

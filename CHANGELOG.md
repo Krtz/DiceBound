@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.34
+
+### Classes subsystem facade and ownership (#348)
+- Consolidated runtime class identity/capability policy, Slime Rouge borrowing lifecycle, combat action selection, bespoke class actions, class-specific combat/stat hooks and borrowed identity/Ultimate support initialization behind the existing public `DiceboundClasses` facade. Focused `classes/runtime.js`, `classes/actions.js`, `classes/hooks.js` and `classes/invoker.js` remain specialist internals rather than peer subsystem APIs.
+- Drained direct class-runtime/action/hook ownership and the public `DiceboundInvoker` peer from ordinary composition. Combat, Mana, Run initialization and other ordinary collaborators now reach class policy through `DiceboundClasses`, while generic Combat, Pets, Powerups and Progression authority stays separate.
+- Added a permanent 18-case exact released-0.6.6.33 Classes output/state/RNG oracle plus focused runtime, lifecycle, action, hook and Invoker facade/anti-shadow contracts. The 24-case Player Initialization oracle and all neighboring subsystem/browser/file suites remain authoritative.
+- Architecture-only: no class stats, unlock thresholds, passive/Ultimate mechanics, Slime Rouge donor behavior, Invoker formulas, action ordering, RNG order/state, Combat/Pet/Powerup/Progression balance, save/checkpoint behavior or UI redesign is intended. Runtime graph is 86 modules (85 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 670,604 bytes / 7,075 physical lines versus 675,358 bytes / 7,064 lines in released 0.6.6.33.
+
 ## Beta 0.6.6.33
 
 ### Powerups subsystem facade and ownership (#346)

@@ -35,6 +35,9 @@
     "combat-vfx",
     "combat-view-facade",
     "classes-registry",
+    "classes-runtime",
+    "classes-actions",
+    "classes-hooks",
     "classes-invoker",
     "combat-mana-action-resolution",
     "combat-facade",
@@ -446,6 +449,38 @@
       ]
     },
     {
+      "id": "classes-runtime",
+      "path": "js/classes/runtime.js",
+      "domain": "classes/runtime-identity-capability-and-slime-rouge-state",
+      "status": "extracted",
+      "requires": [
+        "classes-registry"
+      ],
+      "provides": []
+    },
+    {
+      "id": "classes-actions",
+      "path": "js/classes/actions.js",
+      "domain": "classes/runtime-action-mechanics",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "classes-runtime"
+      ],
+      "provides": []
+    },
+    {
+      "id": "classes-hooks",
+      "path": "js/classes/hooks.js",
+      "domain": "classes/runtime-combat-and-stat-hook-policy",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "classes-runtime"
+      ],
+      "provides": []
+    },
+    {
       "id": "classes-invoker",
       "path": "js/classes/invoker.js",
       "domain": "classes/invoker-orb-state-recipes-and-spell-resolution",
@@ -454,9 +489,7 @@
         "classes-registry",
         "combat-element-resolution"
       ],
-      "provides": [
-        "DiceboundInvoker"
-      ]
+      "provides": []
     },
     {
       "id": "combat-mana-action-resolution",

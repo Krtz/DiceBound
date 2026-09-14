@@ -16,7 +16,7 @@
     const getPlayer=deps.getPlayer,getMeta=deps.getMeta,getClasses=deps.getClasses;
     const getClassPassives=deps.getClassPassives,getElementKeys=deps.getElementKeys;
     if(typeof getPlayer!=="function"||typeof getMeta!=="function"||typeof getClasses!=="function")throw new Error("Player initialization requires player/meta/class state callbacks.");
-    for(const name of ["setRunTalentSnapshot","applyTalentBonuses","getHeirloomSlots","equipItem","gameplayTalentRank","generateEquipment","pick","rand","recordRunBuff","elementSummary","classIdentityActive","classHasMechanic","shuffledPetIds","setCombatKind","syncActivePetBonus","syncBloodmageHpPassive","syncOuroborosAttack","syncOuroborosEconomy","slimeRougeDonorPool","getSlimeRougeRuntime","initIdentitySupport","initUltimateSupport","classMechanicsFor","getUltimateSupportMechanics","addLog","applyGearTransform","syncMana","resetDragoonState","setStatsLast","setRunGlobals","initializeD20State"]){
+    for(const name of ["setRunTalentSnapshot","applyTalentBonuses","getHeirloomSlots","equipItem","gameplayTalentRank","generateEquipment","pick","rand","recordRunBuff","elementSummary","classIdentityActive","classHasMechanic","shuffledPetIds","setCombatKind","syncActivePetBonus","syncBloodmageHpPassive","syncOuroborosAttack","syncOuroborosEconomy","prepareSlimeRougeBorrowing","finishSlimeRougeBorrowing","initIdentitySupport","initUltimateSupport","classMechanicsFor","getUltimateSupportMechanics","addLog","applyGearTransform","syncMana","resetDragoonState","setStatsLast","setRunGlobals","initializeD20State"]){
       if(typeof deps[name]!=="function")throw new Error(`Player initialization requires ${name}().`);
     }
 
@@ -28,15 +28,7 @@
       // Outermost historical v2.8 pre-stage: Slime Rouge rolls its identity and
       // Ultimate before the inner reset chain consumes any RNG.
       let identity=null,ultimate=null;
-      const slimeRuntime=deps.getSlimeRougeRuntime();
-      if(classId==='slimerouge'){
-        const pool=deps.slimeRougeDonorPool();
-        if(pool.length){
-          identity=pool.find(c=>c.id===slimeRuntime.forcedIdentity)||deps.pick(pool);
-          ultimate=pool.find(c=>c.id===slimeRuntime.forcedUltimate)||deps.pick(pool);
-          slimeRuntime.pendingIdentity=identity.id;slimeRuntime.pendingUltimate=ultimate.id;
-        }
-      }
+      if(classId==='slimerouge')({identity,ultimate}=deps.prepareSlimeRougeBorrowing());
 
       // Historical v1.5 pre-stage: snapshot Talents before the canonical reset.
       deps.setRunTalentSnapshot(JSON.parse(JSON.stringify(meta.purchased||{})));
@@ -110,7 +102,7 @@
         deps.recordRunBuff?.('🎭','Random Ultimate',`${ultimate.icon} ${ultimate.ultimate.name} · real ${ultimate.name} ultimate${ultimateSupport.length?` · support: ${ultimateSupport.join(', ')}`:''}`,'class','Slime Rouge');
         deps.addLog(`🔴 Slime Rouge becomes <b>${identity.icon} ${identity.name}</b> for this run and independently rolls <b>${ultimate.icon} ${ultimate.ultimate.name}</b>. Both use their real class mechanics.`);
       }
-      slimeRuntime.pendingIdentity=null;slimeRuntime.pendingUltimate=null;slimeRuntime.forcedIdentity=null;slimeRuntime.forcedUltimate=null;
+      deps.finishSlimeRougeBorrowing();
 
       // Beta 0.6 Legendary/Artifact transform transient state
       player._db060GearSwapAttackAdj=0;player._db060GearSwapDefenseAdj=0;player._db060GlassHpPenalty=0;player._db060IronEchoDefense=0;player._db060BloodPriceStacks=0;player._db060LastStandUsed=false;player._db060LastElement=null;deps.applyGearTransform();

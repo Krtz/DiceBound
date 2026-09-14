@@ -1166,8 +1166,79 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  window.DiceboundClasses=Object.freeze({
-    apiVersion:2,
+  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null,invokerOwner=null,invokerRuntime=null;
+  function installRuntime(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
+    runtimeOwner=owner;
+    return api;
+  }
+  function configure(next={}){
+    if(!runtimeOwner)throw new Error("DiceboundClasses runtime owner has not been installed.");
+    runtime=runtimeOwner.configure(next);
+    return api;
+  }
+  function installActions(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses action-mechanics owner is invalid.");
+    actionsOwner=owner;
+    return api;
+  }
+  function configureActionMechanics(next={}){
+    if(!actionsOwner)throw new Error("DiceboundClasses action-mechanics owner has not been installed.");
+    actionsRuntime=actionsOwner.configure(next);
+    return api;
+  }
+  function requireActions(name){
+    const fn=actionsRuntime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses action mechanic ${name}() is not configured.`);
+    return fn;
+  }
+  function callAction(name,...args){return requireActions(name)(...args);}
+  function installHooks(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime-hooks owner is invalid.");
+    hooksOwner=owner;
+    return api;
+  }
+  function configureRuntimeHooks(next={}){
+    if(!hooksOwner)throw new Error("DiceboundClasses runtime-hooks owner has not been installed.");
+    hooksRuntime=hooksOwner.configure(next);
+    return api;
+  }
+  function requireHook(name){
+    const fn=hooksRuntime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime hook ${name}() is not configured.`);
+    return fn;
+  }
+  function callHook(name,...args){return requireHook(name)(...args);}
+  function installInvoker(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses Invoker owner is invalid.");
+    invokerOwner=owner;
+    return api;
+  }
+  function configureInvoker(next={}){
+    if(!invokerOwner)throw new Error("DiceboundClasses Invoker owner has not been installed.");
+    invokerRuntime=invokerOwner.configure(next);
+    return api;
+  }
+  function requireInvoker(name){
+    const fn=invokerRuntime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses Invoker capability ${name}() is not configured.`);
+    return fn;
+  }
+  function callInvoker(name,...args){return requireInvoker(name)(...args);}
+  function requireInvokerTest(name){
+    const fn=invokerRuntime?._test?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses Invoker test capability ${name}() is not configured.`);
+    return fn;
+  }
+  function requireRuntime(name){
+    const fn=runtime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
+    return fn;
+  }
+  function call(name,...args){return requireRuntime(name)(...args);}
+
+  const api=Object.freeze({
+    owner:"classes/facade",apiVersion:2,
     ids:CLASS_IDS,
     tagVocabulary:Object.freeze([...CLASS_TAG_VOCABULARY]),
     createRegistry,
@@ -1175,5 +1246,64 @@
     createUnlockRegistry,
     createMechanicsRegistry,
     createUltimateSupportRegistry,
+    configure,
+    configureActionMechanics,
+    configureRuntimeHooks,
+    configureInvoker,
+    configureActions:next=>call("configureActions",next),
+    performAction:kind=>call("performAction",kind),
+    bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
+    roguePowerStealChance:luck=>callAction("roguePowerStealChance",luck),
+    rogueSteal:()=>callAction("rogueSteal"),
+    clericConsecration:()=>callAction("clericConsecration"),
+    cycleBeastStance:()=>callAction("cycleBeastStance"),
+    bloodmageReplenish:()=>callAction("bloodmageReplenish"),
+    bloodmageExsanguinate:()=>callAction("bloodmageExsanguinate"),
+    alchemistVolatileFlask:()=>callAction("alchemistVolatileFlask"),
+    legacyMonkDodge:base=>callHook("legacyMonkDodge",base),
+    identityDodgeAdjustments:base=>callHook("identityDodgeAdjustments",base),
+    berserkerDamage:amount=>callHook("berserkerDamage",amount),
+    ninjaExecutionDamage:(amount,ignoreDefense=false)=>callHook("ninjaExecutionDamage",amount,ignoreDefense),
+    syncOuroborosAttack:()=>callHook("syncOuroborosAttack"),
+    syncOuroborosEconomy:()=>callHook("syncOuroborosEconomy"),
+    invokerActive:()=>invokerRuntime?.active?.()||false,
+    invokerRecipeFor:orbs=>callInvoker("recipeFor",orbs),
+    invokerRecipeInfo:()=>callInvoker("recipeInfo"),
+    invokerOrbBonuses:()=>callInvoker("orbBonuses"),
+    invokerActionBonuses:()=>invokerRuntime?.actionBonuses?.()||null,
+    invokerOutgoingMultiplier:()=>invokerRuntime?.outgoingMultiplier?.()||1,
+    invokerGeneratorManaMultiplier:()=>invokerRuntime?.generatorManaMultiplier?.()||1,
+    invokerAfterPlayerAction:kind=>invokerRuntime?.afterPlayerAction?.(kind),
+    invokerAfterPlayerHit:(target,options)=>invokerRuntime?.afterPlayerHit?.(target,options),
+    invokerResponseModifier:()=>invokerRuntime?.responseModifier?.()||null,
+    invokerElementalLance:()=>callInvoker("elementalLance"),
+    invokerUltimate:()=>callInvoker("invokeUltimate"),
+    invokerBeginCombat:()=>invokerRuntime?.beginCombat?.(),
+    invokerResetCombat:(...args)=>invokerRuntime?.resetCombat?.(...args),
+    invokerRender:()=>invokerRuntime?.render?.(),
+    identityId:()=>call("identityId"),
+    active:id=>call("active",id),
+    mechanicsFor:id=>call("mechanicsFor",id),
+    ultimateSupportFor:id=>call("ultimateSupportFor",id),
+    capabilities:()=>call("capabilities"),
+    hasMechanic:tag=>call("hasMechanic",tag),
+    initIdentitySupport:id=>call("initIdentitySupport",id),
+    initUltimateSupport:id=>call("initUltimateSupport",id),
+    syncBloodmageHpPassive:(initial=false)=>call("syncBloodmageHpPassive",initial),
+    forceSlimeRouge:(identity=null,ultimate=null)=>call("forceSlimeRouge",identity,ultimate),
+    prepareSlimeRougeBorrowing:(pool,pick)=>call("prepareSlimeRougeBorrowing",pool,pick),
+    finishSlimeRougeBorrowing:()=>call("finishSlimeRougeBorrowing"),
+    clearSlimeRougeRuntime:()=>call("clearSlimeRougeRuntime"),
+    runtimeSnapshot:()=>call("snapshot"),
+    _invokerTest:Object.freeze({
+      addOrb:orb=>requireInvokerTest("addOrb")(orb),
+      state:(create=true)=>requireInvokerTest("state")(create),
+      scale:(raw,options)=>requireInvokerTest("scale")(raw,options)
+    }),
+    _installRuntime:installRuntime,
+    _installActions:installActions,
+    _installHooks:installHooks,
+    _installInvoker:installInvoker,
   });
+  window.DiceboundClasses=api;
 })();
