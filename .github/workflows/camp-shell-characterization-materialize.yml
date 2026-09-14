@@ -1,0 +1,108 @@
+name: Camp shell characterization materializer
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.36-camp-shell-oracle
+    paths:
+      - tools/materialize_camp_shell_characterization.py
+      - .github/workflows/camp-shell-characterization-materialize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-camp-shell-oracle:
+    runs-on: windows-2022
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.7'
+          cache: false
+
+      - name: Materialize Camp/App-Shell characterization
+        shell: pwsh
+        run: |
+          python tools/materialize_camp_shell_characterization.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.35 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Capture exact released Camp/App-Shell fixture
+        shell: pwsh
+        run: |
+          $env:DICEBOUND_CAPTURE_CAMP_SHELL='1'
+          node tools/test_camp_shell_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item Env:DICEBOUND_CAPTURE_CAMP_SHELL
+          node tools/test_camp_shell_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Focused Camp/App-Shell browser gates
+        shell: pwsh
+        run: |
+          node tools/test_camp_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_camp_progression_reveals.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_file_startup_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_info_edge.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_info_file_edge.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_classes_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_runtime_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_run_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Complete JavaScript and Python gate
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | Sort-Object Name | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | Sort-Object Name | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.6.35 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -eq 0) { go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact characterization commit
+        shell: pwsh
+        run: |
+          Remove-Item tools/materialize_camp_shell_characterization.py
+          Remove-Item .github/workflows/camp-shell-characterization-materialize.yml
+          git config user.name "dicebound-architecture-bot"
+          git config user.email "dicebound-architecture-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git commit -m "test: freeze released 0.6.6.35 Camp/App-Shell behavior"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "CAMP_SHELL_CHARACTERIZATION_COMMIT=$sha"
+          git push origin HEAD:refs/heads/arch/0.6.6.36-camp-shell-oracle
