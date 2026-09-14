@@ -19,4 +19,15 @@ if text.count(old)!=1:
     raise SystemExit(f'turn architecture guard anchor mismatch: {text.count(old)}')
 path.write_text(text.replace(old,new,1),encoding='utf-8',newline='\n')
 
+# The checkpoint regression has a Combat Pet seam assertion because pet turns
+# participate in resumable combat. Preserve the focused owner composition but
+# require the ordinary compatibility seam to route through DiceboundCombat.
+path=Path('tools/test_run_checkpoint.js')
+text=path.read_text(encoding='utf-8')
+old='''assert.match(monolith,/return dbCombatPetTurnResolution\\.petTurn\\(\\.\\.\\.args\\)/,"petTurn compatibility seam must delegate to the extracted owner");'''
+new='''assert.match(monolith,/return dbCombat\\.petTurn\\(\\.\\.\\.args\\)/,"petTurn compatibility seam must delegate through the Combat facade");\nassert.doesNotMatch(monolith,/return dbCombatPetTurnResolution\\.petTurn\\(\\.\\.\\.args\\)/,"petTurn peer-public compatibility seam must stay drained");'''
+if text.count(old)!=1:
+    raise SystemExit(f'checkpoint petTurn architecture guard anchor mismatch: {text.count(old)}')
+path.write_text(text.replace(old,new,1),encoding='utf-8',newline='\n')
+
 print('Combat facade architecture guards updated')
