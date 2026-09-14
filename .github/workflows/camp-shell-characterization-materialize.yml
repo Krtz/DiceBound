@@ -71,7 +71,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_info_guide_ui.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node tools/test_info_local_file_edge.js
+          python tools/test_info_local_file_edge.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/test_classes_oracle.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
