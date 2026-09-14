@@ -37,12 +37,35 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           @'
           from pathlib import Path
+          import json
+
           p=Path('tools/test_runtime_peer_boundaries.js')
           s=p.read_text(encoding='utf-8')
           old='const focusedIds=new Set([...peerIds,"runtime-facade","dicebound-monolith"]);'
           new='const focusedIds=new Set([...peerIds,"native-http-host","wrapper-contract","runtime-facade","dicebound-monolith"]);'
           if old not in s: raise SystemExit('Runtime peer-boundary focused-internal anchor drifted')
           p.write_text(s.replace(old,new,1),encoding='utf-8')
+
+          manifest_path=Path('runtime/js/module-manifest.json')
+          manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+          mods={m['id']:m for m in manifest['modules']}
+          for module_id in ('run-lifecycle','run-completion'):
+              reqs=mods[module_id].setdefault('requires',[])
+              if 'runtime-facade' not in reqs: reqs.insert(0,'runtime-facade')
+          manifest_path.write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+
+          validator=Path('tools/validate_runtime_architecture.py')
+          v=validator.read_text(encoding='utf-8')
+          replacements={
+            '{"run-checkpoint", "board-generation", "board-transition"}':'{"runtime-facade", "board-generation", "board-transition"}',
+            'run-lifecycle must provide DiceboundRunLifecycle, require checkpoint/generation/transition, and load before the monolith':'run-lifecycle must provide DiceboundRunLifecycle, require Runtime facade/generation/transition, and load before the monolith',
+            '{"run-checkpoint", "run-lifecycle", "board-transition"}':'{"runtime-facade", "run-lifecycle", "board-transition"}',
+            'run-completion must provide DiceboundRunCompletion, require checkpoint/lifecycle/transition, and load before the monolith':'run-completion must provide DiceboundRunCompletion, require Runtime facade/lifecycle/transition, and load before the monolith',
+          }
+          for old,new in replacements.items():
+              if v.count(old)!=1: raise SystemExit(f'Runtime architecture Run dependency anchor drifted: {old}')
+              v=v.replace(old,new,1)
+          validator.write_text(v,encoding='utf-8')
           '@ | python -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.34 --channel Beta --development-state Unreleased --notes "Runtime/Core/Persistence facade development for Beta 0.6.6.35."
