@@ -45,6 +45,18 @@ end=text.find("  const dbCampOpenStartCore=openStartScreen;", start)
 if start<0 or end<0:
     raise SystemExit('Camp shell final composition config block not found')
 text=text[:start]+"  db064Camp.configureShell({});\n"+text[end:]
+
+manifest_write='MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8", newline="\\n")'
+if text.count(manifest_write)!=1:
+    raise SystemExit(f'Camp shell manifest write expected once, found {text.count(manifest_write)}')
+manifest_load_order='''load_order = manifest["loadOrder"]
+if "ui-camp-shell-policy" in load_order:
+    raise SystemExit("ui-camp-shell-policy already exists in loadOrder")
+load_idx = load_order.index("ui-camp")
+load_order.insert(load_idx + 1, "ui-camp-shell-policy")
+'''
+text=text.replace(manifest_write,manifest_load_order+manifest_write,1)
+
 path.write_text(text,encoding='utf-8',newline='\n')
-print('Camp shell materializer patched for lexical collaborator registration')
+print('Camp shell materializer patched for lexical collaborator registration and manifest load order')
 # Permanent Run checkpoint ownership assertions live in tools/test_run_checkpoint.js.
