@@ -892,7 +892,7 @@ def main() -> int:
     else:
         run_lifecycle_owner_ok = (
             run_lifecycle_module.get("path") == "js/run/lifecycle.js"
-            and {"run-checkpoint", "board-generation", "board-transition"}.issubset(
+            and {"runtime-facade", "board-generation", "board-transition"}.issubset(
                 set(run_lifecycle_module.get("requires") or [])
             )
             and "DiceboundRunLifecycle" in (run_lifecycle_module.get("provides") or [])
@@ -900,7 +900,7 @@ def main() -> int:
         )
         if not run_lifecycle_owner_ok:
             errors.append(
-                "run-lifecycle must provide DiceboundRunLifecycle, require checkpoint/generation/transition, and load before the monolith"
+                "run-lifecycle must provide DiceboundRunLifecycle, require Runtime facade/generation/transition, and load before the monolith"
             )
     run_lifecycle_source = sources.get("run-lifecycle", "")
     for required_run_lifecycle_behavior in [
@@ -954,7 +954,7 @@ def main() -> int:
     else:
         run_completion_owner_ok = (
             run_completion_module.get("path") == "js/run/completion.js"
-            and {"run-checkpoint", "run-lifecycle", "board-transition"}.issubset(
+            and {"runtime-facade", "run-lifecycle", "board-transition"}.issubset(
                 set(run_completion_module.get("requires") or [])
             )
             and "DiceboundRunCompletion" in (run_completion_module.get("provides") or [])
@@ -962,7 +962,7 @@ def main() -> int:
         )
         if not run_completion_owner_ok:
             errors.append(
-                "run-completion must provide DiceboundRunCompletion, require checkpoint/lifecycle/transition, and load before the monolith"
+                "run-completion must provide DiceboundRunCompletion, require Runtime facade/lifecycle/transition, and load before the monolith"
             )
     run_completion_source = sources.get("run-completion", "")
     for required_run_completion_behavior in [

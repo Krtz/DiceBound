@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  function createMetaService({classIds,petIds,elementIds,petUnlockRequirement=500,saveService=window.DiceboundSave}={}){
+  function createMetaService({classIds,petIds,elementIds,petUnlockRequirement=500,saveService=null}={}){
     if(!Array.isArray(classIds)||!classIds.length)throw new Error("DiceboundCoreState requires classIds.");
     if(!Array.isArray(petIds)||!petIds.length)throw new Error("DiceboundCoreState requires petIds.");
     if(!Array.isArray(elementIds)||!elementIds.length)throw new Error("DiceboundCoreState requires elementIds.");

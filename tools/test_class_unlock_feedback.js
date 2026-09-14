@@ -6,6 +6,7 @@ function load(rel,window={}){const code=fs.readFileSync(path.join(root,rel),"utf
 function assert(value,message){if(!value)throw new Error(message);}
 const stored=new Map();
 const w={DiceboundStorage:{getString:key=>stored.get(String(key))??null,setString:(key,value)=>{stored.set(String(key),String(value));return true;}}};
+w.DiceboundRuntime=Object.freeze({storage:w.DiceboundStorage});
 load("runtime/js/classes/registry.js",w);
 load("runtime/js/assets.js",w);
 load("runtime/js/progression/class-unlock-rules.js",w);

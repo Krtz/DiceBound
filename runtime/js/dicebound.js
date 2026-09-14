@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  const APP_IDENTITY=window.DiceboundVersion;
-  if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
+  const dbRuntime=window.DiceboundRuntime;
+  if(!dbRuntime)throw new Error("dicebound.js requires DiceboundRuntime before loading.");
+  const APP_IDENTITY=dbRuntime.identity;
   const dbCombatOwner=window.DiceboundCombat;
   if(!dbCombatOwner)throw new Error("dicebound.js requires DiceboundCombat before loading.");
   let dbCombat=null;
@@ -176,7 +177,7 @@
   });
   const DB_EFFECTIVE_STATS=window.DiceboundEffectiveStats;
   if(!DB_EFFECTIVE_STATS)throw new Error("DiceboundEffectiveStats must load before dicebound.js");
-  const DB_POWERUP_SERVICES=window.DiceboundRuntimeServices?.createPowerupServices({
+  const DB_POWERUP_SERVICES=dbRuntime.createPowerupServices({
     run:{getPlayer:()=>player},
     economy:{goldReward:amount=>modifiedGold(amount),isNightmare:()=>nightmareMode},
     combat:{heal:amount=>healPlayer(amount)},
@@ -335,8 +336,8 @@
   let pendingDiceChoiceResolve = null;
   let nightmareMode = false;
 
-  const DB_CORE_META=window.DiceboundCoreState?.createMetaService?.({classIds:Object.keys(CLASSES),petIds:Object.keys(PETS),elementIds:ELEMENT_KEYS,petUnlockRequirement:PET_UNLOCK_REQUIREMENT,saveService:window.DiceboundSave});
-  if(!DB_CORE_META)throw new Error("DiceboundCoreState must load before dicebound.js");
+  const DB_CORE_META=dbRuntime.createMetaService({classIds:Object.keys(CLASSES),petIds:Object.keys(PETS),elementIds:ELEMENT_KEYS,petUnlockRequirement:PET_UNLOCK_REQUIREMENT});
+  if(!DB_CORE_META)throw new Error("DiceboundRuntime must provide career-state composition before dicebound.js");
   const DB_PRESTIGE=window.DiceboundPrestige;
   if(!DB_PRESTIGE)throw new Error("DiceboundPrestige must load before dicebound.js");
   const DB_CLASS_UNLOCK_RULES=window.DiceboundClassUnlockRules;
@@ -361,7 +362,7 @@
      Mutating domain helpers return result objects; render adapters consume
      those results. This is intentionally small and framework-free.
      ======================================================================== */
-  const DiceboundStateEvents=window.DiceboundCoreState.createEventBus();
+  const DiceboundStateEvents=dbRuntime.createEventBus();
 
   // Classes owns runtime identity/capability policy. These thin local names remain
   // temporarily as compatibility adapters while ordinary callers are drained.
@@ -1398,7 +1399,7 @@
   saveMeta();
 
   $("startBtn").addEventListener("click",startNewGame);$("nightmareToggle").addEventListener("click",()=>{if(!meta.nightmareUnlocked)return;nightmareMode=!nightmareMode;renderClassChoices();});$("rollBtn").addEventListener("click",rollDice);$("outsidePotionBtn").addEventListener("click",usePotionOutsideCombat);$("attackBtn").addEventListener("click",playerAttack);$("guardBtn").addEventListener("click",guardAction);$("potionBtn").addEventListener("click",usePotion);$("ultimateBtn").addEventListener("click",useUltimate);
-  $("equipLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot];if(current&&gearPowerScore(pendingLootItem)<gearPowerScore(current)&&!window.DiceboundPlatform.confirm(`${pendingLootItem.name} appears weaker overall than ${current.name}. Replace it anyway?`))return;equipItem(pendingLootItem);closeLoot();});
+  $("equipLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot];if(current&&gearPowerScore(pendingLootItem)<gearPowerScore(current)&&!dbRuntime.platform.confirm(`${pendingLootItem.name} appears weaker overall than ${current.name}. Replace it anyway?`))return;equipItem(pendingLootItem);closeLoot();});
   $("sellLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const value=itemSellValue(pendingLootItem);player.gold+=value;sfx.coin();addLog(`Sold <b>${pendingLootItem.name}</b> for ${value} gold.`);showToast(`+${value} gold`);updateHUD();closeLoot();});
 
 
@@ -2092,7 +2093,7 @@
   const refreshDebugButtonsV15Patch=refreshDebugButtons;
   refreshDebugButtons=function(){refreshDebugButtonsV15Patch();const grid=$("debugGrid");if(!grid)return;const defs=[["mythic_weapon","🌈 Mythic Weapon"],["mythic_boots","🌈 Mythic Boots"],["mythic_legs","🌈 Mythic Legguards"],["mythic_amulet","🌈 Mythic Amulet"],["mythic_hat","🌈 Mythic Hat"],["mythic_ring","🌈 Mythic Ring"],["seed_item","🧬 Add item by seed code"]];for(const [id,label] of defs){let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;}};
   const debugActionV15Patch=debugAction;
-  debugAction=function(action){const mythics={mythic_weapon:generateMythicalWeapon,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(mythics[action]){if(!gameStarted){showToast("Start a run first");return;}equipItem(mythics[action](),true);updateHUD();showToast(`${action.replace("mythic_","")} Mythic added`);return;}if(action==="seed_item"){if(!gameStarted){showToast("Start a run first");return;}const code=window.DiceboundPlatform.prompt("Paste a Dicebound v1.5 item seed code (starts with D15|):","");if(code==null)return;const item=v15GenerateEquipmentFromSeedCode(code);if(!item){window.DiceboundPlatform.alert("That seed code is not a valid Dicebound v1.5 ordinary-item seed.");return;}$("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;}return debugActionV15Patch(action);};
+  debugAction=function(action){const mythics={mythic_weapon:generateMythicalWeapon,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(mythics[action]){if(!gameStarted){showToast("Start a run first");return;}equipItem(mythics[action](),true);updateHUD();showToast(`${action.replace("mythic_","")} Mythic added`);return;}if(action==="seed_item"){if(!gameStarted){showToast("Start a run first");return;}const code=dbRuntime.platform.prompt("Paste a Dicebound v1.5 item seed code (starts with D15|):","");if(code==null)return;const item=v15GenerateEquipmentFromSeedCode(code);if(!item){dbRuntime.platform.alert("That seed code is not a valid Dicebound v1.5 ordinary-item seed.");return;}$("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;}return debugActionV15Patch(action);};
 
   // ---- New class portraits and sensible selection order --------------------
   const classPortraitV15Patch=classPortraitSVG;
@@ -3070,7 +3071,7 @@
       startRun:()=>startNewGame(),
       toggleNightmare:()=>{if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;renderClassChoices();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);},
       toggleHell:()=>{if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;renderClassChoices();showToast(`Hell ${hellMode?'enabled':'disabled'}`);},
-      resetProgress:async()=>{if(await diceboundConfirm('Reset all Dicebound progress, achievements, pets, heirlooms and unlocks? This cannot be undone.',{title:'Reset ALL Dicebound progress?',confirmLabel:'Reset everything',danger:true})){window.DiceboundSave?.reset();window.DiceboundPlatform?.reload();}}
+      resetProgress:async()=>{if(await diceboundConfirm('Reset all Dicebound progress, achievements, pets, heirlooms and unlocks? This cannot be undone.',{title:'Reset ALL Dicebound progress?',confirmLabel:'Reset everything',danger:true})){dbRuntime.save?.reset();dbRuntime.platform?.reload();}}
     }
   });
 
@@ -3144,7 +3145,7 @@
     isVisible:()=>true,
     requirementText,
     purchase:id=>purchaseTalentNode(id),
-    resetProgress:async()=>{if(await diceboundConfirm('Reset all Legacy XP, talents, elemental pet progress, cookies, unlocks and heirlooms?',{title:'Reset Legacy progress?',confirmLabel:'Reset',danger:true})){window.DiceboundSave.reset();meta=defaultMeta();saveMeta();renderTalents();showToast('Legacy progress reset');}},
+    resetProgress:async()=>{if(await diceboundConfirm('Reset all Legacy XP, talents, elemental pet progress, cookies, unlocks and heirlooms?',{title:'Reset Legacy progress?',confirmLabel:'Reset',danger:true})){dbRuntime.save.reset();meta=defaultMeta();saveMeta();renderTalents();showToast('Legacy progress reset');}},
     afterRender:()=>updateMetaUI()
   });
   // #178 / #209: the Moon destination owns only presentation. This adapter
@@ -3581,8 +3582,8 @@
   function v25Log(level,category,message,data){const need=V25_LOG_LEVELS[level]??2,current=V25_LOG_LEVELS[meta.debugLogLevel]??0;if(current<need)return;let suffix='';if(data!==undefined){try{suffix=' | '+JSON.stringify(data);}catch(e){suffix=' | [unserializable]';}}const line=`${new Date().toISOString()} [${level.toUpperCase()}] [${category}] ${String(message)}${suffix}`;v25LogBuffer.push(line);if(v25LogBuffer.length>V25_LOG_MAX)v25LogBuffer.splice(0,v25LogBuffer.length-V25_LOG_MAX);v25RefreshLogOutput();}
   function v25RefreshLogOutput(){const out=$('debugLogOutput');if(out){out.textContent=v25LogBuffer.join('\n');out.scrollTop=out.scrollHeight;}document.querySelectorAll('[data-log-level]').forEach(b=>b.classList.toggle('active',b.dataset.logLevel===meta.debugLogLevel));}
   function v25SetLogLevel(level){if(V25_LOG_LEVELS[level]==null)return;meta.debugLogLevel=level;saveMeta();v25Log('events','logging',`Logging level changed to ${level}.`,v25State());v25RefreshLogOutput();}
-  function v25DownloadLog(){const now=window.DiceboundPlatform.nowIso(),header=`Dicebound debug log\nLogging level: ${meta.debugLogLevel}\nGenerated: ${now}\n\n`,text=header+v25LogBuffer.join('\n'),filename=`dicebound_debug_${window.DiceboundPlatform.nowMs()}.txt`;return window.DiceboundPlatform.downloadText(filename,text);}
-  async function v25CopyLog(){const text=v25LogBuffer.join('\n');try{await window.DiceboundPlatform.copyText(text);showToast('Debug log copied');}catch(e){showToast('Could not copy debug log');}}
+  function v25DownloadLog(){const now=dbRuntime.platform.nowIso(),header=`Dicebound debug log\nLogging level: ${meta.debugLogLevel}\nGenerated: ${now}\n\n`,text=header+v25LogBuffer.join('\n'),filename=`dicebound_debug_${dbRuntime.platform.nowMs()}.txt`;return dbRuntime.platform.downloadText(filename,text);}
+  async function v25CopyLog(){const text=v25LogBuffer.join('\n');try{await dbRuntime.platform.copyText(text);showToast('Debug log copied');}catch(e){showToast('Could not copy debug log');}}
   window.addEventListener('error',e=>v25Log('errors','window',e.message,{file:e.filename,line:e.lineno,col:e.colno,state:v25State()}));window.addEventListener('unhandledrejection',e=>v25Log('errors','promise',String(e.reason),v25State()));
   document.addEventListener('click',e=>{if((V25_LOG_LEVELS[meta.debugLogLevel]||0)>=4){const t=e.target.closest?.('button,[data-debug],[data-tile-index],.camp-spot')||e.target;v25Log('all','input','click',{id:t?.id||'',debug:t?.dataset?.debug||'',text:(t?.textContent||'').trim().slice(0,100),state:v25State()});}},true);
   document.addEventListener('keydown',e=>{if((V25_LOG_LEVELS[meta.debugLogLevel]||0)>=4)v25Log('all','input','keydown',{key:e.key,code:e.code,state:v25State()});},true);
@@ -4050,7 +4051,7 @@
   let db322DialogPending=null;
   function diceboundConfirm(message,{title='Confirm',confirmLabel='Confirm',cancelLabel='Cancel',danger=false}={}){
     const overlay=$('appConfirmOverlay'),heading=$('appConfirmTitle'),body=$('appConfirmMessage'),yes=$('appConfirmAccept'),no=$('appConfirmCancel');
-    if(!overlay||!heading||!body||!yes||!no)return Promise.resolve(!!window.DiceboundPlatform?.confirm?.(String(message)));
+    if(!overlay||!heading||!body||!yes||!no)return Promise.resolve(!!dbRuntime.platform?.confirm?.(String(message)));
     if(db322DialogPending){db322DialogPending(false);db322DialogPending=null;}
     heading.textContent=String(title);body.textContent=String(message);yes.textContent=String(confirmLabel);no.textContent=String(cancelLabel);yes.classList.toggle('danger',!!danger);overlay.classList.remove('hidden');
     return new Promise(resolve=>{
@@ -4177,14 +4178,14 @@
 
   /* Native file-save affordance. Hidden in the secondary browser build. */
   function beta04SyncNativeControls(){
-    const btn=document.getElementById('saveFolderBtn'),supported=!!window.DiceboundPlatform?.capabilities?.openSaveFolder;
+    const btn=document.getElementById('saveFolderBtn'),supported=!!dbRuntime.platform?.capabilities?.openSaveFolder;
     if(btn){btn.hidden=!supported;btn.title=supported?'Open %LOCALAPPDATA%\\Dicebound\\saves in File Explorer':'Available in the native Windows wrapper';}
-    document.body?.setAttribute('data-runtime-kind',window.DiceboundPlatform?.kind||'browser');
+    document.body?.setAttribute('data-runtime-kind',dbRuntime.platform?.kind||'browser');
     return supported;
   }
   document.getElementById('saveFolderBtn')?.addEventListener('click',()=>{
-    try{const ok=window.DiceboundPlatform?.openSaveFolder?.();if(ok&&typeof ok.then==='function')ok.then(v=>showToast(v?'📂 Save folder opened':'Could not open save folder'));else showToast(ok?'📂 Save folder opened':'Could not open save folder');}
-    catch(e){showToast('Could not open save folder');window.DiceboundPlatform?.log?.('error','Open Save Folder failed',{message:e?.message||String(e)});}
+    try{const ok=dbRuntime.platform?.openSaveFolder?.();if(ok&&typeof ok.then==='function')ok.then(v=>showToast(v?'📂 Save folder opened':'Could not open save folder'));else showToast(ok?'📂 Save folder opened':'Could not open save folder');}
+    catch(e){showToast('Could not open save folder');dbRuntime.platform?.log?.('error','Open Save Folder failed',{message:e?.message||String(e)});}
   });
 
   /* Board art is now the world, not an image trapped inside board-wrap. The
@@ -4237,7 +4238,7 @@
     },
     unlockHell(){meta.nightmareUnlocked=false;meta.hellUnlocked=false;debugAction('unlock_hell');return {nightmare:!!meta.nightmareUnlocked,hell:!!meta.hellUnlocked};},
     hudMode:beta04HudMode,
-    nativeControls:()=>({kind:window.DiceboundPlatform?.kind||'browser',saveFolderVisible:!document.getElementById('saveFolderBtn')?.hidden,supported:!!window.DiceboundPlatform?.capabilities?.openSaveFolder}),
+    nativeControls:()=>({kind:dbRuntime.platform?.kind||'browser',saveFolderVisible:!document.getElementById('saveFolderBtn')?.hidden,supported:!!dbRuntime.platform?.capabilities?.openSaveFolder}),
     world:beta04SyncWorldScene
   })});
 
@@ -4284,7 +4285,7 @@
   const dbOptionsUi=window.DiceboundOptionsUi?.configure({
     find:$,
     getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth'}),
-    nativeSaveSupported:()=>!!window.DiceboundPlatform?.capabilities?.openSaveFolder,
+    nativeSaveSupported:()=>!!dbRuntime.platform?.capabilities?.openSaveFolder,
     openSaveFolder:()=>{const button=$('saveFolderBtn');button?.click();return !!button;},
     toggleMuted:()=>{$('muteBtn')?.click();return muted;},
     setVolume:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.masterVolume=clamp(Number(value),0,1);saveMeta();return meta.settings.masterVolume;},
@@ -4997,7 +4998,7 @@
      equipment, prestige, storage and save systems. No approximate simulator.
      ======================================================================== */
   function v319ResetCareer(){
-    window.DiceboundSave?.reset?.();
+    dbRuntime.save?.reset?.();
     meta=normalizeMetaCore(defaultMeta());
     if(typeof ensureAlphaMeta==='function')ensureAlphaMeta();
     selectedClassId='ranger';boardLevel=1;nightmareMode=false;hellMode=false;gameStarted=false;rollLocked=true;combatBusy=false;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;tiles=[];tileEls=[];
@@ -5014,7 +5015,7 @@
     const item=generateEquipment('uncommon','weapon');equipItem(item,true);
     meta.runs=17;meta.petCookies=3;meta.bestTiles=Math.max(meta.bestTiles||0,enemyIndex);saveMeta();
     meta.runs=999;meta.petCookies=999;
-    const loaded=window.DiceboundSave.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;
+    const loaded=dbRuntime.save.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;
     return {seed,board,enemyIndex,strikes,encounterResolved,loot:{slot:item.slot,rarity:item.rarity,name:item.name},reload:{source:loaded.source,runs:meta.runs,petCookies:meta.petCookies,bestTiles:meta.bestTiles},rng:window.DiceboundRng.snapshot()};
   }
   function v319LegendaryFallback(){
@@ -5034,7 +5035,7 @@
     window.DiceboundRng.seed(seed);v319ResetCareer();meta.points=18;const before=meta.prestige.count||0;dbProgression.completePrestige(18);const permanent=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'].reduce((n,k)=>n+(meta.prestige[k]||0),0);return {before,after:meta.prestige.count,permanent,points:meta.points,level:meta.level};
   }
   function v319StorageSaveReload(){
-    v319ResetCareer();meta.heirloomStorageUnlocked=true;meta.board5Clears=1;meta.prestige.count=5;meta.merchantKills=1;const item={id:'test_heirloom_319',slot:'weapon',rarity:'epic',icon:'🧪',name:'Regression Blade',bonuses:{attack:9}};meta.heirloomStorage=[item];meta.heirlooms=[item];const capacity=v24StorageCapacity();saveMeta();meta.heirloomStorage=[];meta.heirlooms=[];const loaded=window.DiceboundSave.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;return {capacity,stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length,id:meta.heirloomStorage?.[0]?.id||null};
+    v319ResetCareer();meta.heirloomStorageUnlocked=true;meta.board5Clears=1;meta.prestige.count=5;meta.merchantKills=1;const item={id:'test_heirloom_319',slot:'weapon',rarity:'epic',icon:'🧪',name:'Regression Blade',bonuses:{attack:9}};meta.heirloomStorage=[item];meta.heirlooms=[item];const capacity=v24StorageCapacity();saveMeta();meta.heirloomStorage=[];meta.heirlooms=[];const loaded=dbRuntime.save.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;return {capacity,stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length,id:meta.heirloomStorage?.[0]?.id||null};
   }
   function v319RandomClass(seed='random-class-319'){
     window.DiceboundRng.seed(seed);v319ResetCareer();['ranger','sorcerer','fighter','monk','clown'].forEach(id=>meta.unlocks[id]=true);window.DiceboundClassChooser?.setRandomMode?.(true);startNewGame();const chosen=player.classId;window.DiceboundClassChooser?.setRandomMode?.(false);return {seed,chosen};
@@ -5073,7 +5074,7 @@
   window.DiceboundV32Test=Object.freeze({
     slimeRougeSummonerMana:v32SlimeRougeSummonerMana,
     benedictionEligibility:v32BenedictionEligibility,
-    infrastructure:()=>({platform:window.DiceboundPlatform?.runtimeInfo?.(),storage:window.DiceboundStorage?.diagnostics?.(),save:window.DiceboundSave?.diagnostics?.(),wrapper:window.DiceboundPlatform?.wrapperDiagnostics?.()})
+    infrastructure:()=>({platform:dbRuntime.platform?.runtimeInfo?.(),storage:dbRuntime.storage?.diagnostics?.(),save:dbRuntime.save?.diagnostics?.(),wrapper:dbRuntime.platform?.wrapperDiagnostics?.()})
   });
 
   /* Beta 0.3 — final-runtime regression API. */
@@ -5297,10 +5298,10 @@
   window.DiceboundInfrastructure=Object.freeze({
     version:APP_IDENTITY.version,
     channel:APP_IDENTITY.channel,
-    platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),
-    storage:()=>window.DiceboundStorage?.diagnostics?.(),
-    save:()=>window.DiceboundSave?.diagnostics?.(),
-    wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),
+    platform:()=>dbRuntime.platform?.runtimeInfo?.(),
+    storage:()=>dbRuntime.storage?.diagnostics?.(),
+    save:()=>dbRuntime.save?.diagnostics?.(),
+    wrapper:()=>dbRuntime.platform?.wrapperDiagnostics?.(),
     load:()=>window.__DiceboundSaveLoadResult||null
   });
 
@@ -5537,8 +5538,8 @@
   /* ACTIVE-RUN CHECKPOINT COMPOSITION -------------------------------------
      The extracted checkpoint service owns validation/storage. This adapter
      owns the final live monolith variables until those state domains move. */
-  const DB_RUN_CHECKPOINT=window.DiceboundRunCheckpoint;
-  if(!DB_RUN_CHECKPOINT)throw new Error('DiceboundRunCheckpoint must load before dicebound.js');
+  const DB_RUN_CHECKPOINT=dbRuntime.runCheckpoint;
+  if(!DB_RUN_CHECKPOINT)throw new Error('DiceboundRuntime must provide active-run checkpoint infrastructure');
   const DB_RUN_BLOCKING_OVERLAYS=['combatOverlay','levelOverlay','eventOverlay','wheelOverlay','powerupOverlay','merchantOverlay','blessingOverlay','mysticOverlay','lootOverlay','bloodwellOverlay','gamblerOverlay','diceChoiceOverlay','endOverlay','prestigeHeirloomOverlay','prestigeMoonOverlay'];
   let dbRunCheckpointEpoch=0,dbRunCheckpointTimer=null,dbRunCheckpointRestoring=false,dbRunOwnedSeed=null,dbRunLastResult=DB_RUN_CHECKPOINT.load();
   const dbRunClone=value=>JSON.parse(JSON.stringify(value));
@@ -5640,7 +5641,7 @@
   window.DiceboundGuardianIdentityTest=Object.freeze({matrix:dbGuardianIdentityMatrix});
   setTimeout(dbRunRefreshControls,0);
 
-  window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>window.DiceboundPlatform?.runtimeInfo?.(),storage:()=>window.DiceboundStorage?.diagnostics?.(),save:()=>window.DiceboundSave?.diagnostics?.(),runCheckpoint:()=>DB_RUN_CHECKPOINT.diagnostics(),wrapper:()=>window.DiceboundPlatform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
+  window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>dbRuntime.platform?.runtimeInfo?.(),storage:()=>dbRuntime.storage?.diagnostics?.(),save:()=>dbRuntime.save?.diagnostics?.(),runCheckpoint:()=>DB_RUN_CHECKPOINT.diagnostics(),wrapper:()=>dbRuntime.platform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
 
 
 
@@ -6068,8 +6069,8 @@
   /* #124: keep the recorder independent from game ownership. The compatibility
      monolith supplies a read-only live context; sampling/retention/UI controls
      stay in the extracted core owner and do not wrap combat or timer behavior. */
-  const db064MemoryDiagnostics=window.DiceboundMemoryDiagnostics;
-  if(!db064MemoryDiagnostics)throw new Error('DiceBound requires the memory diagnostics core module.');
+  const db064MemoryDiagnostics=dbRuntime.memoryDiagnostics;
+  if(!db064MemoryDiagnostics)throw new Error('DiceBound requires Runtime memory diagnostics.');
   db064MemoryDiagnostics.configure({getContext:()=>{
     const combatOpen=!$('combatOverlay')?.classList.contains('hidden'),activeOverlays=[...document.querySelectorAll('.overlay:not(.hidden)')].map(overlay=>overlay.id),hasNonCampOverlay=activeOverlays.some(id=>id!=='startOverlay');
     return {
@@ -6821,16 +6822,16 @@
   dbInfoGuide=window.DiceboundInfoGuide;
   if(!dbInfoGuide)throw new Error('DiceBound requires the Info Guide UI module before dicebound.js');
   function dbInfoExportSave(){
-    const data=window.DiceboundSave.exportText(v13NormalizeMeta(meta));
-    window.DiceboundPlatform.copyText(data).then(ok=>showToast(ok?'Save copied to clipboard':'Save placed in text box')).catch(()=>showToast('Save placed in text box'));
+    const data=dbRuntime.save.exportText(v13NormalizeMeta(meta));
+    dbRuntime.platform.copyText(data).then(ok=>showToast(ok?'Save copied to clipboard':'Save placed in text box')).catch(()=>showToast('Save placed in text box'));
     return data;
   }
   function dbInfoImportSave(raw){
     try{
       const text=String(raw||'').trim();if(!text)throw new Error('empty');
-      meta=window.DiceboundSave.importText(text,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});
+      meta=dbRuntime.save.importText(text,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});
       ensureAlphaMeta();saveMeta();repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
-    }catch(error){window.DiceboundPlatform.alert('That save string could not be imported.');return false;}
+    }catch(error){dbRuntime.platform.alert('That save string could not be imported.');return false;}
   }
   dbInfoGuide.configure({
     find:$,

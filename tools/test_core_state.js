@@ -105,8 +105,10 @@ const monolith=fs.readFileSync(path.join(__dirname,"..","runtime","js","diceboun
 assert.doesNotMatch(monolith,/const\s+legacyXpForLevel\s*=\s*level\s*=>/);
 assert.doesNotMatch(monolith,/function\s+normalizeMetaCore\s*\(/);
 assert.doesNotMatch(monolith,/const\s+DiceboundStateEvents\s*=\s*\(\(\)=>/);
-assert.match(monolith,/window\.DiceboundCoreState\?\.createMetaService\?\.\(/);
+assert.match(monolith,/const dbRuntime=window\.DiceboundRuntime;/);
+assert.match(monolith,/const DB_CORE_META=dbRuntime\.createMetaService\(/);
 assert.match(monolith,/const normalizeMetaCore=DB_CORE_META\.normalizeMeta/);
-assert.match(monolith,/window\.DiceboundCoreState\.createEventBus\(\)/);
+assert.match(monolith,/const DiceboundStateEvents=dbRuntime\.createEventBus\(\);/);
+assert.doesNotMatch(monolith,/window\.DiceboundCoreState\b/,"compatibility monolith bypasses the Runtime facade for Core State");
 
 console.log("Core state preserved: career defaults/normalization, save coordination and isolated event bus pass");

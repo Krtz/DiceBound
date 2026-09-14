@@ -1,15 +1,15 @@
 {
   "assetCount": 428,
-  "browserContentHash": "570aa629bafdaabfbe315555c3a9153130a5edc3ed8e86665d3e564137f39593",
-  "buildId": "dicebound-0.6.6.34-dev-570aa629bafdaabf",
+  "browserContentHash": "b50e778858c26df33028d03ffefa3941a637ff01f7187c674e14edbd0c5f17bd",
+  "buildId": "dicebound-0.6.6.35-dev-b50e778858c26df3",
   "channel": "Beta",
-  "contentFileCount": 517,
+  "contentFileCount": 518,
   "developmentState": "Unreleased",
   "entrypoint": "index.html",
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Materialized Unreleased Git development for Beta 0.6.6.34.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.35.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -24,6 +24,7 @@
     "js/core/state.js",
     "js/core/runtime-services.js",
     "js/core/memory-diagnostics.js",
+    "js/core/facade.js",
     "js/combat/effective-stats.js",
     "js/combat/healing-resolution.js",
     "js/combat/element-resolution.js",
@@ -100,9 +101,9 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "570aa629bafdaabfbe315555c3a9153130a5edc3ed8e86665d3e564137f39593",
+  "sourceHash": "b50e778858c26df33028d03ffefa3941a637ff01f7187c674e14edbd0c5f17bd",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
-  "version": "0.6.6.34",
+  "version": "0.6.6.35",
   "wrapperContractVersion": 1,
   "wrapperPayload": "dist/browser"
 }
