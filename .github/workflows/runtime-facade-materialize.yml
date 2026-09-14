@@ -1,0 +1,93 @@
+name: Runtime facade materializer
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.35-runtime-oracle
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-runtime-facade:
+    runs-on: windows-2022
+    timeout-minutes: 55
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.7'
+          cache: false
+
+      - name: Materialize Runtime facade
+        shell: pwsh
+        run: |
+          python tools/materialize_runtime_facade.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.34 --channel Beta --development-state Unreleased --notes "Materialized Runtime facade development for Beta 0.6.6.34."
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --exit-code 7ee569a3fe7068569af65ffe6da339b00d922828 -- tools/test_runtime_oracle.js
+          if ($LASTEXITCODE -ne 0) { Write-Error "Released Runtime characterization changed during production materialization"; exit $LASTEXITCODE }
+
+      - name: Focused Runtime facade gate
+        shell: pwsh
+        run: |
+          node --check runtime/js/core/facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_runtime_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_runtime_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_core_state.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_run_checkpoint.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_memory_diagnostics.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_powerup_services.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Complete repository gate
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | Sort-Object Name | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | Sort-Object Name | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.6.34 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -eq 0) { go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact tested commit
+        shell: pwsh
+        run: |
+          Remove-Item tools/materialize_runtime_facade.py
+          Remove-Item .github/workflows/runtime-facade-materialize.yml
+          git config user.name "dicebound-architecture-bot"
+          git config user.email "dicebound-architecture-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "architecture: converge Runtime composition behind DiceboundRuntime"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "RUNTIME_FACADE_COMMIT=$sha"
+          git push origin HEAD:refs/heads/arch/0.6.6.35-runtime-oracle
