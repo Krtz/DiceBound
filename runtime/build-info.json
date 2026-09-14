@@ -1,7 +1,7 @@
 {
   "assetCount": 428,
-  "browserContentHash": "df93dd688bbc30369ea8a93397c73558765987b8c90431c4d22a1ddd724f9870",
-  "buildId": "dicebound-0.6.6.33-dev-df93dd688bbc3036",
+  "browserContentHash": "f06fd291db71ab2965e3d5a29e65a6737cd9c6fb70879eb2a535acf852d7d827",
+  "buildId": "dicebound-0.6.6.33-dev-f06fd291db71ab29",
   "channel": "Beta",
   "contentFileCount": 515,
   "developmentState": "Unreleased",
@@ -9,7 +9,7 @@
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Classes identity/capability runtime owner checkpoint on released Beta 0.6.6.33 behavior.",
+  "notes": "Classes Slime Rouge borrowing lifecycle checkpoint on released Beta 0.6.6.33 behavior.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
@@ -98,7 +98,7 @@
     "js/dicebound.js"
   ],
   "saveSchemaVersion": 2,
-  "sourceHash": "df93dd688bbc30369ea8a93397c73558765987b8c90431c4d22a1ddd724f9870",
+  "sourceHash": "f06fd291db71ab2965e3d5a29e65a6737cd9c6fb70879eb2a535acf852d7d827",
   "timestampPolicy": "none; materialized identity is content-derived from runtime-loadable HTML/CSS/JS/image/audio payloads; HTML/CSS/JS hashes normalize CRLF to LF",
   "version": "0.6.6.33",
   "wrapperContractVersion": 1,

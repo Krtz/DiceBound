@@ -1200,9 +1200,10 @@
     capabilities:()=>call("capabilities"),
     hasMechanic:tag=>call("hasMechanic",tag),
     forceSlimeRouge:(identity=null,ultimate=null)=>call("forceSlimeRouge",identity,ultimate),
+    prepareSlimeRougeBorrowing:(pool,pick)=>call("prepareSlimeRougeBorrowing",pool,pick),
+    finishSlimeRougeBorrowing:()=>call("finishSlimeRougeBorrowing"),
     clearSlimeRougeRuntime:()=>call("clearSlimeRougeRuntime"),
     runtimeSnapshot:()=>call("snapshot"),
-    _runtimeState:()=>call("_runtimeState"),
     _installRuntime:installRuntime,
   });
   window.DiceboundClasses=api;

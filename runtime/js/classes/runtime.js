@@ -39,19 +39,28 @@
     slimeRougeState.forcedUltimate=ultimate;
     return snapshot();
   }
-  function clearSlimeRougeRuntime(){
+  function prepareSlimeRougeBorrowing(pool=[],pick){
+    if(!Array.isArray(pool)||!pool.length)return Object.freeze({identity:null,ultimate:null});
+    if(typeof pick!=="function")throw new Error("Classes Slime Rouge borrowing requires pick().");
+    const identity=pool.find(candidate=>candidate?.id===slimeRougeState.forcedIdentity)||pick(pool);
+    const ultimate=pool.find(candidate=>candidate?.id===slimeRougeState.forcedUltimate)||pick(pool);
+    slimeRougeState.pendingIdentity=identity.id;
+    slimeRougeState.pendingUltimate=ultimate.id;
+    return Object.freeze({identity,ultimate});
+  }
+  function finishSlimeRougeBorrowing(){
     slimeRougeState.pendingIdentity=null;
     slimeRougeState.pendingUltimate=null;
     slimeRougeState.forcedIdentity=null;
     slimeRougeState.forcedUltimate=null;
     return snapshot();
   }
+  function clearSlimeRougeRuntime(){return finishSlimeRougeBorrowing();}
   function snapshot(){return Object.freeze({...slimeRougeState});}
-  function runtimeState(){return slimeRougeState;}
 
   const api=Object.freeze({
     owner:OWNER,apiVersion:1,configure,identityId,active,mechanicsFor,capabilities,hasMechanic,
-    forceSlimeRouge,clearSlimeRougeRuntime,snapshot,_runtimeState:runtimeState
+    forceSlimeRouge,prepareSlimeRougeBorrowing,finishSlimeRougeBorrowing,clearSlimeRougeRuntime,snapshot
   });
 
   const facade=window.DiceboundClasses;

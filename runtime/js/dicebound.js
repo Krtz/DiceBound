@@ -373,7 +373,6 @@
     getClassMechanics:id=>[...(window.DiceboundContent?.classMechanics?.[id]||[])],
     getUltimateSupportMechanics:id=>[...(window.DiceboundContent?.ultimateSupportMechanics?.[id]||[])]
   });
-  const SlimeRougeRuntime=dbClasses._runtimeState();
   function classIdentityId(){return dbClasses.identityId();}
   function classIdentityActive(id){return dbClasses.active(id);}
   function classMechanicsFor(id){return dbClasses.mechanicsFor(id);}
@@ -4035,7 +4034,7 @@
 
 
   window.DiceboundV318Test=Object.freeze({
-    forceRun:(identity='summoner',ultimate='pokemontrainer')=>{[identity,ultimate,'slimerouge'].forEach(id=>{if(id&&meta.unlocks)meta.unlocks[id]=true;});SlimeRougeRuntime.forcedIdentity=identity;SlimeRougeRuntime.forcedUltimate=ultimate;resetPlayer('slimerouge');return {identity:player.slimeRougeIdentityClass,ultimate:player.slimeRougeUltimateClass,mechanics:[...slimeRougeCapabilities()],mana:player.mana,maxMana:player.maxMana,spirits:Array.isArray(player.summonerSpirits),roster:(player.trainerRoster||[]).length};},
+    forceRun:(identity='summoner',ultimate='pokemontrainer')=>{[identity,ultimate,'slimerouge'].forEach(id=>{if(id&&meta.unlocks)meta.unlocks[id]=true;});dbClasses.forceSlimeRouge(identity,ultimate);resetPlayer('slimerouge');return {identity:player.slimeRougeIdentityClass,ultimate:player.slimeRougeUltimateClass,mechanics:[...slimeRougeCapabilities()],mana:player.mana,maxMana:player.maxMana,spirits:Array.isArray(player.summonerSpirits),roster:(player.trainerRoster||[]).length};},
     compatiblePowers:(identity='summoner',ultimate='pokemontrainer')=>{window.DiceboundV318Test.forceRun(identity,ultimate);const ids=new Set(eligibleUpgrades(()=>true).map(u=>u.id));return {identity,ultimate,summonerSpirit:ids.has('summoner_deeper_circle'),trainerRoster:ids.has('trainer_double_battle'),ninjaSmoke:ids.has('ninja_smoke_step'),count:ids.size};},
     rangerMarks:async()=>{window.DiceboundV318Test.forceRun('ranger','pokemontrainer');const e={name:'Mark Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const result=await performStrike(e,{echo:false,index:0});return {identity:player.slimeRougeIdentityClass,marks:e.rangerMarks||0,resultType:result?.type,domain:result?.domain};},
     summonerConjure:async()=>{window.DiceboundV318Test.forceRun('summoner','ranger');player.mana=100;const e={name:'Spirit Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const oldResponse=resolveEnemyResponse;resolveEnemyResponse=async()=>{combatBusy=false;};try{const before=player.mana;await summonerConjure();return {identity:player.slimeRougeIdentityClass,beforeMana:before,afterMana:player.mana,spirits:(player.summonerSpirits||[]).length};}finally{resolveEnemyResponse=oldResponse;}},
@@ -6940,7 +6939,7 @@
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
     classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>dbPets.shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
     syncActivePetBonus:force=>dbPets.syncActiveBonus(force),syncBloodmageHpPassive:initial=>v18SyncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
-    slimeRougeDonorPool:()=>v318SlimeRougeDonorPool(),getSlimeRougeRuntime:()=>SlimeRougeRuntime,initIdentitySupport:id=>v32InitIdentitySupport(id),initUltimateSupport:id=>v318InitUltimateSupport(id),
+    prepareSlimeRougeBorrowing:()=>dbClasses.prepareSlimeRougeBorrowing(v318SlimeRougeDonorPool(),pick),finishSlimeRougeBorrowing:()=>dbClasses.finishSlimeRougeBorrowing(),initIdentitySupport:id=>v32InitIdentitySupport(id),initUltimateSupport:id=>v318InitUltimateSupport(id),
     classMechanicsFor:id=>classMechanicsFor(id),getUltimateSupportMechanics:id=>window.DiceboundContent?.ultimateSupportMechanics?.[id]||[],addLog:text=>addLog(text),
     applyGearTransform:()=>db060ApplyGearTransform(),syncMana:args=>db06421SyncMana(args),resetDragoonState:()=>dbFriendResetDragoonState(),
     setStatsLast:({hp,gold})=>{statsLastHp=hp;statsLastGold=gold;},
@@ -7067,9 +7066,7 @@
   function dbClassesOracleEnemy(index=0,patch={}){
     return Object.assign({name:`Class Oracle Dummy ${index+1}`,icon:'👹',hp:5000,maxHp:5000,attack:1,defense:0,gold:0,xp:0,weakness:'fire',affinity:null,dodge:0,poisonStacks:0,enemyBarrier:0,guardian:false,boss:false},dbClassesOracleClone(patch||{}));
   }
-  function dbClassesOracleClearIdentityRuntime(){
-    SlimeRougeRuntime.pendingIdentity=null;SlimeRougeRuntime.pendingUltimate=null;SlimeRougeRuntime.forcedIdentity=null;SlimeRougeRuntime.forcedUltimate=null;
-  }
+  function dbClassesOracleClearIdentityRuntime(){dbClasses.clearSlimeRougeRuntime();}
   function dbClassesOracleSetup(classId='ranger',playerPatch={},enemyPatches=[{}]){
     dbClassesOracleClearIdentityRuntime();resetPlayer(classId);Object.assign(player,dbClassesOracleClone(playerPatch||{}));
     boardLevel=3;nightmareMode=false;hellMode=false;gameStarted=true;rollLocked=false;combatBusy=false;runFinalized=false;currentEncounterTurn=0;v16CombatKind='normal';
