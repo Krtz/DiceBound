@@ -35,6 +35,7 @@
     "combat-vfx",
     "combat-view-facade",
     "classes-registry",
+    "classes-runtime",
     "classes-invoker",
     "combat-mana-action-resolution",
     "combat-facade",
@@ -444,6 +445,16 @@
       "provides": [
         "DiceboundClasses"
       ]
+    },
+    {
+      "id": "classes-runtime",
+      "path": "js/classes/runtime.js",
+      "domain": "classes/runtime-identity-capability-and-slime-rouge-state",
+      "status": "extracted",
+      "requires": [
+        "classes-registry"
+      ],
+      "provides": []
     },
     {
       "id": "classes-invoker",

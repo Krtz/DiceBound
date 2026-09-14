@@ -363,23 +363,22 @@
      ======================================================================== */
   const DiceboundStateEvents=window.DiceboundCoreState.createEventBus();
 
-  const SlimeRougeRuntime={pendingIdentity:null,pendingUltimate:null,forcedIdentity:null,forcedUltimate:null};
-  function classIdentityId(){
-    if(player?.classId==='slimerouge')return SlimeRougeRuntime.pendingIdentity||player.slimeRougeIdentityClass||'slimerouge';
-    return player?.classId||selectedClassId||'ranger';
-  }
-  function classIdentityActive(id){return classIdentityId()===id;}
-  function classMechanicsFor(id){return [...(window.DiceboundContent?.classMechanics?.[id]||[])];}
-  function slimeRougeCapabilities(){
-    if(player?.classId!=='slimerouge')return new Set(classMechanicsFor(classIdentityId()));
-    const out=new Set(classMechanicsFor('slimerouge'));
-    classMechanicsFor(SlimeRougeRuntime.pendingIdentity||player.slimeRougeIdentityClass).forEach(x=>out.add(x));
-    const ult=SlimeRougeRuntime.pendingUltimate||player.slimeRougeUltimateClass;
-    (window.DiceboundContent?.ultimateSupportMechanics?.[ult]||[]).forEach(x=>out.add(x));
-    if(ult)out.add(`ultimate:${ult}`);
-    return out;
-  }
-  function classHasMechanic(tag){return player?.classId==='slimerouge'?slimeRougeCapabilities().has(tag):classMechanicsFor(classIdentityId()).includes(tag);}
+  // Classes owns runtime identity/capability policy. These thin local names remain
+  // temporarily as compatibility adapters while ordinary callers are drained.
+  const dbClasses=window.DiceboundClasses;
+  if(!dbClasses?.configure)throw new Error("Dicebound.js requires the DiceboundClasses runtime facade.");
+  dbClasses.configure({
+    getPlayer:()=>player,
+    getSelectedClassId:()=>selectedClassId,
+    getClassMechanics:id=>[...(window.DiceboundContent?.classMechanics?.[id]||[])],
+    getUltimateSupportMechanics:id=>[...(window.DiceboundContent?.ultimateSupportMechanics?.[id]||[])]
+  });
+  const SlimeRougeRuntime=dbClasses._runtimeState();
+  function classIdentityId(){return dbClasses.identityId();}
+  function classIdentityActive(id){return dbClasses.active(id);}
+  function classMechanicsFor(id){return dbClasses.mechanicsFor(id);}
+  function slimeRougeCapabilities(){return dbClasses.capabilities();}
+  function classHasMechanic(tag){return dbClasses.hasMechanic(tag);}
 
   const ProgressionState=Object.freeze({
     grantXp(amount){

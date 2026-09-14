@@ -1166,8 +1166,26 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  window.DiceboundClasses=Object.freeze({
-    apiVersion:2,
+  let runtimeOwner=null,runtime=null;
+  function installRuntime(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
+    runtimeOwner=owner;
+    return api;
+  }
+  function configure(next={}){
+    if(!runtimeOwner)throw new Error("DiceboundClasses runtime owner has not been installed.");
+    runtime=runtimeOwner.configure(next);
+    return api;
+  }
+  function requireRuntime(name){
+    const fn=runtime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
+    return fn;
+  }
+  function call(name,...args){return requireRuntime(name)(...args);}
+
+  const api=Object.freeze({
+    owner:"classes/facade",apiVersion:2,
     ids:CLASS_IDS,
     tagVocabulary:Object.freeze([...CLASS_TAG_VOCABULARY]),
     createRegistry,
@@ -1175,5 +1193,17 @@
     createUnlockRegistry,
     createMechanicsRegistry,
     createUltimateSupportRegistry,
+    configure,
+    identityId:()=>call("identityId"),
+    active:id=>call("active",id),
+    mechanicsFor:id=>call("mechanicsFor",id),
+    capabilities:()=>call("capabilities"),
+    hasMechanic:tag=>call("hasMechanic",tag),
+    forceSlimeRouge:(identity=null,ultimate=null)=>call("forceSlimeRouge",identity,ultimate),
+    clearSlimeRougeRuntime:()=>call("clearSlimeRougeRuntime"),
+    runtimeSnapshot:()=>call("snapshot"),
+    _runtimeState:()=>call("_runtimeState"),
+    _installRuntime:installRuntime,
   });
+  window.DiceboundClasses=api;
 })();
