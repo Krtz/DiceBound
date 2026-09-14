@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.35
+
+### Runtime / Core / Persistence subsystem facade and ownership (#354)
+- Added `runtime/js/core/facade.js` as the ordinary public `DiceboundRuntime` boundary over focused Version, Platform, Storage, Save, active-run Checkpoint, Core State, Runtime Services and Memory Diagnostics internals. Deterministic gameplay RNG remains an explicit foundational dependency instead of being hidden by the facade.
+- Routed ordinary career-state load/save and event-bus composition, checkpoint access, runtime-service construction, diagnostics and persistence collaboration through `DiceboundRuntime`; drained peer-global Runtime implementation dependencies from ordinary modules while retaining intrinsic bootstrap/version dependencies as focused internals.
+- Added a permanent 12-case exact released-0.6.6.34 Runtime/Core/Persistence oracle plus facade and peer-boundary anti-shadow tests. Existing Core State, checkpoint, Memory Diagnostics, subsystem deterministic/oracle, browser/file/Edge and native release gates remain authoritative.
+- Architecture-only: no gameplay balance, RNG order/state, save/checkpoint schema or timing, event ordering, platform fallback behavior or UI redesign is intended. Runtime graph is 87 modules (86 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 670,346 bytes / about 7,076 lines versus 670,604 bytes / 7,075 physical lines in released 0.6.6.34. This wave prioritizes ownership cohesion rather than raw monolith shrinkage.
+
 ## Beta 0.6.6.34
 
 ### Classes subsystem facade and ownership (#348)

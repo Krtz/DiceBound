@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.35
+
+## Beta 0.6.6.35 Runtime / Core / Persistence subsystem ownership (#354)
+- `DiceboundRuntime` is now the ordinary public Runtime/Core/Persistence boundary over focused Version, Platform, Storage, Save, active-run Checkpoint, Core State, Runtime Services and Memory Diagnostics internals; deterministic gameplay RNG remains explicit and separate.
+- Ordinary career-state load/save/event-bus composition, checkpoint access, runtime-service construction, diagnostics and persistence collaboration route through the facade. Direct Runtime implementation peers and stale manifest edges are drained from ordinary modules while focused bootstrap identity adapters retain their intrinsic Version dependency.
+- A permanent 12-case exact released-0.6.6.34 Runtime oracle plus facade and peer-boundary anti-shadow guards freezes save backup/recovery, import/export, checkpoint/RNG continuation, career normalization, event bus, live runtime services, storage/platform diagnostics and non-mutating memory diagnostics.
+- No gameplay balance, RNG order/state, save/checkpoint schema or timing, event ordering, platform fallback behavior or UI redesign is intended. Runtime graph is 87 modules (86 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 670,346 bytes / about 7,076 lines.
+
 # Unreleased — Beta 0.6.6.34
 
 ## Beta 0.6.6.34 Classes subsystem ownership (#348)
