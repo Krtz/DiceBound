@@ -1194,6 +1194,8 @@
     createMechanicsRegistry,
     createUltimateSupportRegistry,
     configure,
+    configureActions:next=>call("configureActions",next),
+    performAction:kind=>call("performAction",kind),
     identityId:()=>call("identityId"),
     active:id=>call("active",id),
     mechanicsFor:id=>call("mechanicsFor",id),

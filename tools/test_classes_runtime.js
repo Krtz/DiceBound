@@ -49,6 +49,28 @@ assert.equal(prepared.identity.id,"ranger");assert.equal(prepared.ultimate.id,"a
 assert.equal(classes.identityId(),"ranger","pending borrowed identity must become active during initialization");
 classes.clearSlimeRougeRuntime();
 
+const actionTrace=[];
+const actionCallbacks={};
+for(const name of ["basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial"]){
+  actionCallbacks[name]=()=>{actionTrace.push(name);return name;};
+}
+classes.configureActions(actionCallbacks);
+function routed(classId,kind){player={classId};actionTrace.length=0;const result=classes.performAction(kind);return {result,trace:[...actionTrace]};}
+assert.deepEqual(routed("ranger","attack"),{result:"basicAttack",trace:["basicAttack"]});
+assert.deepEqual(routed("sorcerer","attack"),{result:"manaAttack",trace:["manaAttack"]});
+assert.deepEqual(routed("bloodmage","attack"),{result:"bloodmageAttack",trace:["bloodmageAttack"]});
+assert.deepEqual(routed("ranger","guard"),{result:"guard",trace:["guard"]});
+assert.deepEqual(routed("bloodmage","guard"),{result:"bloodmageGuard",trace:["bloodmageGuard"]});
+assert.deepEqual(routed("ranger","potion"),{result:"potion",trace:["potion"]});
+assert.deepEqual(routed("ranger","ultimate"),{result:"ultimate",trace:["ultimate"]});
+assert.deepEqual(routed("sorcerer","special"),{result:"manaSpecial",trace:["manaSpecial"]});
+assert.deepEqual(routed("bloodmage","special"),{result:"bloodmageSpecial",trace:["bloodmageSpecial"]});
+assert.deepEqual(routed("rogue","special"),{result:"rogueSpecial",trace:["rogueSpecial"]});
+assert.deepEqual(routed("cleric","special"),{result:"clericSpecial",trace:["clericSpecial"]});
+assert.deepEqual(routed("beastmaster","special"),{result:"beastmasterSpecial",trace:["beastmasterSpecial"]});
+assert.deepEqual(routed("ranger","special"),{result:undefined,trace:[]});
+assert.throws(()=>classes.performAction("bogus"),/Unknown Classes combat action/);
+
 const monolith=fs.readFileSync(monoPath,"utf8"),runInit=fs.readFileSync(runInitPath,"utf8");
 assert.doesNotMatch(monolith,/const\s+SlimeRougeRuntime\s*=/,"monolith still allocates a raw Slime Rouge runtime alias");
 assert.doesNotMatch(monolith,/SlimeRougeRuntime\.(?:pendingIdentity|pendingUltimate|forcedIdentity|forcedUltimate)\s*=/,"monolith still mutates raw Slime Rouge runtime state");
@@ -63,6 +85,14 @@ assert.match(monolith,/prepareSlimeRougeBorrowing:\(\)=>dbClasses\.prepareSlimeR
 assert.doesNotMatch(runInit,/getSlimeRougeRuntime|slimeRuntime\.|pendingIdentity\s*=|forcedIdentity/,"Run initialization still mutates raw Slime Rouge runtime state");
 assert.match(runInit,/deps\.prepareSlimeRougeBorrowing\(\)/);
 assert.match(runInit,/deps\.finishSlimeRougeBorrowing\(\)/);
+assert.match(monolith,/dbClasses\.configureActions\(\{/,'monolith does not compose Classes action routing');
+assert.match(monolith,/replaceCombatButton\("attackBtn",\(\)=>dbClasses\.performAction\("attack"\)\)/);
+assert.match(monolith,/replaceCombatButton\("guardBtn",\(\)=>dbClasses\.performAction\("guard"\)\)/);
+assert.match(monolith,/replaceCombatButton\("potionBtn",\(\)=>dbClasses\.performAction\("potion"\)\)/);
+assert.match(monolith,/replaceCombatButton\("ultimateBtn",\(\)=>dbClasses\.performAction\("ultimate"\)\)/);
+assert.match(monolith,/specialAttackBtn\.addEventListener\("click",\(\)=>dbClasses\.performAction\("special"\)\)/);
+assert.doesNotMatch(monolith,/replaceCombatButton\("attackBtn",\(\)=>\{if\(classIdentityActive\("bloodmage"\)\)/,'historical Attack class-routing branch still lives in monolith');
+assert.doesNotMatch(monolith,/specialAttackBtn\.addEventListener\("click",\(\)=>\{if\(classHasMechanic\("mana"\)\)/,'historical Special class-routing branch still lives in monolith');
 
 const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
 const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime");
@@ -70,4 +100,4 @@ assert.ok(runtimeModule,"classes-runtime manifest owner missing");assert.equal(r
 const order=manifest.loadOrder;assert.equal(order[order.indexOf("classes-registry")+1],"classes-runtime","Classes runtime must load immediately after registry facade");
 const scripts=[...fs.readFileSync(indexPath,"utf8").matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match=>match[1]);assert.ok(scripts.indexOf("js/classes/registry.js")<scripts.indexOf("js/classes/runtime.js"));assert.ok(scripts.indexOf("js/classes/runtime.js")<scripts.indexOf("js/dicebound.js"));
 
-console.log("Classes runtime owner PASS: identity, capabilities and Slime Rouge borrowing lifecycle route through DiceboundClasses without raw state sharing");
+console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle and combat action routing are owned by DiceboundClasses");

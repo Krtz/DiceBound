@@ -1868,13 +1868,30 @@
   async function identityPotionAction(...args){if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.identityPotionAction.apply(this,args);}
 
 
-  // Replace the four original action buttons once, removing old stacked listeners and giving class identity one clean dispatch path.
+  // Classes owns class-action selection policy. Generic Combat/Consumable/Ultimate
+  // resolution remains in its existing owners and is injected as collaborators.
+  dbClasses.configureActions({
+    basicAttack:()=>playerAttack(),
+    manaAttack:()=>occultChannelAttack(),
+    bloodmageAttack:()=>bloodmageBloodletting(),
+    guard:()=>identityGuardAction(),
+    bloodmageGuard:()=>bloodmageReplenish(),
+    potion:()=>identityPotionAction(),
+    ultimate:()=>useUltimate(),
+    manaSpecial:()=>occultSpellAttack(),
+    bloodmageSpecial:()=>bloodmageExsanguinate(),
+    rogueSpecial:()=>rogueSteal(),
+    clericSpecial:()=>clericConsecration(),
+    beastmasterSpecial:()=>cycleBeastStance()
+  });
+
+  // Replace the four original action buttons once, removing old stacked listeners.
   function replaceCombatButton(id,handler){const old=$(id);if(!old)return null;const neo=old.cloneNode(true);old.replaceWith(neo);neo.addEventListener("click",handler);return neo;}
-  replaceCombatButton("attackBtn",()=>{if(classIdentityActive("bloodmage"))bloodmageBloodletting();else if(classHasMechanic("mana"))occultChannelAttack();else playerAttack();});
-  replaceCombatButton("guardBtn",()=>{if(classIdentityActive("bloodmage"))bloodmageReplenish();else identityGuardAction();});
-  replaceCombatButton("potionBtn",()=>identityPotionAction());
-  replaceCombatButton("ultimateBtn",()=>useUltimate());
-  specialAttackBtn.addEventListener("click",()=>{if(classHasMechanic("mana"))occultSpellAttack();else if(classIdentityActive("bloodmage"))bloodmageExsanguinate();else if(classIdentityActive("rogue"))rogueSteal();else if(classIdentityActive("cleric"))clericConsecration();else if(classIdentityActive("beastmaster"))cycleBeastStance();});
+  replaceCombatButton("attackBtn",()=>dbClasses.performAction("attack"));
+  replaceCombatButton("guardBtn",()=>dbClasses.performAction("guard"));
+  replaceCombatButton("potionBtn",()=>dbClasses.performAction("potion"));
+  replaceCombatButton("ultimateBtn",()=>dbClasses.performAction("ultimate"));
+  specialAttackBtn.addEventListener("click",()=>dbClasses.performAction("special"));
 
   // ---- combat UI labels/resources -------------------------------------------
 

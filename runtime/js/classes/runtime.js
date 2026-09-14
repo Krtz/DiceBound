@@ -3,7 +3,7 @@
 
   const OWNER="classes/runtime-identity-capability";
   const slimeRougeState={pendingIdentity:null,pendingUltimate:null,forcedIdentity:null,forcedUltimate:null};
-  let deps=null;
+  let deps=null,actionDeps=null;
 
   function configure(next={}){
     for(const name of ["getPlayer","getSelectedClassId","getClassMechanics","getUltimateSupportMechanics"]){
@@ -58,8 +58,40 @@
   function clearSlimeRougeRuntime(){return finishSlimeRougeBorrowing();}
   function snapshot(){return Object.freeze({...slimeRougeState});}
 
+  function configureActions(next={}){
+    for(const name of [
+      "basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate",
+      "manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial"
+    ]){
+      if(typeof next?.[name]!=="function")throw new Error(`Classes action routing requires ${name}().`);
+    }
+    actionDeps=next;
+    return api;
+  }
+  function actions(){if(!actionDeps)throw new Error("Classes action routing must be configured before use.");return actionDeps;}
+  function performAction(kind){
+    const action=actions();
+    if(kind==="attack"){
+      if(active("bloodmage"))return action.bloodmageAttack();
+      if(hasMechanic("mana"))return action.manaAttack();
+      return action.basicAttack();
+    }
+    if(kind==="guard")return active("bloodmage")?action.bloodmageGuard():action.guard();
+    if(kind==="potion")return action.potion();
+    if(kind==="ultimate")return action.ultimate();
+    if(kind==="special"){
+      if(hasMechanic("mana"))return action.manaSpecial();
+      if(active("bloodmage"))return action.bloodmageSpecial();
+      if(active("rogue"))return action.rogueSpecial();
+      if(active("cleric"))return action.clericSpecial();
+      if(active("beastmaster"))return action.beastmasterSpecial();
+      return undefined;
+    }
+    throw new Error(`Unknown Classes combat action: ${kind}`);
+  }
+
   const api=Object.freeze({
-    owner:OWNER,apiVersion:1,configure,identityId,active,mechanicsFor,capabilities,hasMechanic,
+    owner:OWNER,apiVersion:1,configure,configureActions,identityId,active,mechanicsFor,capabilities,hasMechanic,performAction,
     forceSlimeRouge,prepareSlimeRougeBorrowing,finishSlimeRougeBorrowing,clearSlimeRougeRuntime,snapshot
   });
 
