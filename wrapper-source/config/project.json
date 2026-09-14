@@ -44,6 +44,7 @@
     "js/classes/registry.js",
     "js/classes/runtime.js",
     "js/classes/actions.js",
+    "js/classes/hooks.js",
     "js/classes/invoker.js",
     "js/combat/mana-action-resolution.js",
     "js/combat/facade.js",

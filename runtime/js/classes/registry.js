@@ -1166,7 +1166,7 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null;
+  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null;
   function installRuntime(owner){
     if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
     runtimeOwner=owner;
@@ -1193,6 +1193,22 @@
     return fn;
   }
   function callAction(name,...args){return requireActions(name)(...args);}
+  function installHooks(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime-hooks owner is invalid.");
+    hooksOwner=owner;
+    return api;
+  }
+  function configureRuntimeHooks(next={}){
+    if(!hooksOwner)throw new Error("DiceboundClasses runtime-hooks owner has not been installed.");
+    hooksRuntime=hooksOwner.configure(next);
+    return api;
+  }
+  function requireHook(name){
+    const fn=hooksRuntime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime hook ${name}() is not configured.`);
+    return fn;
+  }
+  function callHook(name,...args){return requireHook(name)(...args);}
   function requireRuntime(name){
     const fn=runtime?.[name];
     if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
@@ -1211,6 +1227,7 @@
     createUltimateSupportRegistry,
     configure,
     configureActionMechanics,
+    configureRuntimeHooks,
     configureActions:next=>call("configureActions",next),
     performAction:kind=>call("performAction",kind),
     bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
@@ -1221,6 +1238,12 @@
     bloodmageReplenish:()=>callAction("bloodmageReplenish"),
     bloodmageExsanguinate:()=>callAction("bloodmageExsanguinate"),
     alchemistVolatileFlask:()=>callAction("alchemistVolatileFlask"),
+    legacyMonkDodge:base=>callHook("legacyMonkDodge",base),
+    identityDodgeAdjustments:base=>callHook("identityDodgeAdjustments",base),
+    berserkerDamage:amount=>callHook("berserkerDamage",amount),
+    ninjaExecutionDamage:(amount,ignoreDefense=false)=>callHook("ninjaExecutionDamage",amount,ignoreDefense),
+    syncOuroborosAttack:()=>callHook("syncOuroborosAttack"),
+    syncOuroborosEconomy:()=>callHook("syncOuroborosEconomy"),
     identityId:()=>call("identityId"),
     active:id=>call("active",id),
     mechanicsFor:id=>call("mechanicsFor",id),
@@ -1233,6 +1256,7 @@
     runtimeSnapshot:()=>call("snapshot"),
     _installRuntime:installRuntime,
     _installActions:installActions,
+    _installHooks:installHooks,
   });
   window.DiceboundClasses=api;
 })();

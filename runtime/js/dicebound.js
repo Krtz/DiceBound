@@ -1624,9 +1624,9 @@
 
 
   const effectiveDodgeChanceV12=effectiveDodgeChance;
-  effectiveDodgeChance=function(){const base=effectiveDodgeChanceV12();return classIdentityActive("monk")?1-(1-base)*(1-base):base;};
+  effectiveDodgeChance=function(){return dbClasses.legacyMonkDodge(effectiveDodgeChanceV12());};
   const damageEnemyV12=damageEnemy;
-  damageEnemy=function(enemy,amount,ignoreDefense=false){if(classIdentityActive("berserker")&&player.maxHp>0)amount=DB_EFFECTIVE_STATS.scaleBerserkerRageDamage(amount,player);return damageEnemyV12(enemy,amount,ignoreDefense);};
+  damageEnemy=function(enemy,amount,ignoreDefense=false){return damageEnemyV12(enemy,dbClasses.berserkerDamage(amount),ignoreDefense);};
 
 
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;if(enemySource){const el=document.createElement("div");el.className="enemy-proc-fx";el.innerHTML=`<span>${target?.icon||"👹"} → ${art}</span><small>ENEMY ELEMENT PROC</small>`;head.appendChild(el);setTimeout(()=>el.remove(),900);return;}const el=document.createElement("div");el.className=`element-proc-fx ${key}`;el.textContent=art;head.appendChild(el);setTimeout(()=>el.remove(),850);};
@@ -1815,11 +1815,11 @@
 
   // ---- core class identity hooks --------------------------------------------
   const effectiveDodgeChanceV13=effectiveDodgeChance;
-  effectiveDodgeChance=function(){let base=effectiveDodgeChanceV13();if(classIdentityActive("monk"))base=clamp(base+(player.monkCombo||0)*.018,0,.92);if(classIdentityActive("clown")&&player.clownGimmick==="Big Shoes")base=clamp(base+.12,0,.92);return base;};
+  effectiveDodgeChance=function(){return dbClasses.identityDodgeAdjustments(effectiveDodgeChanceV13());};
 
 
   const damageEnemyV13=damageEnemy;
-  damageEnemy=function(enemy,amount,ignoreDefense=false){if(player._ninjaExecution){amount*=1.65;ignoreDefense=true;}return damageEnemyV13(enemy,amount,ignoreDefense);};
+  damageEnemy=function(enemy,amount,ignoreDefense=false){const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);return damageEnemyV13(enemy,adjusted.amount,adjusted.ignoreDefense);};
 
 
 
@@ -1847,6 +1847,14 @@
 
   // Classes owns class-action selection policy. Generic Combat/Consumable/Ultimate
   // resolution remains in its existing owners and is injected as collaborators.
+  dbClasses.configureRuntimeHooks({
+    getPlayer:()=>player,
+    isClassActive:id=>classIdentityActive(id),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    scaleBerserkerRageDamage:(amount,targetPlayer)=>DB_EFFECTIVE_STATS.scaleBerserkerRageDamage(amount,targetPlayer),
+    hasEffect:id=>db060HasEffect(id)
+  });
+
   dbClasses.configureActionMechanics({
     getPlayer:()=>player,
     getCurrentEnemy:()=>currentEnemy,
@@ -2413,11 +2421,8 @@
   });
 
   // ---- Per-run state and class-passive normalization -----------------------
-  function v18SyncOuroborosAttack(){
-    if(!classIdentityActive("ouroboros"))return;
-    const delta=(Number(player.attack)||0)-10;
-    if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}
-  }
+
+  function v18SyncOuroborosAttack(){return dbClasses.syncOuroborosAttack();}
   function v18SyncBloodmageHpPassive(initial=false){
     if(!classIdentityActive("bloodmage"))return;
     if(initial){
@@ -3776,7 +3781,7 @@
   showLegendaryChoice=function(source,onComplete=()=>{}){const pool=eligibleUpgrades(u=>u.rarity==='legendary');if(!pool.length){const gold=modifiedGold(250);player.gold+=gold;player.potions+=2;addLog(`<b>${source}:</b> every eligible Legendary power is already owned this run. The guardian converts the exhausted boon into <b>${gold} gold</b> and <b>2 potions</b>.`);showToast(`👑 Legendary pool exhausted · +${gold} gold · +2 potions`,3000,true);updateHUD();setTimeout(()=>onComplete(false),0);return;}showPowerupChoice(source,onComplete,u=>u.rarity==='legendary','The guardian yields. Choose one guaranteed Legendary powerup.');};
 
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
-  v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros'))return;const delta=(Number(player.attack)||0)-10;if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}};
+  // Runtime conversion policy is owned by DiceboundClasses.
 
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
@@ -3836,15 +3841,8 @@
   v27EnsureUpgrade({id:'legendary_wanderer_v27',rarity:'legendary',icon:'🥾🌟',name:'Legend of the Endless Mile',desc:'Gain +25 Luck, +20% Dodge, +30% Boss Damage and +30 starting Ultimate.',apply(){player.luck+=.25;player.dodge+=.20;player.bossDamage+=.30;player.ultimateCharge=clamp(player.ultimateCharge+30,0,100);}});
 
   /* OUROBOROS: EVERY ATTACK SOURCE BECOMES ECHO --------------------------- */
-  function v27SyncOuroborosEconomy(){
-    if(!classIdentityActive('ouroboros'))return;
-    // Any gold->Attack scaling source is converted into the mathematically
-    // equivalent dynamic Echo scaling: +1 effective Attack == +10% Echo.
-    if((player.goldAttackScale||0)!==0){player.v27OuroGoldEchoScale=(player.v27OuroGoldEchoScale||0)+player.goldAttackScale*.10;player.goldAttackScale=0;}
-    const desired=(player.gold||0)*(player.v27OuroGoldEchoScale||0),old=player.v27OuroGoldEchoApplied||0;
-    if(Math.abs(desired-old)>.0000001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+(desired-old));player.v27OuroGoldEchoApplied=desired;}
-    v18SyncOuroborosAttack();
-  }
+
+  function v27SyncOuroborosEconomy(){return dbClasses.syncOuroborosEconomy();}
 
   // Ouroboros post-Powerup economy sync is owned by DiceboundPowerups.
   const updateHUDV27OuroBase=updateHUD;updateHUD=function(){v27SyncOuroborosEconomy();const r=updateHUDV27OuroBase();if(classIdentityActive('ouroboros')&&$('attackText'))$('attackText').textContent='10';return r;};
@@ -5481,9 +5479,7 @@
   // Attack/Defense powerup cross-feed.
   // Sword-and-Shield Powerup cross-feed is owned by DiceboundPowerups.
 
-  // Ouroboros base-30 identity.
-  const db060OuroSyncBase=v18SyncOuroborosAttack;
-  v18SyncOuroborosAttack=function(){if(!classIdentityActive('ouroboros')||!db060HasEffect('perfect_specimen'))return db060OuroSyncBase();const delta=(Number(player.attack)||0)-30;if(delta>0){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=30;}else if(player.attack<30)player.attack=30;};
+  // Ouroboros Perfect Specimen baseline is applied inside DiceboundClasses.
 
   // Basic Attack action-level Echo Chamber sequencing is owned by combat/attack-action-resolution.
   // Individual strike-level effects remain owned by combat/strike-resolution.
@@ -7101,7 +7097,7 @@
     alchemistFlask:async()=>{dbClassesOracleSetup('alchemist',{maxHp:100,hp:100,attack:15,potions:3,potionPower:.50,alchemistFreeFlask:0,alchemistElementChance:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>dbClasses.alchemistVolatileFlask());return dbClassesOracleState();},
     monkDodge:()=>{dbClassesOracleSetup('monk',{dodge:.10,monkCombo:3});return {chance:effectiveDodgeChance(),state:dbClassesOracleState()};},
     ninjaExecution:()=>{dbClassesOracleSetup('ninja',{attack:20,_ninjaExecution:true},[{hp:1000,maxHp:1000,defense:12}]);const dealt=damageEnemy(currentEnemy,100,false);return {dealt,state:dbClassesOracleState()};},
-    ouroborosSync:()=>{dbClassesOracleSetup('ouroboros',{attack:37,doubleStrike:1.20});const before={attack:player.attack,doubleStrike:player.doubleStrike};v18SyncOuroborosAttack();return {before,after:{attack:player.attack,doubleStrike:player.doubleStrike},state:dbClassesOracleState()};},
+    ouroborosSync:()=>{dbClassesOracleSetup('ouroboros',{attack:37,doubleStrike:1.20});const before={attack:player.attack,doubleStrike:player.doubleStrike};dbClasses.syncOuroborosAttack();return {before,after:{attack:player.attack,doubleStrike:player.doubleStrike},state:dbClassesOracleState()};},
     invokerFormula:()=>{dbClassesOracleSetup('invoker');dbInvoker.afterPlayerAction('guard');dbInvoker.afterPlayerAction('generator');dbInvoker.afterPlayerAction('spender');return {active:dbInvoker.active(),state:dbClassesOracleClone(dbInvoker._test.state(false)),recipe:dbClassesOracleClone(dbInvoker.recipeInfo()),bonuses:dbClassesOracleClone(dbInvoker.actionBonuses()),identity:classIdentityId()};},
     beastmasterButton:()=>{dbClassesOracleSetup('beastmaster');const before=player.beastStance,button=$('specialAttackBtn');button?.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));return {before,after:player.beastStance,state:dbClassesOracleState()};}
   });

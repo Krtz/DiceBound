@@ -9,6 +9,7 @@ const root=path.join(__dirname,"..");
 const registryPath=path.join(root,"runtime","js","classes","registry.js");
 const runtimePath=path.join(root,"runtime","js","classes","runtime.js");
 const actionsPath=path.join(root,"runtime","js","classes","actions.js");
+const hooksPath=path.join(root,"runtime","js","classes","hooks.js");
 const monoPath=path.join(root,"runtime","js","dicebound.js");
 const runInitPath=path.join(root,"runtime","js","run","player-initialization.js");
 const manifestPath=path.join(root,"runtime","js","module-manifest.json");
@@ -17,6 +18,7 @@ const context=vm.createContext({window:{},console,Set,Object,Array,JSON});
 vm.runInContext(fs.readFileSync(registryPath,"utf8"),context,{filename:registryPath});
 vm.runInContext(fs.readFileSync(runtimePath,"utf8"),context,{filename:runtimePath});
 vm.runInContext(fs.readFileSync(actionsPath,"utf8"),context,{filename:actionsPath});
+vm.runInContext(fs.readFileSync(hooksPath,"utf8"),context,{filename:hooksPath});
 
 const classes=context.window.DiceboundClasses;
 assert.ok(classes,"DiceboundClasses facade missing");
@@ -24,6 +26,7 @@ assert.equal(classes.apiVersion,2,"registry compatibility apiVersion drifted");
 assert.equal(classes.owner,"classes/facade");
 assert.equal(context.window.DiceboundClassRuntime,undefined,"focused Classes runtime leaked as a peer public global");
 assert.equal(context.window.DiceboundClassActions,undefined,"focused Classes action mechanics leaked as a peer public global");
+assert.equal(context.window.DiceboundClassHooks,undefined,"focused Classes hooks leaked as a peer public global");
 assert.equal(classes._runtimeState,undefined,"raw Classes runtime state leaked through the public facade");
 
 let player={classId:"ranger"},selected="sorcerer";
@@ -117,10 +120,11 @@ assert.doesNotMatch(monolith,/alchemistVolatileFlaskV16/,'Alchemist Volatile Fla
 assert.doesNotMatch(monolith,/beta021RoguePowerStealChance/,'Rogue power-steal helper still lives in monolith');
 
 const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
-const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime"),actionsModule=manifest.modules.find(entry=>entry.id==="classes-actions");
+const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime"),actionsModule=manifest.modules.find(entry=>entry.id==="classes-actions"),hooksModule=manifest.modules.find(entry=>entry.id==="classes-hooks");
 assert.ok(runtimeModule,"classes-runtime manifest owner missing");assert.equal(runtimeModule.path,"js/classes/runtime.js");assert.deepEqual(runtimeModule.requires,["classes-registry"]);assert.deepEqual(runtimeModule.provides,[],"focused Classes runtime should not publish a peer public facade");
 assert.ok(actionsModule,"classes-actions manifest owner missing");assert.equal(actionsModule.path,"js/classes/actions.js");assert.deepEqual(actionsModule.requires,["classes-registry","classes-runtime"]);assert.deepEqual(actionsModule.provides,[],"focused Classes actions should not publish a peer public facade");
+assert.ok(hooksModule,"classes-hooks manifest owner missing");assert.equal(hooksModule.path,"js/classes/hooks.js");assert.deepEqual(hooksModule.requires,["classes-registry","classes-runtime"]);assert.deepEqual(hooksModule.provides,[],"focused Classes hooks should not publish a peer public facade");
 const order=manifest.loadOrder;assert.equal(order[order.indexOf("classes-registry")+1],"classes-runtime","Classes runtime must load immediately after registry facade");assert.equal(order[order.indexOf("classes-runtime")+1],"classes-actions","Classes actions must load immediately after runtime owner");
-const scripts=[...fs.readFileSync(indexPath,"utf8").matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match=>match[1]);assert.ok(scripts.indexOf("js/classes/registry.js")<scripts.indexOf("js/classes/runtime.js"));assert.ok(scripts.indexOf("js/classes/runtime.js")<scripts.indexOf("js/classes/actions.js"));assert.ok(scripts.indexOf("js/classes/actions.js")<scripts.indexOf("js/dicebound.js"));
+const scripts=[...fs.readFileSync(indexPath,"utf8").matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match=>match[1]);assert.ok(scripts.indexOf("js/classes/registry.js")<scripts.indexOf("js/classes/runtime.js"));assert.ok(scripts.indexOf("js/classes/runtime.js")<scripts.indexOf("js/classes/actions.js"));assert.ok(scripts.indexOf("js/classes/actions.js")<scripts.indexOf("js/classes/hooks.js"));assert.ok(scripts.indexOf("js/classes/hooks.js")<scripts.indexOf("js/dicebound.js"));
 
-console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle, routing and bespoke action mechanics are owned behind DiceboundClasses");
+console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle, routing, bespoke actions and runtime hooks are owned behind DiceboundClasses");

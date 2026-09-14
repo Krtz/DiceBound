@@ -37,6 +37,7 @@
     "classes-registry",
     "classes-runtime",
     "classes-actions",
+    "classes-hooks",
     "classes-invoker",
     "combat-mana-action-resolution",
     "combat-facade",
@@ -461,6 +462,17 @@
       "id": "classes-actions",
       "path": "js/classes/actions.js",
       "domain": "classes/runtime-action-mechanics",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "classes-runtime"
+      ],
+      "provides": []
+    },
+    {
+      "id": "classes-hooks",
+      "path": "js/classes/hooks.js",
+      "domain": "classes/runtime-combat-and-stat-hook-policy",
       "status": "extracted",
       "requires": [
         "classes-registry",
