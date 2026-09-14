@@ -34,6 +34,8 @@ jobs:
         run: |
           python tools/materialize_classes_runtime_owner.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/fix_classes_runtime_materializer.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/classes/registry.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/classes/runtime.js
@@ -92,6 +94,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item tools/materialize_classes_runtime_owner.py -Force
+          Remove-Item tools/fix_classes_runtime_materializer.py -Force
           Remove-Item .github/workflows/classes-runtime-owner-materialize.yml -Force
           git status --short
           git diff --check
