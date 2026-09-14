@@ -15,6 +15,7 @@
     "core-state",
     "runtime-services",
     "memory-diagnostics",
+    "runtime-facade",
     "combat-effective-stats",
     "combat-healing-resolution",
     "combat-element-resolution",
@@ -235,6 +236,25 @@
       ],
       "provides": [
         "DiceboundMemoryDiagnostics"
+      ]
+    },
+    {
+      "id": "runtime-facade",
+      "path": "js/core/facade.js",
+      "domain": "runtime/public-core-persistence-composition-facade",
+      "status": "extracted",
+      "requires": [
+        "version",
+        "platform",
+        "storage",
+        "save-system",
+        "run-checkpoint",
+        "core-state",
+        "runtime-services",
+        "memory-diagnostics"
+      ],
+      "provides": [
+        "DiceboundRuntime"
       ]
     },
     {
@@ -1114,16 +1134,9 @@
       "domain": "compatibility-monolith",
       "status": "monolith",
       "requires": [
-        "version",
         "assets",
         "rng",
-        "wrapper-contract",
-        "platform",
-        "storage",
-        "save-system",
-        "run-checkpoint",
-        "core-state",
-        "runtime-services",
+        "runtime-facade",
         "combat-effective-stats",
         "combat-d20-chaos-resolution",
         "combat-strike-policy",
