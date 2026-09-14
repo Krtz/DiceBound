@@ -33,8 +33,10 @@ jobs:
       - name: Validate Runtime oracle and repository gates
         shell: pwsh
         run: |
+          node tools/test_runtime_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
-          Get-ChildItem tools -Filter test_*.js | Sort-Object Name | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | Where-Object { $_.Name -ne 'test_runtime_oracle.js' } | Sort-Object Name | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
           Get-ChildItem tools -Filter test_*.py | Sort-Object Name | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
           python tools/validate_runtime_architecture.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
