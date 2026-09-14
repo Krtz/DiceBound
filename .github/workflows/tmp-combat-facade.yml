@@ -7,6 +7,7 @@ on:
     paths:
       - tools/tmp_combat_facade_patch_v2.py
       - tools/tmp_combat_facade_test_fix.py
+      - tools/tmp_combat_facade_validator_fix.py
       - .github/workflows/tmp-combat-facade.yml
 
 permissions:
@@ -38,6 +39,8 @@ jobs:
           python tools/tmp_combat_facade_patch_v2.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/tmp_combat_facade_test_fix.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_combat_facade_validator_fix.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.30 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -75,6 +78,7 @@ jobs:
           Remove-Item tools/tmp_combat_facade_patch.py -Force -ErrorAction SilentlyContinue
           Remove-Item tools/tmp_combat_facade_patch_v2.py -Force
           Remove-Item tools/tmp_combat_facade_test_fix.py -Force
+          Remove-Item tools/tmp_combat_facade_validator_fix.py -Force
           Remove-Item .github/workflows/tmp-combat-facade.yml -Force
           git add -A
           git diff --cached --check
