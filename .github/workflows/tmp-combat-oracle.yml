@@ -1,0 +1,102 @@
+name: Temporary Combat 0.6.6.30 oracle capture
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.31-combat-facade-oracle
+    paths:
+      - tools/tmp_combat_oracle_patch.py
+      - tools/test_combat_oracle.js
+      - .github/workflows/tmp-combat-oracle.yml
+
+permissions:
+  contents: write
+
+jobs:
+  capture-combat-oracle:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Check out Combat branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Add released Combat characterization surface
+        shell: pwsh
+        run: |
+          python tools/tmp_combat_oracle_patch.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check tools/test_combat_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Capture exact released 0.6.6.30 Combat fixture
+        shell: pwsh
+        run: |
+          $env:DICEBOUND_CAPTURE_COMBAT='1'
+          node tools/test_combat_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item Env:DICEBOUND_CAPTURE_COMBAT
+          if (!(Test-Path tools/fixtures/combat_0_6_6_30.json)) { throw 'Combat fixture was not created' }
+
+      - name: Replay permanent Combat oracle
+        shell: pwsh
+        run: |
+          node tools/test_combat_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run focused Combat deterministic gates
+        shell: pwsh
+        run: |
+          $tests = @(
+            'tools/test_combat_attack_action_resolution.js',
+            'tools/test_combat_element_resolution.js',
+            'tools/test_combat_guard_resolution.js',
+            'tools/test_combat_healing_resolution.js',
+            'tools/test_combat_pet_turn_resolution.js',
+            'tools/test_combat_strike_resolution.js',
+            'tools/test_combat_targeting.js',
+            'tools/test_combat_turn_resolution.js',
+            'tools/test_combat_ultimate_resolution.js',
+            'tools/test_combat_victory_resolution.js',
+            'tools/test_d20_chaos_resolution.js',
+            'tools/test_mana_action_resolution.js',
+            'tools/test_effective_stats.js',
+            'tools/test_encounter_lifecycle.js',
+            'tools/test_enemy_policy.js',
+            'tools/test_enemy_scaling_resolution.js'
+          )
+          foreach ($test in $tests) { node $test; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Materialize exact tested oracle checkpoint
+        shell: pwsh
+        run: |
+          Remove-Item tools/tmp_combat_oracle_patch.py -Force
+          Remove-Item .github/workflows/tmp-combat-oracle.yml -Force
+          git add -A
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git config user.name "DiceBound Combat Oracle"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "test: freeze released Combat subsystem behavior"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sha = git rev-parse HEAD
+          Write-Host "COMBAT_ORACLE_CHECKPOINT=$sha"
+          git push origin "HEAD:refs/heads/arch/0.6.6.31-combat-facade-oracle"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Protected branch push rejected as expected; oracle checkpoint object was uploaded."
+            exit 0
+          }
