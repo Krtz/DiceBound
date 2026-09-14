@@ -47,3 +47,4 @@ if start<0 or end<0:
 text=text[:start]+"  db064Camp.configureShell({});\n"+text[end:]
 path.write_text(text,encoding='utf-8',newline='\n')
 print('Camp shell materializer patched for lexical collaborator registration')
+# Permanent Run checkpoint ownership assertions live in tools/test_run_checkpoint.js.
