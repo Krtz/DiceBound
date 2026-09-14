@@ -9,7 +9,7 @@
   "format": 2,
   "gameBundle": "js/dicebound.js",
   "name": "Dicebound",
-  "notes": "Runtime/Core/Persistence owner convergence for Beta 0.6.6.35.",
+  "notes": "Materialized Unreleased Git development for Beta 0.6.6.35.",
   "reproducible": true,
   "runtimeScripts": [
     "js/version.js",
