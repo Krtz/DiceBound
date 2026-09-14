@@ -8,6 +8,7 @@ on:
       - runtime/js/combat/view-facade.js
       - tools/test_combat_view_facade.js
       - tools/tmp_combat_view_facade_patch.py
+      - tools/tmp_combat_view_test_fix.py
       - .github/workflows/tmp-combat-view-facade.yml
 
 permissions:
@@ -40,6 +41,10 @@ jobs:
       - name: Apply Combat View facade staging patch
         shell: pwsh
         run: python tools/tmp_combat_view_facade_patch.py
+
+      - name: Update migrated ownership assertions
+        shell: pwsh
+        run: python tools/tmp_combat_view_test_fix.py
 
       - name: Refresh runtime build metadata
         shell: pwsh
@@ -107,6 +112,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/tmp-combat-view-facade.yml
           git rm tools/tmp_combat_view_facade_patch.py
+          git rm tools/tmp_combat_view_test_fix.py
           git add -A
           git commit -m "arch: expose Combat View facade"
           $checkpoint = git rev-parse HEAD
