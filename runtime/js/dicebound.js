@@ -6,6 +6,8 @@
   const dbCombatOwner=window.DiceboundCombat;
   if(!dbCombatOwner)throw new Error("dicebound.js requires DiceboundCombat before loading.");
   let dbCombat=null;
+  const dbCombatView=window.DiceboundCombatView;
+  if(!dbCombatView)throw new Error("dicebound.js requires DiceboundCombatView before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
   const dbProgressionOwner=window.DiceboundProgression;
@@ -865,7 +867,7 @@
     if(!currentEnemies.length){currentEnemy=null;return;}
     const safe=currentEnemies[index]?.hp>0?index:currentEnemies.findIndex(e=>e.hp>0);currentEnemyIndex=safe<0?0:safe;currentEnemy=currentEnemies[currentEnemyIndex]||null;renderEnemyParty();updateCombatUI();
   }
-  function updateBossSpecialIndicator(){if(!dbCombatPresentation)throw new Error('Combat presentation owner is not configured.');return dbCombatPresentation.renderBossSpecialIndicator();}
+  function updateBossSpecialIndicator(){return dbCombatView.renderBossSpecialIndicator();}
   function describeCurrentUltimate(classId=player.classId){
     const definition=CLASSES[classId]||CLASSES[player.classId];
     return DB_EFFECTIVE_STATS.describeUltimate(classId,definition,player,{setDamageBonus:v19SetDamageBonus(),rageActive:classId==="berserker"&&classIdentityActive("berserker")});
@@ -1278,9 +1280,9 @@
     el.textContent=enemySource?`${ELEMENTS[key].icon} ${art}`:art;head.appendChild(el);setTimeout(()=>el.remove(),850);
   }
 
-  function statusDotsHTML(barriers=0,poison=0,affinity=null){if(!dbCombatPresentation)throw new Error('Combat presentation owner is not configured.');return dbCombatPresentation.statusDotsHTML(barriers,poison,affinity);}
-  function renderEnemyParty(){if(!dbCombatPresentation)throw new Error('Combat presentation owner is not configured.');return dbCombatPresentation.renderEnemyParty();}
-  function updateCombatUI(){if(!dbCombatPresentation)throw new Error('Combat presentation owner is not configured.');const result=dbCombatPresentation.update();updateHUD();return result;}
+  function statusDotsHTML(barriers=0,poison=0,affinity=null){return dbCombatView.statusDotsHTML(barriers,poison,affinity);}
+  function renderEnemyParty(){return dbCombatView.renderEnemyParty();}
+  function updateCombatUI(){const result=dbCombatView.update();updateHUD();return result;}
 
   // #309: enemy scaling/difficulty now has one authoritative owner.
   let dbEnemyScalingResolution=null;
@@ -1304,7 +1306,6 @@
   let dbCombatGuardResolution=null;
   let dbInvoker=null;
   let dbCombatPetTurnResolution=null;
-  let dbCombatPresentation=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
   let dbCombatTurns=null;
@@ -3454,7 +3455,7 @@
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
   const defenseDamageReductionV24Base=defenseDamageReduction;defenseDamageReduction=function(defense=player.defense){if(v24HasJeanJacket()){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+13),0,.90);}return defenseDamageReductionV24Base(defense);};
-    function v24UpdateShieldBars(){if(!dbCombatPresentation)return;return dbCombatPresentation.syncEnergyShieldBars();}
+    function v24UpdateShieldBars(){if(!dbCombatView.isPresentationConfigured())return;return dbCombatView.syncEnergyShieldBars();}
   const updateHUDV24Base=updateHUD;updateHUD=function(){updateHUDV24Base();v24UpdateShieldBars();};
 
   /* MODULE: camp synchronization ------------------------------------------ */
@@ -5832,16 +5833,15 @@
   /* Nature Poison Vines combat VFX (#80, #71).
      Presentation observes completed proc outcomes only: combat damage, targeting,
      RNG and turns remain owned by the live combat pipeline. */
-  const dbCombatVfx=window.DiceboundCombatVfx?.create({getEnemies:()=>currentEnemies,getPlayer:()=>player});
-  if(!dbCombatVfx)throw new Error('DiceBound requires the combat VFX module.');
-  dbCombatVfx.prepareNature();
+  dbCombatView.configureVfx({getEnemies:()=>currentEnemies,getPlayer:()=>player});
+  dbCombatView.prepareNature();
   const dbNatureLegacyAnimationBase=playElementAnimation;
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){
     // The authored vine sequence replaces (rather than stacks on) the old
     // Nature emoji burst for a real Nature elemental proc. Other uses of the
     // generic Nature cue, such as a normal poison tick, are intentionally
     // untouched, as are all other elements.
-    if(dbCombatVfx.suppressLegacyElementAnimation(key))return false;
+    if(dbCombatView.suppressLegacyElementAnimation(key))return false;
     return dbNatureLegacyAnimationBase(key,target,enemySource);
   };
   // Browser/native smoke adapter for the authored Nature VFX.  This owns no
@@ -5861,7 +5861,7 @@
     currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
     $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
     const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
-    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatVfx.natureEntries(),projectiles:[...document.querySelectorAll('.db-combat-projectile-vfx')].map(node=>({effect:node.dataset.effect,origin:node.dataset.origin})),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
+    return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatView.natureEntries(),projectiles:[...document.querySelectorAll('.db-combat-projectile-vfx')].map(node=>({effect:node.dataset.effect,origin:node.dataset.origin})),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
   }
   function dbCombatPresentationExercise(kind='final'){
     document.querySelectorAll('.db-nature-vines-vfx').forEach(node=>node.remove());
@@ -5874,12 +5874,12 @@
     return {kind,narrow:window.matchMedia('(max-width:760px)').matches,viewportHeight:window.innerHeight,stageClasses:stage?.className||'',hostClasses:host?.className||'',sprite:rect(sprite),art:rect(art),player:rect(player)};
   }
   window.DiceboundNatureVfxTest=Object.freeze({
-    effect:dbCombatVfx.natureEffect,
-    livingTargets:enemies=>dbCombatVfx.livingNatureTargets(enemies).map(enemy=>enemy.name||''),
-    previewPlayer:dbCombatVfx.playNatureOnPlayer,
+    effect:dbCombatView.natureEffect,
+    livingTargets:enemies=>dbCombatView.livingNatureTargets(enemies).map(enemy=>enemy.name||''),
+    previewPlayer:dbCombatView.playNatureOnPlayer,
     exerciseProc:dbNatureProcRegressionExercise,
     exercisePresentation:dbCombatPresentationExercise,
-    active:dbCombatVfx.natureEntries
+    active:dbCombatView.natureEntries
   });
   // #128/#83 compatibility composition binds the extracted equipment owner
   // once before any legacy UI/effective-Mana adapters consume it.
@@ -5994,9 +5994,9 @@
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
      a real completed Donut proc and never changes its target, timing or RNG. */
   window.DiceboundDonutVfxTest=Object.freeze({
-    effect:dbCombatVfx.donutEffect,
-    play:dbCombatVfx.playDonutRain,
-    active:dbCombatVfx.donutEntries
+    effect:dbCombatView.donutEffect,
+    play:dbCombatView.playDonutRain,
+    active:dbCombatView.donutEntries
   });
 
   /* #54 Battle log stays below the action controls and can be minimized
@@ -6254,15 +6254,14 @@
     setTimeout(()=>icon.classList.remove('db-dodge-backflip'),420);return true;
   }
 
-  dbCombatVfx.prepareProjectileEffects?.();
+  dbCombatView.prepareProjectileEffects?.();
   const dbFriendLegacyElementPresentation=playElementAnimation;
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){
     if(key==='fire'||key==='gun'||key==='donut')return false;
     return dbFriendLegacyElementPresentation(key,target,enemySource);
   };
   function dbFriendClearCombatPresentation(){
-    dbCombatVfx.clearTransient?.();
-    dbCombatPresentation?.clearDragoonPresentation();
+    dbCombatView.clearTransient();
     document.querySelectorAll('.element-proc-fx,.enemy-proc-fx,.db-combat-projectile-vfx').forEach(node=>node.remove());
     const fx=$('attackFx');if(fx){fx.className='attack-fx';fx.replaceChildren();}
     $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
@@ -6292,11 +6291,11 @@
   const dbFriendDragoonTalentId='dragoon_aerial_discipline';
   const dbFriendDragoonActive=()=>player?.classId==='dragoon';
   const dbFriendDragoonCooldown=()=>Math.max(2,6-gameplayTalentRank(dbFriendDragoonTalentId));
-  function dbFriendSyncDragoonPresentation(){return dbCombatPresentation?.syncDragoonPresentation();}
-  function dbFriendDragoonLandPresentation(){return dbCombatPresentation?.dragoonLandPresentation();}
+  function dbFriendSyncDragoonPresentation(){return dbCombatView.syncDragoonPresentation();}
+  function dbFriendDragoonLandPresentation(){return dbCombatView.dragoonLandPresentation();}
   function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
 
-  function dbFriendEnsureDragoonJumpButton(){return dbCombatPresentation?.ensureDragoonJumpButton();}
+  function dbFriendEnsureDragoonJumpButton(){return dbCombatView.ensureDragoonJumpButton();}
   async function dbFriendDragoonLanding(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
     combatBusy=true;player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;dbFriendDragoonLandPresentation();
@@ -6369,12 +6368,12 @@
     setElementPower:()=>v19SetElementPower(),
     hasLegendaryEffect:id=>db060HasEffect(id),
     reconcileDefeatedTarget:(target,reason)=>db0648ReconcileDefeatedTarget(target,reason),
-    withNatureLegacyPresentation:(key,work)=>dbCombatVfx.withNatureLegacyPresentation(key,work),
-    livingNatureTargets:list=>dbCombatVfx.livingNatureTargets(list),
-    playNatureOnEnemy:enemy=>dbCombatVfx.playNatureOnEnemy(enemy),
-    playNatureOnPlayer:()=>dbCombatVfx.playNatureOnPlayer(),
-    playDonutRain:payload=>dbCombatVfx.playDonutRain(payload),
-    playProjectileProc:(key,payload)=>dbCombatVfx.playProjectileProc?.(key,payload)
+    withNatureLegacyPresentation:(key,work)=>dbCombatView.withNatureLegacyPresentation(key,work),
+    livingNatureTargets:list=>dbCombatView.livingNatureTargets(list),
+    playNatureOnEnemy:enemy=>dbCombatView.playNatureOnEnemy(enemy),
+    playNatureOnPlayer:()=>dbCombatView.playNatureOnPlayer(),
+    playDonutRain:payload=>dbCombatView.playDonutRain(payload),
+    playProjectileProc:(key,payload)=>dbCombatView.playProjectileProc?.(key,payload)
   });
 
   const dbCombatHealingOwner=window.DiceboundCombatHealingResolution;
@@ -6723,9 +6722,7 @@
     invokeUltimate:()=>dbInvoker?.invokeUltimate(),
   });
 
-  const dbCombatPresentationOwner=window.DiceboundCombatPresentation;
-  if(!dbCombatPresentationOwner)throw new Error('DiceBound requires the combat presentation owner before dicebound.js');
-  dbCombatPresentation=dbCombatPresentationOwner.configure({
+  dbCombatView.configurePresentation({
     document,
     guardianSpecialInterval:GUARDIAN_SPECIAL_INTERVAL,
     getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy}),

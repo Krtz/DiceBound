@@ -825,6 +825,39 @@ def main() -> int:
                     "retired board-transition implementation remains in dicebound.js: "
                     + retired_board_transition_layer
                 )
+    combat_view_module = by_id.get("combat-view-facade")
+    combat_view_source = sources.get("combat-view-facade", "")
+    if not combat_view_module:
+        errors.append("Combat View public facade combat-view-facade is missing from the runtime manifest")
+    else:
+        combat_view_requires = set(combat_view_module.get("requires") or [])
+        if combat_view_module.get("path") != "js/combat/view-facade.js" or "DiceboundCombatView" not in (combat_view_module.get("provides") or []):
+            errors.append("combat-view-facade must own js/combat/view-facade.js and provide DiceboundCombatView")
+        if not {"combat-presentation", "combat-vfx"}.issubset(combat_view_requires):
+            errors.append("Combat View facade must compose the focused Presentation and VFX owners")
+        if position.get("combat-view-facade", -1) <= position.get("combat-presentation", -1) or position.get("combat-view-facade", -1) <= position.get("combat-vfx", -1):
+            errors.append("Combat View facade must load after its focused Presentation/VFX owners")
+        if position.get("combat-view-facade", -1) >= position.get(str(monolith_id), -1):
+            errors.append("Combat View facade must load before the compatibility monolith")
+    for forbidden_rng in ["Math.random", "random(", "rand(", "pick("]:
+        if forbidden_rng in combat_view_source:
+            errors.append("combat-view-facade must not consume game RNG: " + forbidden_rng)
+    if monolith_source:
+        for required_view_route in [
+            "const dbCombatView=window.DiceboundCombatView;",
+            "dbCombatView.configureVfx({",
+            "dbCombatView.configurePresentation({",
+        ]:
+            if required_view_route not in monolith_source:
+                errors.append("dicebound.js is missing Combat View facade composition route: " + required_view_route)
+        for peer_pattern, peer_label in [
+            (r"window\.DiceboundCombatPresentation", "DiceboundCombatPresentation"),
+            (r"window\.DiceboundCombatVfx", "DiceboundCombatVfx"),
+            (r"(?<![\w$])dbCombatPresentation(?![\w$])", "dbCombatPresentation"),
+            (r"(?<![\w$])dbCombatVfx(?![\w$])", "dbCombatVfx"),
+        ]:
+            if re.search(peer_pattern, monolith_source):
+                errors.append("dicebound.js retains direct peer-public Combat View owner: " + peer_label)
     combat_presentation_module = by_id.get("combat-presentation")
     if not combat_presentation_module:
         errors.append("Combat presentation owner combat-presentation is missing from the runtime manifest")
@@ -838,13 +871,13 @@ def main() -> int:
         if forbidden_rng in combat_presentation_source:
             errors.append("combat-presentation must not consume game RNG: " + forbidden_rng)
     if monolith_source:
-        if "dbCombatPresentation=dbCombatPresentationOwner.configure({" not in monolith_source:
-            errors.append("dicebound.js must configure the combat presentation owner")
-        if monolith_source.count("function updateCombatUI(") != 1 or "dbCombatPresentation.update()" not in monolith_source:
+        if "dbCombatView.configurePresentation({" not in monolith_source:
+            errors.append("dicebound.js must configure combat presentation through the Combat View facade")
+        if monolith_source.count("function updateCombatUI(") != 1 or "dbCombatView.update()" not in monolith_source:
             errors.append("dicebound.js must retain only the thin updateCombatUI presentation adapter")
         if re.search(r"(?m)^\s*updateCombatUI\s*=", monolith_source):
             errors.append("dicebound.js retains an updateCombatUI reassignment after presentation extraction")
-        if monolith_source.count("function renderEnemyParty(") != 1 or "dbCombatPresentation.renderEnemyParty()" not in monolith_source:
+        if monolith_source.count("function renderEnemyParty(") != 1 or "dbCombatView.renderEnemyParty()" not in monolith_source:
             errors.append("dicebound.js must retain only the thin renderEnemyParty presentation adapter")
         if re.search(r"(?m)^\s*renderEnemyParty\s*=", monolith_source):
             errors.append("dicebound.js retains a renderEnemyParty reassignment after presentation extraction")

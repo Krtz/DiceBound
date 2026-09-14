@@ -40,6 +40,7 @@
     "js/combat/encounter-lifecycle.js",
     "js/combat/turn-resolution.js",
     "js/combat/vfx.js",
+    "js/combat/view-facade.js",
     "js/classes/registry.js",
     "js/classes/invoker.js",
     "js/combat/mana-action-resolution.js",
