@@ -11,9 +11,7 @@ if text.count(old)!=2:
 text=text.replace(old,new)
 
 # The manifest assertion transform itself predates Phase E's combined
-# runtime+actions declaration. Rather than keying this repair to every character
-# of the stale transform, replace the unique transform block by its label. This
-# keeps the temporary repair resilient to harmless wording/quote differences.
+# runtime+actions declaration. Replace that one transform by its unique label.
 marker="''','classes runtime manifest hook assert')"
 end=text.find(marker)
 if end<0:
@@ -26,13 +24,16 @@ old_block=text[start:end]
 if 'classes-actions' not in old_block or 'classes-hooks' not in old_block:
     raise SystemExit('unexpected manifest assertion transform shape')
 
+# IMPORTANT: the current permanent Phase-E owner test still says
+# "focused Classes actions should not publish..." in this manifest assertion.
+# Match that exact released checkpoint wording rather than silently rewriting it.
 new_block='''test=replace_once(test,
 ''' + "'''" + '''const runtimeModule=manifest.modules.find(entry=>entry.id==\"classes-runtime\"),actionsModule=manifest.modules.find(entry=>entry.id==\"classes-actions\");
 assert.ok(runtimeModule,\"classes-runtime manifest owner missing\");assert.equal(runtimeModule.path,\"js/classes/runtime.js\");assert.deepEqual(runtimeModule.requires,[\"classes-registry\"]);assert.deepEqual(runtimeModule.provides,[],\"focused Classes runtime should not publish a peer public facade\");
-assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.requires,[\"classes-registry\",\"classes-runtime\"]);assert.deepEqual(actionsModule.provides,[],\"focused Classes action mechanics should not publish a peer public facade\");''' + "'''" + ''',
+assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.requires,[\"classes-registry\",\"classes-runtime\"]);assert.deepEqual(actionsModule.provides,[],\"focused Classes actions should not publish a peer public facade\");''' + "'''" + ''',
 ''' + "'''" + '''const runtimeModule=manifest.modules.find(entry=>entry.id==\"classes-runtime\"),actionsModule=manifest.modules.find(entry=>entry.id==\"classes-actions\"),hooksModule=manifest.modules.find(entry=>entry.id==\"classes-hooks\");
 assert.ok(runtimeModule,\"classes-runtime manifest owner missing\");assert.equal(runtimeModule.path,\"js/classes/runtime.js\");assert.deepEqual(runtimeModule.requires,[\"classes-registry\"]);assert.deepEqual(runtimeModule.provides,[],\"focused Classes runtime should not publish a peer public facade\");
-assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.requires,[\"classes-registry\",\"classes-runtime\"]);assert.deepEqual(actionsModule.provides,[],\"focused Classes action mechanics should not publish a peer public facade\");
+assert.ok(actionsModule,\"classes-actions manifest owner missing\");assert.equal(actionsModule.path,\"js/classes/actions.js\");assert.deepEqual(actionsModule.requires,[\"classes-registry\",\"classes-runtime\"]);assert.deepEqual(actionsModule.provides,[],\"focused Classes actions should not publish a peer public facade\");
 assert.ok(hooksModule,\"classes-hooks manifest owner missing\");assert.equal(hooksModule.path,\"js/classes/hooks.js\");assert.deepEqual(hooksModule.requires,[\"classes-registry\",\"classes-runtime\"]);assert.deepEqual(hooksModule.provides,[],\"focused Classes hooks should not publish a peer public facade\");''' + "'''" + ''','classes runtime manifest hook assert')'''
 
 text=text[:start]+new_block+text[end:]
