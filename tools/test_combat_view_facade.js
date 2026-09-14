@@ -109,13 +109,13 @@ assert.doesNotMatch(monolith, /\bdbCombatPresentation\b/, "peer-public Presentat
 assert.doesNotMatch(monolith, /\bdbCombatVfx\b/, "peer-public VFX variable must not survive in the monolith");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "runtime", "js", "module-manifest.json"), "utf8"));
-const module = manifest.modules.find(item => item.id === "combat-view-facade");
-assert(module, "combat-view-facade is missing from the module manifest");
-assert.equal(module.path, "js/combat/view-facade.js");
-assert.equal(module.domain, "combat/public-presentation-vfx-facade");
-assert.equal(module.status, "extracted");
-assert.deepEqual(module.requires, ["combat-presentation", "combat-vfx"]);
-assert.deepEqual(module.provides, ["DiceboundCombatView"]);
+const viewModule = manifest.modules.find(item => item.id === "combat-view-facade");
+assert(viewModule, "combat-view-facade is missing from the module manifest");
+assert.equal(viewModule.path, "js/combat/view-facade.js");
+assert.equal(viewModule.domain, "combat/public-presentation-vfx-facade");
+assert.equal(viewModule.status, "extracted");
+assert.deepEqual(viewModule.requires, ["combat-presentation", "combat-vfx"]);
+assert.deepEqual(viewModule.provides, ["DiceboundCombatView"]);
 const order = manifest.loadOrder;
 assert(order.indexOf("combat-presentation") < order.indexOf("combat-view-facade"));
 assert(order.indexOf("combat-vfx") < order.indexOf("combat-view-facade"));
