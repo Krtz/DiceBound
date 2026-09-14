@@ -44,6 +44,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_runtime_facade.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          from pathlib import Path
+          p=Path('tools/test_core_state.js')
+          s=p.read_text(encoding='utf-8')
+          old='''assert.match(monolith,/window\\.DiceboundCoreState\\?\\.createMetaService\\?\\.\\(/);\nassert.match(monolith,/const normalizeMetaCore=DB_CORE_META\\.normalizeMeta/);\nassert.match(monolith,/window\\.DiceboundCoreState\\.createEventBus\\(\\)/);'''
+          new='''assert.match(monolith,/const dbRuntime=window\\.DiceboundRuntime;/);\nassert.match(monolith,/const DB_CORE_META=dbRuntime\\.createMetaService\\(/);\nassert.match(monolith,/const normalizeMetaCore=DB_CORE_META\\.normalizeMeta/);\nassert.match(monolith,/const DiceboundStateEvents=dbRuntime\\.createEventBus\\(\\);/);\nassert.doesNotMatch(monolith,/window\\.DiceboundCoreState\\b/,"compatibility monolith bypasses the Runtime facade for Core State");'''
+          if old not in s:
+              raise SystemExit('test_core_state Runtime routing assertion anchor drifted')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.34 --channel Beta --development-state Unreleased --notes "Materialized Runtime facade development for Beta 0.6.6.34."
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code 7ee569a3fe7068569af65ffe6da339b00d922828 -- tools/test_runtime_oracle.js
