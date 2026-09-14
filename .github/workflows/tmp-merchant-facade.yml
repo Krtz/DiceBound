@@ -1,0 +1,80 @@
+name: Temporary Merchant facade materializer
+
+on:
+  push:
+    branches:
+      - arch/0.6.6.30-merchant-facade
+    paths:
+      - tools/tmp_merchant_facade_patch.py
+      - .github/workflows/tmp-merchant-facade.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - name: Check out architecture branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Apply Merchant facade ownership slice
+        shell: pwsh
+        run: |
+          python tools/tmp_merchant_facade_patch.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+
+      - name: Run focused Merchant ownership and exact Edge gates
+        shell: pwsh
+        run: |
+          node --check runtime/js/events/merchant-facade.js
+          node --check runtime/js/dicebound.js
+          node tools/test_merchant_facade.js
+          node tools/test_merchant_transaction.js
+          python tools/test_merchant_stock_extraction_boundary.py
+          python tools/test_merchant_ui_extraction_boundary.py
+          python tools/test_shadow_ownership_drain.py
+          node tools/test_merchant_stock_resolution.js
+          node tools/test_merchant_stock_resolution_browser.js
+          node tools/test_merchant_browser.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run full repository JavaScript and Python regression suite
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+
+      - name: Report candidate architecture
+        shell: pwsh
+        run: |
+          python -c "from pathlib import Path; import json; p=Path('runtime/js/dicebound.js'); t=p.read_text(encoding='utf-8'); m=json.loads(Path('runtime/js/module-manifest.json').read_text(encoding='utf-8')); print(f'ARCHITECTURE modules={len(m[\"modules\"])} extracted={sum(1 for x in m[\"modules\"] if x.get(\"status\")==\"extracted\")} monolith_lines={len(t.splitlines())} monolith_bytes={len(t.replace(chr(13)+chr(10),chr(10)).encode())}')"
+
+      - name: Materialize exact tested candidate
+        shell: pwsh
+        run: |
+          Remove-Item tools/tmp_merchant_facade_patch.py -Force
+          Remove-Item .github/workflows/tmp-merchant-facade.yml -Force
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "architecture: expose Merchant subsystem facade"
+          $sha = git rev-parse HEAD
+          Write-Host "MATERIALIZED_CANDIDATE=$sha"
+          git push origin "HEAD:arch/0.6.6.30-merchant-facade"
