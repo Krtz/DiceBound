@@ -5,6 +5,9 @@
   if(!APP_IDENTITY)throw new Error("dicebound.js requires DiceboundVersion before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbProgressionOwner=window.DiceboundProgression;
+  if(!dbProgressionOwner)throw new Error("dicebound.js requires DiceboundProgression before loading.");
+  let dbProgression=null;
   const dbPets=window.DiceboundPets;
   if(!dbPets)throw new Error("dicebound.js requires DiceboundPets before loading.");
   const dbPetLifecycleOwner=window.DiceboundPetLifecycle;
@@ -309,7 +312,6 @@
   let currentMerchantItems = [];
   let dbMerchantStock = null;
   let currentMerchantNotice = "";
-  let pendingPrestige = null;
   let selectedClassId = "ranger";
   let pendingLootItem = null;
   let pendingLootCallback = null;
@@ -323,7 +325,6 @@
   let tiles = [];
   let pendingDiceChoiceResolve = null;
   let nightmareMode = false;
-  let pendingPrestigeKeepIds = new Set();
 
   const DB_CORE_META=window.DiceboundCoreState?.createMetaService?.({classIds:Object.keys(CLASSES),petIds:Object.keys(PETS),elementIds:ELEMENT_KEYS,petUnlockRequirement:PET_UNLOCK_REQUIREMENT,saveService:window.DiceboundSave});
   if(!DB_CORE_META)throw new Error("DiceboundCoreState must load before dicebound.js");
@@ -343,13 +344,8 @@
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
-  function commitClassUnlock(id){
-    if(id==="bloodmage"){meta.bloodmageUnlocked=true;meta.unlocks=meta.unlocks||{};meta.unlocks.bloodmage=true;saveMeta();renderClassChoices();return true;}
-    if(!CLASSES[id]||meta.unlocks?.[id])return false;
-    meta.unlocks=meta.unlocks||{};meta.unlocks[id]=true;saveMeta();
-    const cls=CLASSES[id],unlockFeedback=window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id);if(gameStarted)addLog(`<b>Class unlocked:</b> ${cls.icon} ${cls.name}!`);showToast(unlockFeedback?.toast||`NEW CLASS UNLOCKED · ${cls.icon} ${cls.name}`,3400,true);renderClassChoices();return true;
-  }
-  function unlockClass(id){if(!DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,dbClassUnlockContext()))return false;return commitClassUnlock(id);}
+  function commitClassUnlock(id){return dbProgression.commitClassUnlock(id);}
+  function unlockClass(id){return dbProgression.unlockClass(id);}
 
   /* ========================================================================
      Alpha v3.1.9 — state/render contracts
@@ -431,12 +427,7 @@
     merchantSpacing:()=>MERCHANT_SPACING,
     gameplayTalentRank:id=>gameplayTalentRank(id),
     roadTileType:(roll,level)=>window.DiceboundEventRewards.roadTileType(roll,level),
-    withRunTalentSnapshot:work=>{
-      if(!runTalentSnapshot)return work();
-      const live=meta.purchased;
-      try{meta.purchased=runTalentSnapshot;return work();}
-      finally{meta.purchased=live;}
-    },
+    withRunTalentSnapshot:work=>dbProgression.withRunTalentSnapshot(work),
     setRoad:next=>{tiles=next.tiles;merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;merchantFaceTotal=next.merchantFaceTotal;}
   }});
 
@@ -683,14 +674,24 @@
   });
 
   const req=(id,rank=1)=>({id,rank});
-  const talentRank=id=>Math.max(0,Number(meta.purchased[id])||0);
+  dbProgression=dbProgressionOwner.configure({
+    legacyXpForLevel:level=>legacyXpForLevel(level),getMeta:()=>meta,getPlayer:()=>player,getTalents:()=>talents,getRunTalentSnapshot:()=>runTalentSnapshot,setRunTalentSnapshot:value=>{runTalentSnapshot=value;return runTalentSnapshot;},
+    saveMeta:()=>saveMeta(),sfxLevel:()=>sfx.level(),showToast:(...args)=>showToast(...args),renderTalents:()=>renderTalents(),
+    isRunFinalized:()=>runFinalized,setRunFinalized:value=>{runFinalized=!!value;},getLastLegacyAward:()=>lastLegacyAward,setLastLegacyAward:value=>{lastLegacyAward=value;},setLastGoldLegacyAward:value=>{lastGoldLegacyAward=value;},
+    getTilesMovedThisRun:()=>tilesMovedThisRun,isNightmare:()=>!!nightmareMode,random:()=>random(),updateMetaUI:()=>updateMetaUI(),
+    hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
+    storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
+    getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
+    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,getAchievementGateRewards:()=>db0512GateRewards,
+    getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
+    classUnlockRecordObservedProgress:ctx=>DB_CLASS_UNLOCK_RULES.recordObservedProgress(ctx),classUnlockResolveDynamic:options=>DB_CLASS_UNLOCK_RULES.resolveDynamic(options),
+    classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>renderClassChoices(),addLog:html=>addLog(html),
+    sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
+  });
+  const talentRank=id=>dbProgression.talentRank(id);
 
-  /* Alpha v3.1.7: talents are registry-owned. */
-  function repairTalentPrerequisites(){
-    const byId=Object.fromEntries(talents.map(t=>[t.id,t]));let changed=true,guard=0;
-    while(changed&&guard++<100){changed=false;for(const talent of talents){if(!talentRank(talent.id))continue;for(const r of talent.requires||[]){const reqTalent=byId[r.id];if(reqTalent&&talentRank(r.id)<r.rank){meta.purchased[r.id]=Math.min(reqTalent.maxRank,r.rank);changed=true;}}}}
-    if(changed===false)saveMeta();
-  }
+  /* Alpha v3.1.7: talents are registry-owned; lifecycle policy is Progression-owned. */
+  function repairTalentPrerequisites(){return dbProgression.repairTalentPrerequisites();}
   repairTalentPrerequisites();
 
   const customSoundState={};
@@ -1012,25 +1013,13 @@
     return dbMerchantUi.render();
   }
 
-  function grantLegacyXp(amount){
-    meta.xp+=amount;
-    while(meta.xp>=meta.xpNext){meta.xp-=meta.xpNext;meta.level++;meta.points++;meta.xpNext=legacyXpForLevel(meta.level);}
-  }
-  function finalizeRun(){
-    if(runFinalized)return lastLegacyAward;runFinalized=true;
-    const travelAward=Math.max(0,Math.round(tilesMovedThisRun*(1+player.legacyXpBonus)));lastGoldLegacyAward=Math.max(0,Math.floor(player.gold/10));lastLegacyAward=(travelAward+lastGoldLegacyAward)*(nightmareMode?5:1);
-    meta.runs++;meta.bestTiles=Math.max(meta.bestTiles,tilesMovedThisRun);grantLegacyXp(lastLegacyAward);saveMeta();updateMetaUI();return lastLegacyAward;
-  }
-  function allocatedTalentPoints(){return talents.reduce((sum,t)=>sum+talentRank(t.id)*t.cost,0);}
+  function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}
+  function finalizeRun(){return dbProgression.finalizeRun();}
+  function allocatedTalentPoints(){return dbProgression.allocatedTalentPoints();}
 
-  function talentAvailable(t){return (t.requires||[]).every(r=>talentRank(r.id)>=r.rank);}
+  function talentAvailable(t){return dbProgression.talentAvailable(t);}
   function requirementText(t){return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} rank ${r.rank}`;}).join(" + ");}
-  function purchaseTalentNode(id){
-    const t=talents.find(node=>node.id===id),rank=talentRank(id);
-    if(!t||rank>=t.maxRank||!talentAvailable(t)||meta.points<t.cost)return false;
-    meta.points-=t.cost;meta.purchased[t.id]=rank+1;saveMeta();sfx.level();showToast(`${t.name} rank ${rank+1} · activates next run`);
-    renderTalents();return true;
-  }
+  function purchaseTalentNode(id){return dbProgression.purchaseTalent(id);}
   // The extracted owner renders and navigates the Talent destination. These
   // adapters remain because existing lifecycle/composition callers still use
   // the historical function names.
@@ -1150,7 +1139,6 @@
   );
 
   let merchantFaceClicks=new Set(),merchantFaceTotal=0,merchantBossPrimed=false,merchantBossDefeatedThisBoard=false,merchantBossBattle=false;
-  let prestigeCandidateItems=[];
   const currentTileCount=()=>db317Board(boardLevel).tiles;
   const currentCols=()=>boardLevel>=4?8:10;
   const currentRows=()=>boardLevel>=4?8:10;
@@ -1178,7 +1166,7 @@
   }
   importOldSaveIfNeeded();
 
-  function isClassUnlocked(id){return DB_CLASS_UNLOCK_RULES.isUnlocked(id,dbClassUnlockContext());}
+  function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}
   // Thin composition adapter only.  The real Class chooser, including
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
   function renderClassChoices(){return window.DiceboundClassChooser?.render();}
@@ -1248,10 +1236,7 @@
   function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}
   function renderLifetimeStats(){return dbInfoGuide?.renderStats();}
 
-  function prestigeSummary(){return DB_PRESTIGE.inspect(meta.prestige||defaultPrestige()).permanentSummary;}
-  function openPrestigeHeirloomChoice(data){pendingPrestige=data;pendingPrestigeKeepIds=new Set();const post=(meta.prestige?.count||0)+data.rewards,capacity=1+(post>=20?1:0),byId=new Map();(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));if(gameStarted)EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));prestigeCandidateItems=[...byId.values()];data.candidates=prestigeCandidateItems;const grid=$("prestigeHeirloomGrid");grid.innerHTML="";$("prestigeKeepConfirmBtn").textContent=`Confirm 0 / ${capacity} surviving heirlooms`;prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.className="prestige-keep-btn";b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id)){pendingPrestigeKeepIds.delete(item.id);b.classList.remove("kept");}else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Choose at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);b.classList.add("kept");}$("prestigeKeepConfirmBtn").textContent=`Confirm ${pendingPrestigeKeepIds.size} / ${capacity} surviving heirlooms`;});grid.appendChild(b);});prestigeOverlay.classList.remove("hidden");}
-  function completePrestige(data,keepIds=[]){const {rewards,remainder}=data,keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"],gained=[];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;gained.push(key);}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder+(data.unspent||0);pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();}
-  function prestigeTree(){const allocated=allocatedTalentPoints(),rewards=Math.floor(allocated/10),remainder=allocated%10;if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige ${allocated} allocated points? You gain ${rewards} permanent stat point${rewards===1?"":"s"}, reset talents and Legacy level to 1, and keep up to ${keep} heirloom${keep===1?"":"s"}. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION. Current equipped items may be selected as survivors.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder,unspent:meta.points,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(item=>window.DiceboundEquipment.isHeirloomEligible(item)):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);}
+  function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
@@ -1279,15 +1264,7 @@
     {id:"elemental_predator",rarity:"epic",icon:"🌈🐺",name:"Elemental Predator",desc:"Deal +20% elemental damage and +10% damage against elemental monsters.",apply(){player.elementDamageBonus+=.20;player.elementalEnemyDamage=(player.elementalEnemyDamage||0)+.10;}}
   );
 
-  function achievementGateUnlocked(gate){
-    if(!gate)return true;
-    if(gate==="prestige10")return (meta.prestige?.count||0)>=10;
-    if(gate==="road2")return isClassUnlocked("clown");
-    if(gate==="road3")return !!meta.nightmareUnlocked;
-    if(gate==="road4")return (meta.board4Clears||0)>0;
-    if(gate==="nature_master")return (meta.elementProgress?.nature||0)>=PET_UNLOCK_REQUIREMENT;
-    return !!meta.achievements?.[gate];
-  }
+  function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}
   function eligibleUpgrades(filter=()=>true){return upgrades.filter(u=>{const classOk=!u.classId&&!u.classIds||player.classId==="slime"||u.classId===player.classId||(u.classIds||[]).includes(player.classId);return classOk&&achievementGateUnlocked(u.achievementGate)&&(!u.unique||!(player.upgradeCounts?.[u.id]))&&filter(u);});}
 
   function dbClassUnlockFacts(){meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;}
@@ -1306,13 +1283,7 @@
       hasBoardClear:(classId,board)=>hasBoardClear(classId,board)
     };
   }
-  function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES.isBaseUnlocked(id,dbClassUnlockContext());}
-  function checkDynamicClassUnlocks(){
-    const observed=DB_CLASS_UNLOCK_RULES.recordObservedProgress(dbClassUnlockContext());
-    if(observed.changed){const stats=ensureAlphaMeta();stats.highestGold=observed.highestGold;meta.classUnlockFacts=observed.facts;}
-    DB_CLASS_UNLOCK_RULES.resolveDynamic({getContext:()=>dbClassUnlockContext(),unlock:id=>unlockClass(id)});
-    if(observed.changed)saveMeta();
-  }
+  function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}
 
   function playElementAnimation(key,target=currentEnemy,enemySource=false){
     const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;
@@ -1367,7 +1338,7 @@
   function ensureAlphaMeta(){
     const base=defaultLifetimeStats(),raw=meta.stats||{};meta.stats={...base,...raw,boardClears:{...(raw.boardClears||{})},classMaxLevel:{...(raw.classMaxLevel||{})}};meta.stats.damageTaken=Math.max(Number(meta.stats.damageTaken)||0,Number(meta.damageTaken)||0);meta.achievements={...(meta.achievements||{})};return meta.stats;
   }
-  function gameplayTalentRank(id){const source=runTalentSnapshot||meta.purchased||{};return Math.max(0,Number(source[id])||0);}
+  function gameplayTalentRank(id){return dbProgression.gameplayTalentRank(id);}
   function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function boardClearKey(classId,board,mode=boardClearMode()){return `${classId}:${mode}:b${board}`;}
   function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
@@ -1410,10 +1381,6 @@
     {id:"slime_apotheosis",classId:"slime",rarity:"legendary",achievementGate:"slime_lvl5",icon:"🟢👑",name:"Royal Jelly",desc:"Achievement-locked: +25 max HP, +4 Attack and +18% Echo Strike.",apply(){player.maxHp+=25;player.hp+=25;player.attack+=4;player.doubleStrike+=.18;}}
   );
   const goldenLaw=upgrades.find(u=>u.id==="legendary_golden_law");if(goldenLaw){goldenLaw.achievementGate="merchant1";goldenLaw.desc="Achievement-locked: defeat the Road Merchant once. Gain +100% gold and every 100 gold grants +1 attack for this run.";}
-
-  const gateV15=achievementGateUnlocked;
-  achievementGateUnlocked=function(gate){
-    if(!gate)return true;ensureAlphaMeta();if(gate==="merchant1")return (meta.merchantKills||0)>=1;if(gate==="ranger_b1")return hasBoardClear("ranger",1);if(gate==="sorcerer_b2")return hasBoardClear("sorcerer",2);if(gate==="slime_lvl5")return (meta.stats.classMaxLevel.slime||0)>=5;if(gate==="heal1000")return meta.stats.healingDone>=1000;if(gate==="gold1500")return meta.stats.highestGold>=4000;if(gate==="menagerie")return Object.values(meta.pets||{}).every(p=>p.unlocked);if(gate==="paladin_oath")return hasBoardClear("fighter",3)&&hasBoardClear("cleric",3);return gateV15(gate);};
 
   CLASSES.ceo.unlock="Secret: reach 300% Boss Damage";
   Object.assign(CLASSES.ranger,{scaleNotes:"Attack is the core stat; Crit is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive."});
@@ -1478,7 +1445,7 @@
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
   $("talentBtn").addEventListener("click",()=>openTalentTree());
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
-  $("prestigeKeepConfirmBtn").addEventListener("click",()=>{if(pendingPrestige)completePrestige(pendingPrestige,[...pendingPrestigeKeepIds]);});$("prestigeCancelBtn").addEventListener("click",()=>{pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");});
+
   window.addEventListener("resize",()=>placePawn(false));
   window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
 
@@ -1630,10 +1597,6 @@
   function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
   const openDebugMenuV11=openDebugMenu;openDebugMenu=function(){openDebugMenuV11();refreshDebugButtons();};
   const debugActionV11=debugAction;debugAction=function(action){if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}if(action==="omega_stone"&&gameStarted){equipItem(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");return;}return debugActionV11(action);};
-
-  completePrestige=function(data,keepIds=[]){const total=data.totalPoints??(allocatedTalentPoints()+(meta.points||0)),rewards=Math.floor(total/10),keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"];for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}meta.prestige.count=(meta.prestige.count||0)+rewards;const capacity=1+(meta.prestige.count>=20?1:0),pool=data.candidates||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=0;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$("prestigeHeirloomOverlay").classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();};
-  prestigeTree=function(){const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/10);if(rewards<1)return;const post=(meta.prestige?.count||0)+rewards,keep=1+(post>=20?1:0),warning=`Prestige all ${total} talent points? This includes ${unspent} unspent points. You gain ${rewards} permanent stat point${rewards===1?"":"s"}, your talent tree resets, and your leftover points are consumed so you do not keep extra talent points. ${gameStarted?"THIS ENDS THE CURRENT RUN AND RETURNS TO CLASS SELECTION.":""}`;if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);};
-
 
 
   refreshDebugButtons();
@@ -2640,12 +2603,6 @@
       if(leg){leg.achievementGate=`class_b4:${id}`;classMasteryGate[leg.id]={board:4,id};if(!/Board 4 mastery/i.test(leg.desc))leg.desc=`Board 4 mastery: ${leg.desc}`;}
     });
   }
-  const achievementGateUnlockedV19Base=achievementGateUnlocked;
-  achievementGateUnlocked=function(gate){
-    if(typeof gate==="string"&&gate.startsWith("class_b3:"))return hasBoardClear(gate.slice(9),3);
-    if(typeof gate==="string"&&gate.startsWith("class_b4:"))return hasBoardClear(gate.slice(9),4);
-    return achievementGateUnlockedV19Base(gate);
-  };
   v19AssignMasteryGates();
 
   // ---- Impossible Road: seven-piece progression ---------------------------
@@ -2664,35 +2621,8 @@
   // Board 6 adds the seventh Impossible Road slot.
   function generateMythicalOffhand(){return {id:`mythical_offhand_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"offhand",rarity:"mythical",mythical:true,mythicPiece:"offhand",setName:"Impossible Road",uniqueEffect:"Event Horizon Ward: Guard grants 8 additional Ultimate; every third Guard also raises one Barrier.",icon:"🌌🛡️",name:"Event Horizon Ward, Offhand Beyond the Sixth Road",bonuses:{maxHp:30,defense:7,attack:7,crit:.10,doubleStrike:.12,bossDamage:.32,flatReduction:2}};}
 
-  // ---- Prestige: 9 points per reward and extra 60-Prestige heirloom -------
-  function v19PrestigeKeepCapacity(count=meta.prestige?.count||0){return 1+(count>=20?1:0)+(count>=60?1:0);}
+  // ---- Heirloom slot capacity retained after V27 Prestige no-choice flow --
   getHeirloomSlots=function(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0)+((meta.prestige?.count||0)>=60?1:0);};
-  completePrestige=function(data,keepIds=[]){
-    const total=data.totalPoints??(allocatedTalentPoints()+(meta.points||0)),rewards=Math.floor(total/9),keys=["maxHp","attack","defense","crit","dodge","luck","lifeSteal"];
-    for(let i=0;i<rewards;i++){const key=pick(keys);meta.prestige[key]=(meta.prestige[key]||0)+1;}
-    meta.prestige.count=(meta.prestige.count||0)+rewards;
-    const capacity=v19PrestigeKeepCapacity(meta.prestige.count),pool=data.candidates||prestigeCandidateItems||meta.heirlooms||[],selected=pool.filter(h=>keepIds.includes(h.id)).slice(0,capacity);
-    const remainder=total%9;
-    meta.heirlooms=selected.map(normalizeSavedItem);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();
-    $("prestigeHeirloomOverlay")?.classList.add("hidden");saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} permanent stat point${rewards===1?"":"s"}`);renderTalents();updateMetaUI();openStartScreen();
-  };
-  openPrestigeHeirloomChoice=function(data){
-    const post=(meta.prestige?.count||0)+data.rewards,capacity=v19PrestigeKeepCapacity(post);
-    const pool=[...(meta.heirlooms||[]),...(data.wasInRun?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])];
-    const dedupe=new Map(pool.map(i=>[i.id,i]));prestigeCandidateItems=[...dedupe.values()];data.candidates=prestigeCandidateItems;pendingPrestige=data;pendingPrestigeKeepIds=new Set();
-    const prestigeOverlay=$("prestigeHeirloomOverlay"),prestigeGrid=$("prestigeKeepGrid")||$("prestigeHeirloomGrid"),prestigeConfirm=$("prestigeConfirmBtn")||$("prestigeKeepConfirmBtn"),prestigeSubtitle=$("prestigeHeirloomSubtitle")||$("prestigeHeirloomOverlay")?.querySelector(".subtitle");
-    if(!prestigeOverlay||!prestigeGrid||!prestigeConfirm)return;
-    if(prestigeSubtitle)prestigeSubtitle.textContent=`Choose up to ${capacity} survivor${capacity===1?"":"s"}. Selected items glow gold and show a large check mark.`;
-    const grid=prestigeGrid;grid.innerHTML="";
-    prestigeCandidateItems.forEach(item=>{const b=document.createElement("button");b.type="button";b.className="prestige-keep-btn";b.dataset.keepId=item.id;b.innerHTML=`<strong>${item.icon} ${item.name}</strong><span>${SLOT_LABELS[item.slot]} · ${formatBonuses(item)}</span><em class="prestige-selected-label">Not selected</em>`;b.addEventListener("click",()=>{if(pendingPrestigeKeepIds.has(item.id))pendingPrestigeKeepIds.delete(item.id);else{if(pendingPrestigeKeepIds.size>=capacity){showToast(`Keep at most ${capacity}`);return;}pendingPrestigeKeepIds.add(item.id);}const on=pendingPrestigeKeepIds.has(item.id);b.classList.toggle("kept",on);b.querySelector(".prestige-selected-label").textContent=on?"✓ SELECTED":"Not selected";prestigeConfirm.textContent=`Confirm ${pendingPrestigeKeepIds.size}/${capacity} selected`;});grid.appendChild(b);});
-    prestigeConfirm.textContent=`Confirm 0/${capacity} selected`;$("prestigeHeirloomOverlay").classList.remove("hidden");
-  };
-  prestigeTree=function(){
-    const allocated=allocatedTalentPoints(),unspent=meta.points||0,total=allocated+unspent,rewards=Math.floor(total/9);if(rewards<1)return;
-    const post=(meta.prestige?.count||0)+rewards,keep=v19PrestigeKeepCapacity(post),remainder=total%9,warning=`Prestige all ${total} talent points? Every 9 points becomes 1 permanent Prestige point (${rewards} reward${rewards===1?"":"s"}). ${remainder?`${remainder} leftover talent point${remainder===1?"":"s"} will be returned after the reset. `:""}Talents and Legacy level reset, and you may keep up to ${keep} heirloom${keep===1?"":"s"}.${gameStarted?" THIS ENDS THE CURRENT RUN AND RETURNS TO THE BETWEEN-RUNS HUB.":""}`;
-    if(!window.DiceboundPlatform.confirm(warning))return;const data={allocated,rewards,remainder:0,unspent:0,totalPoints:total,wasInRun:gameStarted};const pool=[...(meta.heirlooms||[]),...(gameStarted?EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(Boolean):[])];if(pool.length)openPrestigeHeirloomChoice(data);else completePrestige(data,[]);
-  };
-
 
   // ---- Compact status markers ---------------------------------------------
   // Once stacks become numerous, a number is much more readable than a row of
@@ -2861,7 +2791,7 @@
     sovereign:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");player.gold=99999;currentMerchantItems=[{id:"v19_relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];renderMerchant();return true;},
     board6:()=>{gameStarted=true;runFinalized=false;boardLevel=6;player.position=0;generateBoard();buildBoard();return {tiles:tiles.length,mini:tiles[currentMinibossTile()-1]?.enemyBase?.name,last:tiles.at(-1)?.type};},
     doubleDice:()=>{meta.doubleDiceUnlocked=true;updateHUD();return {visible:$("roll2Btn")?.style.display!=="none",label:$("roll2Btn")?.textContent};},
-    prestige:()=>({pointsPerPrestige:9,capacity20:v19PrestigeKeepCapacity(20),capacity60:v19PrestigeKeepCapacity(60),tenPointRemainder:10%9}),
+    prestige:()=>({pointsPerPrestige:9,capacity20:2,capacity60:3,tenPointRemainder:10%9}),
     set:()=>({summary:mythicalSetSummary(),offhand:generateMythicalOffhand()}),
     petSwitch:()=>({classId:player.classId,petTagged:v19PetTaggedClass(),gameStarted,beastmasterTagged:(CLASSES.beastmaster.tags||[]).includes("pet")}),
     paladinGrace:()=>{meta.unlocks.paladin=true;resetPlayer("paladin");player.hp=Math.max(1,player.maxHp-20);healPlayer(10);return {grace:player.paladinGrace,hp:player.hp};},
@@ -3242,24 +3172,23 @@
     find:$,
     getState:()=>{
       const total=allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
-      return {prestige:DB_PRESTIGE.inspect(meta.prestige),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Each unspent point grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
+      return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Each unspent point grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
     },
     prestige:()=>prestigeTree(),
     purchase:id=>{
       if(gameStarted){showToast('Spend Prestige Points between runs.');return Object.freeze({ok:false,reason:'Prestige Moon purchases are available between runs.'});}
-      const result=DB_PRESTIGE.purchase(meta.prestige,id,random);
+      const result=dbProgression.prestigePurchase(id);
       if(!result.ok){showToast(result.reason);return result;}
-      meta.prestige=result.prestige;
       const storagePurchase=[DB_HEIRLOOM_STORAGE_NODE,DB_HEIRLOOM_SLOT_I_NODE,DB_HEIRLOOM_SLOT_II_NODE].includes(id);
-      if(storagePurchase){if(id===DB_HEIRLOOM_STORAGE_NODE)meta.heirloomStorageUnlocked=true;v24SyncStorage();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} purchased.`);}else showToast(`${result.node.label}: ${DB_PRESTIGE.formatStats(result.stats)}.`);
+      if(storagePurchase){if(id===DB_HEIRLOOM_STORAGE_NODE)meta.heirloomStorageUnlocked=true;v24SyncStorage();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} purchased.`);}else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
       saveMeta();updateMetaUI();return result;
     },
     refundAll:async()=>{
       if(gameStarted){showToast('Refund Prestige Points between runs.');return false;}
-      const current=DB_PRESTIGE.inspect(meta.prestige);
+      const current=dbProgression.prestigeInspect();
       if(!current.refundableSpent)return false;
       if(!(await diceboundConfirm(`Refund ${current.refundableSpent} refundable Prestige Point${current.refundableSpent===1?'':'s'}? Permanent Heirloom purchases stay unlocked.`,{title:'Refund Prestige stats?',confirmLabel:'Refund stats',danger:true})))return false;
-      const result=DB_PRESTIGE.refundAll(meta.prestige);meta.prestige=result.prestige;saveMeta();updateMetaUI();showToast(`Refunded ${result.refunded} Prestige Point${result.refunded===1?'':'s'}.`);return true;
+      const result=dbProgression.prestigeRefundAll();saveMeta();updateMetaUI();showToast(`Refunded ${result.refunded} Prestige Point${result.refunded===1?'':'s'}.`);return true;
     },
     afterClose:()=>v22UpdateCamp()
   });
@@ -3522,8 +3451,6 @@
     if(!v24StorageUnlocked())return;const byId=new Map((meta.heirloomStorage||[]).map(i=>[i.id,normalizeSavedItem(i)]));(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));meta.heirloomStorage=[...byId.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();
   }
   function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE),text:'Storage Slot I purchased'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE),text:'Storage Slot II purchased'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
-  const completePrestigeV24Base=completePrestige;
-  completePrestige=function(data,keepIds=[]){const unlocked=v24StorageUnlocked(),before=(meta.heirloomStorage||[]).map(normalizeSavedItem),chosen=(data?.candidates||[]).filter(i=>keepIds.includes(i.id)).map(normalizeSavedItem);const result=completePrestigeV24Base(data,keepIds);if(unlocked){meta.heirloomStorageUnlocked=true;const map=new Map([...before,...chosen].map(i=>[i.id,i]));meta.heirloomStorage=[...map.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();}return result;};
 
   /* MODULE: Pale Devil ritual / secret boss ------------------------------- */
   function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
@@ -3969,8 +3896,7 @@
 
   /* RANDOM CLASS ----------------------------------------------------------- */
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
-  function v27CompletePrestigeNoChoice(total){const rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;meta.prestige=DB_PRESTIGE.award(meta.prestige,rewards);meta.purchased={};meta.level=1;meta.xp=0;meta.xpNext=legacyXpForLevel(1);meta.points=remainder;pendingPrestige=null;pendingPrestigeKeepIds=new Set();$('prestigeHeirloomOverlay')?.classList.add('hidden');if(v24StorageUnlocked?.()){v24SyncStorage?.();const cap=getHeirloomSlots();meta.heirlooms=(meta.heirlooms||[]).slice(0,cap).map(normalizeSavedItem);}else meta.heirlooms=(meta.heirlooms||[]).slice(0,getHeirloomSlots()).map(normalizeSavedItem);saveMeta();checkDynamicClassUnlocks();sfx.holy();showToast(`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);renderTalents();updateMetaUI();openStartScreen();return true;}
-  prestigeTree=async function(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return v27CompletePrestigeNoChoice(total);};
+  async function prestigeTree(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return dbProgression.completePrestige(total);}
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
 
@@ -4169,66 +4095,7 @@
   },true);
   dbBeta01SyncDifficultyAtmosphere();
   window.DiceboundBeta01=Object.freeze({difficultyMode:dbBeta01DifficultyMode,syncDifficultyAtmosphere:dbBeta01SyncDifficultyAtmosphere});
-  /* ========================================================================
-     Alpha v3.1.7 — registry-driven achievement presentation
-     Milestone achievement content comes only from ACHIEVEMENT_REGISTRY.
-     Class unlock cards derive from CLASSES + CLASS_UNLOCK_REGISTRY and class
-     mastery cards derive from canonical powerup achievementGate metadata.
-     ======================================================================== */
-  function db317AchievementDone(a){
-    const stats=ensureAlphaMeta(),parts=String(a.condition||"").split(":"),kind=parts[0];
-    if(kind==="runsStarted")return (stats.runsStarted||0)>0||gameStarted;
-    if(kind==="boardClear")return hasBoardClear(parts[1],Number(parts[2]));
-    if(kind==="classUnlocked")return isClassUnlocked(parts[1]);
-    if(kind==="nightmareUnlocked")return !!meta.nightmareUnlocked;
-    if(kind==="board4Clears")return (meta.board4Clears||0)>0;
-    if(kind==="board5Clears")return (meta.board5Clears||0)>0;
-    if(kind==="classLevel")return (stats.classMaxLevel?.[parts[1]]||0)>=Number(parts[2]||0);
-    if(kind==="healingDone")return (stats.healingDone||0)>=Number(parts[1]||0);
-    if(kind==="highestGold")return Math.max(stats.highestGold||0,player?.gold||0)>=Number(parts[1]||0);
-    if(kind==="elementProgress")return (meta.elementProgress?.[parts[1]]||0)>=Number(parts[2]||0);
-    if(kind==="allPetsUnlocked")return Object.values(meta.pets||{}).every(p=>p.unlocked);
-    if(kind==="prestige")return (meta.prestige?.count||0)>=Number(parts[1]||0);
-    if(kind==="setPieces")return mythicalSetCount()>=Number(parts[1]||0);
-    if(kind==="merchantKills")return (meta.merchantKills||0)>=Number(parts[1]||0);
-    if(kind==="hellUnlocked")return !!meta.hellUnlocked;
-    if(kind==="heirloomStorageUnlocked")return !!meta.heirloomStorageUnlocked||v24StorageUnlocked?.();
-    if(kind==="legendaryRelics")return (meta.legendaryRelics||[]).length>=Number(parts[1]||0);
-    if(kind==="devilBossKills")return (meta.devilBossKills||0)>=Number(parts[1]||0);
-    if(kind==="devilHornsFound")return !!meta.devilHornsFound;
-    if(kind==="potionsUsed")return (stats.potionsUsed||0)>=Number(parts[1]||0);
-    return !!meta.achievements?.[a.id];
-  }
-  function db317AchievementConditionText(a){
-    const p=String(a.condition||"").split(":"),kind=p[0];
-    if(kind==="runsStarted")return "Begin any run.";
-    if(kind==="boardClear")return `Clear Board ${p[2]} as ${CLASSES[p[1]]?.name||p[1]}.`;
-    if(kind==="classUnlocked")return `Unlock ${CLASSES[p[1]]?.name||p[1]}.`;
-    if(kind==="nightmareUnlocked")return "Unlock Nightmare Mode.";
-    if(kind==="board4Clears")return "Clear Board 4.";
-    if(kind==="board5Clears")return "Clear Board 5.";
-    if(kind==="classLevel")return `Reach run level ${p[2]} as ${CLASSES[p[1]]?.name||p[1]}.`;
-    if(kind==="healingDone")return `Heal ${Number(p[1]).toLocaleString()} HP across all runs.`;
-    if(kind==="highestGold")return `Hold ${Number(p[1]).toLocaleString()} gold at once.`;
-    if(kind==="elementProgress")return `Accumulate ${Number(p[2]).toLocaleString()} ${ELEMENTS[p[1]]?.name||p[1]} damage/healing.`;
-    if(kind==="allPetsUnlocked")return "Unlock every companion.";
-    if(kind==="prestige")return `Reach ${p[1]} Prestige.`;
-    if(kind==="setPieces")return `Equip ${p[1]} pieces of the Impossible Road set.`;
-    if(kind==="merchantKills")return `Defeat the Road Merchant ${p[1]} time${Number(p[1])===1?"":"s"}.`;
-    if(kind==="hellUnlocked")return "Unlock Hell Mode.";
-    if(kind==="heirloomStorageUnlocked")return "Unlock permanent Heirloom Storage.";
-    if(kind==="legendaryRelics")return `Discover ${p[1]} named Mythical road relic${Number(p[1])===1?"":"s"}.`;
-    if(kind==="devilBossKills")return `Defeat the Pale Devil ${p[1]} time${Number(p[1])===1?"":"s"}.`;
-    if(kind==="devilHornsFound")return "Find the Devil's Horns Omega hat.";
-    if(kind==="potionsUsed")return `Consume ${p[1]} potions across all runs.`;
-    return "Complete the listed achievement condition.";
-  }
-  function db317AchievementRewardText(a){
-    if(!a.reward)return "";const [type,id]=String(a.reward).split(":");
-    if(type==="class")return ` · unlocks ${CLASSES[id]?.name||id}`;
-    if(type==="powerup")return ` · unlocks ${upgrades.find(u=>u.id===id)?.name||id}`;
-    return "";
-  }
+  /* Alpha v3.1.7 Achievement policy is now owned by DiceboundProgression. */
   /* ========================================================================
      Alpha v3.2.4 — touch/mobile UI contract
      ======================================================================== */
@@ -5234,7 +5101,7 @@
   }
   function v319PoisonOverflow(seed='poison-319',chance=2.4,n=1000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');const vals=[];for(let i=0;i<n;i++)vals.push(rollTieredProc(chance));return {seed,chance,n,min:Math.min(...vals),max:Math.max(...vals),average:vals.reduce((a,b)=>a+b,0)/n,first:vals.slice(0,20)};}
   function v319Prestige(seed='prestige-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();meta.points=18;const before=meta.prestige.count||0;v27CompletePrestigeNoChoice(18);const permanent=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'].reduce((n,k)=>n+(meta.prestige[k]||0),0);return {before,after:meta.prestige.count,permanent,points:meta.points,level:meta.level};
+    window.DiceboundRng.seed(seed);v319ResetCareer();meta.points=18;const before=meta.prestige.count||0;dbProgression.completePrestige(18);const permanent=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'].reduce((n,k)=>n+(meta.prestige[k]||0),0);return {before,after:meta.prestige.count,permanent,points:meta.points,level:meta.level};
   }
   function v319StorageSaveReload(){
     v319ResetCareer();meta.heirloomStorageUnlocked=true;meta.board5Clears=1;meta.prestige.count=5;meta.merchantKills=1;const item={id:'test_heirloom_319',slot:'weapon',rarity:'epic',icon:'🧪',name:'Regression Blade',bonuses:{attack:9}};meta.heirloomStorage=[item];meta.heirlooms=[item];const capacity=v24StorageCapacity();saveMeta();meta.heirloomStorage=[];meta.heirlooms=[];const loaded=window.DiceboundSave.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;return {capacity,stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length,id:meta.heirloomStorage?.[0]?.id||null};
@@ -5482,25 +5349,7 @@
     if(legendary){legendary.achievementGate=`class_b5:${id}`;(db0512ClassMastery[id]??=[]).push({board:5,id:legendary.id});}
   });
 
-  const db0512AchievementGateBase=achievementGateUnlocked;
-  achievementGateUnlocked=function(gate){
-    if(typeof gate==='string'&&gate.startsWith('achievement:')){
-      const id=gate.slice('achievement:'.length),a=ACHIEVEMENT_REGISTRY.find(x=>x.id===id);
-      return !!a&&db317AchievementDone(a);
-    }
-    if(typeof gate==='string'&&gate.startsWith('class_b2:'))return hasBoardClear(gate.slice(9),2);
-    if(typeof gate==='string'&&gate.startsWith('class_b5:'))return hasBoardClear(gate.slice(9),5);
-    return db0512AchievementGateBase(gate);
-  };
-
-  // Achievement completion state also controls the newly-gated powerups.
-  const db0512AchievementRewardBase=db317AchievementRewardText;
-  db317AchievementRewardText=function(a){
-    const base=db0512AchievementRewardBase(a),ids=db0512GateRewards[a?.id]||[];
-    const names=ids.map(id=>upgrades.find(u=>u.id===id)?.name).filter(Boolean).filter(name=>!base.includes(name));
-    if(!names.length)return base;
-    return `${base}${base?' · also':' ·'} unlocks ${names.join(', ')}`;
-  };
+  // Achievement-gated reward copy is resolved by DiceboundProgression.
 
   window.DiceboundBeta0512Test=Object.freeze({
     globalGates:()=>Object.entries(db0512GlobalPowerGates).map(([id,a])=>({id,name:upgrades.find(u=>u.id===id)?.name,achievement:a,unlocked:achievementGateUnlocked(`achievement:${a}`)})),
@@ -5815,7 +5664,7 @@
       tiles=dbRunClone(run.tiles);boardLevel=Number(run.boardLevel)||1;selectedClassId=String(run.selectedClassId||player.classId||'ranger');nightmareMode=!!run.nightmareMode;hellMode=!!run.hellMode;
       rolls=Math.max(0,Number(run.rolls)||0);tilesMovedThisRun=Math.max(0,Number(run.tilesMovedThisRun)||0);runTalentSnapshot=dbRunClone(run.runTalentSnapshot);statsLastHp=run.statsLastHp??null;statsLastGold=run.statsLastGold??null;
       merchantFaceClicks=new Set(run.merchant?.faceClicks||[]);merchantFaceTotal=Math.max(0,Number(run.merchant?.faceTotal)||0);merchantBossPrimed=!!run.merchant?.bossPrimed;merchantBossDefeatedThisBoard=!!run.merchant?.bossDefeatedThisBoard;merchantBossBattle=false;
-      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingPrestige=null;pendingPrestigeKeepIds=new Set();pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
+      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
       window.DiceboundRng.restore(checkpoint.rng);dbRunOwnedSeed=checkpoint.rng.seed;
       gameStarted=true;rollLocked=false;dbRunCloseOverlays();applyRunTheme();buildBoard();
       if($('log'))$('log').innerHTML=String(run.logHtml||'');
@@ -5847,7 +5696,6 @@
   const dbRunUpdateHudBase=updateHUD;updateHUD=function(...args){const result=dbRunUpdateHudBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
   const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
   const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
-  const dbRunCompletePrestigeBase=completePrestige;completePrestige=function(...args){dbRunClearCheckpoint();return dbRunCompletePrestigeBase.apply(this,args);};
   document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
   // Test-only exercise of the live final-boss path. It deliberately resets the
@@ -5893,9 +5741,7 @@
     for(const candidate of DB0633_CAMP_TROPHY_TIERS)if(earned>=candidate.minimumAchievementCount)tier=candidate;
     return tier;
   }
-  function db0633PrestigeOfferPoints(total=allocatedTalentPoints()+(meta.points||0)){
-    return Math.max(0,Math.floor(Math.max(0,Number(total)||0)/9));
-  }
+  function db0633PrestigeOfferPoints(total=allocatedTalentPoints()+(meta.points||0)){return dbProgression.prestigeOffer(total);}
   function db0633ReconcileCampRevealState(current={},facts={}){
     const prior={achievementTrophy:!!current.achievementTrophy,talentStar:!!current.talentStar,prestigeMoon:!!current.prestigeMoon};
     const achievementCount=Math.max(0,Math.floor(Number(facts.achievementCount)||0));
@@ -5912,9 +5758,7 @@
     const state=meta.campReveals;
     return {achievementTrophy:!!state?.achievementTrophy,talentStar:!!state?.talentStar,prestigeMoon:!!state?.prestigeMoon};
   }
-  function db0633AchievementCount(){
-    return ACHIEVEMENT_REGISTRY.reduce((count,achievement)=>count+(db317AchievementDone(achievement)?1:0),0);
-  }
+  function db0633AchievementCount(){return dbProgression.achievementCount();}
   function db0633ReconcileCampReveals(options={}){
     const current=db0633CurrentCampRevealState();
     const next=db0633ReconcileCampRevealState(current,{
@@ -6274,15 +6118,6 @@
     if(!meta.settings.achievementGroups||typeof meta.settings.achievementGroups!=='object')meta.settings.achievementGroups={};
     return meta.settings.achievementGroups;
   }
-  function db064PowerupGateDone(gate){return achievementGateUnlocked(gate);}
-  function db064HeroMasteryEntries(classId){
-    return upgrades.filter(upgrade=>(upgrade.classId===classId||(upgrade.classIds||[]).includes(classId))&&!!upgrade.achievementGate)
-      .map(upgrade=>{
-        const gate=String(upgrade.achievementGate),match=/^class_b(\d+):/.exec(gate),achievement=gate.startsWith('achievement:')?ACHIEVEMENT_REGISTRY.find(entry=>entry.id===gate.slice('achievement:'.length)):ACHIEVEMENT_REGISTRY.find(entry=>entry.id===gate);
-        const condition=match?`Clear Board ${match[1]} as this hero.`:achievement?db317AchievementConditionText(achievement):'Complete this hero’s listed unlock condition.';
-        return {id:`hero-talent:${classId}:${upgrade.id}`,name:`${upgrade.icon||'✨'} ${upgrade.name}`,description:`${condition} Unlocks this hero-specific talent.`,done:db064PowerupGateDone(gate)};
-      });
-  }
   const dbAchievementsUi=window.DiceboundAchievementsUi;
   if(!dbAchievementsUi)throw new Error('DiceBound requires the Achievements UI module before dicebound.js');
   dbAchievementsUi.configure({
@@ -6290,9 +6125,9 @@
     getRegistry:()=>ACHIEVEMENT_REGISTRY,
     getClasses:()=>Object.values(CLASSES),
     isClassUnlocked,
-    isDone:db317AchievementDone,
-    descriptionFor:achievement=>db317AchievementConditionText(achievement)+db317AchievementRewardText(achievement),
-    heroMasteryEntries:db064HeroMasteryEntries,
+    isDone:achievement=>dbProgression.achievementDone(achievement),
+    descriptionFor:achievement=>dbProgression.achievementConditionText(achievement)+dbProgression.achievementRewardText(achievement),
+    heroMasteryEntries:classId=>dbProgression.heroMasteryEntries(classId),
     getOpenState:db064AchievementUiSettings,
     setOpenState:(id,open)=>{db064AchievementUiSettings()[id]=!!open;saveMeta();}
   });
@@ -7132,4 +6967,58 @@
     setRunGlobals:next=>{boardLevel=next.boardLevel;rolls=next.rolls;tilesMovedThisRun=next.tilesMovedThisRun;pendingLevelUps=next.pendingLevelUps;currentEnemy=next.currentEnemy;currentEnemies=next.currentEnemies;currentEncounterLead=next.currentEncounterLead;currentEnemyTile=next.currentEnemyTile;currentMerchantItems=next.currentMerchantItems;runFinalized=next.runFinalized;lastLegacyAward=next.lastLegacyAward;lastGoldLegacyAward=next.lastGoldLegacyAward;merchantBossBattle=next.merchantBossBattle;},
     initializeD20State:()=>dbCombatD20ChaosResolution.initializePlayerState()
   });
+
+  // Test-only characterization surface for the Progression subsystem migration.
+  // It exposes the final released 0.6.6.28 behavior without changing ordinary
+  // callers so capture/replay can freeze Talent, Legacy, Prestige, Achievement
+  // and class-unlock integration before ownership moves.
+  window.DiceboundProgressionOracleTest=Object.freeze({
+    snapshot:()=>({
+      gameStarted:!!gameStarted,
+      runTalentSnapshot:dbRunClone(runTalentSnapshot),
+      meta:{
+        level:meta.level,xp:meta.xp,xpNext:meta.xpNext,points:meta.points,
+        purchased:dbRunClone(meta.purchased||{}),prestige:dbRunClone(meta.prestige||{}),
+        heirlooms:dbRunClone(meta.heirlooms||[]),heirloomStorage:dbRunClone(meta.heirloomStorage||[]),heirloomStorageUnlocked:!!meta.heirloomStorageUnlocked,
+        unlocks:dbRunClone(meta.unlocks||{}),classUnlockFacts:dbRunClone(meta.classUnlockFacts||{}),
+        stats:dbRunClone(meta.stats||{}),elementProgress:dbRunClone(meta.elementProgress||{}),
+        devilHornsFound:!!meta.devilHornsFound,nightmareUnlocked:!!meta.nightmareUnlocked,hellUnlocked:!!meta.hellUnlocked,
+        runs:meta.runs,bestTiles:meta.bestTiles
+      }
+    }),
+    setRunActive:value=>{gameStarted=!!value;return gameStarted;},
+    patchMeta:patch=>{Object.assign(meta,dbRunClone(patch||{}));return true;},
+    patchPlayer:patch=>{Object.assign(player,dbRunClone(patch||{}));return true;},
+    setTalentState:({points,purchased}={})=>{if(points!==undefined)meta.points=Math.max(0,Number(points)||0);if(purchased!==undefined)meta.purchased=dbRunClone(purchased||{});return true;},
+    setPurchasedRank:(id,rank)=>{meta.purchased=meta.purchased||{};meta.purchased[id]=Math.max(0,Number(rank)||0);return meta.purchased[id];},
+    setLegacyState:({level,xp,xpNext,points}={})=>{if(level!==undefined)meta.level=Math.max(1,Number(level)||1);if(xp!==undefined)meta.xp=Math.max(0,Number(xp)||0);if(xpNext!==undefined)meta.xpNext=Math.max(1,Number(xpNext)||1);if(points!==undefined)meta.points=Math.max(0,Number(points)||0);return true;},
+    setRunTalentSnapshot:value=>{runTalentSnapshot=value==null?null:dbRunClone(value);return dbRunClone(runTalentSnapshot);},
+    talentRank:id=>talentRank(id),
+    gameplayTalentRank:id=>gameplayTalentRank(id),
+    talentAvailable:id=>{const talent=talents.find(entry=>entry.id===id);return !!talent&&talentAvailable(talent);},
+    purchaseTalent:id=>purchaseTalentNode(id),
+    repairTalentPrerequisites:()=>repairTalentPrerequisites(),
+    allocatedTalentPoints:()=>allocatedTalentPoints(),
+    legacyXpForLevel:level=>legacyXpForLevel(level),
+    grantLegacyXp:amount=>grantLegacyXp(amount),
+    finalizeRun:()=>finalizeRun(),
+    prestigeOffer:total=>db0633PrestigeOfferPoints(total),
+    completePrestige:total=>dbProgression.completePrestige(total),
+    setPrestige:value=>{meta.prestige=DB_PRESTIGE.normalize(dbRunClone(value||{}));return dbRunClone(meta.prestige);},
+    rawPrestige:()=>dbRunClone(meta.prestige||{}),
+    prestigeInspect:()=>dbRunClone(dbProgression.prestigeInspect()),
+    prestigeDomainPurchase:id=>dbRunClone(dbProgression.prestigePurchase(id)),
+    prestigeDomainRefund:()=>dbRunClone(dbProgression.prestigeRefundAll()),
+    checkpointHas:()=>DB_RUN_CHECKPOINT.has(),
+    achievementDone:id=>dbProgression.achievementDone(id),
+    achievementConditionText:id=>dbProgression.achievementConditionText(id),
+    achievementRewardText:id=>dbProgression.achievementRewardText(id),
+    achievementGate:gate=>dbProgression.achievementGateUnlocked(gate),
+    heroMastery:classId=>dbRunClone(dbProgression.heroMasteryEntries(classId)),
+    achievementCount:()=>dbProgression.achievementCount(),
+    unlockClass:id=>dbProgression.unlockClass(id),
+    classUnlockFeedbackState:()=>dbRunClone(window.DiceboundClassUnlockFeedback?.state?.()||null),
+    logHtml:()=>String($('log')?.innerHTML||'')
+  });
+
 })();

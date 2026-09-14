@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.29
+
+### Progression subsystem facade and ownership (#329)
+- Added `runtime/js/progression/lifecycle.js` as the ordinary public `DiceboundProgression` boundary for Talent/Legacy progression, final Prestige reset coordination, Achievement policy and class-unlock orchestration while retaining the existing focused Talent registry, Prestige domain, Achievement registry and class-unlock rule/feedback modules.
+- Routed Talent callers, Run finalization, Prestige Moon inspect/purchase/refund flows, Achievement/Trophy policy, Camp progression reveals and ordinary class unlock eligibility/commit/dynamic scans through the facade; retired the historical Talent/Legacy/Prestige, Achievement-gate/reward and class-unlock semantic shadows from `dicebound.js`.
+- Added a permanent 30-case exact released-0.6.6.28 Progression oracle covering Talent prerequisites and run snapshots, Legacy awards, final Prestige reset/storage/checkpoint behavior, Prestige Moon RNG/state, Achievement completion/copy/gates/mastery/count and class-unlock commit behavior, plus focused anti-shadow and class-unlock transaction guards.
+- Architecture-only: no Talent costs/effects, Legacy rates, Prestige conversion, Moon purchases/Forge design, Achievement conditions/rewards, class unlock thresholds, RNG, save/checkpoint semantics or gameplay balance changes are intended. Runtime graph is 79 modules (78 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 676,782 bytes / 7,025 physical lines versus 692,187 bytes / 7,136 lines in released 0.6.6.28.
+
 ## Beta 0.6.6.28
 
 ### Pets subsystem facade and lifecycle ownership (#327)
