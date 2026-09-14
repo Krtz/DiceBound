@@ -1,3 +1,11 @@
+# Unreleased — Beta 0.6.6.32
+
+## Beta 0.6.6.32 Combat View subsystem ownership (#343)
+- `DiceboundCombatView` is now the ordinary public Combat presentation/VFX boundary over focused `combat/presentation.js` and `combat/vfx.js` internals; ordinary runtime composition no longer treats those two specialist owners as peer subsystem APIs.
+- Combat control/view-model rendering, enemy/status presentation, Dragoon presentation, authored Nature/Donut/projectile VFX and transient cleanup route through the facade while gameplay ownership remains behind `DiceboundCombat` and the other existing subsystem facades.
+- A permanent released-0.6.6.31 Combat View characterization oracle plus facade/anti-shadow guards freezes output and zero-gameplay-RNG behavior. Existing presentation/VFX, Combat Engine, browser/file startup and deterministic subsystem suites remain authoritative.
+- No combat formulas, balance, RNG, turn/action ordering, class/Pet mechanics, targeting, rewards/progression, authored VFX timing/assets, save/checkpoint behavior or UI redesign is intended. Runtime graph is 82 modules (81 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 678,074 bytes / 7,057 lines.
+
 # Unreleased — Beta 0.6.6.31
 
 ## Beta 0.6.6.31 Combat Engine subsystem ownership (#341)
