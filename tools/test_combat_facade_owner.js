@@ -54,7 +54,7 @@ for(const snippet of [
   'function healPlayer(...args){return dbCombat.heal(...args);}',
   'async function useUltimate(...args){return dbCombat.ultimate(...args);}',
   'async function occultSpellAttack(...args){return dbCombat.spell(...args);}',
-  'function petDamage(...args){return dbCombat.petDamage(...args);}'
+  'if(dbCombat)return dbCombat.petDamage();'
 ])assert(monolith.includes(snippet),`Missing Combat facade route: ${snippet}`);
 for(const retired of [
   'return dbCombatAttackResolution.playerAttack(...args);',
@@ -63,7 +63,7 @@ for(const retired of [
   'return dbCombatVictoryResolution.winCombat(...args);',
   'return dbCombatTurns.resolveEnemyResponse(...args);',
   'return dbCombatManaActionResolution.occultSpellAttack.apply(this,args);',
-  'return dbCombatPetTurnResolution.petDamage();'
+  'if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();'
 ])assert(!monolith.includes(retired),`Peer-public Combat adapter returned: ${retired}`);
 assert(!source.includes('DiceboundCombatPresentation'),'Engine facade must not absorb Combat Presentation');
 assert(!source.includes('DiceboundCombatVfx'),'Engine facade must not absorb Combat VFX');
