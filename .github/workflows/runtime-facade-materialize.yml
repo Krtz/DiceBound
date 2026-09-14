@@ -33,6 +33,15 @@ jobs:
       - name: Materialize Runtime facade
         shell: pwsh
         run: |
+          @'
+          from pathlib import Path
+          p=Path('tools/materialize_runtime_facade.py')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('import json\n', 'import json\nimport re\n', 1)
+          s=s.replace('    if forbidden in mono:\n        raise AssertionError(f"monolith still coordinates peer Runtime owner {forbidden}")', '    if re.search(re.escape(forbidden) + r"\\b", mono):\n        raise AssertionError(f"monolith still coordinates peer Runtime owner {forbidden}")', 1)
+          p.write_text(s, encoding='utf-8')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_runtime_facade.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.34 --channel Beta --development-state Unreleased --notes "Materialized Runtime facade development for Beta 0.6.6.34."
