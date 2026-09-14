@@ -3,10 +3,11 @@
 
   const classes=window.DiceboundClasses;
   const assets=window.DiceboundAssets;
-  const storage=window.DiceboundStorage;
+  const runtime=window.DiceboundRuntime;
+  const storage=runtime?.storage;
   const rules=window.DiceboundClassUnlockRules;
   if(!classes)throw new Error("DiceboundClassUnlockFeedback requires DiceboundClasses");
-  if(!storage)throw new Error("DiceboundClassUnlockFeedback requires DiceboundStorage");
+  if(!storage)throw new Error("DiceboundClassUnlockFeedback requires DiceboundRuntime.storage");
   if(!rules)throw new Error("DiceboundClassUnlockFeedback requires DiceboundClassUnlockRules");
 
   const classRegistry=classes.createRegistry();

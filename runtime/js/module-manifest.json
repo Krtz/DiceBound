@@ -193,9 +193,7 @@
       "path": "js/core/state.js",
       "domain": "core/state",
       "status": "extracted",
-      "requires": [
-        "save-system"
-      ],
+      "requires": [],
       "provides": [
         "DiceboundCoreState"
       ]
@@ -645,7 +643,7 @@
       "domain": "run/fresh-run-checkpoint-seed-player-board-and-entry-orchestration",
       "status": "extracted",
       "requires": [
-        "run-checkpoint",
+        "runtime-facade",
         "board-generation",
         "board-transition",
         "run-player-initialization"
@@ -660,7 +658,7 @@
       "domain": "run/terminal-sixth-road-completion-idempotence-and-end-handoff",
       "status": "extracted",
       "requires": [
-        "run-checkpoint",
+        "runtime-facade",
         "run-lifecycle",
         "board-transition"
       ],
@@ -800,9 +798,7 @@
       "path": "js/progression/prestige.js",
       "domain": "progression/prestige-currency-moon-purchases-held-bonuses-and-refunds",
       "status": "extracted",
-      "requires": [
-        "core-state"
-      ],
+      "requires": [],
       "provides": [
         "DiceboundPrestige"
       ]
@@ -823,7 +819,6 @@
       "domain": "progression/talent-legacy-prestige-lifecycle-and-public-facade",
       "status": "extracted",
       "requires": [
-        "core-state",
         "progression-talents",
         "progression-prestige"
       ],
@@ -926,9 +921,7 @@
       "path": "js/powerups/registry.js",
       "domain": "powerups/registry-and-effects",
       "status": "extracted",
-      "requires": [
-        "runtime-services"
-      ],
+      "requires": [],
       "provides": [
         "DiceboundPowerupRegistry"
       ]
@@ -950,9 +943,9 @@
       "status": "extracted",
       "requires": [
         "assets",
-        "storage",
         "classes-registry",
-        "progression-class-unlock-rules"
+        "progression-class-unlock-rules",
+        "runtime-facade"
       ],
       "provides": [
         "DiceboundClassUnlockFeedback"

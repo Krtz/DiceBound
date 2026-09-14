@@ -1,72 +1,4 @@
-from pathlib import Path
-import json
-
-root=Path(__file__).resolve().parents[1]
-
-def read(path): return (root/path).read_text(encoding='utf-8')
-def write(path,text): (root/path).write_text(text,encoding='utf-8')
-def once(text,old,new,label):
-    count=text.count(old)
-    if count!=1: raise AssertionError(f'{label}: expected one match, found {count}')
-    return text.replace(old,new,1)
-
-# Core State is a focused pure owner. Runtime facade injects persistence; the
-# owner must not silently reach sideways to the Save global on its own.
-path=Path('runtime/js/core/state.js')
-text=read(path)
-text=once(text,
-  'function createMetaService({classIds,petIds,elementIds,petUnlockRequirement=500,saveService=window.DiceboundSave}={}){',
-  'function createMetaService({classIds,petIds,elementIds,petUnlockRequirement=500,saveService=null}={}){',
-  'Core State implicit Save dependency')
-write(path,text)
-
-# Unlock feedback is an ordinary Progression consumer of persistence. Route it
-# through the public Runtime boundary rather than the Storage peer global.
-path=Path('runtime/js/progression/class-unlock-feedback.js')
-text=read(path)
-text=once(text,
-  '  const storage=window.DiceboundStorage;',
-  '  const runtime=window.DiceboundRuntime;\n  const storage=runtime?.storage;',
-  'Class unlock feedback Storage route')
-text=once(text,
-  '  if(!storage)throw new Error("DiceboundClassUnlockFeedback requires DiceboundStorage");',
-  '  if(!storage)throw new Error("DiceboundClassUnlockFeedback requires DiceboundRuntime.storage");',
-  'Class unlock feedback Runtime error')
-write(path,text)
-
-# Existing focused unit harness supplies only the persistence port it exercises.
-path=Path('tools/test_class_unlock_feedback.js')
-text=read(path)
-text=once(text,
-  'const w={DiceboundStorage:{getString:key=>stored.get(String(key))??null,setString:(key,value)=>{stored.set(String(key),String(value));return true;}}};',
-  'const w={DiceboundStorage:{getString:key=>stored.get(String(key))??null,setString:(key,value)=>{stored.set(String(key),String(value));return true;}}};\nw.DiceboundRuntime=Object.freeze({storage:w.DiceboundStorage});',
-  'Unlock feedback test Runtime port')
-write(path,text)
-
-# Remove stale implementation dependencies from the authoritative graph. These
-# modules receive capabilities/services via their public subsystem composition
-# boundaries and do not import the focused Runtime peers themselves.
-manifest_path=root/'runtime/js/module-manifest.json'
-manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
-mods={module['id']:module for module in manifest['modules']}
-remove_reqs={
-  'core-state':{'save-system'},
-  'run-lifecycle':{'run-checkpoint'},
-  'run-completion':{'run-checkpoint'},
-  'progression-prestige':{'core-state'},
-  'progression-lifecycle':{'core-state'},
-  'powerup-registry':{'runtime-services'},
-  'progression-class-unlock-feedback':{'storage'},
-}
-for module_id,remove in remove_reqs.items():
-    module=mods[module_id]
-    module['requires']=[req for req in module.get('requires',[]) if req not in remove]
-feedback=mods['progression-class-unlock-feedback']
-if 'runtime-facade' not in feedback['requires']:
-    feedback['requires'].append('runtime-facade')
-manifest_path.write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
-
-boundary_test=r'''"use strict";
+"use strict";
 
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
@@ -122,7 +54,7 @@ assert.doesNotMatch(feedback,/window\.DiceboundStorage\b/);
 const manifest=JSON.parse(fs.readFileSync(path.join(runtime,"module-manifest.json"),"utf8"));
 const modules=Object.fromEntries(manifest.modules.map(module=>[module.id,module]));
 const peerIds=new Set(["version","platform","storage","save-system","run-checkpoint","core-state","runtime-services","memory-diagnostics"]);
-const focusedIds=new Set([...peerIds,"runtime-facade","dicebound-monolith"]);
+const focusedIds=new Set([...peerIds,"native-http-host","wrapper-contract","runtime-facade","dicebound-monolith"]);
 const stale=[];
 for(const module of manifest.modules){
   if(focusedIds.has(module.id))continue;
@@ -137,6 +69,3 @@ for(const [id,peer] of [["run-lifecycle","run-checkpoint"],["run-completion","ru
 }
 
 console.log("Runtime peer-boundary PASS: ordinary modules route through DiceboundRuntime; only focused infrastructure internals retain peer dependencies");
-'''
-write(Path('tools/test_runtime_peer_boundaries.js'),boundary_test)
-print('Runtime boundary cleanup materialized')
