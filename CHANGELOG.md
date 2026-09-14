@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.30
+
+### Merchant subsystem facade and ownership (#321)
+- Added `runtime/js/events/merchant-facade.js` as the ordinary public `DiceboundMerchant` boundary while retaining the existing focused stock/economy, transaction and Merchant UI modules as specialist internals.
+- Routed Merchant catalog/pricing/generated offers, visit transaction state, Legendary-choice settlement and rendering/input entry points through the facade; `dicebound.js` no longer coordinates `DiceboundMerchantStock`, `DiceboundMerchantTransaction` and `DiceboundMerchantUi` as peer public owners.
+- Added a permanent focused Merchant facade contract and strengthened anti-shadow boundaries while retaining the existing 10-case exact Merchant stock/output/RNG oracle, transaction tests and real Edge purchase regression.
+- Architecture-only: no Merchant stock, prices, discounts, free-Merchant behavior, Nightmare/Hell behavior, Legendary-choice semantics, weaker-gear confirmation/refund behavior, RNG, save/checkpoint behavior or UI redesign is intended. Runtime graph is 80 modules (79 extracted/internal + one compatibility monolith); normalized `dicebound.js` is 675,407 bytes / 6,996 physical lines versus 676,782 bytes / 7,025 lines in released 0.6.6.29.
+
 ## Beta 0.6.6.29
 
 ### Progression subsystem facade and ownership (#329)

@@ -215,7 +215,10 @@ print('Monolith spring-clean guard PASS')
 # MERCHANT_UI_OWNERSHIP_GUARD — #313 / Beta 0.6.6.23
 merchant_mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
 merchant_owner=(root/'runtime/js/ui/merchant.js').read_text(encoding='utf-8')
+merchant_facade=(root/'runtime/js/events/merchant-facade.js').read_text(encoding='utf-8')
 assert len(re.findall(r'\bfunction\s+renderMerchant\s*\(',merchant_mono))==1, 'Merchant rendering must retain exactly one compatibility adapter'
 assert not re.search(r'\brenderMerchant\s*=\s*function\b',merchant_mono), 'Merchant renderer replacement stack returned to monolith'
-assert 'dbMerchantUi.render()' in merchant_mono, 'Merchant compatibility adapter no longer delegates to ui/merchant.js'
+assert 'dbMerchant.render()' in merchant_mono, 'Merchant compatibility adapter no longer delegates to DiceboundMerchant'
+assert not re.search(r'window\.DiceboundMerchant(?:Ui|Stock|Transaction)(?!Test)', merchant_mono), 'ordinary monolith must not coordinate Merchant peers directly'
 assert 'DiceboundMerchantUi' in merchant_owner and 'createController' in merchant_owner, 'Merchant UI owner missing'
+assert 'window.DiceboundMerchant=api' in merchant_facade and 'stockOwner.createController' in merchant_facade and 'uiOwner.createController' in merchant_facade, 'Merchant facade ownership missing'
