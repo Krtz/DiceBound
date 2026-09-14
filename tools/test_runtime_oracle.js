@@ -62,7 +62,8 @@ pass("save-export-import-roundtrip",()=>{
 pass("active-run-checkpoint-rng-continuation",()=>{
   const {context,window}=makePersistenceContext(),rng=window.DiceboundRng,cp=window.DiceboundRunCheckpoint;
   rng.seed("runtime-oracle");rng.random();rng.random();
-  context.window.__runtimeOracleCheckpoint=JSON.parse(JSON.stringify({summary:{board:3},meta:{level:9},run:{player:{classId:"ranger",gold:77},tiles:[{type:"start"}]}}));
+  const fixture={summary:{board:3},meta:{level:9},run:{player:{classId:"ranger",gold:77},tiles:[{type:"start"}]}};
+  vm.runInContext(`window.__runtimeOracleCheckpoint=JSON.parse(${JSON.stringify(JSON.stringify(fixture))})`,context);
   const created=vm.runInContext("window.DiceboundRunCheckpoint.create(window.__runtimeOracleCheckpoint)",context);
   const snap=json(created.rng);cp.store(created);const expected=[rng.random(),rng.random(),rng.random()];rng.restore(snap);
   assert.equal(JSON.stringify([rng.random(),rng.random(),rng.random()]),JSON.stringify(expected));
