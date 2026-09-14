@@ -39,6 +39,12 @@ jobs:
           node --check runtime/js/dicebound.js
           node --check tools/test_powerups_oracle.js
 
+      - name: Refresh runtime build metadata for exact oracle runtime
+        shell: pwsh
+        run: |
+          python tools/refresh_runtime_manifest.py --version 0.6.6.32 --channel Beta --development-state Unreleased --notes "Materialized Powerups oracle baseline for released Beta 0.6.6.32."
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Capture exact released 0.6.6.32 Powerups fixture
         shell: pwsh
         run: |
