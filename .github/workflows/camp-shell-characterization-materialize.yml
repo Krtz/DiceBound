@@ -36,6 +36,9 @@ jobs:
         run: |
           python tools/materialize_camp_shell_characterization.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $source = Get-Content runtime/js/dicebound.js -Raw
+          $source = $source.Replace("required=[...(camp?.requiredSemanticIds||[])]", "required=typeof camp?.requiredSemanticIds==='function'?camp.requiredSemanticIds():[]")
+          Set-Content runtime/js/dicebound.js -Value $source -NoNewline
           python tools/refresh_runtime_manifest.py --version 0.6.6.35 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
