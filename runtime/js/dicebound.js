@@ -1367,12 +1367,12 @@
 
   // Ranger gets a real tiny portrait instead of only an emoji.
   function rangerPortraitSVG(){return `<svg viewBox="0 0 64 64" role="img" aria-label="Ranger portrait"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2e7d4f"/><stop offset="1" stop-color="#123b32"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#10263a"/><path d="M13 48c7-12 12-17 19-17s13 5 19 17v12H13z" fill="url(#rg)"/><path d="M19 29c2-13 8-20 15-20 8 0 13 8 14 21-6-5-22-5-29-1z" fill="#285f3d"/><path d="M24 23c2-5 6-8 10-8 5 0 8 3 10 9l-3 14H27z" fill="#d7a66b"/><path d="M27 30c4 3 10 3 14 0-1 8-4 12-7 12-4 0-6-4-7-12z" fill="#9b5d3d" opacity=".9"/><circle cx="30" cy="27" r="1.6" fill="#1a2730"/><circle cx="39" cy="27" r="1.6" fill="#1a2730"/><path d="M47 12c8 7 7 24 1 36" fill="none" stroke="#bf8a46" stroke-width="3" stroke-linecap="round"/><path d="M47 14l8 3-7 4" fill="#d7dfe8"/><path d="M49 17L19 50" stroke="#d9c3a0" stroke-width="1.5" opacity=".8"/></svg>`;}
-  const updateHUDV15=updateHUD;updateHUD=function(){recordVitals();updateHUDV15();const avatar=$("heroAvatar");if(player.classId==="ranger"){avatar.classList.add("ranger-portrait");avatar.innerHTML=rangerPortraitSVG();}else{avatar.classList.remove("ranger-portrait");avatar.textContent=CLASSES[player.classId]?.icon||"🎲";}checkDynamicClassUnlocks();};
+  window.DiceboundCamp.configureShell({recordVitals:()=>recordVitals(),refreshLegacyHeroAvatar:()=>{const avatar=$("heroAvatar");if(player.classId==="ranger"){avatar.classList.add("ranger-portrait");avatar.innerHTML=rangerPortraitSVG();}else{avatar.classList.remove("ranger-portrait");avatar.textContent=CLASSES[player.classId]?.icon||"🎲";}},checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks()});
 
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
   const getHeirloomSlotsV15=getHeirloomSlots;getHeirloomSlots=function(){const source=runTalentSnapshot;if(!source)return getHeirloomSlotsV15();return 1+(Number(source.legacy_heirloom)||0)+((meta.prestige?.count||0)>=20?1:0);};
 
-  const openStartScreenV15=openStartScreen;openStartScreen=function(){runTalentSnapshot=null;openStartScreenV15();};
+  window.DiceboundCamp.configureShell({clearRunTalentSnapshot:()=>{runTalentSnapshot=null;}});
 
   // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
   const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};
@@ -1532,11 +1532,10 @@
     const nbox=$("nightmareBox");if(!nbox)return;const box=document.createElement("div");box.className="nightmare-toggle locked hell-toggle";box.id="hellBox";box.innerHTML=`<div><strong>🔥 Hell Mode</strong><span id="hellText">Defeat Nightmare Board 4 to unlock: all enemies gain elemental affinity and become far more dangerous.</span></div><button class="small-btn" id="hellToggle">Locked</button>`;nbox.after(box);box.querySelector("button").addEventListener("click",e=>{e.preventDefault();if(!meta.hellUnlocked)return;hellMode=!hellMode;renderClassChoices();});ensureHellToggle();
   }
 
-  const updateHUDBase=updateHUD;
-  updateHUD=function(){updateHUDBase();const cls=CLASSES[player.classId]||CLASSES.ranger;applyClassPortrait($("heroAvatar"),cls.id,false);applyClassPortrait($("combatPlayerIcon"),cls.id,true);applyClassBoardMarker($("pawn"),cls.id);if(boardLevel===5){$("guardianText").textContent=player.position<currentMinibossTile()-1?`Miniboss · tile ${currentMinibossTile()}`:`Ring Tyrant · tile ${currentTileCount()}`;}if(hellMode&&$("floorText"))$("floorText").textContent=`Board ${boardLevel} · Hell Mode · ${player.position+1} / ${currentTileCount()}`;};
+  window.DiceboundCamp.configureShell({refreshClassHudAndRoadLabels:()=>{const cls=CLASSES[player.classId]||CLASSES.ranger;applyClassPortrait($("heroAvatar"),cls.id,false);applyClassPortrait($("combatPlayerIcon"),cls.id,true);applyClassBoardMarker($("pawn"),cls.id);if(boardLevel===5){$("guardianText").textContent=player.position<currentMinibossTile()-1?`Miniboss · tile ${currentMinibossTile()}`:`Ring Tyrant · tile ${currentTileCount()}`;}if(hellMode&&$("floorText"))$("floorText").textContent=`Board ${boardLevel} · Hell Mode · ${player.position+1} / ${currentTileCount()}`;}});
 
 
-  const openStartScreenBase=openStartScreen;openStartScreen=function(){openStartScreenBase();ensureHellToggle();};
+  window.DiceboundCamp.configureShell({ensureHellToggle:()=>ensureHellToggle()});
 
   function generateMythicalRing(){return {id:`mythical_ring_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"ring",rarity:"mythical",mythical:true,mythicPiece:"ring",setName:"Impossible Road",uniqueEffect:"Ouroboros Halo: every fourth player action grants 1 barrier and 12 ultimate charge.",icon:"💍",name:"Ouroboros Halo, Ring of the Fifth Road",bonuses:{maxHp:22,attack:6,defense:4,crit:.12,luck:.18,bossDamage:.28}};}
   function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
@@ -2187,7 +2186,7 @@
   // ---- Combat UI clarity ----------------------------------------------------
   // Alchemist Special now uses the shared DiceboundClasses action route.
 
-  const updateHUDV16Base=updateHUD;updateHUD=function(){updateHUDV16Base();const d=$("defenseText");if(d){const pct=Math.round(defenseDamageReduction(player.defense)*100);d.classList.add("defense-tooltip");d.title=`${Math.round(player.defense)} Defense currently reduces ordinary incoming damage by about ${pct}%. Defense has diminishing returns; guardian specials receive only part of this reduction.`;const box=d.closest(".stat");if(box)box.title=d.title;}checkDynamicClassUnlocks();};
+  window.DiceboundCamp.configureShell({refreshDefenseTooltip:()=>{const d=$("defenseText");if(d){const pct=Math.round(defenseDamageReduction(player.defense)*100);d.classList.add("defense-tooltip");d.title=`${Math.round(player.defense)} Defense currently reduces ordinary incoming damage by about ${pct}%. Defense has diminishing returns; guardian specials receive only part of this reduction.`;const box=d.closest(".stat");if(box)box.title=d.title;}}});
 
   // ---- Second Sun actually works -------------------------------------------
   const handlePlayerDeathV16Base=handlePlayerDeath;
@@ -2481,11 +2480,7 @@
   };
 
   // ---- Live HUD refresh, hidden passives and tooltips -----------------------
-  const updateHUDV18Base=updateHUD;
-  updateHUD=function(){
-    dbClasses.syncBloodmageHpPassive(false);v18SyncOuroborosAttack();updateHUDV18Base();
-    v18ApplyStatTooltip("potionText",v18PotionTooltip());v18ApplyStatTooltip("defenseText",v18DefenseTooltip());v18ApplyStatTooltip("echoText",v18EchoTooltip());
-  };
+  window.DiceboundCamp.configureShell({syncBloodmageHpPassive:initial=>dbClasses.syncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),refreshStatTooltips:()=>{v18ApplyStatTooltip("potionText",v18PotionTooltip());v18ApplyStatTooltip("defenseText",v18DefenseTooltip());v18ApplyStatTooltip("echoText",v18EchoTooltip());}});
 
   // ---- Info/documentation updates ------------------------------------------
 
@@ -2655,8 +2650,7 @@
     if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling","double-mode");for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}let a=rand(1,6),b=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){a=await chooseDieResult();b=await chooseDieResult();chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;if(hasMythicPiece("boots")&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast("🥾 Titanstep!");}const total=a+b;addLog(`${chosen?"Fate bends. You choose":"Double Dice rolls"} <b>${a} + ${b} = ${total}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.`);await dbRun.move(total+bonus,total,bonus>0,chosen);
   }
   v19EnsureDoubleDiceButton();
-  const updateHUDV19Base=updateHUD;
-  updateHUD=function(){updateHUDV19Base();v19EnsureDoubleDiceButton();const b=$("roll2Btn");if(b){b.style.display=meta.doubleDiceUnlocked?"block":"none";b.disabled=rollLocked||!gameStarted;}const one=$("rollBtn");if(one)one.textContent=meta.doubleDiceUnlocked?"🎲 Roll 1d6":"🎲 Roll the dice";};
+  window.DiceboundCamp.configureShell({refreshDoubleDiceControls:()=>{v19EnsureDoubleDiceButton();const b=$("roll2Btn");if(b){b.style.display=meta.doubleDiceUnlocked?"block":"none";b.disabled=rollLocked||!gameStarted;}const one=$("rollBtn");if(one)one.textContent=meta.doubleDiceUnlocked?"🎲 Roll 1d6":"🎲 Roll the dice";}});
 
   // ---- Board 6 -------------------------------------------------------------
   const applyRunThemeV19Base=applyRunTheme;
@@ -2723,12 +2717,10 @@
   function completeSixthRoadV19(){return dbRun.completeFinalRoad();}
 
   // Board-6 guardian labels in the road HUD.
-  const updateHUDV19RoadBase=updateHUD;
-  updateHUD=function(){updateHUDV19RoadBase();if(boardLevel===6&&gameStarted){const count=currentTileCount(),mini=currentMinibossTile();$("floorText").textContent=`Board 6 · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Abyssal Custodian · tile ${mini}`:`The Last Equation · tile ${count}`;}};
+  window.DiceboundCamp.configureShell({refreshBoard6RoadLabels:()=>{if(boardLevel===6&&gameStarted){const count=currentTileCount(),mini=currentMinibossTile();$("floorText").textContent=`Board 6 · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Abyssal Custodian · tile ${mini}`:`The Last Equation · tile ${count}`;}}});
   // Keep the road HUD on the same final guardian identity used for combat,
   // including Boards 4-6 where legacy labels previously drifted.
-  const updateHUDV20GuardianBase=updateHUD;
-  updateHUD=function(){updateHUDV20GuardianBase();if(!gameStarted)return;const guardian=DB317_GUARDIANS.resolveFinal(boardLevel),count=currentTileCount(),mini=currentMinibossTile();if(guardian&&player.position>=mini-1)$("guardianText").textContent=`${guardian.name} · tile ${count}`;};
+  window.DiceboundCamp.configureShell({refreshFinalGuardianLabel:()=>{if(!gameStarted)return;const guardian=DB317_GUARDIANS.resolveFinal(boardLevel),count=currentTileCount(),mini=currentMinibossTile();if(guardian&&player.position>=mini-1)$("guardianText").textContent=`${guardian.name} · tile ${count}`;}});
 
   // ---- Set bonuses: runtime hooks ------------------------------------------
   // Normalize old hard-coded thresholds by wrapping the two main combat entry
@@ -2806,10 +2798,7 @@
   function v110UpdateCampScene(){return window.DiceboundCamp?.refresh();}
 
 
-  const openStartScreenV110Base=openStartScreen;
-  openStartScreen=function(){const result=openStartScreenV110Base();v110EnsureCampScene();v110UpdateCampScene();return result;};
-  const updateMetaUIV110Base=updateMetaUI;
-  updateMetaUI=function(){const result=updateMetaUIV110Base();v110EnsureCampScene();v110UpdateCampScene();return result;};
+  window.DiceboundCamp.configureShell({ensureCampScene:()=>v110EnsureCampScene(),refreshCampV110:()=>v110UpdateCampScene()});
 
   // The module is configured after all legacy action owners have initialized;
   // this timer deliberately runs after that deterministic bootstrap boundary.
@@ -3036,10 +3025,7 @@
   function v22EnsureCompatStartBtn(){return window.DiceboundCamp?.ensureCompatStartButton();}
   function openPrestigeMoon(){return window.DiceboundPrestigeMoon?.open?.()||null;}
 
-  const updateMetaUIV22Base=updateMetaUI;
-  updateMetaUI=function(){const result=updateMetaUIV22Base();v22UpdateCamp();return result;};
-  const openStartScreenV22Base=openStartScreen;
-  openStartScreen=function(){const result=openStartScreenV22Base();v22UpdateCamp();return result;};
+  window.DiceboundCamp.configureShell({refreshCampV22:()=>v22UpdateCamp()});
 
   // This adapter intentionally lives in the v2.2 lexical scope: it supplies
   // presentation data/actions, while ui/camp.js remains the sole DOM/layout
@@ -3214,8 +3200,7 @@
   const ensureDoubleV22Base=v19EnsureDoubleDiceButton;
   v19EnsureDoubleDiceButton=function(){ensureDoubleV22Base();v22WireDoubleDice();};
   v22WireDoubleDice();
-  const updateHUDV22Base=updateHUD;
-  updateHUD=function(){updateHUDV22Base();v19EnsureDoubleDiceButton();};
+  window.DiceboundCamp.configureShell({ensureDoubleDiceButton:()=>v19EnsureDoubleDiceButton()});
 
   // Public regression hooks for this patch.
 
@@ -3451,7 +3436,7 @@
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
   const defenseDamageReductionV24Base=defenseDamageReduction;defenseDamageReduction=function(defense=player.defense){if(v24HasJeanJacket()){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+13),0,.90);}return defenseDamageReductionV24Base(defense);};
     function v24UpdateShieldBars(){if(!dbCombatView.isPresentationConfigured())return;return dbCombatView.syncEnergyShieldBars();}
-  const updateHUDV24Base=updateHUD;updateHUD=function(){updateHUDV24Base();v24UpdateShieldBars();};
+  window.DiceboundCamp.configureShell({refreshShieldBars:()=>v24UpdateShieldBars()});
 
   /* MODULE: camp synchronization ------------------------------------------ */
   function v24RefreshCamp(){
@@ -3460,7 +3445,7 @@
     dbEquipmentUi.renderEquipment();
   }
   DB24.modules.camp={refresh:v24RefreshCamp,armDevil:v24ArmDance};
-  const updateMetaUIV24CampBase=updateMetaUI;updateMetaUI=function(){updateMetaUIV24CampBase();v24RefreshCamp();};const openStartScreenV24CampBase=openStartScreen;openStartScreen=function(){const r=openStartScreenV24CampBase();v24RefreshCamp();return r;};
+  window.DiceboundCamp.configureShell({refreshCampV24:()=>v24RefreshCamp()});
   document.addEventListener('click',e=>{if(e.target.closest?.('#campHellBtn')&&!e.target.closest?.('#campHellBtn .camp-icon'))setTimeout(v24RefreshCamp,0);},true);
 
   /* MODULE: info ----------------------------------------------------------- */
@@ -3765,10 +3750,10 @@
   /* POISON AS A FIRST-CLASS VISIBLE STAT ---------------------------------- */
   function v26EnsurePoisonStat(){if($('poisonChanceText'))return;const echo=$('echoText')?.closest('.stat'),grid=echo?.parentElement;if(!grid)return;const box=document.createElement('div');box.className='stat v18-stat-tooltip';box.id='poisonChanceStat';box.innerHTML='<span>Poison Chance</span><strong id="poisonChanceText">0%</strong>';echo.after(box);}
   function v26PoisonStackDamage(){return Math.max(1,Math.round((player.attack||0)*(player.poisonStackPower||.12)));}
-  const updateHUDV26PoisonBase=updateHUD;updateHUD=function(){if(classIdentityActive('ouroboros'))v18SyncOuroborosAttack();const r=updateHUDV26PoisonBase();v26EnsurePoisonStat();const t=$('poisonChanceText'),box=$('poisonChanceStat');if(t)t.textContent=`${Math.round((player.poisonOnHitChance||0)*100)}%`;if(box)box.dataset.tip=`${Math.round((player.poisonOnHitChance||0)*100)}% Poison Chance per eligible strike. Chance above 100% guarantees stacks and rolls the overflow for extra stacks. One Poison stack currently deals ${v26PoisonStackDamage()} damage each Poison tick before affinity modifiers.`;return r;};
+  window.DiceboundCamp.configureShell({isOuroboros:()=>classIdentityActive('ouroboros'),refreshPoisonStat:()=>{v26EnsurePoisonStat();const t=$('poisonChanceText'),box=$('poisonChanceStat');if(t)t.textContent=`${Math.round((player.poisonOnHitChance||0)*100)}%`;if(box)box.dataset.tip=`${Math.round((player.poisonOnHitChance||0)*100)}% Poison Chance per eligible strike. Chance above 100% guarantees stacks and rolls the overflow for extra stacks. One Poison stack currently deals ${v26PoisonStackDamage()} damage each Poison tick before affinity modifiers.`;}});
 
   function v266SyncGoldGainStat(){const snapshot=currentGoldSnapshot(),text=$('goldGainText'),box=$('goldGainStat');if(text)text.textContent=snapshot.label||'100%';if(box){box.dataset.tip=snapshot.description||'Gold gain is shown as a percentage of base rewards.';box.title=box.dataset.tip;}}
-  const updateHUDV266GoldGainBase=updateHUD;updateHUD=function(){const result=updateHUDV266GoldGainBase();v266SyncGoldGainStat();return result;};
+  window.DiceboundCamp.configureShell({syncGoldGainStat:()=>v266SyncGoldGainStat()});
 
   /* LEGENDARY REWARD EXHAUSTION ------------------------------------------- */
   showLegendaryChoice=function(source,onComplete=()=>{}){const pool=eligibleUpgrades(u=>u.rarity==='legendary');if(!pool.length){const gold=modifiedGold(250);player.gold+=gold;player.potions+=2;addLog(`<b>${source}:</b> every eligible Legendary power is already owned this run. The guardian converts the exhausted boon into <b>${gold} gold</b> and <b>2 potions</b>.`);showToast(`👑 Legendary pool exhausted · +${gold} gold · +2 potions`,3000,true);updateHUD();setTimeout(()=>onComplete(false),0);return;}showPowerupChoice(source,onComplete,u=>u.rarity==='legendary','The guardian yields. Choose one guaranteed Legendary powerup.');};
@@ -3838,7 +3823,7 @@
   function v27SyncOuroborosEconomy(){return dbClasses.syncOuroborosEconomy();}
 
   // Ouroboros post-Powerup economy sync is owned by DiceboundPowerups.
-  const updateHUDV27OuroBase=updateHUD;updateHUD=function(){v27SyncOuroborosEconomy();const r=updateHUDV27OuroBase();if(classIdentityActive('ouroboros')&&$('attackText'))$('attackText').textContent='10';return r;};
+  window.DiceboundCamp.configureShell({syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),forceOuroborosAttackLabel:()=>{if($('attackText'))$('attackText').textContent='10';}});
 
   /* EXTREME ECHO SPEED ----------------------------------------------------- */
   // delay() reads this cap. Normal Ouroboros attacks become faster above
@@ -5619,8 +5604,7 @@
     const title=$('runResumeTitle'),summary=$('runResumeSummary'),resume=$('runResumeBtn'),abandon=$('runAbandonBtn');if(title)title.textContent=valid?'Continue expedition':'Saved expedition needs attention';if(summary)summary.textContent=dbRunPanelText(dbRunLastResult);if(resume)resume.disabled=!valid;if(abandon)abandon.textContent=valid?'Abandon saved run':'Discard unreadable run';
   }
 
-  const dbRunUpdateHudBase=updateHUD;updateHUD=function(...args){const result=dbRunUpdateHudBase.apply(this,args);dbRunScheduleCheckpoint();return result;};
-  const dbRunOpenStartBase=openStartScreen;openStartScreen=function(...args){dbRunClearCheckpoint();const result=dbRunOpenStartBase.apply(this,args);dbRunRefreshControls();return result;};
+  window.DiceboundCamp.configureShell({scheduleRunCheckpoint:()=>dbRunScheduleCheckpoint(),clearCheckpoint:()=>dbRunClearCheckpoint(),refreshRunControls:()=>dbRunRefreshControls()});
   const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
   document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
@@ -5715,10 +5699,7 @@
     const before=Math.max(1,Math.floor(Number(meta.level)||1)),result=db0633GrantLegacyXpBase.apply(this,args);
     db0633RefreshCampProgression({legacyLevelGained:Math.max(1,Math.floor(Number(meta.level)||1))>before});return result;
   };
-  const db0633OpenStartScreenBase=openStartScreen;
-  openStartScreen=function(...args){const result=db0633OpenStartScreenBase.apply(this,args);db0633SyncCampObjects();return result;};
-  const db0633UpdateMetaUIBase=updateMetaUI;
-  updateMetaUI=function(...args){const result=db0633UpdateMetaUIBase.apply(this,args);db0633RefreshCampProgression();return result;};
+  window.DiceboundCamp.configureShell({syncCampProgressionObjects:()=>db0633SyncCampObjects(),refreshCampProgression:()=>db0633RefreshCampProgression()});
   window.DiceboundCampProgressionTest=Object.freeze({
     trophyTiers:()=>DB0633_CAMP_TROPHY_TIERS.map(tier=>({...tier})),
     trophyTierForAchievementCount:db0633TrophyTierForAchievementCount,
@@ -6062,8 +6043,7 @@
   const db064Camp=window.DiceboundCamp;
   if(!db064Camp)throw new Error('DiceBound requires the Camp UI module before dicebound.js');
   window.DiceboundCampHitTargetTest=Object.freeze({inspect:()=>db064Camp.inspectHitTargets()});
-  const db064FriendsUpdateMetaUiBase=updateMetaUI;
-  updateMetaUI=function(...args){const result=db064FriendsUpdateMetaUiBase.apply(this,args);db064Camp.scheduleHitTargetSync();return result;};
+  window.DiceboundCamp.configureShell({scheduleCampHitTargetSync:()=>db064Camp.scheduleHitTargetSync()});
   db064Camp.scheduleHitTargetSync();
 
   /* #124: keep the recorder independent from game ownership. The compatibility
@@ -6227,15 +6207,13 @@
   const dbFriendReturnToRoadBase=returnToRoad;
   returnToRoad=function(...args){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
 
-  const dbFriendUpdateMetaUiBase=updateMetaUI;
-  updateMetaUI=function(...args){const result=dbFriendUpdateMetaUiBase.apply(this,args);db059RefreshActivePetArt?.();return result;};
+  window.DiceboundCamp.configureShell({refreshActivePetArt:()=>db059RefreshActivePetArt?.()});
   function dbFriendHealAtCamp(){
     const max=Math.max(1,Math.floor(Number(player?.maxHp)||1));
     if(Number(player?.hp)>=max)return false;
     player.hp=max;updateHUD();return true;
   }
-  const dbFriendOpenStartScreenBase=openStartScreen;
-  openStartScreen=function(...args){const result=dbFriendOpenStartScreenBase.apply(this,args);dbClasses.invokerResetCombat();dbFriendHealAtCamp();dbFriendClearCombatPresentation();db059RefreshActivePetArt?.();return result;};
+  window.DiceboundCamp.configureShell({resetInvokerCombat:()=>dbClasses.invokerResetCombat(),healAtCamp:()=>dbFriendHealAtCamp(),clearCombatPresentation:()=>dbFriendClearCombatPresentation()});
   function dbFriendCampRecoveryExercise(){resetPlayer('ranger');player.hp=1;openStartScreen();return Object.freeze({hp:player.hp,maxHp:player.maxHp,campVisible:!$('startOverlay')?.classList.contains('hidden')});}
   function dbFriendBoardClearModeRegressionExercise(){
     const before={...(ensureAlphaMeta().boardClears||{})},modes={nightmare:nightmareMode,hell:hellMode};
@@ -7007,6 +6985,110 @@
     unlockClass:id=>dbProgression.unlockClass(id),
     classUnlockFeedbackState:()=>dbRunClone(window.DiceboundClassUnlockFeedback?.state?.()||null),
     logHtml:()=>String($('log')?.innerHTML||'')
+  });
+
+
+  /* BETA 0.6.6.36 — Camp / App-Shell public-owner convergence.
+     The focused policy owner preserves the released wrapper ordering while the
+     compatibility root supplies domain collaborators. No peer HUD global is
+     introduced: DiceboundCamp remains the one ordinary shell boundary. */
+  db064Camp.configureShell({});
+  const dbCampOpenStartCore=openStartScreen;
+  openStartScreen=function(...args){return db064Camp.enterShell(dbCampOpenStartCore,this,args);};
+  const dbCampMetaUiCore=updateMetaUI;
+  updateMetaUI=function(...args){return db064Camp.refreshMetaShell(dbCampMetaUiCore,this,args);};
+  const dbCampHudCore=updateHUD;
+  updateHUD=function(...args){return db064Camp.refreshHudShell(dbCampHudCore,this,args);};
+
+
+  // Test-only characterization surface for the Camp / App Shell convergence.
+  // It freezes released 0.6.6.35 shell lifecycle/HUD behavior before the
+  // historical openStartScreen/updateMetaUI/updateHUD wrapper ladders move.
+  const dbCampShellOracleClone=value=>value==null?value:JSON.parse(JSON.stringify(value));
+  function dbCampShellOracleRng(action){
+    const before=window.DiceboundRng.snapshot(),result=action(),after=window.DiceboundRng.snapshot();
+    return {result:dbCampShellOracleClone(result),actionRngCalls:after.calls-before.calls,actionRngState:after.state};
+  }
+  function dbCampShellOracleHideBlocking(){
+    DB_RUN_BLOCKING_OVERLAYS.forEach(id=>$(id)?.classList.add('hidden'));
+    $('battleVictory')?.classList.add('hidden');
+    currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;pendingLevelUps=0;combatBusy=false;
+  }
+  function dbCampShellOracleStableRun(classId='ranger',board=3){
+    dbRunClearCheckpoint();dbClasses.clearSlimeRougeRuntime();resetPlayer(classId);boardLevel=board;nightmareMode=false;hellMode=false;
+    gameStarted=true;runFinalized=false;rollLocked=false;combatBusy=false;currentEnemy=null;pendingLevelUps=0;player.position=0;
+    dbCampShellOracleHideBlocking();$('startOverlay')?.classList.add('hidden');
+    return dbCampShellOracleShellState();
+  }
+  function dbCampShellOracleImg(id){const root=$(id);return root?.querySelector?.('img')?.getAttribute('src')||null;}
+  function dbCampShellOracleShellState(){
+    const camp=window.DiceboundCamp,required=typeof camp?.requiredSemanticIds==='function'?camp.requiredSemanticIds():[],present=required.filter(id=>!!$(id));
+    return {
+      gameStarted:!!gameStarted,rollLocked:!!rollLocked,combatBusy:!!combatBusy,boardLevel,position:player?.position??null,
+      overlayHidden:!!$('startOverlay')?.classList.contains('hidden'),campFullscreen:!!$('startOverlay')?.classList.contains('camp-fullscreen'),scene:!!$('campScene'),
+      requiredCount:required.length,presentRequired:present,
+      classStatus:String($('campClassStatus')?.textContent||''),petStatus:String($('campPetStatus')?.textContent||''),
+      nightmareStatus:String($('campNightmareBtn')?.querySelector('.camp-sub')?.textContent||''),hellStatus:String($('campHellBtn')?.querySelector('.camp-sub')?.textContent||''),
+      classArt:dbCampShellOracleImg('campClassIcon'),petArt:dbCampShellOracleImg('campPetIcon'),
+      floorText:String($('floorText')?.textContent||''),guardianText:String($('guardianText')?.textContent||''),
+      hpText:String($('hpText')?.textContent||''),attackText:String($('attackText')?.textContent||''),defenseText:String($('defenseText')?.textContent||''),goldText:String($('goldText')?.textContent||''),potionText:String($('potionText')?.textContent||''),
+      critText:String($('critText')?.textContent||''),dodgeText:String($('dodgeText')?.textContent||''),lifeStealText:String($('lifeStealText')?.textContent||''),luckText:String($('luckText')?.textContent||''),echoText:String($('echoText')?.textContent||''),bossDamageText:String($('bossDamageText')?.textContent||''),
+      heroArt:dbCampShellOracleImg('heroAvatar'),pawnArt:dbCampShellOracleImg('pawn'),combatArt:dbCampShellOracleImg('combatPlayerIcon'),
+      combatHidden:!!$('combatOverlay')?.classList.contains('hidden'),victoryHidden:!!$('battleVictory')?.classList.contains('hidden'),checkpoint:DB_RUN_CHECKPOINT.has()
+    };
+  }
+  function dbCampShellOracleStartup(){return dbCampShellOracleShellState();}
+  function dbCampShellOracleRecovery(){
+    window.DiceboundRng.seed('camp-shell-recovery-setup');
+    const before=window.DiceboundRng.snapshot(),result=window.DiceboundFriendsPatchTest.exerciseCampRecovery(),after=window.DiceboundRng.snapshot();
+    return {result:dbCampShellOracleClone(result),actionRngCalls:after.calls-before.calls,actionRngState:after.state,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleCheckpointReset(){
+    dbCampShellOracleStableRun('ranger',3);player.hp=1;const saved=dbRunWriteCheckpoint(),hadBefore=DB_RUN_CHECKPOINT.has();
+    const action=dbCampShellOracleRng(()=>openStartScreen());
+    return {saved,hadBefore,hasAfter:DB_RUN_CHECKPOINT.has(),hp:player.hp,maxHp:player.maxHp,actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleCampReset(){
+    dbCampShellOracleStableRun('invoker',3);dbClasses.invokerBeginCombat();dbClasses.invokerAfterPlayerAction('guard');
+    const invokerBefore=dbCampShellOracleClone(dbClasses._invokerTest.state(false));player.hp=Math.max(1,player.maxHp-7);
+    $('combatOverlay')?.classList.remove('hidden');$('battleVictory')?.classList.remove('hidden');if($('combatText'))$('combatText').textContent='Camp shell oracle combat residue';
+    const action=dbCampShellOracleRng(()=>openStartScreen()),invokerAfter=dbCampShellOracleClone(dbClasses._invokerTest.state(false));
+    return {invokerBefore,invokerAfter,hp:player.hp,maxHp:player.maxHp,combatText:String($('combatText')?.textContent||''),actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleMetaRefresh(){
+    dbCampShellOracleStableRun('ranger',3);openStartScreen();
+    const action=dbCampShellOracleRng(()=>updateMetaUI());
+    return {actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleHud(board,position,mode='normal'){
+    dbCampShellOracleStableRun('ranger',board);nightmareMode=mode==='nightmare'||mode==='hell';hellMode=mode==='hell';player.position=position;
+    const action=dbCampShellOracleRng(()=>updateHUD());
+    return {mode,mini:currentMinibossTile(),count:currentTileCount(),actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleHudBoard5Pre(){return dbCampShellOracleHud(5,0,'normal');}
+  function dbCampShellOracleHudBoard5Final(){dbCampShellOracleStableRun('ranger',5);return dbCampShellOracleHud(5,currentMinibossTile()-1,'normal');}
+  function dbCampShellOracleHudBoard6Pre(){return dbCampShellOracleHud(6,0,'normal');}
+  function dbCampShellOracleHudBoard6Final(){dbCampShellOracleStableRun('ranger',6);return dbCampShellOracleHud(6,currentMinibossTile()-1,'normal');}
+  function dbCampShellOracleHudHell(){return dbCampShellOracleHud(3,4,'hell');}
+  function dbCampShellOracleHudStats(){
+    dbCampShellOracleStableRun('ranger',3);Object.assign(player,{hp:23,maxHp:47,attack:17,defense:6,flatReduction:2,gold:123,potions:4,crit:.37,dodge:.11,lifeSteal:.19,luck:.42,doubleStrike:.88,bossDamage:.31});
+    const action=dbCampShellOracleRng(()=>updateHUD());
+    return {actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  async function dbCampShellOracleHudCheckpoint(){
+    dbCampShellOracleStableRun('ranger',3);dbRunClearCheckpoint();const action=dbCampShellOracleRng(()=>updateHUD());const immediate=DB_RUN_CHECKPOINT.has();
+    await new Promise(resolve=>setTimeout(resolve,260));
+    return {immediate,afterDelay:DB_RUN_CHECKPOINT.has(),loaded:!!DB_RUN_CHECKPOINT.load()?.checkpoint,actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  function dbCampShellOracleArtRefresh(){
+    dbCampShellOracleStableRun('ranger',2);const before={classArt:dbCampShellOracleImg('campClassIcon'),petArt:dbCampShellOracleImg('campPetIcon')};
+    const action=dbCampShellOracleRng(()=>openStartScreen());
+    return {before,after:{classArt:dbCampShellOracleImg('campClassIcon'),petArt:dbCampShellOracleImg('campPetIcon')},actionRngCalls:action.actionRngCalls,actionRngState:action.actionRngState,shell:dbCampShellOracleShellState()};
+  }
+  window.DiceboundCampShellOracleTest=Object.freeze({
+    apiVersion:1,state:()=>dbCampShellOracleShellState(),startup:dbCampShellOracleStartup,recovery:dbCampShellOracleRecovery,checkpointReset:dbCampShellOracleCheckpointReset,campReset:dbCampShellOracleCampReset,metaRefresh:dbCampShellOracleMetaRefresh,
+    hudBoard5Pre:dbCampShellOracleHudBoard5Pre,hudBoard5Final:dbCampShellOracleHudBoard5Final,hudBoard6Pre:dbCampShellOracleHudBoard6Pre,hudBoard6Final:dbCampShellOracleHudBoard6Final,hudHell:dbCampShellOracleHudHell,hudStats:dbCampShellOracleHudStats,hudCheckpoint:dbCampShellOracleHudCheckpoint,artRefresh:dbCampShellOracleArtRefresh,
+    cleanup:()=>{dbRunClearCheckpoint();dbClasses.invokerResetCombat();dbCampShellOracleHideBlocking();openStartScreen();return true;}
   });
 
 

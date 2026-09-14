@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.36
+
+### Camp / App Shell subsystem ownership (#356)
+- Converged Camp entry, career-meta refresh and HUD orchestration behind the existing public `DiceboundCamp` boundary, with focused `runtime/js/ui/camp-shell.js` lifecycle/order policy installed internally rather than exposed as a peer subsystem API.
+- Drained the historical `openStartScreen`, `updateMetaUI` and `updateHUD` wrapper ladders from `dicebound.js`; one explicit composition adapter per surface now invokes Camp-owned policy while Run, Classes, Progression, Pets, Combat View, Items and Runtime remain authoritative collaborators.
+- Added a permanent 13-case exact released-0.6.6.35 Camp/App-Shell oracle plus exact orchestration-order and anti-shadow ownership guards. Local-file Camp startup, Info/Edge/file, active-run checkpoint and every neighboring subsystem oracle remain authoritative.
+- Architecture-only: no gameplay balance, RNG order/state, save/checkpoint semantics, class/Pet/progression behavior or UI redesign is intended. Runtime graph is 88 modules (87 extracted/internal + one compatibility/composition monolith); the characterization-bearing candidate `dicebound.js` is 678,304 bytes / 7,158 lines versus 679,024 bytes / 7,167 lines at the locked pre-convergence characterization checkpoint. This completes the planned 12/12 public subsystem-owner architecture.
+
 ## Beta 0.6.6.35
 
 ### Runtime / Core / Persistence subsystem facade and ownership (#354)

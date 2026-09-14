@@ -162,6 +162,7 @@
   `;
 
   let runtime={};
+  let shell=null;
   let resizeBound=false;
   let refreshFrame=0;
 
@@ -545,8 +546,18 @@
     return api;
   }
 
+  function requireShell(){if(!shell)throw new Error('DiceboundCamp shell policy is not installed.');return shell;}
+  function installShell(next){
+    if(!next||typeof next.configure!=='function'||typeof next.enter!=='function'||typeof next.refreshMeta!=='function'||typeof next.refreshHud!=='function')throw new Error('Invalid DiceboundCamp shell policy.');
+    shell=next;return api;
+  }
+  function configureShell(nextRuntime={}){requireShell().configure(nextRuntime);return api;}
+  function enterShell(base,thisArg,args=[]){return requireShell().enter(base,thisArg,args);}
+  function refreshMetaShell(base,thisArg,args=[]){return requireShell().refreshMeta(base,thisArg,args);}
+  function refreshHudShell(base,thisArg,args=[]){return requireShell().refreshHud(base,thisArg,args);}
+
   const api=Object.freeze({
-    configure,ensure,refresh,refreshArt,renderClassFigure,renderPetFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
+    configure,configureShell,enterShell,refreshMetaShell,refreshHudShell,_installShell:installShell,ensure,refresh,refreshArt,renderClassFigure,renderPetFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
     layoutForViewport,layouts:CAMP_LAYOUTS,stageAnchors:CAMP_STAGE_ANCHORS,stageFrame,syncHitTargets,scheduleHitTargetSync,applyStageLayout,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,
     syncProgressionReveals,progressionRevealObjectIds:()=>CAMP_PROGRESSIVE_OBJECTS.map(entry=>entry.id),
     requiredSemanticIds:()=>[...CAMP_OBJECT_IDS]
