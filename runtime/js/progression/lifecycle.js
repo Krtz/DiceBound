@@ -73,6 +73,15 @@
     call('saveMeta');checkDynamicClassUnlocks();call('sfxHoly');call('showToast',`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);call('renderTalents');call('updateMetaUI');call('openStartScreen');return true;
   }
 
+  function prestigeInspect(){return PRESTIGE.inspect(meta().prestige);}
+  function prestigePurchase(id){
+    const state=meta(),result=PRESTIGE.purchase(state.prestige,id,()=>call('random'));
+    if(result.ok)state.prestige=result.prestige;
+    return result;
+  }
+  function prestigeRefundAll(){const state=meta(),result=PRESTIGE.refundAll(state.prestige);state.prestige=result.prestige;return result;}
+  function prestigeFormatStats(stats){return PRESTIGE.formatStats(stats);}
+
   function achievementRegistry(){return call('getAchievementRegistry');}
   function classes(){return call('getClasses');}
   function upgrades(){return call('getUpgrades');}
@@ -203,7 +212,7 @@
   const api=Object.freeze({
     owner:OWNER,apiVersion:1,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
-    legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,
+    legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
     achievementDone,achievementConditionText,achievementRewardText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
     isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks
   });

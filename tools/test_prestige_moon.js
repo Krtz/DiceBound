@@ -28,8 +28,10 @@ const progression=fs.readFileSync(path.join(root,'runtime/js/progression/lifecyc
 const talent=fs.readFileSync(path.join(root,'runtime/js/ui/talent-tree.js'),'utf8');
 const camp=fs.readFileSync(path.join(root,'runtime/js/ui/camp.js'),'utf8');
 assert.match(monolith,/const DB_PRESTIGE=window\.DiceboundPrestige/,'monolith must consume the authoritative Prestige domain owner');
-assert.match(monolith,/DB_PRESTIGE\.purchase\(meta\.prestige,id,random\)/,'only the injected runtime adapter may supply purchase RNG');
-assert.match(monolith,/DB_PRESTIGE\.refundAll\(meta\.prestige\)/,'Refund All must route through the domain transaction owner');
+assert.match(progression,/PRESTIGE\.purchase\(state\.prestige,id,\(\)=>call\('random'\)\)/,'Progression facade must be the ordinary purchase RNG boundary');
+assert.match(monolith,/const result=dbProgression\.prestigePurchase\(id\);/,'Prestige Moon purchase must route through DiceboundProgression');
+assert.match(progression,/PRESTIGE\.refundAll\(state\.prestige\)/,'Progression facade must coordinate the focused Prestige refund domain');
+assert.match(monolith,/const result=dbProgression\.prestigeRefundAll\(\);/,'Prestige Moon Refund All must route through DiceboundProgression');
 assert.match(monolith,/function openPrestigeMoon\(\)\{return window\.DiceboundPrestigeMoon\?\.open\?\.\(\)\|\|null;\}/,'monolith should retain only a thin Moon open adapter');
 assert.match(progression,/state\.prestige=PRESTIGE\.award\(state\.prestige,rewards\)/,'Progression owner must award Prestige currency during the reset transaction');
 assert.match(monolith,/async function prestigeTree\(\)/,'final Prestige entry should be the single live entry point');
@@ -43,4 +45,4 @@ assert.doesNotMatch(fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),
 assert.doesNotMatch(talent,/data-talent-prestige/,'Talent UI must not retain a second Prestige action');
 assert.doesNotMatch(talent,/talent-tree-prestige/,'Talent UI must not retain Prestige presentation markup or styles');
 
-console.log('Prestige Moon UI owner PASS: destination chrome, data-driven nodes and Progression-owned reset award contract');
+console.log('Prestige Moon UI owner PASS: destination chrome, data-driven nodes and Progression-owned reset/purchase/refund facade contract');

@@ -678,7 +678,7 @@
     legacyXpForLevel:level=>legacyXpForLevel(level),getMeta:()=>meta,getPlayer:()=>player,getTalents:()=>talents,getRunTalentSnapshot:()=>runTalentSnapshot,setRunTalentSnapshot:value=>{runTalentSnapshot=value;return runTalentSnapshot;},
     saveMeta:()=>saveMeta(),sfxLevel:()=>sfx.level(),showToast:(...args)=>showToast(...args),renderTalents:()=>renderTalents(),
     isRunFinalized:()=>runFinalized,setRunFinalized:value=>{runFinalized=!!value;},getLastLegacyAward:()=>lastLegacyAward,setLastLegacyAward:value=>{lastLegacyAward=value;},setLastGoldLegacyAward:value=>{lastGoldLegacyAward=value;},
-    getTilesMovedThisRun:()=>tilesMovedThisRun,isNightmare:()=>!!nightmareMode,updateMetaUI:()=>updateMetaUI(),
+    getTilesMovedThisRun:()=>tilesMovedThisRun,isNightmare:()=>!!nightmareMode,random:()=>random(),updateMetaUI:()=>updateMetaUI(),
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
     storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
@@ -1236,7 +1236,7 @@
   function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}
   function renderLifetimeStats(){return dbInfoGuide?.renderStats();}
 
-  function prestigeSummary(){return DB_PRESTIGE.inspect(meta.prestige||defaultPrestige()).permanentSummary;}
+  function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
@@ -3172,24 +3172,23 @@
     find:$,
     getState:()=>{
       const total=allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
-      return {prestige:DB_PRESTIGE.inspect(meta.prestige),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Each unspent point grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
+      return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Each unspent point grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
     },
     prestige:()=>prestigeTree(),
     purchase:id=>{
       if(gameStarted){showToast('Spend Prestige Points between runs.');return Object.freeze({ok:false,reason:'Prestige Moon purchases are available between runs.'});}
-      const result=DB_PRESTIGE.purchase(meta.prestige,id,random);
+      const result=dbProgression.prestigePurchase(id);
       if(!result.ok){showToast(result.reason);return result;}
-      meta.prestige=result.prestige;
       const storagePurchase=[DB_HEIRLOOM_STORAGE_NODE,DB_HEIRLOOM_SLOT_I_NODE,DB_HEIRLOOM_SLOT_II_NODE].includes(id);
-      if(storagePurchase){if(id===DB_HEIRLOOM_STORAGE_NODE)meta.heirloomStorageUnlocked=true;v24SyncStorage();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} purchased.`);}else showToast(`${result.node.label}: ${DB_PRESTIGE.formatStats(result.stats)}.`);
+      if(storagePurchase){if(id===DB_HEIRLOOM_STORAGE_NODE)meta.heirloomStorageUnlocked=true;v24SyncStorage();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} purchased.`);}else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
       saveMeta();updateMetaUI();return result;
     },
     refundAll:async()=>{
       if(gameStarted){showToast('Refund Prestige Points between runs.');return false;}
-      const current=DB_PRESTIGE.inspect(meta.prestige);
+      const current=dbProgression.prestigeInspect();
       if(!current.refundableSpent)return false;
       if(!(await diceboundConfirm(`Refund ${current.refundableSpent} refundable Prestige Point${current.refundableSpent===1?'':'s'}? Permanent Heirloom purchases stay unlocked.`,{title:'Refund Prestige stats?',confirmLabel:'Refund stats',danger:true})))return false;
-      const result=DB_PRESTIGE.refundAll(meta.prestige);meta.prestige=result.prestige;saveMeta();updateMetaUI();showToast(`Refunded ${result.refunded} Prestige Point${result.refunded===1?'':'s'}.`);return true;
+      const result=dbProgression.prestigeRefundAll();saveMeta();updateMetaUI();showToast(`Refunded ${result.refunded} Prestige Point${result.refunded===1?'':'s'}.`);return true;
     },
     afterClose:()=>v22UpdateCamp()
   });
@@ -7007,9 +7006,9 @@
     completePrestige:total=>dbProgression.completePrestige(total),
     setPrestige:value=>{meta.prestige=DB_PRESTIGE.normalize(dbRunClone(value||{}));return dbRunClone(meta.prestige);},
     rawPrestige:()=>dbRunClone(meta.prestige||{}),
-    prestigeInspect:()=>dbRunClone(DB_PRESTIGE.inspect(meta.prestige)),
-    prestigeDomainPurchase:id=>{const result=DB_PRESTIGE.purchase(meta.prestige,id,random);if(result.ok)meta.prestige=result.prestige;return dbRunClone(result);},
-    prestigeDomainRefund:()=>{const result=DB_PRESTIGE.refundAll(meta.prestige);meta.prestige=result.prestige;return dbRunClone(result);},
+    prestigeInspect:()=>dbRunClone(dbProgression.prestigeInspect()),
+    prestigeDomainPurchase:id=>dbRunClone(dbProgression.prestigePurchase(id)),
+    prestigeDomainRefund:()=>dbRunClone(dbProgression.prestigeRefundAll()),
     checkpointHas:()=>DB_RUN_CHECKPOINT.has(),
     achievementDone:id=>dbProgression.achievementDone(id),
     achievementConditionText:id=>dbProgression.achievementConditionText(id),
