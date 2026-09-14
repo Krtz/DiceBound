@@ -1,4 +1,5 @@
 name: Classes oracle materializer
+# Rerun after correcting the Beastmaster synthetic button-dispatch characterization.
 
 on:
   push:
