@@ -45,5 +45,22 @@ end=text.find("  const dbCampOpenStartCore=openStartScreen;", start)
 if start<0 or end<0:
     raise SystemExit('Camp shell final composition config block not found')
 text=text[:start]+"  db064Camp.configureShell({});\n"+text[end:]
+
+# The Run checkpoint test previously asserted the historical raw
+# openStartScreen wrapper. Keep the behavior requirement, but follow it through
+# the new authoritative Camp shell route instead of requiring the retired
+# shadow implementation to remain.
+text += r'''
+
+RUN_CHECKPOINT_TEST = ROOT / "tools" / "test_run_checkpoint.js"
+run_checkpoint_test = RUN_CHECKPOINT_TEST.read_text(encoding="utf-8")
+old_checkpoint_assert = r'''assert.match(monolith,/const dbRunOpenStartBase=openStartScreen;openStartScreen=function\\(\\.\\.\\.args\\)\\{dbRunClearCheckpoint\\(\\);/,"between-run start boundary must clear the active-run checkpoint");'''
+new_checkpoint_assert = r'''assert.match(monolith,/DiceboundCamp\\.configureShell\\(\\{scheduleRunCheckpoint:\(\)=>dbRunScheduleCheckpoint\\(\\),clearCheckpoint:\(\)=>dbRunClearCheckpoint\\(\\),refreshRunControls:\(\)=>dbRunRefreshControls\\(\\)\\}\\);/,"Run checkpoint clearing must remain injected into the authoritative Camp shell boundary");
+assert.match(monolith,/db064Camp\\.enterShell\\(dbCampOpenStartCore,this,args\\)/,"between-run start boundary must route through Camp shell checkpoint clearing");
+assert.doesNotMatch(monolith,/const dbRunOpenStartBase=openStartScreen;/,"retired Run-owned Camp-entry checkpoint wrapper must stay drained");'''
+run_checkpoint_test = replace_once(run_checkpoint_test, old_checkpoint_assert, new_checkpoint_assert, "Run checkpoint Camp-shell ownership assertion")
+RUN_CHECKPOINT_TEST.write_text(run_checkpoint_test, encoding="utf-8", newline="\\n")
+'''
+
 path.write_text(text,encoding='utf-8',newline='\n')
-print('Camp shell materializer patched for lexical collaborator registration')
+print('Camp shell materializer patched for lexical collaborator registration and Run checkpoint ownership')
