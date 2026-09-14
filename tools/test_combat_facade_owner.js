@@ -20,7 +20,7 @@ combat.configure({
   guard:svc('guard',['guardAction','identityGuardAction']),
   mana:svc('mana',['manaGain','occultChannelAttack','occultSpellAttack','summonerConjure']),
   ultimate:svc('ultimate',['start']),
-  petTurn:svc('petTurn',['petTurn','trainerPetDamage','petElementFor','activeTrainerPetId','maybePetElementProc','trainerStrike']),
+  petTurn:svc('petTurn',['petTurn','petDamage','trainerPetDamage','petElementFor','activeTrainerPetId','maybePetElementProc','trainerStrike']),
   turns:svc('turns',['enemyTurn','resolveEnemyResponse','applyPlayerDamage']),
   victory:svc('victory',['winCombat']),
   elements:svc('elements',['triggerElementEffect','currentWeaponElement','triggerWeaponElement','enemyElementProc','affinityElementMultiplier','elementHit','elementHitAll','restoreRadiationDefense','restoreEnemyElementDebuffs','addEnemyBurn']),
@@ -33,12 +33,13 @@ assert.strictEqual(combat.attack('a'),'attack.playerAttack');
 assert.strictEqual(combat.guard('g'),'guard.guardAction');
 assert.strictEqual(combat.spell('s'),'mana.occultSpellAttack');
 assert.strictEqual(combat.ultimate('u'),'ultimate.start');
+assert.strictEqual(combat.petDamage(),'petTurn.petDamage');
 assert.strictEqual(combat.enemyResponse(false),'turns.resolveEnemyResponse');
 assert.strictEqual(combat.element('fire',{}),'elements.triggerElementEffect');
 assert.strictEqual(combat.heal(5),'healing.healPlayer');
 assert.strictEqual(combat.win(),'victory.winCombat');
 assert.strictEqual(combat.scaleEnemy({}),'scaling.scale');
-assert.strictEqual(calls.length,9,'Combat facade forwarding smoke did not exercise expected methods');
+assert.strictEqual(calls.length,10,'Combat facade forwarding smoke did not exercise expected methods');
 
 const monolith=fs.readFileSync(path.join(root,'runtime','js','dicebound.js'),'utf8');
 for(const snippet of [
@@ -52,7 +53,8 @@ for(const snippet of [
   'function triggerElementEffect(...args){return dbCombat.element(...args);}',
   'function healPlayer(...args){return dbCombat.heal(...args);}',
   'async function useUltimate(...args){return dbCombat.ultimate(...args);}',
-  'async function occultSpellAttack(...args){return dbCombat.spell(...args);}'
+  'async function occultSpellAttack(...args){return dbCombat.spell(...args);}',
+  'function petDamage(...args){return dbCombat.petDamage(...args);}'
 ])assert(monolith.includes(snippet),`Missing Combat facade route: ${snippet}`);
 for(const retired of [
   'return dbCombatAttackResolution.playerAttack(...args);',
@@ -60,7 +62,8 @@ for(const retired of [
   'return dbCombatEncounterLifecycle.start(kind);',
   'return dbCombatVictoryResolution.winCombat(...args);',
   'return dbCombatTurns.resolveEnemyResponse(...args);',
-  'return dbCombatManaActionResolution.occultSpellAttack.apply(this,args);'
+  'return dbCombatManaActionResolution.occultSpellAttack.apply(this,args);',
+  'return dbCombatPetTurnResolution.petDamage();'
 ])assert(!monolith.includes(retired),`Peer-public Combat adapter returned: ${retired}`);
 assert(!source.includes('DiceboundCombatPresentation'),'Engine facade must not absorb Combat Presentation');
 assert(!source.includes('DiceboundCombatVfx'),'Engine facade must not absorb Combat VFX');
