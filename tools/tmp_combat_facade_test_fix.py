@@ -30,4 +30,15 @@ if text.count(old)!=1:
     raise SystemExit(f'checkpoint petTurn architecture guard anchor mismatch: {text.count(old)}')
 path.write_text(text.replace(old,new,1),encoding='utf-8',newline='\n')
 
+# Enemy scaling remains a focused deterministic owner, but ordinary scaleEnemy
+# callers now go through the public Combat Engine boundary instead of exposing
+# the specialist owner as a peer-public service.
+path=Path('tools/test_enemy_scaling_extraction_boundary.py')
+text=path.read_text(encoding='utf-8')
+old='''    assert re.search(r"return\\s+dbEnemyScalingResolution\\.scale\\(", mono), (\n        "scaleEnemy thin adapter must delegate to the authoritative owner"\n    )\n    print("Enemy scaling extraction boundary PASS (authoritative owner + thin adapter)")\n'''
+new='''    assert re.search(r"return\\s+dbCombat\\.scaleEnemy\\(", mono), (\n        "scaleEnemy thin adapter must delegate through the public Combat facade"\n    )\n    assert not re.search(r"return\\s+dbEnemyScalingResolution\\.scale\\(", mono), (\n        "direct peer-public enemy-scaling adapter returned"\n    )\n    assert "scaling:dbEnemyScalingResolution" in mono, (\n        "focused enemy-scaling owner must remain composed behind DiceboundCombat"\n    )\n    print("Enemy scaling extraction boundary PASS (focused owner behind Combat facade)")\n'''
+if text.count(old)!=1:
+    raise SystemExit(f'enemy scaling architecture guard anchor mismatch: {text.count(old)}')
+path.write_text(text.replace(old,new,1),encoding='utf-8',newline='\n')
+
 print('Combat facade architecture guards updated')
