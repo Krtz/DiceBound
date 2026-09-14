@@ -95,6 +95,9 @@
       art:(...args)=>beta043Art(...args)
     }
   });
+  const dbMerchantOwner=window.DiceboundMerchant;
+  if(!dbMerchantOwner)throw new Error("dicebound.js requires DiceboundMerchant before loading.");
+  let dbMerchant=null;
   const MERCHANT_SPACING = 12;
   const STATIC_CAMP_TILES = [10,30,55,70,90];
   const POWERUP_TILE_COUNT = 5;
@@ -310,7 +313,6 @@
   let currentEncounterTurn = 0;
   let currentEnemyTile = null;
   let currentMerchantItems = [];
-  let dbMerchantStock = null;
   let currentMerchantNotice = "";
   let selectedClassId = "ranger";
   let pendingLootItem = null;
@@ -1005,13 +1007,8 @@
     tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();
   }
 
-  // Merchant presentation is owned by ui/merchant.js; this lexical adapter
-  // remains only for legacy callers inside the compatibility monolith.
-  let dbMerchantUi=null;
-  function renderMerchant(){
-    if(!dbMerchantUi)throw new Error('Merchant UI owner is not configured.');
-    return dbMerchantUi.render();
-  }
+  // Merchant presentation is reached through the subsystem facade.
+  function renderMerchant(){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.render();}
 
   function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}
   function finalizeRun(){return dbProgression.finalizeRun();}
@@ -1175,20 +1172,12 @@
     const p=random(),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1),boost=bonus+depth*.13+player.luck*.22+(nightmareMode?.08:0);
     if(p<.018+boost*.22)return "legendary";if(p<.08+boost*.40)return "epic";if(p<.23+boost*.68)return "rare";if(p<.53+boost)return "uncommon";return "common";
   }
-  function makeMerchantGear(){if(!dbMerchantStock)throw new Error('Merchant stock owner is not configured.');return dbMerchantStock.makeGear();}
-  function merchantCatalog(){if(!dbMerchantStock)throw new Error('Merchant stock owner is not configured.');return dbMerchantStock.catalog();}
-  function merchantPrice(base){if(!dbMerchantStock)throw new Error('Merchant stock owner is not configured.');return dbMerchantStock.price(base);}
-  // Merchant stock/economy construction is owned by events/merchant-stock.js.
-  // This lexical adapter remains for Board/event callers inside the compatibility monolith.
-  function openMerchant(){
-    if(!dbMerchantStock)throw new Error('Merchant stock owner is not configured.');
-    if(db0646MerchantTransaction.hasActiveChoice(db0646MerchantVisit))return false;
-    const view=dbMerchantStock.buildStock();
-    currentMerchantItems=view.items;currentMerchantNotice="";
-    $("merchantTitle").textContent=view.title;$("merchantSubtitle").textContent=view.subtitle;
-    $("merchantOverlay").classList.remove("hidden");renderMerchant();
-    db0646MerchantVisit=db0646MerchantTransaction.beginVisit(null,currentMerchantItems);
-  }
+  function makeMerchantGear(){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.makeGear();}
+  function merchantCatalog(){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.catalog();}
+  function merchantPrice(base){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.price(base);}
+  // Merchant stock, transactions and presentation are internal to DiceboundMerchant.
+  // These lexical adapters remain only for compatibility callers inside this composition root.
+  function openMerchant(){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.open();}
 
   function generateMythicalHat(){return {id:`mythical_hat_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"hat",rarity:"mythical",mythical:true,mythicPiece:"hat",setName:"Impossible Road",uniqueEffect:"Crown of the Fourth Road: after surviving a guardian special, restore 10% max HP and gain 25 ultimate charge.",icon:"👑",name:"Crown of the Road That Should Not Exist",bonuses:{maxHp:38,attack:7,defense:5,crit:.18,luck:.18,bossDamage:.45}};}
   function generateMythicalWeapon(){
@@ -4537,13 +4526,6 @@
   };
 
   // ----- Sovereign / Contract hardening -----------------------------------
-  const db0646MerchantTransaction=window.DiceboundMerchantTransaction;
-  if(!db0646MerchantTransaction)throw new Error('DiceboundMerchantTransaction must load before dicebound.js');
-  let db0646MerchantVisit=null;
-  function db0646MerchantVisitForCurrentStock(){
-    if(!db0646MerchantVisit||(!db0646MerchantTransaction.hasActiveChoice(db0646MerchantVisit)&&!db0646MerchantTransaction.ownsOffers(db0646MerchantVisit,currentMerchantItems))){db0646MerchantVisit=db0646MerchantTransaction.createVisit(currentMerchantItems);}
-    return db0646MerchantVisit;
-  }
 
 
   function db0410LegendaryChoices(){const pool=[...eligibleUpgrades(u=>u.rarity==='legendary')],out=[];while(pool.length&&out.length<3){const i=rand(0,pool.length-1);out.push(pool.splice(i,1)[0]);}return out;}
@@ -4562,54 +4544,43 @@
     $('merchantOverlay')?.classList.add('hidden');overlay.classList.remove('hidden');
   }
 
-  // Final Merchant renderer: transaction ownership lives in
-  // DiceboundMerchantTransaction, not in transient buttons or delayed UI.
-  const dbMerchantStockOwner=window.DiceboundMerchantStock;
-  if(!dbMerchantStockOwner)throw new Error('DiceboundMerchantStock must load before dicebound.js');
-  dbMerchantStock=dbMerchantStockOwner.createController({
-    getPlayer:()=>player,getBoardLevel:()=>boardLevel,random:()=>random(),pick:list=>pick(list),
-    rollGearRarity:bonus=>dbItems.rollGearRarity(bonus),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
-    rawSellValue:item=>dbItems.rawSellValue(item),equipItem:item=>dbItems.equip(item),formatBonuses:item=>dbItems.formatBonuses(item),
-    getSlotLabel:slot=>SLOT_LABELS[slot],clamp:(value,min,max)=>clamp(value,min,max),eligibleUpgrades:filter=>eligibleUpgrades(filter),
-    isPowerupRarityAtLeast:(rarity,floor)=>DB_RARITIES.isPowerupRarityAtLeast(rarity,floor),
-    applyUpgrade:(up,source)=>applyUpgrade(up,source),applyRandomHighRarity:(source,announce)=>applyRandomHighRarity(source,announce)
-  });
-
-    const dbMerchantUiOwner=window.DiceboundMerchantUi;
-  if(!dbMerchantUiOwner)throw new Error('DiceboundMerchantUi must load before dicebound.js');
-  dbMerchantUi=dbMerchantUiOwner.createController({
-    $:id=>$(id),
-    getPlayer:()=>player,
-    getItems:()=>currentMerchantItems,
-    getNotice:()=>currentMerchantNotice,
-    setNotice:value=>{currentMerchantNotice=value;},
-    priceFor:base=>merchantPrice(base),
-    getVisit:()=>db0646MerchantVisitForCurrentStock(),
-    transaction:db0646MerchantTransaction,
-    formatGearComparison:(item,current)=>formatGearComparison(item,current),
-    gearPowerScore:item=>gearPowerScore(item),
-    confirmWeakerGear:(gear,current)=>diceboundConfirm(`${gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}),
-    chargeOffer:(item,price)=>{player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);},
-    refundOffer:price=>{player.gold+=price;},
-    applyOffer:item=>item.buy?.(),
-    recordRunBuff:item=>recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant'),
-    formatBonuses:item=>formatBonuses(item),
-    rarityInfoFor:rarity=>rarityInfo[rarity],
-    showToast:(...args)=>showToast(...args),
-    updateHud:()=>updateHUD(),
-    openLegendaryChoice:(source,done)=>db0410OpenSovereignChoice(source,done),
-    setMerchantVisible:visible=>$('merchantOverlay').classList.toggle('hidden',!visible),
-    schedule:(fn,ms)=>setTimeout(fn,ms)
+  // Merchant subsystem composition: focused stock, transaction and UI owners live
+  // behind one ordinary public DiceboundMerchant boundary.
+  dbMerchant=dbMerchantOwner.configure({
+    stock:{
+      getPlayer:()=>player,getBoardLevel:()=>boardLevel,random:()=>random(),pick:list=>pick(list),
+      rollGearRarity:bonus=>dbItems.rollGearRarity(bonus),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
+      rawSellValue:item=>dbItems.rawSellValue(item),equipItem:item=>dbItems.equip(item),formatBonuses:item=>dbItems.formatBonuses(item),
+      getSlotLabel:slot=>SLOT_LABELS[slot],clamp:(value,min,max)=>clamp(value,min,max),eligibleUpgrades:filter=>eligibleUpgrades(filter),
+      isPowerupRarityAtLeast:(rarity,floor)=>DB_RARITIES.isPowerupRarityAtLeast(rarity,floor),
+      applyUpgrade:(up,source)=>applyUpgrade(up,source),applyRandomHighRarity:(source,announce)=>applyRandomHighRarity(source,announce)
+    },
+    state:{
+      getItems:()=>currentMerchantItems,setItems:value=>{currentMerchantItems=value;},
+      getNotice:()=>currentMerchantNotice,setNotice:value=>{currentMerchantNotice=value;},
+      setTitle:value=>{$('merchantTitle').textContent=value;},setSubtitle:value=>{$('merchantSubtitle').textContent=value;},
+      setVisible:visible=>$('merchantOverlay').classList.toggle('hidden',!visible)
+    },
+    ui:{
+      $:id=>$(id),getPlayer:()=>player,
+      formatGearComparison:(item,current)=>formatGearComparison(item,current),gearPowerScore:item=>gearPowerScore(item),
+      confirmWeakerGear:(gear,current)=>diceboundConfirm(`${gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}),
+      chargeOffer:(item,price)=>{player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);},
+      refundOffer:price=>{player.gold+=price;},applyOffer:item=>item.buy?.(),
+      recordRunBuff:item=>recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant'),formatBonuses:item=>formatBonuses(item),
+      rarityInfoFor:rarity=>rarityInfo[rarity],showToast:(...args)=>showToast(...args),updateHud:()=>updateHUD(),
+      openLegendaryChoice:(source,done)=>db0410OpenSovereignChoice(source,done),schedule:(fn,ms)=>setTimeout(fn,ms)
+    }
   });
 
   window.DiceboundMerchantTransactionTest=Object.freeze({
     prepareSovereign:()=>{
-      player.gold=99999;currentMerchantNotice='';currentMerchantItems=[{id:'merchant-transaction-sovereign',icon:'C',name:'Sovereign Relic',desc:'Choose one Legendary power.',base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];db0646MerchantVisit=db0646MerchantTransaction.createVisit(currentMerchantItems);$('merchantOverlay').classList.remove('hidden');renderMerchant();return window.DiceboundMerchantTransactionTest.state();
+      player.gold=99999;currentMerchantNotice='';currentMerchantItems=[{id:'merchant-transaction-sovereign',icon:'C',name:'Sovereign Relic',desc:'Choose one Legendary power.',base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];dbMerchant.testing.createVisitForCurrentStock();$('merchantOverlay').classList.remove('hidden');renderMerchant();return window.DiceboundMerchantTransactionTest.state();
     },
     attemptDelayedReopen:()=>{
       const stock=currentMerchantItems,result=openMerchant();return {result,sameStock:stock===currentMerchantItems,state:window.DiceboundMerchantTransactionTest.state()};
     },
-    state:()=>({visit:db0646MerchantTransaction.snapshot(db0646MerchantVisit),merchantHidden:$('merchantOverlay').classList.contains('hidden'),choiceVisible:!$('sovereignChoiceOverlay')?.classList.contains('hidden'),items:currentMerchantItems.map(item=>({id:item.id,sold:!!item.sold}))})
+    state:()=>({visit:dbMerchant.testing.snapshotVisit(),merchantHidden:$('merchantOverlay').classList.contains('hidden'),choiceVisible:!$('sovereignChoiceOverlay')?.classList.contains('hidden'),items:currentMerchantItems.map(item=>({id:item.id,sold:!!item.sold}))})
   });
 
   // ----- Simple diagnostics for the harness/tooling layer -----------------

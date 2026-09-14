@@ -88,6 +88,7 @@
     "js/ui/achievements.js",
     "js/ui/info-guide.js",
     "js/ui/merchant.js",
+    "js/events/merchant-facade.js",
     "js/dicebound.js"
   ],
   "gameBundle": "js/dicebound.js",

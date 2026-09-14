@@ -81,6 +81,7 @@
     "ui-achievements",
     "ui-info-guide",
     "ui-merchant",
+    "merchant-facade",
     "dicebound-monolith"
   ],
   "modules": [
@@ -1005,6 +1006,20 @@
       ],
       "provides": [
         "DiceboundMerchantUi"
+      ]
+    },
+    {
+      "id": "merchant-facade",
+      "path": "js/events/merchant-facade.js",
+      "domain": "events/public-merchant-subsystem-facade",
+      "status": "extracted",
+      "requires": [
+        "merchant-transactions",
+        "merchant-stock",
+        "ui-merchant"
+      ],
+      "provides": [
+        "DiceboundMerchant"
       ]
     },
     {
