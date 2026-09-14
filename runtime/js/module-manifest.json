@@ -36,6 +36,7 @@
     "combat-view-facade",
     "classes-registry",
     "classes-runtime",
+    "classes-actions",
     "classes-invoker",
     "combat-mana-action-resolution",
     "combat-facade",
@@ -453,6 +454,17 @@
       "status": "extracted",
       "requires": [
         "classes-registry"
+      ],
+      "provides": []
+    },
+    {
+      "id": "classes-actions",
+      "path": "js/classes/actions.js",
+      "domain": "classes/runtime-action-mechanics",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "classes-runtime"
       ],
       "provides": []
     },

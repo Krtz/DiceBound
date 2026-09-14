@@ -8,6 +8,7 @@ const vm=require("node:vm");
 const root=path.join(__dirname,"..");
 const registryPath=path.join(root,"runtime","js","classes","registry.js");
 const runtimePath=path.join(root,"runtime","js","classes","runtime.js");
+const actionsPath=path.join(root,"runtime","js","classes","actions.js");
 const monoPath=path.join(root,"runtime","js","dicebound.js");
 const runInitPath=path.join(root,"runtime","js","run","player-initialization.js");
 const manifestPath=path.join(root,"runtime","js","module-manifest.json");
@@ -15,12 +16,14 @@ const indexPath=path.join(root,"runtime","index.html");
 const context=vm.createContext({window:{},console,Set,Object,Array,JSON});
 vm.runInContext(fs.readFileSync(registryPath,"utf8"),context,{filename:registryPath});
 vm.runInContext(fs.readFileSync(runtimePath,"utf8"),context,{filename:runtimePath});
+vm.runInContext(fs.readFileSync(actionsPath,"utf8"),context,{filename:actionsPath});
 
 const classes=context.window.DiceboundClasses;
 assert.ok(classes,"DiceboundClasses facade missing");
 assert.equal(classes.apiVersion,2,"registry compatibility apiVersion drifted");
 assert.equal(classes.owner,"classes/facade");
 assert.equal(context.window.DiceboundClassRuntime,undefined,"focused Classes runtime leaked as a peer public global");
+assert.equal(context.window.DiceboundClassActions,undefined,"focused Classes action mechanics leaked as a peer public global");
 assert.equal(classes._runtimeState,undefined,"raw Classes runtime state leaked through the public facade");
 
 let player={classId:"ranger"},selected="sorcerer";
@@ -93,11 +96,19 @@ assert.match(monolith,/replaceCombatButton\("ultimateBtn",\(\)=>dbClasses\.perfo
 assert.match(monolith,/specialAttackBtn\.addEventListener\("click",\(\)=>dbClasses\.performAction\("special"\)\)/);
 assert.doesNotMatch(monolith,/replaceCombatButton\("attackBtn",\(\)=>\{if\(classIdentityActive\("bloodmage"\)\)/,'historical Attack class-routing branch still lives in monolith');
 assert.doesNotMatch(monolith,/specialAttackBtn\.addEventListener\("click",\(\)=>\{if\(classHasMechanic\("mana"\)\)/,'historical Special class-routing branch still lives in monolith');
+assert.match(monolith,/dbClasses\.configureActionMechanics\(\{/,'monolith does not configure the Classes action-mechanics owner');
+assert.doesNotMatch(monolith,/async function bloodmageBloodletting\(/,'Bloodmage Bloodletting still lives in monolith');
+assert.doesNotMatch(monolith,/async function clericConsecration\(/,'Cleric Consecration still lives in monolith');
+assert.doesNotMatch(monolith,/function cycleBeastStance\(/,'Beastmaster stance mechanics still live in monolith');
+assert.match(monolith,/bloodmageAttack:\(\)=>dbClasses\.bloodmageBloodletting\(\)/);
+assert.match(monolith,/clericSpecial:\(\)=>dbClasses\.clericConsecration\(\)/);
+assert.match(monolith,/beastmasterSpecial:\(\)=>dbClasses\.cycleBeastStance\(\)/);
 
 const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
-const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime");
+const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime"),actionsModule=manifest.modules.find(entry=>entry.id==="classes-actions");
 assert.ok(runtimeModule,"classes-runtime manifest owner missing");assert.equal(runtimeModule.path,"js/classes/runtime.js");assert.deepEqual(runtimeModule.requires,["classes-registry"]);assert.deepEqual(runtimeModule.provides,[],"focused Classes runtime should not publish a peer public facade");
-const order=manifest.loadOrder;assert.equal(order[order.indexOf("classes-registry")+1],"classes-runtime","Classes runtime must load immediately after registry facade");
-const scripts=[...fs.readFileSync(indexPath,"utf8").matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match=>match[1]);assert.ok(scripts.indexOf("js/classes/registry.js")<scripts.indexOf("js/classes/runtime.js"));assert.ok(scripts.indexOf("js/classes/runtime.js")<scripts.indexOf("js/dicebound.js"));
+assert.ok(actionsModule,"classes-actions manifest owner missing");assert.equal(actionsModule.path,"js/classes/actions.js");assert.deepEqual(actionsModule.requires,["classes-registry","classes-runtime"]);assert.deepEqual(actionsModule.provides,[],"focused Classes actions should not publish a peer public facade");
+const order=manifest.loadOrder;assert.equal(order[order.indexOf("classes-registry")+1],"classes-runtime","Classes runtime must load immediately after registry facade");assert.equal(order[order.indexOf("classes-runtime")+1],"classes-actions","Classes actions must load immediately after runtime owner");
+const scripts=[...fs.readFileSync(indexPath,"utf8").matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(match=>match[1]);assert.ok(scripts.indexOf("js/classes/registry.js")<scripts.indexOf("js/classes/runtime.js"));assert.ok(scripts.indexOf("js/classes/runtime.js")<scripts.indexOf("js/classes/actions.js"));assert.ok(scripts.indexOf("js/classes/actions.js")<scripts.indexOf("js/dicebound.js"));
 
-console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle and combat action routing are owned by DiceboundClasses");
+console.log("Classes runtime owner PASS: identity, capabilities, Slime Rouge lifecycle, routing and simple action mechanics are owned behind DiceboundClasses");

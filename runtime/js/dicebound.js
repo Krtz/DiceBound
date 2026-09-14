@@ -1837,7 +1837,6 @@
   async function occultChannelAttack(...args){return dbCombat.channel(...args);}
   async function occultSpellAttack(...args){return dbCombat.spell(...args);}
 
-  async function bloodmageBloodletting(){if(combatBusy||!currentEnemy)return;const oldLS=player.lifeSteal;player.lifeSteal+=.12;identityFlash("🩸 Bloodletting restores fuel");try{await playerAttack();}finally{player.lifeSteal=oldLS;}updateCombatUI();}
 
   function beta021RoguePowerStealChance(luck=player.luck){return clamp((Number(luck)||0)-.50,0,.50)*.70;}
   async function rogueSteal(){
@@ -1855,9 +1854,7 @@
     setCombatText(text);updateHUD();updateCombatUI();await delay(620);await resolveEnemyResponse(false);
   }
 
-  async function clericConsecration(){if(combatBusy||!currentEnemy||(player.clericFaith||0)<100)return;combatBusy=true;player.clericFaith=0;player.combatActionCount++;const heal=healPlayer(Math.ceil(player.maxHp*.22));player.combatShield+=1;const dmg=Math.round(player.attack*1.15+player.maxHp*.08),dealt=damageAll(dmg,.75);setCombatText(`☀️ Consecration spends 100 Faith, heals ${heal} HP, raises a Barrier and deals ${dealt} Light-touched damage across the pack.`);identityFlash("☀️ CONSECRATION");sfx.holy();updateCombatUI();await delay(760);if(!livingEnemies().length)return winCombat();await resolveEnemyResponse(false);}
 
-  function cycleBeastStance(){if(!classIdentityActive("beastmaster")||combatBusy)return;const order=["aggressive","defensive","support"],i=order.indexOf(player.beastStance);player.beastStance=order[(i+1)%order.length];identityFlash(`🐾 ${player.beastStance[0].toUpperCase()+player.beastStance.slice(1)} stance`);updateCombatUI();}
 
   // Guard/potion identity wrappers.
   async function identityGuardAction(...args){
@@ -1870,10 +1867,28 @@
 
   // Classes owns class-action selection policy. Generic Combat/Consumable/Ultimate
   // resolution remains in its existing owners and is injected as collaborators.
+  dbClasses.configureActionMechanics({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    basicAttack:()=>playerAttack(),
+    identityFlash:text=>identityFlash(text),
+    updateCombatUI:()=>updateCombatUI(),
+    healPlayer:amount=>healPlayer(amount),
+    damageAll:(amount,falloff=1)=>damageAll(amount,falloff),
+    setCombatText:text=>setCombatText(text),
+    sfxHoly:()=>sfx.holy(),
+    delay:ms=>delay(ms),
+    livingEnemies:()=>livingEnemies(),
+    winCombat:()=>winCombat(),
+    resolveEnemyResponse:guarded=>resolveEnemyResponse(guarded),
+    isClassActive:id=>classIdentityActive(id)
+  });
   dbClasses.configureActions({
     basicAttack:()=>playerAttack(),
     manaAttack:()=>occultChannelAttack(),
-    bloodmageAttack:()=>bloodmageBloodletting(),
+    bloodmageAttack:()=>dbClasses.bloodmageBloodletting(),
     guard:()=>identityGuardAction(),
     bloodmageGuard:()=>bloodmageReplenish(),
     potion:()=>identityPotionAction(),
@@ -1881,8 +1896,8 @@
     manaSpecial:()=>occultSpellAttack(),
     bloodmageSpecial:()=>bloodmageExsanguinate(),
     rogueSpecial:()=>rogueSteal(),
-    clericSpecial:()=>clericConsecration(),
-    beastmasterSpecial:()=>cycleBeastStance()
+    clericSpecial:()=>dbClasses.clericConsecration(),
+    beastmasterSpecial:()=>dbClasses.cycleBeastStance()
   });
 
   // Replace the four original action buttons once, removing old stacked listeners.
@@ -7126,8 +7141,8 @@
     slimeRougeUltimate:(identity='summoner',ultimate='pokemontrainer')=>window.DiceboundV318Test.realUltimate(identity,ultimate),
     berserkerRage:(missing=.40)=>dbClassesOracleClone(window.DiceboundBeta021Test.rageDamage(missing)),
     rogueSteal:(seed='classes-oracle-rogue')=>window.DiceboundBeta021Test.rogueStealTrial(seed),
-    clericConsecration:async()=>{dbClassesOracleSetup('cleric',{maxHp:100,hp:40,attack:20,clericFaith:100,combatShield:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>clericConsecration());return dbClassesOracleState();},
-    beastmasterStances:()=>{dbClassesOracleSetup('beastmaster');const sequence=[player.beastStance];for(let i=0;i<4;i++){cycleBeastStance();sequence.push(player.beastStance);}return {sequence,state:dbClassesOracleState()};},
+    clericConsecration:async()=>{dbClassesOracleSetup('cleric',{maxHp:100,hp:40,attack:20,clericFaith:100,combatShield:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>dbClasses.clericConsecration());return dbClassesOracleState();},
+    beastmasterStances:()=>{dbClassesOracleSetup('beastmaster');const sequence=[player.beastStance];for(let i=0;i<4;i++){dbClasses.cycleBeastStance();sequence.push(player.beastStance);}return {sequence,state:dbClassesOracleState()};},
     bloodmageReplenish:async()=>{dbClassesOracleSetup('bloodmage',{maxHp:100,hp:40,ultimateCharge:0,combatActionCount:0},[{hp:600,maxHp:1000}]);await dbClassesOracleWithoutResponse(()=>bloodmageReplenish());return dbClassesOracleState();},
     bloodmageExsanguinate:async()=>{dbClassesOracleSetup('bloodmage',{maxHp:100,hp:100,attack:20,ultimateCharge:0,combatActionCount:0},[{hp:5000,maxHp:5000,defense:3}]);await dbClassesOracleWithoutResponse(()=>bloodmageExsanguinate());return dbClassesOracleState();},
     alchemistFlask:async()=>{dbClassesOracleSetup('alchemist',{maxHp:100,hp:100,attack:15,potions:3,potionPower:.50,alchemistFreeFlask:0,alchemistElementChance:0,combatActionCount:0},[{hp:5000,maxHp:5000},{hp:5000,maxHp:5000}]);await dbClassesOracleWithoutResponse(()=>alchemistVolatileFlaskV16());return dbClassesOracleState();},

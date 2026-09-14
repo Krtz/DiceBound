@@ -1166,7 +1166,7 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  let runtimeOwner=null,runtime=null;
+  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null;
   function installRuntime(owner){
     if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
     runtimeOwner=owner;
@@ -1177,6 +1177,22 @@
     runtime=runtimeOwner.configure(next);
     return api;
   }
+  function installActions(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses action-mechanics owner is invalid.");
+    actionsOwner=owner;
+    return api;
+  }
+  function configureActionMechanics(next={}){
+    if(!actionsOwner)throw new Error("DiceboundClasses action-mechanics owner has not been installed.");
+    actionsRuntime=actionsOwner.configure(next);
+    return api;
+  }
+  function requireActions(name){
+    const fn=actionsRuntime?.[name];
+    if(typeof fn!=="function")throw new Error(`DiceboundClasses action mechanic ${name}() is not configured.`);
+    return fn;
+  }
+  function callAction(name,...args){return requireActions(name)(...args);}
   function requireRuntime(name){
     const fn=runtime?.[name];
     if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
@@ -1194,8 +1210,12 @@
     createMechanicsRegistry,
     createUltimateSupportRegistry,
     configure,
+    configureActionMechanics,
     configureActions:next=>call("configureActions",next),
     performAction:kind=>call("performAction",kind),
+    bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
+    clericConsecration:()=>callAction("clericConsecration"),
+    cycleBeastStance:()=>callAction("cycleBeastStance"),
     identityId:()=>call("identityId"),
     active:id=>call("active",id),
     mechanicsFor:id=>call("mechanicsFor",id),
@@ -1207,6 +1227,7 @@
     clearSlimeRougeRuntime:()=>call("clearSlimeRougeRuntime"),
     runtimeSnapshot:()=>call("snapshot"),
     _installRuntime:installRuntime,
+    _installActions:installActions,
   });
   window.DiceboundClasses=api;
 })();
