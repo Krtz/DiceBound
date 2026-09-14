@@ -46,7 +46,7 @@ async function main(){
   try{
     child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-sandbox","--no-first-run","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
     page=await connect(url);await page.send("Runtime.enable");
-    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundCombatOracleTest&&!!window.DiceboundRng&&!!window.DiceboundStateEvents");if(ready)break;await sleep(100);}assert.ok(ready,"Combat oracle runtime surface did not become ready");
+    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundRunResumeTest&&!!window.DiceboundCombatOracleTest&&!!window.DiceboundRng");if(ready)break;await sleep(100);}assert.ok(ready,"Combat oracle runtime surface did not become ready");
     await page.evaluate("document.getElementById('campGoBtn')?.click();window.__DB_FAST_ECHO_CAP__=1;window.__DB_V26_FAST_ECHO__=true;true");
     await sleep(250);
     await page.evaluate("document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');true");
@@ -55,7 +55,7 @@ async function main(){
       const clone=x=>x==null?x:JSON.parse(JSON.stringify(x));
       const combat=window.DiceboundCombatOracleTest,outputs=[];
       window.DiceboundRng.seed('combat-template');const template=window.DiceboundRunResumeTest.snapshot();
-      const eventsFor=async work=>{const events=[],stops=[];const add=(type,payload)=>events.push({type,...clone(payload)});stops.push(window.DiceboundStateEvents.on('combat:strike',e=>add('combat:strike',{targetName:e.targetName??null,targetHp:e.targetHp??null,presentationTarget:e.presentationTarget??null,damage:e.damage??null,crit:e.crit??null,echo:!!e.echo,index:e.index??null})));stops.push(window.DiceboundStateEvents.on('combat:target-advanced',e=>add('combat:target-advanced',{reason:e.reason??null,defeatedIndex:e.defeatedIndex??null,targetIndex:e.targetIndex??null,targetName:e.targetName??null})));try{return {result:await work(),events};}finally{stops.forEach(stop=>stop?.());}};
+      const eventsFor=async work=>{const events=[],stops=[];const add=(type,payload)=>events.push({type,...clone(payload)});stops.push(combat.onEvent('combat:strike',e=>add('combat:strike',{targetName:e.targetName??null,targetHp:e.targetHp??null,presentationTarget:e.presentationTarget??null,damage:e.damage??null,crit:e.crit??null,echo:!!e.echo,index:e.index??null})));stops.push(combat.onEvent('combat:target-advanced',e=>add('combat:target-advanced',{reason:e.reason??null,defeatedIndex:e.defeatedIndex??null,targetIndex:e.targetIndex??null,targetName:e.targetName??null})));try{return {result:await work(),events};}finally{stops.forEach(stop=>stop?.());}};
       const restore=name=>{window.DiceboundRunResumeTest.restore(structuredClone(template));window.__DB_FAST_ECHO_CAP__=1;window.__DB_V26_FAST_ECHO__=true;combat.cleanup();window.DiceboundRng.seed('combat-oracle:'+name);return window.DiceboundRng.snapshot();};
       const finish=(record,before)=>{const after=window.DiceboundRng.snapshot();outputs.push({...record,state:combat.snapshot(),rngCalls:after.calls-before.calls,rngState:after.state});};
       const setup=(name,spec)=>{const before=restore(name);combat.setup(spec);window.DiceboundRng.seed('combat-oracle:'+name);return window.DiceboundRng.snapshot();};
@@ -100,7 +100,7 @@ async function main(){
         const before=setup('d20-chaos',{classId:'d20',player:{hp:500,maxHp:500,defense:100,ultimateCharge:20},enemies:[{name:'Chaos Dummy',hp:500,maxHp:500,attack:1,defense:0}]});const observed=await eventsFor(()=>combat.chaos('attack'));finish({name:'d20-chaos',kind:'d20',result:clone(observed.result??null),events:observed.events},before);
       }
       {
-        const before=setup('victory-ordinary',{classId:'ranger',player:{hp:500,maxHp:500,defense:100,gold:0,xp:0,xpNext:999999,postFightHeal:0},enemies:[{name:'Victory Dummy',hp:0,maxHp:25,attack:1,defense:0,gold:11,xp:7}]});const observed=await eventsFor(()=>combat.win());await new Promise(r=>setTimeout(r,20));finish({name:'victory-ordinary',kind:'victory',result:observed.result??null,events:observed.events},before);combat.dismissTransient();
+        const before=setup('victory-ordinary',{classId:'ranger',player:{hp:500,maxHp:500,defense:100,gold:0,xp:0,xpNext:999999,postFightHeal:0},enemies:[{name:'Victory Dummy',hp:0,maxHp:25,attack:1,defense:0,gold:11,xp:7}]});const clicker=setInterval(()=>document.getElementById('battleVictoryContinue')?.click(),5);let observed;try{observed=await eventsFor(()=>combat.win());}finally{clearInterval(clicker);}await new Promise(r=>setTimeout(r,20));finish({name:'victory-ordinary',kind:'victory',result:observed.result??null,events:observed.events},before);combat.dismissTransient();
       }
       combat.cleanup();
       return {baselineVersion:'0.6.6.30',runtimeVersion:window.DiceboundVersion?.version||null,cases:outputs};
