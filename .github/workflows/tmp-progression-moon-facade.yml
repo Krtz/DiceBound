@@ -28,7 +28,10 @@ jobs:
         run: |
           python tools/tmp_progression_moon_facade.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_progression_moon_test_fix.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Remove-Item tools/tmp_progression_moon_facade.py
+          Remove-Item tools/tmp_progression_moon_test_fix.py
           Remove-Item .github/workflows/tmp-progression-moon-facade.yml
           python tools/refresh_runtime_manifest.py --version 0.6.6.28 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
