@@ -60,18 +60,19 @@ pass("save-export-import-roundtrip",()=>{
 });
 
 pass("active-run-checkpoint-rng-continuation",()=>{
-  const {window}=makePersistenceContext(),rng=window.DiceboundRng,cp=window.DiceboundRunCheckpoint;
+  const {context,window}=makePersistenceContext(),rng=window.DiceboundRng,cp=window.DiceboundRunCheckpoint;
   rng.seed("runtime-oracle");rng.random();rng.random();
-  const created=cp.create({summary:{board:3},meta:{level:9},run:{player:{classId:"ranger",gold:77},tiles:[{type:"start"}]}});
+  context.window.__runtimeOracleCheckpoint=JSON.parse(JSON.stringify({summary:{board:3},meta:{level:9},run:{player:{classId:"ranger",gold:77},tiles:[{type:"start"}]}}));
+  const created=vm.runInContext("window.DiceboundRunCheckpoint.create(window.__runtimeOracleCheckpoint)",context);
   const snap=json(created.rng);cp.store(created);const expected=[rng.random(),rng.random(),rng.random()];rng.restore(snap);
   assert.equal(JSON.stringify([rng.random(),rng.random(),rng.random()]),JSON.stringify(expected));
   const loaded=cp.load();assert.equal(loaded.checkpoint.run.player.gold,77);assert.equal(loaded.checkpoint.summary.board,3);assert.equal(cp.has(),true);cp.clear();assert.equal(cp.has(),false);
 });
 
 pass("checkpoint-validation-errors",()=>{
-  const {window}=makePersistenceContext(),cp=window.DiceboundRunCheckpoint;
-  assert.throws(()=>cp.validate({checkpointVersion:99,gameVersion:"0.6.6.34",meta:{},run:{player:{},tiles:[{}]},rng:{mode:"seeded"}}),/unsupported/);
-  assert.throws(()=>cp.create({meta:{},run:{player:{bad:()=>1},tiles:[{}]}}),/unsupported function data/);
+  const {context,window}=makePersistenceContext(),cp=window.DiceboundRunCheckpoint;
+  assert.throws(()=>vm.runInContext("window.DiceboundRunCheckpoint.validate({checkpointVersion:99,gameVersion:'0.6.6.34',meta:{},run:{player:{},tiles:[{}]},rng:{mode:'seeded'}})",context),/unsupported/);
+  assert.throws(()=>vm.runInContext("window.DiceboundRunCheckpoint.create({meta:{},run:{player:{bad:()=>1},tiles:[{}]}})",context),/unsupported function data/);
   assert.equal(cp.uiFix,"browser-camp-resume-v2");
 });
 
@@ -92,7 +93,7 @@ pass("core-normalization",()=>{
 });
 
 pass("core-event-bus",()=>{
-  const {window}=makePersistenceContext();const errors=[];
+  const errors=[];
   const context=vm.createContext({window:{},console:{error:(...args)=>errors.push(args)}});run(context,path.join("core","state.js"));
   const bus=context.window.DiceboundCoreState.createEventBus(),calls=[];const off=bus.on("tick",v=>calls.push(`a:${v}`));bus.on("tick",()=>{throw new Error("boom");});bus.on("tick",v=>calls.push(`b:${v}`));
   assert.equal(bus.emit("tick",7),7);off();bus.emit("tick",8);assert.equal(JSON.stringify(calls),JSON.stringify(["a:7","b:7","b:8"]));assert.equal(errors.length,2);assert.throws(()=>bus.on("tick",null),/listener must be a function/);
