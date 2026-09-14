@@ -6,6 +6,7 @@ on:
       - arch/0.6.6.34-classes-oracle
     paths:
       - tools/materialize_classes_runtime_hooks.py
+      - tools/fix_classes_runtime_hooks_materializer.py
       - .github/workflows/classes-runtime-hooks-materialize.yml
 
 permissions:
@@ -34,6 +35,8 @@ jobs:
       - name: Materialize Classes runtime hooks
         shell: pwsh
         run: |
+          python tools/fix_classes_runtime_hooks_materializer.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/materialize_classes_runtime_hooks.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/classes/hooks.js
@@ -102,6 +105,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item tools/materialize_classes_runtime_hooks.py -Force
+          Remove-Item tools/fix_classes_runtime_hooks_materializer.py -Force
           Remove-Item .github/workflows/classes-runtime-hooks-materialize.yml -Force
           git status --short
           git diff --check
