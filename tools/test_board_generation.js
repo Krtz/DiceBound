@@ -129,12 +129,14 @@ assert.deepEqual(boardOneAfterCleanup.digest,expectedBoardOneDigest,"primed Boar
 assert.equal(boardOneAfterCleanup.random.draws(),boardOneBeforeCleanup.random.draws(),"Board 1 Devil cleanup must not consume RNG");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
-for(const adapter of [
+for(const routed of [
   "dbRun.configure({generation:{",
-  "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",
-  "function generateBoard(){return dbRun.generateBoard();}"
-])assert.ok(monolith.includes(adapter),`missing Board-generation facade composition: ${adapter}`);
+  "dbRun.enemyForPosition(",
+  "dbRun.generateBoard()"
+])assert.ok(monolith.includes(routed),`missing direct Board owner composition/routing: ${routed}`);
 for(const retired of [
+  "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",
+  "function generateBoard(){return dbRun.generateBoard();}",
   "function drawSpecialIndexes(",
   "function plannedPackSize(",
   "const generateBoardV15=generateBoard;",
@@ -149,4 +151,4 @@ for(const retired of [
   "generateBoard=function"
 ])assert.ok(!monolith.includes(retired),`retired Board-generation chain remains: ${retired}`);
 
-console.log("Board generation owner PASS: bootstrap preview, Board 1/5/6 construction, Pale Devil placement, exact fixture RNG cursors and retired-chain guards are deterministic");
+console.log("Board generation owner PASS: bootstrap preview, Board 1/5/6 construction, Pale Devil placement, direct owner routing, exact fixture RNG cursors and retired-chain guards are deterministic");
