@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 # Import the corrected v2 materializer so the diagnostic exercises the exact
@@ -10,6 +11,17 @@ import tmp_materialize_0670_chainsaw_v2 as chainsaw_v2
 chainsaw=chainsaw_v2.base
 ROOT=Path(__file__).resolve().parents[1]
 MONOLITH=ROOT/'runtime/js/dicebound.js'
+
+
+def route_owner_callbacks(text:str)->str:
+    # These are composition-boundary callbacks, not compatibility functions.
+    # Keep the current owner lazy (dbProgression is configured later) while
+    # removing the named monolith adapter entirely.
+    pattern=re.compile(r'(?m)^(\s*)isClassUnlocked,\s*$')
+    text,count=pattern.subn(r'\1isClassUnlocked:(...args)=>dbProgression.isClassUnlocked(...args),',text)
+    if count != 2:
+        raise RuntimeError(f'Expected two isClassUnlocked config shorthands, found {count}')
+    return text
 
 
 def main()->int:
@@ -40,24 +52,29 @@ def main()->int:
         original=chainsaw.DELEGATES
         if spec and explicit:
             raise RuntimeError('Use CHAINSAW_DELEGATE_SLICE or CHAINSAW_DELEGATE_NAMES, not both')
+        selected_names=list(original)
         if explicit:
             missing=[name for name in explicit if name not in original]
             if missing:
                 raise RuntimeError(f'Unknown delegate names: {missing}')
             chainsaw.DELEGATES={name:original[name] for name in explicit}
+            selected_names=explicit
             print(f'delegate names: {", ".join(explicit)}')
         elif spec:
             lo_text,hi_text=spec.split(':',1)
             lo,hi=int(lo_text),int(hi_text)
             names=list(original)
-            selected=names[lo:hi]
-            chainsaw.DELEGATES={name:original[name] for name in selected}
-            print(f'delegate slice {lo}:{hi}: {", ".join(selected)}')
+            selected_names=names[lo:hi]
+            chainsaw.DELEGATES={name:original[name] for name in selected_names}
+            print(f'delegate slice {lo}:{hi}: {", ".join(selected_names)}')
+        if 'isClassUnlocked' in selected_names:
+            text=route_owner_callbacks(text)
         try:
             text,killed,skipped=chainsaw.eliminate_delegates(text)
         finally:
             chainsaw.DELEGATES=original
         print(f'delegates: killed={len(killed)} skipped={len(skipped)} names={", ".join(killed)}')
+        print(f'delegates skipped: {"; ".join(skipped)}')
 
     if 'support' in parts:
         if 'dead' not in parts:
