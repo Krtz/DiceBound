@@ -13,14 +13,17 @@ ANTI_RETURN=ROOT/"tools/test_monolith_chainsaw.py"
 MYTHICAL_TEST=ROOT/"tools/test_canonical_mythical_set_summary.py"
 PORTRAIT_TEST=ROOT/"tools/test_canonical_class_portrait.py"
 
+# V13 was already absent from the released 0.6.6.39 source. The remaining
+# predecessor captures are required inputs to this surgery; every historical
+# name, including V13, is forbidden in the resulting runtime.
 PORTRAIT_ALIASES={
-    "classPortraitV13Base",
     "classPortraitV15Patch",
     "classPortraitV16Base",
     "classPortraitV18Base",
     "classPortraitBeta042Base",
     "db054LegacyPortraitSVG",
 }
+PORTRAIT_FORBIDDEN_ALIASES={"classPortraitV13Base",*PORTRAIT_ALIASES}
 
 
 def _node_name(source:bytes,node)->str|None:
@@ -36,6 +39,30 @@ def _expand_statement_end(source:bytes,end:int)->int:
     if source[end:end+1]==b"\n":
         return end+1
     return end
+
+
+def _portrait_structure(text:str)->tuple[int,int,set[str]]:
+    """Count live portrait declarations/reassignments and exact identifier names."""
+    source=text.encode("utf-8")
+    tree=base.parse(source)
+    declarations=0
+    assignments=0
+    identifiers=set()
+    for node in base.walk(tree.root_node):
+        if node.type=="identifier":
+            identifiers.add(base.node_text(source,node))
+        if node.type=="function_declaration" and _node_name(source,node)=="classPortraitSVG":
+            declarations+=1
+            continue
+        if node.type!="assignment_expression":
+            continue
+        left=node.child_by_field_name("left")
+        right=node.child_by_field_name("right")
+        if not left or left.type!="identifier" or base.node_text(source,left)!="classPortraitSVG":
+            continue
+        if right and right.type in {"function_expression","arrow_function"}:
+            assignments+=1
+    return declarations,assignments,identifiers
 
 
 def canonicalize_class_portrait(text:str)->tuple[str,int]:
@@ -123,13 +150,14 @@ def canonicalize_class_portrait(text:str)->tuple[str,int]:
     if count!=1:
         raise RuntimeError(f"expected one final applyClassPortrait layer, replaced {count}")
 
-    for name in PORTRAIT_ALIASES:
-        if re.search(rf"\b{re.escape(name)}\b",base.mask_non_code(text)):
-            raise RuntimeError(f"portrait predecessor survived: {name}")
-    if len(re.findall(r"\bfunction\s+classPortraitSVG\s*\(",base.mask_non_code(text)))!=1:
-        raise RuntimeError("classPortraitSVG did not collapse to one declaration")
-    if re.search(r"\bclassPortraitSVG\s*=\s*function\b",base.mask_non_code(text)):
-        raise RuntimeError("classPortraitSVG replacement ladder survived")
+    declarations,assignments,identifiers=_portrait_structure(text)
+    survivors=PORTRAIT_FORBIDDEN_ALIASES.intersection(identifiers)
+    if survivors:
+        raise RuntimeError(f"portrait predecessors survived structurally: {sorted(survivors)}")
+    if declarations!=1 or assignments!=0:
+        raise RuntimeError(
+            f"classPortraitSVG structural collapse failed: declarations={declarations}, assignments={assignments}"
+        )
     return text,portrait_impls
 
 
@@ -235,9 +263,9 @@ def augment_anti_return()->None:
         text=text.replace(anchor,anchor+"STALE_CLASS_PORTRAIT_ALIASES=['classPortraitV13Base','classPortraitV15Patch','classPortraitV16Base','classPortraitV18Base','classPortraitBeta042Base','db054LegacyPortraitSVG']\n",1)
         needle='''    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, Progression bootstrap ordered, startup aliases retired")'''
         replacement='''    for name in STALE_CLASS_PORTRAIT_ALIASES:
-        assert not re.search(rf"\\b{re.escape(name)}\\b",code), f"historical class portrait alias {name} returned"
-    assert len(re.findall(r"\\bfunction\\s+classPortraitSVG\\s*\\(",code))==1, "classPortraitSVG must remain one canonical implementation"
-    assert not re.search(r"\\bclassPortraitSVG\\s*=\\s*function\\b",code), "classPortraitSVG replacement ladder returned"
+        assert not re.search(rf"\\b{re.escape(name)}\\b",text), f"historical class portrait alias {name} returned"
+    assert len(re.findall(r"\\bfunction\\s+classPortraitSVG\\s*\\(",text))==1, "classPortraitSVG must remain one canonical implementation"
+    assert not re.search(r"\\bclassPortraitSVG\\s*=\\s*function\\b",text), "classPortraitSVG replacement ladder returned"
     assert "db054LegacyPortraitSVG" not in text, "class portrait legacy fallback returned"
     assert "CLASSES[classId]||CLASSES.ranger" not in text, "class portrait Ranger fallback returned"
 
