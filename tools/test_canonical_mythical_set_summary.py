@@ -8,9 +8,23 @@ if len(re.findall(r'\bfunction\s+mythicalSetSummary\s*\(',SOURCE))!=1:
 if re.search(r'\bmythicalSetSummary\s*=\s*function\b',SOURCE):
     raise SystemExit('historical mythicalSetSummary replacement returned')
 start=SOURCE.find('function mythicalSetSummary()')
-end=SOURCE.find('function enemyForPosition(',start)
-if start<0 or end<0: raise SystemExit('could not isolate canonical mythicalSetSummary')
+if start<0: raise SystemExit('canonical mythicalSetSummary missing')
+brace=SOURCE.find('{',start)
+if brace<0: raise SystemExit('canonical mythicalSetSummary has no body')
+depth=0
+end=-1
+for pos in range(brace,len(SOURCE)):
+    ch=SOURCE[pos]
+    if ch=='{': depth+=1
+    elif ch=='}':
+        depth-=1
+        if depth==0:
+            end=pos+1
+            break
+if end<0: raise SystemExit('canonical mythicalSetSummary body is unbalanced')
 body=SOURCE[start:end]
+if re.search(r'\bfunction\s+enemyForPosition\s*\(',SOURCE):
+    raise SystemExit('retired enemyForPosition wrapper returned just to delimit mythicalSetSummary')
 final="return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');"
 if final not in body: raise SystemExit('canonical mythicalSetSummary does not use final v24 summary policy')
 for obsolete in ('/5 Impossible Road pieces','/6 Impossible Road pieces','/7 Impossible Road pieces · 2: +3% all damage'):
