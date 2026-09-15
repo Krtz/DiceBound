@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 
 import tmp_materialize_0670_chainsaw_v3 as v3
@@ -7,15 +8,11 @@ import tmp_materialize_0670_chainsaw_v3 as v3
 base=v3.base
 
 
-def targeted_support_cleanup(text:str,removed_names:set[str])->tuple[str,list[str]]:
-    # Do not infer declaration death from naming/history prefixes. Two values the
-    # old sweep selected (db060GuardianArt and db0512GateRewards) are live reads.
-    # v16Talents is different: DB317 makes its registration loop a guaranteed
-    # no-op, so after dead-write removal the authored array has no remaining
-    # consumer and can be retired explicitly.
+def remove_isolated_declaration(text:str,name:str)->str:
     code=base.mask_non_code(text)
-    if len(re.findall(r'\bv16Talents\b',code))!=1:
-        raise RuntimeError('v16Talents is not isolated after DB317 dead-write removal')
+    count=len(re.findall(rf'\b{re.escape(name)}\b',code))
+    if count!=1:
+        raise RuntimeError(f'{name} is not isolated after prior cleanup (occurrences={count})')
     source=text.encode('utf-8')
     tree=base.parse(source)
     target=None
@@ -26,11 +23,11 @@ def targeted_support_cleanup(text:str,removed_names:set[str])->tuple[str,list[st
         if len(declarators)!=1:
             continue
         ident=declarators[0].child_by_field_name('name')
-        if ident and base.node_text(source,ident)=='v16Talents':
+        if ident and base.node_text(source,ident)==name:
             target=node
             break
     if target is None:
-        raise RuntimeError('Could not locate isolated v16Talents declaration')
+        raise RuntimeError(f'Could not locate isolated declaration: {name}')
     start,end=target.start_byte,target.end_byte
     while end<len(source) and source[end:end+1] in {b' ',b'\t',b';'}:
         end+=1
@@ -38,11 +35,22 @@ def targeted_support_cleanup(text:str,removed_names:set[str])->tuple[str,list[st
         end+=2
     elif end<len(source) and source[end:end+1]==b'\n':
         end+=1
-    result=(source[:start]+source[end:]).decode('utf-8')
-    for live in ('db060GuardianArt','db0512GateRewards'):
-        if len(re.findall(rf'\b{live}\b',base.mask_non_code(result)))<2:
-            raise RuntimeError(f'Live support value unexpectedly lost: {live}')
-    return result,['v16Talents']
+    return (source[:start]+source[end:]).decode('utf-8')
+
+
+def targeted_support_cleanup(text:str,removed_names:set[str])->tuple[str,list[str]]:
+    # Generic history-prefix sweeping was unsafe. Only remove exact declarations
+    # that have become isolated after the preceding, validated transformations.
+    requested=[name.strip() for name in os.environ.get('CHAINSAW_SUPPORT_NAMES','v16Talents').split(',') if name.strip()]
+    allowed={'db060GuardianArt','db0512GateRewards','v16Talents'}
+    unknown=set(requested)-allowed
+    if unknown:
+        raise RuntimeError(f'Unsupported support-cleanup candidates: {sorted(unknown)}')
+    removed=[]
+    for name in requested:
+        text=remove_isolated_declaration(text,name)
+        removed.append(name)
+    return text,removed
 
 
 base.remove_dead_support_declarations=targeted_support_cleanup
