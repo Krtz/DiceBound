@@ -1,0 +1,47 @@
+name: Temporary 0.6.7.0 class oracle bisect
+
+on:
+  push:
+    branches:
+      - refactor/0.6.7.0-monolith-chainsaw
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  classes-oracle:
+    name: classes-oracle (${{ matrix.label }})
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: released-main
+            ref: db7e6f423caaa06b5d8939dbf113da3a1236ccdb
+          - label: pre-startup-repair
+            ref: 6b2ff149cd0683fa455f3a30317001ceef0609b1
+          - label: startup-repair
+            ref: 25cc994622e26dfb1f35c5623b3255809acf4826
+          - label: canonical-rewards-helper
+            ref: 849230bde6d217a679d0de7455a8b25deb3d78bb
+          - label: canonical-rewards-checkpoint
+            ref: 9a9aeba32305830d5fd1f621f3d80d1dd04296d3
+          - label: class-unlock-helper
+            ref: 243bde9ff948962292b4419387b4142a41f41893
+          - label: dead-noise-checkpoint
+            ref: e6d1678ad92e2720f0ce84f2a97d9e660e865838
+          - label: rng-boundary-checkpoint
+            ref: c3ecba2789db0529321b12435dddcef28e13c259
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          fetch-depth: 0
+      - name: Show candidate
+        shell: pwsh
+        run: git log -1 --oneline
+      - name: Run exact Classes oracle
+        shell: pwsh
+        run: node tools/test_classes_oracle.js
