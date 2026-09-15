@@ -76,7 +76,7 @@ for(const direct of [
   'dbCombat.heal(',
   'dbCombat.spell(',
   'dbCombat.manaGain(',
-  'dbCombat.performStrike(',
+  'dbCombat.strike(',
   'dbCombat.strikeBaseDamage('
 ])assert(monolith.includes(direct),`ordinary Combat callers no longer route directly through facade: ${direct}`);
 
