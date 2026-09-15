@@ -28,6 +28,12 @@
   const dbItems=window.DiceboundItems;
   if(!dbItems)throw new Error("dicebound.js requires DiceboundItems before loading.");
   let dbItemGeneration=null,dbItemOperations=null;
+  // Final live policy assignments occur after the historical bootstrap block.
+  // These bindings preserve that order without retaining superseded bodies.
+  let elementChanceForRarity,rollGearRarity,generatePhilosophersStone;
+  let v19SetDamageBonus,v19SetProcBonus,v19SetPetDoubleBonus;
+  let v19SetElementPower,v19SetStartUltimate,v19SetGuardianSpecialMult;
+  let applyClassPortrait,openCombatLootChain,v17OpenLegendaryChoice;
   dbItems.configure({
     generateEquipment:(rarity=null,slot=null)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateEquipment(rarity,slot);},
     generateLegendary:(slot=null,preferUndiscovered=false)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateLegendary(slot,preferUndiscovered);},
@@ -592,7 +598,6 @@
   /* rarityValues is registry-owned. */
 
   function gearIcon(slot){const offhand={fighter:"🛡️",ranger:"🪶",sorcerer:"📖",monk:"📿",clown:"🎭",rouge:"🎨",berserker:"💀",turtle:"🐚",frog:"🪷",d20:"🎲",slime:"🫧"};return {weapon:CLASSES[player.classId].attackIcon,offhand:offhand[player.classId]||"📖",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"}[slot];}
-  function elementChanceForRarity(rarity){return {common:.16,uncommon:.26,rare:.38,epic:.52,legendary:.70,mythical:1}[rarity]||0;}
   function maybeAddElement(item){if(item.slot!=="weapon"||random()>=elementChanceForRarity(item.rarity))return item;item.element=pick(ELEMENT_KEYS);return item;}
   function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
   function generateEquipment(forceRarity=null,forcedSlot=null){return dbItems.generateEquipment(forceRarity,forcedSlot);}
@@ -1139,10 +1144,6 @@
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
   function renderClassChoices(){return window.DiceboundClassChooser?.render();}
 
-  function rollGearRarity(bonus=0){
-    const p=random(),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1),boost=bonus+depth*.13+player.luck*.22+(nightmareMode?.08:0);
-    if(p<.018+boost*.22)return "legendary";if(p<.08+boost*.40)return "epic";if(p<.23+boost*.68)return "rare";if(p<.53+boost)return "uncommon";return "common";
-  }
   function makeMerchantGear(){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.makeGear();}
   function merchantCatalog(){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.catalog();}
   function merchantPrice(base){if(!dbMerchant)throw new Error('Merchant facade is not configured.');return dbMerchant.price(base);}
@@ -1176,13 +1177,6 @@
   }
   function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}
   function damageEnemy(enemy,amount,ignoreDefense=false){if(!enemy||enemy.hp<=0)return 0;if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);return 0;}const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0))),dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;return dealt;}
-  function openCombatLootChain(defeated,done){
-    const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?pick(["epic","legendary"]):defeated.miniBoss?pick(["rare","epic"]):null;openLoot(generateEquipment(rarity),done);}else done();},specials=[];let weapon=0,boots=0,amulet=0,pants=0,hat=0,merchant=.001;
-    if(defeated.merchantBoss){if(random()<merchant*(nightmareMode?2:1))specials.push(generateMerchantWeapon());}
-    else if(defeated.miniBoss){if(boardLevel===1)weapon=.005;else if(boardLevel===2){weapon=.075;boots=.01;}else if(boardLevel===3){weapon=.075;boots=.01;pants=.005;}else{weapon=.12;boots=.075;pants=.04;amulet=.005;hat=.005;}}
-    else if(defeated.finalBoss){if(boardLevel===1)weapon=.05;else if(boardLevel===2){weapon=.10;boots=.05;amulet=.001;}else if(boardLevel===3){weapon=.10;boots=.05;pants=.02;amulet=.001;}else{weapon=.18;boots=.10;pants=.06;amulet=.01;hat=.02;}}
-    const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>MYTHIC ITEM!</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
-  }
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
   async function winCombat(...args){return dbCombat.win(...args);}
@@ -1476,17 +1470,6 @@
   });
   Object.entries(CLASS_TAGS).forEach(([id,tags])=>{if(CLASSES[id])CLASSES[id].tags=tags;});
 
-  const portraitPalette={
-    ranger:["#16344f","#2e7d4f","🏹"],fighter:["#2e3548","#8ea4d2","🛡️"],sorcerer:["#1c1437","#7c59ff","🔮"],monk:["#3e2718","#d89b53","👊"],clown:["#3b1335","#ff5bbd","🤡"],
-    berserker:["#321014","#c93e4b","🪓"],turtle:["#183028","#42a66a","🐢"],frog:["#173320","#79d761","🐸"],d20:["#1f2148","#7fd0ff","🎲"],slime:["#173117","#61d96f","🟢"],
-    vampire:["#2e1022","#ff587f","🦇"],ninja:["#12161e","#b5c6da","🥷"],rouge:["#4b1322","#ff7f9a","🎨"],ceo:["#2d2110","#f4c85b","💼"],merchant:["#241914","#dba95a","⚖️"],
-    cleric:["#172a48","#ffd988","✝️"],paladin:["#1c2641","#f0d27c","⚔️"],beastmaster:["#2a2216","#c79e54","🐾"],rogue:["#17171b","#8bd0ff","🗡️"],bloodmage:["#2e0f19","#ff516e","🩸"]
-  };
-  function classPortraitSVG(classId){
-    const cls=CLASSES[classId]||CLASSES.ranger,p=portraitPalette[classId]||["#1b2740","#65dcff",cls.icon||"🎲"],bg=p[0],accent=p[1],sig=p[2];
-    return `<svg viewBox="0 0 64 64" role="img" aria-label="${cls.name} portrait"><defs><linearGradient id="g_${classId}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg}"/><stop offset="1" stop-color="${accent}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#09111f"/><rect x="4" y="4" width="56" height="56" rx="12" fill="url(#g_${classId})" opacity=".95"/><circle cx="32" cy="25" r="12" fill="#f0c69b"/><path d="M17 54c4-11 11-16 15-16s11 5 15 16" fill="none" stroke="#122033" stroke-width="11" stroke-linecap="round"/><path d="M20 54c4-9 9-14 12-14 4 0 9 5 12 14" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="9" stroke-linecap="round"/><path d="M18 23c2-10 8-16 14-16 7 0 13 6 15 16-4-3-10-5-15-5-5 0-10 2-14 5z" fill="rgba(12,22,36,.72)"/><circle cx="28" cy="24.5" r="1.5" fill="#1b1b1f"/><circle cx="36" cy="24.5" r="1.5" fill="#1b1b1f"/><path d="M27 30c3 2 7 2 10 0" fill="none" stroke="#8b4b3a" stroke-width="1.6" stroke-linecap="round"/><circle cx="50" cy="50" r="9" fill="rgba(9,17,31,.72)"/><text x="50" y="53" text-anchor="middle" font-size="12">${sig}</text></svg>`;
-  }
-  function applyClassPortrait(el,classId,combat=false){if(!el)return;el.classList.add(combat?"combat-portrait":"class-portrait");el.innerHTML=classPortraitSVG(classId);}
   function classBoardMarkerSrc(classId){const root=(window.DiceboundAssets?.paths?.uiClassMarkers)||"assets/ui/class-markers";return `${root}/${classId}.png`;}
   function applyClassBoardMarker(el,classId){
     if(!el)return;
@@ -1539,13 +1522,8 @@
 
   function generateMythicalRing(){return {id:`mythical_ring_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"ring",rarity:"mythical",mythical:true,mythicPiece:"ring",setName:"Impossible Road",uniqueEffect:"Ouroboros Halo: every fourth player action grants 1 barrier and 12 ultimate charge.",icon:"💍",name:"Ouroboros Halo, Ring of the Fifth Road",bonuses:{maxHp:22,attack:6,defense:4,crit:.12,luck:.18,bossDamage:.28}};}
   function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
-  function generatePhilosophersStone(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"omega",mythical:true,bloodmageStone:true,icon:"🜂",name:"Philosopher's Stone",uniqueEffect:"Scarlet Transmutation: healing beyond full grants +1 attack for the rest of the battle and blood-fuelled abilities cost less life.",bonuses:{maxHp:28,attack:9,lifeSteal:.18,crit:.16,luck:.16}};}
   mythicalSetSummary=function(){const count=mythicalSetCount();return `${count}/6 Impossible Road pieces · 3 pieces: +15% all damage and +15% elemental proc chance · 4 pieces: begin each battle with at least 50 ultimate, one barrier, and +25% pet double-attack chance · 5 pieces: guardian specials deal 25% less damage and your elemental/ultimate effects strengthen further · 6 pieces: Ouroboros set bonus grants +25% all damage, +1 extra starting barrier, and every fourth action grants 1 barrier + 12 ultimate.`;};
   function applyMythicRingPulse(){if(!(player.equipment?.ring?.mythicPiece==="ring")||player.combatActionCount<1||player.combatActionCount%4!==0)return "";player.combatShield=(player.combatShield||0)+1;player.ultimateCharge=clamp(player.ultimateCharge+12,0,100);return "💍 Ouroboros Halo grants 1 barrier and 12 ultimate.";}
-  // v1.9: the former six-piece +25% strike multiplier was removed. Damage now comes
-  // exclusively from the graduated 2/3/4/7-piece set table below.
-
-  openCombatLootChain=function(defeated,done){const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?pick(["epic","legendary"]):defeated.miniBoss?pick(["rare","epic"]):null;openLoot(generateEquipment(rarity),done);}else done();};const specials=[];let weapon=0,boots=0,amulet=0,pants=0,hat=0,ring=0;if(defeated.merchantBoss){if(random()<.05*(nightmareMode?2:1)){specials.push(generateMerchantWeapon());meta.merchantOmegaDrops++;saveMeta();}}else if(defeated.bloodmageBoss){if(random()<.05*(nightmareMode?2:1)){specials.push(generatePhilosophersStone());meta.bloodmageOmegaDrops++;saveMeta();}}else if(defeated.miniBoss){if(boardLevel===1)weapon=.005;else if(boardLevel===2){weapon=.075;boots=.01;}else if(boardLevel===3){weapon=.075;boots=.01;pants=.005;}else if(boardLevel===4){weapon=.12;boots=.075;pants=.04;amulet=.005;hat=.005;}else{weapon=.14;boots=.09;pants=.05;amulet=.01;hat=.01;ring=.04;}}else if(defeated.finalBoss){if(boardLevel===1)weapon=.05;else if(boardLevel===2){weapon=.10;boots=.05;amulet=.001;}else if(boardLevel===3){weapon=.10;boots=.05;pants=.02;amulet=.001;}else if(boardLevel===4){weapon=.18;boots=.10;pants=.06;amulet=.01;hat=.02;}else{weapon=.20;boots=.12;pants=.08;amulet=.02;hat=.03;ring=.10;}}const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());if(ring&&random()<ring*mult)specials.push(generateMythicalRing());const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${item.rarity==="omega"?"OMEGA ITEM!":"MYTHIC ITEM!"}</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();};
 
 
 
@@ -1594,6 +1572,10 @@
   /* Alpha v3.1.7: CLASS_PASSIVES is registry-owned. */
   Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{if(CLASSES[id])CLASSES[id].passive=p;});
 
+  // The historical portrait extension chain starts below and is ultimately
+  // replaced by the semantic-art owner. Keep its single lexical binding so
+  // early startup assignments remain valid in strict mode.
+  let classPortraitSVG;
   classPortraitSVG=function(classId){
     const cls=CLASSES[classId]||CLASSES.ranger;
     const cfg={
@@ -2058,9 +2040,6 @@
   // ---- Defense becomes diminishing percentage reduction --------------------
   function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+25),0,.82);}
   // ---- Rarity/Luck and deterministic v1.5 seed codes -----------------------
-  elementChanceForRarity=function(rarity){return {common:.28,uncommon:.39,rare:.52,epic:.66,legendary:.80,mythical:1,omega:1}[rarity]||.25;};
-  rollGearRarity=function(bonus=0){const progress=player.position/Math.max(1,currentTileCount()-1),luck=Math.max(0,player.luck||0),luckDiminishing=1-Math.exp(-luck*.80),q=clamp((boardLevel-1)*.026+progress*.016+Math.max(0,bonus)*.075+luckDiminishing*.035+(nightmareMode?.014:0),0,.34),legendary=.0025+q*.012,epic=.018+q*.055,rare=.085+q*.16,uncommon=.27+q*.18,p=random();if(p<legendary)return "legendary";if(p<legendary+epic)return "epic";if(p<legendary+epic+rare)return "rare";if(p<legendary+epic+rare+uncommon)return "uncommon";return "common";};
-  weightedUpgrade=function(pool){return dbPowerups.weighted(pool);};
 
   function v15SafeClassId(id){return CLASSES[id]?id:"ranger";}
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
@@ -2241,7 +2220,6 @@
     .summoner-spirit-token{font-size:21px;line-height:1;padding:3px 5px;border-radius:999px;background:rgba(121,93,210,.16);border:1px solid rgba(181,155,255,.22);filter:drop-shadow(0 3px 5px rgba(0,0,0,.35))}
     #bloodwellOverlay .start-art.bloodmage-secret-ready{cursor:pointer;filter:drop-shadow(0 0 12px rgba(255,55,92,.38));transition:.16s ease}
     #bloodwellOverlay .start-art.bloodmage-secret-ready:hover{transform:scale(1.08);filter:drop-shadow(0 0 20px rgba(255,55,92,.66))}
-    .poison-count-compact{font-weight:950;color:#a9f08b;letter-spacing:-.02em}
   `;document.head.appendChild(v17Style);
 
   // ---- Pet bond scaling is owned by DiceboundPets / pets/lifecycle.js. -----
@@ -2255,8 +2233,6 @@
   // ---- Reliable Legendary choice flow -------------------------------------
   function v17LegendaryPool(){return dbPowerups.eligible(u=>u.rarity==="legendary");}
   function v17LegendaryChoices(){return dbPowerups.legendaryChoices();}
-  function v17OpenLegendaryChoice(source,onComplete=()=>{}){$("powerupTitle").textContent=source;$('powerupSubtitle').textContent="Choose one of three Legendary powers. The purchase is already paid for.";const grid=$("powerupGrid");grid.innerHTML="";const choices=v17LegendaryChoices();if(!choices.length){const d=document.createElement("div");d.className="merchant-notice show";d.innerHTML="No eligible Legendary powers remain for this class this run. The contract refunds 100% of its price.";grid.appendChild(d);$("powerupOverlay").classList.remove("hidden");setTimeout(()=>{$("powerupOverlay").classList.add("hidden");onComplete(false);},650);return;}choices.forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn legendary`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose <b>${up.name}</b>.`);showToast(`Legendary: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete(up);});grid.appendChild(btn);});$("merchantOverlay")?.classList.add("hidden");$("powerupOverlay").classList.remove("hidden");}
-
   // ---- Explicit late-road difficulty curve --------------------------------
   // Soften the historical Board-4-only overboost by compensating it, then let v1.7's monotonic layer rebuild the curve.
 
@@ -2288,17 +2264,6 @@
   // ---- Toxic Bloom wording -------------------------------------------------
   const toxic=upgrades.find(u=>u.name==="Toxic Bloom");if(toxic)toxic.desc="Nature activation adds one more poison proc, and Poison deals +3% Attack per stack.";
 
-
-  // ---- v1.7 final consistency fixes --------------------------------------
-  // Status-dot rendering itself knows how to collapse double-digit poison counts.
-  statusDotsHTML=function(barriers=0,poison=0,affinity=null){
-    let html="";
-    for(let i=0;i<Math.min(12,barriers||0);i++)html+='<i class="status-dot barrier" title="Barrier"></i>';
-    if((poison||0)>=10)html+=`<span class="v17-poison-count poison-count-compact" title="${poison} Poison stacks">${poison}×☠️</span>`;
-    else for(let i=0;i<(poison||0);i++)html+='<i class="status-dot poison" title="Poison stack"></i>';
-    if(affinity&&ELEMENTS[affinity])html+=`<i class="status-dot element" title="${ELEMENTS[affinity].name} affinity">${ELEMENTS[affinity].icon}</i>`;
-    return html;
-  };
 
   // Hidden regression helpers: these never appear in the player UI/debug menu.
   Object.defineProperty(window,"DiceboundV17Regression",{configurable:true,value:{
@@ -2462,23 +2427,6 @@
   // ---- Reliable Sovereign/Contract choice for Edge -------------------------
   // The choice uses delegated pointer/click handling (more robust in Edge),
   // then performs an integrity check. If the overlay failed to render buttons,
-  // it safely grants one random eligible Legendary rather than doing nothing.
-  let v18LegendaryChoiceToken=0;
-  v17OpenLegendaryChoice=function(source,onComplete=()=>{}){
-    const token=++v18LegendaryChoiceToken,title=$("powerupTitle"),subtitle=$("powerupSubtitle"),grid=$("powerupGrid"),overlay=$("powerupOverlay");
-    let settled=false;const choices=v17LegendaryChoices();
-    const finish=(up,reason="chosen")=>{if(settled)return;settled=true;if(up){applyUpgrade(up,source);addLog(`<b>${source}:</b> ${reason==="fallback"?"fallback granted":"chose"} <b>${up.name}</b>.`);showToast(`Legendary: ${up.name}`);}overlay?.classList.add("hidden");updateHUD();onComplete(up||false);};
-    const fallback=()=>{if(settled)return;const pool=choices.length?choices:eligibleUpgrades(u=>u.rarity==="legendary");const up=pool.length?pick(pool):null;if(up){showToast("⚠️ Choice UI fallback: random Legendary granted");finish(up,"fallback");}else finish(false,"fallback");};
-    try{
-      title.textContent=source;subtitle.textContent="Choose one of three Legendary powers. If this browser cannot render the chooser, a random Legendary is granted automatically.";grid.innerHTML="";
-      if(!choices.length){const d=document.createElement("div");d.className="merchant-notice show";d.textContent="No eligible Legendary powers remain for this class this run.";grid.appendChild(d);overlay.classList.remove("hidden");setTimeout(()=>finish(false),450);return;}
-      choices.forEach((up,i)=>{const btn=document.createElement("button");btn.type="button";btn.className="choice-btn legendary";btn.dataset.v18LegendaryIndex=String(i);btn.innerHTML=choiceHTML(up);grid.appendChild(btn);});
-      const chooseFromEvent=e=>{const btn=e.target.closest?.('button[data-v18-legendary-index]');if(!btn||settled)return;e.preventDefault();const up=choices[Number(btn.dataset.v18LegendaryIndex)];if(up)finish(up);};
-      grid.onpointerup=chooseFromEvent;grid.onclick=chooseFromEvent;$("merchantOverlay")?.classList.add("hidden");overlay.classList.remove("hidden");
-      requestAnimationFrame(()=>setTimeout(()=>{if(token!==v18LegendaryChoiceToken||settled)return;const rendered=!overlay.classList.contains("hidden")&&grid.querySelectorAll('button[data-v18-legendary-index]').length===choices.length;if(!rendered)fallback();},120));
-    }catch(err){console.error("Legendary chooser failed; using v1.8 fallback.",err);fallback();}
-  };
-
   // ---- Live HUD refresh, hidden passives and tooltips -----------------------
   window.DiceboundCamp.configureShell({syncBloodmageHpPassive:initial=>dbClasses.syncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),refreshStatTooltips:()=>{v18ApplyStatTooltip("potionText",v18PotionTooltip());v18ApplyStatTooltip("defenseText",v18DefenseTooltip());v18ApplyStatTooltip("echoText",v18EchoTooltip());}});
 
@@ -2575,13 +2523,7 @@
   v19AssignMasteryGates();
 
   // ---- Impossible Road: seven-piece progression ---------------------------
-  function v19SetDamageBonus(){const n=mythicalSetCount();return n>=7?.28:n>=4?.10:n>=3?.07:n>=2?.03:0;}
-  function v19SetProcBonus(){const n=mythicalSetCount();return n>=7?.18:n>=4?.08:n>=3?.06:0;}
-  function v19SetPetDoubleBonus(){const n=mythicalSetCount();return n>=7?.20:n>=4?.12:0;}
-  function v19SetElementPower(){return mythicalSetCount()>=7?1.22:1;}
   function v19SetStartBarrier(){return mythicalSetCount()>=5?1:0;}
-  function v19SetStartUltimate(){return mythicalSetCount()>=4?35:0;}
-  function v19SetGuardianSpecialMult(){const n=mythicalSetCount();return n>=7?.72:n>=4?.90:1;}
   mythicalSetSummary=function(){
     const n=mythicalSetCount();
     return `${n}/7 Impossible Road pieces · 2: +3% all damage · 3: +7% all damage and +6% elemental proc chance · 4: +10% all damage, +8% proc chance, begin battles with 35 Ultimate, one Barrier, +12% pet double chance, and guardian specials deal 10% less damage · 7: +28% all damage, +18% elemental proc chance, +22% elemental power, +20% pet double chance, guardian specials deal 28% less damage, and once per battle at ≤25% HP restore 25% max HP + gain 1 Barrier.`;
@@ -2592,17 +2534,6 @@
 
   // ---- Heirloom slot capacity retained after V27 Prestige no-choice flow --
   getHeirloomSlots=function(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0)+((meta.prestige?.count||0)>=60?1:0);};
-
-  // ---- Compact status markers ---------------------------------------------
-  // Once stacks become numerous, a number is much more readable than a row of
-  // dots. Under five, dots preserve the quick visual language.
-  statusDotsHTML=function(barriers=0,poison=0,affinity=null){
-    let html="";
-    if(barriers>=5)html+=`<span class="status-count barrier-count" title="${barriers} Barrier stacks">${barriers}×🛡️</span>`;else for(let i=0;i<barriers;i++)html+=`<span class="status-dot barrier" title="Barrier"></span>`;
-    if(poison>=5)html+=`<span class="status-count poison-count" title="${poison} Poison stacks">${poison}×☠️</span>`;else for(let i=0;i<poison;i++)html+=`<span class="status-dot poison" title="Poison"></span>`;
-    if(affinity&&ELEMENTS[affinity])html+=`<span class="status-affinity" title="${ELEMENTS[affinity].name} affinity">${ELEMENTS[affinity].icon}</span>`;
-    return html;
-  };
 
   // ---- Haste: one-turn lockout --------------------------------------------
   // Haste may grant one immediate extra action, but cannot chain itself again
@@ -2684,19 +2615,6 @@
 
 
 
-
-  // Mythical drop table: Board 6 inherits a stronger late-road table and adds
-  // the seventh set piece offhand at exactly 0.5% / 5% before Nightmare's x2.
-  openCombatLootChain=function(defeated,done){
-    const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?pick(["epic","legendary"]):defeated.miniBoss?pick(["rare","epic"]):null;openLoot(generateEquipment(rarity),done);}else done();};
-    const specials=[];let weapon=0,boots=0,amulet=0,pants=0,hat=0,ring=0,offhand=0;
-    if(defeated.merchantBoss){if(random()<.05*(nightmareMode?2:1))specials.push(generateMerchantWeapon());}
-    else if(defeated.bloodmageBoss){if(random()<.05*(nightmareMode?2:1))specials.push(generatePhilosophersStone());}
-    else if(defeated.miniBoss){if(boardLevel===1)weapon=.005;else if(boardLevel===2){weapon=.075;boots=.01;}else if(boardLevel===3){weapon=.075;boots=.01;pants=.005;}else if(boardLevel===4){weapon=.12;boots=.075;pants=.04;amulet=.005;hat=.005;}else if(boardLevel===5){weapon=.14;boots=.09;pants=.05;amulet=.01;hat=.01;ring=.04;}else{weapon=.18;boots=.12;pants=.075;amulet=.015;hat=.025;ring=.07;offhand=.005;}}
-    else if(defeated.finalBoss){if(boardLevel===1)weapon=.05;else if(boardLevel===2){weapon=.10;boots=.05;amulet=.001;}else if(boardLevel===3){weapon=.10;boots=.05;pants=.02;amulet=.001;}else if(boardLevel===4){weapon=.18;boots=.10;pants=.06;amulet=.01;hat=.02;}else if(boardLevel===5){weapon=.20;boots=.12;pants=.08;amulet=.02;hat=.03;ring=.10;}else{weapon=.25;boots=.16;pants=.11;amulet=.03;hat=.05;ring=.14;offhand=.05;}}
-    const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());if(ring&&random()<ring*mult)specials.push(generateMythicalRing());if(offhand&&random()<offhand*mult)specials.push(generateMythicalOffhand());
-    const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${item.rarity==="omega"?"OMEGA ITEM!":"MYTHIC ITEM!"}</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
-  };
 
   // The historical callers still use this name, but board-transition.js now
   // owns the complete Board 5 -> 6 / final-road transition contract.
@@ -2780,8 +2698,6 @@
   document.title=`Dicebound: ${V}`;
   const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${V}`;
   const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${V} · Six roads, impossible builds and a proper between-runs camp.`;
-
-  generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"omega",mythical:true,bloodmageStone:true,icon:"🜂",name:"Philosopher's Stone",uniqueEffect:"Scarlet Transmutation: healing beyond full grants +2 attack for the rest of the battle and blood-fuelled abilities cost less life.",bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
 
   const debugActionV110Base=debugAction;
   debugAction=function(action){
@@ -3010,14 +2926,6 @@
   // target prevents those inherited renderers from dereferencing null.
   if(!$('startBtn')){const compat=document.createElement('button');compat.id='startBtn';compat.className='camp-hidden';compat.type='button';compat.setAttribute('aria-hidden','true');$('startOverlay')?.querySelector('.start-modal')?.appendChild(compat);}
 
-  // ----- Impossible Road now has a continuous 2/3/4/5/6/7-piece curve. -----
-  v19SetDamageBonus=function(){const n=mythicalSetCount();return n>=7?.28:n>=6?.19:n>=5?.14:n>=4?.10:n>=3?.07:n>=2?.03:0;};
-  v19SetProcBonus=function(){const n=mythicalSetCount();return n>=7?.18:n>=6?.14:n>=5?.10:n>=4?.08:n>=3?.06:0;};
-  v19SetPetDoubleBonus=function(){const n=mythicalSetCount();return n>=7?.20:n>=6?.17:n>=5?.14:n>=4?.12:0;};
-  v19SetElementPower=function(){const n=mythicalSetCount();return n>=7?1.22:n>=6?1.14:n>=5?1.08:1;};
-  v19SetStartUltimate=function(){const n=mythicalSetCount();return n>=7?50:n>=6?45:n>=5?40:n>=4?35:0;};
-  v19SetGuardianSpecialMult=function(){const n=mythicalSetCount();return n>=7?.72:n>=6?.79:n>=5?.85:n>=4?.90:1;};
-  mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Impossible Road pieces · 2: +3% all damage · 3: +7% all damage and +6% elemental proc chance · 4: +10% damage, +8% proc, 35 starting Ultimate, 1 Barrier, +12% pet double chance, 10% less guardian-special damage · 5: +14% damage, +10% proc, +8% elemental power, 40 starting Ultimate, +14% pet double chance, 15% less guardian-special damage · 6: +19% damage, +14% proc, +14% elemental power, 45 starting Ultimate, +17% pet double chance, 21% less guardian-special damage · 7: +28% damage, +18% proc, +22% elemental power, 50 starting Ultimate, +20% pet double chance, 28% less guardian-special damage, plus the low-HP recovery/barrier effect.`;};
   function v22CampSummaryText(){return `Legacy Lv ${meta.level} · ${meta.points} unspent · Prestige ${meta.prestige?.count||0} · ${meta.doubleDiceUnlocked?'Double Dice ready':'Clear Board 5 to unlock Double Dice'}`;}
   // Camp presentation stays behind the existing names while its DOM, layout,
   // art and click-target ownership live in DiceboundCamp.
@@ -3226,8 +3134,6 @@
   `;
   document.head.appendChild(style);
 
-  // ----- Impossible Road: 4-piece no longer grants the starting Barrier. ----
-  mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Impossible Road pieces · 2: +3% damage · 3: +7% damage and +6% proc · 4: +10% damage, +8% proc, 35 starting Ultimate, +12% pet double chance, 10% less Guardian-special damage · 5: +14% damage, +10% proc, +8% elemental power, 40 starting Ultimate, 1 Barrier, +14% pet double chance, 15% less Guardian-special damage · 6: +19% damage, +14% proc, +14% elemental power, 45 starting Ultimate, 1 Barrier, +17% pet double chance, 21% less Guardian-special damage · 7: +28% damage, +18% proc, +22% elemental power, 50 starting Ultimate, 1 Barrier, +20% pet double chance, 28% less Guardian-special damage and the emergency heal/barrier effect.`;};
   v19SetStartBarrier=function(){return mythicalSetCount()>=5?1:0;};
 
   // ----- Road Wisdom and talent prerequisite clarity. -----------------------
@@ -3387,20 +3293,6 @@
   ];}
   mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');};
 
-  // A slightly leaner Artifact table. Board 6's offhand is now 0.4% / 4%.
-  openCombatLootChain=function(defeated,done){
-    const normal=()=>{if(random()<equipmentDropChance(defeated.boss)){const rarity=defeated.finalBoss?(random()<.28?'epic':'rare'):defeated.miniBoss?(random()<.30?'rare':'uncommon'):null;openLoot(generateEquipment(rarity),done);}else done();};
-    const specials=[];
-    if(defeated?.devilBoss){if(random()<.05){specials.push(generateDevilsHorns());meta.devilHornsFound=(meta.devilHornsFound||0)+1;saveMeta();}}
-    else if(defeated?.merchantBoss){if(random()<.05*(nightmareMode?2:1))specials.push(generateMerchantWeapon());}
-    else if(defeated?.bloodmageBoss){if(random()<.05*(nightmareMode?2:1))specials.push(generatePhilosophersStone());}
-    else {let weapon=0,boots=0,amulet=0,pants=0,hat=0,ring=0,offhand=0;
-      if(defeated?.miniBoss){if(boardLevel===1)weapon=.004;else if(boardLevel===2){weapon=.055;boots=.008;}else if(boardLevel===3){weapon=.055;boots=.008;pants=.004;}else if(boardLevel===4){weapon=.09;boots=.055;pants=.03;amulet=.004;hat=.004;}else if(boardLevel===5){weapon=.105;boots=.067;pants=.038;amulet=.008;hat=.008;ring=.03;}else{weapon=.135;boots=.09;pants=.055;amulet=.012;hat=.018;ring=.052;offhand=.004;}}
-      else if(defeated?.finalBoss){if(boardLevel===1)weapon=.04;else if(boardLevel===2){weapon=.075;boots=.038;amulet=.0008;}else if(boardLevel===3){weapon=.075;boots=.038;pants=.015;amulet=.0008;}else if(boardLevel===4){weapon=.135;boots=.075;pants=.045;amulet=.008;hat=.015;}else if(boardLevel===5){weapon=.15;boots=.09;pants=.06;amulet=.015;hat=.022;ring=.075;}else{weapon=.19;boots=.12;pants=.082;amulet=.022;hat=.038;ring=.105;offhand=.04;}}
-      const mult=nightmareMode?2:1;if(weapon&&random()<weapon*mult)specials.push(generateMythicalWeapon());if(boots&&random()<boots*mult)specials.push(generateMythicalBoots());if(pants&&random()<pants*mult)specials.push(generateMythicalPants());if(amulet&&random()<amulet*mult)specials.push(generateMythicalAmulet());if(hat&&random()<hat*mult)specials.push(generateMythicalHat());if(ring&&random()<ring*mult)specials.push(generateMythicalRing());if(offhand&&random()<offhand*mult)specials.push(generateMythicalOffhand());
-    }
-    const next=()=>{if(!specials.length)return normal();const item=specials.shift();addLog(`<b>${rarityInfo[item.rarity]?.label?.toUpperCase()||'SPECIAL'} ITEM!</b> ${item.name} drops from ${defeated.name}.`);sfx.holy();openLoot(item,next);};next();
-  };
 
   unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
 
@@ -5893,8 +5785,11 @@
       meta.purchased.element_prismatic=1;resetPlayer('ranger');
       const starter=JSON.parse(JSON.stringify(player.equipment.weapon));renderEndGear();
       const endStarterCandidates=[...document.querySelectorAll('#endGearGrid .gear-keep-btn')].map(button=>button.textContent);
-      gameStarted=true;const prestigeStarter={rewards:1};openPrestigeHeirloomChoice(prestigeStarter);
-      const prestigeStarterCandidates=(prestigeStarter.candidates||[]).map(item=>({id:item.id,name:item.name,eligible:db06314Equipment.isHeirloomEligible(item)}));
+      gameStarted=true;
+      // Prestige no longer opens the retired survivor-choice surface. Its
+      // persistent storage stays account-owned, so characterize that current
+      // candidate set directly instead of reviving the removed UI helper.
+      const prestigeStarterCandidates=(meta.heirlooms||[]).map(item=>({id:item.id,name:item.name,eligible:db06314Equipment.isHeirloomEligible(item)}));
       const ordinary=generateEquipment('common','weapon');equipItem(ordinary,true);renderEndGear();
       const endReplacementCandidates=[...document.querySelectorAll('#endGearGrid .gear-keep-btn')].map(button=>button.textContent);
       v319ResetCareer();const existing={id:'db06422-existing-heirloom',slot:'weapon',rarity:'common',icon:'⚔️',name:'Historic Bound Weapon',bonuses:{attack:1}};
