@@ -8,9 +8,12 @@ def main() -> int:
         "README.md",
         "CHANGELOG.md",
         "docs/DESIGN_RULES.md",
+        "docs/MONOLITH_SHADOW_AUDIT.md",
         "distribution/latest.json",
         "tools/validate_pr_version.py",
         "tools/test_pr_version_gate.py",
+        "tools/test_historical_layer_census.py",
+        "tools/audit_monolith_shadow_ownership.py",
     ]:
         assert is_non_implementation_path(path), f"expected maintenance path: {path}"
 
@@ -28,10 +31,11 @@ def main() -> int:
 
     assert not requires_new_version(["README.md", "distribution/latest.json"])
     assert not requires_new_version(["tools/validate_pr_version.py", "tools/test_pr_version_gate.py"])
+    assert not requires_new_version(["docs/MONOLITH_SHADOW_AUDIT.md", "tools/audit_monolith_shadow_ownership.py"])
     assert requires_new_version(["README.md", "runtime/js/dicebound.js"])
     assert requires_new_version(["distribution/latest.json", "installer/main_v2.go"])
     assert requires_new_version(["docs/moved-runtime.md", "runtime/js/removed.js"])
-    print("PR version gate PASS: docs/verified metadata are exempt; runtime, wrapper, installer, workflow and release behavior remain strict")
+    print("PR version gate PASS: docs/verified metadata/audit tools are exempt; runtime, wrapper, installer, workflow and release behavior remain strict")
     return 0
 
 
