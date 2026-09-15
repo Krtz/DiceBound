@@ -13,8 +13,8 @@ assert.deepEqual(entry.provides,["DiceboundProgression"]);
 assert.match(lifecycle,/owner:OWNER,apiVersion:1/);
 
 // These used to be one-line compatibility adapters in dicebound.js.  The
-// composition root now calls DiceboundProgression directly; do not rebuild a
-// forwarding layer merely to satisfy an architecture test.
+// composition root now calls DiceboundProgression directly where a caller
+// exists; unused adapters are simply gone.
 const retiredForwarders=[
   "achievementGateUnlocked","allocatedTalentPoints","checkDynamicClassUnlocks",
   "commitClassUnlock","gameplayTalentRank","isClassUnlocked",
@@ -27,12 +27,16 @@ for(const direct of [
   "dbProgression.achievementGateUnlocked(",
   "dbProgression.allocatedTalentPoints(",
   "dbProgression.checkDynamicClassUnlocks(",
-  "dbProgression.commitClassUnlock(",
   "dbProgression.gameplayTalentRank(",
   "dbProgression.isClassUnlocked(",
   "dbProgression.repairTalentPrerequisites(",
   "dbProgression.unlockClass("
 ])assert.ok(monolith.includes(direct),`composition no longer routes directly through Progression owner: ${direct}`);
+
+// commitClassUnlock's old composition adapter had no callers at all.  The
+// capability remains owned by Progression, but a dead root-level alias must not
+// be recreated just to make an architecture test happy.
+assert.ok(lifecycle.includes("commitClassUnlock"),"Progression commitClassUnlock capability missing");
 
 // These three remain first-class seams because the released runtime passes them
 // around as values/hooks.  They may be thin, but deleting them would erase an
