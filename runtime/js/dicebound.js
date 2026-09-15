@@ -587,8 +587,7 @@
   /* rarityValues is registry-owned. */
 
   function gearIcon(slot){const offhand={fighter:"🛡️",ranger:"🪶",sorcerer:"📖",monk:"📿",clown:"🎭",rouge:"🎨",berserker:"💀",turtle:"🐚",frog:"🪷",d20:"🎲",slime:"🫧"};return {weapon:CLASSES[player.classId].attackIcon,offhand:offhand[player.classId]||"📖",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"}[slot];}
-  function maybeAddElement(item){if(item.slot!=="weapon"||random()>=elementChanceForRarity(item.rarity))return item;item.element=pick(ELEMENT_KEYS);return item;}
-  function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
+    function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
     function generateMythicalBoots(){return {id:`mythical_boots_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"boots",rarity:"mythical",mythical:true,mythicPiece:"boots",setName:"Impossible Road",uniqueEffect:"Titanstep: rolling 5 or 6 restores 5% max HP and grants 10 ultimate charge.",icon:"🥾",name:"Titanstep, Boots of the Astral Road",bonuses:{maxHp:20,defense:3,dodge:.15,extraStepChance:.25}};}
   function generateMythicalAmulet(){return {id:`mythical_amulet_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"mythical",mythical:true,mythicPiece:"amulet",setName:"Impossible Road",uniqueEffect:"Devourer's Gaze: once per battle below 35% HP, consume 12% of every living enemy's max HP and heal for half the damage.",icon:"👁️",name:"The Devourer's Last Eye",bonuses:{maxHp:30,attack:8,crit:.15,luck:.20,lifeSteal:.10,bossDamage:.50}};}
   function generateMythicalPants(){return {id:`mythical_legs_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"legs",rarity:"mythical",mythical:true,mythicPiece:"legs",setName:"Impossible Road",uniqueEffect:"Paradox Loop: every third player action restores 6% max HP and grants 15 ultimate charge.",icon:"👖",name:"Paradox Weave, Legguards Outside Time",bonuses:{maxHp:34,defense:5,attack:5,doubleStrike:.16,luck:.14}};}
@@ -619,8 +618,7 @@
   function closeLoot(){
     $("lootOverlay").classList.add("hidden");const cb=pendingLootCallback;pendingLootItem=null;pendingLootCallback=null;if(cb)cb();
   }
-  function equipmentDropChance(boss=false){return boss?1:.34+Math.min(.18,player.position*.0025);}
-  function formatGearComparison(item,current){return dbItems.formatComparison(item,current);}
+    function formatGearComparison(item,current){return dbItems.formatComparison(item,current);}
 
   /* #209 / #40: equipment and Heirloom presentation is owned by
      ui/equipment-heirlooms.js. The monolith supplies runtime facts and the
@@ -1796,29 +1794,7 @@ function returnToRoad(...args){
 
 
   // ---- even more thematic class portraits -----------------------------------
-  const classArtV13={
-    ranger:{bg1:"#0b261f",bg2:"#356d3d",skin:"#d2a06b",body:"#1c4d31",motif:`<path d="M7 58Q23 42 59 8" stroke="#d7a454" stroke-width="3" fill="none"/><path d="M50 10l9 3-7 6" fill="#f3ebcf"/>`,head:`<path d="M14 27Q18 6 33 6T51 27Q34 18 14 27" fill="#214f31"/><path d="M18 17Q34 8 47 20" stroke="#6f9e59" stroke-width="3" fill="none"/>`,gear:`<path d="M13 57Q18 39 31 39T51 57" fill="#193b2a"/><path d="M17 53l30-6" stroke="#d9b169" stroke-width="2"/>`},
-    fighter:{bg1:"#121b2b",bg2:"#516787",skin:"#c89263",body:"#384862",motif:`<path d="M8 54l13-31 11 10 12-17 12 38" fill="none" stroke="#9eb4d4" stroke-width="2" opacity=".7"/>`,head:`<path d="M14 26Q16 5 32 5T50 26H14" fill="#8fa0b7"/><path d="M18 20h28v10H18z" fill="#263449"/><path d="M29 5h6v15h-6z" fill="#e2bd61"/>`,gear:`<path d="M10 59Q14 38 32 38T54 59" fill="#2f4059"/><path d="M17 45l15 10 15-10" fill="none" stroke="#9fb4d0" stroke-width="3"/>`},
-    sorcerer:{bg1:"#140c2b",bg2:"#613cb0",skin:"#d6a97d",body:"#302052",motif:`<circle cx="51" cy="13" r="7" fill="#8d63ff" opacity=".8"/><path d="M51 3v20M41 13h20" stroke="#e9dbff" stroke-width="1.5" opacity=".8"/><circle cx="12" cy="51" r="5" fill="#65dcff" opacity=".6"/>`,head:`<path d="M6 20h52L38 4H26z" fill="#4a287f"/><path d="M14 19Q32 12 51 19" stroke="#d5b0ff" stroke-width="3" fill="none"/>`,gear:`<path d="M11 60Q15 39 32 39T54 60" fill="#271a48"/><path d="M32 40l7 13-7 8-7-8z" fill="#8f68ff"/>`},
-    monk:{bg1:"#301a0e",bg2:"#9a562a",skin:"#c98d5f",body:"#8e3e2c",motif:`<circle cx="11" cy="11" r="7" fill="none" stroke="#ffd087" stroke-width="2"/><path d="M6 11h10M11 6v10" stroke="#ffd087" stroke-width="1.5"/>`,head:`<path d="M18 15Q32 7 46 15" stroke="#e0543d" stroke-width="5" fill="none"/><path d="M18 16l-8 8" stroke="#e0543d" stroke-width="3"/>`,gear:`<path d="M11 60Q16 39 32 39T53 60" fill="#8d452d"/><path d="M24 42l8 13 8-13" fill="#e6a35d" opacity=".6"/><circle cx="12" cy="49" r="6" fill="#c88f5c"/><circle cx="52" cy="49" r="6" fill="#c88f5c"/>`},
-    clown:{bg1:"#2c0927",bg2:"#b51e7b",skin:"#f5ddd7",body:"#5b1b70",motif:`<circle cx="9" cy="51" r="6" fill="#ffd64d"/><circle cx="55" cy="48" r="7" fill="#5fcfff"/><path d="M7 9l8 5-6 7" fill="#ff5c55"/>`,head:`<path d="M12 17Q19 2 31 14Q43 0 53 17l-8 7H19z" fill="#d43d7c"/><circle cx="17" cy="12" r="5" fill="#ff5c55"/><circle cx="48" cy="11" r="5" fill="#5fcfff"/><circle cx="32" cy="29" r="3" fill="#ef4250"/>`,gear:`<path d="M9 60Q14 39 32 39T55 60" fill="#5d1d72"/><path d="M18 45l14 11 14-11" fill="#ffd64d" opacity=".7"/>`},
-    berserker:{bg1:"#26090d",bg2:"#8f1e24",skin:"#b97955",body:"#4b1717",motif:`<path d="M8 55L23 9M56 55L40 10" stroke="#d6c3a0" stroke-width="3"/><path d="M7 55l8-2-5-7M57 55l-8-2 5-7" fill="#a52d31"/>`,head:`<path d="M14 21L7 6l15 9M50 21l7-15-15 9" fill="#dfcfb0"/><path d="M13 25Q32 8 52 25" fill="#5a1717"/>`,gear:`<path d="M7 61Q15 38 32 38T57 61" fill="#501518"/><path d="M12 46l40 9" stroke="#8c2c2e" stroke-width="5"/>`},
-    turtle:{bg1:"#0c281f",bg2:"#287b48",skin:"#76bd82",body:"#315f3d",motif:`<circle cx="32" cy="33" r="27" fill="none" stroke="#82d08e" stroke-width="3" opacity=".35"/><path d="M10 33h44M32 6v54M15 15l34 36M49 15L15 51" stroke="#82d08e" stroke-width="1" opacity=".25"/>`,head:`<ellipse cx="32" cy="26" rx="16" ry="13" fill="#77c183"/><circle cx="26" cy="24" r="2" fill="#15221a"/><circle cx="38" cy="24" r="2" fill="#15221a"/>`,gear:`<path d="M9 61Q12 37 32 37T55 61" fill="#356b43"/><path d="M17 50Q32 38 47 50Q32 62 17 50" fill="#274e35" stroke="#83c78b" stroke-width="2"/>`},
-    frog:{bg1:"#0d2b17",bg2:"#4a9e42",skin:"#6fd86a",body:"#2f7437",motif:`<path d="M4 52Q15 40 27 51T60 45" fill="none" stroke="#9de67e" stroke-width="2" opacity=".6"/>`,head:`<ellipse cx="32" cy="27" rx="18" ry="14" fill="#71dc6e"/><circle cx="22" cy="14" r="8" fill="#7fe878"/><circle cx="42" cy="14" r="8" fill="#7fe878"/><circle cx="22" cy="14" r="2.5" fill="#101820"/><circle cx="42" cy="14" r="2.5" fill="#101820"/><path d="M24 32Q32 37 40 32" stroke="#22592b" stroke-width="2" fill="none"/>`,gear:`<path d="M8 61Q14 41 32 41T56 61" fill="#326f39"/>`},
-    d20:{bg1:"#10143b",bg2:"#326aa0",skin:"#d4a276",body:"#202b65",motif:`<polygon points="9,7 19,13 16,25 5,25 2,13" fill="#295c9a" stroke="#8cd8ff"/><text x="11" y="19" text-anchor="middle" font-size="8" fill="white">?</text><polygon points="55,39 63,44 60,56 49,56 46,44" fill="#6b3ea7" stroke="#d7b9ff"/>`,head:`<polygon points="32,4 52,17 45,39 19,39 12,17" fill="#295c9a" stroke="#a8e7ff" stroke-width="2"/><path d="M12 17h40M19 39l13-35 13 35" stroke="#77b9dd" stroke-width="1"/><text x="32" y="27" text-anchor="middle" font-size="13" fill="white" font-weight="900">20</text>`,gear:`<path d="M11 61Q16 40 32 40T53 61" fill="#222b67"/>`},
-    slime:{bg1:"#0a2e13",bg2:"#36a94a",skin:"#66d977",body:"#4cc75c",motif:`<circle cx="10" cy="12" r="4" fill="#8cf595" opacity=".7"/><circle cx="53" cy="50" r="5" fill="#8cf595" opacity=".5"/>`,head:`<path d="M12 37Q12 6 32 6T52 37Q52 45 44 42l-5 6-7-5-7 5-5-6q-8 3-8-5z" fill="#65db74"/><circle cx="26" cy="25" r="2" fill="#122018"/><circle cx="38" cy="25" r="2" fill="#122018"/><path d="M27 31q5 4 10 0" stroke="#2e7d3a" stroke-width="2" fill="none"/>`,gear:`<path d="M14 56q18-11 36 0" stroke="#a4f7aa" stroke-width="3" opacity=".35"/>`},
-    vampire:{bg1:"#260717",bg2:"#7c163f",skin:"#eee4df",body:"#331020",motif:`<path d="M4 54L17 18 31 50 46 16 60 55" fill="#5d1233" opacity=".6"/>`,head:`<path d="M13 22Q32 5 51 22Q38 18 32 20Q24 16 13 22" fill="#1d1019"/><path d="M27 33l3 7 2-5 2 5 3-7" fill="#fff"/>`,gear:`<path d="M6 61Q12 35 32 40Q52 35 58 61" fill="#3b0d25"/><path d="M8 42l13 13M56 42L43 55" stroke="#a42a5a" stroke-width="4"/>`},
-    ninja:{bg1:"#0a1017",bg2:"#33495f",skin:"#d1a071",body:"#111923",motif:`<path d="M8 11l12 4-9 8zM56 8l-5 13-9-9zM54 52l-13 4 7-11z" fill="#8ca7c8" opacity=".65"/>`,head:`<path d="M10 19Q32 3 54 19v19H10z" fill="#121922"/><path d="M16 23h32v10H16z" fill="#a9bfd7" opacity=".82"/>`,gear:`<path d="M9 61Q15 38 32 38T55 61" fill="#121b25"/><path d="M13 52l39-8M14 44l38 9" stroke="#9fb5c8" stroke-width="2"/>`},
-    rouge:{bg1:"#3d0c1e",bg2:"#a12247",skin:"#e0ad82",body:"#6d1734",motif:`<path d="M52 7l5 4-20 42-5-3z" fill="#d8aa69"/><path d="M55 8l5-5 2 7" fill="#ff4e83"/><circle cx="9" cy="51" r="6" fill="#c9345d"/>`,head:`<path d="M14 14Q31 2 50 15Q36 22 14 14" fill="#bc3152"/><path d="M16 16l18-7 16 6" fill="#d34869"/>`,gear:`<path d="M10 61Q15 38 32 39T55 61" fill="#6b1732"/><path d="M18 47q14 9 28 0" stroke="#ff89a6" stroke-width="2"/>`},
-    ceo:{bg1:"#211906",bg2:"#78631f",skin:"#d1a06d",body:"#25262c",motif:`<path d="M7 51l9-13 8 6 9-22 8 10 15-23" stroke="#f3d05f" stroke-width="3" fill="none"/><path d="M52 8l5 1-2 5" fill="#f3d05f"/>`,head:`<path d="M17 15Q32 5 48 16" fill="#5a4935"/><rect x="17" y="23" width="12" height="8" rx="2" fill="none" stroke="#111" stroke-width="2"/><rect x="35" y="23" width="12" height="8" rx="2" fill="none" stroke="#111" stroke-width="2"/><path d="M29 27h6" stroke="#111" stroke-width="2"/>`,gear:`<path d="M9 61Q14 39 32 39T55 61" fill="#25272d"/><path d="M27 41l5 14 5-14" fill="#db3948"/><path d="M18 44h9M37 44h9" stroke="#f0d67b" stroke-width="2"/>`},
-    merchant:{bg1:"#26170b",bg2:"#8e5f24",skin:"#ca9362",body:"#5d3a1f",motif:`<circle cx="51" cy="13" r="9" fill="#ddb24c"/><text x="51" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="#4e3514">G</text><path d="M5 51h18M9 47v8M18 47v8" stroke="#dfb965" stroke-width="2"/>`,head:`<path d="M12 18h40L44 7H20z" fill="#704827"/><path d="M21 31Q23 49 32 50Q42 49 44 31Q39 40 32 39Q25 40 21 31" fill="#70422d"/>`,gear:`<path d="M8 61Q13 39 32 39T56 61" fill="#5d391f"/><path d="M18 47h28" stroke="#d5a24f" stroke-width="4"/>`},
-    cleric:{bg1:"#0e2545",bg2:"#627fb5",skin:"#deb383",body:"#e4e9f1",motif:`<ellipse cx="32" cy="8" rx="15" ry="5" fill="none" stroke="#ffe98c" stroke-width="3"/><path d="M8 49h11M13 44v11M48 14h9M52 10v9" stroke="#ffe98c" stroke-width="2"/>`,head:`<path d="M16 18Q32 7 48 18" fill="#eef2f7"/><path d="M32 6v14M25 13h14" stroke="#f3d45e" stroke-width="3"/>`,gear:`<path d="M9 61Q15 38 32 38T55 61" fill="#edf0f5"/><path d="M32 39v18M24 48h16" stroke="#e0bd4f" stroke-width="3"/>`},
-    paladin:{bg1:"#111c36",bg2:"#7d6c32",skin:"#d4a77a",body:"#a99655",motif:`<circle cx="51" cy="50" r="10" fill="none" stroke="#f4dc86" stroke-width="3"/><path d="M51 42v16M43 50h16" stroke="#f4dc86" stroke-width="2"/>`,head:`<path d="M13 26Q15 4 32 4T51 26H13" fill="#cfb45f"/><path d="M19 20h26v13H19z" fill="#39445f"/><path d="M32 5v14M26 12h12" stroke="#fff3a8" stroke-width="2"/>`,gear:`<path d="M8 61Q13 38 32 38T56 61" fill="#a99250"/><path d="M20 43l12 14 12-14" fill="#3c4964"/>`},
-    beastmaster:{bg1:"#21190d",bg2:"#6c4c23",skin:"#ca9469",body:"#4a321c",motif:`<circle cx="52" cy="50" r="9" fill="#17120e"/><text x="52" y="55" text-anchor="middle" font-size="13">🐾</text><path d="M5 17l11 5M59 17l-11 5" stroke="#d0a45d" stroke-width="3"/>`,head:`<path d="M15 20l6-14 9 11M49 20L43 6l-9 11" fill="#8c6335"/><path d="M16 20Q32 7 49 20" fill="#654426"/>`,gear:`<path d="M8 61Q14 38 32 38T56 61" fill="#4d341d"/><path d="M12 44l12 8 8-12 8 12 12-8" fill="#8b6336" opacity=".75"/>`},
-    rogue:{bg1:"#091018",bg2:"#294d66",skin:"#c99068",body:"#172430",motif:`<path d="M8 52L25 9M56 52L39 9" stroke="#9ed8f4" stroke-width="2"/><path d="M7 53l8-1-5-7M57 53l-8-1 5-7" fill="#9ed8f4"/>`,head:`<path d="M9 27Q14 4 32 4T55 27l-9-4H18z" fill="#1d2934"/><path d="M16 24h32v9H16z" fill="#091018"/>`,gear:`<path d="M8 61Q14 39 32 39T56 61" fill="#17242f"/><path d="M20 43l12 13 12-13" fill="#2e536b"/>`},
-    bloodmage:{bg1:"#280712",bg2:"#8f1733",skin:"#e5c0b0",body:"#551126",motif:`<circle cx="32" cy="30" r="26" fill="none" stroke="#ff4969" stroke-width="1.5" opacity=".45"/><path d="M32 4l4 9-4 9-4-9zM6 45l9-2-4 9M58 45l-9-2 4 9" fill="#ff5673"/>`,head:`<path d="M10 28Q15 4 32 4T54 28l-10-5H20z" fill="#5c1128"/><path d="M32 7l5 9-5 9-5-9z" fill="#ef4461"/>`,gear:`<path d="M7 61Q13 37 32 39T57 61" fill="#571126"/><path d="M16 48q16 13 32 0" stroke="#ff5b78" stroke-width="3" fill="none"/>`}
-  };
-
+  
 
   // ---- monster and boss portraits -------------------------------------------
   function artHash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return Math.abs(h>>>0);}
@@ -2036,9 +2012,7 @@ function returnToRoad(...args){
   function v14SPick(R,a){return a[Math.floor(R()*a.length)];}
   function v14SInt(R,a,b){return Math.floor(R()*(b-a+1))+a;}
   function v14ClassTags(){return new Set(CLASSES[classIdentityId()]?.tags||[]);}
-  function v14WeightedAffix(R,pool,slot){const tags=v14ClassTags(),eligible=pool.filter(a=>a.slots.includes(slot));const weighted=[];eligible.forEach(a=>{let n=3;if((a.tags||[]).some(t=>tags.has(t)))n+=3;for(let i=0;i<n;i++)weighted.push(a);});return v14SPick(R,weighted.length?weighted:eligible);}
-  function v14BaseName(slot,R){const names=(gearNames[slot]&&gearNames[slot][player.classId])||gearNames[slot];return Array.isArray(names)&&names.length?v14SPick(R,names):SLOT_LABELS[slot];}
-  function v14SpendBase(item,R,remaining){const b=item.bonuses,key=V14_SLOT_BASE[item.slot];let spent=0;
+      function v14SpendBase(item,R,remaining){const b=item.bonuses,key=V14_SLOT_BASE[item.slot];let spent=0;
     const add=(k,val,cost)=>{if(remaining-spent<cost)return false;b[k]=(b[k]||0)+val;spent+=cost;return true;};
     while(remaining-spent>=4){
       if(key==="attack"){if(!add("attack",1,7))break;}
@@ -2244,8 +2218,7 @@ function returnToRoad(...args){
   // ---- Potion / Echo tooltips ----------------------------------------------
 
   // ---- Reliable Legendary choice flow -------------------------------------
-  function v17LegendaryPool(){return dbPowerups.eligible(u=>u.rarity==="legendary");}
-  function v17LegendaryChoices(){return dbPowerups.legendaryChoices();}
+    function v17LegendaryChoices(){return dbPowerups.legendaryChoices();}
   // ---- Explicit late-road difficulty curve --------------------------------
   // Soften the historical Board-4-only overboost by compensating it, then let v1.7's monotonic layer rebuild the curve.
 
@@ -2501,17 +2474,13 @@ function returnToRoad(...args){
   // The final runtime owner now uses Dicebound's visual powerup-choice overlay.
   // Older prompt/random-fallback logic was the reason Board 6 ignored the newer
   // chooser even though the UI existed earlier in the bundle.
-  function v19OpenLegendaryContract(source,onComplete=()=>{}){
-    return v17OpenLegendaryChoice(source,onComplete);
-  }
-
+  
   // ---- Pet switching rules -------------------------------------------------
   // Beastmaster predates the class-tag pass, so make its pet identity explicit.
   // Summoner and Pokémon Trainer already carry the `pet` tag in their definitions.
 
   function v19PetTaggedClass(){return classHasMechanic("pet");}
-  function v19CanSwitchPet(petId){return dbPets.canSwitch(petId);}
-
+  
   // ---- Paladin: healing stores Grace, Grace empowers Guard ----------------
   // This deliberately fuses Cleric's healing feedback loop with Fighter's
   // defensive tempo. Healing stores up to 100 Grace. Guard consumes it for
@@ -3234,21 +3203,7 @@ function returnToRoad(...args){
   /* MODULE: info ----------------------------------------------------------- */
 
   /* MODULE: v2.4 smoke/regression helpers --------------------------------- */
-  function v24TalentAudit(){return window.DiceboundTalentTree?.layoutAudit?.();}
-  window.DiceboundV24Test=Object.freeze({
-    rarity:()=>({labels:Object.fromEntries(['poor','common','uncommon','rare','epic','legendary','artifact','mythical','omega'].map(k=>[k,rarityInfo[k]?.label])),ordinary:Object.keys(V14_RARITY_BUDGETS),powerups:Object.fromEntries(['poor','common','uncommon','rare','epic','legendary','artifact','mythical','omega'].map(k=>[k,upgrades.filter(u=>u.rarity===k).length]))}),
-    storage:()=>({unlocked:v24StorageUnlocked(),capacity:v24StorageCapacity(),stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length}),
-    storageTalentGate:()=>({beforeBoard3:false,afterBoard3:false,retired:true}),
-    devilRitual:()=>{const oldH=meta.hellUnlocked,oldMode=hellMode,oldPrime=meta.devilPrimed;meta.hellUnlocked=true;hellMode=true;meta.devilPrimed=false;v24RefreshCamp();v24ArmDance();const fire=document.querySelector('#campScene .camp-bonfire'),r=fire.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,rad=Math.max(70,Math.min(130,Math.max(r.width,r.height)));for(let a=0;a<=Math.PI*6.4;a+=.18)v24TrackDance({clientX:cx+Math.cos(a)*rad,clientY:cy+Math.sin(a)*rad});const primed=meta.devilPrimed,icon=$('campHellBtn')?.querySelector('.camp-icon')?.textContent;meta.hellUnlocked=oldH;hellMode=oldMode;meta.devilPrimed=oldPrime;v24CancelDance();v24RefreshCamp();return {primed,hellOnIcon:icon};},
-    classTuning:()=>({fighter:{...CLASSES.fighter.base},paladin:{...CLASSES.paladin.base},beastmaster:{...CLASSES.beastmaster.base}}),
-    storageMilestones:()=>{const old={u:meta.heirloomStorageUnlocked,b5:meta.board5Clears,p:DB_PRESTIGE.clone(meta.prestige),m:meta.merchantKills};let test=DB_PRESTIGE.normalize({count:20,moon:{legacySpent:0,purchases:[]}});test=DB_PRESTIGE.grantLegacyPurchase(test,DB_HEIRLOOM_STORAGE_NODE);meta.prestige=test;meta.heirloomStorageUnlocked=true;const vals=[];meta.board5Clears=0;meta.merchantKills=0;vals.push(v24StorageCapacity());meta.board5Clears=1;vals.push(v24StorageCapacity());meta.prestige=DB_PRESTIGE.grantLegacyPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE);vals.push(v24StorageCapacity());meta.prestige=DB_PRESTIGE.grantLegacyPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE);vals.push(v24StorageCapacity());meta.merchantKills=1;vals.push(v24StorageCapacity());Object.assign(meta,{heirloomStorageUnlocked:old.u,board5Clears:old.b5,merchantKills:old.m});meta.prestige=old.p;return vals;},
-    talentAudit:v24TalentAudit,
-    alchemistOutside:()=>{resetPlayer('ranger');gameStarted=true;rollLocked=false;currentEnemy=null;player.potions=1;player.hp=Math.max(1,player.maxHp-10);const b=ensureAlphaMeta().potionsUsed||0;usePotionOutsideCombat();return (ensureAlphaMeta().potionsUsed||0)-b;},
-    setBonuses:()=>[2,3,4,5,6,7].map(n=>({n,damage:(()=>{const old=player.equipment;player.equipment={};EQUIPMENT_SLOTS.slice(0,n).forEach((s,i)=>player.equipment[s]={slot:s,setName:'Impossible Road',rarity:'artifact',bonuses:{},id:`x${i}`});const v=v19SetDamageBonus();player.equipment=old;return v;})()})),
-    hornOverheal:()=>{resetPlayer('ranger');player.equipment.hat=generateDevilsHorns();player.hp=player.maxHp-2;player.energyShield=0;dbCombat.heal(12);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};},
-    legendaryItems:()=>V24_LEGENDARY_RELICS.map(fn=>{const x=fn();return {name:x.name,slot:x.slot,rarity:x.rarity,effect:x.uniqueEffect};})
-  });
-  DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
+      DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
   setTimeout(()=>{if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();renderTalents();renderEquipment();v24UpdateShieldBars();},0);
 
@@ -4677,125 +4632,17 @@ dbReturnToRoadTraceReady=true;
     return meta;
   }
   function v319BoardDigest(){return tiles.map((t,i)=>({i,type:t?.type||null,pack:t?.packSize||1,enemy:t?.enemyBase?.name||null}));}
-  async function v319ActualFlow(seed='flow-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');boardLevel=1;dbRun.generateBoard();
-    const board=v319BoardDigest(),enemyIndex=tiles.findIndex((t,i)=>i>0&&t?.type==='enemy'&&(t.packSize||1)===1);
-    if(enemyIndex<0)throw new Error('Deterministic flow could not find a normal encounter');
-    player.position=enemyIndex;player.attack=999;startCombat('normal');
-    let strikes=0;while(livingEnemies().length&&strikes<12){const target=livingEnemies()[0];setCurrentEnemy(currentEnemies.indexOf(target));await dbCombat.strike(target,{echo:false,index:0});strikes++;}
-    const encounterResolved=!livingEnemies().length;
-    const item=dbItems.generateEquipment('uncommon','weapon');equipItem(item,true);
-    meta.runs=17;meta.petCookies=3;meta.bestTiles=Math.max(meta.bestTiles||0,enemyIndex);saveMeta();
-    meta.runs=999;meta.petCookies=999;
-    const loaded=dbRuntime.save.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;
-    return {seed,board,enemyIndex,strikes,encounterResolved,loot:{slot:item.slot,rarity:item.rarity,name:item.name},reload:{source:loaded.source,runs:meta.runs,petCookies:meta.petCookies,bestTiles:meta.bestTiles},rng:window.DiceboundRng.snapshot()};
-  }
-  function v319LegendaryFallback(){
-    v319ResetCareer();resetPlayer('ranger');const original=eligibleUpgrades;
-    try{eligibleUpgrades=(filter=()=>true)=>original(u=>u.rarity!=='legendary'&&filter(u));const result=v27FallbackRarityPool('legendary');return {rarity:result.rarity,count:result.pool.length};}
-    finally{eligibleUpgrades=original;}
-  }
-  function v319RoadLockRecovery(){
-    v319ResetCareer();resetPlayer('ranger');gameStarted=true;dbRun.generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;dbRun.dispatchTile();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
-  }
-  function v319PoorItems(n=500){v319ResetCareer();resetPlayer('ranger');let nulls=0,badSlots=0,wrongRarity=0;for(let i=0;i<n;i++){const item=dbItems.generateEquipment('poor');if(!item)nulls++;else{if(!EQUIPMENT_SLOTS.includes(item.slot))badSlots++;if(item.rarity!=='poor')wrongRarity++;}}return {n,nulls,badSlots,wrongRarity};}
-  function v319EnergyShield(){
-    v319ResetCareer();resetPlayer('ranger');gameStarted=true;currentEnemies=[{name:'Shield Dummy',icon:'👹',hp:100,maxHp:100,attack:1,defense:0}];currentEnemy=currentEncounterLead=currentEnemies[0];const aegis=upgrades.find(u=>u.id==='legendary_crimson_aegis_v27');applyUpgrade(aegis,'deterministic test');player.hp=player.maxHp-1;player.energyShield=0;dbCombat.heal(101);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};
-  }
-  function v319PoisonOverflow(seed='poison-319',chance=2.4,n=1000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');const vals=[];for(let i=0;i<n;i++)vals.push(rollTieredProc(chance));return {seed,chance,n,min:Math.min(...vals),max:Math.max(...vals),average:vals.reduce((a,b)=>a+b,0)/n,first:vals.slice(0,20)};}
-  function v319Prestige(seed='prestige-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();meta.points=18;const before=meta.prestige.count||0;dbProgression.completePrestige(18);const permanent=['maxHp','attack','defense','crit','dodge','luck','lifeSteal'].reduce((n,k)=>n+(meta.prestige[k]||0),0);return {before,after:meta.prestige.count,permanent,points:meta.points,level:meta.level};
-  }
-  function v319StorageSaveReload(){
-    v319ResetCareer();meta.heirloomStorageUnlocked=true;meta.board5Clears=1;meta.prestige.count=5;meta.merchantKills=1;const item={id:'test_heirloom_319',slot:'weapon',rarity:'epic',icon:'🧪',name:'Regression Blade',bonuses:{attack:9}};meta.heirloomStorage=[item];meta.heirlooms=[item];const capacity=v24StorageCapacity();saveMeta();meta.heirloomStorage=[];meta.heirlooms=[];const loaded=dbRuntime.save.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;return {capacity,stored:(meta.heirloomStorage||[]).length,active:(meta.heirlooms||[]).length,id:meta.heirloomStorage?.[0]?.id||null};
-  }
-  function v319RandomClass(seed='random-class-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();['ranger','sorcerer','fighter','monk','clown'].forEach(id=>meta.unlocks[id]=true);window.DiceboundClassChooser?.setRandomMode?.(true);startNewGame();const chosen=player.classId;window.DiceboundClassChooser?.setRandomMode?.(false);return {seed,chosen};
-  }
-  function v319SecretBossRitual(){return window.DiceboundV24Test?.devilRitual?.()||{primed:false};}
-  function v319SlimeRouge(seed='slime-rouge-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();Object.keys(CLASSES).forEach(id=>meta.unlocks[id]=true);selectedClassId='slimerouge';startNewGame();return {seed,identity:player.slimeRougeIdentityClass,ultimate:player.slimeRougeUltimateClass,summary:player.slimeRougeRunSummary||'',classId:player.classId};
-  }
-  window.DiceboundV319Test=Object.freeze({
-    seed:value=>window.DiceboundRng.seed(value),rng:()=>window.DiceboundRng.snapshot(),fresh:v319ResetCareer,
-    board:(seed='board-319')=>{window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');dbRun.generateBoard();return v319BoardDigest();},
-    actualFlow:v319ActualFlow,legendaryFallback:v319LegendaryFallback,roadLock:v319RoadLockRecovery,poorItems:v319PoorItems,energyShield:v319EnergyShield,
-    ouroboros:()=>window.DiceboundV318Test.ouroborosIdentityStrike(),poisonOverflow:v319PoisonOverflow,prestige:v319Prestige,storage:v319StorageSaveReload,
-    randomClass:v319RandomClass,secretBoss:v319SecretBossRitual,slimeRouge:v319SlimeRouge
-  });
-
+                        
 
   /* ========================================================================
      Alpha 3.2 — wrapper-boundary / mechanic-eligibility regression API
      ======================================================================== */
-  function v32SlimeRougeSummonerMana(){
-    window.DiceboundV318Test.forceRun('merchant','ranger');
-    const previous={identity:player.slimeRougeIdentityClass,mana:player.mana,maxMana:player.maxMana};
-    const current=window.DiceboundV318Test.forceRun('summoner','ranger');
-    return {previous,current,playerMana:player.mana,playerMaxMana:player.maxMana,hasMana:classHasMechanic('mana'),hasSpirits:classHasMechanic('spirits')};
-  }
-  function v32BenedictionEligibility(){
-    v319ResetCareer();meta.unlocks.slime=true;meta.unlocks.cleric=true;meta.unlocks.slimerouge=true;
-    const ben=upgrades.find(u=>u.id==='cleric_benediction');
-    resetPlayer('slime');const slime=eligibleUpgrades(()=>true).some(u=>u.id==='cleric_benediction');
-    resetPlayer('cleric');const cleric=eligibleUpgrades(()=>true).some(u=>u.id==='cleric_benediction');
-    window.DiceboundV318Test.forceRun('cleric','ranger');const rouge=eligibleUpgrades(()=>true).some(u=>u.id==='cleric_benediction');
-    const spec=window.DiceboundContent?.powerupMechanics?.cleric_benediction||{};
-    return {slime,cleric,slimeRougeCleric:rouge,requires:[...(spec.requires||[])],clericMechanics:classMechanicsFor('cleric'),description:ben?.desc||''};
-  }
-  window.DiceboundV32Test=Object.freeze({
-    slimeRougeSummonerMana:v32SlimeRougeSummonerMana,
-    benedictionEligibility:v32BenedictionEligibility,
-    infrastructure:()=>({platform:dbRuntime.platform?.runtimeInfo?.(),storage:dbRuntime.storage?.diagnostics?.(),save:dbRuntime.save?.diagnostics?.(),wrapper:dbRuntime.platform?.wrapperDiagnostics?.()})
-  });
-
+      
   /* Beta 0.3 — final-runtime regression API. */
-  function beta03RewardOdds(level){const t=beta03MinibossBaseTable(level),legendary=t.legendary,epic=t.epic-t.legendary,rare=t.rare-t.epic,uncommon=t.uncommon-t.rare,common=1-t.uncommon;return {legendary,epic,rare,uncommon,common};}
-  function beta03MysticSample(seed='beta03-mystic',n=20000){window.DiceboundRng.seed(seed);const out={legendary:0,epic:0,rare:0};for(let i=0;i<n;i++)out[beta03RollMysticRarity()]++;return {...out,n};}
-  function beta03MinibossSample(level=1,seed='beta03-miniboss',n=20000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');boardLevel=level;nightmareMode=false;hellMode=false;player.luck=0;const out={legendary:0,epic:0,rare:0,uncommon:0,common:0};for(let i=0;i<n;i++)out[v27RollMinibossRarity()]++;return {...out,n};}
-  function beta03BurnCap(){const e={name:'Burn Dummy',hp:1000,maxHp:1000,attack:0,defense:0,burnStacks:0};return {after20:beta03AddBurn(e,20),cap:BETA03_BURN_CAP,chance:BETA03_FIREBALL_BURN_CHANCE};}
-  function beta03FireSample(seed='beta03-fire',n=10000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');gameStarted=true;player.attack=1;player.elementEchoChance=0;const e={name:'Fire Dummy',icon:'🎯',hp:1000000000,maxHp:1000000000,attack:1,defense:0,weakness:'ice',affinity:null,poisonStacks:0,enemyBarrier:0,burnStacks:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;let burns=0;for(let i=0;i<n;i++){e.burnStacks=0;dbCombat.element('fire',e,{forced:true,source:'Beta 0.3 regression'});if(e.burnStacks)burns++;}return {seed,n,burns,rate:burns/n};}
-  function beta03BurnTick(){v319ResetCareer();resetPlayer('ranger');gameStarted=true;player.hp=player.maxHp;const e={name:'Burn Dummy',icon:'🎯',hp:1000,maxHp:1000,attack:0,defense:0,burnStacks:3,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;const before=e.hp,result=dbCombatTurns.test.tickEnemyBurns();return {before,after:e.hp,dealt:before-e.hp,result};}
-  function beta03BerserkerPowers(){v319ResetCareer();resetPlayer('berserker');const before={attack:player.attack,berserk:player.berserk},pain=upgrades.find(u=>u.id==='berserker_pain'),roar=upgrades.find(u=>u.id==='berserker_blood_roar');pain.apply();const afterPain={attack:player.attack,berserk:player.berserk};roar.apply();return {before,afterPain,afterRoar:{attack:player.attack,berserk:player.berserk},painDesc:pain.desc,roarDesc:roar.desc};}
-  async function beta03DoubleDose(){window.DiceboundRng.seed('beta03-double-dose');v319ResetCareer();meta.purchased.survival_prepared=2;meta.purchased.survival_alchemy=2;meta.purchased.survival_double_dose=1;resetPlayer('ranger');gameStarted=true;player.maxHp=200;player.hp=1;player.potions=2;const e={name:'Potion Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'ice',affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;combatBusy=false;let responses=0;const baseResponse=resolveEnemyResponse;resolveEnemyResponse=async function(){responses++;combatBusy=false;};try{const before={hp:player.hp,potions:player.potions,used:meta.stats?.potionsUsed||0};await usePotion();return {before,after:{hp:player.hp,potions:player.potions,used:meta.stats?.potionsUsed||0},responses,enabled:player.doublePotionTurn,talent:talents.find(t=>t.id==='survival_double_dose')};}finally{resolveEnemyResponse=baseResponse;combatBusy=false;}}
-  window.DiceboundBeta03Test=Object.freeze({rewardOdds:beta03RewardOdds,mysticSample:beta03MysticSample,minibossSample:beta03MinibossSample,burnCap:beta03BurnCap,fireSample:beta03FireSample,burnTick:beta03BurnTick,berserkerPowers:beta03BerserkerPowers,doubleDose:beta03DoubleDose,talentAudit:()=>window.DiceboundTalentTree?.layoutAudit?.()});
-  /* ========================================================================
+                    /* ========================================================================
      Alpha 3.2.4 — touch/mobile + victory/eligibility regression API
      ======================================================================== */
-  function v322ArcaneEligibility(){
-    const powerId='sorcerer_resonance';
-    v319ResetCareer();meta.unlocks.slime=true;meta.unlocks.sorcerer=true;meta.unlocks.slimerouge=true;
-    resetPlayer('slime');const slime=eligibleUpgrades(()=>true).some(u=>u.id===powerId);
-    window.DiceboundV318Test.forceRun('ranger','ranger');const rougeRanger=eligibleUpgrades(()=>true).some(u=>u.id===powerId);
-    window.DiceboundV318Test.forceRun('sorcerer','ranger');const rougeSorcerer=eligibleUpgrades(()=>true).some(u=>u.id===powerId);
-    resetPlayer('sorcerer');const sorcerer=eligibleUpgrades(()=>true).some(u=>u.id===powerId);
-    return {slime,rougeRanger,rougeSorcerer,sorcerer,requires:[...(window.DiceboundContent?.powerupMechanics?.[powerId]?.requires||[])]};
-  }
-  function v322UltimateTooltip(identity='summoner',ultimate='pokemontrainer'){
-    window.DiceboundV318Test.forceRun(identity,ultimate);updateCombatUI();
-    const donor=CLASSES[ultimate];
-    return {identity,ultimate,button:$('ultimateBtn')?.textContent||'',tip:$('ultimateBtn')?.dataset?.tip||'',expected:donor?.ultimate?.desc||''};
-  }
-  async function v322VictoryAliveBlocked(){
-    BattleVictoryUI.reset();currentEnemies=[{name:'Still Alive',hp:12,maxHp:12}];currentEnemy=currentEncounterLead=currentEnemies[0];
-    const result=BattleVictoryState.create({title:'Impossible Victory',defeatedNames:[],xp:0,gold:0,cookies:0,board:1});
-    await BattleVictoryUI.present(result);
-    const hidden=$('battleVictory')?.classList?.contains('hidden');
-    currentEnemies=[];currentEnemy=currentEncounterLead=null;BattleVictoryUI.reset();return {hidden};
-  }
-  async function v322VictoryCookies(cookies=0){
-    BattleVictoryUI.reset();currentEnemies=[];currentEnemy=currentEncounterLead=null;
-    const result=BattleVictoryState.create({title:'Cookie Test',defeatedNames:['Dummy'],xp:1,gold:1,cookies,board:1});
-    const pending=BattleVictoryUI.present(result);const hidden=$('battleVictoryCookieBox')?.classList?.contains('hidden');$('battleVictoryContinue')?.click?.();await pending;BattleVictoryUI.reset();return {cookies,hidden};
-  }
-  window.DiceboundV322Test=Object.freeze({
-    arcaneEligibility:v322ArcaneEligibility,
-    ultimateTooltip:v322UltimateTooltip,
-    victoryAliveBlocked:v322VictoryAliveBlocked,
-    victoryCookies:v322VictoryCookies,
-    touchContract:()=>({dialog:!!window.DiceboundDialogs?.confirm,touchInfo:!!window.DiceboundTouchInfo?.show})
-  });
-
+          
   /* ========================================================================
      Beta 0.5.11 — full-screen combat, elemental parity & progression fixes
      ======================================================================== */
@@ -4891,13 +4738,7 @@ dbReturnToRoadTraceReady=true;
 
 
   // Small exposed checks for future regression work.
-  window.DiceboundBeta0511Test=Object.freeze({
-    frogThreshold:()=>({requiredEcho:1.5,unlocked:!!meta.unlocks?.frog,currentEcho:player.doubleStrike||0}),
-    arcaneLanceEchoBonus:()=>Math.max(0,player.doubleStrike||0)*.5,
-    alchemistPotions:()=>({used:meta.stats?.potionsUsed||0,required:15,unlocked:!!meta.unlocks?.alchemist}),
-    glassNeedleArt:()=>({path:db0511GlassNeedleArt,rendered:choiceHTML(upgrades.find(u=>u?.name==='Glass Needle')||{rarity:'rare',icon:'',name:'Glass Needle',desc:'',tags:[]}).includes('glass-needle')})
-  });
-
+  
   /* ========================================================================
      Beta 0.5.12 — campsite placement + achievement powerup progression
      ======================================================================== */
@@ -4910,32 +4751,8 @@ dbReturnToRoadTraceReady=true;
     'legendary_star_eater_v27','legendary_venom_throne_v27','legendary_kings_ransom_v27','legendary_prismatic_choir_v27',
     'legendary_echo_crown','legendary_blood_contract','legendary_loaded_road','legendary_packbreaker','legendary_second_sun','perfected_signature'
   ]);
-  function db0512GlobalGateSnapshot(){
-    return DB0512_GLOBAL_POWER_IDS.map(id=>{
-      const up=upgrades.find(entry=>entry.id===id),gate=String(up?.achievementGate||''),achievement=gate.startsWith('achievement:')?gate.slice('achievement:'.length):gate;
-      return {id,name:up?.name,achievement,unlocked:!!gate&&dbProgression.achievementGateUnlocked(gate)};
-    });
-  }
-  function db0512ClassMasterySnapshot(){
-    const out={};
-    Object.keys(CLASSES).forEach(classId=>{
-      const rows=[];
-      upgrades.forEach(up=>{
-        if(up?.achievementGate===`class_b2:${classId}`)rows.push({board:2,id:up.id});
-        if(up?.achievementGate===`class_b5:${classId}`)rows.push({board:5,id:up.id});
-      });
-      if(rows.length)out[classId]=rows;
-    });
-    return out;
-  }
-
-  window.DiceboundBeta0512Test=Object.freeze({
-    globalGates:()=>db0512GlobalGateSnapshot(),
-    classGates:()=>db0512ClassMasterySnapshot(),
-    eligibleLegendaryCount:()=>eligibleUpgrades(u=>u.rarity==='legendary').length,
-    eligibleEpicCount:()=>eligibleUpgrades(u=>u.rarity==='epic').length
-  });
-
+    
+  
   /* ========================================================================
      Alpha v3.1.7 — infrastructure boundary: platform / storage / save schema
      ======================================================================== */
@@ -5017,8 +4834,7 @@ dbReturnToRoadTraceReady=true;
     ordinaryApi:window.DiceboundEquipment,logError:(message,data)=>v25Log('errors','loot',message,data),stateForLog:()=>v25State()
   });
   function db060HasEffect(id){return dbItemGeneration.hasEffect(id);}
-  function db060GenerateLegendary(forcedSlot=null,preferUndiscovered=false){return dbItems.generateLegendary(forcedSlot,preferUndiscovered);}
-
+  
   // Generated Legendary effects count as real item value in comparisons.
   const db060FormatBonusesBase=formatBonuses;
   formatBonuses=function(item){const base=db060FormatBonusesBase(item);if(!item?.legendaryEffectId)return base;const e=DB060_EFFECT_BY_ID[item.legendaryEffectId];return `${base} · LEGENDARY EFFECT: ${e?.name||item.legendaryEffectName} — ${e?.desc||item.legendaryEffectDesc||''}`;};
@@ -5582,12 +5398,7 @@ dbReturnToRoadTraceReady=true;
     getBoard:level=>db317Board(level),enemyPolicy:db064EnemyPolicy,elementKeys:ELEMENT_KEYS,
     beta045EnemyArtForName,db046EnemyArtForName,db047UiArt
   });
-  window.DiceboundEnemyMechanicsTest=Object.freeze({
-    wolfEchoChance:(board,mode)=>db064EnemyPolicy.wolfEchoChance(board,mode),
-    devilFlameChance:(board,mode)=>db064EnemyPolicy.standardDevilFlameChance(board,mode),
-    isStandardDevil:db064IsStandardDevil
-  });
-
+  
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
      a real completed Donut proc and never changes its target, timing or RNG. */
   window.DiceboundDonutVfxTest=Object.freeze({
@@ -5640,41 +5451,17 @@ dbReturnToRoadTraceReady=true;
   document.addEventListener('focusin',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target)db064ShowTooltip(target);});
   document.addEventListener('focusout',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target===db064TooltipTarget)db064HideTooltip(target);});
   window.addEventListener('resize',db064PositionTooltip);window.addEventListener('scroll',db064PositionTooltip,true);
-  window.DiceboundCombatUiTest=Object.freeze({
-    battleLogCollapsed:db064BattleLogCollapsed,
-    setBattleLogCollapsed:db064SetBattleLogCollapsed,
-    tooltip:()=>({active:!!db064TooltipTarget,text:db064TooltipLayer()?.textContent||'',hidden:db064TooltipLayer()?.classList.contains('hidden')??true}),
-    positionTooltip:db064PositionTooltip
-  });
-
+  
   // Isolated browser-harness coverage for the #123 semantic contract.  This
   // exercises the live composed strike pipeline, including the Ranger wrapper.
-  window.DiceboundEchoStrikeTest=Object.freeze({
-    async highCritRangerEchoes(){
-      if(meta.unlocks)meta.unlocks.ranger=true;
-      resetPlayer('ranger');
-      Object.assign(player,{attack:1,crit:3.5,doubleStrike:2,criticalEchoBonus:1,combatAttackCount:0});
-      const enemy={name:'Echo Regression Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,rangerMarks:0};
-      currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
-      const strikes=[];
-      for(let index=1;index<=3;index++)strikes.push(await dbCombat.strike(enemy,{echo:true,index,canCrit:false}));
-      return {crits:strikes.map(strike=>strike.critTiers),canCrit:strikes.map(strike=>strike.canCrit),marks:enemy.rangerMarks,expectedMarks:3};
-    }
-  });
-
+  
   /* #75 / #122 — one source for the level-aware event Gold family.  The
      runtime applies its existing effective-Gold calculation exactly once. */
   const db064FriendsEventRewards=window.DiceboundEventRewards;
   if(!db064FriendsEventRewards)throw new Error('DiceBound requires the event reward policy domain.');
   const db064PurseTalent=talents.find(talent=>talent.id==='fortune_gold');
   if(db064PurseTalent)db064PurseTalent.desc='Each rank adds 35% of the level-scaled event-Gold reward at run start (25 Gold per rank at level 1) and +5% Gold Gain.';
-  window.DiceboundEventRewardTest=Object.freeze({
-    gold:(source,level=player.level,multiplier=1,goldModifier=1)=>Math.round(db064FriendsEventRewards.goldBaseFor(source,level,multiplier)*goldModifier),
-    slotOdds:luck=>db064FriendsEventRewards.slotMatchOdds(luck),
-    tileType:(roll,board)=>db064FriendsEventRewards.roadTileType(roll,board),
-    sources:()=>Object.keys(db064FriendsEventRewards.gold.sourceMultiplier)
-  });
-
+  
   /* #78 / #209 — achievement rules and mastery state remain here until their
      domain moves. The Trophy destination itself is owned by ui/achievements. */
   function db064AchievementUiSettings(){
@@ -5888,8 +5675,7 @@ dbReturnToRoadTraceReady=true;
   function dbFriendDragoonLandPresentation(){return dbCombatView.dragoonLandPresentation();}
   function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
 
-  function dbFriendEnsureDragoonJumpButton(){return dbCombatView.ensureDragoonJumpButton();}
-  async function dbFriendDragoonLanding(){
+    async function dbFriendDragoonLanding(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
     combatBusy=true;player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;dbFriendDragoonLandPresentation();
     const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target){combatBusy=false;return false;}
