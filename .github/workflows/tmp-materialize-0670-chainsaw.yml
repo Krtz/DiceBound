@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   materialize:
-    # Revision 2: ownership tests now reject call-only Combat adapters instead of requiring them.
+    # Revision 3: call-only Combat adapters stay retired; strike callers use dbCombat.strike().
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
