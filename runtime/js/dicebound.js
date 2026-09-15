@@ -866,9 +866,16 @@
   function chooseDieResult(){
     return new Promise(resolve=>{pendingDiceChoiceResolve=resolve;const grid=$("diceChoiceGrid");grid.innerHTML="";diceFaces.forEach((face,i)=>{const b=document.createElement("button");b.textContent=face;b.addEventListener("click",()=>{pendingDiceChoiceResolve=null;$("diceChoiceOverlay").classList.add("hidden");resolve(i+1);});grid.appendChild(b);});$("diceChoiceOverlay").classList.remove("hidden");});
   }
-  function returnToRoad(){
-    if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}
-  }
+  let dbReturnToRoadTraceReady=false,dbReturnToRoadSafetyReady=false,dbReturnToRoadStoneReady=false,dbReturnToRoadFriendReady=false;
+function returnToRoad(...args){
+  if(dbReturnToRoadFriendReady){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();}
+  if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
+  const core=()=>{if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}};
+  const result=dbReturnToRoadTraceReady?v25TraceCommand('returnToRoad',core,'detailed',args,this):core();
+  if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
+  if(dbReturnToRoadStoneReady&&!currentEnemy)v26ClearStoneBattle();
+  return result;
+}
 
 
   function livingEnemies(){return currentEnemies.filter(e=>e.hp>0);}
@@ -1026,8 +1033,12 @@
   function renderEndGear(){
     return dbEquipmentUi.renderEndGear();
   }
-  function openDebugMenu(){$("debugOverlay").classList.remove("hidden");}
-
+  function openDebugMenu(){
+    $("debugOverlay").classList.remove("hidden");
+    refreshDebugButtons();
+    v24RefreshDebugLabels();
+    v25EnsureDebugControls();
+  }
 
   function loseGame(){sfx.lose();$("combatOverlay").classList.add("hidden");showEnd(false);}
 
@@ -1160,11 +1171,76 @@
     const data={fighter:["Worldsplitter, Blade of the Last Road","🗡️",{attack:14,maxHp:24,defense:3,lifeSteal:.12,bossDamage:.35}],ranger:["Starpiercer, Bow Beyond Distance","🏹",{attack:12,crit:.20,dodge:.10,doubleStrike:.25,bossDamage:.35}],sorcerer:["Eventide, Staff of Infinite Sparks","🪄",{attack:15,crit:.12,lifeSteal:.18,classBurst:.20,bossDamage:.35}],monk:["Heaven's Knuckles, Hands of the Silent Road","🥊",{attack:13,dodge:.14,doubleStrike:.28,lifeSteal:.10,bossDamage:.30}],clown:["The Last Laugh, Impossible Rubber Chicken","🐔",{attack:11,crit:.22,luck:.25,doubleStrike:.25,bossDamage:.30}],rouge:["Vermilion, Brush of the Red Beyond","🖌️",{attack:14,crit:.16,lifeSteal:.24,doubleStrike:.16,bossDamage:.35}],berserker:["World-Ender, Axe of Ten Thousand Scars","🪓",{attack:17,maxHp:30,crit:.14,lifeSteal:.15,bossDamage:.40,damageBonus:.20}],turtle:["Atlas Shellbreaker, Hammer of Patient Worlds","🔨",{attack:10,maxHp:42,defense:9,bossDamage:.40,damageBonus:.12}],frog:["Ribbitus Maximus, Spear of Infinite Echoes","🐸",{attack:13,doubleStrike:.45,dodge:.18,crit:.15,bossDamage:.35}],d20:["The Unfair Die, Edge of Twenty Outcomes","🎲",{attack:14,crit:.20,doubleStrike:.20,luck:.30,bossDamage:.35}],slime:["Primordial Puddle, Weapon of Everything","🟢",{attack:14,maxHp:28,crit:.14,doubleStrike:.16,lifeSteal:.14,bossDamage:.35}]}[player.classId]||["Worldsplitter","🗡️",{attack:14,bossDamage:.35}];
     return {id:`mythical_${player.classId}_${Date.now()}`,slot:"weapon",rarity:"mythical",mythical:true,mythicPiece:"weapon",setName:"Impossible Road",uniqueEffect:"Reality Rend: every fifth basic attack guarantees a strengthened elemental activation.",icon:data[1],name:data[0],element:pick(ELEMENT_KEYS),bonuses:data[2]};
   }
-  function mythicalSetSummary(){const count=mythicalSetCount();return `${count}/5 Impossible Road pieces · 3 pieces: +15% all damage and +15% elemental proc chance · 4 pieces: begin battles with at least 50 ultimate, one barrier and +25% pet double chance · 5 pieces: +30% all damage, +25% elemental power, and guardian specials deal 25% less damage.`;}
+  function mythicalSetSummary(){
+  const n=mythicalSetCount();
+  return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');
+}
 
   function enemyForPosition(index){return dbRun.enemyForPosition(index);}
   function generateBoard(){return dbRun.generateBoard();}
-  function tileMeta(tile){if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];}
+  let dbTileMetaFinalReady=false;
+  function tileMeta(tile){
+    if(dbTileMetaFinalReady){
+      // Final 0.6 guardian art was the outermost generation.
+      if(tile?.type==='miniboss'&&tile.enemyBase?.id&&db060GuardianArt(tile.enemyBase.id))return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
+      if(tile?.type==='boss'){
+        const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
+        if(boss?.id&&boss.art?.boardMarker)return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
+      }
+
+      // Beta 0.4.9 current pack rendering supersedes earlier enemy art when it applies.
+      if(tile?.type==='enemy'&&Number(tile.packSize||1)>1&&tile?.enemyBase){
+        const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||'Enemy';
+        return [`<span class="db-enemy-pack-art">${db049EnemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
+      }
+      if(tile?.type==='enemy'&&tile?.enemyBase&&(/bandit|troll/i.test(tile.enemyBase.name||''))){
+        return [db049EnemyTileIcon(tile),`${tile.enemyBase.name} · 1 enemy`];
+      }
+
+      // Preserve the exact 0.4.7 fallback for non-standard Bandit/Troll tiles or
+      // when the later enemy-specific generations do not apply.
+      const enemyName=tile?.enemyBase?.name||'';
+      if(enemyName){
+        let icon='';
+        if(/bandit/i.test(enemyName))icon=db047UiArt('bandit',enemyName,'db-art-portrait');
+        else if(/troll/i.test(enemyName))icon=db047UiArt('troll',enemyName,'db-art-portrait');
+        if(icon){
+          const n=Math.max(1,Number(tile.packSize||1)||1);
+          const visual=n>1?`<span class="db-enemy-pack-art">${icon}<b>×${n}</b></span>`:icon;
+          return [visual,n>1?`${enemyName} · ${n} enemies`:`${enemyName} · 1 enemy`];
+        }
+      }
+
+      // Older art generations remain as real fallbacks because their asset helper
+      // can succeed even when a newer helper does not.
+      if(tile?.enemyBase?.name){
+        const art=db046EnemyArtForName(tile.enemyBase.name);
+        if(art&&tile.type==='enemy'){
+          const count=tile.packSize||1;
+          return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
+        }
+        if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
+      }
+      if(tile?.enemyBase?.name){
+        const art=beta045EnemyArtForName(tile.enemyBase.name);
+        if(art&&tile.type==='enemy'){
+          const count=tile.packSize||1;
+          return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
+        }
+        if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
+      }
+
+      if(tile?.type==='treasure')return [beta043Art('coins','Treasure','db-art-tile')||'💰','Treasure'];
+      if(tile?.type==='gambler')return [beta043Art('gambler','Gambler','db-art-tile')||'🪙','Gambler'];
+      if(tile?.type==='devilboss')return ['👿🌙','???'];
+    }
+
+    // Original base metadata remains the bootstrap fallback until all later art
+    // helpers are initialized, and the final fallback after they decline a tile.
+    if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}
+    if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];
+    return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];
+  }
   function buildBoard(){
     const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=tileMeta(tile),el=document.createElement("div");el.className=`tile ${tile.type}`;el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
   }
@@ -1180,7 +1256,29 @@
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
   async function winCombat(...args){return dbCombat.win(...args);}
-  function applyRunTheme(){const themes={1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},2:{bg1:"#2a2105",bg2:"#130f02",glow1:"rgba(255,221,69,.25)",glow2:"rgba(255,152,45,.12)",board1:"#594817",board2:"#2d240b"},3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},4:{bg1:"#160522",bg2:"#07020b",glow1:"rgba(196,88,255,.30)",glow2:"rgba(255,70,173,.15)",board1:"#3f1357",board2:"#1b0828"}},t=themes[boardLevel]||themes[1],r=document.documentElement.style;for(const [k,v] of Object.entries(t))r.setProperty(`--run-${k.replace(/([A-Z])/g,"-$1").toLowerCase()}`,v);}
+  function applyRunTheme(){
+  const themeByBoard={
+    1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},
+    2:{bg1:"#1c1708",bg2:"#0c0b05",glow1:"rgba(255,217,123,.23)",glow2:"rgba(137,193,255,.14)",board1:"#43371a",board2:"#1d1910"},
+    3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},
+    4:{bg1:"#221109",bg2:"#0d0604",glow1:"rgba(255,118,62,.26)",glow2:"rgba(164,47,36,.16)",board1:"#4f2416",board2:"#20100a"},
+    5:{bg1:"#140721",bg2:"#06020d",glow1:"rgba(189,98,255,.28)",glow2:"rgba(87,130,255,.16)",board1:"#351048",board2:"#13061d"},
+    6:{bg1:"#03050d",bg2:"#000104",glow1:"rgba(71,92,255,.30)",glow2:"rgba(210,55,255,.17)",board1:"#111947",board2:"#070a1d"}
+  };
+  const rootStyle=document.documentElement.style,theme=themeByBoard[boardLevel]||themeByBoard[1],scene=window.DiceboundAssets?.resolveBoardBackground?.(boardLevel),sceneUrl=scene?.image?`url("${scene.image}")`:'none';
+  for(const [key,value] of Object.entries(theme))rootStyle.setProperty(`--run-${key.replace(/([A-Z])/g,'-$1').toLowerCase()}`,value);
+  rootStyle.setProperty("--run-scene-image",sceneUrl);
+  rootStyle.setProperty("--run-scene-focus",scene?.focus||"50% 50%");
+  const sceneEl=$("boardSceneBg");
+  if(sceneEl){
+    if(scene?.image&&sceneEl.getAttribute('src')!==scene.image)sceneEl.setAttribute('src',scene.image);
+    sceneEl.style.objectPosition=scene?.focus||"50% 50%";
+    sceneEl.dataset.board=String(boardLevel||1);
+  }
+  document.body?.setAttribute('data-board-level',String(boardLevel||1));
+  dbBeta01SyncDifficultyAtmosphere();
+  beta04SyncWorldScene();
+}
 
   function openInfo(){return dbInfoGuide?.open();}
   function renderInfo(){return dbInfoGuide?.render();}
@@ -1288,7 +1386,94 @@
 
   function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}
 
-  function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbRun.dispatchTile();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
+  function debugAction(action){
+    // Final released dispatch order, collapsed from ten historical generations.
+    // Beta 0.4 was the outermost wrapper.
+    if(action==='unlock_hell'){
+      meta.nightmareUnlocked=true;meta.hellUnlocked=true;saveMeta();
+      try{renderClassChoices();}catch(_){}
+      showToast('🔥 Hell Mode unlocked (debug)');
+      return;
+    }
+
+    // v26 was the next outer layer and therefore intercepts these before v25 logging.
+    if(action==='kill_character_v26'){
+      if(!gameStarted){showToast('Start a run first');return;}
+      $('debugOverlay')?.classList.add('hidden');
+      const damage=Math.max(1,Math.ceil(player.hp+player.maxHp));
+      meta.damageTaken=(meta.damageTaken||0)+damage;player.hp=0;
+      addLog('<b>Debug monster</b> deals lethal damage. Running the normal death/revive pipeline.');
+      showToast('☠️ Debug monster attacks');handlePlayerDeath();updateHUD();return;
+    }
+    const artifactFns={mythic_weapon:generateMythicalWeapon,mythic_offhand:generateMythicalOffhand,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};
+    if(artifactFns[action]){
+      if(!gameStarted){showToast('Start a run first');return;}
+      const item=artifactFns[action]();equipItem(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;
+    }
+    if(action==='mythic'){
+      if(!gameStarted){showToast('Start a run first');return;}
+      [generateMythicalWeapon,generateMythicalOffhand,generateMythicalBoots,generateMythicalPants,generateMythicalAmulet,generateMythicalHat,generateMythicalRing].forEach(fn=>equipItem(fn(),true));
+      renderEquipment();updateHUD();showToast('Full current seven-piece Artifact set equipped');return;
+    }
+
+    // v25 logging occurred only after all later v26/Beta04 intercepts.
+    v25Log('events','debug',`debugAction(${action})`,v25State());
+    if(['legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25'].includes(action)){
+      if(!gameStarted){showToast('Start a run first');return;}
+      const item=action==='legend_mug_v25'?generateAxelsCoffeeMug():action==='legend_headphones_v25'?generateKratzHeadphones():action==='legend_jacket_v25'?generateKellysJeanJacket():generateDevilsHorns();
+      equipItem(item,true);renderEquipment();updateHUD();showToast(`${item.name} added`);return;
+    }
+    if(action==='recover_road_v25'){v25RecoverRoadState('manual');return;}
+
+    if(action==='unlockclasses'){
+      meta.unlocks=meta.unlocks||{};Object.keys(CLASSES).forEach(id=>meta.unlocks[id]=true);saveMeta();renderClassChoices();showToast('Debug: all classes unlocked');return;
+    }
+    if(action==='unlockpets'){
+      meta.pets=meta.pets||defaultPets();Object.keys(PETS).forEach(id=>{meta.pets[id]=meta.pets[id]||defaultPetState(false);meta.pets[id].unlocked=true;});
+      ELEMENT_KEYS.forEach(k=>meta.elementProgress[k]=Math.max(meta.elementProgress[k]||0,PET_UNLOCK_REQUIREMENT));saveMeta();renderPetCollection();updateMetaUI();showToast('Debug: all pets unlocked');return;
+    }
+    if(action==='all_powerups'){
+      if(!gameStarted){showToast('Start a run first');return;}
+      $('debugOverlay').classList.add('hidden');showAllEligiblePowerupSelection('Debug · Full Eligible Powerup List',()=>{});return;
+    }
+
+    // v19 / v1.5 / v1.1 effective branches. Superseded Mythical branches that
+    // are unreachable behind v26 are intentionally not carried forward.
+    if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}
+    if(action==="double_dice"){meta.doubleDiceUnlocked=true;saveMeta();updateHUD();showToast("Double Dice unlocked");return;}
+    if(action==="seed_item"){
+      if(!gameStarted){showToast("Start a run first");return;}
+      const code=dbRuntime.platform.prompt("Paste a Dicebound v1.5 item seed code (starts with D15|):","");if(code==null)return;
+      const item=v15GenerateEquipmentFromSeedCode(code);if(!item){dbRuntime.platform.alert("That seed code is not a valid Dicebound v1.5 ordinary-item seed.");return;}
+      $("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;
+    }
+    if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}
+    if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}
+    if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}
+    if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}
+    if(action==="omega_stone"&&gameStarted){
+      equipItem(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");
+      // The former v1.10 outer wrapper performed this presentation refresh after
+      // the older handler returned; keep that order exactly once.
+      renderEquipment();updateHUD();return;
+    }
+
+    // Original debug dispatcher. These actions intentionally fall through to the
+    // common meta/HUD refresh and generic toast, exactly as released.
+    if(action==="runxp"&&gameStarted)grantXp(250);
+    if(action==="level"&&gameStarted)forceLevels(5);
+    if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}
+    if(action==="talents"){meta.points+=25;saveMeta();}
+    if(action==="gold"&&gameStarted)player.gold+=5000;
+    if(action==="cookies"){meta.petCookies+=25;saveMeta();}
+    if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}
+    if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}
+    if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}
+    if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}
+    if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}
+    if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbRun.dispatchTile();}
+    updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);
+  }
 
   /* SEMANTIC OWNER — Progression, achievements, board expansion and early run lifecycle. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1: achievements, classes, stats and combat polish ---------- */
@@ -1522,7 +1707,6 @@
 
   function generateMythicalRing(){return {id:`mythical_ring_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"ring",rarity:"mythical",mythical:true,mythicPiece:"ring",setName:"Impossible Road",uniqueEffect:"Ouroboros Halo: every fourth player action grants 1 barrier and 12 ultimate charge.",icon:"💍",name:"Ouroboros Halo, Ring of the Fifth Road",bonuses:{maxHp:22,attack:6,defense:4,crit:.12,luck:.18,bossDamage:.28}};}
   function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
-  mythicalSetSummary=function(){const count=mythicalSetCount();return `${count}/6 Impossible Road pieces · 3 pieces: +15% all damage and +15% elemental proc chance · 4 pieces: begin each battle with at least 50 ultimate, one barrier, and +25% pet double-attack chance · 5 pieces: guardian specials deal 25% less damage and your elemental/ultimate effects strengthen further · 6 pieces: Ouroboros set bonus grants +25% all damage, +1 extra starting barrier, and every fourth action grants 1 barrier + 12 ultimate.`;};
   function applyMythicRingPulse(){if(!(player.equipment?.ring?.mythicPiece==="ring")||player.combatActionCount<1||player.combatActionCount%4!==0)return "";player.combatShield=(player.combatShield||0)+1;player.ultimateCharge=clamp(player.ultimateCharge+12,0,100);return "💍 Ouroboros Halo grants 1 barrier and 12 ultimate.";}
 
 
@@ -1533,10 +1717,34 @@
   const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);};
   $("rollBtn").addEventListener("click",e=>{if(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked){e.preventDefault();e.stopImmediatePropagation();rollDice();}},true);
 
-  function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
-  const openDebugMenuV11=openDebugMenu;openDebugMenu=function(){openDebugMenuV11();refreshDebugButtons();};
-  const debugActionV11=debugAction;debugAction=function(action){if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}if(action==="omega_stone"&&gameStarted){equipItem(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");return;}return debugActionV11(action);};
+  let dbDebugUiReady=false;
+  function refreshDebugButtons(){
+    const grid=$("debugGrid");if(!grid)return;
+    const ensure=(id,label)=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;return btn;};
 
+    // The static controls accumulated through v11, v1.5 and v21 now have one owner.
+    ensure("alwayschoose",`${meta.debugAlwaysChooseRolls?"☑":"☐"} Always choose dice`);
+    ensure("board5","Board 5");
+    ensure("mythicring","Artifact Ring");
+    ensure("omega_merchant","The Final Price");
+    ensure("omega_stone","Philosopher's Stone");
+    for(const [id,label] of [
+      ["mythic_weapon","🌈 Mythic Weapon"],["mythic_boots","🌈 Mythic Boots"],["mythic_legs","🌈 Mythic Legguards"],
+      ["mythic_amulet","🌈 Mythic Amulet"],["mythic_hat","🌈 Mythic Hat"],["mythic_ring","🌈 Mythic Ring"],["seed_item","🧬 Add item by seed code"],
+      ["all_powerups","🎁 Choose any eligible powerup"]
+    ])ensure(id,label);
+
+    // v22 split the old destructive unlock button into separate class/Pet cheats.
+    const old=grid.querySelector('[data-debug="unlock"]');
+    if(old){old.dataset.debug="unlockclasses";old.textContent="🔓 Unlock all classes";}
+    else ensure("unlockclasses","🔓 Unlock all classes");
+    ensure("unlockpets","🐾 Unlock all pets");
+
+    // During source evaluation the later v25/V26 control machinery is not ready
+    // yet. Once the final debug UI generation has initialized, every ordinary
+    // refresh also performs the current tab/control sync exactly once.
+    if(dbDebugUiReady)v25EnsureDebugControls();
+  }
 
   refreshDebugButtons();
   saveMeta();
@@ -2068,10 +2276,6 @@
 
 
   // ---- Debug: all Mythic pieces + item seed recreation ----------------------
-  const refreshDebugButtonsV15Patch=refreshDebugButtons;
-  refreshDebugButtons=function(){refreshDebugButtonsV15Patch();const grid=$("debugGrid");if(!grid)return;const defs=[["mythic_weapon","🌈 Mythic Weapon"],["mythic_boots","🌈 Mythic Boots"],["mythic_legs","🌈 Mythic Legguards"],["mythic_amulet","🌈 Mythic Amulet"],["mythic_hat","🌈 Mythic Hat"],["mythic_ring","🌈 Mythic Ring"],["seed_item","🧬 Add item by seed code"]];for(const [id,label] of defs){let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;}};
-  const debugActionV15Patch=debugAction;
-  debugAction=function(action){const mythics={mythic_weapon:generateMythicalWeapon,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(mythics[action]){if(!gameStarted){showToast("Start a run first");return;}equipItem(mythics[action](),true);updateHUD();showToast(`${action.replace("mythic_","")} Mythic added`);return;}if(action==="seed_item"){if(!gameStarted){showToast("Start a run first");return;}const code=dbRuntime.platform.prompt("Paste a Dicebound v1.5 item seed code (starts with D15|):","");if(code==null)return;const item=v15GenerateEquipmentFromSeedCode(code);if(!item){dbRuntime.platform.alert("That seed code is not a valid Dicebound v1.5 ordinary-item seed.");return;}$("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;}return debugActionV15Patch(action);};
 
   // ---- New class portraits and sensible selection order --------------------
   const classPortraitV15Patch=classPortraitSVG;
@@ -2524,10 +2728,6 @@
 
   // ---- Impossible Road: seven-piece progression ---------------------------
   function v19SetStartBarrier(){return mythicalSetCount()>=5?1:0;}
-  mythicalSetSummary=function(){
-    const n=mythicalSetCount();
-    return `${n}/7 Impossible Road pieces · 2: +3% all damage · 3: +7% all damage and +6% elemental proc chance · 4: +10% all damage, +8% proc chance, begin battles with 35 Ultimate, one Barrier, +12% pet double chance, and guardian specials deal 10% less damage · 7: +28% all damage, +18% elemental proc chance, +22% elemental power, +20% pet double chance, guardian specials deal 28% less damage, and once per battle at ≤25% HP restore 25% max HP + gain 1 Barrier.`;
-  };
 
   // Board 6 adds the seventh Impossible Road slot.
   function generateMythicalOffhand(){return {id:`mythical_offhand_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"offhand",rarity:"mythical",mythical:true,mythicPiece:"offhand",setName:"Impossible Road",uniqueEffect:"Event Horizon Ward: Guard grants 8 additional Ultimate; every third Guard also raises one Barrier.",icon:"🌌🛡️",name:"Event Horizon Ward, Offhand Beyond the Sixth Road",bonuses:{maxHp:30,defense:7,attack:7,crit:.10,doubleStrike:.12,bossDamage:.32,flatReduction:2}};}
@@ -2584,29 +2784,6 @@
   window.DiceboundCamp.configureShell({refreshDoubleDiceControls:()=>{v19EnsureDoubleDiceButton();const b=$("roll2Btn");if(b){b.style.display=meta.doubleDiceUnlocked?"block":"none";b.disabled=rollLocked||!gameStarted;}const one=$("rollBtn");if(one)one.textContent=meta.doubleDiceUnlocked?"🎲 Roll 1d6":"🎲 Roll the dice";}});
 
   // ---- Board 6 -------------------------------------------------------------
-  const applyRunThemeV19Base=applyRunTheme;
-  applyRunTheme=function(){
-    applyRunThemeV19Base();
-    const themeByBoard={
-      1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},
-      2:{bg1:"#1c1708",bg2:"#0c0b05",glow1:"rgba(255,217,123,.23)",glow2:"rgba(137,193,255,.14)",board1:"#43371a",board2:"#1d1910"},
-      3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},
-      4:{bg1:"#221109",bg2:"#0d0604",glow1:"rgba(255,118,62,.26)",glow2:"rgba(164,47,36,.16)",board1:"#4f2416",board2:"#20100a"},
-      5:{bg1:"#140721",bg2:"#06020d",glow1:"rgba(189,98,255,.28)",glow2:"rgba(87,130,255,.16)",board1:"#351048",board2:"#13061d"},
-      6:{bg1:"#03050d",bg2:"#000104",glow1:"rgba(71,92,255,.30)",glow2:"rgba(210,55,255,.17)",board1:"#111947",board2:"#070a1d"}
-    };
-    const root=document.documentElement.style,theme=themeByBoard[boardLevel]||themeByBoard[1],scene=window.DiceboundAssets?.resolveBoardBackground?.(boardLevel),sceneUrl=scene?.image?`url("${scene.image}")`:'none';
-    for(const [key,value] of Object.entries(theme))root.setProperty(`--run-${key.replace(/([A-Z])/g,'-$1').toLowerCase()}`,value);
-    root.setProperty("--run-scene-image",sceneUrl); // fallback / future filter composition
-    root.setProperty("--run-scene-focus",scene?.focus||"50% 50%");
-    const sceneEl=$("boardSceneBg");
-    if(sceneEl){
-      if(scene?.image&&sceneEl.getAttribute('src')!==scene.image)sceneEl.setAttribute('src',scene.image);
-      sceneEl.style.objectPosition=scene?.focus||"50% 50%";
-      sceneEl.dataset.board=String(boardLevel||1);
-    }
-    document.body?.setAttribute('data-board-level',String(boardLevel||1));
-  };
 
   // Sixth-road merchant: much richer stock and distinctly higher cost.
 
@@ -2649,9 +2826,7 @@
   // Offhand unique effect and Paladin Guard behavior share Guard entry.
 
   // ---- Debug additions -----------------------------------------------------
-  const debugActionV19Base=debugAction;
-  debugAction=function(action){if(action==="mythic_offhand"){if(!gameStarted){showToast("Start a run first");return;}equipItem(generateMythicalOffhand(),true);updateHUD();showToast("Artifact offhand added");return;}if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}if(action==="double_dice"){meta.doubleDiceUnlocked=true;saveMeta();updateHUD();showToast("Double Dice unlocked");return;}return debugActionV19Base(action);};
-  function v19AddDebugButton(action,label){const grid=$("debugOverlay")?.querySelector(".debug-grid");if(!grid||grid.querySelector(`[data-v19-action="${action}"]`))return;const b=document.createElement("button");b.className="small-btn";b.dataset.v19Action=action;b.textContent=label;b.addEventListener("click",()=>debugAction(action));grid.appendChild(b);}
+    function v19AddDebugButton(action,label){const grid=$("debugOverlay")?.querySelector(".debug-grid");if(!grid||grid.querySelector(`[data-v19-action="${action}"]`))return;const b=document.createElement("button");b.className="small-btn";b.dataset.v19Action=action;b.textContent=label;b.addEventListener("click",()=>debugAction(action));grid.appendChild(b);}
   v19AddDebugButton("board6","Board 6");v19AddDebugButton("mythic_offhand","Artifact offhand");v19AddDebugButton("double_dice","Unlock 2d6");
 
   // ---- Info / visual polish ------------------------------------------------
@@ -2699,13 +2874,6 @@
   const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${V}`;
   const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${V} · Six roads, impossible builds and a proper between-runs camp.`;
 
-  const debugActionV110Base=debugAction;
-  debugAction=function(action){
-    const result=debugActionV110Base(action);
-    if(action==="mythic"&&gameStarted){[generateMythicalRing,generateMythicalOffhand].forEach(fn=>equipItem(fn(),true));renderEquipment();updateHUD();showToast("Full seven-piece Impossible Road set equipped");}
-    if(action==="omega_stone"&&gameStarted){renderEquipment();updateHUD();}
-    return result;
-  };
 
 
   // Camp DOM/presentation ownership moved to runtime/js/ui/camp.js.  These
@@ -2899,14 +3067,7 @@
 
   // Debug access makes the reusable selector easy to regression-test in an
   // ordinary run without manufacturing a special event first.
-  const refreshDebugButtonsV21Base=refreshDebugButtons;
-  refreshDebugButtons=function(){
-    refreshDebugButtonsV21Base();const grid=$('debugGrid');if(!grid)return;
-    let btn=grid.querySelector('[data-debug="all_powerups"]');if(!btn){btn=document.createElement('button');btn.dataset.debug='all_powerups';btn.className='small-btn';grid.appendChild(btn);}btn.textContent='🎁 Choose any eligible powerup';
-  };
-  const debugActionV21Base=debugAction;
-  debugAction=function(action){if(action==='all_powerups'){if(!gameStarted){showToast('Start a run first');return;}$('debugOverlay').classList.add('hidden');showAllEligiblePowerupSelection('Debug · Full Eligible Powerup List',()=>{});return;}return debugActionV21Base(action);};
-  refreshDebugButtons();
+      refreshDebugButtons();
 
   // Tiny regression hooks kept out of visible UI.
 
@@ -3080,15 +3241,7 @@
     const old=grid.querySelector('[data-debug="unlock"]');if(old){old.dataset.debug='unlockclasses';old.textContent='🔓 Unlock all classes';}
     let pets=grid.querySelector('[data-debug="unlockpets"]');if(!pets){pets=document.createElement('button');pets.className='small-btn';pets.dataset.debug='unlockpets';pets.textContent='🐾 Unlock all pets';if(old)old.after(pets);else grid.appendChild(pets);}
   }
-  const refreshDebugButtonsV22Base=refreshDebugButtons;
-  refreshDebugButtons=function(){refreshDebugButtonsV22Base();v22EnsureDebugUnlockButtons();};
-  const debugActionV22Base=debugAction;
-  debugAction=function(action){
-    if(action==='unlockclasses'){meta.unlocks=meta.unlocks||{};Object.keys(CLASSES).forEach(id=>meta.unlocks[id]=true);saveMeta();renderClassChoices();showToast('Debug: all classes unlocked');return;}
-    if(action==='unlockpets'){meta.pets=meta.pets||defaultPets();Object.keys(PETS).forEach(id=>{meta.pets[id]=meta.pets[id]||defaultPetState(false);meta.pets[id].unlocked=true;});ELEMENT_KEYS.forEach(k=>meta.elementProgress[k]=Math.max(meta.elementProgress[k]||0,PET_UNLOCK_REQUIREMENT));saveMeta();renderPetCollection();updateMetaUI();showToast('Debug: all pets unlocked');return;}
-    return debugActionV22Base(action);
-  };
-  refreshDebugButtons();
+      refreshDebugButtons();
 
   // ----- Shared fate chooser for 1d6 and 2d6. -------------------------------
   async function v22ChooseDice(count,reason='Fate'){
@@ -3291,7 +3444,6 @@
   function v24SetTierData(){return [
     {pieces:2,text:'+2% all damage.'},{pieces:3,text:'+4% all damage and +4% elemental proc chance.'},{pieces:4,text:'+7% all damage, +5% elemental proc chance, 25 starting Ultimate, +8% pet double-attack chance and 5% less Guardian-special damage.'},{pieces:5,text:'+10% all damage, +7% elemental proc chance, +5% elemental power, 30 starting Ultimate, 1 starting Barrier, +10% pet double-attack chance and 10% less Guardian-special damage.'},{pieces:6,text:'+14% all damage, +10% elemental proc chance, +9% elemental power, 35 starting Ultimate, +13% pet double-attack chance and 15% less Guardian-special damage.'},{pieces:7,text:'+20% all damage, +13% elemental proc chance, +14% elemental power, 40 starting Ultimate, +16% pet double-attack chance, 20% less Guardian-special damage, and once per battle at ≤25% HP restore 18% max HP + gain 1 Barrier.'}
   ];}
-  mythicalSetSummary=function(){const n=mythicalSetCount();return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');};
 
 
   unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
@@ -3320,7 +3472,6 @@
   document.addEventListener('pointercancel',()=>{if(v24DanceArmed)v24CancelDance();},{passive:true});
   document.addEventListener('pointerdown',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(icon&&hellMode){v24SuppressHellClickUntil=Date.now()+900;e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   document.addEventListener('click',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(!icon||!hellMode)return;if(Date.now()<v24SuppressHellClickUntil){e.preventDefault();e.stopImmediatePropagation();return;}if(e.detail===0){e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
-  const tileMetaV24Base=tileMeta;tileMeta=function(tile){if(tile?.type==='devilboss')return ['👿🌙','???'];return tileMetaV24Base(tile);};
 
   /* MODULE: Energy Shield / special Legendary combat hooks ---------------- */
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
@@ -3371,8 +3522,6 @@
     const mythicBtn=document.querySelector('[data-debug="mythic"]');if(mythicBtn)mythicBtn.textContent='Equip full Artifact set';
     const offhandBtn=document.querySelector('[data-debug="mythic_offhand"]');if(offhandBtn)offhandBtn.textContent='Artifact offhand';
   }
-  const openDebugMenuV24PresentationBase=openDebugMenu;
-  openDebugMenu=function(){const r=openDebugMenuV24PresentationBase();v24RefreshDebugLabels();return r;};
 
   v24RefreshDebugLabels();
 
@@ -3482,7 +3631,8 @@
     return isClassUnlocked(id);
   }
   function v25EnsureDebugControls(){
-    const modal=$('debugOverlay')?.querySelector('.modal'),grid=$('debugGrid');if(!modal||!grid)return;
+    const modal=$('debugOverlay')?.querySelector('.modal'),grid=$('debugGrid');
+    if(modal&&grid){
     let nav=$('debugTabs');if(!nav){nav=document.createElement('div');nav.id='debugTabs';nav.className='debug-tabs';nav.innerHTML=`<button class="small-btn active" data-debug-tab="player">Player</button><button class="small-btn" data-debug-tab="progress">Progression</button><button class="small-btn" data-debug-tab="gear">Gear</button><button class="small-btn" data-debug-tab="navigation">Navigation</button><button class="small-btn" data-debug-tab="logging">Logging</button>`;grid.before(nav);nav.addEventListener('click',e=>{const b=e.target.closest('[data-debug-tab]');if(!b)return;v25ShowDebugTab(b.dataset.debugTab);});}
     const categories={player:new Set(['runxp','level','gold','heal','cookies','all_powerups']),progress:new Set(['legacy','talents','unlockclasses','unlockpets','dibo50','nightmare','unlock_hell','double_dice']),gear:new Set(['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythic_offhand','omega_merchant','omega_stone','seed_item','legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25']),navigation:new Set(['alwayschoose','board2','board3','board4','board5','board6','boss','recover_road_v25'])};
     const ensurePanel=(id)=>{let p=grid.querySelector(`[data-debug-panel="${id}"]`);if(!p){p=document.createElement('div');p.className='debug-tab-panel';p.dataset.debugPanel=id;grid.appendChild(p);}return p;};['player','progress','gear','navigation'].forEach(ensurePanel);
@@ -3493,15 +3643,19 @@
     const classOptions=Object.values(CLASSES).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}">${c.icon} ${c.name}${isClassUnlocked(c.id)?' · unlocked':''}</option>`).join('');picker.innerHTML=`<label for="debugClassUnlockSelect">Unlock one class</label><select id="debugClassUnlockSelect">${classOptions}</select><button class="small-btn" id="debugUnlockSelectedClass" type="button">Unlock selected class</button>`;
     let logPanel=$('debugLogPanel');if(!logPanel){logPanel=document.createElement('div');logPanel.id='debugLogPanel';logPanel.className='debug-log-panel';logPanel.dataset.debugPanel='logging';logPanel.innerHTML=`<div class="debug-log-levels">${Object.keys(V25_LOG_LEVELS).map(l=>`<button class="small-btn" data-log-level="${l}">${l[0].toUpperCase()+l.slice(1)}</button>`).join('')}</div><div class="debug-log-note"><b>Errors</b> captures faults. <b>Events</b> adds important game events. <b>Detailed</b> adds combat/state transitions. <b>All</b> records every routed game command, UI input, save call and state snapshot; use it only while reproducing a bug because it is intentionally noisy.</div><pre class="debug-log-output" id="debugLogOutput"></pre><div class="debug-log-actions"><button class="small-btn" id="debugLogSnapshot">Add state snapshot</button><button class="small-btn" id="debugLogCopy">Copy log</button><button class="small-btn" id="debugLogDownload">Download .txt</button><button class="small-btn" id="debugLogClear">Clear</button></div>`;grid.appendChild(logPanel);logPanel.addEventListener('click',e=>{const level=e.target.closest('[data-log-level]')?.dataset.logLevel;if(level)return v25SetLogLevel(level);if(e.target.id==='debugLogSnapshot')v25Log('errors','snapshot','Manual state snapshot',v25State());if(e.target.id==='debugLogCopy')v25CopyLog();if(e.target.id==='debugLogDownload')v25DownloadLog();if(e.target.id==='debugLogClear'){v25LogBuffer.length=0;v25RefreshLogOutput();}});}
     v25ShowDebugTab(nav.querySelector('.active')?.dataset.debugTab||'player');v25RefreshLogOutput();
-  }
-  function v25ShowDebugTab(id){document.querySelectorAll('#debugTabs [data-debug-tab]').forEach(b=>b.classList.toggle('active',b.dataset.debugTab===id));document.querySelectorAll('#debugGrid [data-debug-panel]').forEach(p=>p.classList.toggle('active',p.dataset.debugPanel===id));}
-  const openDebugMenuV25Base=openDebugMenu;openDebugMenu=function(){const r=openDebugMenuV25Base();v25EnsureDebugControls();return r;};
-  const debugActionV25Base=debugAction;debugAction=function(action){
-    v25Log('events','debug',`debugAction(${action})`,v25State());
-    if(['legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25'].includes(action)){if(!gameStarted){showToast('Start a run first');return;}const item=action==='legend_mug_v25'?generateAxelsCoffeeMug():action==='legend_headphones_v25'?generateKratzHeadphones():action==='legend_jacket_v25'?generateKellysJeanJacket():generateDevilsHorns();equipItem(item,true);renderEquipment();updateHUD();showToast(`${item.name} added`);return;}
-    if(action==='recover_road_v25'){v25RecoverRoadState('manual');return;}
-    return debugActionV25Base(action);
-  };
+
+    }
+    {
+      const grid=$('debugGrid');if(!grid)return;
+          // Remove the three legacy v1.9 orphan controls; recreate them as ordinary
+          // data-debug controls so the tab router owns them exactly once.
+          grid.querySelectorAll('[data-v19-action]').forEach(b=>b.remove());grid.querySelector('[data-debug="mythicring"]')?.remove();
+          const ensure=(id,label)=>{let b=grid.querySelector(`[data-debug="${id}"]`);if(!b){b=document.createElement('button');b.className='small-btn';b.dataset.debug=id;grid.appendChild(b);}b.textContent=label;return b;};
+          ensure('board6','🛣️ Jump to Board 6');ensure('mythic_offhand','🟧 Artifact Offhand');ensure('double_dice','🎲 Unlock 2d6');ensure('kill_character_v26','☠️ Kill character');
+          const labels={mythic:'🟧 Equip full Artifact set',mythic_weapon:'🟧 Artifact Weapon',mythic_boots:'🟧 Artifact Boots',mythic_legs:'🟧 Artifact Legguards',mythic_amulet:'🟧 Artifact Amulet',mythic_hat:'🟧 Artifact Hat',mythic_ring:'🟧 Artifact Ring',mythicring:'🟧 Artifact Ring',mythic_offhand:'🟧 Artifact Offhand'};Object.entries(labels).forEach(([id,label])=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b)b.textContent=label;});
+          const playerPanel=grid.querySelector('[data-debug-panel="player"]'),progressPanel=grid.querySelector('[data-debug-panel="progress"]'),gearPanel=grid.querySelector('[data-debug-panel="gear"]'),navPanel=grid.querySelector('[data-debug-panel="navigation"]');const move=(id,p)=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b&&p)p.appendChild(b);};move('kill_character_v26',playerPanel);move('double_dice',progressPanel);['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythicring','mythic_offhand'].forEach(id=>move(id,gearPanel));move('board6',navPanel);v25ShowDebugTab(document.querySelector('#debugTabs .active')?.dataset.debugTab||'player');
+    }
+  }  function v25ShowDebugTab(id){document.querySelectorAll('#debugTabs [data-debug-tab]').forEach(b=>b.classList.toggle('active',b.dataset.debugTab===id));document.querySelectorAll('#debugGrid [data-debug-panel]').forEach(p=>p.classList.toggle('active',p.dataset.debugPanel===id));}
 
   /* ROAD SOFT-LOCK WATCHDOG ------------------------------------------------ */
   const v25BlockingOverlayIds=['combatOverlay','levelOverlay','eventOverlay','wheelOverlay','powerupOverlay','merchantOverlay','blessingOverlay','mysticOverlay','lootOverlay','talentOverlay','prestigeMoonOverlay','buffOverlay','prestigeHeirloomOverlay','petCollectionOverlay','diceChoiceOverlay','debugOverlay','bloodwellOverlay','gamblerOverlay','achievementOverlay','infoOverlay','endOverlay'];
@@ -3523,15 +3677,15 @@
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,returnToRoad,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
-    const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
-  }
-  ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
+  const fn=({rollDice,rollTwoDice,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
+  const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
+  if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
+}
+['rollDice','rollTwoDice','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
+dbReturnToRoadTraceReady=true;
 
   /* Final UI sync / tests -------------------------------------------------- */
-  const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
-  DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};
+    DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};
   try{Object.defineProperty(window,'DiceboundModules25',{value:Object.freeze(DB25),enumerable:false});}catch(e){}
 
   setTimeout(()=>{if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';v25EnsureDebugControls();renderInfo();},0);
@@ -3565,13 +3719,7 @@
   // Returning to the board is, by definition, no longer combat. Older layers
   // only unlocked the dice and left combatBusy=true. That stale bit prevented
   // the v2.5 watchdog from recognising the exact soft-lock seen in the log.
-  const returnToRoadV251Base=returnToRoad;
-  returnToRoad=function(...args){
-    if(!currentEnemy)combatBusy=false;
-    const result=returnToRoadV251Base.apply(this,args);
-    if(!currentEnemy)combatBusy=false;
-    return result;
-  };
+  dbReturnToRoadSafetyReady=true;
 
   // Victory reward-side failure containment moved to combat/victory-resolution.
 
@@ -3658,20 +3806,12 @@
   function v26ClearStoneBattle(...args){return dbCombat.clearStoneBattle(...args);}
 
   /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
-  const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
+  dbReturnToRoadStoneReady=true;
 
 
   /* DEBUG MENU CLEANUP / DEATH SIMULATION / CURRENT ARTIFACT GEAR --------- */
-  const v25EnsureDebugControlsV26Base=v25EnsureDebugControls;v25EnsureDebugControls=function(){v25EnsureDebugControlsV26Base();const grid=$('debugGrid');if(!grid)return;
-    // Remove the three legacy v1.9 orphan controls; recreate them as ordinary
-    // data-debug controls so the tab router owns them exactly once.
-    grid.querySelectorAll('[data-v19-action]').forEach(b=>b.remove());grid.querySelector('[data-debug="mythicring"]')?.remove();
-    const ensure=(id,label)=>{let b=grid.querySelector(`[data-debug="${id}"]`);if(!b){b=document.createElement('button');b.className='small-btn';b.dataset.debug=id;grid.appendChild(b);}b.textContent=label;return b;};
-    ensure('board6','🛣️ Jump to Board 6');ensure('mythic_offhand','🟧 Artifact Offhand');ensure('double_dice','🎲 Unlock 2d6');ensure('kill_character_v26','☠️ Kill character');
-    const labels={mythic:'🟧 Equip full Artifact set',mythic_weapon:'🟧 Artifact Weapon',mythic_boots:'🟧 Artifact Boots',mythic_legs:'🟧 Artifact Legguards',mythic_amulet:'🟧 Artifact Amulet',mythic_hat:'🟧 Artifact Hat',mythic_ring:'🟧 Artifact Ring',mythicring:'🟧 Artifact Ring',mythic_offhand:'🟧 Artifact Offhand'};Object.entries(labels).forEach(([id,label])=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b)b.textContent=label;});
-    const playerPanel=grid.querySelector('[data-debug-panel="player"]'),progressPanel=grid.querySelector('[data-debug-panel="progress"]'),gearPanel=grid.querySelector('[data-debug-panel="gear"]'),navPanel=grid.querySelector('[data-debug-panel="navigation"]');const move=(id,p)=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b&&p)p.appendChild(b);};move('kill_character_v26',playerPanel);move('double_dice',progressPanel);['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythicring','mythic_offhand'].forEach(id=>move(id,gearPanel));move('board6',navPanel);v25ShowDebugTab(document.querySelector('#debugTabs .active')?.dataset.debugTab||'player');};
-  const debugActionV26Base=debugAction;debugAction=function(action){if(action==='kill_character_v26'){if(!gameStarted){showToast('Start a run first');return;}$('debugOverlay')?.classList.add('hidden');const damage=Math.max(1,Math.ceil(player.hp+player.maxHp));meta.damageTaken=(meta.damageTaken||0)+damage;player.hp=0;addLog('<b>Debug monster</b> deals lethal damage. Running the normal death/revive pipeline.');showToast('☠️ Debug monster attacks');handlePlayerDeath();updateHUD();return;}const artifactFns={mythic_weapon:generateMythicalWeapon,mythic_offhand:generateMythicalOffhand,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(artifactFns[action]){if(!gameStarted){showToast('Start a run first');return;}const item=artifactFns[action]();equipItem(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;}if(action==='mythic'){if(!gameStarted){showToast('Start a run first');return;}[generateMythicalWeapon,generateMythicalOffhand,generateMythicalBoots,generateMythicalPants,generateMythicalAmulet,generateMythicalHat,generateMythicalRing].forEach(fn=>equipItem(fn(),true));renderEquipment();updateHUD();showToast('Full current seven-piece Artifact set equipped');return;}return debugActionV26Base(action);};
-  const refreshDebugButtonsV26Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV26Base();v25EnsureDebugControls();return r;};
+
+  dbDebugUiReady=true;refreshDebugButtons();
 
   /* Regression helpers ---------------------------------------------------- */
 
@@ -3913,8 +4053,6 @@
     document.body?.setAttribute('data-run-mode',mode);
     return mode;
   }
-  const applyRunThemeBeta01Base=applyRunTheme;
-  applyRunTheme=function(){const out=applyRunThemeBeta01Base();dbBeta01SyncDifficultyAtmosphere();return out;};
   document.addEventListener('click',event=>{
     const id=event.target?.closest?.('button')?.id||event.target?.id||'';
     if(['nightmareToggle','hellToggle','campNightmareBtn','campHellBtn'].includes(id))setTimeout(dbBeta01SyncDifficultyAtmosphere,0);
@@ -4042,16 +4180,6 @@
 
   /* Debug progression shortcut. This is intentionally a late owner so older
      layered debugAction implementations cannot swallow it. */
-  const debugActionBeta04Base=debugAction;
-  debugAction=function(action){
-    if(action==='unlock_hell'){
-      meta.nightmareUnlocked=true;meta.hellUnlocked=true;saveMeta();
-      try{renderClassChoices();}catch(_){}
-      showToast('🔥 Hell Mode unlocked (debug)');
-      return;
-    }
-    return debugActionBeta04Base(action);
-  };
 
   /* Native file-save affordance. Hidden in the secondary browser build. */
   function beta04SyncNativeControls(){
@@ -4082,8 +4210,6 @@
     document.body?.setAttribute('data-world-board',String(level));
     return {mode,board:level,image:scene?.image||null};
   }
-  const applyRunThemeBeta04Base=applyRunTheme;
-  applyRunTheme=function(){const r=applyRunThemeBeta04Base();beta04SyncWorldScene();return r;};
   setTimeout(beta04SyncWorldScene,0);
 
   /* Responsive HUD flow. The board and cards get different arrangements for
@@ -4261,12 +4387,6 @@
     return gearIconBeta043Base(slot);
   };
 
-  const tileMetaBeta043Base=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.type==='treasure')return [beta043Art('coins','Treasure','db-art-tile')||'💰','Treasure'];
-    if(tile?.type==='gambler')return [beta043Art('gambler','Gambler','db-art-tile')||'🪙','Gambler'];
-    return tileMetaBeta043Base(tile);
-  };
 
 
 
@@ -4349,18 +4469,6 @@
 
 
   // ----- Bandit / troll board presentation fallback -----------------------
-  const tileMetaBeta045Base=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.enemyBase?.name){
-      const art=beta045EnemyArtForName(tile.enemyBase.name);
-      if(art&&tile.type==='enemy'){
-        const count=tile.packSize||1;
-        return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
-      }
-      if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
-    }
-    return tileMetaBeta045Base(tile);
-  };
 
   // ----- Sovereign / Contract hardening -----------------------------------
 
@@ -4478,18 +4586,6 @@
 
 
 
-  const db046TileMetaBase=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.enemyBase?.name){
-      const art=db046EnemyArtForName(tile.enemyBase.name);
-      if(art&&tile.type==='enemy'){
-        const count=tile.packSize||1;
-        return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
-      }
-      if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
-    }
-    return db046TileMetaBase(tile);
-  };
 
   window.DiceboundBeta046Debug=Object.freeze({
     boardTuning:()=>({
@@ -4535,20 +4631,6 @@
   }
   db047ApplyKnownArt();
 
-  const db047TileMetaBase=tileMeta;
-  function db047CompactEnemyTile(icon,enemyName,count=1){
-    const n=Math.max(1,Number(count)||1);
-    const visual=n>1?`<span class="db-enemy-pack-art">${icon}<b>×${n}</b></span>`:icon;
-    return [visual,n>1?`${enemyName} · ${n} enemies`:`${enemyName} · 1 enemy`];
-  }
-  tileMeta=function(tile){
-    const enemyName=tile?.enemyBase?.name||'';
-    if(enemyName){
-      if(/bandit/i.test(enemyName)){const icon=db047UiArt('bandit',enemyName,'db-art-portrait');if(icon)return db047CompactEnemyTile(icon,enemyName,tile.packSize||1);}
-      if(/troll/i.test(enemyName)){const icon=db047UiArt('troll',enemyName,'db-art-portrait');if(icon)return db047CompactEnemyTile(icon,enemyName,tile.packSize||1);}
-    }
-    return db047TileMetaBase(tile);
-  };
 
   // --- board pass: make the climb smoother and Board 5 > Board 4 ----------
   const DB047_BOARD_OVERRIDES={
@@ -4681,17 +4763,6 @@
   db049ApplyArtBindings();
   setTimeout(db049ApplyArtBindings,0);
 
-  const db049TileMetaBase=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.type==='enemy'&&Number(tile.packSize||1)>1&&tile?.enemyBase){
-      const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||'Enemy';
-      return [`<span class="db-enemy-pack-art">${db049EnemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
-    }
-    if(tile?.type==='enemy'&&tile?.enemyBase&&(/bandit|troll/i.test(tile.enemyBase.name||''))){
-      return [db049EnemyTileIcon(tile),`${tile.enemyBase.name} · 1 enemy`];
-    }
-    return db049TileMetaBase(tile);
-  };
 
   // Travel width changed; immediately offer the reclaimed space to the square board.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
@@ -5207,15 +5278,8 @@
     const src=db060GuardianArt(id)?.boardMarker;
     return src?`<img class="db060-guardian-tile-art" src="${src}" alt="${alt}" draggable="false">`:'';
   }
-  const db060TileMetaBase=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.type==='miniboss'&&tile.enemyBase?.id&&db060GuardianArt(tile.enemyBase.id))return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
-    if(tile?.type==='boss'){
-      const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
-      if(boss?.id&&boss.art?.boardMarker)return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
-    }
-    return db060TileMetaBase(tile);
-  };
+
+  dbTileMetaFinalReady=true;
 
   const db060GuardianArtStyle=document.createElement('style');
   db060GuardianArtStyle.id='dicebound-beta-0-6-guardian-art-style';
@@ -6099,8 +6163,7 @@
     const fx=$('attackFx');if(fx){fx.className='attack-fx';fx.replaceChildren();}
     $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
   }
-  const dbFriendReturnToRoadBase=returnToRoad;
-  returnToRoad=function(...args){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
+  dbReturnToRoadFriendReady=true;
 
   window.DiceboundCamp.configureShell({refreshActivePetArt:()=>db059RefreshActivePetArt?.()});
   function dbFriendHealAtCamp(){

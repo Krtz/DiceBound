@@ -2,6 +2,15 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.38
+
+### Canonical-function archaeology — Debug tooling (#359)
+- Collapsed the released ten-generation `debugAction` chain into one readable canonical dispatcher in the Composition / Bootstrap / Tooling root. The effective outer-to-inner dispatch order, v25 debug logging position and the surviving Philosopher's Stone post-refresh are preserved exactly once; unreachable superseded Mythical handlers and all nine predecessor captures are removed.
+- Added a deterministic repository-wide historical-layer census and anti-return coverage so later archaeology proceeds from measured debt rather than raw file size.
+- Collapsed the six-generation `refreshDebugButtons`, four-generation `openDebugMenu`, and two-generation current debug-control builder into one implementation each. Static button creation, tab/logging setup, V26 cleanup/layout and final Artifact labels now compose directly without predecessor chains.
+- Collapsed eight historical `tileMeta` generations into one canonical board-presentation function. Guardian art, current pack art, Bandit/Troll fallbacks, Treasure/Gambler art, the secret devil tile and base labels retain the exact final newest-to-oldest precedence without seven predecessor captures.
+- Architecture/tooling cleanup only: no gameplay/balance, RNG order/state, save/checkpoint semantics or player-facing UI behavior changes are intended. `dicebound.js` changes from 658,200 bytes / 7,052 physical lines to 657,203 bytes / 7,102 physical lines before release metadata materialization.
+
 ## Beta 0.6.6.37
 
 ### Composition sediment cleanup (#40, #209)

@@ -16,6 +16,7 @@ NON_IMPLEMENTATION_PATHS = frozenset({
     "distribution/latest.json",
     "tools/validate_pr_version.py",
     "tools/test_pr_version_gate.py",
+    "tools/test_historical_layer_census.py",
 })
 
 

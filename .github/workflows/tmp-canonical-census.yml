@@ -1,0 +1,45 @@
+name: Temporary canonical-function census
+
+on:
+  push:
+    branches:
+      - refactor/0.6.6.38-canonical-functions
+    paths:
+      - .github/workflows/tmp-canonical-census.yml
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: windows-latest
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate ranked archaeology census
+        shell: pwsh
+        run: |
+          python tools/test_historical_layer_census.py --markdown docs/HISTORICAL_LAYER_CENSUS.md
+      - name: Commit census report
+        shell: pwsh
+        run: |
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add docs/HISTORICAL_LAYER_CENSUS.md
+          git diff --cached --quiet; if ($LASTEXITCODE -eq 0) { exit 0 }
+          git commit -m "docs: record historical-layer census"
+          git push origin HEAD:refactor/0.6.6.38-canonical-functions
