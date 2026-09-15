@@ -16,6 +16,7 @@
     "runtime-services",
     "memory-diagnostics",
     "runtime-facade",
+    "combat-element-content",
     "combat-effective-stats",
     "combat-healing-resolution",
     "combat-element-resolution",
@@ -254,6 +255,16 @@
       ],
       "provides": [
         "DiceboundRuntime"
+      ]
+    },
+    {
+      "id": "combat-element-content",
+      "path": "js/combat/element-content.js",
+      "domain": "combat/element-content-metadata",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundElementContent"
       ]
     },
     {
@@ -1141,6 +1152,7 @@
         "assets",
         "rng",
         "runtime-facade",
+        "combat-element-content",
         "combat-effective-stats",
         "combat-d20-chaos-resolution",
         "combat-strike-policy",

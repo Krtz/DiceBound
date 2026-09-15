@@ -1,3 +1,5 @@
+- **Beta 0.6.7.0 — Monolith Chainsaw:** removed all provable DB317 no-op registry writes (113 mutation nodes across 115 dead statements), moved the final 12-element content registry into `combat/element-content.js`, and removed 41 redundant monolith-to-owner delegate functions. `dicebound.js` fell from 7,177 lines / 649,410 bytes to 6,956 lines / 597,139 bytes before generated version metadata.
+
 # Unreleased — Beta 0.6.6.39
 
 ## Beta 0.6.6.39 Canonical-function archaeology wave 2 (#361)

@@ -88,7 +88,7 @@
       sfxCoin:()=>sfx.coin(),
       sfxHoly:()=>sfx.holy(),
       modifiedGold:value=>modifiedGold(value),
-      gameplayTalentRank:id=>gameplayTalentRank(id),
+      gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
       saveMeta:()=>saveMeta(),
       updateMetaUI:()=>updateMetaUI(),
       refreshTile:index=>refreshTile(index),
@@ -124,20 +124,11 @@
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
   const EQUIPMENT_SLOTS=[...DB_EQUIPMENT_CONFIG.slots];
   const SLOT_LABELS={...DB_EQUIPMENT_CONFIG.labels};
-  const ELEMENTS={
-    fire:{icon:"🔥",name:"Fire",spell:"Fireball",description:"Deals a burst of bonus damage."},
-    ice:{icon:"❄️",name:"Ice",spell:"Ice Nova",description:"Deals damage and freezes the enemy for one turn."},
-    electric:{icon:"⚡",name:"Electric",spell:"Thunderbolt",description:"Deals heavy lightning damage."},
-    light:{icon:"✨",name:"Light",spell:"Holy",description:"Deals damage and restores HP."},
-    void:{icon:"🕳️",name:"Void",spell:"Black Hole",description:"Tears away a percentage of enemy maximum HP."},
-    nature:{icon:"🌿",name:"Nature",spell:"Poison Vines",description:"Deals pack damage and adds stackable Poison. Every Poison stack deals a percentage of your Attack each combat round."},
-    donut:{icon:"🍩",name:"Donut",spell:"Healing Rain of Donuts",description:"Restores a generous amount of HP. Extremely serious magic."},
-    tech:{icon:"🤖",name:"Tech",spell:"Brain Hack",description:"Deals damage and permanently lowers enemy attack."},
-    metal:{icon:"🤘",name:"Metal",spell:"Hard Rock Metal Music",description:"Deals sonic damage and grants ultimate charge."},
-    coffee:{icon:"☕",name:"Coffee",spell:"Caffeinated Haste",description:"Grants an immediate extra action."}
-  };
-  const ELEMENT_KEYS=Object.keys(ELEMENTS);
-  const DIBO_ELEMENTS=["fire","ice","electric","nature","light","void"];
+  const DB_ELEMENT_CONTENT=window.DiceboundElementContent;
+  if(!DB_ELEMENT_CONTENT)throw new Error("DiceboundElementContent must load before dicebound.js");
+  const ELEMENTS=DB_ELEMENT_CONTENT.createRegistry();
+  const ELEMENT_KEYS=[...DB_ELEMENT_CONTENT.ids];
+  const DIBO_ELEMENTS=[...DB_ELEMENT_CONTENT.coreIds];
   const PET_UNLOCK_REQUIREMENT=dbPetLifecycleOwner.unlockRequirement;
   const GUARDIAN_SPECIAL_INTERVAL=5;
   const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';
@@ -168,7 +159,7 @@
   dbPetLifecycle=dbPetLifecycleOwner.configure({
     getMeta:()=>meta,getPlayer:()=>player,getPets:()=>PETS,getElements:()=>ELEMENTS,isRunActive:()=>!!gameStarted,
     classHasMechanic:id=>classHasMechanic(id),talentRank:id=>talentRank(id),rand:(min,max)=>rand(min,max),
-    saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     sfxLevel:()=>sfx.level(),sfxCoin:()=>sfx.coin(),sfxHoly:()=>sfx.holy(),showToast:(...args)=>showToast(...args),
     addLog:text=>addLog(text),updateMetaUI:()=>updateMetaUI(),updateHUD:()=>updateHUD(),
     renderPetCollection:()=>renderPetCollection(),refreshActivePetArt:()=>db059RefreshActivePetArt?.()
@@ -186,7 +177,7 @@
   const DB_POWERUP_SERVICES=dbRuntime.createPowerupServices({
     run:{getPlayer:()=>player},
     economy:{goldReward:amount=>modifiedGold(amount),isNightmare:()=>nightmareMode},
-    combat:{heal:amount=>healPlayer(amount)},
+    combat:{heal:amount=>dbCombat.heal(amount)},
     rules:{clamp:(value,min,max)=>clamp(value,min,max)},
     content:{elementIds:DIBO_ELEMENTS},
     signatures:{
@@ -233,7 +224,7 @@
   const ACHIEVEMENT_REGISTRY=db317Readonly(DB317_ACHIEVEMENT_REGISTRY_RAW);
   const CLASS_TAG_VOCABULARY=db317Readonly([...(window.DiceboundClasses?.tagVocabulary||[])]);
   if(!CLASS_TAG_VOCABULARY.length)throw new Error("DiceboundClasses tag vocabulary must load before dicebound.js");
-  const ELEMENT_ID_VOCABULARY=db317Readonly(["fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation"]);
+  const ELEMENT_ID_VOCABULARY=db317Readonly([...DB_ELEMENT_CONTENT.ids]);
   const POWERUP_GATE_REGISTRY=db317Readonly({
     prestige10:{type:"prestige",minimum:10},
     road2:{type:"classUnlocked",classId:"clown"},
@@ -360,8 +351,6 @@
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
-  function commitClassUnlock(id){return dbProgression.commitClassUnlock(id);}
-  function unlockClass(id){return dbProgression.unlockClass(id);}
 
   /* ========================================================================
      Alpha v3.1.9 — state/render contracts
@@ -442,7 +431,7 @@
     currentPowerupCount:()=>currentPowerupCount(),
     currentWheelCount:()=>currentWheelCount(),
     merchantSpacing:()=>MERCHANT_SPACING,
-    gameplayTalentRank:id=>gameplayTalentRank(id),
+    gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
     roadTileType:(roll,level)=>window.DiceboundEventRewards.roadTileType(roll,level),
     withRunTalentSnapshot:work=>dbProgression.withRunTalentSnapshot(work),
     setRoad:next=>{tiles=next.tiles;merchantFaceClicks=new Set();merchantBossPrimed=false;merchantBossDefeatedThisBoard=false;merchantFaceTotal=next.merchantFaceTotal;}
@@ -451,7 +440,7 @@
   dbRun.configure({completion:{
     clearCheckpoint:()=>dbRunClearCheckpoint(),
     isCompleting:()=>v19CompletingSixth,
-    beforeCompletion:()=>({unlockSlimeRouge:!!player.v28StartedRandom&&isClassUnlocked('slime')&&!meta.unlocks?.slimerouge}),
+    beforeCompletion:()=>({unlockSlimeRouge:!!player.v28StartedRandom&&dbProgression.isClassUnlocked('slime')&&!meta.unlocks?.slimerouge}),
     setCompleting:value=>{v19CompletingSixth=!!value;},
     setRunState:next=>{gameStarted=!!next.gameStarted;rollLocked=!!next.rollLocked;},
     isRunFinalized:()=>runFinalized,
@@ -469,7 +458,7 @@
     resetEncounter:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
     setRollLocked:value=>{rollLocked=!!value;},
     applyTheme:()=>applyRunTheme(),
-    rebuildBoard:()=>{generateBoard();buildBoard();},
+    rebuildBoard:()=>{dbRun.generateBoard();buildBoard();},
     getBoardDefinition:level=>db317Board(level),
     completeFinalRoad:()=>dbRun.completeFinalRoad(),
     log:addLog,
@@ -515,7 +504,7 @@
     initializePlayer:classId=>resetPlayer(classId),
     setBoardLevel:value=>{boardLevel=value;},
     applyRunTheme:()=>applyRunTheme(),
-    generateBoard:()=>generateBoard(),
+    generateBoard:()=>dbRun.generateBoard(),
     buildBoard:()=>buildBoard(),
     setRunState:next=>{gameStarted=!!next.gameStarted;rollLocked=!!next.rollLocked;combatBusy=!!next.combatBusy;},
     clearLog:()=>{const log=$('log');if(log)log.innerHTML='';},
@@ -600,8 +589,7 @@
   function gearIcon(slot){const offhand={fighter:"🛡️",ranger:"🪶",sorcerer:"📖",monk:"📿",clown:"🎭",rouge:"🎨",berserker:"💀",turtle:"🐚",frog:"🪷",d20:"🎲",slime:"🫧"};return {weapon:CLASSES[player.classId].attackIcon,offhand:offhand[player.classId]||"📖",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"}[slot];}
   function maybeAddElement(item){if(item.slot!=="weapon"||random()>=elementChanceForRarity(item.rarity))return item;item.element=pick(ELEMENT_KEYS);return item;}
   function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
-  function generateEquipment(forceRarity=null,forcedSlot=null){return dbItems.generateEquipment(forceRarity,forcedSlot);}
-  function generateMythicalBoots(){return {id:`mythical_boots_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"boots",rarity:"mythical",mythical:true,mythicPiece:"boots",setName:"Impossible Road",uniqueEffect:"Titanstep: rolling 5 or 6 restores 5% max HP and grants 10 ultimate charge.",icon:"🥾",name:"Titanstep, Boots of the Astral Road",bonuses:{maxHp:20,defense:3,dodge:.15,extraStepChance:.25}};}
+    function generateMythicalBoots(){return {id:`mythical_boots_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"boots",rarity:"mythical",mythical:true,mythicPiece:"boots",setName:"Impossible Road",uniqueEffect:"Titanstep: rolling 5 or 6 restores 5% max HP and grants 10 ultimate charge.",icon:"🥾",name:"Titanstep, Boots of the Astral Road",bonuses:{maxHp:20,defense:3,dodge:.15,extraStepChance:.25}};}
   function generateMythicalAmulet(){return {id:`mythical_amulet_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"mythical",mythical:true,mythicPiece:"amulet",setName:"Impossible Road",uniqueEffect:"Devourer's Gaze: once per battle below 35% HP, consume 12% of every living enemy's max HP and heal for half the damage.",icon:"👁️",name:"The Devourer's Last Eye",bonuses:{maxHp:30,attack:8,crit:.15,luck:.20,lifeSteal:.10,bossDamage:.50}};}
   function generateMythicalPants(){return {id:`mythical_legs_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"legs",rarity:"mythical",mythical:true,mythicPiece:"legs",setName:"Impossible Road",uniqueEffect:"Paradox Loop: every third player action restores 6% max HP and grants 15 ultimate charge.",icon:"👖",name:"Paradox Weave, Legguards Outside Time",bonuses:{maxHp:34,defense:5,attack:5,doubleStrike:.16,luck:.14}};}
   function bonusLabel(key,value){
@@ -707,8 +695,7 @@
   const talentRank=id=>dbProgression.talentRank(id);
 
   /* Alpha v3.1.7: talents are registry-owned; lifecycle policy is Progression-owned. */
-  function repairTalentPrerequisites(){return dbProgression.repairTalentPrerequisites();}
-  repairTalentPrerequisites();
+    dbProgression.repairTalentPrerequisites();
 
   const customSoundState={};
   function ensureAudio(){
@@ -844,11 +831,9 @@
     if(hop){pawn.classList.add("hop");setTimeout(()=>pawn.classList.remove("hop"),150);}
   }
 
-  function activePetDef(){return dbPets.activeDefinition();}
-  function activePetState(){return dbPets.activeState();}
-  function petDamage(){if(dbCombat)return dbCombat.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;}
+      function petDamage(){if(dbCombat)return dbCombat.petDamage();const talentBonus=gameStarted?player.petDamageBonus:talentRank("companion_damage")+talentRank("companion_ascendant")*2;return 1+Math.ceil((dbPets.activeState()?.level||1)*.8)+talentBonus;}
   function updateMetaUI(){
-    const pet=activePetState(),def=activePetDef();
+    const pet=dbPets.activeState(),def=dbPets.activeDefinition();
     $("talentPointTop").textContent=meta.points;
     $("petAvatar").textContent=def.icon;$("petName").textContent=def.name;$("combatPet").textContent=def.icon;$("petCookies").textContent=meta.petCookies;
     $("petStats").textContent=`Level ${pet.level} · ${petDamage()} ${def.id==="neutral"?"random core-element":def.element?ELEMENTS[def.element].name:"neutral"} damage · ${pet.xp} / ${pet.xpNext} bond`;
@@ -881,7 +866,7 @@ function returnToRoad(...args){
   function livingEnemies(){return currentEnemies.filter(e=>e.hp>0);}
   function setCurrentEnemy(index){
     if(!currentEnemies.length){currentEnemy=null;return;}
-    const safe=currentEnemies[index]?.hp>0?index:currentEnemies.findIndex(e=>e.hp>0);currentEnemyIndex=safe<0?0:safe;currentEnemy=currentEnemies[currentEnemyIndex]||null;renderEnemyParty();updateCombatUI();
+    const safe=currentEnemies[index]?.hp>0?index:currentEnemies.findIndex(e=>e.hp>0);currentEnemyIndex=safe<0?0:safe;currentEnemy=currentEnemies[currentEnemyIndex]||null;dbCombatView.renderEnemyParty();updateCombatUI();
   }
   function updateBossSpecialIndicator(){return dbCombatView.renderBossSpecialIndicator();}
   function describeCurrentUltimate(classId=player.classId){
@@ -893,21 +878,18 @@ function returnToRoad(...args){
     await delay(mode==="crit"?520:mode==="echo"?350:({fighter:360,ranger:460,sorcerer:460,monk:420,clown:500,rouge:450,berserker:500}[player.classId]||460));enemy.classList.add("enemy-hit");await delay(130);enemy.classList.remove("enemy-hit");icon.classList.remove("attack-lunge");
   }
   function chargeUltimate(amount){player.ultimateCharge=clamp(player.ultimateCharge+amount,0,100);updateCombatUI();}
-  function trackElementProgress(key,amount){return dbPets.trackElementProgress(key,amount);}
-  async function petTurn(...args){return dbCombat.petTurn(...args);}
+    async function petTurn(...args){return dbCombat.petTurn(...args);}
 
   async function animateUltimate(){
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent=({fighter:"⚔️",ranger:"➶➶➶➶",sorcerer:"☄️",monk:"👊👊👊👊",clown:"🎪🐔💥",rouge:"🌹🩸",berserker:"🌋🪓",turtle:"🐚💥",frog:"🐸🐸🐸",d20:"🎲20!",slime:"🟢🌊",vampire:"🌑🩸🦇",ninja:"🌘🗡️🗡️",ceo:"📉💥",merchant:"🏦🪙⚖️"}[player.classId]||"💥");fx.classList.add(`ultimate-${player.classId}`);sfx.holy();await delay(({sorcerer:760,monk:690,clown:790,rouge:730,berserker:760}[player.classId]||620));enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");
   }
-  function currentWeaponElement(...args){return dbCombat.currentWeaponElement(...args);}
-  function damageAll(amount,falloff=1){let total=0;livingEnemies().forEach(e=>{total+=damageEnemy(e,amount*(e===currentEnemy?1:falloff));});return total;}
-  function triggerWeaponElement(...args){return dbCombat.triggerWeaponElement(...args);}
-  function triggerStrikeElements(target,chaos=null){
-    const results=[];const weapon=triggerWeaponElement(target);if(weapon)results.push(weapon);
-    Object.entries(player.classElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=triggerElementEffect(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"class affinity"});if(r)results.push(r);}});
-    const omniTimes=rollTieredProc(player.omniElementChance||0);for(let n=0;n<omniTimes;n++)ELEMENT_KEYS.forEach(key=>{const r=triggerElementEffect(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"Prismatic Accident"});if(r)results.push(r);});
-    if(chaos?.forceElement){const r=triggerElementEffect(chaos.forceElement,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"d20"});if(r)results.push(r);}
-    if(chaos?.allElements)DIBO_ELEMENTS.forEach(key=>{const r=triggerElementEffect(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"natural twenty"});if(r)results.push(r);});
+    function damageAll(amount,falloff=1){let total=0;livingEnemies().forEach(e=>{total+=damageEnemy(e,amount*(e===currentEnemy?1:falloff));});return total;}
+    function triggerStrikeElements(target,chaos=null){
+    const results=[];const weapon=dbCombat.triggerWeaponElement(target);if(weapon)results.push(weapon);
+    Object.entries(player.classElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"class affinity"});if(r)results.push(r);}});
+    const omniTimes=rollTieredProc(player.omniElementChance||0);for(let n=0;n<omniTimes;n++)ELEMENT_KEYS.forEach(key=>{const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"Prismatic Accident"});if(r)results.push(r);});
+    if(chaos?.forceElement){const r=dbCombat.element(chaos.forceElement,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"d20"});if(r)results.push(r);}
+    if(chaos?.allElements)DIBO_ELEMENTS.forEach(key=>{const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"natural twenty"});if(r)results.push(r);});
     return {totalDamage:results.reduce((n,r)=>n+(r.totalDamage||0),0),heal:results.reduce((n,r)=>n+(r.heal||0),0),message:results.map(r=>r.message).join(" ")};
   }
 
@@ -919,8 +901,6 @@ function returnToRoad(...args){
   async function useUltimate(...args){return dbCombat.ultimate(...args);}
 
   function rollTieredProc(chance){const guaranteed=Math.floor(Math.max(0,chance)),fraction=Math.max(0,chance-guaranteed);return guaranteed+(random()<fraction?1:0);}
-  function strikeBaseDamage(...args){return dbCombat.strikeBaseDamage(...args);}
-  async function performStrike(...args){return dbCombat.strike(...args);}
 
   let dbCombatElementResolution=null;
   let dbCombatHealingResolution=null;
@@ -952,8 +932,7 @@ function returnToRoad(...args){
   function applyUpgrade(up,source="Powerup"){return dbPowerups.apply(up,source);}
   function weightedUpgrade(pool){return dbPowerups.weighted(pool);}
   function getUpgradeChoices(filter=()=>true){return dbPowerups.choices(filter,3);}
-  function applyRandomHighRarity(source="Sealed Relic",announce=true){return dbPowerups.applyRandomHighRarity(source,announce);}
-  function powerupDisplayDesc(up){return dbPowerups.describe(up);}
+    function powerupDisplayDesc(up){return dbPowerups.describe(up);}
 
   function choiceHTML(up){
     inferUpgradeTags(up);
@@ -964,7 +943,7 @@ function returnToRoad(...args){
   function attachPowerupReroll(grid,reroll){
     if(!grid)return;
     grid.querySelectorAll('.powerup-reroll-btn').forEach(x=>x.remove());
-    const total=Math.max(0,Number(player.v26SecondOpinionRank??gameplayTalentRank('fortune_powerup_rerolls'))||0);
+    const total=Math.max(0,Number(player.v26SecondOpinionRank??dbProgression.gameplayTalentRank('fortune_powerup_rerolls'))||0);
     const spent=Math.max(0,Number(player.v26SecondOpinionSpent)||0);
     const remaining=Math.max(0,total-spent);
     player.powerupRerolls=remaining;
@@ -1074,7 +1053,6 @@ function returnToRoad(...args){
 
   function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}
   function finalizeRun(){return dbProgression.finalizeRun();}
-  function allocatedTalentPoints(){return dbProgression.allocatedTalentPoints();}
 
   function talentAvailable(t){return dbProgression.talentAvailable(t);}
   function requirementText(t){return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} rank ${r.rank}`;}).join(" + ");}
@@ -1100,7 +1078,7 @@ function returnToRoad(...args){
     push("Damage reduction",player.flatReduction);push("Effective Dodge",`${Math.round(effectiveDodgeChance()*100)}% (${Math.round(rawDodgeChance()*100)} raw before diminishing returns)`);push("Revives",player.revives);push("Thorns",player.thorns);push("First-hit barriers",player.firstHitBlocks);push("Post-victory healing",player.postFightHeal);
     mods.push(`<span class="effective-gold-line" tabindex="0" data-effective-gold-container data-tip="${gold.description}" title="${gold.description}"><strong>Gold gain:</strong> <span data-effective-gold>${gold.label}</span></span>`);push("Enemy XP bonus",player.xpBonus?`${Math.round(player.xpBonus*100)}%`:0);push("Boss Damage",player.bossDamage?`${Math.round(player.bossDamage*100)}%`:0);push("Luck",player.luck?Math.round(player.luck*100):0);
     push("Potion healing bonus",player.potionPower?`${Math.round(player.potionPower*100)}%`:0);push("Extra-step chance",player.extraStepChance?`${Math.round(player.extraStepChance*100)}%`:0);push("Ultimate damage",player.ultimateDamageBonus?`+${Math.round(player.ultimateDamageBonus*100)}%`:0);
-    push("Ultimate charge",`${player.ultimateAttackGain} attack / ${player.ultimateGuardGain} defend`);push("Pet double attack",player.petDoubleChance?`${Math.round(player.petDoubleChance*100)}%`:0);push("Element proc bonus",player.elementProcBonus?`${Math.round(player.elementProcBonus*100)}%`:0);push("Element power",player.elementDamageBonus?`+${Math.round(player.elementDamageBonus*100)}%`:0);push("Weakness element power",player.weaknessElementBonus?`+${Math.round(player.weaknessElementBonus*100)}%`:0);push("Element echo",player.elementEchoChance?`${Math.round(player.elementEchoChance*100)}%`:0);push("Choose-die chance",player.diceChoiceChance?`${Math.round(player.diceChoiceChance*100)}%`:0);push("Active pet",`${activePetDef().icon} ${activePetDef().name} · ${petDamage()} damage`);push("Overflow scaling","Crit and Echo above 100% create guaranteed additional tiers, with the remainder as the chance for another tier.");
+    push("Ultimate charge",`${player.ultimateAttackGain} attack / ${player.ultimateGuardGain} defend`);push("Pet double attack",player.petDoubleChance?`${Math.round(player.petDoubleChance*100)}%`:0);push("Element proc bonus",player.elementProcBonus?`${Math.round(player.elementProcBonus*100)}%`:0);push("Element power",player.elementDamageBonus?`+${Math.round(player.elementDamageBonus*100)}%`:0);push("Weakness element power",player.weaknessElementBonus?`+${Math.round(player.weaknessElementBonus*100)}%`:0);push("Element echo",player.elementEchoChance?`${Math.round(player.elementEchoChance*100)}%`:0);push("Choose-die chance",player.diceChoiceChance?`${Math.round(player.diceChoiceChance*100)}%`:0);push("Active pet",`${dbPets.activeDefinition().icon} ${dbPets.activeDefinition().name} · ${petDamage()} damage`);push("Overflow scaling","Crit and Echo above 100% create guaranteed additional tiers, with the remainder as the chance for another tier.");
     addCard("📊 Active modifiers",`<p>${mods.length?mods.join("<br>"):"No additional modifiers yet."}</p>`);
     const gear=EQUIPMENT_SLOTS.map(slot=>player.equipment[slot]).filter(Boolean);
     addCard("🧰 Equipment",`<p>${gear.length?gear.map(i=>`<strong>${i.icon} ${i.name}</strong> — ${formatBonuses(i)}`).join("<br>"):"No equipment currently worn."}</p>${mythicalSetCount()>0?`<div class="mythic-set-box"><strong>🌈 Impossible Road set</strong><br>${mythicalSetSummary()}</div>`:""}`);
@@ -1126,80 +1104,18 @@ function returnToRoad(...args){
 
   /* SEMANTIC OWNER — Class/content expansion, powerups and equipment definitions. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- v13: Blood & Fortune systems expansion ---------- */
-  Object.assign(CLASSES,{
-    vampire:{id:"vampire",name:"Vampire",icon:"🧛",attackIcon:"🦇",fxIcon:"🩸🦇",unlock:"Reach more than 100% Lifesteal during a run",desc:"A blood-drinking duelist whose attacks feed its health and whose ultimate drains the entire pack.",stats:"36 HP · 7 ATK · 18% LIFESTEAL",ultimate:{name:"Crimson Eclipse",icon:"🌑",desc:"Drain the entire pack for heavy damage and heal for 50% of damage dealt."},base:{maxHp:36,attack:7,defense:1,crit:.09,dodge:.03,luck:.02,doubleStrike:.04,guardPower:.56,classBurst:.16,lifeSteal:.18}},
-    ninja:{id:"ninja",name:"Ninja",icon:"🥷",attackIcon:"🗡️",fxIcon:"✦🗡️",unlock:"Reach more than 100% Critical chance during a run",desc:"A precision assassin built around overflow critical tiers, smoke and rapid single-target execution.",stats:"29 HP · 8 ATK · 28% CRIT · 12% DODGE",ultimate:{name:"Thousand Shadows",icon:"🌘",desc:"Five independently critical strikes against the selected enemy, spilling to new targets on defeat."},base:{maxHp:29,attack:8,defense:0,crit:.28,dodge:.12,luck:.03,doubleStrike:.12,guardPower:.50,classBurst:.22,lifeSteal:0}},
-    ceo:{id:"ceo",secret:true,name:"CEO",icon:"👔",attackIcon:"📈",fxIcon:"📊💥",unlock:"Secret: reach 300% Boss Damage",desc:"The hidden executive class converts ruthless guardian specialization into hostile quarterly growth.",stats:"40 HP · 9 ATK · 35% BOSS DAMAGE",ultimate:{name:"Quarterly Annihilation",icon:"📉",desc:"A boardroom-wide attack scaling with Boss Damage and current gold."},base:{maxHp:40,attack:9,defense:2,crit:.12,dodge:.02,luck:.10,doubleStrike:.05,guardPower:.60,classBurst:.20,lifeSteal:.05,bossDamage:.35}},
-    merchant:{id:"merchant",secret:true,name:"Merchant",icon:"🧔",attackIcon:"💰",fxIcon:"🪙⚖️",unlock:"Secret: defeat the Road Merchant five times",desc:"A scandalously strong trader who converts gold into damage and buys reality wholesale.",stats:"45 HP · 10 ATK · 20 LUCK · GOLD SCALING",ultimate:{name:"Market Monopoly",icon:"🏦",desc:"Deals massive pack damage, grants gold and raises two barriers."},base:{maxHp:45,attack:10,defense:3,crit:.15,dodge:.05,luck:.20,doubleStrike:.10,guardPower:.66,classBurst:.22,lifeSteal:.08}}
-  });
-  CLASSES.d20.secret=true;
+
+
   const PUBLIC_SLIME_EXEMPT=new Set(["slime","d20","ceo","merchant"]);
   Object.assign(gearNames.weapon,{vampire:["Sanguine Rapier","Nightfang","Blood Chalice Blade"],ninja:["Moon Kunai","Silent Katana","Storm Shuriken"],ceo:["Executive Pen","Hostile Takeover Briefcase","Quarterly Cleaver"],merchant:["Golden Abacus","Coinblade","Ledger of Ruin"]});
   Object.assign(gearNames.offhand,{vampire:["Blood Goblet","Batwing Mantle"],ninja:["Smoke Bomb Satchel","Shadow Scroll"],ceo:["Expense Account","Golden Parachute"],merchant:["Bottomless Purse","Portable Stall"]});
   for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].vampire=[`Bloodbound ${SLOT_LABELS[slot]}`];gearNames[slot].ninja=[`Shadow ${SLOT_LABELS[slot]}`];gearNames[slot].ceo=[`Executive ${SLOT_LABELS[slot]}`];gearNames[slot].merchant=[`Gilded ${SLOT_LABELS[slot]}`];}
   const evasive=upgrades.find(u=>u.id==="evasive_bulwark");if(evasive){evasive.unique=true;evasive.desc="Unique: every point of Defense adds 1 raw Dodge point before diminishing returns.";}
-  upgrades.push(
-    {id:"vampire_void_affinity",classId:"vampire",rarity:"uncommon",icon:"🕳️",name:"Night's Hunger",desc:"Stackable: +10% chance for attacks to activate Black Hole.",apply(){player.classElementProcs.void=(player.classElementProcs.void||0)+.10;}},
-    {id:"vampire_blood_moon",classId:"vampire",rarity:"legendary",icon:"🌑🩸",name:"Blood Moon",desc:"Gain +30% Lifesteal; overhealing becomes up to 20 temporary max HP for the battle.",apply(){player.lifeSteal+=.30;player.bloodOverheal=true;}},
-    {id:"ninja_electric_affinity",classId:"ninja",rarity:"uncommon",icon:"⚡",name:"Lightning Step",desc:"Stackable: +10% chance for attacks to activate Thunderbolt.",apply(){player.classElementProcs.electric=(player.classElementProcs.electric||0)+.10;}},
-    {id:"ninja_shadow_clone",classId:"ninja",rarity:"legendary",icon:"🥷🥷",name:"Shadow Parliament",desc:"Gain +35% Crit and +25% Echo Strike. Critical Echoes gain another +25% damage.",apply(){player.crit+=.35;player.doubleStrike+=.25;player.criticalEchoBonus=(player.criticalEchoBonus||0)+.25;}},
-    {id:"ceo_tech_affinity",classId:"ceo",rarity:"uncommon",icon:"🤖",name:"Automated Workforce",desc:"Stackable: +10% chance for attacks to activate Brain Hack.",apply(){player.classElementProcs.tech=(player.classElementProcs.tech||0)+.10;}},
-    {id:"merchant_coffee_affinity",classId:"merchant",rarity:"uncommon",icon:"☕",name:"Open All Hours",desc:"Stackable: +10% chance for attacks to activate Caffeinated Haste.",apply(){player.classElementProcs.coffee=(player.classElementProcs.coffee||0)+.10;}},
-    {id:"legendary_worldheart",rarity:"legendary",unique:true,icon:"🌍",name:"Worldheart",desc:"Gain +35 max HP, +4 defense and heal fully.",apply(){player.maxHp+=35;player.hp=player.maxHp;player.defense+=4;}},
-    {id:"legendary_echo_crown",rarity:"legendary",unique:true,icon:"👑↯",name:"Crown of Repetition",desc:"Gain +45% Echo Strike and Echo Strikes deal 20% more damage.",apply(){player.doubleStrike+=.45;player.echoDamageScale=Math.max(player.echoDamageScale||.70,.90);}},
-    {id:"legendary_prismatic",rarity:"legendary",unique:true,icon:"🌈",name:"Prismatic Sovereignty",desc:"Gain +20% elemental activation and +35% elemental power.",apply(){player.elementProcBonus+=.20;player.elementDamageBonus+=.35;}},
-    {id:"legendary_blood_contract",rarity:"legendary",unique:true,icon:"📜🩸",name:"Blood Contract",desc:"Gain +35% Lifesteal and +25% Boss Damage, but lose 15 max HP.",apply(){player.lifeSteal+=.35;player.bossDamage+=.25;player.maxHp=Math.max(1,player.maxHp-15);player.hp=Math.min(player.hp,player.maxHp);}},
-    {id:"legendary_loaded_road",rarity:"legendary",unique:true,icon:"🎲✨",name:"The Road Is Loaded",desc:"Every natural six grants an additional 15 Fast Travel XP and +20 ultimate charge.",apply(){player.loadedSix=true;}},
-    {id:"legendary_packbreaker",rarity:"legendary",unique:true,icon:"👹💥",name:"Packbreaker",desc:"Deal +30% damage while two or more enemies remain alive.",apply(){player.packDamageBonus=.30;}},
-    {id:"legendary_second_sun",rarity:"legendary",unique:true,icon:"☀️☀️",name:"Second Sun",desc:"The first time you would die each board, survive at 1 HP and unleash Holy on the pack.",apply(){player.secondSun=true;player.secondSunUsedBoards=player.secondSunUsedBoards||{};}},
-    {id:"legendary_golden_law",rarity:"legendary",unique:true,icon:"⚖️🪙",name:"Golden Law",desc:"Gain +100% gold and every 100 gold grants +1 attack for this run.",apply(){player.goldBonus+=1;player.goldAttackScale=.01;}}
-  );
+
 
 
   /* v14: broader Rare pool and deeper class identities */
-  upgrades.push(
-    {id:"rare_glass_needle",rarity:"rare",icon:"🪡",name:"Glass Needle",desc:"Gain +18% Crit and +2 Attack, but lose 6 max HP.",apply(){player.crit+=.18;player.attack+=2;player.maxHp=Math.max(1,player.maxHp-6);player.hp=Math.min(player.hp,player.maxHp);}},
-    {id:"rare_echo_chamber",rarity:"rare",icon:"🔊",name:"Echo Chamber",desc:"Gain +24% Echo Strike; Echoes deal 5% more damage.",apply(){player.doubleStrike+=.24;player.echoDamageScale=Math.min(1.2,(player.echoDamageScale||.70)+.05);}},
-    {id:"rare_dragon_mark",rarity:"rare",icon:"🐉",name:"Dragon Mark",desc:"Gain +25% Boss Damage and +2 Attack.",apply(){player.bossDamage+=.25;player.attack+=2;}},
-    {id:"rare_stormstep",rarity:"rare",icon:"🌩️",name:"Stormstep",desc:"Gain +9% raw Dodge and +10 Luck.",apply(){player.dodge+=.09;player.luck+=.10;}},
-    {id:"rare_prism_lens",rarity:"rare",icon:"🔍🌈",name:"Prism Lens",desc:"Gain +10% elemental activation and +18% elemental power.",apply(){player.elementProcBonus+=.10;player.elementDamageBonus+=.18;}},
-    {id:"rare_pack_hunter",rarity:"rare",icon:"👹🎯",name:"Pack Hunter",desc:"Deal +18% damage while at least two enemies remain.",apply(){player.packDamageBonus=(player.packDamageBonus||0)+.18;}},
-    {id:"rare_ultimate_vessel",rarity:"rare",icon:"💜",name:"Ultimate Vessel",desc:"Gain 35 ultimate immediately and +10% ultimate damage.",apply(){player.ultimateCharge=clamp(player.ultimateCharge+35,0,100);player.ultimateDamageBonus+=.10;}},
-    {id:"rare_red_flask",rarity:"rare",icon:"🧪🩸",name:"Red Flask",desc:"Gain +16% Lifesteal and two potions.",apply(){player.lifeSteal+=.16;player.potions+=2;}},
 
-    {id:"fighter_battering_line",classId:"fighter",rarity:"rare",icon:"🛡️💥",name:"Battering Line",desc:"Basic attacks gain 35% of Defense as damage and guarding grants +5 ultimate.",apply(){player.defenseAttackScale+=.35;player.ultimateGuardGain+=5;}},
-    {id:"fighter_iron_command",classId:"fighter",rarity:"epic",icon:"⚔️🏰",name:"Iron Command",desc:"Gain +4 Defense; Titan Cleave grants one additional barrier.",apply(){player.defense+=4;player.titanCleaveBarrierBonus=(player.titanCleaveBarrierBonus||0)+1;}},
-    {id:"ranger_thorn_volley",classId:"ranger",rarity:"rare",icon:"🌿🏹",name:"Thorn Volley",desc:"Gain +14% Crit and +14% Nature activation.",apply(){player.crit+=.14;player.classElementProcs.nature=(player.classElementProcs.nature||0)+.14;}},
-    {id:"ranger_high_ground",classId:"ranger",rarity:"epic",icon:"🦅",name:"High Ground",desc:"First attacks deal 80% more damage and gain +12% Echo Strike.",apply(){player.firstAttackBonus+=.80;player.doubleStrike+=.12;}},
-    {id:"sorcerer_mana_fracture",classId:"sorcerer",rarity:"rare",icon:"🔮💥",name:"Mana Fracture",desc:"Gain +18% Arcane Surge chance and +12% elemental power.",apply(){player.classBurst+=.18;player.elementDamageBonus+=.12;}},
-    {id:"sorcerer_gravity_well",classId:"sorcerer",rarity:"epic",icon:"🕳️☄️",name:"Gravity Well",desc:"Gain +20% Void activation and +25% Boss Damage.",apply(){player.classElementProcs.void=(player.classElementProcs.void||0)+.20;player.bossDamage+=.25;}},
-    {id:"monk_afterimage",classId:"monk",rarity:"rare",icon:"🥋💨",name:"Afterimage Kata",desc:"Gain +16% Echo Strike and +7% raw Dodge.",apply(){player.doubleStrike+=.16;player.dodge+=.07;}},
-    {id:"monk_perfect_form",classId:"monk",rarity:"epic",icon:"☯️",name:"Perfect Form",desc:"Gain +3 Attack, +3 Defense and +15 ultimate from every Guard.",apply(){player.attack+=3;player.defense+=3;player.ultimateGuardGain+=15;}},
-    {id:"clown_banana_law",classId:"clown",rarity:"rare",icon:"🍌",name:"Banana-Peel Law",desc:"Gain +18 Luck and +10% Dodge. This is apparently jurisprudence.",apply(){player.luck+=.18;player.dodge+=.10;}},
-    {id:"clown_three_ring",classId:"clown",rarity:"epic",icon:"🎪🎪🎪",name:"Three-Ring Disaster",desc:"Gain +15% Crit, +15% Echo and +0.5% Prismatic Accident.",apply(){player.crit+=.15;player.doubleStrike+=.15;player.omniElementChance=(player.omniElementChance||0)+.005;}},
-    {id:"rouge_carmine_veins",classId:"rouge",rarity:"rare",icon:"🌹🩸",name:"Carmine Veins",desc:"Gain +20% Lifesteal and +10% Crit.",apply(){player.lifeSteal+=.20;player.crit+=.10;}},
-    {id:"rouge_masterpiece",classId:"rouge",rarity:"epic",icon:"🖼️",name:"Final Masterpiece",desc:"Gain +3 Attack, +18% Boss Damage and +12% Echo Strike.",apply(){player.attack+=3;player.bossDamage+=.18;player.doubleStrike+=.12;}},
-    {id:"berserker_blood_roar",classId:"berserker",rarity:"rare",icon:"🩸📣",name:"Blood Roar",desc:"Gain +5 Attack while below half HP and +12% Lifesteal.",apply(){player.berserk+=.55;player.lifeSteal+=.12;}},
-    {id:"berserker_unbroken",classId:"berserker",rarity:"epic",icon:"🪓🔥",name:"Unbroken Rampage",desc:"Gain +25 max HP, +20% Echo Strike and one revive.",apply(){player.maxHp+=25;player.hp+=25;player.doubleStrike+=.20;player.revives+=1;}},
-    {id:"turtle_shell_memory",classId:"turtle",rarity:"rare",icon:"🐢🧠",name:"Shell Memory",desc:"Gain +5 Defense and heal 3 HP after victories.",apply(){player.defense+=5;player.postFightHeal+=3;}},
-    {id:"turtle_continental",classId:"turtle",rarity:"epic",icon:"🌍🐢",name:"Continental Drift",desc:"Gain +35 max HP; add 60% of Defense to attacks.",apply(){player.maxHp+=35;player.hp+=35;player.defenseAttackScale+=.60;}},
-    {id:"frog_lingering_croak",classId:"frog",rarity:"rare",icon:"🐸🔊",name:"Lingering Croak",desc:"Gain +28% Echo Strike and Echoes deal 8% more damage.",apply(){player.doubleStrike+=.28;player.echoDamageScale=Math.min(1.25,(player.echoDamageScale||.70)+.08);}},
-    {id:"frog_amphibian_loop",classId:"frog",rarity:"epic",icon:"♻️🐸",name:"Amphibian Recursion",desc:"Gain +40% Echo Strike and +12% Crit.",apply(){player.doubleStrike+=.40;player.crit+=.12;}},
-    {id:"d20_bent_probability",classId:"d20",rarity:"rare",icon:"🎲↻",name:"Bent Probability",desc:"Every action has a 20% chance to add a random extra Echo, barrier, heal or element.",apply(){player.d20BonusChance=(player.d20BonusChance||0)+.20;}},
-    {id:"d20_loaded_corners",classId:"d20",rarity:"epic",icon:"🎲✨",name:"Loaded Corners",desc:"Every d20 action roll has a 12% chance to be replaced by a random roll from 17–20.",apply(){player.d20HighRollChance=(player.d20HighRollChance||0)+.12;}},
-    {id:"vampire_red_mist",classId:"vampire",rarity:"rare",icon:"🩸🌫️",name:"Red Mist",desc:"Gain +22% Lifesteal and +8% Dodge.",apply(){player.lifeSteal+=.22;player.dodge+=.08;}},
-    {id:"vampire_night_feast",classId:"vampire",rarity:"epic",icon:"🦇🍷",name:"Night Feast",desc:"Gain +4 Attack and +25% Boss Damage; victories heal 6 HP.",apply(){player.attack+=4;player.bossDamage+=.25;player.postFightHeal+=6;}},
-    {id:"ninja_smoke_math",classId:"ninja",rarity:"rare",icon:"🥷💨",name:"Smoke Mathematics",desc:"Gain +18% Crit and +9% raw Dodge.",apply(){player.crit+=.18;player.dodge+=.09;}},
-    {id:"ninja_five_shadows",classId:"ninja",rarity:"epic",icon:"🌘🗡️",name:"Five Shadows",desc:"Gain +22% Echo Strike and +20% Boss Damage.",apply(){player.doubleStrike+=.22;player.bossDamage+=.20;}},
-    {id:"ceo_hostile_synergy",classId:"ceo",rarity:"rare",icon:"📈🤝",name:"Hostile Synergy",desc:"Gain +25% Boss Damage and +35% gold.",apply(){player.bossDamage+=.25;player.goldBonus+=.35;}},
-    {id:"ceo_infinite_growth",classId:"ceo",rarity:"epic",icon:"📊♾️",name:"Infinite Growth",desc:"Gain +4 Attack and every 200 gold adds another +1 effective attack.",apply(){player.attack+=4;player.goldAttackScale=Math.max(player.goldAttackScale||0,.005);}},
-    {id:"merchant_bulk_discount",classId:"merchant",rarity:"rare",icon:"🧔📦",name:"Bulk Discount Violence",desc:"Gain +50% gold and +15 Luck.",apply(){player.goldBonus+=.50;player.luck+=.15;}},
-    {id:"merchant_compound_fury",classId:"merchant",rarity:"epic",icon:"🪙💥",name:"Compound Fury",desc:"Gain +4 Attack, +20% Boss Damage and +15% Echo Strike.",apply(){player.attack+=4;player.bossDamage+=.20;player.doubleStrike+=.15;}},
-
-    {id:"shared_vanguard",classIds:["fighter","berserker","turtle","monk"],rarity:"rare",icon:"⚔️🛡️",name:"Vanguard Doctrine",desc:"Gain +2 Attack, +2 Defense and +10% Boss Damage.",apply(){player.attack+=2;player.defense+=2;player.bossDamage+=.10;}},
-    {id:"shared_skirmisher",classIds:["ranger","ninja","frog","monk"],rarity:"rare",icon:"💨🎯",name:"Skirmisher's Tempo",desc:"Gain +10% Crit, +10% Echo Strike and +5% raw Dodge.",apply(){player.crit+=.10;player.doubleStrike+=.10;player.dodge+=.05;}},
-    {id:"shared_occult",classIds:["sorcerer","vampire","rouge","d20","clown"],rarity:"rare",icon:"🔮🩸",name:"Occult Convergence",desc:"Gain +10% elemental activation and +10% Lifesteal.",apply(){player.elementProcBonus+=.10;player.lifeSteal+=.10;}}
-  );
 
   let merchantFaceClicks=new Set(),merchantFaceTotal=0,merchantBossPrimed=false,merchantBossDefeatedThisBoard=false,merchantBossBattle=false;
   const currentTileCount=()=>db317Board(boardLevel).tiles;
@@ -1225,12 +1141,11 @@ function returnToRoad(...args){
     // Alpha 3.1.4 intentionally starts a new save schema. Legacy localStorage keys are not auto-loaded.
     try{meta=v13NormalizeMeta(meta);saveMeta();}
     catch(e){meta=v13NormalizeMeta({});saveMeta();}
-    repairTalentPrerequisites();
+    dbProgression.repairTalentPrerequisites();
   }
   importOldSaveIfNeeded();
 
-  function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}
-  // Thin composition adapter only.  The real Class chooser, including
+    // Thin composition adapter only.  The real Class chooser, including
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
   function renderClassChoices(){return window.DiceboundClassChooser?.render();}
 
@@ -1255,9 +1170,7 @@ function returnToRoad(...args){
   return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');
 }
 
-  function enemyForPosition(index){return dbRun.enemyForPosition(index);}
-  function generateBoard(){return dbRun.generateBoard();}
-  let dbTileMetaFinalReady=false;
+      let dbTileMetaFinalReady=false;
   function tileMeta(tile){
     if(dbTileMetaFinalReady){
       // Final 0.6 guardian art was the outermost generation.
@@ -1324,8 +1237,8 @@ function returnToRoad(...args){
     const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=tileMeta(tile),el=document.createElement("div");el.className=`tile ${tile.type}`;el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
   }
   function updateHUD(){
-    const cls=CLASSES[player.classId]||CLASSES.ranger;$("heroAvatar").textContent=cls.icon;$("heroName").textContent=cls.name;$("pawn").textContent=cls.icon;$("combatPlayerIcon").textContent=cls.icon;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=activePetDef().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
-    const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;$("rollBtn").disabled=rollLocked||!gameStarted;$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
+    const cls=CLASSES[player.classId]||CLASSES.ranger;$("heroAvatar").textContent=cls.icon;$("heroName").textContent=cls.name;$("pawn").textContent=cls.icon;$("combatPlayerIcon").textContent=cls.icon;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=dbPets.activeDefinition().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
+    const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;$("rollBtn").disabled=rollLocked||!gameStarted;$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;dbProgression.checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
   }
   async function rollDice(){
     if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
@@ -1334,8 +1247,7 @@ function returnToRoad(...args){
   function damageEnemy(enemy,amount,ignoreDefense=false){if(!enemy||enemy.hp<=0)return 0;if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);return 0;}const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0))),dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;return dealt;}
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
-  async function winCombat(...args){return dbCombat.win(...args);}
-  function applyRunTheme(){
+    function applyRunTheme(){
   const themeByBoard={
     1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},
     2:{bg1:"#1c1708",bg2:"#0c0b05",glow1:"rgba(255,217,123,.23)",glow2:"rgba(137,193,255,.14)",board1:"#43371a",board2:"#1d1910"},
@@ -1366,42 +1278,31 @@ function returnToRoad(...args){
 
   function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
-  function openStartScreen(){gameStarted=false;rollLocked=true;if(!isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
+  function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
-  function showEnd(victory){rollLocked=true;gameStarted=false;const earned=finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
 
 
   // ===== v15: Venom & Arsenal systems =====
-  ELEMENTS.gun={icon:"🔫",name:"Gun",spell:"Deadeye Volley",description:"Fires a piercing shot for heavy single-target damage, ignoring half of the target's Defense."};
-  if(!ELEMENT_KEYS.includes("gun"))ELEMENT_KEYS.push("gun");
-  PETS.gun={id:"gun",name:"Trigger",icon:"🦝",element:"gun",desc:"A tiny gunslinger raccoon with extremely questionable licensing."};
+
   if(!meta.pets.gun)meta.pets.gun=defaultPetState(false);
   if(meta.elementProgress.gun==null)meta.elementProgress.gun=0;
-  CLASSES.d20.unlock="Raise DiBo to level 30";
-  CLASSES.d20.desc="A hidden avatar of probability, unlocked when DiBo reaches level 30. Every action and every powerup bends around a d20 roll.";
+
+
 
   const ACHIEVEMENT_POWER_GATES={destiny:"prestige10",godslayer:"road2",immortal:"road3",chaos:"road4",plague_lord:"nature_master"};
   for(const [id,gate] of Object.entries(ACHIEVEMENT_POWER_GATES)){const up=upgrades.find(x=>x.id===id);if(up)up.achievementGate=gate;}
-  upgrades.push(
-    {id:"venom_edge",rarity:"rare",icon:"🐍",name:"Venom Edge",desc:"Each basic or Echo strike has a 15% chance to add 1 Poison stack to its target.",apply(){player.poisonOnHitChance=(player.poisonOnHitChance||0)+.15;}},
-    {id:"toxicology",rarity:"rare",icon:"🧪🌿",name:"Road Toxicology",desc:"Poison stacks deal +4% of Attack per stack each round.",apply(){player.poisonStackPower=(player.poisonStackPower||.12)+.04;}},
-    {id:"thorn_venom",classIds:["ranger","ninja","frog","monk"],rarity:"rare",icon:"🌿🎯",name:"Thorn Venom",desc:"Gain +8% Crit and +10% chance to apply a Poison stack with basic and Echo strikes.",apply(){player.crit+=.08;player.poisonOnHitChance=(player.poisonOnHitChance||0)+.10;}},
-    {id:"toxic_bloom",rarity:"epic",icon:"☠️🌺",name:"Toxic Bloom",desc:"Nature activation adds one more poison proc, and Poison deals +3% Attack per stack.",apply(){player.naturePoisonStacks=(player.naturePoisonStacks||1)+1;player.poisonStackPower=(player.poisonStackPower||.12)+.03;}},
-    {id:"plague_lord",rarity:"legendary",achievementGate:"nature_master",icon:"👑☠️",name:"Crown of the Green Plague",desc:"Achievement-locked: Nature adds 3 extra Poison stacks and Poison deals +8% Attack per stack.",apply(){player.naturePoisonStacks=(player.naturePoisonStacks||1)+3;player.poisonStackPower=(player.poisonStackPower||.12)+.08;}},
-    {id:"gunpowder_luck",rarity:"rare",icon:"🔫🍀",name:"Loaded Chamber",desc:"Gain +10 Luck and every strike has a 7% chance to activate Deadeye Volley.",apply(){player.luck+=.10;player.classElementProcs.gun=(player.classElementProcs.gun||0)+.07;}},
-    {id:"elemental_predator",rarity:"epic",icon:"🌈🐺",name:"Elemental Predator",desc:"Deal +20% elemental damage and +10% damage against elemental monsters.",apply(){player.elementDamageBonus+=.20;player.elementalEnemyDamage=(player.elementalEnemyDamage||0)+.10;}}
-  );
 
-  function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}
-  dbPowerups.configure({
-    getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>achievementGateUnlocked(gate),
+
+    dbPowerups.configure({
+    getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
     slimeIdentityActive:()=>classIdentityActive("slime"),
-    slimePowerCompatible:u=>{const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));return dbPowerups.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps);},
+    slimePowerCompatible:u=>{const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&dbProgression.isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));return dbPowerups.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps);},
     slimeRougePowerCompatible:u=>v318SlimeRougePowerCompatible(u),
     filterPowerupPoolForLuck:(pool,luck)=>DB_RARITIES.filterPowerupPoolForLuck?.(pool,luck),
     getBoardLevel:()=>boardLevel,currentTileCount:()=>currentTileCount(),random:()=>random(),rand:(min,max)=>rand(min,max),pick:list=>pick(list),clamp:(value,min,max)=>clamp(value,min,max),
     classIdentityActive:id=>classIdentityActive(id),hasLegendaryEffect:id=>db060HasEffect(id),saveMeta:()=>saveMeta(),addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{ensureAlphaMeta().powerupsTaken++;saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{ensureAlphaMeta().powerupsTaken++;saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
     isNightmare:()=>!!nightmareMode,isHell:()=>!!hellMode,isGameStarted:()=>!!gameStarted
   });
   function eligibleUpgrades(filter=()=>true){return dbPowerups.eligible(filter);}
@@ -1422,7 +1323,6 @@ function returnToRoad(...args){
       hasBoardClear:(classId,board)=>hasBoardClear(classId,board)
     };
   }
-  function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}
 
   function playElementAnimation(key,target=currentEnemy,enemySource=false){
     const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;
@@ -1431,22 +1331,18 @@ function returnToRoad(...args){
     el.textContent=enemySource?`${ELEMENTS[key].icon} ${art}`:art;head.appendChild(el);setTimeout(()=>el.remove(),850);
   }
 
-  function statusDotsHTML(barriers=0,poison=0,affinity=null){return dbCombatView.statusDotsHTML(barriers,poison,affinity);}
-  function renderEnemyParty(){return dbCombatView.renderEnemyParty();}
-  function updateCombatUI(){const result=dbCombatView.update();updateHUD();return result;}
+      function updateCombatUI(){const result=dbCombatView.update();updateHUD();return result;}
 
   // #309: enemy scaling/difficulty now has one authoritative owner.
   let dbEnemyScalingResolution=null;
   function scaleEnemy(...args){return dbCombat.scaleEnemy(...args);}
 
-  function triggerElementEffect(...args){return dbCombat.element(...args);}
 
   function applyPoisonTick(){
     let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;const dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}
     if(total){playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;
   }
 
-  function enemyElementProc(...args){return dbCombat.enemyElementProc(...args);}
 
   // Beta 0.6.6.0: enemy-response and enemy-turn orchestration is owned by
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
@@ -1459,8 +1355,7 @@ function returnToRoad(...args){
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
   let dbCombatTurns=null;
-  async function enemyTurn(...args){return dbCombat.enemyTurn(...args);}
-  async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}
+    async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}
   function applyCombatPlayerDamage(raw){return dbCombat.applyPlayerDamage(raw);}
 
   function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}
@@ -1518,7 +1413,7 @@ function returnToRoad(...args){
 
     // v19 / v1.5 / v1.1 effective branches. Superseded Mythical branches that
     // are unreachable behind v26 are intentionally not carried forward.
-    if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}
+    if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();dbRun.generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}
     if(action==="double_dice"){meta.doubleDiceUnlocked=true;saveMeta();updateHUD();showToast("Double Dice unlocked");return;}
     if(action==="seed_item"){
       if(!gameStarted){showToast("Start a run first");return;}
@@ -1527,7 +1422,7 @@ function returnToRoad(...args){
       $("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;
     }
     if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}
-    if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}
+    if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();dbRun.generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}
     if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}
     if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}
     if(action==="omega_stone"&&gameStarted){
@@ -1547,9 +1442,9 @@ function returnToRoad(...args){
     if(action==="cookies"){meta.petCookies+=25;saveMeta();}
     if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}
     if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}
-    if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}
+    if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();dbProgression.checkDynamicClassUnlocks();}
     if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}
-    if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}
+    if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();dbRun.generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}
     if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbRun.dispatchTile();}
     updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);
   }
@@ -1562,16 +1457,12 @@ function returnToRoad(...args){
   function ensureAlphaMeta(){
     const base=defaultLifetimeStats(),raw=meta.stats||{};meta.stats={...base,...raw,boardClears:{...(raw.boardClears||{})},classMaxLevel:{...(raw.classMaxLevel||{})}};meta.stats.damageTaken=Math.max(Number(meta.stats.damageTaken)||0,Number(meta.damageTaken)||0);meta.achievements={...(meta.achievements||{})};return meta.stats;
   }
-  function gameplayTalentRank(id){return dbProgression.gameplayTalentRank(id);}
-  function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+    function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function boardClearKey(classId,board,mode=boardClearMode()){return `${classId}:${mode}:b${board}`;}
   function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
   function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')||key===legacyBoardClearKey(classId,board)));}
-  function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();checkDynamicClassUnlocks();}
-  function recordHealing(...args){return dbCombat.recordHealing(...args);}
-  function healPlayer(...args){return dbCombat.heal(...args);}
-  function clearBloodOverhealTemp(...args){return dbCombat.clearBloodOverhealTemp(...args);}
-  function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
+  function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();dbProgression.checkDynamicClassUnlocks();}
+        function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)dbCombat.recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
   // Preserve v15 save compatibility while enriching imported saves with Alpha fields.
   const normalizeV15=v13NormalizeMeta;
@@ -1579,53 +1470,35 @@ function returnToRoad(...args){
   ensureAlphaMeta();
 
   // Four new public classes. Rouge remains the colour; Rogue is the thief.
-  Object.assign(CLASSES,{
-    cleric:{id:"cleric",name:"Cleric",icon:"⛪",attackIcon:"✨",fxIcon:"✝️✨",unlock:"Heal 1,000 HP across all runs",desc:"A holy sustain specialist. Blessed attacks can restore HP, Light effects are especially valuable, and Divine Reckoning heals while damaging the whole pack.",stats:"40 HP · 5 ATK · 2 DEF · HOLY SUSTAIN",scaleNotes:"Attack scales modestly; healing scales mainly from max HP and repeated actions. Defense and sustain make long guardian fights increasingly favorable.",ultimate:{name:"Divine Reckoning",icon:"☀️",desc:"Holy area damage plus a large self-heal. Overhealing can interact with effects that explicitly allow it."},base:{maxHp:40,attack:5,defense:2,crit:.06,dodge:.02,luck:.03,doubleStrike:.03,guardPower:.64,classBurst:.24,lifeSteal:0}},
-    paladin:{id:"paladin",name:"Paladin",icon:"🛡️✨",attackIcon:"⚔️",fxIcon:"⚔️✨",unlock:"Defeat Board 3 with both Fighter and Cleric",desc:"A guardian hybrid that turns Defense into offense, shrugs off attrition and uses Aegis Judgment to damage, heal and raise barriers at once.",stats:"48 HP · 6 ATK · 4 DEF · DEFENSE SCALING",scaleNotes:"Basic attacks gain extra value from Defense. Guard, barriers and max HP scale its effective damage uptime more than raw Crit does.",ultimate:{name:"Aegis Judgment",icon:"⚜️",desc:"Heavy area damage scaling with Attack and Defense, restores HP and raises two barriers."},base:{maxHp:48,attack:6,defense:4,crit:.06,dodge:.01,luck:.02,doubleStrike:.02,guardPower:.74,classBurst:.20,lifeSteal:.02}},
-    beastmaster:{id:"beastmaster",name:"Beastmaster",icon:"🐾",attackIcon:"🦴",fxIcon:"🐺➶",unlock:"Unlock every companion",desc:"A companion commander. Its own attacks are steady, but pet level, pet damage talents and double-pet attacks become a second damage engine.",stats:"38 HP · 6 ATK · 1 DEF · PET SCALING",scaleNotes:"Gains more from companion level and pet bonuses than most classes. Pack Call converts current pet damage directly into burst damage.",ultimate:{name:"Call of the Pack",icon:"🐺",desc:"Calls a spectral pack for area damage based on Attack plus several times your active companion's damage."},base:{maxHp:38,attack:6,defense:1,crit:.08,dodge:.06,luck:.05,doubleStrike:.06,guardPower:.56,classBurst:.20,lifeSteal:0}},
-    rogue:{id:"rogue",name:"Rogue",icon:"🗡️",attackIcon:"🗡️",fxIcon:"🗡️💨",unlock:"Hold 4,000 gold at one time",desc:"The thief, not the colour. A high-crit evasive striker that rewards hoarding and opportunistic bursts, then steals even more money with Grand Larceny.",stats:"30 HP · 8 ATK · 22% CRIT · 14% DODGE",scaleNotes:"Raw Attack and Crit scale its burst fastest. Gold is also tactical fuel: some Rogue powers and its ultimate turn a rich purse into momentum.",ultimate:{name:"Grand Larceny",icon:"💎",desc:"A brutal single-target strike that steals gold after the hit."},base:{maxHp:30,attack:8,defense:0,crit:.22,dodge:.14,luck:.08,doubleStrike:.12,guardPower:.50,classBurst:.24,lifeSteal:.03}}
-  });
+
   Object.assign(gearNames.weapon,{cleric:["Pilgrim Mace","Sunlit Crozier","Reliquary Hammer"],paladin:["Oathblade","Sunsteel Sword","Aegis Hammer"],beastmaster:["Pack Spear","Beast Hook","Alpha Whip"],rogue:["Cutpurse Dirk","Night Knife","Guild Stiletto"]});
   Object.assign(gearNames.offhand,{cleric:["Prayer Book","Saintly Censer","Sun Disc"],paladin:["Aegis Shield","Oathbound Buckler","Lion Ward"],beastmaster:["Whistle of Command","Treat Satchel","Pack Totem"],rogue:["Lockpick Roll","Smoke Satchel","Second Dagger"]});
   for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].cleric=[`Consecrated ${SLOT_LABELS[slot]}`];gearNames[slot].paladin=[`Oathbound ${SLOT_LABELS[slot]}`];gearNames[slot].beastmaster=[`Packlord ${SLOT_LABELS[slot]}`];gearNames[slot].rogue=[`Guild ${SLOT_LABELS[slot]}`];}
 
   // Class powers and achievement-hidden Legendaries.
-  upgrades.push(
-    {id:"cleric_benediction",classId:"cleric",rarity:"uncommon",icon:"🙏",name:"Benediction",desc:"Blessed attack heals are 3 HP stronger and Guard restores 3 HP.",apply(){player.clericHealBonus=(player.clericHealBonus||0)+3;player.guardHeal+=3;}},
-    {id:"cleric_radiance",classId:"cleric",rarity:"rare",icon:"☀️",name:"Radiant Doctrine",desc:"Gain +12% Light activation and +20% elemental power.",apply(){player.classElementProcs.light=(player.classElementProcs.light||0)+.12;player.elementDamageBonus+=.20;}},
-    {id:"cleric_saint",classId:"cleric",rarity:"legendary",achievementGate:"heal1000",icon:"👼",name:"Saint of a Thousand Wounds",desc:"Achievement-locked: +30 max HP, +25% Light activation and every victory heals 10 HP.",apply(){player.maxHp+=30;player.hp+=30;player.classElementProcs.light=(player.classElementProcs.light||0)+.25;player.postFightHeal+=10;}},
-    {id:"paladin_smite",classId:"paladin",rarity:"rare",icon:"⚜️",name:"Oathbound Smite",desc:"Add 70% of Defense to basic and Echo attacks.",apply(){player.defenseAttackScale+=.70;}},
-    {id:"paladin_citadel",classId:"paladin",rarity:"legendary",achievementGate:"paladin_oath",icon:"🏰✨",name:"Walking Sanctuary",desc:"Achievement-locked: +5 Defense, +25 max HP and begin every battle with two extra barriers.",apply(){player.defense+=5;player.maxHp+=25;player.hp+=25;player.firstHitBlocks+=2;}},
-    {id:"beastmaster_pack",classId:"beastmaster",rarity:"rare",icon:"🐾",name:"Pack Discipline",desc:"Pet attacks deal +6 damage and gain +20% double-attack chance.",apply(){player.petDamageBonus+=6;player.petDoubleChance+=.20;}},
-    {id:"beastmaster_alpha",classId:"beastmaster",rarity:"legendary",achievementGate:"menagerie",icon:"🐺👑",name:"Alpha of Every Road",desc:"Achievement-locked: +10 pet damage, +30% pet double chance and +3 Attack.",apply(){player.petDamageBonus+=10;player.petDoubleChance+=.30;player.attack+=3;}},
-    {id:"rogue_backstab",classId:"rogue",rarity:"rare",icon:"🗡️💰",name:"Profitable Backstab",desc:"Gain +14% Crit and attacks add 0.2% of current gold as effective Attack.",apply(){player.crit+=.14;player.goldAttackScale=Math.max(player.goldAttackScale||0,.002);}},
-    {id:"rogue_kingpin",classId:"rogue",rarity:"legendary",achievementGate:"gold1500",icon:"💎🗡️",name:"Kingpin's Cut",desc:"Achievement-locked: +5 Attack, +20% Crit, +20% Echo and +50% gold.",apply(){player.attack+=5;player.crit+=.20;player.doubleStrike+=.20;player.goldBonus+=.50;}},
-    {id:"ranger_crownshot",classId:"ranger",rarity:"legendary",achievementGate:"ranger_b1",icon:"🏹👑",name:"Crownshot",desc:"Achievement-locked: +15% Crit, +20% Boss Damage and Arrow Storm gains another +50% damage.",apply(){player.crit+=.15;player.bossDamage+=.20;player.classUltimateBonus+=.50;}},
-    {id:"sorcerer_starcovenant",classId:"sorcerer",rarity:"legendary",achievementGate:"sorcerer_b2",icon:"🌠🔮",name:"Star Covenant",desc:"Achievement-locked: +20% element power, +20% Echo and Starfall gains another +50% damage.",apply(){player.elementDamageBonus+=.20;player.doubleStrike+=.20;player.classUltimateBonus+=.50;}},
-    {id:"slime_apotheosis",classId:"slime",rarity:"legendary",achievementGate:"slime_lvl5",icon:"🟢👑",name:"Royal Jelly",desc:"Achievement-locked: +25 max HP, +4 Attack and +18% Echo Strike.",apply(){player.maxHp+=25;player.hp+=25;player.attack+=4;player.doubleStrike+=.18;}}
-  );
+
   const goldenLaw=upgrades.find(u=>u.id==="legendary_golden_law");if(goldenLaw){goldenLaw.achievementGate="merchant1";goldenLaw.desc="Achievement-locked: defeat the Road Merchant once. Gain +100% gold and every 100 gold grants +1 attack for this run.";}
 
-  CLASSES.ceo.unlock="Secret: reach 300% Boss Damage";
-  Object.assign(CLASSES.ranger,{scaleNotes:"Attack is the core stat; Crit is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive."});
-  Object.assign(CLASSES.sorcerer,{scaleNotes:"Attack and elemental power drive spell damage. Channel Bolt still rolls normal Crit/Echo chains, while Arcane Lance converts half of your total Echo Strike chance into bonus Lance damage and applies Lifesteal to the spell plus its forced elemental eruption. Arcane Surge is the Sorcerer signature burst: each basic or Echo strike has your Signature Burst chance to deal 50% more strike damage. Starfall rewards both Attack and sustain/lifesteal."});
-  Object.assign(CLASSES.fighter,{scaleNotes:"Defense is both survival and, with several Fighter powers, offense. Attack still raises baseline damage, but Guard/barrier uptime and Defense scaling are the class's defining growth path."});
-  Object.assign(CLASSES.monk,{scaleNotes:"Attack, Echo Strike and Dodge work together: more Echo means more hits and ultimate charge opportunities, while sustain lets Monk survive long enough to exploit them. Hundred Fists scales mostly from Attack."});
-  Object.assign(CLASSES.clown,{scaleNotes:"Luck, Crit and Echo are the main chaos multipliers. Clown has high variance rather than one clean stat curve; more Luck also improves the road rewards that feed the build."});
-  Object.assign(CLASSES.rouge,{scaleNotes:"Rouge—the colour—likes Attack, Crit and Lifesteal. Its crimson bursts become safer as Lifesteal rises, and Crimson Deluge rewards a damage-heavy build that can immediately drink back lost HP."});
-  Object.assign(CLASSES.berserker,{scaleNotes:"Every 1% missing HP grants +1% damage as Rage. Attack raises the base damage while Max HP and Lifesteal help you live in the dangerous high-Rage range."});
-  Object.assign(CLASSES.turtle,{scaleNotes:"Defense is the premium stat: it drastically improves survival and can be converted into damage. Turtle scales slowly with raw Attack but explosively once Defense-based powers stack."});
-  Object.assign(CLASSES.frog,{scaleNotes:"Echo Strike is the primary engine. Values above 100% create guaranteed extra hits, and Croak Cascade converts high Echo into more jumps. Attack still determines how hard each jump lands."});
-  Object.assign(CLASSES.d20,{scaleNotes:"Probability is the mechanic. Attack supplies the floor, while Crit, Echo and Luck make high D20 outcomes increasingly absurd. Exact high-roll interactions remain intentionally undocumented."});
-  Object.assign(CLASSES.slime,{scaleNotes:"Slime has no exclusive scaling rule; its strength is access to the broad shared/class power pool. It can become whatever the run offers—Attack bruiser, Echo machine, elemental build or sustain blob."});
-  Object.assign(CLASSES.vampire,{scaleNotes:"Lifesteal is the signature multiplier because every damage increase also becomes healing. Attack, Crit and Echo therefore double as sustain stats. Blood Moon can turn excess healing into temporary battle HP."});
-  Object.assign(CLASSES.ninja,{scaleNotes:"Crit is king: overflow above 100% creates additional guaranteed critical tiers. Attack multiplies those tiers, while Echo supplies more chances to exploit them. Dodge compensates for very low base durability."});
-  Object.assign(CLASSES.ceo,{scaleNotes:"Boss Damage is both an unlock identity and a major multiplier. Gold can become direct combat value through executive powers, so economic growth and guardian specialization feed each other."});
-  Object.assign(CLASSES.merchant,{scaleNotes:"Gold is a combat stat. Several attacks and weapons convert the purse directly into damage, while Luck and gold bonuses accelerate the economy that powers the class."});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Ranger gets a real tiny portrait instead of only an emoji.
   function rangerPortraitSVG(){return `<svg viewBox="0 0 64 64" role="img" aria-label="Ranger portrait"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2e7d4f"/><stop offset="1" stop-color="#123b32"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#10263a"/><path d="M13 48c7-12 12-17 19-17s13 5 19 17v12H13z" fill="url(#rg)"/><path d="M19 29c2-13 8-20 15-20 8 0 13 8 14 21-6-5-22-5-29-1z" fill="#285f3d"/><path d="M24 23c2-5 6-8 10-8 5 0 8 3 10 9l-3 14H27z" fill="#d7a66b"/><path d="M27 30c4 3 10 3 14 0-1 8-4 12-7 12-4 0-6-4-7-12z" fill="#9b5d3d" opacity=".9"/><circle cx="30" cy="27" r="1.6" fill="#1a2730"/><circle cx="39" cy="27" r="1.6" fill="#1a2730"/><path d="M47 12c8 7 7 24 1 36" fill="none" stroke="#bf8a46" stroke-width="3" stroke-linecap="round"/><path d="M47 14l8 3-7 4" fill="#d7dfe8"/><path d="M49 17L19 50" stroke="#d9c3a0" stroke-width="1.5" opacity=".8"/></svg>`;}
-  window.DiceboundCamp.configureShell({recordVitals:()=>recordVitals(),refreshLegacyHeroAvatar:()=>{const avatar=$("heroAvatar");if(player.classId==="ranger"){avatar.classList.add("ranger-portrait");avatar.innerHTML=rangerPortraitSVG();}else{avatar.classList.remove("ranger-portrait");avatar.textContent=CLASSES[player.classId]?.icon||"🎲";}},checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks()});
+  window.DiceboundCamp.configureShell({recordVitals:()=>recordVitals(),refreshLegacyHeroAvatar:()=>{const avatar=$("heroAvatar");if(player.classId==="ranger"){avatar.classList.add("ranger-portrait");avatar.innerHTML=rangerPortraitSVG();}else{avatar.classList.remove("ranger-portrait");avatar.textContent=CLASSES[player.classId]?.icon||"🎲";}},checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks()});
 
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
   const getHeirloomSlotsV15=getHeirloomSlots;getHeirloomSlots=function(){const source=runTalentSnapshot;if(!source)return getHeirloomSlotsV15();return 1+(Number(source.legacy_heirloom)||0)+((meta.prestige?.count||0)>=20?1:0);};
@@ -1646,12 +1519,12 @@ function returnToRoad(...args){
 
 
   // Track board/class feats; victory ownership now lives in combat/victory-resolution.
-  const loseGameV15=loseGame;loseGame=function(){clearBloodOverhealTemp();return loseGameV15();};
+  const loseGameV15=loseGame;loseGame=function(){dbCombat.clearBloodOverhealTemp();return loseGameV15();};
 
   // Stats hooks around existing run lifecycle.
   const finalizeRunV15=finalizeRun;finalizeRun=function(){const was=runFinalized,result=finalizeRunV15();if(!was){const s=ensureAlphaMeta();s.runsFinished++;s.rolls+=rolls;s.tilesTraveled+=tilesMovedThisRun;s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);s.highestGold=Math.max(s.highestGold,player.gold);saveMeta();}return result;};
   const showEndV15=showEnd;showEnd=function(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}return showEndV15(victory);};
-  const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);checkDynamicClassUnlocks();saveMeta();return r;};
+  const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);dbProgression.checkDynamicClassUnlocks();saveMeta();return r;};
 
   // Ensure transferred v14 saves gain the new Gun companion/progress fields immediately.
   saveMeta();
@@ -1665,7 +1538,7 @@ function returnToRoad(...args){
   $("feedAllPetBtn").addEventListener("click",()=>feedActivePet(meta.petCookies));
   $("debugTrigger").addEventListener("click",openDebugMenu);$("debugCloseBtn").addEventListener("click",()=>$("debugOverlay").classList.add("hidden"));$("debugGrid").addEventListener("click",e=>{const btn=e.target.closest("[data-debug]");if(btn)debugAction(btn.dataset.debug);});
   $("merchantContinueBtn").addEventListener("click",()=>{tiles[player.position].cleared=false;refreshTile(player.position);$("merchantOverlay").classList.add("hidden");returnToRoad();});
-  $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
+  $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=dbProgression.finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
   $("talentBtn").addEventListener("click",()=>openTalentTree());
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
@@ -1675,7 +1548,7 @@ function returnToRoad(...args){
 
 
 
-  generateBoard();buildBoard();renderClassChoices();renderEquipment();updateHUD();updateMetaUI();
+  dbRun.generateBoard();buildBoard();renderClassChoices();renderEquipment();updateHUD();updateMetaUI();
   // Historically the first-run timer prepared the Guide tab but did not open
   // the surface. Keep that timing contract explicit now that openInfo is a
   // stable module adapter rather than a captured legacy wrapper.
@@ -1724,15 +1597,13 @@ function returnToRoad(...args){
   `;
   document.head.appendChild(extraStyle);
 
-  rarityInfo.omega={label:"Omega",weight:0};
-  rarityValues.omega=9;
+
+
   rarityPrefixes.omega="Omega";
 
   /* Alpha v3.1.7: CLASS_TAGS is registry-owned. */
-  Object.assign(CLASSES,{
-    bloodmage:{id:"bloodmage",secret:true,name:"Bloodmage",icon:"🩸",attackIcon:"🩸",fxIcon:"🩸💥",unlock:"Secret: defeat the Bloodmage hidden inside a Bloodwell",desc:"A forbidden caster that spends life as fuel. Exsanguinate converts your own blood into damage, Replenish restores both combatants, and its ultimate turns injury into catastrophic area damage.",stats:"34 HP · 9 ATK · 1 DEF · LIFE-FUELLED",scaleNotes:"Attack scales burst damage, while max HP determines how much blood you can safely spend. Healing and lifesteal extend the amount of damage the class can buy with its own veins.",ultimate:{name:"Sanguine Cataclysm",icon:"🩸☄️",desc:"Deals heavy damage to every enemy, then restores a portion of the blood spilled."},base:{maxHp:34,attack:9,defense:1,crit:.12,dodge:.04,luck:.04,doubleStrike:.06,guardPower:.40,classBurst:.22,lifeSteal:.05}}
-  });
-  Object.entries(CLASS_TAGS).forEach(([id,tags])=>{if(CLASSES[id])CLASSES[id].tags=tags;});
+
+  Object.entries(CLASS_TAGS).forEach(([id,tags])=>{});
 
   function classBoardMarkerSrc(classId){const root=(window.DiceboundAssets?.paths?.uiClassMarkers)||"assets/ui/class-markers";return `${root}/${classId}.png`;}
   function applyClassBoardMarker(el,classId){
@@ -1857,7 +1728,7 @@ function returnToRoad(...args){
   document.head.appendChild(v12Style);
 
   /* Alpha v3.1.7: CLASS_PASSIVES is registry-owned. */
-  Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{if(CLASSES[id])CLASSES[id].passive=p;});
+  Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{});
 
   // The historical portrait extension chain starts below and is ultimately
   // replaced by the semantic-art owner. Keep its single lexical binding so
@@ -1902,9 +1773,6 @@ function returnToRoad(...args){
 
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;if(enemySource){const el=document.createElement("div");el.className="enemy-proc-fx";el.innerHTML=`<span>${target?.icon||"👹"} → ${art}</span><small>ENEMY ELEMENT PROC</small>`;head.appendChild(el);setTimeout(()=>el.remove(),900);return;}const el=document.createElement("div");el.className=`element-proc-fx ${key}`;el.textContent=art;head.appendChild(el);setTimeout(()=>el.remove(),850);};
 
-  function affinityElementMultiplier(...args){return dbCombat.affinityElementMultiplier(...args);}
-  function elementHit(...args){return dbCombat.elementHit(...args);}
-  function elementHitAll(...args){return dbCombat.elementHitAll(...args);}
 
   applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
 
@@ -1959,41 +1827,20 @@ function returnToRoad(...args){
     invoker:{builder:"Arcane Current",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Arcane Current generates Mana and a Green orb. Elemental Lance spends 50 Mana for a Red orb. Guard forms Blue; three orbs unlock Invoke."}
   };
 
-  Object.assign(CLASS_PASSIVES,{
-    ranger:{name:"Marked Quarry",desc:"Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."},
-    fighter:{name:"Counterstance",desc:"Guarding primes the Fighter's next basic attack for a heavy counterblow."},
-    sorcerer:{name:"Arcane Reservoir",desc:"Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts Echo Strike chance into damage, and applies Lifesteal."},
-    monk:{name:"Flowing Combo",desc:"Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."},
-    clown:{name:"Opening Gag",desc:"Every battle begins with a random comedy gimmick: shoes, pies, barriers, applause or chickens."},
-    berserker:{name:"Blood Rage",desc:"Every 1% missing HP grants +1% damage as Rage. The Rage bar fills as HP falls."},
-    turtle:{name:"Shell Discipline",desc:"Guarding primes a crushing shell counter on the next basic attack. Starts with an extra Barrier and +1 Defense."},
-    frog:{name:"Predatory Bounce",desc:"Echo-heavy attacks become especially vicious against enemies below half HP."},
-    d20:{name:"Probability Leak",desc:"Nearly every combat action rolls a visible d20. The class intentionally pauses so you can witness fate making mistakes."},
-    slime:{name:"Borrowed Shapes",desc:"Has no privileged mechanic of its own. Instead it can learn many non-Ultimate class powers from other non-secret classes."},
-    vampire:{name:"Night Hunger",desc:"Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."},
-    ninja:{name:"Smoke Counter",desc:"Critical hits build Smoke. At 3 Smoke, the next basic attack becomes a defense-piercing execution strike."},
-    rouge:{name:"Painted Hexcraft",desc:"Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."},
-    ceo:{name:"Executive Compensation",desc:"All gold gained is increased by +200%. Secret classes are allowed to be financially irresponsible."},
-    merchant:{name:"Occult Accounting",desc:"Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."},
-    cleric:{name:"Faith",desc:"Healing builds Faith. At full Faith, the Cleric can cast a free Consecration during combat."},
-    paladin:{name:"Oathplate",desc:"Defense contributes 35% of its value to ordinary attack damage. The class remains deliberately stable and dependable."},
-    beastmaster:{name:"Pack Orders",desc:"Can switch its companion between Aggressive, Defensive and Support stances during battle."},
-    rogue:{name:"Sticky Fingers",desc:"Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also steal a random powerup. Starts with +25% gold gain and +5% Dodge."},
-    bloodmage:{name:"Blood Is Mana",desc:"Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."}
-  });
-  Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{if(CLASSES[id])CLASSES[id].passive=p;});
 
-  if(CLASSES.sorcerer){CLASSES.sorcerer.desc="An occult spellcaster with a real Mana cycle: Channel Bolt builds Mana and Arcane Lance spends it on heavy elemental magic. Arcane Lance converts half of Echo Strike chance into bonus spell damage and applies Lifesteal.";CLASSES.sorcerer.stats="27 HP · 7 ATK · 25/100 MANA · 5 LUCK";CLASSES.sorcerer.scaleNotes="Attack powers both Channel Bolt and Arcane Lance. Arcane Lance converts half of your Echo Strike chance into bonus damage and applies Lifesteal to the spell plus its forced elemental eruption. Mana generation determines spell frequency; Crit, elemental power and Luck improve the payoff.";}
-  if(CLASSES.vampire){CLASSES.vampire.desc="A lifestealing occult duelist. Night Siphon builds Mana; Grave Lance spends it and drinks the damage back as health.";CLASSES.vampire.stats="36 HP · 7 ATK · 25/100 MANA · 28% LIFESTEAL";}
-  if(CLASSES.rouge){CLASSES.rouge.desc="Rouge—the colour, not the thief—is a crimson battle artist whose occult brushwork builds Mana for Scarlet Hex.";CLASSES.rouge.stats="31 HP · 7 ATK · 25/100 MANA · 12% CRIT";}
-  if(CLASSES.merchant){CLASSES.merchant.desc="A secret trader using gold, resale margins and actual occult accounting. It builds Mana with Ledger Tap and spends it on Foreclosure Hex.";CLASSES.merchant.stats="45 HP · 10 ATK · 25/100 MANA · 20 LUCK · GOLD SCALING";}
-  if(CLASSES.rogue){CLASSES.rogue.desc="A fast opportunist built around Dodge, gold and one Steal attempt per battle. The Rogue wins by making every pocket somebody else's problem.";}
-  if(CLASSES.bloodmage){CLASSES.bloodmage.desc="A forbidden occult caster that replaces Mana with HP. Bloodletting restores fuel, Exsanguinate spends life for damage, and Replenish heals both combatants.";}
-  if(CLASSES.d20){CLASSES.d20.desc="A hidden avatar of probability. Combat actions visibly roll a d20, pause on the result, and can erupt into absurd outcomes.";}
-  if(CLASSES.slime){CLASSES.slime.desc="No true class identity and no exclusive specialty: the Slime survives by borrowing non-Ultimate strengths from many other non-secret classes.";}
+  Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{});
 
-  ["sorcerer","vampire","rouge","merchant"].forEach(id=>{if(CLASSES[id])CLASSES[id].tags=[...new Set([...(CLASSES[id].tags||[]),"mana"])];});
-  if(CLASSES.bloodmage)CLASSES.bloodmage.tags=[...new Set([...(CLASSES.bloodmage.tags||[]),"blood-fuel"])];
+  if(CLASSES.sorcerer){}
+  if(CLASSES.vampire){}
+  if(CLASSES.rouge){}
+  if(CLASSES.merchant){}
+  if(CLASSES.rogue){}
+  if(CLASSES.bloodmage){}
+  if(CLASSES.d20){}
+  if(CLASSES.slime){}
+
+  ["sorcerer","vampire","rouge","merchant"].forEach(id=>{});
+
 
   // ---- even more thematic class portraits -----------------------------------
   const classArtV13={
@@ -2100,9 +1947,6 @@ function returnToRoad(...args){
 
   // ---- occult attacks --------------------------------------------------------
   // Mana / occult action ownership lives in combat/mana-action-resolution.js.
-  function manaGain(amount){return dbCombat.manaGain(amount);}
-  async function occultChannelAttack(...args){return dbCombat.channel(...args);}
-  async function occultSpellAttack(...args){return dbCombat.spell(...args);}
 
 
   // Rogue Steal mechanics are owned by DiceboundClasses.
@@ -2133,10 +1977,10 @@ function returnToRoad(...args){
     getEncounterLead:()=>currentEncounterLead,
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    basicAttack:()=>playerAttack(),
+    basicAttack:()=>dbCombat.attack(),
     identityFlash:text=>identityFlash(text),
     updateCombatUI:()=>updateCombatUI(),
-    healPlayer:amount=>healPlayer(amount),
+    healPlayer:amount=>dbCombat.heal(amount),
     damageAll:(amount,falloff=1)=>damageAll(amount,falloff),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
     setCombatText:text=>setCombatText(text),
@@ -2147,8 +1991,8 @@ function returnToRoad(...args){
     sfxCrit:()=>sfx.crit(),
     delay:ms=>delay(ms),
     livingEnemies:()=>livingEnemies(),
-    winCombat:()=>winCombat(),
-    resolveEnemyResponse:guarded=>resolveEnemyResponse(guarded),
+    winCombat:()=>dbCombat.win(),
+    resolveEnemyResponse:guarded=>dbCombat.enemyResponse(guarded),
     isClassActive:id=>classIdentityActive(id),
     random:()=>random(),
     rand:(min,max)=>rand(min,max),
@@ -2158,7 +2002,7 @@ function returnToRoad(...args){
     pick:values=>pick(values),
     applyUpgrade:(upgrade,source)=>applyUpgrade(upgrade,source),
     showToast:(...args)=>showToast(...args),
-    rollD20Chaos:kind=>rollD20Chaos(kind),
+    rollD20Chaos:kind=>dbCombat.chaos(kind),
     animateClassAttack:mode=>animateClassAttack(mode),
     getSetDamageBonus:()=>v19SetDamageBonus(),
     applyMythicRingPulse:()=>applyMythicRingPulse(),
@@ -2169,17 +2013,17 @@ function returnToRoad(...args){
     recordPotionUse:()=>{if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();},
     chargeUltimate:amount=>chargeUltimate(amount),
     pickElementKey:()=>pick(ELEMENT_KEYS),
-    triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options)
+    triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options)
   });
   dbClasses.configureActions({
-    basicAttack:()=>playerAttack(),
-    manaAttack:()=>occultChannelAttack(),
+    basicAttack:()=>dbCombat.attack(),
+    manaAttack:()=>dbCombat.channel(),
     bloodmageAttack:()=>dbClasses.bloodmageBloodletting(),
     guard:()=>identityGuardAction(),
     bloodmageGuard:()=>dbClasses.bloodmageReplenish(),
     potion:()=>identityPotionAction(),
     ultimate:()=>useUltimate(),
-    manaSpecial:()=>occultSpellAttack(),
+    manaSpecial:()=>dbCombat.spell(),
     bloodmageSpecial:()=>dbClasses.bloodmageExsanguinate(),
     rogueSpecial:()=>dbClasses.rogueSteal(),
     clericSpecial:()=>dbClasses.clericConsecration(),
@@ -2301,28 +2145,19 @@ function returnToRoad(...args){
   meta.beastmasterNightmareBoard5=!!meta.beastmasterNightmareBoard5;
   meta.unlocks=meta.unlocks||{};
 
-  Object.assign(CLASSES,{
-    summoner:{id:"summoner",name:"Summoner",icon:"📖",attackIcon:"✨",fxIcon:"🔹🐾",unlock:"Raise any 3 companions to level 10",desc:"A Mana-based pet caster. Spirit Bolt builds Mana; Conjure Familiar spends it to call temporary elemental spirits that join companion attacks for the rest of the battle.",stats:"31 HP · 6 ATK · 35/120 MANA · SUMMONS",ultimate:{name:"Grand Convergence",icon:"🌌",desc:"Calls a temporary full spirit circle and sends every summoned familiar crashing through the enemy pack."},base:{maxHp:31,attack:6,defense:1,crit:.08,dodge:.05,luck:.08,doubleStrike:.05,guardPower:.54,classBurst:.18,lifeSteal:0},tags:["occult","mana","pet","pack","ranged"]},
-    pokemontrainer:{id:"pokemontrainer",secret:true,name:"Pokémon Trainer",icon:"🧢",attackIcon:"🔴",fxIcon:"🐾✨",unlock:"Secret: master every companion and prove the Beastmaster on the fifth Nightmare road",desc:"A secret late-game companion master. Six Dicebound creatures are randomly drafted at the start of every run; switch between them freely and unleash the entire roster together.",stats:"40 HP · 8 ATK · 2 DEF · SIX-CREATURE ROSTER",ultimate:{name:"Six-Pack Stampede",icon:"🌈🐾",desc:"Every creature in the six-member roster attacks the entire pack in rapid succession."},base:{maxHp:40,attack:8,defense:2,crit:.12,dodge:.08,luck:.10,doubleStrike:.08,guardPower:.60,classBurst:.26,lifeSteal:.04},tags:["pet","pack","weird","strong","lucky"]}
-  });
-  CLASS_TAGS.summoner=["occult","mana","pet","pack","ranged"];
-  CLASS_TAGS.pokemontrainer=["pet","pack","weird","strong","lucky"];
-  CLASS_PASSIVES.summoner={name:"Spirit Circle",desc:"Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."};
-  CLASS_PASSIVES.pokemontrainer={name:"Six-Creature Draft",desc:"At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."};
-  CLASSES.summoner.passive=CLASS_PASSIVES.summoner;CLASSES.pokemontrainer.passive=CLASS_PASSIVES.pokemontrainer;
+
+
+
+
+
+
   MANA_OCCULT_CLASSES.add("summoner");
   OCCULT_SPELLS.summoner={builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."};
   Object.assign(gearNames.weapon,{summoner:["Conjurer's Crook","Pact Tome","Astral Bell"],pokemontrainer:["Trainer Baton","Red Capture Orb","Champion Whistle"]});
   Object.assign(gearNames.offhand,{summoner:["Spirit Ledger","Familiar Seal","Summoning Grimoire"],pokemontrainer:["Creature Index","Treat Belt","Six-Slot Harness"]});
   for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].summoner=[`Pactbound ${SLOT_LABELS[slot]}`];gearNames[slot].pokemontrainer=[`Champion ${SLOT_LABELS[slot]}`];}
 
-  upgrades.push(
-    {id:"summoner_deeper_circle",classId:"summoner",rarity:"uncommon",icon:"🔷",name:"Deeper Circle",desc:"Conjured spirits deal +3 damage and Spirit Bolt generates +6 Mana.",tags:["pet","mana"],apply(){player.petDamageBonus+=3;player.summonerManaBonus=(player.summonerManaBonus||0)+6;}},
-    {id:"summoner_twin_pact",classId:"summoner",rarity:"rare",icon:"🐾🐾",name:"Twin Pact",desc:"Summoned spirits gain +25% damage and a 15% chance to attack twice.",tags:["pet","pack"],apply(){player.summonerSpiritScale=(player.summonerSpiritScale||1)+.25;player.summonerSpiritDouble=(player.summonerSpiritDouble||0)+.15;}},
-    {id:"summoner_archpact",classId:"summoner",rarity:"legendary",icon:"🌌📖",name:"Archpact",desc:"Begin every battle with one random spirit already conjured, +20 max Mana and +5 pet damage.",tags:["pet","mana","legendary"],apply(){player.summonerAutoSpirit=true;player.maxMana+=20;player.mana=Math.min(player.maxMana,player.mana+20);player.petDamageBonus+=5;}},
-    {id:"trainer_double_battle",classId:"pokemontrainer",rarity:"rare",icon:"🐾⚔️",name:"Double Battle",desc:"Roster assist chance rises by 20% and assists deal more damage.",tags:["pet","pack"],apply(){player.trainerAssistBonus=(player.trainerAssistBonus||0)+.20;player.trainerAssistScale=(player.trainerAssistScale||.65)+.20;}},
-    {id:"trainer_champion",classId:"pokemontrainer",rarity:"legendary",icon:"🏆🐾",name:"Road Champion",desc:"Every roster creature gains +5 effective pet damage and the Six-Pack Stampede is 35% stronger.",tags:["pet","pack","legendary"],apply(){player.petDamageBonus+=5;player.trainerUltimateBonus=(player.trainerUltimateBonus||0)+.35;}}
-  );
+
 
   // ---- Defense becomes diminishing percentage reduction --------------------
   function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+25),0,.82);}
@@ -2336,21 +2171,14 @@ function returnToRoad(...args){
   {const oldBtn=$("equipLootBtn");if(oldBtn){const neo=oldBtn.cloneNode(true);oldBtn.replaceWith(neo);neo.addEventListener("click",async()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot],delta=current?gearPowerScore(pendingLootItem)-gearPowerScore(current):999;if(current&&delta<0&&!(await diceboundConfirm(`${pendingLootItem.name} rolls lower overall quality than ${current.name} after considering its hidden quality budget and visible stats. Replace it anyway? ${current.name} will automatically be sold for ${itemSellValue(current)} gold.`,{title:"Replace stronger gear?",confirmLabel:"Replace anyway",danger:true})))return;equipItem(pendingLootItem);closeLoot();});}}
 
   // ---- Summoner & Pokémon Trainer runtime ----------------------------------
-  function shuffledPetIds(){return dbPets.shuffledPetIds();}
-  function trainerPetDamage(id){return dbCombat.trainerPetDamage(id);}
-  function petElementFor(id){return dbCombat.petElementFor(id);}
-  function activeTrainerPetId(){return dbCombat.activeTrainerPetId();}
-  async function maybePetElementProc(id,target,source="Companion Spark"){return dbCombat.maybePetElementProc(id,target,source);}
-  async function trainerStrike(id,target,scale=1,label="attacks"){return dbCombat.trainerStrike(id,target,scale,label);}
-  async function summonerConjure(...args){return dbCombat.summonerConjure(...args);}
-  function cycleTrainerPokemon(){if(!classIdentityActive("pokemontrainer")||combatBusy)return;const roster=player.trainerRoster||[];if(!roster.length)return;player.trainerActiveIndex=((player.trainerActiveIndex||0)+1)%roster.length;const id=activeTrainerPetId();identityFlash(`${PETS[id].icon} Go, ${PETS[id].name}!`);setCombatText(`🧢 You switch to ${PETS[id].icon} ${PETS[id].name}. Switching does not spend your turn.`);updateCombatUI();}
+                function cycleTrainerPokemon(){if(!classIdentityActive("pokemontrainer")||combatBusy)return;const roster=player.trainerRoster||[];if(!roster.length)return;player.trainerActiveIndex=((player.trainerActiveIndex||0)+1)%roster.length;const id=dbCombat.activeTrainerPetId();identityFlash(`${PETS[id].icon} Go, ${PETS[id].name}!`);setCombatText(`🧢 You switch to ${PETS[id].icon} ${PETS[id].name}. Switching does not spend your turn.`);updateCombatUI();}
   $("specialAttackBtn")?.addEventListener("click",e=>{if(classIdentityActive("pokemontrainer")){e.preventDefault();e.stopImmediatePropagation();cycleTrainerPokemon();}},true);
 
 
 
 
 
-  if(!talents.some(t=>t.id==="companion_element_proc"))talents.push({id:"companion_element_proc",branch:"Companion",icon:"🌈🐾",name:"Primal Spark",cost:3,maxRank:3,desc:"Each rank gives companion and summoned-creature hits a 2.5% chance to trigger their element's full proc.",requires:[req("companion_ascendant",1),req("element_attunement",1)]});
+
 
 
 
@@ -2390,11 +2218,6 @@ function returnToRoad(...args){
   document.head.appendChild(v16Style);
 
   // ---- Radiation ------------------------------------------------------------
-  if(!ELEMENTS.radiation){
-    ELEMENTS.radiation={name:"Radiation",icon:"☢️",spell:"Irradiate",description:"Deals light elemental damage and permanently lowers the target's Defense for the current battle."};
-    if(!ELEMENT_KEYS.includes("radiation"))ELEMENT_KEYS.push("radiation");
-    PETS.radiation={id:"radiation",name:"Glowbug",icon:"☢️🐛",element:"radiation",desc:"A suspiciously luminous companion. Slightly stronger than DiBo and grants a small Element Power bonus while active."};
-  }
   const radiationWeakling=enemyPool.find(e=>e.name==="Demon");if(radiationWeakling)radiationWeakling.weakness="radiation";
   meta.pets=meta.pets||{};if(!meta.pets.radiation)meta.pets.radiation=defaultPetState(false);
   meta.elementProgress=meta.elementProgress||{};if(meta.elementProgress.radiation==null)meta.elementProgress.radiation=0;
@@ -2406,26 +2229,15 @@ function returnToRoad(...args){
   // Enemy affinity can never contradict its weakness.
 
   // ---- New Alchemist class --------------------------------------------------
-  CLASSES.alchemist={id:"alchemist",name:"Alchemist",icon:"⚗️",attackIcon:"🧪",fxIcon:"🧪💥",unlock:"Use 100 potions across all runs",desc:"A potion engineer who brews replacements during combat and can drink potions for healing or throw them as volatile weapons. Offensive flask damage scales directly with Potion Healing bonuses.",stats:"34 HP · 6 ATK · 1 DEF · +25% POTION HEALING",ultimate:{name:"Grand Distillation",icon:"⚗️✨",desc:"Creates three potions, restores health and detonates an oversized restorative formula across the enemy pack."},base:{maxHp:34,attack:6,defense:1,crit:.08,dodge:.04,luck:.06,doubleStrike:.04,guardPower:.54,classBurst:.14,lifeSteal:0},tags:["alchemy","sustain","ranged","weird"]};
-  CLASS_TAGS.alchemist=["alchemy","sustain","ranged","weird"];
-  CLASS_PASSIVES.alchemist={name:"Combat Distillery",desc:"Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."};CLASSES.alchemist.passive=CLASS_PASSIVES.alchemist;
+
+
+
   Object.assign(gearNames.weapon,{alchemist:["Catalyst Rod","Glassbreaker","Distillation Staff"]});Object.assign(gearNames.offhand,{alchemist:["Reagent Case","Portable Still","Unlabelled Flask Rack"]});for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].alchemist=[`Distiller's ${SLOT_LABELS[slot]}`];}
-  upgrades.push(
-    {id:"alchemist_quick_brew",classId:"alchemist",rarity:"uncommon",icon:"🧪⚙️",name:"Quick Brew",desc:"Combat Distillery creates a potion every 2 basic attacks instead of every 3.",tags:["alchemy","sustain"],apply(){player.alchemistBrewNeed=2;}},
-    {id:"alchemist_volatile_formula",classId:"alchemist",rarity:"rare",icon:"💥🧪",name:"Volatile Formula",desc:"Volatile Flask deals +35% damage and has a 20% chance to trigger a random element.",tags:["alchemy","damage","elemental"],apply(){player.alchemistFlaskBonus=(player.alchemistFlaskBonus||0)+.35;player.alchemistElementChance=(player.alchemistElementChance||0)+.20;}},
-    {id:"alchemist_panacea_engine",classId:"alchemist",rarity:"legendary",icon:"⚗️🌈",name:"Panacea Engine",desc:"+75% Potion Healing. Volatile Flask has a 30% chance not to consume its potion.",tags:["alchemy","sustain","legendary"],apply(){player.potionPower+=.75;player.alchemistFreeFlask=(player.alchemistFreeFlask||0)+.30;}}
-  );
+
   function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
   // Volatile Flask consumption/action mechanics are owned by DiceboundClasses.
 
   // ---- Talents --------------------------------------------------------------  // ---- Talents --------------------------------------------------------------
-  const v16Talents=[
-    {id:"fortune_powerup_rerolls",branch:"Fortune",icon:"🔄✨",name:"Second Opinion",cost:1,maxRank:5,desc:"Each rank adds 1 Powerup Reroll at the start of every run.",requires:[req("fortune_luck",1)]},
-    {id:"fighter_counter_reserve",branch:"Power",icon:"🛡️🛡️",name:"Counter Reserve",cost:2,maxRank:1,desc:"Fighter can bank up to 2 Counterblow stacks instead of 1.",requires:[req("power_attack",2)]},
-    {id:"ranger_deep_marks",branch:"Power",icon:"🏹🎯",name:"Deep Quarry",cost:1,maxRank:3,desc:"Each rank increases Ranger's maximum Marks per enemy by 1.",requires:[req("power_crit",2)]},
-    {id:"monk_flow_ceiling",branch:"Power",icon:"🥋🔥",name:"Endless Form",cost:1,maxRank:3,desc:"Each rank increases Monk's maximum Combo by 1.",requires:[req("power_echo",1)]},
-    {id:"turtle_guard_element",branch:"Elements",icon:"🐢🌈",name:"Resonant Carapace",cost:2,maxRank:3,desc:"Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.",requires:[req("element_attunement",1),req("survival_armor",1)]}
-  ];for(const t of v16Talents)if(!talents.some(x=>x.id===t.id))talents.push(t);
 
   // ---- Per-run identity state ----------------------------------------------
 
@@ -2452,7 +2264,7 @@ function returnToRoad(...args){
 
   // ---- Second Sun actually works -------------------------------------------
   const handlePlayerDeathV16Base=handlePlayerDeath;
-  handlePlayerDeath=function(){if(player.hp<=0&&player.secondSun&&!player.secondSunUsedBoards?.[boardLevel]){player.secondSunUsedBoards=player.secondSunUsedBoards||{};player.secondSunUsedBoards[boardLevel]=true;player.hp=1;combatBusy=false;sfx.holy();const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];let holy="";if(target){const r=triggerElementEffect("light",target,{forced:true,source:"Second Sun"});holy=r?.message||"Holy erupts across the pack.";}addLog(`<b>Second Sun!</b> Death is refused on Board ${boardLevel}.`);setCombatText(`☀️☀️ Second Sun returns you at 1 HP. ${holy}`);updateCombatUI();if(!livingEnemies().length)return winCombat();return;}return handlePlayerDeathV16Base();};
+  handlePlayerDeath=function(){if(player.hp<=0&&player.secondSun&&!player.secondSunUsedBoards?.[boardLevel]){player.secondSunUsedBoards=player.secondSunUsedBoards||{};player.secondSunUsedBoards[boardLevel]=true;player.hp=1;combatBusy=false;sfx.holy();const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];let holy="";if(target){const r=dbCombat.element("light",target,{forced:true,source:"Second Sun"});holy=r?.message||"Holy erupts across the pack.";}addLog(`<b>Second Sun!</b> Death is refused on Board ${boardLevel}.`);setCombatText(`☀️☀️ Second Sun returns you at 1 HP. ${holy}`);updateCombatUI();if(!livingEnemies().length)return dbCombat.win();return;}return handlePlayerDeathV16Base();};
 
   // ---- Sovereign Relic: force a visible choice flow ------------------------
 
@@ -2473,14 +2285,14 @@ function returnToRoad(...args){
   try{Object.defineProperty(window,"DiceboundV16Regression",{value:{
     state:()=>({boardLevel,gameStarted,runFinalized,playerClass:player.classId,gold:player.gold,gear:EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]?.name).filter(Boolean),endVisible:!$("endOverlay").classList.contains("hidden"),powerVisible:!$("powerupOverlay").classList.contains("hidden")}),
     prepareSovereign:()=>{boardLevel=4;gameStarted=true;player.gold=99999;currentMerchantNotice="";currentMerchantItems=[{id:"relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one of three random Legendary powerups.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");renderMerchant();return true;},
-    prepareAlchemist:()=>{meta.stats.potionsUsed=100;checkDynamicClassUnlocks();renderClassChoices();return isClassUnlocked("alchemist");},
-    forceFifthWin:async()=>{gameStarted=true;runFinalized=false;boardLevel=5;player.position=0;player.gold=0;player.level=1;player.xp=0;player.xpNext=20;player.equipment=player.equipment||{};player.equipment.ring=generateMythicalRing();generateBoard();player.position=tiles.length-1;currentEnemyTile=tiles.length-1;const e={name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,finalBoss:true,boss:true,guardian:true};currentEnemies=[e];currentEncounterLead=e;currentEnemy=e;v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await winCombat();await new Promise(r=>setTimeout(r,80));return {boardLevel,gameStarted,runFinalized,gear:player.equipment.ring?.name,endVisible:!$("endOverlay").classList.contains("hidden")};}finally{Math.random=oldRandom;}}
+    prepareAlchemist:()=>{meta.stats.potionsUsed=100;dbProgression.checkDynamicClassUnlocks();renderClassChoices();return dbProgression.isClassUnlocked("alchemist");},
+    forceFifthWin:async()=>{gameStarted=true;runFinalized=false;boardLevel=5;player.position=0;player.gold=0;player.level=1;player.xp=0;player.xpNext=20;player.equipment=player.equipment||{};player.equipment.ring=generateMythicalRing();dbRun.generateBoard();player.position=tiles.length-1;currentEnemyTile=tiles.length-1;const e={name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,finalBoss:true,boss:true,guardian:true};currentEnemies=[e];currentEncounterLead=e;currentEnemy=e;v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await new Promise(r=>setTimeout(r,80));return {boardLevel,gameStarted,runFinalized,gear:player.equipment.ring?.name,endVisible:!$("endOverlay").classList.contains("hidden")};}finally{Math.random=oldRandom;}}
   },enumerable:false,configurable:false,writable:false});}catch(e){}
 
-  saveMeta();checkDynamicClassUnlocks();renderClassChoices();renderInfo();refreshDebugButtons();updateHUD();
+  saveMeta();dbProgression.checkDynamicClassUnlocks();renderClassChoices();renderInfo();refreshDebugButtons();updateHUD();
 
 
-  saveMeta();checkDynamicClassUnlocks();refreshDebugButtons();renderClassChoices();renderInfo();
+  saveMeta();dbProgression.checkDynamicClassUnlocks();refreshDebugButtons();renderClassChoices();renderInfo();
 
   // Refresh visible UI once the new identity/art layer is active.
   renderClassChoices();
@@ -2509,7 +2321,7 @@ function returnToRoad(...args){
 
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
   const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){resonantTalent.name="Resonant Carapace";resonantTalent.desc="Each rank gives Guardian-tagged classes a 5% chance to trigger an elemental proc whenever they Guard.";resonantTalent.maxRank=3;}
-  if(!upgrades.some(u=>u.id==="reactive_carapace"))upgrades.push({id:"reactive_carapace",classIds:["turtle","slime"],rarity:"rare",icon:"🐢🌈",name:"Reactive Carapace",desc:"Guard gains +12% chance to trigger an elemental proc.",tags:["guardian","elemental"],apply(){player.guardElementProcBonus=(player.guardElementProcBonus||0)+.12;}});
+
 
   // ---- Potion / Echo tooltips ----------------------------------------------
 
@@ -2520,7 +2332,7 @@ function returnToRoad(...args){
   // Soften the historical Board-4-only overboost by compensating it, then let v1.7's monotonic layer rebuild the curve.
 
   // ---- Ninja Smoke ---------------------------------------------------------
-  if(!upgrades.some(u=>u.id==="ninja_smoke_step"))upgrades.push({id:"ninja_smoke_step",classId:"ninja",rarity:"epic",unique:true,icon:"🌫️🥷",name:"Vanishing Point",desc:"Unique: Smoke Execution needs one fewer Smoke stack.",tags:["dodgy","precision","unique"],apply(){player.ninjaSmokeNeed=2;player.ninjaSmoke=Math.min(player.ninjaSmoke||0,2);}});
+
 
 
   // ---- Prismatic Birthright runtime migration -----------------------------
@@ -2540,7 +2352,7 @@ function returnToRoad(...args){
     {id:"mana_deep_reservoir",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"uncommon",icon:"🔷",name:"Deep Reservoir",desc:"+25 max Mana and restore 25 Mana immediately.",tags:["mana","occult"],apply(){player.maxMana=(player.maxMana||0)+25;player.mana=Math.min(player.maxMana,(player.mana||0)+25);}},
     {id:"mana_quick_channel",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"rare",icon:"⚡🔮",name:"Quick Channel",desc:"Mana-building attacks generate +8 Mana.",tags:["mana","tempo"],apply(){player.manaBuilderBonus=(player.manaBuilderBonus||0)+8;}},
     {id:"mana_overflow",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"epic",icon:"🌊🔮",name:"Arcane Overflow",desc:"+35 max Mana. Spending Mana grants 8 Ultimate charge.",tags:["mana","ultimate"],apply(){player.maxMana=(player.maxMana||0)+35;player.mana=Math.min(player.maxMana,(player.mana||0)+35);player.manaSpendUltimate=(player.manaSpendUltimate||0)+8;}}
-  ].forEach(u=>{if(!upgrades.some(x=>x.id===u.id))upgrades.push(u);});
+  ].forEach(u=>{});
 
   // ---- Summoner spirits become visible in combat --------------------------
 
@@ -2612,17 +2424,9 @@ function returnToRoad(...args){
   // Attack is deliberately fixed at 10. Any system that tries to add/remove
   // Attack is translated into +/-10% Echo per Attack point instead. This hook
   // makes talents, gear, Bloodwell exchanges and powerups all obey one rule.
-  CLASSES.ouroboros={
-    id:"ouroboros",secret:true,name:"Ouroboros",icon:"🐍♾️",attackIcon:"🐍",fxIcon:"♾️🐍",
-    unlock:"Secret: reach 400% Echo Strike during a run",
-    desc:"A recursive serpent that refuses normal Attack scaling. Attack is fixed at 10; every point of Attack gained or lost becomes 10% Echo Strike instead. Its best powers turn absurd Echo into poison and elemental recursion.",
-    stats:"42 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT",
-    scaleNotes:"Attack cannot move from 10. Attack bonuses convert into Echo Strike at 10% per point; Echo, Poison and elemental effects are the real scaling engines.",
-    ultimate:{name:"Infinite Return",icon:"♾️☠️",desc:"A chain of serpent strikes whose hit count scales with Echo Strike. Every hit adds Poison and can bounce through the pack."},
-    base:{maxHp:42,attack:10,defense:2,crit:.08,dodge:.06,luck:.04,doubleStrike:1.20,guardPower:.56,classBurst:.14,lifeSteal:.04}
-  };
-  CLASS_TAGS.ouroboros=["secret","weird","echo","poison","elemental","dodgy"];
-  CLASSES.ouroboros.tags=CLASS_TAGS.ouroboros;
+
+
+
   gearNames.weapon.ouroboros=["Tailbite Fang","Recursive Fang","Serpent Loopblade"];
   gearNames.offhand.ouroboros=["Shed Scale","Venom Ouroboros Idol","Looped Egg"];
   for(const slot of ["boots","legs","chest","hat","ring","amulet"]){
@@ -2636,26 +2440,10 @@ function returnToRoad(...args){
     {id:"ouro_elemental_molting",classId:"ouroboros",rarity:"epic",icon:"🌈🐍",name:"Elemental Molting",desc:"Gain +40% Echo Strike, +20% Element Power and 6% chance for attacks to trigger an additional random element.",tags:["echo","elemental"],apply(){player.doubleStrike+=.40;player.elementDamageBonus+=.20;player.omniElementChance=(player.omniElementChance||0)+.06;}},
     {id:"ouro_tail_world",classId:"ouroboros",rarity:"legendary",unique:true,icon:"👑♾️",name:"The Tail Devours the World",desc:"Gain +100% Echo Strike. Poison gains +15% Attack damage per stack, +20% Poison-on-hit and +10% random-element chance.",tags:["echo","poison","elemental","legendary"],apply(){player.doubleStrike+=1;player.poisonStackPower=(player.poisonStackPower||.12)+.15;player.poisonOnHitChance=(player.poisonOnHitChance||0)+.20;player.omniElementChance=(player.omniElementChance||0)+.10;}}
   ];
-  ouroborosPowers.forEach(u=>{if(!upgrades.some(x=>x.id===u.id))upgrades.push(u);});
+  ouroborosPowers.forEach(u=>{});
 
   // A one-copy identity power that complements the broader Endless Form talent.
-  if(!upgrades.some(x=>x.id==="perfected_signature"))upgrades.push({
-    id:"perfected_signature",rarity:"epic",unique:true,icon:"✨🧬",name:"Perfected Signature",
-    desc:"Unique: sharply strengthens your current class's signature resource or technique.",
-    apply(){
-      const id=classIdentityId();
-      if(id==="ranger")player.rangerMarkMax=(player.rangerMarkMax||3)+2;
-      else if(id==="fighter")player.fighterCounterPowerBonus=(player.fighterCounterPowerBonus||0)+.30;
-      else if(id==="monk")player.monkComboMax=(player.monkComboMax||5)+2;
-      else if(id==="turtle")player.turtleGuardMax=(player.turtleGuardMax||5)+2;
-      else if(id==="cleric")player.clericFaithGainBonus=(player.clericFaithGainBonus||0)+.35;
-      else if(id==="summoner")player.summonerSpiritScale=(player.summonerSpiritScale||1)+.30;
-      else if(id==="alchemist")player.alchemistFlaskBonus=(player.alchemistFlaskBonus||0)+.35;
-      else if(MANA_OCCULT_CLASSES.has(id)){player.maxMana=(player.maxMana||0)+25;player.mana=Math.min(player.maxMana,(player.mana||0)+25);player.manaBuilderBonus=(player.manaBuilderBonus||0)+5;}
-      else if(id==="ninja")player.ninjaSmokeNeed=Math.max(2,(player.ninjaSmokeNeed||3)-1);
-      else {player.ultimateDamageBonus=(player.ultimateDamageBonus||0)+.25;player.elementDamageBonus=(player.elementDamageBonus||0)+.15;}
-    }
-  });
+
 
   // ---- Talent revisions and new fourth-choice node -------------------------
   const nuzzleTalent=talents.find(t=>t.id==="companion_recovery");
@@ -2665,10 +2453,7 @@ function returnToRoad(...args){
     endlessTalent.name="Endless Form";
     endlessTalent.desc="Each rank improves many class signatures: Ranger Marks, Monk Combo, Turtle Guard chain, Fighter Counterblow power, Mana building, Cleric Faith gain, Summoner spirits and Alchemist flasks.";
   }
-  if(!talents.some(t=>t.id==="fortune_extra_choice"))talents.push({
-    id:"fortune_extra_choice",branch:"Fortune",icon:"🃏✨",name:"Expanded Horizons",cost:3,maxRank:1,
-    desc:"Level-ups offer 4 powerup choices instead of 3.",requires:[req("fortune_powerup_rerolls",3)]
-  });
+
 
   // ---- Per-run state and class-passive normalization -----------------------
 
@@ -2717,17 +2502,17 @@ function returnToRoad(...args){
   // player-facing debug button. They are safe to ignore during normal play.
   Object.defineProperty(window,"DiceboundV18Regression",{configurable:true,value:{
     tooltipState:()=>({potion:$("potionText")?.closest('.stat')?.dataset.tip,defense:$("defenseText")?.closest('.stat')?.dataset.tip,echo:$("echoText")?.closest('.stat')?.dataset.tip}),
-    unlockOuroboros:()=>{meta.unlocks.ouroboros=true;saveMeta();renderClassChoices();return isClassUnlocked("ouroboros");},
+    unlockOuroboros:()=>{meta.unlocks.ouroboros=true;saveMeta();renderClassChoices();return dbProgression.isClassUnlocked("ouroboros");},
     alchemistCounter:()=>{renderClassChoices();const progress=window.DiceboundClassChooser?.alchemistProgress?.();return progress?`Potion uses: ${progress.used} / ${progress.required}`:"";},
     sovereign:()=>{player.gold=99999;currentMerchantItems=[{id:"v18_sovereign",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");renderMerchant();return true;},
-    ouroborosConversion:()=>{meta.unlocks.ouroboros=true;resetPlayer("ouroboros");const before=player.doubleStrike;player.attack+=5;updateHUD();return {attack:player.attack,before,after:player.doubleStrike,unlocked:isClassUnlocked("ouroboros")};},
+    ouroborosConversion:()=>{meta.unlocks.ouroboros=true;resetPlayer("ouroboros");const before=player.doubleStrike;player.attack+=5;updateHUD();return {attack:player.attack,before,after:player.doubleStrike,unlocked:dbProgression.isClassUnlocked("ouroboros")};},
     bloodmageHp:()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");const before=player.maxHp;player.maxHp+=10;player.hp+=10;updateHUD();return {before,after:player.maxHp,delta:player.maxHp-before};},
     levelChoices:()=>{resetPlayer("ranger");player.levelChoiceBonus=1;pendingLevelUps=1;dbPowerups.openLevelUp();return {choices:$("choiceGrid").querySelectorAll("button.choice-btn").length,reroll:!!$("choiceGrid").querySelector(".powerup-reroll-btn")};},
     replenishGuard:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let guarded=null;const old=resolveEnemyResponse;resolveEnemyResponse=async g=>{guarded=g;combatBusy=false;};try{await dbClasses.bloodmageReplenish();return {guarded,hp:player.hp,enemyHp:currentEnemy.hp};}finally{resolveEnemyResponse=old;}},
-    conjureRally:async()=>{meta.unlocks.summoner=true;Object.values(meta.pets).forEach(p=>p.unlocked=true);resetPlayer("summoner");player.mana=100;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let pet=0,response=0;const oldPet=petTurn,oldResponse=resolveEnemyResponse;petTurn=async()=>{pet++;};resolveEnemyResponse=async()=>{response++;combatBusy=false;};try{await summonerConjure();return {pet,response,spirits:player.summonerSpirits.length,mana:player.mana};}finally{petTurn=oldPet;resolveEnemyResponse=oldResponse;}},
+    conjureRally:async()=>{meta.unlocks.summoner=true;Object.values(meta.pets).forEach(p=>p.unlocked=true);resetPlayer("summoner");player.mana=100;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let pet=0,response=0;const oldPet=petTurn,oldResponse=resolveEnemyResponse;petTurn=async()=>{pet++;};resolveEnemyResponse=async()=>{response++;combatBusy=false;};try{await dbCombat.summonerConjure();return {pet,response,spirits:player.summonerSpirits.length,mana:player.mana};}finally{petTurn=oldPet;resolveEnemyResponse=oldResponse;}},
     guardMana:async()=>{meta.unlocks.sorcerer=true;resetPlayer("sorcerer");player.mana=0;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;const old=guardAction;guardAction=async()=>{combatBusy=false;};try{await identityGuardAction();return {mana:player.mana,gain:player.guardManaGain};}finally{guardAction=old;}},
     exsanguinateTwo:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy A",hp:1000,maxHp:1000,attack:1,defense:0},{name:"Dummy B",hp:1000,maxHp:1000,attack:1,defense:0}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;currentEncounterLead={boss:false};combatBusy=false;const oldResponse=resolveEnemyResponse,oldChaos=rollD20Chaos,oldAnim=animateClassAttack;resolveEnemyResponse=async()=>{combatBusy=false;};rollD20Chaos=async()=>({mult:1});animateClassAttack=async()=>{};try{await dbClasses.bloodmageExsanguinate();return {firstDamage:1000-currentEnemies[0].hp,secondDamage:1000-currentEnemies[1].hp};}finally{resolveEnemyResponse=oldResponse;rollD20Chaos=oldChaos;animateClassAttack=oldAnim;}},
-    healingNuzzle:async()=>{resetPlayer("ranger");player.petTurnHeal=2;player.hp=Math.max(1,player.maxHp-8);currentEnemies=[{name:"Dummy",hp:5000,maxHp:5000,attack:1,defense:0,weakness:"fire"}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;combatBusy=false;const before=player.hp,oldUpdate=updateCombatUI;updateCombatUI=()=>{};try{await petTurn();return {before,after:player.hp,healed:player.hp-before};}finally{updateCombatUI=oldUpdate;}}
+    healingNuzzle:async()=>{resetPlayer("ranger");player.petTurnHeal=2;player.hp=Math.max(1,player.maxHp-8);currentEnemies=[{name:"Dummy",hp:5000,maxHp:5000,attack:1,defense:0,weakness:"fire"}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;combatBusy=false;const before=player.hp,oldUpdate=updateCombatUI;updateCombatUI=()=>{};try{await dbCombat.petTurn();return {before,after:player.hp,healed:player.hp-before};}finally{updateCombatUI=oldUpdate;}}
   }});
 
 
@@ -2753,7 +2538,7 @@ function returnToRoad(...args){
 
   // CEO is intentionally a later secret now. Existing unlocked saves remain
   // unlocked; only future unlock checks use the new 300% threshold.
-  if(CLASSES.ceo){CLASSES.ceo.unlock="Secret: reach 300% Boss Damage";CLASSES.ceo.desc="The hidden executive class converts extreme guardian specialization into hostile quarterly growth.";}
+  if(CLASSES.ceo){}
   // ---- Gear point budgets --------------------------------------------------
   // Hidden point budgets are a little wider at every ordinary rarity. Mythic
   // and Omega pieces remain handcrafted rather than budget-generated.
@@ -2770,7 +2555,7 @@ function returnToRoad(...args){
     const oldRank=Math.max(0,Number(meta.purchased?.ranger_deep_marks)||0);
     if(oldRank){meta.points=(meta.points||0)+oldRank*(talents[deepQuarryIndex].cost||1);delete meta.purchased.ranger_deep_marks;}
     if(runTalentSnapshot?.ranger_deep_marks)delete runTalentSnapshot.ranger_deep_marks;
-    talents.splice(deepQuarryIndex,1);
+
   }
   const endless19=talents.find(t=>t.id==="monk_flow_ceiling");
   if(endless19){
@@ -2827,7 +2612,7 @@ function returnToRoad(...args){
   // ---- Pet switching rules -------------------------------------------------
   // Beastmaster predates the class-tag pass, so make its pet identity explicit.
   // Summoner and Pokémon Trainer already carry the `pet` tag in their definitions.
-  CLASSES.beastmaster.tags=Array.from(new Set([...(CLASSES.beastmaster.tags||[]),"pet"]));
+
   function v19PetTaggedClass(){return classHasMechanic("pet");}
   function v19CanSwitchPet(petId){return dbPets.canSwitch(petId);}
 
@@ -2836,9 +2621,9 @@ function returnToRoad(...args){
   // defensive tempo. Healing stores up to 100 Grace. Guard consumes it for
   // stronger Guard and barriers, turning sustain into deliberate defense.
   if(CLASSES.paladin){
-    CLASSES.paladin.desc="A holy guardian hybrid. Healing stores Oath Grace; Guard consumes that Grace for stronger mitigation and barriers, while Defense still contributes to offense.";
-    CLASSES.paladin.scaleNotes="Healing and max HP build Oath Grace; Defense makes each empowered Guard more valuable. The class blends Cleric sustain with Fighter-style defensive tempo.";
-    CLASSES.paladin.ultimate.desc="Heavy holy area damage scaling with Attack and Defense, heals the Paladin and feeds Oath Grace, then raises barriers.";
+
+
+
   }
 
   // ---- Runtime reset hooks -------------------------------------------------
@@ -2882,7 +2667,7 @@ function returnToRoad(...args){
   }
   function dbRunApplySixthRoadCompletion({before}){
     if(!before?.unlockSlimeRouge)return;
-    unlockClass('slimerouge');addLog('<b>🔴 Something red crawls out of the random road.</b> Slime Rouge has been unlocked.');showToast('🔴 SECRET CLASS UNLOCKED · Slime Rouge',3800,true);
+    dbProgression.unlockClass('slimerouge');addLog('<b>🔴 Something red crawls out of the random road.</b> Slime Rouge has been unlocked.');showToast('🔴 SECRET CLASS UNLOCKED · Slime Rouge',3800,true);
   }
   function completeSixthRoadV19(){return dbRun.completeFinalRoad();}
 
@@ -2923,17 +2708,17 @@ function returnToRoad(...args){
   // ---- Regression helpers --------------------------------------------------
   Object.defineProperty(window,"DiceboundV19Regression",{configurable:true,value:{
     sovereign:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");player.gold=99999;currentMerchantItems=[{id:"v19_relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];renderMerchant();return true;},
-    board6:()=>{gameStarted=true;runFinalized=false;boardLevel=6;player.position=0;generateBoard();buildBoard();return {tiles:tiles.length,mini:tiles[currentMinibossTile()-1]?.enemyBase?.name,last:tiles.at(-1)?.type};},
+    board6:()=>{gameStarted=true;runFinalized=false;boardLevel=6;player.position=0;dbRun.generateBoard();buildBoard();return {tiles:tiles.length,mini:tiles[currentMinibossTile()-1]?.enemyBase?.name,last:tiles.at(-1)?.type};},
     doubleDice:()=>{meta.doubleDiceUnlocked=true;updateHUD();return {visible:$("roll2Btn")?.style.display!=="none",label:$("roll2Btn")?.textContent};},
     prestige:()=>({pointsPerPrestige:9,capacity20:2,capacity60:3,tenPointRemainder:10%9}),
     set:()=>({summary:mythicalSetSummary(),offhand:generateMythicalOffhand()}),
     petSwitch:()=>({classId:player.classId,petTagged:v19PetTaggedClass(),gameStarted,beastmasterTagged:(CLASSES.beastmaster.tags||[]).includes("pet")}),
-    paladinGrace:()=>{meta.unlocks.paladin=true;resetPlayer("paladin");player.hp=Math.max(1,player.maxHp-20);healPlayer(10);return {grace:player.paladinGrace,hp:player.hp};},
-    outsidePotion:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;rollLocked=false;boardLevel=1;player.position=0;generateBoard();buildBoard();player.hp=Math.max(1,player.maxHp-10);player.potions=1;const before=ensureAlphaMeta().potionsUsed||0;usePotionOutsideCombat();return {used:(ensureAlphaMeta().potionsUsed||0)-before,potions:player.potions};},
-    statusCounts:()=>statusDotsHTML(5,7),
-    haste:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;player.maxHp=999;player.hp=999;const e={name:"Cooldown Dummy",icon:"🎯",hp:9999,maxHp:9999,attack:1,defense:0,weakness:"fire",affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyTile=0;player.hasteTurns=1;player.hasteCooldown=0;await resolveEnemyResponse(false);const afterUse=player.hasteCooldown;const beforeBlocked=player.hasteTurns;triggerElementEffect("coffee",e,{forced:true,source:"Regression"});const blocked=player.hasteTurns===beforeBlocked;await resolveEnemyResponse(false);return {afterUse,blocked,afterEnemyTurn:player.hasteCooldown};},
-    forceFifthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=5;player.position=0;generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await winCombat();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,doubleDice:!!meta.doubleDiceUnlocked,endHidden:$('endOverlay')?.classList.contains('hidden')};},
-    forceSixthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=6;player.position=0;generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Last Equation",icon:"♾️🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await winCombat();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,runFinalized,endHidden:$('endOverlay')?.classList.contains('hidden')};}
+    paladinGrace:()=>{meta.unlocks.paladin=true;resetPlayer("paladin");player.hp=Math.max(1,player.maxHp-20);dbCombat.heal(10);return {grace:player.paladinGrace,hp:player.hp};},
+    outsidePotion:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;rollLocked=false;boardLevel=1;player.position=0;dbRun.generateBoard();buildBoard();player.hp=Math.max(1,player.maxHp-10);player.potions=1;const before=ensureAlphaMeta().potionsUsed||0;usePotionOutsideCombat();return {used:(ensureAlphaMeta().potionsUsed||0)-before,potions:player.potions};},
+    statusCounts:()=>dbCombatView.statusDotsHTML(5,7),
+    haste:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;player.maxHp=999;player.hp=999;const e={name:"Cooldown Dummy",icon:"🎯",hp:9999,maxHp:9999,attack:1,defense:0,weakness:"fire",affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyTile=0;player.hasteTurns=1;player.hasteCooldown=0;await dbCombat.enemyResponse(false);const afterUse=player.hasteCooldown;const beforeBlocked=player.hasteTurns;dbCombat.element("coffee",e,{forced:true,source:"Regression"});const blocked=player.hasteTurns===beforeBlocked;await dbCombat.enemyResponse(false);return {afterUse,blocked,afterEnemyTurn:player.hasteCooldown};},
+    forceFifthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=5;player.position=0;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,doubleDice:!!meta.doubleDiceUnlocked,endHidden:$('endOverlay')?.classList.contains('hidden')};},
+    forceSixthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=6;player.position=0;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Last Equation",icon:"♾️🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,runFinalized,endHidden:$('endOverlay')?.classList.contains('hidden')};}
   }});
 
 
@@ -3114,7 +2899,7 @@ function returnToRoad(...args){
     choices:(rarity=null)=>getUpgradeChoices(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
     levelChoices:()=>dbPowerups.levelChoices().map(dbPowerupsOracleSummary),
     apply:(id,source='Powerups Oracle')=>{const up=upgrades.find(u=>u.id===id);if(!up)throw new Error(`unknown powerup ${id}`);return dbPowerupsOracleSummary(applyUpgrade(up,source));},
-    randomHigh:(source='Powerups Oracle')=>dbPowerupsOracleSummary(applyRandomHighRarity(source,false)),
+    randomHigh:(source='Powerups Oracle')=>dbPowerupsOracleSummary(dbPowerups.applyRandomHighRarity(source,false)),
     legendaryChoices:()=>v17LegendaryChoices().map(dbPowerupsOracleSummary),
     sovereignChoices:()=>db0410LegendaryChoices().map(dbPowerupsOracleSummary),
     fallbackRarity:wanted=>{const found=v27FallbackRarityPool(wanted);return {rarity:found.rarity,ids:found.pool.map(u=>u.id)};},
@@ -3178,7 +2963,7 @@ function returnToRoad(...args){
         classId:cls.id,className:cls.name,classIcon:cls.icon,
         petId:pet.id,petName:pet.name,petIcon:pet.icon,petLine:`${pet.icon} ${pet.name} · Bond Lv ${state.level}`,
         summary:v22CampSummaryText(),
-        prestigeSummary:`${prestigeSummary()} · ${allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
+        prestigeSummary:`${prestigeSummary()} · ${dbProgression.allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
         ...dbEquipmentUi.campView(),
         reveals:{...(meta.campReveals||{})},heirloomStorageUnlocked:!!meta.heirloomStorageUnlocked||!!v24StorageUnlocked?.(),
         nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
@@ -3212,8 +2997,8 @@ function returnToRoad(...args){
       nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
       hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
     }),
-    isUnlocked:id=>isClassUnlocked(id),
-    ensureDynamicUnlocks:()=>checkDynamicClassUnlocks(),
+    isUnlocked:id=>dbProgression.isClassUnlocked(id),
+    ensureDynamicUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     setSelectedClassId:id=>{selectedClassId=id;},
     pick,
     tagChips,
@@ -3267,7 +3052,7 @@ function returnToRoad(...args){
     },
     rankFor:talentRank,
     isAvailable:talentAvailable,
-    canPurchase:t=>talentRank(t.id)<t.maxRank&&talentAvailable(t)&&meta.points>=t.cost,
+    canPurchase:t=>talentRank(t.id)<t.maxRank&&dbProgression.talentAvailable(t)&&meta.points>=t.cost,
     isVisible:()=>true,
     requirementText,
     purchase:id=>purchaseTalentNode(id),
@@ -3282,7 +3067,7 @@ function returnToRoad(...args){
   db064PrestigeMoon.configure({
     find:$,
     getState:()=>{
-      const total=allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
+      const total=dbProgression.allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
       return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Each unspent point grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
     },
     prestige:()=>prestigeTree(),
@@ -3440,10 +3225,8 @@ function returnToRoad(...args){
   }
 
   /* MODULE: rarity schema -------------------------------------------------- */
-  Object.assign(rarityInfo,{
-    poor:{label:'Poor',weight:68},common:{label:'Common',weight:25},uncommon:{label:'Uncommon',weight:7.5},rare:{label:'Rare',weight:1.9},epic:{label:'Epic',weight:.42},legendary:{label:'Legendary',weight:.028},artifact:{label:'Artifact',weight:.003},mythical:{label:'Mythical',weight:0},omega:{label:'Omega',weight:0}
-  });
-  Object.assign(rarityValues,{poor:1,common:2,uncommon:3,rare:4,epic:5,legendary:7,artifact:9,mythical:11,omega:14});
+
+
   Object.assign(rarityPrefixes,{poor:'Worn',common:'Reliable',uncommon:'Fine',rare:'Royal',epic:'Godforged',legendary:'Legendary',artifact:'Artifact',mythical:'Mythical',omega:'Omega'});
   Object.keys(V14_RARITY_BUDGETS).forEach(k=>delete V14_RARITY_BUDGETS[k]);
   Object.assign(V14_RARITY_BUDGETS,{poor:[11,18],common:[20,31],uncommon:[34,49],rare:[54,76],epic:[84,116]});
@@ -3473,7 +3256,7 @@ function returnToRoad(...args){
   v24EditUpgrade('defense','Gain +1 Defense this run.',function(){player.defense+=1;});
   v24EditUpgrade('potion','Gain 1 potion immediately.',function(){player.potions+=1;});
   v24EditUpgrade('purse','Gain 18 gold, increased by your Gold bonus.',function(){player.gold+=modifiedGold(18);});
-  v24EditUpgrade('mending','Heal 25% of your maximum HP.',function(){healPlayer(Math.ceil(player.maxHp*.25));});
+  v24EditUpgrade('mending','Heal 25% of your maximum HP.',function(){dbCombat.heal(Math.ceil(player.maxHp*.25));});
   const v24NewPowerups=[
     {id:'attack_common_v24',rarity:'common',icon:'⚔️',name:'Sharpened Steel',desc:'Gain +2 Attack this run.',apply(){player.attack+=2;}},
     {id:'attack_uncommon_v24',rarity:'uncommon',icon:'⚔️✨',name:'Roadforged Edge',desc:'Gain +4 Attack this run.',apply(){player.attack+=4;}},
@@ -3488,7 +3271,7 @@ function returnToRoad(...args){
     {id:'true_legend_guard_v24',rarity:'legendary',icon:'🏰🌟',name:'Legend of the Last Wall',unique:true,desc:'Gain +12 Defense and start every battle with 2 additional Barriers this run.',apply(){player.defense+=12;player.firstHitBlocks=(player.firstHitBlocks||0)+2;}},
     {id:'true_legend_element_v24',rarity:'legendary',icon:'🌈🌟',name:'Legend of the Prismatic Road',unique:true,desc:'Gain +20% elemental proc chance and +35% elemental power this run.',apply(){player.elementProcBonus=(player.elementProcBonus||0)+.20;player.elementDamageBonus=(player.elementDamageBonus||0)+.35;}}
   ];
-  v24NewPowerups.forEach(up=>{if(!upgrades.some(x=>x.id===up.id))upgrades.push(up);});
+  v24NewPowerups.forEach(up=>{});
   weightedUpgrade=function(pool){return dbPowerups.weighted(pool);};
 
   /* MODULE: handcrafted Legendary relics ---------------------------------- */
@@ -3520,9 +3303,9 @@ function returnToRoad(...args){
   unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
 
   /* MODULE: class tuning / Alchemist counter ------------------------------- */
-  if(CLASSES.fighter){CLASSES.fighter.base.attack=5;CLASSES.fighter.base.guardPower=.67;CLASSES.fighter.stats='38 HP · 5 ATK · 2 DEF';}
-  if(CLASSES.paladin){CLASSES.paladin.base.maxHp=52;CLASSES.paladin.base.attack=7;CLASSES.paladin.base.defense=5;CLASSES.paladin.base.guardPower=.78;CLASSES.paladin.stats='52 HP · 7 ATK · 5 DEF · DEFENSE/HEALING SCALING';}
-  if(CLASSES.beastmaster){CLASSES.beastmaster.base.maxHp=42;CLASSES.beastmaster.base.attack=7;CLASSES.beastmaster.base.crit=.10;CLASSES.beastmaster.stats='42 HP · 7 ATK · 1 DEF · STRONG PET SCALING';CLASSES.beastmaster.desc='A late-unlock companion commander. Its own attacks are reliable, while pet Bond, pet damage and double-pet attacks become a genuinely dangerous second damage engine.';}
+  if(CLASSES.fighter){}
+  if(CLASSES.paladin){}
+  if(CLASSES.beastmaster){}
 
 
   /* MODULE: permanent Heirloom Storage ------------------------------------ */
@@ -3576,7 +3359,7 @@ function returnToRoad(...args){
     talentAudit:v24TalentAudit,
     alchemistOutside:()=>{resetPlayer('ranger');gameStarted=true;rollLocked=false;currentEnemy=null;player.potions=1;player.hp=Math.max(1,player.maxHp-10);const b=ensureAlphaMeta().potionsUsed||0;usePotionOutsideCombat();return (ensureAlphaMeta().potionsUsed||0)-b;},
     setBonuses:()=>[2,3,4,5,6,7].map(n=>({n,damage:(()=>{const old=player.equipment;player.equipment={};EQUIPMENT_SLOTS.slice(0,n).forEach((s,i)=>player.equipment[s]={slot:s,setName:'Impossible Road',rarity:'artifact',bonuses:{},id:`x${i}`});const v=v19SetDamageBonus();player.equipment=old;return v;})()})),
-    hornOverheal:()=>{resetPlayer('ranger');player.equipment.hat=generateDevilsHorns();player.hp=player.maxHp-2;player.energyShield=0;healPlayer(12);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};},
+    hornOverheal:()=>{resetPlayer('ranger');player.equipment.hat=generateDevilsHorns();player.hp=player.maxHp-2;player.energyShield=0;dbCombat.heal(12);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};},
     legendaryItems:()=>V24_LEGENDARY_RELICS.map(fn=>{const x=fn();return {name:x.name,slot:x.slot,rarity:x.rarity,effect:x.uniqueEffect};})
   });
   DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
@@ -3633,13 +3416,13 @@ function returnToRoad(...args){
 
   // Gold / treasure progression.
   const treasure=v25Upgrade('gold');if(treasure){treasure.rarity='poor';treasure.desc='Enemies and chests grant 20% more gold this run.';treasure.apply=function(){player.goldBonus+=.20;};}
-  if(!v25Upgrade('treasure_sense_common_v25'))upgrades.push({id:'treasure_sense_common_v25',rarity:'common',icon:'💰',name:'Treasure Sense+',desc:'Enemies and chests grant 40% more gold this run.',apply(){player.goldBonus+=.40;}});
-  if(!v25Upgrade('treasure_sense_uncommon_v25'))upgrades.push({id:'treasure_sense_uncommon_v25',rarity:'uncommon',icon:'💰✨',name:'Treasure Sense++',desc:'Enemies and chests grant 60% more gold this run.',apply(){player.goldBonus+=.60;}});
+
+
   const friend=v25Upgrade('merchant');if(friend)friend.rarity='common';
 
   // Poison progression and overflow-ready values.
   const venom=v25Upgrade('venom_edge');if(venom){venom.rarity='common';venom.desc='Basic and Echo strikes gain +10% Poison-stack chance. Poison chance can exceed 100% for guaranteed extra stacks.';venom.apply=function(){player.poisonOnHitChance=(player.poisonOnHitChance||0)+.10;};}
-  if(!v25Upgrade('venom_edge_rare_v25'))upgrades.push({id:'venom_edge_rare_v25',rarity:'rare',icon:'🐍☠️',name:'Venom Edge: Black Fang',desc:'Basic and Echo strikes gain +35% Poison-stack chance. Chance above 100% guarantees stacks and rolls the remainder for another.',apply(){player.poisonOnHitChance=(player.poisonOnHitChance||0)+.35;}});
+
 
   // Upper-tier corrections.
   const rep=v25Upgrade('true_legend_echo_v24');if(rep){rep.desc='Gain +80% Echo Strike and Echo Strikes deal 30% more damage this run.';rep.apply=function(){player.doubleStrike+=.80;player.echoDamageScale=(player.echoDamageScale||.70)+.30;};}
@@ -3660,7 +3443,7 @@ function returnToRoad(...args){
   const damageEnemyV25CroakBase=damageEnemy;
   damageEnemy=function(enemy,amount,ignoreDefense=false){
     const dealt=damageEnemyV25CroakBase(enemy,amount,ignoreDefense);
-    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
+    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
     return dealt;
   };
 
@@ -3690,7 +3473,7 @@ function returnToRoad(...args){
   const setCombatTextV25Base=setCombatText;setCombatText=function(text,...args){v25Log('detailed','combat-text',text,v25State());return setCombatTextV25Base(text,...args);};
   const saveMetaV25Base=saveMeta;saveMeta=function(){v25Log('all','save','saveMeta()',v25State());return saveMetaV25Base();};
   window.DiceboundDebugLog=Object.freeze({setLevel:v25SetLogLevel,getLevel:()=>meta.debugLogLevel,lines:()=>[...v25LogBuffer],snapshot:()=>v25State(),download:v25DownloadLog,clear:()=>{v25LogBuffer.length=0;v25RefreshLogOutput();}});
-  window.DiceboundDebugClasses=Object.freeze({unlock:id=>v25DebugUnlockClass(id),list:()=>Object.values(CLASSES).map(c=>({id:c.id,name:c.name,unlocked:isClassUnlocked(c.id)}))});
+  window.DiceboundDebugClasses=Object.freeze({unlock:id=>v25DebugUnlockClass(id),list:()=>Object.values(CLASSES).map(c=>({id:c.id,name:c.name,unlocked:dbProgression.isClassUnlocked(c.id)}))});
 
   /* DEBUG MENU TABS + NEW DEBUG ACTIONS ----------------------------------- */
   function v25DebugUnlockClass(id){
@@ -3699,7 +3482,7 @@ function returnToRoad(...args){
     if(id==='bloodmage')meta.bloodmageUnlocked=true;
     saveMeta();renderClassChoices();updateMetaUI();
     showToast(`🧪 Debug unlocked ${CLASSES[id].icon} ${CLASSES[id].name}`);
-    return isClassUnlocked(id);
+    return dbProgression.isClassUnlocked(id);
   }
   function v25EnsureDebugControls(){
     const modal=$('debugOverlay')?.querySelector('.modal'),grid=$('debugGrid');
@@ -3711,7 +3494,7 @@ function returnToRoad(...args){
     addBtn('legend_mug_v25',"☕ Axel's Coffee Mug");addBtn('legend_headphones_v25','🎧 Kratz Headphones');addBtn('legend_jacket_v25',"🧥 Kelly's Jean Jacket");addBtn('omega_horns_v25',"👿 Devil's Horns");addBtn('recover_road_v25','🛠️ Recover road state');
     [...grid.querySelectorAll('[data-debug]')].forEach(btn=>{let cat='player';for(const [name,set] of Object.entries(categories))if(set.has(btn.dataset.debug)){cat=name;break;}ensurePanel(cat).appendChild(btn);});
     const progressPanel=ensurePanel('progress');let picker=$('debugClassUnlocker');if(!picker){picker=document.createElement('div');picker.id='debugClassUnlocker';picker.className='debug-class-unlock';progressPanel.prepend(picker);picker.addEventListener('click',e=>{if(e.target.id!=='debugUnlockSelectedClass')return;const id=$('debugClassUnlockSelect')?.value;if(id)v25DebugUnlockClass(id);});}
-    const classOptions=Object.values(CLASSES).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}">${c.icon} ${c.name}${isClassUnlocked(c.id)?' · unlocked':''}</option>`).join('');picker.innerHTML=`<label for="debugClassUnlockSelect">Unlock one class</label><select id="debugClassUnlockSelect">${classOptions}</select><button class="small-btn" id="debugUnlockSelectedClass" type="button">Unlock selected class</button>`;
+    const classOptions=Object.values(CLASSES).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}">${c.icon} ${c.name}${dbProgression.isClassUnlocked(c.id)?' · unlocked':''}</option>`).join('');picker.innerHTML=`<label for="debugClassUnlockSelect">Unlock one class</label><select id="debugClassUnlockSelect">${classOptions}</select><button class="small-btn" id="debugUnlockSelectedClass" type="button">Unlock selected class</button>`;
     let logPanel=$('debugLogPanel');if(!logPanel){logPanel=document.createElement('div');logPanel.id='debugLogPanel';logPanel.className='debug-log-panel';logPanel.dataset.debugPanel='logging';logPanel.innerHTML=`<div class="debug-log-levels">${Object.keys(V25_LOG_LEVELS).map(l=>`<button class="small-btn" data-log-level="${l}">${l[0].toUpperCase()+l.slice(1)}</button>`).join('')}</div><div class="debug-log-note"><b>Errors</b> captures faults. <b>Events</b> adds important game events. <b>Detailed</b> adds combat/state transitions. <b>All</b> records every routed game command, UI input, save call and state snapshot; use it only while reproducing a bug because it is intentionally noisy.</div><pre class="debug-log-output" id="debugLogOutput"></pre><div class="debug-log-actions"><button class="small-btn" id="debugLogSnapshot">Add state snapshot</button><button class="small-btn" id="debugLogCopy">Copy log</button><button class="small-btn" id="debugLogDownload">Download .txt</button><button class="small-btn" id="debugLogClear">Clear</button></div>`;grid.appendChild(logPanel);logPanel.addEventListener('click',e=>{const level=e.target.closest('[data-log-level]')?.dataset.logLevel;if(level)return v25SetLogLevel(level);if(e.target.id==='debugLogSnapshot')v25Log('errors','snapshot','Manual state snapshot',v25State());if(e.target.id==='debugLogCopy')v25CopyLog();if(e.target.id==='debugLogDownload')v25DownloadLog();if(e.target.id==='debugLogClear'){v25LogBuffer.length=0;v25RefreshLogOutput();}});}
     v25ShowDebugTab(nav.querySelector('.active')?.dataset.debugTab||'player');v25RefreshLogOutput();
 
@@ -3815,7 +3598,7 @@ dbReturnToRoadTraceReady=true;
   const v26Sub=document.querySelector('.brand p');if(v26Sub)v26Sub.textContent='The road grows stranger: sturdier talents, clearer poison, sharper secrets and cleaner debug tools.';
 
   const v26Upgrade=id=>upgrades.find(u=>u.id===id);
-  function v26EnsureUpgrade(def){if(!upgrades.some(u=>u.id===def.id))upgrades.push(def);return v26Upgrade(def.id);}
+  function v26EnsureUpgrade(def){return v26Upgrade(def.id);}
 
   /* POWERUP LADDER / RARITY CLEANUP --------------------------------------- */
   const purse26=v26Upgrade('purse');if(purse26){purse26.rarity='poor';purse26.desc='Gain 100 gold, increased by your Gold bonus.';purse26.apply=function(){player.gold+=modifiedGold(100);};}
@@ -3839,7 +3622,7 @@ dbReturnToRoadTraceReady=true;
 
   /* COUNTER RESERVE -> ENDLESS FORM --------------------------------------- */
   const v26CounterIdx=talents.findIndex(t=>t.id==='fighter_counter_reserve');
-  if(v26CounterIdx>=0){const t=talents[v26CounterIdx],rank=Math.max(0,Number(meta.purchased?.fighter_counter_reserve)||0);if(rank){meta.points=(meta.points||0)+rank*(t.cost||2);delete meta.purchased.fighter_counter_reserve;showToast('Counter Reserve refunded — its effect moved into Endless Form');}if(runTalentSnapshot?.fighter_counter_reserve)delete runTalentSnapshot.fighter_counter_reserve;talents.splice(v26CounterIdx,1);saveMeta();}
+  if(v26CounterIdx>=0){const t=talents[v26CounterIdx],rank=Math.max(0,Number(meta.purchased?.fighter_counter_reserve)||0);if(rank){meta.points=(meta.points||0)+rank*(t.cost||2);delete meta.purchased.fighter_counter_reserve;showToast('Counter Reserve refunded — its effect moved into Endless Form');}if(runTalentSnapshot?.fighter_counter_reserve)delete runTalentSnapshot.fighter_counter_reserve;saveMeta();}
   const endless26=talents.find(t=>t.id==='monk_flow_ceiling');if(endless26)endless26.desc='Each rank improves many class signatures: Ranger Marks, Monk Combo, Turtle Guard chain, Fighter Counterblow damage and +1 stored Counterblow, Mana building, Cleric Faith gain, Summoner spirits and Alchemist flasks.';
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
@@ -3892,7 +3675,7 @@ dbReturnToRoadTraceReady=true;
   const v27Sub=document.querySelector('.brand p');if(v27Sub)v27Sub.textContent='The road fights back: smarter rewards, tougher difficulties, cleaner shields and faster impossible snakes.';
 
   const v27Upgrade=id=>upgrades.find(u=>u.id===id);
-  function v27EnsureUpgrade(def){if(!upgrades.some(u=>u.id===def.id))upgrades.push(def);return v27Upgrade(def.id);}
+  function v27EnsureUpgrade(def){return v27Upgrade(def.id);}
 
   /* QUIETER COMBAT FEEDBACK ------------------------------------------------ */
   // Elemental activations remain in the combat text/history and animations,
@@ -3954,7 +3737,7 @@ dbReturnToRoadTraceReady=true;
 
   /* RANDOM CLASS ----------------------------------------------------------- */
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
-  async function prestigeTree(){const total=allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return dbProgression.completePrestige(total);}
+  async function prestigeTree(){const total=dbProgression.allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return dbProgression.completePrestige(total);}
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
 
@@ -3974,19 +3757,19 @@ dbReturnToRoadTraceReady=true;
     legendaries:()=>upgrades.filter(u=>u.rarity==='legendary').map(u=>({id:u.id,name:u.name,unique:!!u.unique})),
     minibossSample:(n=10000)=>{const out={poor:0,common:0,uncommon:0,rare:0,epic:0,legendary:0};for(let i=0;i<n;i++)out[v27RollMinibossRarity()]++;return out;},
     ouroSync:(attack=20,gold=1000,scale=.01)=>{meta.unlocks.ouroboros=true;resetPlayer('ouroboros');player.attack=attack;player.gold=gold;player.goldAttackScale=scale;const before=player.doubleStrike;v27SyncOuroborosEconomy();return {attack:player.attack,echoBefore:before,echoAfter:player.doubleStrike,goldScale:player.goldAttackScale,ouroGoldEchoScale:player.v27OuroGoldEchoScale};},
-    status:()=>statusDotsHTML(6,14,'radiation'),
+    status:()=>dbCombatView.statusDotsHTML(6,14,'radiation'),
     goldenLawOuro:()=>{meta.unlocks.ouroboros=true;resetPlayer('ouroboros');player.gold=1000;const u=v27Upgrade('legendary_golden_law');applyUpgrade(u,'test');updateHUD();return {attack:player.attack,echo:player.doubleStrike,goldScale:player.goldAttackScale,ouroScale:player.v27OuroGoldEchoScale};},
-    shieldAegis:()=>{resetPlayer('ranger');gameStarted=true;currentEnemies=[{name:'Heal Dummy',icon:'x',hp:100,maxHp:100,attack:1,defense:0}];currentEnemy=currentEncounterLead=currentEnemies[0];applyUpgrade(v27Upgrade('legendary_crimson_aegis_v27'),'test');player.hp=player.maxHp-1;player.energyShield=0;healPlayer(101);v24UpdateShieldBars();return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield,style:getComputedStyle($('energyShieldFill')).backgroundImage};},
-    nightmareBoss:()=>{resetPlayer('ranger');gameStarted=true;boardLevel=2;nightmareMode=true;hellMode=false;generateBoard();buildBoard();player.position=tiles.length-1;startCombat('final');return {barrier:currentEnemy.enemyBarrier||0,dodge:currentEnemy.dodge||0,boss:!!currentEnemy.boss};},
+    shieldAegis:()=>{resetPlayer('ranger');gameStarted=true;currentEnemies=[{name:'Heal Dummy',icon:'x',hp:100,maxHp:100,attack:1,defense:0}];currentEnemy=currentEncounterLead=currentEnemies[0];applyUpgrade(v27Upgrade('legendary_crimson_aegis_v27'),'test');player.hp=player.maxHp-1;player.energyShield=0;dbCombat.heal(101);v24UpdateShieldBars();return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield,style:getComputedStyle($('energyShieldFill')).backgroundImage};},
+    nightmareBoss:()=>{resetPlayer('ranger');gameStarted=true;boardLevel=2;nightmareMode=true;hellMode=false;dbRun.generateBoard();buildBoard();player.position=tiles.length-1;startCombat('final');return {barrier:currentEnemy.enemyBarrier||0,dodge:currentEnemy.dodge||0,boss:!!currentEnemy.boss};},
     mysticFallback:()=>{const states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);const oldCounts=player.upgradeCounts||{};player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});dbRoadEvents.openMystic();const r=window.DiceboundRoadEventLifecycle.inspect().mysticRarity;$('mysticOverlay')?.classList.add('hidden');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;dbRoadEvents.resetTransient();return r;},
     prestigeFlow:()=>{const oldConfirm=window.confirm,before=meta.prestige?.count||0;window.confirm=()=>true;meta.points=9;meta.heirloomStorageUnlocked=true;meta.heirloomStorage=[{id:'keep',slot:'ring',rarity:'common',name:'Stored Test Ring',icon:'💍',bonuses:{}}];meta.heirlooms=[normalizeSavedItem(meta.heirloomStorage[0])];prestigeTree();window.confirm=oldConfirm;return {prestige:(meta.prestige?.count||0)-before,storage:(meta.heirloomStorage||[]).length,chooserVisible:!$('prestigeHeirloomOverlay').classList.contains('hidden')};},
     flatAttackOuro:()=>{meta.unlocks.ouroboros=true;resetPlayer('ouroboros');const before=player.doubleStrike;applyUpgrade(v27Upgrade('attack_uncommon_v24'),'test');return {attack:player.attack,deltaEcho:player.doubleStrike-before};},
     exhaustedFallback:()=>{const oldCounts=player.upgradeCounts||{},states=upgrades.filter(u=>u.rarity==='legendary').map(u=>[u,u.unique]);player.upgradeCounts={...oldCounts};states.forEach(([u])=>{u.unique=true;player.upgradeCounts[u.id]=1;});const f=v27FallbackRarityPool('legendary');states.forEach(([u,x])=>u.unique=x);player.upgradeCounts=oldCounts;return {rarity:f.rarity,count:f.pool.length};},
     randomPool:()=>window.DiceboundClassChooser?.unlockedPoolIds?.()||[],
     forceFiveClasses:()=>{['ranger','sorcerer','fighter','monk','clown'].forEach(id=>meta.unlocks[id]=true);renderClassChoices();return {count:document.querySelectorAll('.random-class-card').length,text:document.querySelector('.random-class-card')?.textContent.trim().slice(0,100)};},
-    difficultyDummy:()=>{resetPlayer('ranger');gameStarted=true;boardLevel=2;nightmareMode=true;hellMode=true;generateBoard();buildBoard();player.position=1;tiles[1]={type:'enemy',cleared:false,packSize:1,enemyBase:{name:'Dummy',icon:'👹',hp:20,attack:5,xp:1,gold:1,weakness:'fire'}};startCombat('normal');return currentEnemies.map(e=>({barrier:e.enemyBarrier||0,dodge:e.dodge||0,boss:!!e.boss}));},
-    radiationNegative:()=>{const e={name:'Rad Dummy',icon:'👹',hp:100,maxHp:100,attack:5,defense:0,weakness:'ice',affinity:null};currentEnemies=[e];currentEnemy=currentEncounterLead=e;player.attack=10;const r=triggerElementEffect('radiation',e,{forced:true,source:'test'});return {def:e.defense,msg:r?.message||''};},
-    brainHack:()=>{const e={name:'Tech Dummy',icon:'👹',hp:100,maxHp:100,attack:50,defense:0,weakness:'ice',affinity:null};currentEnemies=[e];currentEnemy=currentEncounterLead=e;player.attack=10;const r=triggerElementEffect('tech',e,{forced:true,source:'test'});return {attack:e.attack,msg:r?.message||''};},
+    difficultyDummy:()=>{resetPlayer('ranger');gameStarted=true;boardLevel=2;nightmareMode=true;hellMode=true;dbRun.generateBoard();buildBoard();player.position=1;tiles[1]={type:'enemy',cleared:false,packSize:1,enemyBase:{name:'Dummy',icon:'👹',hp:20,attack:5,xp:1,gold:1,weakness:'fire'}};startCombat('normal');return currentEnemies.map(e=>({barrier:e.enemyBarrier||0,dodge:e.dodge||0,boss:!!e.boss}));},
+    radiationNegative:()=>{const e={name:'Rad Dummy',icon:'👹',hp:100,maxHp:100,attack:5,defense:0,weakness:'ice',affinity:null};currentEnemies=[e];currentEnemy=currentEncounterLead=e;player.attack=10;const r=dbCombat.element('radiation',e,{forced:true,source:'test'});return {def:e.defense,msg:r?.message||''};},
+    brainHack:()=>{const e={name:'Tech Dummy',icon:'👹',hp:100,maxHp:100,attack:50,defense:0,weakness:'ice',affinity:null};currentEnemies=[e];currentEnemy=currentEncounterLead=e;player.attack=10;const r=dbCombat.element('tech',e,{forced:true,source:'test'});return {attack:e.attack,msg:r?.message||''};},
     rarityGuide:()=>{renderInfo();return {count:document.querySelectorAll('#v27RarityGuide').length,omega:document.querySelector('#v27RarityGuide')?.textContent.includes('Omega')};},
     prestigeUsesChooser:()=>false
   });
@@ -4010,8 +3793,6 @@ dbReturnToRoadTraceReady=true;
   if(vampEdge28){vampEdge28.rarity='rare';vampEdge28.desc='Gain +25% Lifesteal. A pure sustain pick: more Lifesteal than Red Flask, but no potions.';vampEdge28.apply=function(){player.lifeSteal+=.25;};}
 
   /* POISON CLASS TAGS / THRONE OF VENOM ---------------------------------- */
-  function v28AddClassTag(id,tag){if(!CLASSES[id])return;const tags=new Set(CLASSES[id].tags||[]);tags.add(tag);CLASSES[id].tags=[...tags];if(CLASS_TAGS[id])CLASS_TAGS[id]=[...new Set([...CLASS_TAGS[id],tag])];else CLASS_TAGS[id]=[...tags];}
-  ['frog','ouroboros','ninja','slime'].forEach(id=>v28AddClassTag(id,'poison'));
   const venomThrone28=upgrades.find(u=>u.id==='legendary_venom_throne_v27');
   if(venomThrone28){
     venomThrone28.desc='Gain +50% Poison Chance and +10% Lifesteal. Poison-tagged classes gain +40% Poison damage; all other classes gain +20%.';
@@ -4027,9 +3808,9 @@ dbReturnToRoadTraceReady=true;
   for(const slot of EQUIPMENT_SLOTS){gearNames[slot]=gearNames[slot]||{};gearNames[slot].slimerouge=[...(gearNames[slot].slime||[`Rouge Slime ${SLOT_LABELS[slot]}`])].map(n=>`Rouge ${n}`);}
 
   /* SLIME ROUGE 3.1.8 — real random identity + real borrowed ultimate ------- */
-  function v318SlimeRougeDonorPool(){return Object.values(CLASSES).filter(c=>c.id!=='slime'&&c.id!=='slimerouge'&&isClassUnlocked(c.id));}
+  function v318SlimeRougeDonorPool(){return Object.values(CLASSES).filter(c=>c.id!=='slime'&&c.id!=='slimerouge'&&dbProgression.isClassUnlocked(c.id));}
   function v318SlimeRougePowerCompatible(u){
-    if(!u)return false;const owners=[u.classId,...(u.classIds||[])].filter(Boolean),unlocked=['slimerouge',...Object.keys(CLASSES).filter(id=>id!=='slimerouge'&&isClassUnlocked(id))];
+    if(!u)return false;const owners=[u.classId,...(u.classIds||[])].filter(Boolean),unlocked=['slimerouge',...Object.keys(CLASSES).filter(id=>id!=='slimerouge'&&dbProgression.isClassUnlocked(id))];
     if(!dbPowerups.ownershipAllowed(u,'slimerouge',unlocked))return false;
     if(!owners.length||owners.includes('slimerouge'))return true;
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};const caps=slimeRougeCapabilities();
@@ -4077,12 +3858,12 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundV318Test=Object.freeze({
     forceRun:(identity='summoner',ultimate='pokemontrainer')=>{[identity,ultimate,'slimerouge'].forEach(id=>{if(id&&meta.unlocks)meta.unlocks[id]=true;});dbClasses.forceSlimeRouge(identity,ultimate);resetPlayer('slimerouge');return {identity:player.slimeRougeIdentityClass,ultimate:player.slimeRougeUltimateClass,mechanics:[...slimeRougeCapabilities()],mana:player.mana,maxMana:player.maxMana,spirits:Array.isArray(player.summonerSpirits),roster:(player.trainerRoster||[]).length};},
     compatiblePowers:(identity='summoner',ultimate='pokemontrainer')=>{window.DiceboundV318Test.forceRun(identity,ultimate);const ids=new Set(eligibleUpgrades(()=>true).map(u=>u.id));return {identity,ultimate,summonerSpirit:ids.has('summoner_deeper_circle'),trainerRoster:ids.has('trainer_double_battle'),ninjaSmoke:ids.has('ninja_smoke_step'),count:ids.size};},
-    rangerMarks:async()=>{window.DiceboundV318Test.forceRun('ranger','pokemontrainer');const e={name:'Mark Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const result=await performStrike(e,{echo:false,index:0});return {identity:player.slimeRougeIdentityClass,marks:e.rangerMarks||0,resultType:result?.type,domain:result?.domain};},
-    summonerConjure:async()=>{window.DiceboundV318Test.forceRun('summoner','ranger');player.mana=100;const e={name:'Spirit Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const oldResponse=resolveEnemyResponse;resolveEnemyResponse=async()=>{combatBusy=false;};try{const before=player.mana;await summonerConjure();return {identity:player.slimeRougeIdentityClass,beforeMana:before,afterMana:player.mana,spirits:(player.summonerSpirits||[]).length};}finally{resolveEnemyResponse=oldResponse;}},
+    rangerMarks:async()=>{window.DiceboundV318Test.forceRun('ranger','pokemontrainer');const e={name:'Mark Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const result=await dbCombat.strike(e,{echo:false,index:0});return {identity:player.slimeRougeIdentityClass,marks:e.rangerMarks||0,resultType:result?.type,domain:result?.domain};},
+    summonerConjure:async()=>{window.DiceboundV318Test.forceRun('summoner','ranger');player.mana=100;const e={name:'Spirit Dummy',icon:'👹',hp:9999,maxHp:9999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const oldResponse=resolveEnemyResponse;resolveEnemyResponse=async()=>{combatBusy=false;};try{const before=player.mana;await dbCombat.summonerConjure();return {identity:player.slimeRougeIdentityClass,beforeMana:before,afterMana:player.mana,spirits:(player.summonerSpirits||[]).length};}finally{resolveEnemyResponse=oldResponse;}},
     realUltimate:async(identity='summoner',ultimate='pokemontrainer')=>{window.DiceboundV318Test.forceRun(identity,ultimate);player.ultimateCharge=100;const e={name:'Ultimate Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const oldResponse=resolveEnemyResponse;resolveEnemyResponse=async()=>{combatBusy=false;};try{const before=e.hp;await useUltimate();return {identity:player.slimeRougeIdentityClass,ultimate:player.slimeRougeUltimateClass,damage:before-e.hp,classRestored:player.classId==='slimerouge',charge:player.ultimateCharge,roster:(player.trainerRoster||[]).length};}finally{resolveEnemyResponse=oldResponse;}},
     rangerUltimate:async(ultimate='ranger')=>{window.DiceboundV318Test.forceRun('ranger',ultimate);player.ultimateCharge=100;const e={name:'Marked Ultimate Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0,rangerMarks:4};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const oldResponse=resolveEnemyResponse;resolveEnemyResponse=async()=>{combatBusy=false;};try{const before=e.hp;await useUltimate();return {ultimate,damage:before-e.hp,marksAfter:e.rangerMarks||0,classRestored:player.classId==='slimerouge'};}finally{resolveEnemyResponse=oldResponse;}},
-    ninjaIdentityStrike:async()=>{window.DiceboundV318Test.forceRun('ninja','ranger');player.crit=2;player.ninjaSmoke=0;player.ninjaSmokeNeed=3;const e={name:'Rouge Smoke Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const result=await performStrike(e,{echo:false,index:0});return {critTiers:result?.critTiers||result?.crit||0,smoke:player.ninjaSmoke||0,identity:player.slimeRougeIdentityClass};},
-    ouroborosIdentityStrike:async()=>{window.DiceboundV318Test.forceRun('ouroboros','ranger');const beforeEcho=player.doubleStrike||0;player.attack=20;const e={name:'Rouge Ouro Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;await performStrike(e,{echo:false,index:0});return {attack:player.attack,echoGain:(player.doubleStrike||0)-beforeEcho,identity:player.slimeRougeIdentityClass};},
+    ninjaIdentityStrike:async()=>{window.DiceboundV318Test.forceRun('ninja','ranger');player.crit=2;player.ninjaSmoke=0;player.ninjaSmokeNeed=3;const e={name:'Rouge Smoke Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;const result=await dbCombat.strike(e,{echo:false,index:0});return {critTiers:result?.critTiers||result?.crit||0,smoke:player.ninjaSmoke||0,identity:player.slimeRougeIdentityClass};},
+    ouroborosIdentityStrike:async()=>{window.DiceboundV318Test.forceRun('ouroboros','ranger');const beforeEcho=player.doubleStrike||0;player.attack=20;const e={name:'Rouge Ouro Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;await dbCombat.strike(e,{echo:false,index:0});return {attack:player.attack,echoGain:(player.doubleStrike||0)-beforeEcho,identity:player.slimeRougeIdentityClass};},
     stateContract:()=>{resetPlayer('ranger');const result=ProgressionState.grantXp(25);return {domain:result.domain,type:result.type,applied:result.applied,levelsGained:result.levelsGained};}
   });
 
@@ -4303,7 +4084,7 @@ dbReturnToRoadTraceReady=true;
       meta.unlocks.ranger=true;resetPlayer('ranger');player.rangerMarkMax=cap;gameStarted=true;
       const enemy={name:'Mark Dummy',icon:'🎯',hp:1000000,maxHp:1000000,attack:0,defense:0,gold:0,xp:0,weakness:'fire',rangerMarks:start,poisonStacks:0,enemyBarrier:0,dodge:0};
       currentEnemies=[enemy];currentEnemy=currentEncounterLead=enemy;currentEnemyIndex=0;
-      const result=await performStrike(enemy,{echo,index:echo?1:0});
+      const result=await dbCombat.strike(enemy,{echo,index:echo?1:0});
       return {before:start,after:enemy.rangerMarks||0,gain:(enemy.rangerMarks||0)-start,cap:player.rangerMarkMax||3,dodged:!!result?.dodged};
     },
     unlockHell(){meta.nightmareUnlocked=false;meta.hellUnlocked=false;debugAction('unlock_hell');return {nightmare:!!meta.nightmareUnlocked,hell:!!meta.hellUnlocked};},
@@ -4630,8 +4411,8 @@ dbReturnToRoadTraceReady=true;
   db046ApplyAssetBindings();
 
   // Alchemist's final shipped unlock copy is presentation only; resolution lives in class-unlock-rules.
-  if(CLASSES.alchemist)CLASSES.alchemist.unlock='Use 15 potions across all runs';
-  if(window.DiceboundV16Debug?.prepareAlchemist)window.DiceboundV16Debug.prepareAlchemist=()=>{meta.stats.potionsUsed=15;checkDynamicClassUnlocks();renderClassChoices();return isClassUnlocked('alchemist');};
+
+  if(window.DiceboundV16Debug?.prepareAlchemist)window.DiceboundV16Debug.prepareAlchemist=()=>{meta.stats.potionsUsed=15;dbProgression.checkDynamicClassUnlocks();renderClassChoices();return dbProgression.isClassUnlocked('alchemist');};
 
   // Board balance pass. Goal: a smoother climb with Board 5 clearly harder than Board 4.
   const DB046_BOARD_OVERRIDES={
@@ -5021,13 +4802,13 @@ dbReturnToRoadTraceReady=true;
   }
   function v319BoardDigest(){return tiles.map((t,i)=>({i,type:t?.type||null,pack:t?.packSize||1,enemy:t?.enemyBase?.name||null}));}
   async function v319ActualFlow(seed='flow-319'){
-    window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');boardLevel=1;generateBoard();
+    window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');boardLevel=1;dbRun.generateBoard();
     const board=v319BoardDigest(),enemyIndex=tiles.findIndex((t,i)=>i>0&&t?.type==='enemy'&&(t.packSize||1)===1);
     if(enemyIndex<0)throw new Error('Deterministic flow could not find a normal encounter');
     player.position=enemyIndex;player.attack=999;startCombat('normal');
-    let strikes=0;while(livingEnemies().length&&strikes<12){const target=livingEnemies()[0];setCurrentEnemy(currentEnemies.indexOf(target));await performStrike(target,{echo:false,index:0});strikes++;}
+    let strikes=0;while(livingEnemies().length&&strikes<12){const target=livingEnemies()[0];setCurrentEnemy(currentEnemies.indexOf(target));await dbCombat.strike(target,{echo:false,index:0});strikes++;}
     const encounterResolved=!livingEnemies().length;
-    const item=generateEquipment('uncommon','weapon');equipItem(item,true);
+    const item=dbItems.generateEquipment('uncommon','weapon');equipItem(item,true);
     meta.runs=17;meta.petCookies=3;meta.bestTiles=Math.max(meta.bestTiles||0,enemyIndex);saveMeta();
     meta.runs=999;meta.petCookies=999;
     const loaded=dbRuntime.save.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMetaCore});meta=loaded.meta;
@@ -5039,11 +4820,11 @@ dbReturnToRoadTraceReady=true;
     finally{eligibleUpgrades=original;}
   }
   function v319RoadLockRecovery(){
-    v319ResetCareer();resetPlayer('ranger');gameStarted=true;generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;dbRun.dispatchTile();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
+    v319ResetCareer();resetPlayer('ranger');gameStarted=true;dbRun.generateBoard();buildBoard();player.position=Math.min(5,tiles.length-2);tiles[player.position]={type:'definitely-corrupt',cleared:false};rollLocked=true;combatBusy=true;dbRun.dispatchTile();return {type:tiles[player.position].type,cleared:!!tiles[player.position].cleared,rollLocked,combatBusy};
   }
-  function v319PoorItems(n=500){v319ResetCareer();resetPlayer('ranger');let nulls=0,badSlots=0,wrongRarity=0;for(let i=0;i<n;i++){const item=generateEquipment('poor');if(!item)nulls++;else{if(!EQUIPMENT_SLOTS.includes(item.slot))badSlots++;if(item.rarity!=='poor')wrongRarity++;}}return {n,nulls,badSlots,wrongRarity};}
+  function v319PoorItems(n=500){v319ResetCareer();resetPlayer('ranger');let nulls=0,badSlots=0,wrongRarity=0;for(let i=0;i<n;i++){const item=dbItems.generateEquipment('poor');if(!item)nulls++;else{if(!EQUIPMENT_SLOTS.includes(item.slot))badSlots++;if(item.rarity!=='poor')wrongRarity++;}}return {n,nulls,badSlots,wrongRarity};}
   function v319EnergyShield(){
-    v319ResetCareer();resetPlayer('ranger');gameStarted=true;currentEnemies=[{name:'Shield Dummy',icon:'👹',hp:100,maxHp:100,attack:1,defense:0}];currentEnemy=currentEncounterLead=currentEnemies[0];const aegis=upgrades.find(u=>u.id==='legendary_crimson_aegis_v27');applyUpgrade(aegis,'deterministic test');player.hp=player.maxHp-1;player.energyShield=0;healPlayer(101);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};
+    v319ResetCareer();resetPlayer('ranger');gameStarted=true;currentEnemies=[{name:'Shield Dummy',icon:'👹',hp:100,maxHp:100,attack:1,defense:0}];currentEnemy=currentEncounterLead=currentEnemies[0];const aegis=upgrades.find(u=>u.id==='legendary_crimson_aegis_v27');applyUpgrade(aegis,'deterministic test');player.hp=player.maxHp-1;player.energyShield=0;dbCombat.heal(101);return {hp:player.hp,maxHp:player.maxHp,shield:player.energyShield};
   }
   function v319PoisonOverflow(seed='poison-319',chance=2.4,n=1000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');const vals=[];for(let i=0;i<n;i++)vals.push(rollTieredProc(chance));return {seed,chance,n,min:Math.min(...vals),max:Math.max(...vals),average:vals.reduce((a,b)=>a+b,0)/n,first:vals.slice(0,20)};}
   function v319Prestige(seed='prestige-319'){
@@ -5061,7 +4842,7 @@ dbReturnToRoadTraceReady=true;
   }
   window.DiceboundV319Test=Object.freeze({
     seed:value=>window.DiceboundRng.seed(value),rng:()=>window.DiceboundRng.snapshot(),fresh:v319ResetCareer,
-    board:(seed='board-319')=>{window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');generateBoard();return v319BoardDigest();},
+    board:(seed='board-319')=>{window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');dbRun.generateBoard();return v319BoardDigest();},
     actualFlow:v319ActualFlow,legendaryFallback:v319LegendaryFallback,roadLock:v319RoadLockRecovery,poorItems:v319PoorItems,energyShield:v319EnergyShield,
     ouroboros:()=>window.DiceboundV318Test.ouroborosIdentityStrike(),poisonOverflow:v319PoisonOverflow,prestige:v319Prestige,storage:v319StorageSaveReload,
     randomClass:v319RandomClass,secretBoss:v319SecretBossRitual,slimeRouge:v319SlimeRouge
@@ -5097,7 +4878,7 @@ dbReturnToRoadTraceReady=true;
   function beta03MysticSample(seed='beta03-mystic',n=20000){window.DiceboundRng.seed(seed);const out={legendary:0,epic:0,rare:0};for(let i=0;i<n;i++)out[beta03RollMysticRarity()]++;return {...out,n};}
   function beta03MinibossSample(level=1,seed='beta03-miniboss',n=20000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');boardLevel=level;nightmareMode=false;hellMode=false;player.luck=0;const out={legendary:0,epic:0,rare:0,uncommon:0,common:0};for(let i=0;i<n;i++)out[v27RollMinibossRarity()]++;return {...out,n};}
   function beta03BurnCap(){const e={name:'Burn Dummy',hp:1000,maxHp:1000,attack:0,defense:0,burnStacks:0};return {after20:beta03AddBurn(e,20),cap:BETA03_BURN_CAP,chance:BETA03_FIREBALL_BURN_CHANCE};}
-  function beta03FireSample(seed='beta03-fire',n=10000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');gameStarted=true;player.attack=1;player.elementEchoChance=0;const e={name:'Fire Dummy',icon:'🎯',hp:1000000000,maxHp:1000000000,attack:1,defense:0,weakness:'ice',affinity:null,poisonStacks:0,enemyBarrier:0,burnStacks:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;let burns=0;for(let i=0;i<n;i++){e.burnStacks=0;triggerElementEffect('fire',e,{forced:true,source:'Beta 0.3 regression'});if(e.burnStacks)burns++;}return {seed,n,burns,rate:burns/n};}
+  function beta03FireSample(seed='beta03-fire',n=10000){window.DiceboundRng.seed(seed);v319ResetCareer();resetPlayer('ranger');gameStarted=true;player.attack=1;player.elementEchoChance=0;const e={name:'Fire Dummy',icon:'🎯',hp:1000000000,maxHp:1000000000,attack:1,defense:0,weakness:'ice',affinity:null,poisonStacks:0,enemyBarrier:0,burnStacks:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;let burns=0;for(let i=0;i<n;i++){e.burnStacks=0;dbCombat.element('fire',e,{forced:true,source:'Beta 0.3 regression'});if(e.burnStacks)burns++;}return {seed,n,burns,rate:burns/n};}
   function beta03BurnTick(){v319ResetCareer();resetPlayer('ranger');gameStarted=true;player.hp=player.maxHp;const e={name:'Burn Dummy',icon:'🎯',hp:1000,maxHp:1000,attack:0,defense:0,burnStacks:3,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;const before=e.hp,result=dbCombatTurns.test.tickEnemyBurns();return {before,after:e.hp,dealt:before-e.hp,result};}
   function beta03BerserkerPowers(){v319ResetCareer();resetPlayer('berserker');const before={attack:player.attack,berserk:player.berserk},pain=upgrades.find(u=>u.id==='berserker_pain'),roar=upgrades.find(u=>u.id==='berserker_blood_roar');pain.apply();const afterPain={attack:player.attack,berserk:player.berserk};roar.apply();return {before,afterPain,afterRoar:{attack:player.attack,berserk:player.berserk},painDesc:pain.desc,roarDesc:roar.desc};}
   async function beta03DoubleDose(){window.DiceboundRng.seed('beta03-double-dose');v319ResetCareer();meta.purchased.survival_prepared=2;meta.purchased.survival_alchemy=2;meta.purchased.survival_double_dose=1;resetPlayer('ranger');gameStarted=true;player.maxHp=200;player.hp=1;player.potions=2;const e={name:'Potion Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'ice',affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;combatBusy=false;let responses=0;const baseResponse=resolveEnemyResponse;resolveEnemyResponse=async function(){responses++;combatBusy=false;};try{const before={hp:player.hp,potions:player.potions,used:meta.stats?.potionsUsed||0};await usePotion();return {before,after:{hp:player.hp,potions:player.potions,used:meta.stats?.potionsUsed||0},responses,enabled:player.doublePotionTurn,talent:talents.find(t=>t.id==='survival_double_dose')};}finally{resolveEnemyResponse=baseResponse;combatBusy=false;}}
@@ -5223,7 +5004,7 @@ dbReturnToRoadTraceReady=true;
       usePotionOutsideCombat();
       const counter=document.querySelector('.v18-potion-counter');
       if(counter)counter.textContent=`Potion uses: ${Math.floor(meta.stats?.potionsUsed||0)} / 15`;
-      checkDynamicClassUnlocks();
+      dbProgression.checkDynamicClassUnlocks();
     },true);
   }
 
@@ -5266,8 +5047,7 @@ dbReturnToRoadTraceReady=true;
     perfected_signature:'road3'
   });
 
-  const db0512GateRewards={};
-  function db0512RememberReward(achievementId,up){
+    function db0512RememberReward(achievementId,up){
     if(!achievementId||!up)return;
     (db0512GateRewards[achievementId]??=[]).push(up.id);
   }
@@ -5292,7 +5072,7 @@ dbReturnToRoadTraceReady=true;
   // Achievement-gated reward copy is resolved by DiceboundProgression.
 
   window.DiceboundBeta0512Test=Object.freeze({
-    globalGates:()=>Object.entries(db0512GlobalPowerGates).map(([id,a])=>({id,name:upgrades.find(u=>u.id===id)?.name,achievement:a,unlocked:achievementGateUnlocked(`achievement:${a}`)})),
+    globalGates:()=>Object.entries(db0512GlobalPowerGates).map(([id,a])=>({id,name:upgrades.find(u=>u.id===id)?.name,achievement:a,unlocked:dbProgression.achievementGateUnlocked(`achievement:${a}`)})),
     classGates:()=>JSON.parse(JSON.stringify(db0512ClassMastery)),
     eligibleLegendaryCount:()=>eligibleUpgrades(u=>u.rarity==='legendary').length,
     eligibleEpicCount:()=>eligibleUpgrades(u=>u.rarity==='epic').length
@@ -5328,8 +5108,7 @@ dbReturnToRoadTraceReady=true;
   // The original 0.5.13 handoff appended these bindings outside the runtime
   // closure. Keep the art/assets, but bind them here where the live combat and
   // camp owners actually exist.
-  const db060GuardianArt=id=>DB317_GUARDIANS.resolveById(id)?.art||window.DiceboundAssets.resolveGuardianArt(id)||null;
-  const db060EnemyPortraitBase=enemyPortraitSVG;
+    const db060EnemyPortraitBase=enemyPortraitSVG;
   enemyPortraitSVG=function(enemy){
     const src=db060GuardianArt(enemy?.id)?.battle;
     if(src)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${src}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
@@ -5357,8 +5136,8 @@ dbReturnToRoadTraceReady=true;
   Object.assign(V14_RARITY_BUDGETS,{poor:[11,25],common:[26,45],uncommon:[46,70],rare:[71,105],epic:[106,150],legendary:[151,210]});
   Object.keys(V14_RARITY_AFFIX_TIER).forEach(k=>delete V14_RARITY_AFFIX_TIER[k]);
   Object.assign(V14_RARITY_AFFIX_TIER,{poor:1,common:2,uncommon:3,rare:4,epic:5,legendary:5});
-  Object.assign(rarityInfo,{legendary:{label:'Legendary',weight:.028},mythical:{label:'Mythical',weight:0}});
-  Object.assign(rarityValues,{legendary:7,mythical:11});
+
+
 
   // New seed parser accepts the full generated ladder including Legendary.
   const db060SeedParserBase=v15ParseSeedCode;
@@ -5422,7 +5201,7 @@ dbReturnToRoadTraceReady=true;
     const drop=DB060_LOOT.ordinaryGuardianDrop({defeated,board:boardLevel,nightmare:nightmareMode,hell:hellMode,randomFn:random});
     if(!drop)return done();
     // Secret bosses keep one ordinary loot roll in addition to their signature item.
-    return openLoot(drop.rarity?generateEquipment(drop.rarity):generateEquipment(),done);
+    return openLoot(drop.rarity?dbItems.generateEquipment(drop.rarity):dbItems.generateEquipment(),done);
   }
 
   // Secret signature item rates: 5% Normal, 10% Nightmare, 15% Hell for
@@ -5489,7 +5268,7 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundPetsOracleTest=Object.freeze({
     snapshot:()=>({
       activePet:meta.activePet,petCookies:meta.petCookies,gameStarted:!!gameStarted,classId:player.classId,
-      activeState:JSON.parse(JSON.stringify(activePetState()||null)),
+      activeState:JSON.parse(JSON.stringify(dbPets.activeState()||null)),
       elementProgress:JSON.parse(JSON.stringify(meta.elementProgress||{})),
       player:{attack:player.attack,defense:player.defense,crit:player.crit,doubleStrike:player.doubleStrike,maxHp:player.maxHp,hp:player.hp,potionPower:player.potionPower,bossDamage:player.bossDamage,flatReduction:player.flatReduction,luck:player.luck,elementDamageBonus:player.elementDamageBonus,cookieBondBonus:player.cookieBondBonus,_activePetBonusId:player._activePetBonusId||null,_v17PetBonusScale:player._v17PetBonusScale||null}
     }),
@@ -5515,7 +5294,7 @@ dbReturnToRoadTraceReady=true;
   // Test-only characterization surface for the Items subsystem migration.
   // It deliberately exposes the current final wrappers without changing ordinary callers.
   window.DiceboundItemsOracleTest=Object.freeze({
-    generateEquipment:(rarity=null,slot=null)=>generateEquipment(rarity,slot),
+    generateEquipment:(rarity=null,slot=null)=>dbItems.generateEquipment(rarity,slot),
     generateLegendary:(slot=null,preferUndiscovered=false)=>dbItems.generateLegendary(slot,preferUndiscovered),
     sellValue:item=>itemSellValue(item),
     score:item=>gearPowerScore(item),
@@ -5629,7 +5408,7 @@ dbReturnToRoadTraceReady=true;
   // ephemeral test session after each capture; it is never exposed to player UI.
   function dbGuardianIdentityExercise(board,mode="normal",resume=false){
     const level=Math.floor(Number(board));if(!DB317_GUARDIANS.resolveFinal(level))throw new Error(`Unknown final guardian Board ${board}`);
-    window.DiceboundRng.seed(`guardian-identity-${level}-${mode}`);resetPlayer("ranger");boardLevel=level;nightmareMode=mode==="nightmare";hellMode=mode==="hell";gameStarted=true;rollLocked=false;runFinalized=false;combatBusy=false;generateBoard();buildBoard();player.position=currentTileCount()-1;
+    window.DiceboundRng.seed(`guardian-identity-${level}-${mode}`);resetPlayer("ranger");boardLevel=level;nightmareMode=mode==="nightmare";hellMode=mode==="hell";gameStarted=true;rollLocked=false;runFinalized=false;combatBusy=false;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;
     if(resume)dbRunRestore(dbRunSnapshot());
     startCombat("final");
     const enemy=currentEncounterLead,art=$("enemyIcon")?.querySelector("img.db060-guardian-art")?.getAttribute("src")||null;
@@ -5648,12 +5427,12 @@ dbReturnToRoadTraceReady=true;
 
   /* BETA 0.6.6.22 — class-unlock policy now resolves in progression/class-unlock-rules.js. */
   if(!dbPowerups||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Powerups/progression/equipment rule modules must load before dicebound.js');
-  if(CLASSES.pokemontrainer)CLASSES.pokemontrainer.unlock='Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty';
-  if(CLASSES.rogue)CLASSES.rogue.unlock='Hold 5,000 gold at one time and defeat the Board 3 miniboss';
-  if(CLASSES.merchant)CLASSES.merchant.unlock='Defeat the Road Merchant secret boss once';
-  if(CLASSES.slime)CLASSES.slime.unlock='Unlock 10 classes in total';
-  if(CLASSES.vampire)CLASSES.vampire.unlock='Exceed 100% Lifesteal and defeat the Board 3 final boss';
-  checkDynamicClassUnlocks();
+
+
+
+
+
+  dbProgression.checkDynamicClassUnlocks();
 
   /* BETA 0.6.3.3 — #109 progressive Camp reveals.
      This intentionally stays in the existing Camp owner. The persisted facts
@@ -5668,7 +5447,7 @@ dbReturnToRoadTraceReady=true;
     for(const candidate of DB0633_CAMP_TROPHY_TIERS)if(earned>=candidate.minimumAchievementCount)tier=candidate;
     return tier;
   }
-  function db0633PrestigeOfferPoints(total=allocatedTalentPoints()+(meta.points||0)){return dbProgression.prestigeOffer(total);}
+  function db0633PrestigeOfferPoints(total=dbProgression.allocatedTalentPoints()+(meta.points||0)){return dbProgression.prestigeOffer(total);}
   function db0633ReconcileCampRevealState(current={},facts={}){
     const prior={achievementTrophy:!!current.achievementTrophy,talentStar:!!current.talentStar,prestigeMoon:!!current.prestigeMoon};
     const achievementCount=Math.max(0,Math.floor(Number(facts.achievementCount)||0));
@@ -5815,8 +5594,8 @@ dbReturnToRoadTraceReady=true;
       {name:'Nature VFX Living Target B',icon:'👹',hp:10,maxHp:10,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0}
     ];
     currentEnemies=targets;currentEnemyIndex=0;currentEnemy=targets[0];currentEncounterLead=targets[0];currentEncounterTurn=0;gameStarted=true;combatBusy=false;
-    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
-    const result=triggerElementEffect(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
+    $('combatOverlay')?.classList.remove('hidden');dbCombatView.renderEnemyParty();
+    const result=dbCombat.element(key,targets[0],{forced:true,source:'Nature VFX regression exercise'});
     return {activated:!!result,key,enemies:targets.map((enemy,index)=>({index,hp:enemy.hp,poisonStacks:enemy.poisonStacks||0})),vfx:dbCombatView.natureEntries(),projectiles:[...document.querySelectorAll('.db-combat-projectile-vfx')].map(node=>({effect:node.dataset.effect,origin:node.dataset.origin})),legacyPresentation:{nature:document.querySelectorAll('.element-proc-fx.nature').length,fire:document.querySelectorAll('.element-proc-fx.fire').length,enemy:document.querySelectorAll('.enemy-proc-fx').length}};
   }
   function dbCombatPresentationExercise(kind='final'){
@@ -5824,7 +5603,7 @@ dbReturnToRoadTraceReady=true;
     const tiered=kind==='slime'||kind==='wolf';
     const enemy={name:tiered?(kind==='slime'?'Slime':'Wolf'):(kind==='miniboss'?'Ogre Roadwarden':'Ancient Road Dragon'),icon:'👹',hp:100,maxHp:100,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,guardian:!tiered,miniBoss:kind==='miniboss',finalBoss:kind==='final'};
     currentEnemies=[enemy];currentEnemyIndex=-1;currentEnemy=enemy;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
-    $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();
+    $('combatOverlay')?.classList.remove('hidden');dbCombatView.renderEnemyParty();
     const stage=$('enemyIcon'),host=stage?.querySelector('.stage-enemy'),sprite=host?.querySelector('.stage-sprite'),art=host?.querySelector('.enemy-art-frame'),player=$('combatPlayerIcon');
     const rect=node=>{const box=node?.getBoundingClientRect();return box?{width:Math.round(box.width),height:Math.round(box.height)}:null;};
     return {kind,narrow:window.matchMedia('(max-width:760px)').matches,viewportHeight:window.innerHeight,stageClasses:stage?.className||'',hostClasses:host?.className||'',sprite:rect(sprite),art:rect(art),player:rect(player)};
@@ -5876,7 +5655,7 @@ dbReturnToRoadTraceReady=true;
 
   function db06421ManaEquipmentExercise(){
     try{
-      window.DiceboundRng.seed('db06421-mana-equipment');resetPlayer('sorcerer');gameStarted=true;rollLocked=false;generateBoard();buildBoard();
+      window.DiceboundRng.seed('db06421-mana-equipment');resetPlayer('sorcerer');gameStarted=true;rollLocked=false;dbRun.generateBoard();buildBoard();
       const base={maxMana:player.maxMana,mana:player.mana};player.mana=17;
       equipItem({id:'db06421-spellbook',slot:'offhand',rarity:'common',equipmentId:'spellbook',bonuses:{}},true);
       const one={maxMana:player.maxMana,mana:player.mana};
@@ -5915,7 +5694,7 @@ dbReturnToRoadTraceReady=true;
       // persistent storage stays account-owned, so characterize that current
       // candidate set directly instead of reviving the removed UI helper.
       const prestigeStarterCandidates=(meta.heirlooms||[]).map(item=>({id:item.id,name:item.name,eligible:db06314Equipment.isHeirloomEligible(item)}));
-      const ordinary=generateEquipment('common','weapon');equipItem(ordinary,true);renderEndGear();
+      const ordinary=dbItems.generateEquipment('common','weapon');equipItem(ordinary,true);renderEndGear();
       const endReplacementCandidates=[...document.querySelectorAll('#endGearGrid .gear-keep-btn')].map(button=>button.textContent);
       v319ResetCareer();const existing={id:'db06422-existing-heirloom',slot:'weapon',rarity:'common',icon:'⚔️',name:'Historic Bound Weapon',bonuses:{attack:1}};
       meta.heirlooms=[existing];meta.purchased.element_prismatic=3;resetPlayer('ranger');
@@ -6019,7 +5798,7 @@ dbReturnToRoadTraceReady=true;
       const enemy={name:'Echo Regression Dummy',icon:'🎯',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,poisonStacks:0,rangerMarks:0};
       currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEncounterTurn=0;gameStarted=true;combatBusy=false;
       const strikes=[];
-      for(let index=1;index<=3;index++)strikes.push(await performStrike(enemy,{echo:true,index,canCrit:false}));
+      for(let index=1;index<=3;index++)strikes.push(await dbCombat.strike(enemy,{echo:true,index,canCrit:false}));
       return {crits:strikes.map(strike=>strike.critTiers),canCrit:strikes.map(strike=>strike.canCrit),marks:enemy.rangerMarks,expectedMarks:3};
     }
   });
@@ -6093,7 +5872,7 @@ dbReturnToRoadTraceReady=true;
   const db0648Targeting=window.DiceboundCombatTargeting;
   if(!db0648Targeting)throw new Error('DiceBound requires the combat targeting domain.');
   function db0648ClearTargetPresentation(){
-    renderEnemyParty();
+    dbCombatView.renderEnemyParty();
     const name=$('enemyName'),weakness=$('enemyWeakness'),hp=$('enemyHpText'),fill=$('enemyHpFill'),status=$('enemyStatusDots');
     if(name)name.textContent='No living targets';
     if(weakness)weakness.textContent='All enemies defeated';
@@ -6131,7 +5910,7 @@ dbReturnToRoadTraceReady=true;
     const captures=[],events=[],baseAnimate=animateClassAttack,baseResponse=resolveEnemyResponse,stop=DiceboundStateEvents.on('combat:strike',result=>events.push({targetName:result.targetName,targetHp:result.targetHp,presentationTarget:result.presentationTarget,surfaces:db0648SelectedTargetSurfaces()}));
     animateClassAttack=async mode=>{captures.push({mode,surfaces:db0648SelectedTargetSurfaces()});await delay(35);};
     resolveEnemyResponse=async()=>{combatBusy=false;};
-    try{await playerAttack();return {captures,events,afterDelay:db0648SelectedTargetSurfaces(),living:livingEnemies().map(enemy=>enemy.name)};}
+    try{await dbCombat.attack();return {captures,events,afterDelay:db0648SelectedTargetSurfaces(),living:livingEnemies().map(enemy=>enemy.name)};}
     finally{stop();animateClassAttack=baseAnimate;resolveEnemyResponse=baseResponse;combatBusy=false;}
   }
   function db06420PassivePoisonTargetExercise(){
@@ -6166,7 +5945,7 @@ dbReturnToRoadTraceReady=true;
     openStartScreen();
   }
   function db06411PrepareSingleEnemyCombat(){
-    const index=Math.min(1,Math.max(0,tiles.length-1)),base=enemyForPosition(index);
+    const index=Math.min(1,Math.max(0,tiles.length-1)),base=dbRun.enemyForPosition(index);
     if(!base)throw new Error('Memory stress exercise could not resolve its ordinary-enemy fixture.');
     tiles[index]={...(tiles[index]||{}),type:'enemy',cleared:false,enemyBase:{...base},enemyBases:undefined};
     player.position=index;refreshBoardHighlights();
@@ -6245,7 +6024,7 @@ dbReturnToRoadTraceReady=true;
   /* Dragoon #97 — one semantic airborne window and one forced landing action. */
   const dbFriendDragoonTalentId='dragoon_aerial_discipline';
   const dbFriendDragoonActive=()=>player?.classId==='dragoon';
-  const dbFriendDragoonCooldown=()=>Math.max(2,6-gameplayTalentRank(dbFriendDragoonTalentId));
+  const dbFriendDragoonCooldown=()=>Math.max(2,6-dbProgression.gameplayTalentRank(dbFriendDragoonTalentId));
   function dbFriendSyncDragoonPresentation(){return dbCombatView.syncDragoonPresentation();}
   function dbFriendDragoonLandPresentation(){return dbCombatView.dragoonLandPresentation();}
   function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
@@ -6259,12 +6038,12 @@ dbReturnToRoadTraceReady=true;
     player.combatAttackCount++;chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*critTiers);await animateClassAttack(critTiers?'crit':'normal');
     const proc=target.hp>0?triggerStrikeElements(target):{message:'',totalDamage:0};
     setCombatText(`🐉 Dragoon lands for ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?'':'s'}`:''}.${proc?.message?` ${proc.message}`:''}`);updateCombatUI();await delay(480);
-    if(!livingEnemies().length)return winCombat();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);return true;
+    if(!livingEnemies().length)return dbCombat.win();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await dbCombat.enemyResponse(false);return true;
   }
   async function dbFriendDragoonJump(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
     combatBusy=true;player.guardCooldown=0;player.dragoonJumpCooldown=dbFriendDragoonCooldown();player.dragoonAirborneResponses=1;dbFriendSyncDragoonPresentation();
-    setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await resolveEnemyResponse(false);
+    setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await dbCombat.enemyResponse(false);
     if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
   }
   function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
@@ -6272,10 +6051,10 @@ dbReturnToRoadTraceReady=true;
     const enemy={name:'Airborne Exercise Guardian',icon:'🐲',hp:999,maxHp:999,attack:999,defense:0,weakness:'ice',affinity:null,poisonStacks:0,guardian:true,finalBoss:true,specialName:'Exercise Skybreaker'};
     try{
       resetPlayer('dragoon');gameStarted=true;rollLocked=false;combatBusy=false;currentEnemies=[enemy];currentEnemy=enemy;currentEnemyIndex=0;currentEncounterLead=enemy;currentEnemyTile=null;currentEncounterTurn=Math.max(0,GUARDIAN_SPECIAL_INTERVAL-1);
-      $('combatOverlay')?.classList.remove('hidden');renderEnemyParty();updateCombatUI();
+      $('combatOverlay')?.classList.remove('hidden');dbCombatView.renderEnemyParty();updateCombatUI();
       const hpBefore=player.hp,jumpButton=$('dragoonJumpBtn'),jumpVisible=!!jumpButton&&!jumpButton.hidden,jumped=await dbFriendDragoonJump();
       const airborne={hp:player.hp,cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,airborneResponses:player.dragoonAirborneResponses,turn:currentEncounterTurn,artRaised:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===true};
-      const enemyHpBeforeLanding=enemy.hp,landed=await playerAttack();
+      const enemyHpBeforeLanding=enemy.hp,landed=await dbCombat.attack();
       return Object.freeze({jumped,jumpVisible,hpBefore,airborne,landed:!!landed,landingDamage:Math.max(0,enemyHpBeforeLanding-enemy.hp),cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,artRestored:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===false});
     }finally{
       dbFriendClearCombatPresentation();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;combatBusy=false;gameStarted=false;rollLocked=true;openStartScreen();
@@ -6310,13 +6089,13 @@ dbReturnToRoadTraceReady=true;
     clamp:(value,min,max)=>clamp(value,min,max),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
     applyPlayerDamage:raw=>applyCombatPlayerDamage(raw),
-    healPlayer:(...args)=>healPlayer(...args),
-    trackElementProgress:(key,amount)=>trackElementProgress(key,amount),
+    healPlayer:(...args)=>dbCombat.heal(...args),
+    trackElementProgress:(key,amount)=>dbPets.trackElementProgress(key,amount),
     playElementAnimation:(key,target,enemySource)=>playElementAnimation(key,target,enemySource),
     addLog:text=>addLog(text),
     showToast:(...args)=>showToast(...args),
     addCombatHistory:text=>addCombatHistory(text),
-    renderEnemyParty:()=>renderEnemyParty(),
+    renderEnemyParty:()=>dbCombatView.renderEnemyParty(),
     updateCombatUI:()=>updateCombatUI(),
     updateHUD:()=>updateHUD(),
     setProcBonus:()=>v19SetProcBonus(),
@@ -6339,7 +6118,7 @@ dbReturnToRoadTraceReady=true;
     ensureAlphaMeta:()=>ensureAlphaMeta(),
     setStatsLastHp:value=>{statsLastHp=value;},
     saveMeta:()=>saveMeta(),
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     isClassActive:id=>classIdentityActive(id),
     clamp:(value,min,max)=>clamp(value,min,max),
     identityFlash:text=>identityFlash(text),
@@ -6359,7 +6138,7 @@ dbReturnToRoadTraceReady=true;
     getBoardLevel:()=>boardLevel,
     isGameStarted:()=>gameStarted,
     talentRank:id=>talentRank(id),
-    gameplayTalentRank:id=>gameplayTalentRank(id),
+    gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
     isClassActive:id=>classIdentityActive(id),
     livingEnemies:()=>livingEnemies(),
     getCurrentEnemy:()=>currentEnemy,
@@ -6371,13 +6150,13 @@ dbReturnToRoadTraceReady=true;
     pick:list=>pick(list),
     clamp:(value,min,max)=>clamp(value,min,max),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
-    trackElementProgress:(key,amount)=>trackElementProgress(key,amount),
+    trackElementProgress:(key,amount)=>dbPets.trackElementProgress(key,amount),
     tone:(frequency,duration,type,gain,slide)=>tone(frequency,duration,type,gain,slide),
     setCombatText:text=>setCombatText(text),
     updateCombatUI:()=>updateCombatUI(),
     addCombatHistory:text=>addCombatHistory(text),
-    healPlayer:amount=>healPlayer(amount),
-    triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
+    healPlayer:amount=>dbCombat.heal(amount),
+    triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options),
     setPetDoubleBonus:()=>v19SetPetDoubleBonus(),
     petBondLevel:id=>dbPets.bondLevel(id),
     hasLegendaryEffect:id=>db060HasEffect(id),
@@ -6396,19 +6175,19 @@ dbReturnToRoadTraceReady=true;
     setCombatBusy:value=>{combatBusy=!!value;},
     isGameStarted:()=>gameStarted,
     getRollLocked:()=>rollLocked,
-    rollD20Chaos:action=>rollD20Chaos(action),
-    healPlayer:amount=>healPlayer(amount),
+    rollD20Chaos:action=>dbCombat.chaos(action),
+    healPlayer:amount=>dbCombat.heal(amount),
     playHeal:()=>sfx.heal(),
-    triggerElementEffect:(...args)=>triggerElementEffect(...args),
+    triggerElementEffect:(...args)=>dbCombat.element(...args),
     getDiboElements:()=>DIBO_ELEMENTS,
     applyMythicPantsPulse:()=>applyMythicPantsPulse(),
     setCombatText:text=>setCombatText(text),
     updateCombatUI:()=>updateCombatUI(),
     delay:ms=>delay(ms),
-    winCombat:()=>winCombat(),
-    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    winCombat:()=>dbCombat.win(),
+    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
     ensureAlphaMeta:()=>ensureAlphaMeta(),
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     saveMeta:()=>saveMeta(),
     renderClassChooser:()=>window.DiceboundClassChooser?.render?.(),
     addLog:html=>addLog(html),
@@ -6429,14 +6208,14 @@ dbReturnToRoadTraceReady=true;
     getState:()=>({player,meta,boardLevel,nightmareMode,hellMode,combatKind:v16CombatKind,tiles,currentEnemy,currentEnemies,currentEncounterLead,currentEnemyTile}),
     ensureAlphaMeta:()=>ensureAlphaMeta(),
     recordBoardClear:(board,classId)=>recordBoardClear(board,classId),
-    clearBloodOverhealTemp:()=>clearBloodOverhealTemp(),
+    clearBloodOverhealTemp:()=>dbCombat.clearBloodOverhealTemp(),
     modifiedGold:amount=>modifiedGold(amount),
-    healPlayer:amount=>healPlayer(amount),
+    healPlayer:amount=>dbCombat.heal(amount),
     saveMeta:()=>saveMeta(),
     showToast:(...args)=>showToast(...args),
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     addLog:html=>addLog(html),
-    unlockClass:id=>unlockClass(id),
+    unlockClass:id=>dbProgression.unlockClass(id),
     refreshTile:index=>refreshTile(index),
     setCombatText:text=>setCombatText(text),
     playWin:()=>sfx.win(),
@@ -6464,7 +6243,7 @@ dbReturnToRoadTraceReady=true;
     isCombatOverlayHidden:()=>!!$('combatOverlay')?.classList.contains('hidden'),
     setRollLocked:value=>{rollLocked=!!value;},
     clearStoneBattle:()=>v26ClearStoneBattle(),
-    grantLegacyXp:gain=>grantLegacyXp(gain),
+    grantLegacyXp:gain=>dbProgression.grantLegacyXp(gain),
     updateMetaUi:()=>updateMetaUI(),
     restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
     clearLegendaryBattleTemps:()=>db060ClearBattleLegendaryTemps(),
@@ -6481,16 +6260,16 @@ dbReturnToRoadTraceReady=true;
     livingEnemies:()=>livingEnemies(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    rollD20Chaos:(...args)=>rollD20Chaos(...args),
+    rollD20Chaos:(...args)=>dbCombat.chaos(...args),
     updateCombatUI:()=>updateCombatUI(),
     rollTieredProc:chance=>rollTieredProc(chance),
-    performStrike:(...args)=>performStrike(...args),
+    performStrike:(...args)=>dbCombat.strike(...args),
     chargeUltimate:amount=>chargeUltimate(amount),
     applyMythicPantsPulse:()=>applyMythicPantsPulse(),
     setCombatText:text=>setCombatText(text),
-    winCombat:(...args)=>winCombat(...args),
+    winCombat:(...args)=>dbCombat.win(...args),
     setCurrentEnemy:index=>setCurrentEnemy(index),
-    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
     isClassActive:id=>classIdentityActive(id),
     classIdentityId:()=>classIdentityId(),
     hasLegendaryEffect:id=>db060HasEffect(id),
@@ -6517,7 +6296,7 @@ dbReturnToRoadTraceReady=true;
     classIdentityId:()=>classIdentityId(),
     isClassActive:id=>classIdentityActive(id),
     clamp:(value,min,max)=>clamp(value,min,max),
-    playerAttack:(...args)=>playerAttack(...args),
+    playerAttack:(...args)=>dbCombat.attack(...args),
     invokerActive:()=>dbClasses.invokerActive(),
     invokerGeneratorManaMultiplier:()=>dbClasses.invokerGeneratorManaMultiplier(),
     invokerElementalLance:()=>dbClasses.invokerElementalLance(),
@@ -6528,25 +6307,25 @@ dbReturnToRoadTraceReady=true;
     pick:values=>pick(values),
     rollTieredProc:chance=>rollTieredProc(chance),
     coreElementIds:()=>DIBO_ELEMENTS,
-    triggerElementEffect:(...args)=>triggerElementEffect(...args),
+    triggerElementEffect:(...args)=>dbCombat.element(...args),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
-    healPlayer:amount=>healPlayer(amount),
+    healPlayer:amount=>dbCombat.heal(amount),
     getSetDamageBonus:()=>v19SetDamageBonus(),
     getEncounterLead:()=>currentEncounterLead,
     chargeUltimate:amount=>chargeUltimate(amount),
     setCombatText:text=>setCombatText(text),
     critSfx:()=>sfx.crit(),
     delay:ms=>delay(ms),
-    winCombat:(...args)=>winCombat(...args),
+    winCombat:(...args)=>dbCombat.win(...args),
     setCurrentEnemy:index=>setCurrentEnemy(index),
-    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
     getPets:()=>PETS,
     getMeta:()=>meta,
-    petTurn:(...args)=>petTurn(...args),
+    petTurn:(...args)=>dbCombat.petTurn(...args),
     addCombatHistory:text=>addCombatHistory(text),
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},
     saveMeta:()=>saveMeta(),
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks()
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks()
   });
 
   const dbCombatGuardOwner=window.DiceboundCombatGuardResolution;
@@ -6557,33 +6336,33 @@ dbReturnToRoadTraceReady=true;
     livingEnemies:()=>livingEnemies(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    rollD20Chaos:action=>rollD20Chaos(action),
+    rollD20Chaos:action=>dbCombat.chaos(action),
     chargeUltimate:amount=>chargeUltimate(amount),
-    healPlayer:amount=>healPlayer(amount),
+    healPlayer:amount=>dbCombat.heal(amount),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
-    triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
+    triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options),
     getDiboElements:()=>DIBO_ELEMENTS,
     applyMythicPantsPulse:()=>applyMythicPantsPulse(),
     updateCombatUI:()=>updateCombatUI(),
     setCombatText:text=>setCombatText(text),
     tone:(frequency,duration,type,gain,slide)=>tone(frequency,duration,type,gain,slide),
     delay:ms=>delay(ms),
-    winCombat:()=>winCombat(),
-    resolveEnemyResponse:(guarded,bonus)=>resolveEnemyResponse(guarded,bonus),
+    winCombat:()=>dbCombat.win(),
+    resolveEnemyResponse:(guarded,bonus)=>dbCombat.enemyResponse(guarded,bonus),
     isClassActive:id=>classIdentityActive(id),
     classIdentityId:()=>classIdentityId(),
     classHasMechanic:tag=>classHasMechanic(tag),
     getClassTags:id=>CLASSES[id]?.tags||[],
-    gameplayTalentRank:id=>gameplayTalentRank(id),
+    gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
     getWeaponElement:()=>player.equipment?.weapon?.element||null,
-    getActivePetElement:()=>activePetDef().element,
+    getActivePetElement:()=>dbPets.activeDefinition().element,
     getElementKeys:()=>ELEMENT_KEYS,
     random:()=>random(),
     pick:list=>pick(list),
     clamp:(value,min,max)=>clamp(value,min,max),
     addCombatHistory:text=>addCombatHistory(text),
     identityFlash:text=>identityFlash(text),
-    manaGain:amount=>manaGain(amount),
+    manaGain:amount=>dbCombat.manaGain(amount),
     hasMythicPiece:slot=>hasMythicPiece(slot),
     hasLegendaryEffect:id=>db060HasEffect(id),
     rollTieredProc:chance=>rollTieredProc(chance),
@@ -6592,7 +6371,7 @@ dbReturnToRoadTraceReady=true;
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
-    invokeGuardAction:(...args)=>guardAction(...args)
+    invokeGuardAction:(...args)=>dbCombat.guard(...args)
   });
 
   const dbCombatStrikeOwner=window.DiceboundCombatStrikeResolution;
@@ -6602,11 +6381,11 @@ dbReturnToRoadTraceReady=true;
     random,rand,pick,clamp,rollTieredProc,
     resolveCriticalTiers:(roller,options)=>window.DiceboundStrikePolicy.resolveCriticalTiers(roller,options),
     rangerMarkTotal:(before,options)=>window.DiceboundStrikePolicy.rangerMarkTotal(before,options),
-    setDamageBonus:()=>v19SetDamageBonus(),petDamage:()=>petDamage(),healPlayer:amount=>healPlayer(amount),
+    setDamageBonus:()=>v19SetDamageBonus(),petDamage:()=>petDamage(),healPlayer:amount=>dbCombat.heal(amount),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),animateClassAttack:mode=>animateClassAttack(mode),
     playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy),addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),playHolySfx:()=>sfx.holy(),
-    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),triggerElementEffect:(key,target,options)=>triggerElementEffect(key,target,options),
+    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options),
     identityFlash:text=>identityFlash(text),reconcileDefeatedTarget:(target,reason)=>db0648ReconcileDefeatedTarget(target,reason),
     presentationTargetSnapshot:()=>db0648PresentationTargetSnapshot(),emitStrike:result=>DiceboundStateEvents.emit('combat:strike',result),
     renderStrike:result=>CombatUI.renderStrike(result),delay:ms=>delay(ms),chargeUltimate:amount=>chargeUltimate(amount),
@@ -6642,12 +6421,12 @@ dbReturnToRoadTraceReady=true;
     scaleUltimateDamage:(damage,actor,opts)=>DB_EFFECTIVE_STATS.scaleUltimateDamage(damage,actor,opts),
     damageEnemy:(enemy,amount,ignoreDefense)=>damageEnemy(enemy,amount,ignoreDefense),
     damageAll:(amount,secondary)=>damageAll(amount,secondary),
-    healPlayer:(amount,opts)=>healPlayer(amount,opts),
+    healPlayer:(amount,opts)=>dbCombat.heal(amount,opts),
     triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
     petDamage:()=>petDamage(),
-    trainerPetDamage:id=>trainerPetDamage(id),
+    trainerPetDamage:id=>dbCombat.trainerPetDamage(id),
     syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
-    rollD20Chaos:action=>rollD20Chaos(action),
+    rollD20Chaos:action=>dbCombat.chaos(action),
     updateCombatUI:()=>updateCombatUI(),
     animateUltimate:()=>animateUltimate(),
     animateClassAttack:mode=>animateClassAttack(mode),
@@ -6658,9 +6437,9 @@ dbReturnToRoadTraceReady=true;
     playHolySfx:()=>sfx.holy(),
     delay:ms=>delay(ms),
     getCombatActionDelay:()=>ALPHA_COMBAT_DELAY,
-    winCombat:()=>winCombat(),
-    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
-    petTurn:(...args)=>petTurn(...args),
+    winCombat:()=>dbCombat.win(),
+    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
+    petTurn:(...args)=>dbCombat.petTurn(...args),
     applyMythicPantsPulse:()=>applyMythicPantsPulse(),
     applyMythicRingPulse:()=>applyMythicRingPulse(),
     potionHealValue:fraction=>v16PotionHealValue(fraction),
@@ -6697,7 +6476,7 @@ dbReturnToRoadTraceReady=true;
     describeUltimate:id=>describeCurrentUltimate(id),
     berserkerRageBonus:()=>DB_EFFECTIVE_STATS.berserkerRageBonus(player),
     hasLegendaryEffect:id=>db060HasEffect(id),
-    activeTrainerPetId:()=>activeTrainerPetId(),
+    activeTrainerPetId:()=>dbCombat.activeTrainerPetId(),
     selectEnemy:index=>setCurrentEnemy(index),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
@@ -6721,7 +6500,7 @@ dbReturnToRoadTraceReady=true;
     enemyById:id=>db317Enemy(id),
     finalGuardian:level=>db317FinalGuardian(level),
     minibossGuardian:level=>db317MinibossGuardian(level),
-    enemyForPosition:index=>enemyForPosition(index),
+    enemyForPosition:index=>dbRun.enemyForPosition(index),
     scaleEnemy:(...args)=>scaleEnemy(...args),
     setMerchantBossBattle:value=>{merchantBossBattle=!!value;},
     setCombatKind:value=>{v16CombatKind=value;},
@@ -6738,7 +6517,7 @@ dbReturnToRoadTraceReady=true;
     setCombatText:(...args)=>setCombatText(...args),
     showCombatOverlay:()=>$('combatOverlay').classList.remove('hidden'),
     addLog:text=>addLog(text),
-    renderEnemyParty:()=>renderEnemyParty(),
+    renderEnemyParty:()=>dbCombatView.renderEnemyParty(),
     updateCombatUI:()=>updateCombatUI(),
     pick:values=>pick(values),
     clamp:(value,min,max)=>clamp(value,min,max),
@@ -6773,27 +6552,27 @@ dbReturnToRoadTraceReady=true;
     rand:(min,max)=>rand(min,max),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms),
-    petTurn:()=>petTurn(),
+    petTurn:()=>dbCombat.petTurn(),
     applyPoisonTick:()=>applyPoisonTick(),
-    winCombat:()=>winCombat(),
+    winCombat:()=>dbCombat.win(),
     handlePlayerDeath:()=>handlePlayerDeath(),
     setCombatText:(...args)=>setCombatText(...args),
     updateCombatUI:()=>updateCombatUI(),
     addCombatHistory:text=>addCombatHistory(text),
-    renderEnemyParty:()=>renderEnemyParty(),
-    triggerElementEffect:(...args)=>triggerElementEffect(...args),
+    renderEnemyParty:()=>dbCombatView.renderEnemyParty(),
+    triggerElementEffect:(...args)=>dbCombat.element(...args),
     defenseDamageReduction:value=>defenseDamageReduction(value),
     effectiveDodgeChance:()=>effectiveDodgeChance(),
-    enemyElementProc:enemy=>enemyElementProc(enemy),
+    enemyElementProc:enemy=>dbCombat.enemyElementProc(enemy),
     damageEnemy:(...args)=>damageEnemy(...args),
-    healPlayer:(...args)=>healPlayer(...args),
+    healPlayer:(...args)=>dbCombat.heal(...args),
     mythicalSetCount:()=>mythicalSetCount(),
     guardianSpecialMultiplier:()=>v19SetGuardianSpecialMult(),
     hasMythicPiece:slot=>hasMythicPiece(slot),
     hasDevilsHorns:()=>v24HasHorns(),
     hasHeadphones:()=>v24HasHeadphones(),
     hasLegendaryEffect:id=>db060HasEffect(id),
-    checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     saveMeta:()=>saveMeta(),
     playHitSfx:()=>sfx.hit(),
     recordDamageTaken:amount=>{meta.damageTaken=(meta.damageTaken||0)+amount;},
@@ -6806,11 +6585,11 @@ dbReturnToRoadTraceReady=true;
   dbClasses.configureInvoker({
     getPlayer:()=>player,getMeta:()=>meta,isClassActive:id=>classIdentityActive(id),getCurrentEnemy:()=>currentEnemy,getCurrentEnemies:()=>currentEnemies,
     livingEnemies:()=>livingEnemies(),getCombatBusy:()=>combatBusy,setCombatBusy:value=>{combatBusy=!!value;},
-    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),damageAll:(amount,falloff=1)=>damageAll(amount,falloff),healPlayer:amount=>healPlayer(amount),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),damageAll:(amount,falloff=1)=>damageAll(amount,falloff),healPlayer:amount=>dbCombat.heal(amount),
     addEnemyBurn:(enemy,stacks)=>dbCombatElementResolution.addEnemyBurn(enemy,stacks),updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),addCombatHistory:text=>addCombatHistory(text),identityFlash:text=>identityFlash(text),
-    delay:ms=>delay(ms),winCombat:()=>winCombat(),resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
+    delay:ms=>delay(ms),winCombat:()=>dbCombat.win(),resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
     clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
-    recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>checkDynamicClassUnlocks(),document:()=>document
+    recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document
   });
 
   /* INFO / ROADKEEPER'S GUIDE ------------------------------------------------
@@ -6827,7 +6606,7 @@ dbReturnToRoadTraceReady=true;
     try{
       const text=String(raw||'').trim();if(!text)throw new Error('empty');
       meta=dbRuntime.save.importText(text,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});
-      ensureAlphaMeta();saveMeta();repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
+      ensureAlphaMeta();saveMeta();dbProgression.repairTalentPrerequisites();renderClassChoices();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
     }catch(error){dbRuntime.platform.alert('That save string could not be imported.');return false;}
   }
   dbInfoGuide.configure({
@@ -6883,7 +6662,7 @@ dbReturnToRoadTraceReady=true;
   dbRun.configurePlayerInitialization({
     getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>getHeirloomSlots(),
-    equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
+    equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
     classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>dbPets.shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
     syncActivePetBonus:force=>dbPets.syncActiveBonus(force),syncBloodmageHpPassive:initial=>dbClasses.syncBloodmageHpPassive(initial),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
@@ -6944,13 +6723,13 @@ dbReturnToRoadTraceReady=true;
   function dbCombatOraclePrepareEncounter(spec={}){
     dbCombatOracleCleanup();resetPlayer(spec.classId||'ranger');Object.assign(player,dbCombatOracleClone(spec.player||{}));
     boardLevel=Math.max(1,Math.min(6,Math.floor(Number(spec.board)||1)));nightmareMode=!!spec.nightmare;hellMode=!!spec.hell;gameStarted=true;rollLocked=false;combatBusy=false;runFinalized=false;v16CombatKind='normal';
-    const tileIndex=Math.max(1,Math.floor(Number(spec.tileIndex)||1));player.position=tileIndex;while(tiles.length<=tileIndex)tiles.push({type:'empty',cleared:false});const base=enemyForPosition(tileIndex);if(!base)throw new Error('Combat oracle could not resolve ordinary encounter base.');tiles[tileIndex]={type:'enemy',cleared:false,enemyBase:dbCombatOracleClone(base)};currentEnemyTile=null;return dbCombatOracleClone(base);
+    const tileIndex=Math.max(1,Math.floor(Number(spec.tileIndex)||1));player.position=tileIndex;while(tiles.length<=tileIndex)tiles.push({type:'empty',cleared:false});const base=dbRun.enemyForPosition(tileIndex);if(!base)throw new Error('Combat oracle could not resolve ordinary encounter base.');tiles[tileIndex]={type:'enemy',cleared:false,enemyBase:dbCombatOracleClone(base)};currentEnemyTile=null;return dbCombatOracleClone(base);
   }
   window.DiceboundCombatOracleTest=Object.freeze({
     snapshot:dbCombatOracleSnapshot,cleanup:dbCombatOracleCleanup,dismissTransient:dbCombatOracleDismissTransient,setup:dbCombatOracleSetup,prepareEncounter:dbCombatOraclePrepareEncounter,
     onEvent:(name,listener)=>DiceboundStateEvents.on(name,listener),
-    startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>playerAttack(...args),guard:(...args)=>guardAction(...args),channel:(...args)=>occultChannelAttack(...args),spell:(...args)=>occultSpellAttack(...args),ultimate:(...args)=>useUltimate(...args),petTurn:(...args)=>petTurn(...args),enemyResponse:(...args)=>resolveEnemyResponse(...args),
-    element:(key,options={})=>triggerElementEffect(key,currentEnemy,options),heal:(amount,options)=>healPlayer(amount,options),chaos:action=>rollD20Chaos(action),win:(...args)=>winCombat(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
+    startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>dbCombat.attack(...args),guard:(...args)=>dbCombat.guard(...args),channel:(...args)=>dbCombat.channel(...args),spell:(...args)=>dbCombat.spell(...args),ultimate:(...args)=>useUltimate(...args),petTurn:(...args)=>dbCombat.petTurn(...args),enemyResponse:(...args)=>dbCombat.enemyResponse(...args),
+    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
   });
 
   // Test-only characterization surface for the Progression subsystem migration.
@@ -6979,14 +6758,14 @@ dbReturnToRoadTraceReady=true;
     setLegacyState:({level,xp,xpNext,points}={})=>{if(level!==undefined)meta.level=Math.max(1,Number(level)||1);if(xp!==undefined)meta.xp=Math.max(0,Number(xp)||0);if(xpNext!==undefined)meta.xpNext=Math.max(1,Number(xpNext)||1);if(points!==undefined)meta.points=Math.max(0,Number(points)||0);return true;},
     setRunTalentSnapshot:value=>{runTalentSnapshot=value==null?null:dbRunClone(value);return dbRunClone(runTalentSnapshot);},
     talentRank:id=>talentRank(id),
-    gameplayTalentRank:id=>gameplayTalentRank(id),
-    talentAvailable:id=>{const talent=talents.find(entry=>entry.id===id);return !!talent&&talentAvailable(talent);},
+    gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
+    talentAvailable:id=>{const talent=talents.find(entry=>entry.id===id);return !!talent&&dbProgression.talentAvailable(talent);},
     purchaseTalent:id=>purchaseTalentNode(id),
-    repairTalentPrerequisites:()=>repairTalentPrerequisites(),
-    allocatedTalentPoints:()=>allocatedTalentPoints(),
+    repairTalentPrerequisites:()=>dbProgression.repairTalentPrerequisites(),
+    allocatedTalentPoints:()=>dbProgression.allocatedTalentPoints(),
     legacyXpForLevel:level=>legacyXpForLevel(level),
-    grantLegacyXp:amount=>grantLegacyXp(amount),
-    finalizeRun:()=>finalizeRun(),
+    grantLegacyXp:amount=>dbProgression.grantLegacyXp(amount),
+    finalizeRun:()=>dbProgression.finalizeRun(),
     prestigeOffer:total=>db0633PrestigeOfferPoints(total),
     completePrestige:total=>dbProgression.completePrestige(total),
     setPrestige:value=>{meta.prestige=DB_PRESTIGE.normalize(dbRunClone(value||{}));return dbRunClone(meta.prestige);},
