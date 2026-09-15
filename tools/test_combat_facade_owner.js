@@ -56,7 +56,7 @@ for(const snippet of [
   'if(dbCombat)return dbCombat.petDamage();'
 ])assert(monolith.includes(snippet),`Missing intentional Combat seam/composition route: ${snippet}`);
 
-// Call-only compatibility functions are not architecture.  Their callers now
+// Call-only compatibility functions are not architecture. Their callers now
 // invoke DiceboundCombat directly; rebuilding these wrappers would recreate the
 // historical layer this release is removing.
 const retiredForwarders=[
@@ -70,14 +70,17 @@ const retiredForwarders=[
 for(const name of retiredForwarders){
   assert(!new RegExp(`\\b(?:async\\s+)?function\\s+${name}\\s*\\(`).test(monolith),`retired Combat forwarding adapter returned: ${name}`);
 }
+
+// Guard representative direct routes that actually have ordinary monolith
+// callers after the chainsaw pass. A facade method need not have a monolith
+// caller merely because focused owners can consume it.
 for(const direct of [
   'dbCombat.win(',
   'dbCombat.element(',
   'dbCombat.heal(',
   'dbCombat.spell(',
   'dbCombat.manaGain(',
-  'dbCombat.strike(',
-  'dbCombat.strikeBaseDamage('
+  'dbCombat.strike('
 ])assert(monolith.includes(direct),`ordinary Combat callers no longer route directly through facade: ${direct}`);
 
 for(const retired of [
