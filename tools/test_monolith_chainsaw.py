@@ -10,6 +10,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 MONOLITH=ROOT/"runtime/js/dicebound.js"
 ELEMENTS=ROOT/"runtime/js/combat/element-content.js"
 KILLED=['achievementGateUnlocked', 'activePetDef', 'activePetState', 'activeTrainerPetId', 'affinityElementMultiplier', 'allocatedTalentPoints', 'applyRandomHighRarity', 'checkDynamicClassUnlocks', 'clearBloodOverhealTemp', 'commitClassUnlock', 'currentWeaponElement', 'elementHit', 'elementHitAll', 'enemyElementProc', 'enemyForPosition', 'enemyTurn', 'gameplayTalentRank', 'generateBoard', 'generateEquipment', 'healPlayer', 'isClassUnlocked', 'manaGain', 'maybePetElementProc', 'occultChannelAttack', 'occultSpellAttack', 'performStrike', 'petElementFor', 'recordHealing', 'renderEnemyParty', 'repairTalentPrerequisites', 'shuffledPetIds', 'statusDotsHTML', 'strikeBaseDamage', 'summonerConjure', 'trackElementProgress', 'trainerPetDamage', 'trainerStrike', 'triggerElementEffect', 'triggerWeaponElement', 'unlockClass', 'winCombat']
+STALE_STARTUP_ALIASES=['db0512GateRewards','db0512RememberReward','db060GuardianArt','db060GuardianTileArt']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -35,7 +36,16 @@ def main()->int:
     assert repair_call in text, "legacy-meta repair no longer routes directly to Progression owner"
     assert text.index(early_progression)<text.index(legacy_import), "Progression owner bootstrap must precede legacy-meta repair"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, Progression bootstrap ordered")
+    # Beta 0.5.12's reward-copy table and Beta 0.6's guardian-art alias were
+    # historical replay layers.  Their surviving consumers now read canonical
+    # Powerup/Guardian/Asset owners directly; none of the old names may return.
+    for name in STALE_STARTUP_ALIASES:
+        assert not re.search(rf"\b{re.escape(name)}\b",code), f"historical startup alias {name} returned"
+    assert "DB0512_GLOBAL_POWER_IDS" in text, "0.5.12 regression snapshot no longer reads canonical powerup metadata"
+    assert "DB317_GUARDIANS.resolveById" in text, "guardian consumers no longer route through the Guardian owner"
+    assert "window.DiceboundAssets.resolveGuardianArt" in text, "secret-boss art fallback no longer routes through DiceboundAssets"
+
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, Progression bootstrap ordered, startup aliases retired")
     return 0
 
 if __name__=="__main__":
