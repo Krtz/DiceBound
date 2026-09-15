@@ -98,8 +98,8 @@ const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"
 assert.match(monolith, /const dbCombatView=window\.DiceboundCombatView;/, "monolith must bind the Combat View facade");
 assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player\}\);/, "monolith must configure VFX through the facade");
 assert.match(monolith, /dbCombatView\.configurePresentation\(\{/, "monolith must configure presentation through the facade");
-assert.match(monolith, /function updateCombatUI\(\)\{const result=dbCombatView\.update\(\);updateHUD\(\);return result;\}/, "updateCombatUI must be a thin facade adapter");
-assert.match(monolith, /function renderEnemyParty\(\)\{return dbCombatView\.renderEnemyParty\(\);\}/, "renderEnemyParty must be a thin facade adapter");
+assert.match(monolith, /function updateCombatUI\(\)\{const result=dbCombatView\.update\(\);updateHUD\(\);return result;\}/, "updateCombatUI is a real HUD-coupled seam and must stay singular");
+assert.doesNotMatch(monolith, /\bfunction renderEnemyParty\s*\(/, "call-only renderEnemyParty adapter must stay retired");
 assert.match(monolith, /withNatureLegacyPresentation:\(key,work\)=>dbCombatView\.withNatureLegacyPresentation\(key,work\)/, "element composition must route Nature presentation through Combat View");
 assert.match(monolith, /playDonutRain:payload=>dbCombatView\.playDonutRain\(payload\)/, "element composition must route Donut presentation through Combat View");
 assert.match(monolith, /playProjectileProc:\(key,payload\)=>dbCombatView\.playProjectileProc\?\.\(key,payload\)/, "element composition must route projectile presentation through Combat View");
@@ -125,4 +125,4 @@ const index = fs.readFileSync(path.join(root, "runtime", "index.html"), "utf8");
 assert(index.indexOf('js/combat/vfx.js') < index.indexOf('js/combat/view-facade.js'));
 assert(index.indexOf('js/combat/view-facade.js') < index.indexOf('js/dicebound.js'));
 
-console.log("Combat View facade ownership contract: PASS");
+console.log("Combat View facade ownership contract: PASS — call-only enemy-party adapter retired; HUD seam preserved");
