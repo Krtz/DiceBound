@@ -3,6 +3,7 @@
 ## Beta 0.6.6.38 Canonical-function archaeology — Debug tooling (#359)
 - Replaced the ten-layer historical `debugAction` chain with one canonical dispatcher while preserving the final released dispatch/logging/post-refresh order.
 - Added a deterministic runtime historical-layer census and anti-return coverage; later rewrites will follow the measured ranking and manual ownership review.
+- Canonicalized the Debug menu surface too: button refresh, menu opening and current control/tab layout each have one implementation instead of v11→v15→v21→v22→v25→v26 wrapper ladders.
 - No gameplay/balance, RNG order/state, save/checkpoint semantics or player-facing UI behavior changes are intended. `dicebound.js` is 657,203 bytes / 7,102 physical lines before release metadata materialization.
 
 ## Beta 0.6.6.37 Composition sediment cleanup (#40, #209)

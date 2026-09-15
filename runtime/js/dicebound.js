@@ -1026,8 +1026,12 @@
   function renderEndGear(){
     return dbEquipmentUi.renderEndGear();
   }
-  function openDebugMenu(){$("debugOverlay").classList.remove("hidden");}
-
+  function openDebugMenu(){
+    $("debugOverlay").classList.remove("hidden");
+    refreshDebugButtons();
+    v24RefreshDebugLabels();
+    v25EnsureDebugControls();
+  }
 
   function loseGame(){sfx.lose();$("combatOverlay").classList.add("hidden");showEnd(false);}
 
@@ -1620,9 +1624,34 @@
   const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);};
   $("rollBtn").addEventListener("click",e=>{if(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked){e.preventDefault();e.stopImmediatePropagation();rollDice();}},true);
 
-  function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
-  const openDebugMenuV11=openDebugMenu;openDebugMenu=function(){openDebugMenuV11();refreshDebugButtons();};
+  let dbDebugUiReady=false;
+  function refreshDebugButtons(){
+    const grid=$("debugGrid");if(!grid)return;
+    const ensure=(id,label)=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;return btn;};
 
+    // The static controls accumulated through v11, v1.5 and v21 now have one owner.
+    ensure("alwayschoose",`${meta.debugAlwaysChooseRolls?"☑":"☐"} Always choose dice`);
+    ensure("board5","Board 5");
+    ensure("mythicring","Artifact Ring");
+    ensure("omega_merchant","The Final Price");
+    ensure("omega_stone","Philosopher's Stone");
+    for(const [id,label] of [
+      ["mythic_weapon","🌈 Mythic Weapon"],["mythic_boots","🌈 Mythic Boots"],["mythic_legs","🌈 Mythic Legguards"],
+      ["mythic_amulet","🌈 Mythic Amulet"],["mythic_hat","🌈 Mythic Hat"],["mythic_ring","🌈 Mythic Ring"],["seed_item","🧬 Add item by seed code"],
+      ["all_powerups","🎁 Choose any eligible powerup"]
+    ])ensure(id,label);
+
+    // v22 split the old destructive unlock button into separate class/Pet cheats.
+    const old=grid.querySelector('[data-debug="unlock"]');
+    if(old){old.dataset.debug="unlockclasses";old.textContent="🔓 Unlock all classes";}
+    else ensure("unlockclasses","🔓 Unlock all classes");
+    ensure("unlockpets","🐾 Unlock all pets");
+
+    // During source evaluation the later v25/V26 control machinery is not ready
+    // yet. Once the final debug UI generation has initialized, every ordinary
+    // refresh also performs the current tab/control sync exactly once.
+    if(dbDebugUiReady)v25EnsureDebugControls();
+  }
 
   refreshDebugButtons();
   saveMeta();
@@ -2154,8 +2183,6 @@
 
 
   // ---- Debug: all Mythic pieces + item seed recreation ----------------------
-  const refreshDebugButtonsV15Patch=refreshDebugButtons;
-  refreshDebugButtons=function(){refreshDebugButtonsV15Patch();const grid=$("debugGrid");if(!grid)return;const defs=[["mythic_weapon","🌈 Mythic Weapon"],["mythic_boots","🌈 Mythic Boots"],["mythic_legs","🌈 Mythic Legguards"],["mythic_amulet","🌈 Mythic Amulet"],["mythic_hat","🌈 Mythic Hat"],["mythic_ring","🌈 Mythic Ring"],["seed_item","🧬 Add item by seed code"]];for(const [id,label] of defs){let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;}};
 
   // ---- New class portraits and sensible selection order --------------------
   const classPortraitV15Patch=classPortraitSVG;
@@ -2974,12 +3001,7 @@
 
   // Debug access makes the reusable selector easy to regression-test in an
   // ordinary run without manufacturing a special event first.
-  const refreshDebugButtonsV21Base=refreshDebugButtons;
-  refreshDebugButtons=function(){
-    refreshDebugButtonsV21Base();const grid=$('debugGrid');if(!grid)return;
-    let btn=grid.querySelector('[data-debug="all_powerups"]');if(!btn){btn=document.createElement('button');btn.dataset.debug='all_powerups';btn.className='small-btn';grid.appendChild(btn);}btn.textContent='🎁 Choose any eligible powerup';
-  };
-    refreshDebugButtons();
+      refreshDebugButtons();
 
   // Tiny regression hooks kept out of visible UI.
 
@@ -3153,9 +3175,7 @@
     const old=grid.querySelector('[data-debug="unlock"]');if(old){old.dataset.debug='unlockclasses';old.textContent='🔓 Unlock all classes';}
     let pets=grid.querySelector('[data-debug="unlockpets"]');if(!pets){pets=document.createElement('button');pets.className='small-btn';pets.dataset.debug='unlockpets';pets.textContent='🐾 Unlock all pets';if(old)old.after(pets);else grid.appendChild(pets);}
   }
-  const refreshDebugButtonsV22Base=refreshDebugButtons;
-  refreshDebugButtons=function(){refreshDebugButtonsV22Base();v22EnsureDebugUnlockButtons();};
-    refreshDebugButtons();
+      refreshDebugButtons();
 
   // ----- Shared fate chooser for 1d6 and 2d6. -------------------------------
   async function v22ChooseDice(count,reason='Fate'){
@@ -3438,8 +3458,6 @@
     const mythicBtn=document.querySelector('[data-debug="mythic"]');if(mythicBtn)mythicBtn.textContent='Equip full Artifact set';
     const offhandBtn=document.querySelector('[data-debug="mythic_offhand"]');if(offhandBtn)offhandBtn.textContent='Artifact offhand';
   }
-  const openDebugMenuV24PresentationBase=openDebugMenu;
-  openDebugMenu=function(){const r=openDebugMenuV24PresentationBase();v24RefreshDebugLabels();return r;};
 
   v24RefreshDebugLabels();
 
@@ -3549,7 +3567,8 @@
     return isClassUnlocked(id);
   }
   function v25EnsureDebugControls(){
-    const modal=$('debugOverlay')?.querySelector('.modal'),grid=$('debugGrid');if(!modal||!grid)return;
+    const modal=$('debugOverlay')?.querySelector('.modal'),grid=$('debugGrid');
+    if(modal&&grid){
     let nav=$('debugTabs');if(!nav){nav=document.createElement('div');nav.id='debugTabs';nav.className='debug-tabs';nav.innerHTML=`<button class="small-btn active" data-debug-tab="player">Player</button><button class="small-btn" data-debug-tab="progress">Progression</button><button class="small-btn" data-debug-tab="gear">Gear</button><button class="small-btn" data-debug-tab="navigation">Navigation</button><button class="small-btn" data-debug-tab="logging">Logging</button>`;grid.before(nav);nav.addEventListener('click',e=>{const b=e.target.closest('[data-debug-tab]');if(!b)return;v25ShowDebugTab(b.dataset.debugTab);});}
     const categories={player:new Set(['runxp','level','gold','heal','cookies','all_powerups']),progress:new Set(['legacy','talents','unlockclasses','unlockpets','dibo50','nightmare','unlock_hell','double_dice']),gear:new Set(['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythic_offhand','omega_merchant','omega_stone','seed_item','legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25']),navigation:new Set(['alwayschoose','board2','board3','board4','board5','board6','boss','recover_road_v25'])};
     const ensurePanel=(id)=>{let p=grid.querySelector(`[data-debug-panel="${id}"]`);if(!p){p=document.createElement('div');p.className='debug-tab-panel';p.dataset.debugPanel=id;grid.appendChild(p);}return p;};['player','progress','gear','navigation'].forEach(ensurePanel);
@@ -3560,9 +3579,19 @@
     const classOptions=Object.values(CLASSES).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}">${c.icon} ${c.name}${isClassUnlocked(c.id)?' · unlocked':''}</option>`).join('');picker.innerHTML=`<label for="debugClassUnlockSelect">Unlock one class</label><select id="debugClassUnlockSelect">${classOptions}</select><button class="small-btn" id="debugUnlockSelectedClass" type="button">Unlock selected class</button>`;
     let logPanel=$('debugLogPanel');if(!logPanel){logPanel=document.createElement('div');logPanel.id='debugLogPanel';logPanel.className='debug-log-panel';logPanel.dataset.debugPanel='logging';logPanel.innerHTML=`<div class="debug-log-levels">${Object.keys(V25_LOG_LEVELS).map(l=>`<button class="small-btn" data-log-level="${l}">${l[0].toUpperCase()+l.slice(1)}</button>`).join('')}</div><div class="debug-log-note"><b>Errors</b> captures faults. <b>Events</b> adds important game events. <b>Detailed</b> adds combat/state transitions. <b>All</b> records every routed game command, UI input, save call and state snapshot; use it only while reproducing a bug because it is intentionally noisy.</div><pre class="debug-log-output" id="debugLogOutput"></pre><div class="debug-log-actions"><button class="small-btn" id="debugLogSnapshot">Add state snapshot</button><button class="small-btn" id="debugLogCopy">Copy log</button><button class="small-btn" id="debugLogDownload">Download .txt</button><button class="small-btn" id="debugLogClear">Clear</button></div>`;grid.appendChild(logPanel);logPanel.addEventListener('click',e=>{const level=e.target.closest('[data-log-level]')?.dataset.logLevel;if(level)return v25SetLogLevel(level);if(e.target.id==='debugLogSnapshot')v25Log('errors','snapshot','Manual state snapshot',v25State());if(e.target.id==='debugLogCopy')v25CopyLog();if(e.target.id==='debugLogDownload')v25DownloadLog();if(e.target.id==='debugLogClear'){v25LogBuffer.length=0;v25RefreshLogOutput();}});}
     v25ShowDebugTab(nav.querySelector('.active')?.dataset.debugTab||'player');v25RefreshLogOutput();
-  }
-  function v25ShowDebugTab(id){document.querySelectorAll('#debugTabs [data-debug-tab]').forEach(b=>b.classList.toggle('active',b.dataset.debugTab===id));document.querySelectorAll('#debugGrid [data-debug-panel]').forEach(p=>p.classList.toggle('active',p.dataset.debugPanel===id));}
-  const openDebugMenuV25Base=openDebugMenu;openDebugMenu=function(){const r=openDebugMenuV25Base();v25EnsureDebugControls();return r;};
+
+    }
+    {
+      const grid=$('debugGrid');if(!grid)return;
+          // Remove the three legacy v1.9 orphan controls; recreate them as ordinary
+          // data-debug controls so the tab router owns them exactly once.
+          grid.querySelectorAll('[data-v19-action]').forEach(b=>b.remove());grid.querySelector('[data-debug="mythicring"]')?.remove();
+          const ensure=(id,label)=>{let b=grid.querySelector(`[data-debug="${id}"]`);if(!b){b=document.createElement('button');b.className='small-btn';b.dataset.debug=id;grid.appendChild(b);}b.textContent=label;return b;};
+          ensure('board6','🛣️ Jump to Board 6');ensure('mythic_offhand','🟧 Artifact Offhand');ensure('double_dice','🎲 Unlock 2d6');ensure('kill_character_v26','☠️ Kill character');
+          const labels={mythic:'🟧 Equip full Artifact set',mythic_weapon:'🟧 Artifact Weapon',mythic_boots:'🟧 Artifact Boots',mythic_legs:'🟧 Artifact Legguards',mythic_amulet:'🟧 Artifact Amulet',mythic_hat:'🟧 Artifact Hat',mythic_ring:'🟧 Artifact Ring',mythicring:'🟧 Artifact Ring',mythic_offhand:'🟧 Artifact Offhand'};Object.entries(labels).forEach(([id,label])=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b)b.textContent=label;});
+          const playerPanel=grid.querySelector('[data-debug-panel="player"]'),progressPanel=grid.querySelector('[data-debug-panel="progress"]'),gearPanel=grid.querySelector('[data-debug-panel="gear"]'),navPanel=grid.querySelector('[data-debug-panel="navigation"]');const move=(id,p)=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b&&p)p.appendChild(b);};move('kill_character_v26',playerPanel);move('double_dice',progressPanel);['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythicring','mythic_offhand'].forEach(id=>move(id,gearPanel));move('board6',navPanel);v25ShowDebugTab(document.querySelector('#debugTabs .active')?.dataset.debugTab||'player');
+    }
+  }  function v25ShowDebugTab(id){document.querySelectorAll('#debugTabs [data-debug-tab]').forEach(b=>b.classList.toggle('active',b.dataset.debugTab===id));document.querySelectorAll('#debugGrid [data-debug-panel]').forEach(p=>p.classList.toggle('active',p.dataset.debugPanel===id));}
 
   /* ROAD SOFT-LOCK WATCHDOG ------------------------------------------------ */
   const v25BlockingOverlayIds=['combatOverlay','levelOverlay','eventOverlay','wheelOverlay','powerupOverlay','merchantOverlay','blessingOverlay','mysticOverlay','lootOverlay','talentOverlay','prestigeMoonOverlay','buffOverlay','prestigeHeirloomOverlay','petCollectionOverlay','diceChoiceOverlay','debugOverlay','bloodwellOverlay','gamblerOverlay','achievementOverlay','infoOverlay','endOverlay'];
@@ -3591,8 +3620,7 @@
   ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
 
   /* Final UI sync / tests -------------------------------------------------- */
-  const refreshDebugButtonsV25Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV25Base();v25EnsureDebugControls();return r;};
-  DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};
+    DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};
   try{Object.defineProperty(window,'DiceboundModules25',{value:Object.freeze(DB25),enumerable:false});}catch(e){}
 
   setTimeout(()=>{if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';v25EnsureDebugControls();renderInfo();},0);
@@ -3723,15 +3751,8 @@
 
 
   /* DEBUG MENU CLEANUP / DEATH SIMULATION / CURRENT ARTIFACT GEAR --------- */
-  const v25EnsureDebugControlsV26Base=v25EnsureDebugControls;v25EnsureDebugControls=function(){v25EnsureDebugControlsV26Base();const grid=$('debugGrid');if(!grid)return;
-    // Remove the three legacy v1.9 orphan controls; recreate them as ordinary
-    // data-debug controls so the tab router owns them exactly once.
-    grid.querySelectorAll('[data-v19-action]').forEach(b=>b.remove());grid.querySelector('[data-debug="mythicring"]')?.remove();
-    const ensure=(id,label)=>{let b=grid.querySelector(`[data-debug="${id}"]`);if(!b){b=document.createElement('button');b.className='small-btn';b.dataset.debug=id;grid.appendChild(b);}b.textContent=label;return b;};
-    ensure('board6','🛣️ Jump to Board 6');ensure('mythic_offhand','🟧 Artifact Offhand');ensure('double_dice','🎲 Unlock 2d6');ensure('kill_character_v26','☠️ Kill character');
-    const labels={mythic:'🟧 Equip full Artifact set',mythic_weapon:'🟧 Artifact Weapon',mythic_boots:'🟧 Artifact Boots',mythic_legs:'🟧 Artifact Legguards',mythic_amulet:'🟧 Artifact Amulet',mythic_hat:'🟧 Artifact Hat',mythic_ring:'🟧 Artifact Ring',mythicring:'🟧 Artifact Ring',mythic_offhand:'🟧 Artifact Offhand'};Object.entries(labels).forEach(([id,label])=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b)b.textContent=label;});
-    const playerPanel=grid.querySelector('[data-debug-panel="player"]'),progressPanel=grid.querySelector('[data-debug-panel="progress"]'),gearPanel=grid.querySelector('[data-debug-panel="gear"]'),navPanel=grid.querySelector('[data-debug-panel="navigation"]');const move=(id,p)=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b&&p)p.appendChild(b);};move('kill_character_v26',playerPanel);move('double_dice',progressPanel);['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythicring','mythic_offhand'].forEach(id=>move(id,gearPanel));move('board6',navPanel);v25ShowDebugTab(document.querySelector('#debugTabs .active')?.dataset.debugTab||'player');};
-    const refreshDebugButtonsV26Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV26Base();v25EnsureDebugControls();return r;};
+
+  dbDebugUiReady=true;refreshDebugButtons();
 
   /* Regression helpers ---------------------------------------------------- */
 
