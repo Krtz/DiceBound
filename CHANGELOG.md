@@ -2,6 +2,13 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.37
+
+### Composition sediment cleanup (#40, #209)
+- Removed superseded guardian-loot, item/Artifact-policy, Legendary-choice and class-portrait implementation generations from `dicebound.js`, retaining only the current authoritative paths and required public facades.
+- Removed two late `statusDotsHTML` shadow renderers so Combat View's canonical presentation is the single owner of status-marker output; added guards that prevent the retired assignment chains from returning.
+- Architecture-only: no gameplay/balance, RNG order/state, save/checkpoint semantics or intended UI behavior changes. The compatibility monolith is 658,200 normalized bytes / 7,053 physical lines, down from 678,304 bytes / 7,158 lines in Beta 0.6.6.36.
+
 ## Beta 0.6.6.36
 
 ### Camp / App Shell subsystem ownership (#356)

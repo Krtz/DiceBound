@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.6.36
+# Unreleased — Beta 0.6.6.37
+
+## Beta 0.6.6.37 Composition sediment cleanup (#40, #209)
+- Retired superseded guardian-loot, item/Artifact-policy, Legendary-choice and class-portrait generations from `dicebound.js`; current authoritative implementations and public facades remain intact.
+- Removed two late status-marker renderer shadows so Combat View is again the single presentation owner. Regression guards prevent the retired renderer and loot/portrait assignment chains from returning.
+- No gameplay/balance, RNG order/state, save/checkpoint semantics or intended UI behavior changes. The compatibility monolith is 658,200 normalized bytes / 7,053 physical lines, down from 678,304 bytes / 7,158 lines in Beta 0.6.6.36.
 
 ## Beta 0.6.6.36 Camp / App Shell subsystem ownership (#356)
 - `DiceboundCamp` is now the ordinary public Camp/App-Shell boundary for Camp entry, meta refresh and HUD orchestration; focused `ui/camp-shell.js` remains hidden behind the facade while `ui/camp.js` keeps DOM/layout/stage ownership.
