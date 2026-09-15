@@ -1579,6 +1579,7 @@ function returnToRoad(...args){
     return meta;
   }
   ensureV11Meta();
+  random();
 
   const extraStyle=document.createElement("style");
   extraStyle.textContent=`
@@ -1702,6 +1703,7 @@ function returnToRoad(...args){
 
 
   /* ---------- Alpha v1.2: identity, clarity, affinity and progression polish ---------- */
+  random();
 
   const v12Style=document.createElement("style");
   v12Style.textContent=`
@@ -1779,6 +1781,7 @@ function returnToRoad(...args){
   renderClassChoices();
   /* SEMANTIC OWNER — Class identity mechanics, combat resources, portraits and action dispatch. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1.3: class identities, enemy art and hidden AI simulation harness ---------- */
+  random();
 
   const v13Style=document.createElement("style");
   v13Style.textContent=`
@@ -2037,6 +2040,7 @@ function returnToRoad(...args){
 
   /* SEMANTIC OWNER — Equipment economy, defense, companions, alchemy and fifth-road systems. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1.4: affix gear, economy curve & career simulation ---------- */
+  random();
 
   const v14Style=document.createElement("style");
   v14Style.textContent=`
@@ -2108,6 +2112,7 @@ function returnToRoad(...args){
 
 
   /* ---------- Alpha v1.5: defense, treasure scaling, summon classes & completion hardening ---------- */
+  random();
 
   const v15Style=document.createElement("style");
   v15Style.textContent=`
@@ -2169,6 +2174,7 @@ function returnToRoad(...args){
 
 
   /* ---------- Alpha v1.6: refinement, alchemy, radiation and fifth-road hard stop ---------- */
+  random();
 
   const v16Style=document.createElement("style");
   v16Style.textContent=`
@@ -2267,6 +2273,7 @@ function returnToRoad(...args){
 
   /* SEMANTIC OWNER — Late class mechanics, talents, Ouroboros and meta progression. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1.7: late-road curve, pet bonds, ninja smoke & reliable relic choices ---------- */
+  random();
 
   const v17Style=document.createElement("style");
   v17Style.textContent=`
