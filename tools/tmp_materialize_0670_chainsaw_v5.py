@@ -80,4 +80,5 @@ def main()->int:
 
 if __name__=="__main__":
     import tmp_materialize_0670_chainsaw_v6 as v6
+    v6.PORTRAIT_ALIASES.discard("classPortraitV13Base")
     raise SystemExit(v6.main())
