@@ -1,0 +1,102 @@
+name: Temporary debug-action wrapper audit
+
+on:
+  push:
+    branches:
+      - refactor/0.6.6.38-canonical-functions
+    paths:
+      - .github/workflows/tmp-debug-action-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: windows-latest
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extract exact debugAction generations
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          @'
+          from pathlib import Path
+          import re
+
+          src=Path('runtime/js/dicebound.js').read_text(encoding='utf-8')
+          def close_brace(s,o):
+              depth=0;state='code';quote='';esc=False;i=o
+              while i<len(s):
+                  c=s[i];n=s[i+1] if i+1<len(s) else ''
+                  if state=='line':
+                      if c=='\n': state='code'
+                      i+=1;continue
+                  if state=='block':
+                      if c=='*' and n=='/': state='code';i+=2;continue
+                      i+=1;continue
+                  if state=='string':
+                      if esc: esc=False;i+=1;continue
+                      if c=='\\': esc=True;i+=1;continue
+                      if c==quote: state='code';quote=''
+                      i+=1;continue
+                  if c=='/' and n=='/': state='line';i+=2;continue
+                  if c=='/' and n=='*': state='block';i+=2;continue
+                  if c in ('"',"'",'`'): state='string';quote=c;i+=1;continue
+                  if c=='{': depth+=1
+                  elif c=='}':
+                      depth-=1
+                      if depth==0:return i
+                  i+=1
+              raise RuntimeError('unclosed brace')
+
+          entries=[]
+          for m in re.finditer(r'(?:(?:const|let|var)\s+(?P<capture>[A-Za-z_$][\w$]*)\s*=\s*debugAction\s*;\s*)?(?P<assign>debugAction\s*=\s*)?(?P<async>async\s+)?function\s+debugAction?\s*\(\s*action\s*\)\s*\{|(?:(?:const|let|var)\s+(?P<capture2>[A-Za-z_$][\w$]*)\s*=\s*debugAction\s*;\s*)debugAction\s*=\s*(?P<async2>async\s+)?function\s*\(\s*action\s*\)\s*\{',src):
+              o=src.find('{',m.start(),m.end());e=close_brace(src,o)
+              entries.append((m.start(),m.group('capture') or m.group('capture2') or 'BASE',bool(m.group('async') or m.group('async2')),src[m.start():e+1]))
+          # Fallback capture-driven scan catches anonymous replacements the combined regex may miss.
+          seen={pos for pos,_,_,_ in entries}
+          for cm in re.finditer(r'(?:const|let|var)\s+(?P<capture>[A-Za-z_$][\w$]*)\s*=\s*debugAction\s*;',src):
+              am=re.search(r'debugAction\s*=\s*(?P<async>async\s+)?function\s*\(\s*action\s*\)\s*\{',src[cm.end():])
+              if not am: continue
+              astart=cm.end()+am.start();o=src.find('{',astart,cm.end()+am.end());e=close_brace(src,o)
+              if cm.start() not in seen: entries.append((cm.start(),cm.group('capture'),bool(am.group('async')),src[cm.start():e+1]))
+          # Explicit base declaration.
+          bm=re.search(r'(?P<async>async\s+)?function\s+debugAction\s*\(\s*action\s*\)\s*\{',src)
+          if bm:
+              o=src.find('{',bm.start(),bm.end());e=close_brace(src,o)
+              if bm.start() not in seen: entries.append((bm.start(),'BASE',bool(bm.group('async')),src[bm.start():e+1]))
+          entries.sort()
+          out=['# Exact released debugAction generation audit','',f'Found **{len(entries)}** generations in source order.','']
+          for i,(_,name,is_async,body) in enumerate(entries,1):
+              out += [f'## {i}. `{name}`' + (' (async)' if is_async else ''),'','```js',body,'```','']
+          Path('docs/DEBUG_ACTION_AUDIT.md').write_text('\n'.join(out),encoding='utf-8',newline='\n')
+          print('debugAction generations:',[(i+1,n,a) for i,(_,n,a,_) in enumerate(entries)])
+          if len(entries)!=10: raise SystemExit(f'expected 10 debugAction generations, found {len(entries)}')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit audit report
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add docs/DEBUG_ACTION_AUDIT.md
+          git commit -m "docs: audit exact debug-action generations"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.6.38-canonical-functions
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
