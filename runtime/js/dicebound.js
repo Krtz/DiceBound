@@ -1246,7 +1246,29 @@
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
   async function winCombat(...args){return dbCombat.win(...args);}
-  function applyRunTheme(){const themes={1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},2:{bg1:"#2a2105",bg2:"#130f02",glow1:"rgba(255,221,69,.25)",glow2:"rgba(255,152,45,.12)",board1:"#594817",board2:"#2d240b"},3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},4:{bg1:"#160522",bg2:"#07020b",glow1:"rgba(196,88,255,.30)",glow2:"rgba(255,70,173,.15)",board1:"#3f1357",board2:"#1b0828"}},t=themes[boardLevel]||themes[1],r=document.documentElement.style;for(const [k,v] of Object.entries(t))r.setProperty(`--run-${k.replace(/([A-Z])/g,"-$1").toLowerCase()}`,v);}
+  function applyRunTheme(){
+  const themeByBoard={
+    1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},
+    2:{bg1:"#1c1708",bg2:"#0c0b05",glow1:"rgba(255,217,123,.23)",glow2:"rgba(137,193,255,.14)",board1:"#43371a",board2:"#1d1910"},
+    3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},
+    4:{bg1:"#221109",bg2:"#0d0604",glow1:"rgba(255,118,62,.26)",glow2:"rgba(164,47,36,.16)",board1:"#4f2416",board2:"#20100a"},
+    5:{bg1:"#140721",bg2:"#06020d",glow1:"rgba(189,98,255,.28)",glow2:"rgba(87,130,255,.16)",board1:"#351048",board2:"#13061d"},
+    6:{bg1:"#03050d",bg2:"#000104",glow1:"rgba(71,92,255,.30)",glow2:"rgba(210,55,255,.17)",board1:"#111947",board2:"#070a1d"}
+  };
+  const rootStyle=document.documentElement.style,theme=themeByBoard[boardLevel]||themeByBoard[1],scene=window.DiceboundAssets?.resolveBoardBackground?.(boardLevel),sceneUrl=scene?.image?`url("${scene.image}")`:'none';
+  for(const [key,value] of Object.entries(theme))rootStyle.setProperty(`--run-${key.replace(/([A-Z])/g,'-$1').toLowerCase()}`,value);
+  rootStyle.setProperty("--run-scene-image",sceneUrl);
+  rootStyle.setProperty("--run-scene-focus",scene?.focus||"50% 50%");
+  const sceneEl=$("boardSceneBg");
+  if(sceneEl){
+    if(scene?.image&&sceneEl.getAttribute('src')!==scene.image)sceneEl.setAttribute('src',scene.image);
+    sceneEl.style.objectPosition=scene?.focus||"50% 50%";
+    sceneEl.dataset.board=String(boardLevel||1);
+  }
+  document.body?.setAttribute('data-board-level',String(boardLevel||1));
+  dbBeta01SyncDifficultyAtmosphere();
+  beta04SyncWorldScene();
+}
 
   function openInfo(){return dbInfoGuide?.open();}
   function renderInfo(){return dbInfoGuide?.render();}
@@ -2757,29 +2779,6 @@
   window.DiceboundCamp.configureShell({refreshDoubleDiceControls:()=>{v19EnsureDoubleDiceButton();const b=$("roll2Btn");if(b){b.style.display=meta.doubleDiceUnlocked?"block":"none";b.disabled=rollLocked||!gameStarted;}const one=$("rollBtn");if(one)one.textContent=meta.doubleDiceUnlocked?"🎲 Roll 1d6":"🎲 Roll the dice";}});
 
   // ---- Board 6 -------------------------------------------------------------
-  const applyRunThemeV19Base=applyRunTheme;
-  applyRunTheme=function(){
-    applyRunThemeV19Base();
-    const themeByBoard={
-      1:{bg1:"#071b0d",bg2:"#031008",glow1:"rgba(82,220,118,.24)",glow2:"rgba(175,255,116,.11)",board1:"#173c20",board2:"#0a2111"},
-      2:{bg1:"#1c1708",bg2:"#0c0b05",glow1:"rgba(255,217,123,.23)",glow2:"rgba(137,193,255,.14)",board1:"#43371a",board2:"#1d1910"},
-      3:{bg1:"#2a0709",bg2:"#120305",glow1:"rgba(255,67,76,.25)",glow2:"rgba(255,130,57,.12)",board1:"#5c171b",board2:"#2b090c"},
-      4:{bg1:"#221109",bg2:"#0d0604",glow1:"rgba(255,118,62,.26)",glow2:"rgba(164,47,36,.16)",board1:"#4f2416",board2:"#20100a"},
-      5:{bg1:"#140721",bg2:"#06020d",glow1:"rgba(189,98,255,.28)",glow2:"rgba(87,130,255,.16)",board1:"#351048",board2:"#13061d"},
-      6:{bg1:"#03050d",bg2:"#000104",glow1:"rgba(71,92,255,.30)",glow2:"rgba(210,55,255,.17)",board1:"#111947",board2:"#070a1d"}
-    };
-    const root=document.documentElement.style,theme=themeByBoard[boardLevel]||themeByBoard[1],scene=window.DiceboundAssets?.resolveBoardBackground?.(boardLevel),sceneUrl=scene?.image?`url("${scene.image}")`:'none';
-    for(const [key,value] of Object.entries(theme))root.setProperty(`--run-${key.replace(/([A-Z])/g,'-$1').toLowerCase()}`,value);
-    root.setProperty("--run-scene-image",sceneUrl); // fallback / future filter composition
-    root.setProperty("--run-scene-focus",scene?.focus||"50% 50%");
-    const sceneEl=$("boardSceneBg");
-    if(sceneEl){
-      if(scene?.image&&sceneEl.getAttribute('src')!==scene.image)sceneEl.setAttribute('src',scene.image);
-      sceneEl.style.objectPosition=scene?.focus||"50% 50%";
-      sceneEl.dataset.board=String(boardLevel||1);
-    }
-    document.body?.setAttribute('data-board-level',String(boardLevel||1));
-  };
 
   // Sixth-road merchant: much richer stock and distinctly higher cost.
 
@@ -4055,8 +4054,6 @@
     document.body?.setAttribute('data-run-mode',mode);
     return mode;
   }
-  const applyRunThemeBeta01Base=applyRunTheme;
-  applyRunTheme=function(){const out=applyRunThemeBeta01Base();dbBeta01SyncDifficultyAtmosphere();return out;};
   document.addEventListener('click',event=>{
     const id=event.target?.closest?.('button')?.id||event.target?.id||'';
     if(['nightmareToggle','hellToggle','campNightmareBtn','campHellBtn'].includes(id))setTimeout(dbBeta01SyncDifficultyAtmosphere,0);
@@ -4214,8 +4211,6 @@
     document.body?.setAttribute('data-world-board',String(level));
     return {mode,board:level,image:scene?.image||null};
   }
-  const applyRunThemeBeta04Base=applyRunTheme;
-  applyRunTheme=function(){const r=applyRunThemeBeta04Base();beta04SyncWorldScene();return r;};
   setTimeout(beta04SyncWorldScene,0);
 
   /* Responsive HUD flow. The board and cards get different arrangements for
