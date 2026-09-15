@@ -64,7 +64,7 @@ def main()->int:
         if 'dead' not in parts:
             raise RuntimeError('support phase requires dead phase so removed-name evidence exists')
         text,support=chainsaw.remove_dead_support_declarations(text,removed_names)
-        print(f'support: removed={len(support)}')
+        print(f'support: removed={len(support)} names={", ".join(support)}')
 
     MONOLITH.write_text(text,encoding='utf-8',newline='\n')
     print(f'CHAINSAW_PHASE={phase} lines={text.count(chr(10))+1} bytes={len(text.encode("utf-8"))} killed={len(killed)}')
