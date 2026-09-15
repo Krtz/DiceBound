@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   semantic-startup-owners:
-    name: semantic startup-owner surgery
+    name: integrated chainsaw surgery
     runs-on: windows-2022
     timeout-minutes: 30
     steps:
@@ -28,20 +28,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply hook-safe chainsaw and semantic owner repair
+      - name: Apply integrated hook-safe chainsaw
         shell: pwsh
-        env:
-          CHAINSAW_PHASE: dead+element+delegates+support
-          CHAINSAW_SUPPORT_NAMES: v16Talents
         run: |
           $ErrorActionPreference = 'Stop'
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/tmp_diagnose_0670_chainsaw_phases.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/tmp_fix_0670_startup_owners.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/tmp_normalize_0670_source.py
+          python tools/tmp_materialize_0670_chainsaw_v5.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/dicebound.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
