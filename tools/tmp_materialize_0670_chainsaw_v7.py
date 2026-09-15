@@ -11,17 +11,40 @@ v6.PORTRAIT_ALIASES.discard("classPortraitV13Base")
 _original_canonicalize=v6.canonicalize_class_portrait
 
 
+def _strip_lexical_portrait_bindings(text:str)->tuple[str,int]:
+    """Remove const/let/var classPortraitSVG layers before canonical insertion."""
+    source=text.encode("utf-8")
+    tree=v6.base.parse(source)
+    spans=set()
+    for node in v6.base.walk(tree.root_node):
+        if node.type not in {"lexical_declaration","variable_declaration"}:
+            continue
+        names=[]
+        for child in node.named_children:
+            if child.type!="variable_declarator":
+                continue
+            ident=child.child_by_field_name("name")
+            if ident and ident.type=="identifier":
+                names.append(v6.base.node_text(source,ident))
+        if "classPortraitSVG" not in names:
+            continue
+        if len(names)!=1:
+            raise RuntimeError(f"classPortraitSVG shares declaration with live names: {names}")
+        spans.add((node.start_byte,v6._expand_statement_end(source,node.end_byte)))
+    out=source
+    for start,end in sorted(spans,reverse=True):
+        out=out[:start]+out[end:]
+    return out.decode("utf-8"),len(spans)
+
+
 def canonicalize_class_portrait(text:str):
-    # audit_monolith_shadow_ownership.mask_non_code intentionally treats whole
-    # template literals as opaque and can therefore hide a later declaration
-    # after the historical SVG templates. Structural surgery is AST-based; use
-    # raw source only for the final exact-name absence/count assertions.
-    original_mask=v6.base.mask_non_code
-    v6.base.mask_non_code=lambda value:value
-    try:
-        return _original_canonicalize(text)
-    finally:
-        v6.base.mask_non_code=original_mask
+    # A late historical portrait layer is a lexical binding rather than a
+    # function declaration/reassignment. Strip it structurally first; this also
+    # removes its Ranger fallback instead of teaching the canonical renderer to
+    # preserve compatibility behavior.
+    text,lexical_layers=_strip_lexical_portrait_bindings(text)
+    result,removed=_original_canonicalize(text)
+    return result,removed+lexical_layers
 
 
 v6.canonicalize_class_portrait=canonicalize_class_portrait
