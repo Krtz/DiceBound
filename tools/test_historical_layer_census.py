@@ -18,17 +18,16 @@ FUNCTION_ASSIGN_RE = re.compile(
     r"(?<![.\w$])([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>)"
 )
 CAPTURE_RE = re.compile(
-    r"(?<![.\w$])([A-Za-z_$][\w$]*(?:Base|Orig|Original|Previous|Prev|Legacy|Old)[A-Za-z0-9_$]*)\s*=\s*([A-Za-z_$][\w$]*)\b",
-    re.IGNORECASE,
+    r"(?<![.\w$])([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\b"
+)
+HISTORY_ALIAS_RE = re.compile(
+    r"^(?:(?:old|legacy|previous|prev|base|orig(?:inal)?|compat|wrapper|override|historical|superseded)(?=$|[A-Z0-9_$])|.*(?:Base|Orig(?:inal)?|Previous|Prev|Legacy|Old|Compat|Wrapper|Override|Historical|Superseded)(?=$|[A-Z0-9_$]))"
 )
 VERSIONED_NAME_RE = re.compile(
     r"^(?:v\d+|db\d{3,}|db0\d+|patch\d+|beta\d+)[A-Za-z0-9_$]*$",
     re.IGNORECASE,
 )
-HISTORY_NAME_RE = re.compile(
-    r"(?:Base$|Orig(?:inal)?|Previous|Prev|Legacy|Old|Compat|Wrapper|Override|Historical|Superseded)",
-    re.IGNORECASE,
-)
+HISTORY_NAME_RE = HISTORY_ALIAS_RE
 
 
 def mask_non_code(text: str) -> str:
@@ -138,7 +137,7 @@ def analyze(path: pathlib.Path) -> dict[str, object]:
     code = mask_non_code(text)
     depths = brace_depths(code)
 
-    raw_captures = list(CAPTURE_RE.finditer(code))
+    raw_captures = [match for match in CAPTURE_RE.finditer(code) if HISTORY_ALIAS_RE.search(match.group(1))]
     historical_captures: list[tuple[str, str]] = []
     historical_capture_count = 0
     replacement_pairs = 0
