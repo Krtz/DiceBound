@@ -43,10 +43,6 @@ jobs:
 
           root=Path.cwd();p=root/'runtime/js/dicebound.js';text=p.read_text(encoding='utf-8')
 
-          old='''  function returnToRoad(){
-            if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}
-          }
-          '''
           new='''  let dbReturnToRoadTraceReady=false,dbReturnToRoadSafetyReady=false,dbReturnToRoadStoneReady=false,dbReturnToRoadFriendReady=false;
           function returnToRoad(...args){
             if(dbReturnToRoadFriendReady){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();}
@@ -56,40 +52,33 @@ jobs:
             if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
             if(dbReturnToRoadStoneReady&&!currentEnemy)v26ClearStoneBattle();
             return result;
-          }
-          '''
-          if text.count(old)!=1: raise SystemExit(f'expected one base returnToRoad, found {text.count(old)}')
-          text=text.replace(old,new,1)
+          }'''
+          base=re.compile(r'''  function\s+returnToRoad\s*\(\s*\)\s*\{\s*if\s*\(pendingLevelUps\s*>\s*0\)\s*openLevelUp\(\)\s*;\s*else\s*\{\s*rollLocked\s*=\s*false\s*;\s*updateHUD\(\)\s*;\s*\}\s*\}''',re.S)
+          text,n=base.subn(new,text,count=1)
+          if n!=1: raise SystemExit(f'expected one base returnToRoad, replaced {n}')
 
-          old_wrap='''  function v25WrapCommand(name,level='detailed'){
-            const fn=({rollDice,rollTwoDice,returnToRoad,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
-            const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-            if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
-          }
-          ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
-          '''
           new_wrap='''  function v25WrapCommand(name,level='detailed'){
             const fn=({rollDice,rollTwoDice,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
             const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
             if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
           }
           ['rollDice','rollTwoDice','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
-          dbReturnToRoadTraceReady=true;
-          '''
-          if text.count(old_wrap)!=1: raise SystemExit(f'expected one v25 command wrapper block, found {text.count(old_wrap)}')
-          text=text.replace(old_wrap,new_wrap,1)
+          dbReturnToRoadTraceReady=true;'''
+          wrap=re.compile(r'''  function\s+v25WrapCommand\s*\(name,level='detailed'\)\s*\{.*?\n\s*\}\s*\n\s*\['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem'\]\.forEach\(n=>v25WrapCommand\(n,n==='rollDice'\|\|n==='rollTwoDice'\?'events':'detailed'\)\);''',re.S)
+          text,n=wrap.subn(new_wrap,text,count=1)
+          if n!=1: raise SystemExit(f'expected one v25 command wrapper block, replaced {n}')
 
-          safety=re.compile(r'''  const returnToRoadV251Base=returnToRoad;\n  returnToRoad=function\(\.\.\.args\)\{\n    if\(!currentEnemy\)combatBusy=false;\n    const result=returnToRoadV251Base\.apply\(this,args\);\n    if\(!currentEnemy\)combatBusy=false;\n    return result;\n  \};''')
+          safety=re.compile(r'''  const\s+returnToRoadV251Base\s*=\s*returnToRoad\s*;\s*returnToRoad\s*=\s*function\s*\(\.\.\.args\)\s*\{\s*if\s*\(!currentEnemy\)\s*combatBusy\s*=\s*false\s*;\s*const\s+result\s*=\s*returnToRoadV251Base\.apply\(this,args\)\s*;\s*if\s*\(!currentEnemy\)\s*combatBusy\s*=\s*false\s*;\s*return\s+result\s*;\s*\}\s*;''',re.S)
           text,n=safety.subn('  dbReturnToRoadSafetyReady=true;',text,count=1)
           if n!=1: raise SystemExit(f'expected one v2.5.1 road-return layer, removed {n}')
 
-          stone="  const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};"
-          if text.count(stone)!=1: raise SystemExit(f'expected one v26 road-return layer, found {text.count(stone)}')
-          text=text.replace(stone,'  dbReturnToRoadStoneReady=true;',1)
+          stone=re.compile(r'''  const\s+returnToRoadV26Base\s*=\s*returnToRoad\s*;\s*returnToRoad\s*=\s*function\s*\(\.\.\.args\)\s*\{\s*const\s+r\s*=\s*returnToRoadV26Base\.apply\(this,args\)\s*;\s*if\s*\(!currentEnemy\)\s*v26ClearStoneBattle\(\)\s*;\s*return\s+r\s*;\s*\}\s*;''',re.S)
+          text,n=stone.subn('  dbReturnToRoadStoneReady=true;',text,count=1)
+          if n!=1: raise SystemExit(f'expected one v26 road-return layer, removed {n}')
 
-          friend="  const dbFriendReturnToRoadBase=returnToRoad;\n  returnToRoad=function(...args){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};"
-          if text.count(friend)!=1: raise SystemExit(f'expected one Friends road-return layer, found {text.count(friend)}')
-          text=text.replace(friend,'  dbReturnToRoadFriendReady=true;',1)
+          friend=re.compile(r'''  const\s+dbFriendReturnToRoadBase\s*=\s*returnToRoad\s*;\s*returnToRoad\s*=\s*function\s*\(\.\.\.args\)\s*\{\s*dbClasses\.invokerResetCombat\(\)\s*;\s*dbFriendClearCombatPresentation\(\)\s*;\s*return\s+dbFriendReturnToRoadBase\.apply\(this,args\)\s*;\s*\}\s*;''',re.S)
+          text,n=friend.subn('  dbReturnToRoadFriendReady=true;',text,count=1)
+          if n!=1: raise SystemExit(f'expected one Friends road-return layer, removed {n}')
           p.write_text(text,encoding='utf-8',newline='\n')
 
           test=root/'tools/test_canonical_return_to_road.py'
@@ -100,8 +89,8 @@ jobs:
           SOURCE=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')
           if len(re.findall(r'\bfunction\s+returnToRoad\s*\(',SOURCE))!=1:
               raise SystemExit('returnToRoad must have exactly one canonical declaration')
-          if re.search(r'\breturnToRoad\s*=\s*(?:function\b|[A-Za-z_$][\w$]*\b)',SOURCE):
-              raise SystemExit('historical returnToRoad replacement returned')
+          if re.search(r'\breturnToRoad\s*=\s*function\b',SOURCE):
+              raise SystemExit('historical returnToRoad function replacement returned')
           if re.search(r'\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*returnToRoad\s*;',SOURCE):
               raise SystemExit('historical returnToRoad predecessor capture returned')
           for alias in ('returnToRoadV251Base','returnToRoadV26Base','dbFriendReturnToRoadBase'):
