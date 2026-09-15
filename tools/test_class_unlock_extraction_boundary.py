@@ -24,18 +24,18 @@ for token in required_owner:
     if token not in owner:
         raise SystemExit(f'class unlock owner missing responsibility: {token}')
 
-# Beta 0.6.6.29 makes DiceboundProgression the ordinary public boundary. The
-# compatibility monolith may keep only thin facade adapters; it must not call
-# the focused rule owner directly or reconstruct the unlock transaction/scan.
-required_adapters=[
-    'function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}',
-    'function commitClassUnlock(id){return dbProgression.commitClassUnlock(id);}',
-    'function unlockClass(id){return dbProgression.unlockClass(id);}',
-    'function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}',
+# Beta 0.6.7.0 retires the call-only class-unlock adapters from the composition
+# root. Ordinary callers route straight through DiceboundProgression; the
+# unused commitClassUnlock root alias stays gone instead of being recreated for
+# an architecture test.
+required_routes=[
+    'dbProgression.isClassUnlocked(',
+    'dbProgression.unlockClass(',
+    'dbProgression.checkDynamicClassUnlocks(',
 ]
-for token in required_adapters:
+for token in required_routes:
     if token not in mono:
-        raise SystemExit(f'dicebound.js missing thin Progression class-unlock adapter: {token}')
+        raise SystemExit(f'dicebound.js missing direct Progression class-unlock route: {token}')
 
 required_progression=[
     "function isClassUnlocked(id){return call('classUnlockIsUnlocked',id,classUnlockContext());}",
@@ -47,6 +47,10 @@ for token in required_progression:
         raise SystemExit(f'DiceboundProgression missing class-unlock orchestration boundary: {token}')
 
 retired=[
+    'function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}',
+    'function commitClassUnlock(id){return dbProgression.commitClassUnlock(id);}',
+    'function unlockClass(id){return dbProgression.unlockClass(id);}',
+    'function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}',
     'function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES',
     'DB_CLASS_UNLOCK_RULES.isUnlocked(id,dbClassUnlockContext())',
     'DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,dbClassUnlockContext())',
@@ -83,19 +87,17 @@ for token in retired:
     if token in mono:
         raise SystemExit(f'retired class unlock shadow ownership remains in dicebound.js: {token}')
 
-if len(re.findall(r'\bfunction\s+isClassUnlocked\s*\(',mono))!=1:
-    raise SystemExit('dicebound.js must contain exactly one isClassUnlocked facade adapter')
-if len(re.findall(r'\bfunction\s+commitClassUnlock\s*\(',mono))!=1:
-    raise SystemExit('dicebound.js must contain exactly one commitClassUnlock facade adapter')
-if len(re.findall(r'\bfunction\s+unlockClass\s*\(',mono))!=1:
-    raise SystemExit('dicebound.js must contain exactly one unlockClass facade adapter')
-if len(re.findall(r'\bfunction\s+checkDynamicClassUnlocks\s*\(',mono))!=1:
-    raise SystemExit('dicebound.js must contain exactly one checkDynamicClassUnlocks facade adapter')
-if re.search(r'\bfunction\s+baseClassUnlocked\s*\(',mono):
-    raise SystemExit('retired baseClassUnlocked adapter must stay out of dicebound.js')
+for name in ['isClassUnlocked','commitClassUnlock','unlockClass','checkDynamicClassUnlocks','baseClassUnlocked']:
+    if re.search(rf'\bfunction\s+{name}\s*\(',mono):
+        raise SystemExit(f'retired class-unlock forwarding adapter returned in dicebound.js: {name}')
+
+# commitClassUnlock still exists as an owned Progression capability even though
+# the old composition-root alias had no callers.
+if 'commitClassUnlock' not in progression:
+    raise SystemExit('DiceboundProgression commitClassUnlock capability missing')
 
 for token in ['"unlock": "Use 15 potions across all runs"','alchemist:{type:"lifetimeStat",stat:"potionsUsed",minimum:15}','"unlock": "Reach 10 Prestige points"','rouge:{type:"prestige",count:10}']:
     if token not in registry:
         raise SystemExit(f'class registry not reconciled to shipped unlock truth: {token}')
 
-print('Class unlock extraction boundary PASS: focused rules remain specialist internals behind DiceboundProgression')
+print('Class unlock extraction boundary PASS: focused rules stay internal, call-only root adapters stay retired, and callers route through DiceboundProgression')
