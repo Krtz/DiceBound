@@ -1,4 +1,9 @@
-# Unreleased — Beta 0.6.6.37
+# Unreleased — Beta 0.6.6.38
+
+## Beta 0.6.6.38 Canonical-function archaeology — Debug tooling (#359)
+- Replaced the ten-layer historical `debugAction` chain with one canonical dispatcher while preserving the final released dispatch/logging/post-refresh order.
+- Added a deterministic runtime historical-layer census and anti-return coverage; later rewrites will follow the measured ranking and manual ownership review.
+- No gameplay/balance, RNG order/state, save/checkpoint semantics or player-facing UI behavior changes are intended. `dicebound.js` is 657,203 bytes / 7,102 physical lines before release metadata materialization.
 
 ## Beta 0.6.6.37 Composition sediment cleanup (#40, #209)
 - Retired superseded guardian-loot, item/Artifact-policy, Legendary-choice and class-portrait generations from `dicebound.js`; current authoritative implementations and public facades remain intact.

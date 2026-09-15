@@ -1,18 +1,18 @@
 {
   "format": 3,
-  "version": "0.6.6.37",
+  "version": "0.6.6.38",
   "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6.6.37-dev-f7feb1dd90d7b2a5",
-  "browserContentHash": "f7feb1dd90d7b2a5e2be1797b7f637722a8c8ce8468a8ef9380f224e04170ffe",
+  "buildId": "dicebound-0.6.6.38-dev-bc20d35932a22e80",
+  "browserContentHash": "bc20d35932a22e8051661eb8337c22a88d5129890dc36177e9f633be56382d48",
   "assetRegistryVersion": 22,
   "payloadFileCount": 518,
   "assetPayloadCount": 428,
   "files": {
-    "build-info.json": "139944faf24944deb2251dc953efe4576da0684fd03015c9989f7002d1768281",
-    "index.html": "25b395037097d9086b2e7121906120e2c3f9f5fcfbbd7025f790d02ce3cf5556",
+    "build-info.json": "9f7b13cccc075b106956f5482f5299bb2f4989154188a037a555cc3580bff172",
+    "index.html": "28b41043752bf80d2041b9cab19b9dc549b393d22579a7c25f5ce3ae1f651807",
     "css/dicebound.css": "332019d7e73fa7a1588e0120799b26932f1f608f689725d617622be8fec07ffd",
-    "js/version.js": "72ea0f4c0a95398483faea419c73daac65ddefe39e63ebfa126eb7d0167bfd1d",
+    "js/version.js": "6218cfb116e083ed023a03b41671fe6c62d3b5b5381786563ca4c29e7a264858",
     "js/assets.js": "4868b9149e9a0a1b83b10cf34c74b21fda3c905efc440e36b2639bf2a8543bd5",
     "js/rng.js": "3a10ec9b4eb589795906d55bab2f6ab3f88bfe73cd4a3a5a7eea71605a96a8f2",
     "js/native-http-host.js": "2edcc8e766aad5ea99cdf175e9d0faf2b5e27006af83dd19a13293714e02b54b",
@@ -99,7 +99,7 @@
     "js/ui/info-guide.js": "543557349a75f9350e15b3bf3ebddb7615182eb59d3de64ff64a8fd1f4dd8fb7",
     "js/ui/merchant.js": "ac8c6f49274a4fc860cb415a28f727e4df902c3f74af9e7af78a264614241fb6",
     "js/events/merchant-facade.js": "ca3db9c202327bd723fa3b69a877eef854794cb5c2868fbced9c3aae3fa5fc1e",
-    "js/dicebound.js": "bc614216fff827169da1b80cdc5447c25d14fa4a3ded6d041c3bd09e915d5d66"
+    "js/dicebound.js": "8777cef43060a6f1b71a7eea496041fb9fea6fa0ab137a4281c1762a14d96f4c"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",

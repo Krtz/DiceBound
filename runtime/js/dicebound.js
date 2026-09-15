@@ -1288,7 +1288,94 @@
 
   function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}
 
-  function debugAction(action){if(action==="runxp"&&gameStarted)grantXp(250);if(action==="level"&&gameStarted)forceLevels(5);if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}if(action==="talents"){meta.points+=25;saveMeta();}if(action==="gold"&&gameStarted)player.gold+=5000;if(action==="cookies"){meta.petCookies+=25;saveMeta();}if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}if(action==="mythic"&&gameStarted){equipItem(generateMythicalWeapon(),true);equipItem(generateMythicalBoots(),true);equipItem(generateMythicalPants(),true);equipItem(generateMythicalAmulet(),true);equipItem(generateMythicalHat(),true);}if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbRun.dispatchTile();}updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);}
+  function debugAction(action){
+    // Final released dispatch order, collapsed from ten historical generations.
+    // Beta 0.4 was the outermost wrapper.
+    if(action==='unlock_hell'){
+      meta.nightmareUnlocked=true;meta.hellUnlocked=true;saveMeta();
+      try{renderClassChoices();}catch(_){}
+      showToast('🔥 Hell Mode unlocked (debug)');
+      return;
+    }
+
+    // v26 was the next outer layer and therefore intercepts these before v25 logging.
+    if(action==='kill_character_v26'){
+      if(!gameStarted){showToast('Start a run first');return;}
+      $('debugOverlay')?.classList.add('hidden');
+      const damage=Math.max(1,Math.ceil(player.hp+player.maxHp));
+      meta.damageTaken=(meta.damageTaken||0)+damage;player.hp=0;
+      addLog('<b>Debug monster</b> deals lethal damage. Running the normal death/revive pipeline.');
+      showToast('☠️ Debug monster attacks');handlePlayerDeath();updateHUD();return;
+    }
+    const artifactFns={mythic_weapon:generateMythicalWeapon,mythic_offhand:generateMythicalOffhand,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};
+    if(artifactFns[action]){
+      if(!gameStarted){showToast('Start a run first');return;}
+      const item=artifactFns[action]();equipItem(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;
+    }
+    if(action==='mythic'){
+      if(!gameStarted){showToast('Start a run first');return;}
+      [generateMythicalWeapon,generateMythicalOffhand,generateMythicalBoots,generateMythicalPants,generateMythicalAmulet,generateMythicalHat,generateMythicalRing].forEach(fn=>equipItem(fn(),true));
+      renderEquipment();updateHUD();showToast('Full current seven-piece Artifact set equipped');return;
+    }
+
+    // v25 logging occurred only after all later v26/Beta04 intercepts.
+    v25Log('events','debug',`debugAction(${action})`,v25State());
+    if(['legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25'].includes(action)){
+      if(!gameStarted){showToast('Start a run first');return;}
+      const item=action==='legend_mug_v25'?generateAxelsCoffeeMug():action==='legend_headphones_v25'?generateKratzHeadphones():action==='legend_jacket_v25'?generateKellysJeanJacket():generateDevilsHorns();
+      equipItem(item,true);renderEquipment();updateHUD();showToast(`${item.name} added`);return;
+    }
+    if(action==='recover_road_v25'){v25RecoverRoadState('manual');return;}
+
+    if(action==='unlockclasses'){
+      meta.unlocks=meta.unlocks||{};Object.keys(CLASSES).forEach(id=>meta.unlocks[id]=true);saveMeta();renderClassChoices();showToast('Debug: all classes unlocked');return;
+    }
+    if(action==='unlockpets'){
+      meta.pets=meta.pets||defaultPets();Object.keys(PETS).forEach(id=>{meta.pets[id]=meta.pets[id]||defaultPetState(false);meta.pets[id].unlocked=true;});
+      ELEMENT_KEYS.forEach(k=>meta.elementProgress[k]=Math.max(meta.elementProgress[k]||0,PET_UNLOCK_REQUIREMENT));saveMeta();renderPetCollection();updateMetaUI();showToast('Debug: all pets unlocked');return;
+    }
+    if(action==='all_powerups'){
+      if(!gameStarted){showToast('Start a run first');return;}
+      $('debugOverlay').classList.add('hidden');showAllEligiblePowerupSelection('Debug · Full Eligible Powerup List',()=>{});return;
+    }
+
+    // v19 / v1.5 / v1.1 effective branches. Superseded Mythical branches that
+    // are unreachable behind v26 are intentionally not carried forward.
+    if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}
+    if(action==="double_dice"){meta.doubleDiceUnlocked=true;saveMeta();updateHUD();showToast("Double Dice unlocked");return;}
+    if(action==="seed_item"){
+      if(!gameStarted){showToast("Start a run first");return;}
+      const code=dbRuntime.platform.prompt("Paste a Dicebound v1.5 item seed code (starts with D15|):","");if(code==null)return;
+      const item=v15GenerateEquipmentFromSeedCode(code);if(!item){dbRuntime.platform.alert("That seed code is not a valid Dicebound v1.5 ordinary-item seed.");return;}
+      $("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;
+    }
+    if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}
+    if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}
+    if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}
+    if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}
+    if(action==="omega_stone"&&gameStarted){
+      equipItem(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");
+      // The former v1.10 outer wrapper performed this presentation refresh after
+      // the older handler returned; keep that order exactly once.
+      renderEquipment();updateHUD();return;
+    }
+
+    // Original debug dispatcher. These actions intentionally fall through to the
+    // common meta/HUD refresh and generic toast, exactly as released.
+    if(action==="runxp"&&gameStarted)grantXp(250);
+    if(action==="level"&&gameStarted)forceLevels(5);
+    if(action==="legacy"){for(let i=0;i<5;i++){meta.level++;meta.points++;}meta.xpNext=legacyXpForLevel(meta.level);saveMeta();}
+    if(action==="talents"){meta.points+=25;saveMeta();}
+    if(action==="gold"&&gameStarted)player.gold+=5000;
+    if(action==="cookies"){meta.petCookies+=25;saveMeta();}
+    if(action==="heal"&&gameStarted){player.hp=player.maxHp;player.ultimateCharge=100;}
+    if(action==="unlock"){Object.keys(CLASSES).forEach(k=>meta.unlocks[k]=true);Object.keys(meta.pets).forEach(k=>meta.pets[k].unlocked=true);saveMeta();renderClassChoices();}
+    if(action==="dibo50"){meta.pets.neutral.level=30;saveMeta();checkDynamicClassUnlocks();}
+    if(action==="nightmare"){meta.nightmareUnlocked=true;saveMeta();renderClassChoices();}
+    if(/^board[234]$/.test(action)&&gameStarted){boardLevel=Number(action.slice(-1));player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");}
+    if(action==="boss"&&gameStarted){$("debugOverlay").classList.add("hidden");player.position=currentTileCount()-1;refreshBoardHighlights();placePawn(false);rollLocked=true;dbRun.dispatchTile();}
+    updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);
+  }
 
   /* SEMANTIC OWNER — Progression, achievements, board expansion and early run lifecycle. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1: achievements, classes, stats and combat polish ---------- */
@@ -1535,7 +1622,6 @@
 
   function refreshDebugButtons(){const grid=$("debugGrid");if(!grid)return;const defs=[["alwayschoose",()=>`🎯 Always choose rolls: ${meta.debugAlwaysChooseRolls?"ON":"OFF"}`],["board5",()=>"🛣️ Jump to Board 5"],["mythicring",()=>"💍 Add Mythic Ring"],["omega_merchant",()=>"⚖️ Add The Final Price"],["omega_stone",()=>"🜂 Add Philosopher's Stone"]];defs.forEach(([id,labelFn])=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=labelFn();});}
   const openDebugMenuV11=openDebugMenu;openDebugMenu=function(){openDebugMenuV11();refreshDebugButtons();};
-  const debugActionV11=debugAction;debugAction=function(action){if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}if(action==="mythicring"&&gameStarted){equipItem(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}if(action==="omega_merchant"&&gameStarted){equipItem(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}if(action==="omega_stone"&&gameStarted){equipItem(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");return;}return debugActionV11(action);};
 
 
   refreshDebugButtons();
@@ -2070,8 +2156,6 @@
   // ---- Debug: all Mythic pieces + item seed recreation ----------------------
   const refreshDebugButtonsV15Patch=refreshDebugButtons;
   refreshDebugButtons=function(){refreshDebugButtonsV15Patch();const grid=$("debugGrid");if(!grid)return;const defs=[["mythic_weapon","🌈 Mythic Weapon"],["mythic_boots","🌈 Mythic Boots"],["mythic_legs","🌈 Mythic Legguards"],["mythic_amulet","🌈 Mythic Amulet"],["mythic_hat","🌈 Mythic Hat"],["mythic_ring","🌈 Mythic Ring"],["seed_item","🧬 Add item by seed code"]];for(const [id,label] of defs){let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;}};
-  const debugActionV15Patch=debugAction;
-  debugAction=function(action){const mythics={mythic_weapon:generateMythicalWeapon,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(mythics[action]){if(!gameStarted){showToast("Start a run first");return;}equipItem(mythics[action](),true);updateHUD();showToast(`${action.replace("mythic_","")} Mythic added`);return;}if(action==="seed_item"){if(!gameStarted){showToast("Start a run first");return;}const code=dbRuntime.platform.prompt("Paste a Dicebound v1.5 item seed code (starts with D15|):","");if(code==null)return;const item=v15GenerateEquipmentFromSeedCode(code);if(!item){dbRuntime.platform.alert("That seed code is not a valid Dicebound v1.5 ordinary-item seed.");return;}$("debugOverlay").classList.add("hidden");openLoot(item,()=>{});return;}return debugActionV15Patch(action);};
 
   // ---- New class portraits and sensible selection order --------------------
   const classPortraitV15Patch=classPortraitSVG;
@@ -2649,9 +2733,7 @@
   // Offhand unique effect and Paladin Guard behavior share Guard entry.
 
   // ---- Debug additions -----------------------------------------------------
-  const debugActionV19Base=debugAction;
-  debugAction=function(action){if(action==="mythic_offhand"){if(!gameStarted){showToast("Start a run first");return;}equipItem(generateMythicalOffhand(),true);updateHUD();showToast("Artifact offhand added");return;}if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}if(action==="double_dice"){meta.doubleDiceUnlocked=true;saveMeta();updateHUD();showToast("Double Dice unlocked");return;}return debugActionV19Base(action);};
-  function v19AddDebugButton(action,label){const grid=$("debugOverlay")?.querySelector(".debug-grid");if(!grid||grid.querySelector(`[data-v19-action="${action}"]`))return;const b=document.createElement("button");b.className="small-btn";b.dataset.v19Action=action;b.textContent=label;b.addEventListener("click",()=>debugAction(action));grid.appendChild(b);}
+    function v19AddDebugButton(action,label){const grid=$("debugOverlay")?.querySelector(".debug-grid");if(!grid||grid.querySelector(`[data-v19-action="${action}"]`))return;const b=document.createElement("button");b.className="small-btn";b.dataset.v19Action=action;b.textContent=label;b.addEventListener("click",()=>debugAction(action));grid.appendChild(b);}
   v19AddDebugButton("board6","Board 6");v19AddDebugButton("mythic_offhand","Artifact offhand");v19AddDebugButton("double_dice","Unlock 2d6");
 
   // ---- Info / visual polish ------------------------------------------------
@@ -2699,13 +2781,6 @@
   const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${V}`;
   const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${V} · Six roads, impossible builds and a proper between-runs camp.`;
 
-  const debugActionV110Base=debugAction;
-  debugAction=function(action){
-    const result=debugActionV110Base(action);
-    if(action==="mythic"&&gameStarted){[generateMythicalRing,generateMythicalOffhand].forEach(fn=>equipItem(fn(),true));renderEquipment();updateHUD();showToast("Full seven-piece Impossible Road set equipped");}
-    if(action==="omega_stone"&&gameStarted){renderEquipment();updateHUD();}
-    return result;
-  };
 
 
   // Camp DOM/presentation ownership moved to runtime/js/ui/camp.js.  These
@@ -2904,9 +2979,7 @@
     refreshDebugButtonsV21Base();const grid=$('debugGrid');if(!grid)return;
     let btn=grid.querySelector('[data-debug="all_powerups"]');if(!btn){btn=document.createElement('button');btn.dataset.debug='all_powerups';btn.className='small-btn';grid.appendChild(btn);}btn.textContent='🎁 Choose any eligible powerup';
   };
-  const debugActionV21Base=debugAction;
-  debugAction=function(action){if(action==='all_powerups'){if(!gameStarted){showToast('Start a run first');return;}$('debugOverlay').classList.add('hidden');showAllEligiblePowerupSelection('Debug · Full Eligible Powerup List',()=>{});return;}return debugActionV21Base(action);};
-  refreshDebugButtons();
+    refreshDebugButtons();
 
   // Tiny regression hooks kept out of visible UI.
 
@@ -3082,13 +3155,7 @@
   }
   const refreshDebugButtonsV22Base=refreshDebugButtons;
   refreshDebugButtons=function(){refreshDebugButtonsV22Base();v22EnsureDebugUnlockButtons();};
-  const debugActionV22Base=debugAction;
-  debugAction=function(action){
-    if(action==='unlockclasses'){meta.unlocks=meta.unlocks||{};Object.keys(CLASSES).forEach(id=>meta.unlocks[id]=true);saveMeta();renderClassChoices();showToast('Debug: all classes unlocked');return;}
-    if(action==='unlockpets'){meta.pets=meta.pets||defaultPets();Object.keys(PETS).forEach(id=>{meta.pets[id]=meta.pets[id]||defaultPetState(false);meta.pets[id].unlocked=true;});ELEMENT_KEYS.forEach(k=>meta.elementProgress[k]=Math.max(meta.elementProgress[k]||0,PET_UNLOCK_REQUIREMENT));saveMeta();renderPetCollection();updateMetaUI();showToast('Debug: all pets unlocked');return;}
-    return debugActionV22Base(action);
-  };
-  refreshDebugButtons();
+    refreshDebugButtons();
 
   // ----- Shared fate chooser for 1d6 and 2d6. -------------------------------
   async function v22ChooseDice(count,reason='Fate'){
@@ -3496,12 +3563,6 @@
   }
   function v25ShowDebugTab(id){document.querySelectorAll('#debugTabs [data-debug-tab]').forEach(b=>b.classList.toggle('active',b.dataset.debugTab===id));document.querySelectorAll('#debugGrid [data-debug-panel]').forEach(p=>p.classList.toggle('active',p.dataset.debugPanel===id));}
   const openDebugMenuV25Base=openDebugMenu;openDebugMenu=function(){const r=openDebugMenuV25Base();v25EnsureDebugControls();return r;};
-  const debugActionV25Base=debugAction;debugAction=function(action){
-    v25Log('events','debug',`debugAction(${action})`,v25State());
-    if(['legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25'].includes(action)){if(!gameStarted){showToast('Start a run first');return;}const item=action==='legend_mug_v25'?generateAxelsCoffeeMug():action==='legend_headphones_v25'?generateKratzHeadphones():action==='legend_jacket_v25'?generateKellysJeanJacket():generateDevilsHorns();equipItem(item,true);renderEquipment();updateHUD();showToast(`${item.name} added`);return;}
-    if(action==='recover_road_v25'){v25RecoverRoadState('manual');return;}
-    return debugActionV25Base(action);
-  };
 
   /* ROAD SOFT-LOCK WATCHDOG ------------------------------------------------ */
   const v25BlockingOverlayIds=['combatOverlay','levelOverlay','eventOverlay','wheelOverlay','powerupOverlay','merchantOverlay','blessingOverlay','mysticOverlay','lootOverlay','talentOverlay','prestigeMoonOverlay','buffOverlay','prestigeHeirloomOverlay','petCollectionOverlay','diceChoiceOverlay','debugOverlay','bloodwellOverlay','gamblerOverlay','achievementOverlay','infoOverlay','endOverlay'];
@@ -3670,8 +3731,7 @@
     ensure('board6','🛣️ Jump to Board 6');ensure('mythic_offhand','🟧 Artifact Offhand');ensure('double_dice','🎲 Unlock 2d6');ensure('kill_character_v26','☠️ Kill character');
     const labels={mythic:'🟧 Equip full Artifact set',mythic_weapon:'🟧 Artifact Weapon',mythic_boots:'🟧 Artifact Boots',mythic_legs:'🟧 Artifact Legguards',mythic_amulet:'🟧 Artifact Amulet',mythic_hat:'🟧 Artifact Hat',mythic_ring:'🟧 Artifact Ring',mythicring:'🟧 Artifact Ring',mythic_offhand:'🟧 Artifact Offhand'};Object.entries(labels).forEach(([id,label])=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b)b.textContent=label;});
     const playerPanel=grid.querySelector('[data-debug-panel="player"]'),progressPanel=grid.querySelector('[data-debug-panel="progress"]'),gearPanel=grid.querySelector('[data-debug-panel="gear"]'),navPanel=grid.querySelector('[data-debug-panel="navigation"]');const move=(id,p)=>{const b=grid.querySelector(`[data-debug="${id}"]`);if(b&&p)p.appendChild(b);};move('kill_character_v26',playerPanel);move('double_dice',progressPanel);['mythic','mythic_weapon','mythic_boots','mythic_legs','mythic_amulet','mythic_hat','mythic_ring','mythicring','mythic_offhand'].forEach(id=>move(id,gearPanel));move('board6',navPanel);v25ShowDebugTab(document.querySelector('#debugTabs .active')?.dataset.debugTab||'player');};
-  const debugActionV26Base=debugAction;debugAction=function(action){if(action==='kill_character_v26'){if(!gameStarted){showToast('Start a run first');return;}$('debugOverlay')?.classList.add('hidden');const damage=Math.max(1,Math.ceil(player.hp+player.maxHp));meta.damageTaken=(meta.damageTaken||0)+damage;player.hp=0;addLog('<b>Debug monster</b> deals lethal damage. Running the normal death/revive pipeline.');showToast('☠️ Debug monster attacks');handlePlayerDeath();updateHUD();return;}const artifactFns={mythic_weapon:generateMythicalWeapon,mythic_offhand:generateMythicalOffhand,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};if(artifactFns[action]){if(!gameStarted){showToast('Start a run first');return;}const item=artifactFns[action]();equipItem(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;}if(action==='mythic'){if(!gameStarted){showToast('Start a run first');return;}[generateMythicalWeapon,generateMythicalOffhand,generateMythicalBoots,generateMythicalPants,generateMythicalAmulet,generateMythicalHat,generateMythicalRing].forEach(fn=>equipItem(fn(),true));renderEquipment();updateHUD();showToast('Full current seven-piece Artifact set equipped');return;}return debugActionV26Base(action);};
-  const refreshDebugButtonsV26Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV26Base();v25EnsureDebugControls();return r;};
+    const refreshDebugButtonsV26Base=refreshDebugButtons;refreshDebugButtons=function(){const r=refreshDebugButtonsV26Base();v25EnsureDebugControls();return r;};
 
   /* Regression helpers ---------------------------------------------------- */
 
@@ -4042,16 +4102,6 @@
 
   /* Debug progression shortcut. This is intentionally a late owner so older
      layered debugAction implementations cannot swallow it. */
-  const debugActionBeta04Base=debugAction;
-  debugAction=function(action){
-    if(action==='unlock_hell'){
-      meta.nightmareUnlocked=true;meta.hellUnlocked=true;saveMeta();
-      try{renderClassChoices();}catch(_){}
-      showToast('🔥 Hell Mode unlocked (debug)');
-      return;
-    }
-    return debugActionBeta04Base(action);
-  };
 
   /* Native file-save affordance. Hidden in the secondary browser build. */
   function beta04SyncNativeControls(){
