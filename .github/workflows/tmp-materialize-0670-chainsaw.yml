@@ -1,9 +1,7 @@
 name: Temporary Beta 0.6.7.0 chainsaw materializer
 
 on:
-  push:
-    branches:
-      - refactor/0.6.7.0-monolith-chainsaw
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -39,32 +37,9 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (Select-String -Path runtime/js/dicebound.js -Pattern 'const DB_ELEMENT_CONTENT=window.DiceboundElementContent' -Quiet) {
-            Write-Host 'Chainsaw checkpoint is already materialized; validating current branch source.'
-          } else {
-            python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            python tools/tmp_materialize_0670_chainsaw_v2.py
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-          @'
-          from pathlib import Path
-          path = Path("runtime/js/dicebound.js")
-          text = path.read_text(encoding="utf-8")
-          anchor = '  function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}'
-          bootstrap = '''  // Progression is used during immediate legacy-meta normalization, before the\n  // remainder of composition callbacks are ready. Configure that minimal\n  // canonical owner surface here; the later configure() call merges the rest.\n  dbProgression=dbProgressionOwner.configure({\n    getMeta:()=>meta,\n    getTalents:()=>talents,\n    saveMeta:()=>saveMeta()\n  });'''
-          if bootstrap not in text:
-              if anchor not in text:
-                  raise SystemExit('Could not locate saveMeta anchor for early Progression bootstrap')
-              text = text.replace(anchor, anchor + '\n\n' + bootstrap, 1)
-          had_newline = text.endswith(("\n", "\r\n"))
-          text = "\n".join(line.rstrip() for line in text.splitlines())
-          if had_newline:
-              text += "\n"
-          path.write_text(text, encoding="utf-8", newline="\n")
-          '@ | python -
+          python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/tmp_fix_0670_startup_owners.py
+          python tools/tmp_materialize_0670_chainsaw_v2.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.7.0 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -80,24 +55,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Commit materialized chainsaw checkpoint
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          git config user.name "dicebound-manifest-publisher[bot]"
-          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git diff --cached --quiet
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host 'Materialized source already committed.'
-          } else {
-            git commit -m "Beta 0.6.7.0: chainsaw checkpoint [skip ci]"
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
       - name: Run full source validation gate
         shell: pwsh
         run: |
@@ -118,19 +75,4 @@ jobs:
           go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Remove temporary materializer after green gate
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          git config user.name "dicebound-manifest-publisher[bot]"
-          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
-          git rm tools/tmp_materialize_0670_chainsaw.py tools/tmp_materialize_0670_chainsaw_v2.py tools/tmp_fix_0670_startup_owners.py tools/tmp_chainsaw_analysis.py .github/workflows/tmp-chainsaw-analysis.yml .github/workflows/tmp-materialize-0670-chainsaw.yml
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git add -A
-          git diff --cached --check
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git commit -m "Beta 0.6.7.0: retire chainsaw materializer"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
