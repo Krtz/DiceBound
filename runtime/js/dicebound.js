@@ -352,15 +352,6 @@
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
-  // Progression is used during immediate legacy-meta normalization, before the
-  // remainder of composition callbacks are ready. Configure that minimal
-  // canonical owner surface here; the later configure() call merges the rest.
-  dbProgression=dbProgressionOwner.configure({
-    getMeta:()=>meta,
-    getTalents:()=>talents,
-    saveMeta:()=>saveMeta()
-  });
-
   /* ========================================================================
      Alpha v3.1.9 — state/render contracts
      Mutating domain helpers return result objects; render adapters consume
@@ -1289,7 +1280,7 @@ function returnToRoad(...args){
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");renderClassChoices();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
-  function showEnd(victory){rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){rollLocked=true;gameStarted=false;const earned=finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;renderEndGear();$("endOverlay").classList.remove("hidden");}
 
 
   // ===== v15: Venom & Arsenal systems =====
@@ -1547,7 +1538,7 @@ function returnToRoad(...args){
   $("feedAllPetBtn").addEventListener("click",()=>feedActivePet(meta.petCookies));
   $("debugTrigger").addEventListener("click",openDebugMenu);$("debugCloseBtn").addEventListener("click",()=>$("debugOverlay").classList.add("hidden"));$("debugGrid").addEventListener("click",e=>{const btn=e.target.closest("[data-debug]");if(btn)debugAction(btn.dataset.debug);});
   $("merchantContinueBtn").addEventListener("click",()=>{tiles[player.position].cleared=false;refreshTile(player.position);$("merchantOverlay").classList.add("hidden");returnToRoad();});
-  $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=dbProgression.finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
+  $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
   $("talentBtn").addEventListener("click",()=>openTalentTree());
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
@@ -1935,7 +1926,7 @@ function returnToRoad(...args){
     getEncounterLead:()=>currentEncounterLead,
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    basicAttack:()=>dbCombat.attack(),
+    basicAttack:()=>playerAttack(),
     identityFlash:text=>identityFlash(text),
     updateCombatUI:()=>updateCombatUI(),
     healPlayer:amount=>dbCombat.heal(amount),
@@ -1950,7 +1941,7 @@ function returnToRoad(...args){
     delay:ms=>delay(ms),
     livingEnemies:()=>livingEnemies(),
     winCombat:()=>dbCombat.win(),
-    resolveEnemyResponse:guarded=>dbCombat.enemyResponse(guarded),
+    resolveEnemyResponse:guarded=>resolveEnemyResponse(guarded),
     isClassActive:id=>classIdentityActive(id),
     random:()=>random(),
     rand:(min,max)=>rand(min,max),
@@ -1960,7 +1951,7 @@ function returnToRoad(...args){
     pick:values=>pick(values),
     applyUpgrade:(upgrade,source)=>applyUpgrade(upgrade,source),
     showToast:(...args)=>showToast(...args),
-    rollD20Chaos:kind=>dbCombat.chaos(kind),
+    rollD20Chaos:kind=>rollD20Chaos(kind),
     animateClassAttack:mode=>animateClassAttack(mode),
     getSetDamageBonus:()=>v19SetDamageBonus(),
     applyMythicRingPulse:()=>applyMythicRingPulse(),
@@ -1974,7 +1965,7 @@ function returnToRoad(...args){
     triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options)
   });
   dbClasses.configureActions({
-    basicAttack:()=>dbCombat.attack(),
+    basicAttack:()=>playerAttack(),
     manaAttack:()=>dbCombat.channel(),
     bloodmageAttack:()=>dbClasses.bloodmageBloodletting(),
     guard:()=>identityGuardAction(),
@@ -2417,7 +2408,7 @@ function returnToRoad(...args){
     conjureRally:async()=>{meta.unlocks.summoner=true;Object.values(meta.pets).forEach(p=>p.unlocked=true);resetPlayer("summoner");player.mana=100;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let pet=0,response=0;const oldPet=petTurn,oldResponse=resolveEnemyResponse;petTurn=async()=>{pet++;};resolveEnemyResponse=async()=>{response++;combatBusy=false;};try{await dbCombat.summonerConjure();return {pet,response,spirits:player.summonerSpirits.length,mana:player.mana};}finally{petTurn=oldPet;resolveEnemyResponse=oldResponse;}},
     guardMana:async()=>{meta.unlocks.sorcerer=true;resetPlayer("sorcerer");player.mana=0;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;const old=guardAction;guardAction=async()=>{combatBusy=false;};try{await identityGuardAction();return {mana:player.mana,gain:player.guardManaGain};}finally{guardAction=old;}},
     exsanguinateTwo:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy A",hp:1000,maxHp:1000,attack:1,defense:0},{name:"Dummy B",hp:1000,maxHp:1000,attack:1,defense:0}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;currentEncounterLead={boss:false};combatBusy=false;const oldResponse=resolveEnemyResponse,oldChaos=rollD20Chaos,oldAnim=animateClassAttack;resolveEnemyResponse=async()=>{combatBusy=false;};rollD20Chaos=async()=>({mult:1});animateClassAttack=async()=>{};try{await dbClasses.bloodmageExsanguinate();return {firstDamage:1000-currentEnemies[0].hp,secondDamage:1000-currentEnemies[1].hp};}finally{resolveEnemyResponse=oldResponse;rollD20Chaos=oldChaos;animateClassAttack=oldAnim;}},
-    healingNuzzle:async()=>{resetPlayer("ranger");player.petTurnHeal=2;player.hp=Math.max(1,player.maxHp-8);currentEnemies=[{name:"Dummy",hp:5000,maxHp:5000,attack:1,defense:0,weakness:"fire"}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;combatBusy=false;const before=player.hp,oldUpdate=updateCombatUI;updateCombatUI=()=>{};try{await dbCombat.petTurn();return {before,after:player.hp,healed:player.hp-before};}finally{updateCombatUI=oldUpdate;}}
+    healingNuzzle:async()=>{resetPlayer("ranger");player.petTurnHeal=2;player.hp=Math.max(1,player.maxHp-8);currentEnemies=[{name:"Dummy",hp:5000,maxHp:5000,attack:1,defense:0,weakness:"fire"}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;combatBusy=false;const before=player.hp,oldUpdate=updateCombatUI;updateCombatUI=()=>{};try{await petTurn();return {before,after:player.hp,healed:player.hp-before};}finally{updateCombatUI=oldUpdate;}}
   }});
 
 
@@ -2621,7 +2612,7 @@ function returnToRoad(...args){
     paladinGrace:()=>{meta.unlocks.paladin=true;resetPlayer("paladin");player.hp=Math.max(1,player.maxHp-20);dbCombat.heal(10);return {grace:player.paladinGrace,hp:player.hp};},
     outsidePotion:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;rollLocked=false;boardLevel=1;player.position=0;dbRun.generateBoard();buildBoard();player.hp=Math.max(1,player.maxHp-10);player.potions=1;const before=ensureAlphaMeta().potionsUsed||0;usePotionOutsideCombat();return {used:(ensureAlphaMeta().potionsUsed||0)-before,potions:player.potions};},
     statusCounts:()=>dbCombatView.statusDotsHTML(5,7),
-    haste:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;player.maxHp=999;player.hp=999;const e={name:"Cooldown Dummy",icon:"🎯",hp:9999,maxHp:9999,attack:1,defense:0,weakness:"fire",affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyTile=0;player.hasteTurns=1;player.hasteCooldown=0;await dbCombat.enemyResponse(false);const afterUse=player.hasteCooldown;const beforeBlocked=player.hasteTurns;dbCombat.element("coffee",e,{forced:true,source:"Regression"});const blocked=player.hasteTurns===beforeBlocked;await dbCombat.enemyResponse(false);return {afterUse,blocked,afterEnemyTurn:player.hasteCooldown};},
+    haste:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;player.maxHp=999;player.hp=999;const e={name:"Cooldown Dummy",icon:"🎯",hp:9999,maxHp:9999,attack:1,defense:0,weakness:"fire",affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyTile=0;player.hasteTurns=1;player.hasteCooldown=0;await resolveEnemyResponse(false);const afterUse=player.hasteCooldown;const beforeBlocked=player.hasteTurns;dbCombat.element("coffee",e,{forced:true,source:"Regression"});const blocked=player.hasteTurns===beforeBlocked;await resolveEnemyResponse(false);return {afterUse,blocked,afterEnemyTurn:player.hasteCooldown};},
     forceFifthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=5;player.position=0;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,doubleDice:!!meta.doubleDiceUnlocked,endHidden:$('endOverlay')?.classList.contains('hidden')};},
     forceSixthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=6;player.position=0;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Last Equation",icon:"♾️🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,runFinalized,endHidden:$('endOverlay')?.classList.contains('hidden')};}
   }});
@@ -2948,7 +2939,7 @@ function returnToRoad(...args){
     },
     rankFor:talentRank,
     isAvailable:talentAvailable,
-    canPurchase:t=>talentRank(t.id)<t.maxRank&&dbProgression.talentAvailable(t)&&meta.points>=t.cost,
+    canPurchase:t=>talentRank(t.id)<t.maxRank&&talentAvailable(t)&&meta.points>=t.cost,
     isVisible:()=>true,
     requirementText,
     purchase:id=>purchaseTalentNode(id),
@@ -4975,7 +4966,8 @@ dbReturnToRoadTraceReady=true;
   // The original 0.5.13 handoff appended these bindings outside the runtime
   // closure. Keep the art/assets, but bind them here where the live combat and
   // camp owners actually exist.
-    const db060EnemyPortraitBase=enemyPortraitSVG;
+  const db060GuardianArt=id=>DB317_GUARDIANS.resolveById(id)?.art||window.DiceboundAssets.resolveGuardianArt(id)||null;
+  const db060EnemyPortraitBase=enemyPortraitSVG;
   enemyPortraitSVG=function(enemy){
     const src=DB317_GUARDIANS.resolveById(enemy?.id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(enemy?.id)?.battle;
     if(src)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${src}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
@@ -5696,7 +5688,7 @@ dbReturnToRoadTraceReady=true;
     find:$,
     getRegistry:()=>ACHIEVEMENT_REGISTRY,
     getClasses:()=>Object.values(CLASSES),
-    isClassUnlocked:id=>dbProgression.isClassUnlocked(id),
+    isClassUnlocked:(...args)=>dbProgression.isClassUnlocked(...args),
     isDone:achievement=>dbProgression.achievementDone(achievement),
     descriptionFor:achievement=>dbProgression.achievementConditionText(achievement)+dbProgression.achievementRewardText(achievement),
     heroMasteryEntries:classId=>dbProgression.heroMasteryEntries(classId),
@@ -5777,7 +5769,7 @@ dbReturnToRoadTraceReady=true;
     const captures=[],events=[],baseAnimate=animateClassAttack,baseResponse=resolveEnemyResponse,stop=DiceboundStateEvents.on('combat:strike',result=>events.push({targetName:result.targetName,targetHp:result.targetHp,presentationTarget:result.presentationTarget,surfaces:db0648SelectedTargetSurfaces()}));
     animateClassAttack=async mode=>{captures.push({mode,surfaces:db0648SelectedTargetSurfaces()});await delay(35);};
     resolveEnemyResponse=async()=>{combatBusy=false;};
-    try{await dbCombat.attack();return {captures,events,afterDelay:db0648SelectedTargetSurfaces(),living:livingEnemies().map(enemy=>enemy.name)};}
+    try{await playerAttack();return {captures,events,afterDelay:db0648SelectedTargetSurfaces(),living:livingEnemies().map(enemy=>enemy.name)};}
     finally{stop();animateClassAttack=baseAnimate;resolveEnemyResponse=baseResponse;combatBusy=false;}
   }
   function db06420PassivePoisonTargetExercise(){
@@ -5905,12 +5897,12 @@ dbReturnToRoadTraceReady=true;
     player.combatAttackCount++;chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*critTiers);await animateClassAttack(critTiers?'crit':'normal');
     const proc=target.hp>0?triggerStrikeElements(target):{message:'',totalDamage:0};
     setCombatText(`🐉 Dragoon lands for ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?'':'s'}`:''}.${proc?.message?` ${proc.message}`:''}`);updateCombatUI();await delay(480);
-    if(!livingEnemies().length)return dbCombat.win();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await dbCombat.enemyResponse(false);return true;
+    if(!livingEnemies().length)return dbCombat.win();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);return true;
   }
   async function dbFriendDragoonJump(){
     if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
     combatBusy=true;player.guardCooldown=0;player.dragoonJumpCooldown=dbFriendDragoonCooldown();player.dragoonAirborneResponses=1;dbFriendSyncDragoonPresentation();
-    setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await dbCombat.enemyResponse(false);
+    setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await resolveEnemyResponse(false);
     if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
   }
   function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
@@ -5921,7 +5913,7 @@ dbReturnToRoadTraceReady=true;
       $('combatOverlay')?.classList.remove('hidden');dbCombatView.renderEnemyParty();updateCombatUI();
       const hpBefore=player.hp,jumpButton=$('dragoonJumpBtn'),jumpVisible=!!jumpButton&&!jumpButton.hidden,jumped=await dbFriendDragoonJump();
       const airborne={hp:player.hp,cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,airborneResponses:player.dragoonAirborneResponses,turn:currentEncounterTurn,artRaised:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===true};
-      const enemyHpBeforeLanding=enemy.hp,landed=await dbCombat.attack();
+      const enemyHpBeforeLanding=enemy.hp,landed=await playerAttack();
       return Object.freeze({jumped,jumpVisible,hpBefore,airborne,landed:!!landed,landingDamage:Math.max(0,enemyHpBeforeLanding-enemy.hp),cooldown:player.dragoonJumpCooldown,landingReady:!!player.dragoonLandingReady,artRestored:$('combatPlayerIcon')?.classList.contains('db-dragoon-airborne')===false});
     }finally{
       dbFriendClearCombatPresentation();currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;combatBusy=false;gameStarted=false;rollLocked=true;openStartScreen();
@@ -6042,7 +6034,7 @@ dbReturnToRoadTraceReady=true;
     setCombatBusy:value=>{combatBusy=!!value;},
     isGameStarted:()=>gameStarted,
     getRollLocked:()=>rollLocked,
-    rollD20Chaos:action=>dbCombat.chaos(action),
+    rollD20Chaos:action=>rollD20Chaos(action),
     healPlayer:amount=>dbCombat.heal(amount),
     playHeal:()=>sfx.heal(),
     triggerElementEffect:(...args)=>dbCombat.element(...args),
@@ -6052,7 +6044,7 @@ dbReturnToRoadTraceReady=true;
     updateCombatUI:()=>updateCombatUI(),
     delay:ms=>delay(ms),
     winCombat:()=>dbCombat.win(),
-    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
     ensureAlphaMeta:()=>ensureAlphaMeta(),
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     saveMeta:()=>saveMeta(),
@@ -6110,7 +6102,7 @@ dbReturnToRoadTraceReady=true;
     isCombatOverlayHidden:()=>!!$('combatOverlay')?.classList.contains('hidden'),
     setRollLocked:value=>{rollLocked=!!value;},
     clearStoneBattle:()=>v26ClearStoneBattle(),
-    grantLegacyXp:gain=>dbProgression.grantLegacyXp(gain),
+    grantLegacyXp:gain=>grantLegacyXp(gain),
     updateMetaUi:()=>updateMetaUI(),
     restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
     clearLegendaryBattleTemps:()=>db060ClearBattleLegendaryTemps(),
@@ -6127,7 +6119,7 @@ dbReturnToRoadTraceReady=true;
     livingEnemies:()=>livingEnemies(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    rollD20Chaos:(...args)=>dbCombat.chaos(...args),
+    rollD20Chaos:(...args)=>rollD20Chaos(...args),
     updateCombatUI:()=>updateCombatUI(),
     rollTieredProc:chance=>rollTieredProc(chance),
     performStrike:(...args)=>dbCombat.strike(...args),
@@ -6136,7 +6128,7 @@ dbReturnToRoadTraceReady=true;
     setCombatText:text=>setCombatText(text),
     winCombat:(...args)=>dbCombat.win(...args),
     setCurrentEnemy:index=>setCurrentEnemy(index),
-    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
     isClassActive:id=>classIdentityActive(id),
     classIdentityId:()=>classIdentityId(),
     hasLegendaryEffect:id=>db060HasEffect(id),
@@ -6163,7 +6155,7 @@ dbReturnToRoadTraceReady=true;
     classIdentityId:()=>classIdentityId(),
     isClassActive:id=>classIdentityActive(id),
     clamp:(value,min,max)=>clamp(value,min,max),
-    playerAttack:(...args)=>dbCombat.attack(...args),
+    playerAttack:(...args)=>playerAttack(...args),
     invokerActive:()=>dbClasses.invokerActive(),
     invokerGeneratorManaMultiplier:()=>dbClasses.invokerGeneratorManaMultiplier(),
     invokerElementalLance:()=>dbClasses.invokerElementalLance(),
@@ -6185,10 +6177,10 @@ dbReturnToRoadTraceReady=true;
     delay:ms=>delay(ms),
     winCombat:(...args)=>dbCombat.win(...args),
     setCurrentEnemy:index=>setCurrentEnemy(index),
-    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
     getPets:()=>PETS,
     getMeta:()=>meta,
-    petTurn:(...args)=>dbCombat.petTurn(...args),
+    petTurn:(...args)=>petTurn(...args),
     addCombatHistory:text=>addCombatHistory(text),
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},
     saveMeta:()=>saveMeta(),
@@ -6203,7 +6195,7 @@ dbReturnToRoadTraceReady=true;
     livingEnemies:()=>livingEnemies(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    rollD20Chaos:action=>dbCombat.chaos(action),
+    rollD20Chaos:action=>rollD20Chaos(action),
     chargeUltimate:amount=>chargeUltimate(amount),
     healPlayer:amount=>dbCombat.heal(amount),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
@@ -6215,7 +6207,7 @@ dbReturnToRoadTraceReady=true;
     tone:(frequency,duration,type,gain,slide)=>tone(frequency,duration,type,gain,slide),
     delay:ms=>delay(ms),
     winCombat:()=>dbCombat.win(),
-    resolveEnemyResponse:(guarded,bonus)=>dbCombat.enemyResponse(guarded,bonus),
+    resolveEnemyResponse:(guarded,bonus)=>resolveEnemyResponse(guarded,bonus),
     isClassActive:id=>classIdentityActive(id),
     classIdentityId:()=>classIdentityId(),
     classHasMechanic:tag=>classHasMechanic(tag),
@@ -6238,7 +6230,7 @@ dbReturnToRoadTraceReady=true;
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
-    invokeGuardAction:(...args)=>dbCombat.guard(...args)
+    invokeGuardAction:(...args)=>guardAction(...args)
   });
 
   const dbCombatStrikeOwner=window.DiceboundCombatStrikeResolution;
@@ -6293,7 +6285,7 @@ dbReturnToRoadTraceReady=true;
     petDamage:()=>petDamage(),
     trainerPetDamage:id=>dbCombat.trainerPetDamage(id),
     syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
-    rollD20Chaos:action=>dbCombat.chaos(action),
+    rollD20Chaos:action=>rollD20Chaos(action),
     updateCombatUI:()=>updateCombatUI(),
     animateUltimate:()=>animateUltimate(),
     animateClassAttack:mode=>animateClassAttack(mode),
@@ -6305,8 +6297,8 @@ dbReturnToRoadTraceReady=true;
     delay:ms=>delay(ms),
     getCombatActionDelay:()=>ALPHA_COMBAT_DELAY,
     winCombat:()=>dbCombat.win(),
-    resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),
-    petTurn:(...args)=>dbCombat.petTurn(...args),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    petTurn:(...args)=>petTurn(...args),
     applyMythicPantsPulse:()=>applyMythicPantsPulse(),
     applyMythicRingPulse:()=>applyMythicRingPulse(),
     potionHealValue:fraction=>v16PotionHealValue(fraction),
@@ -6419,7 +6411,7 @@ dbReturnToRoadTraceReady=true;
     rand:(min,max)=>rand(min,max),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms),
-    petTurn:()=>dbCombat.petTurn(),
+    petTurn:()=>petTurn(),
     applyPoisonTick:()=>applyPoisonTick(),
     winCombat:()=>dbCombat.win(),
     handlePlayerDeath:()=>handlePlayerDeath(),
@@ -6454,7 +6446,7 @@ dbReturnToRoadTraceReady=true;
     livingEnemies:()=>livingEnemies(),getCombatBusy:()=>combatBusy,setCombatBusy:value=>{combatBusy=!!value;},
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),damageAll:(amount,falloff=1)=>damageAll(amount,falloff),healPlayer:amount=>dbCombat.heal(amount),
     addEnemyBurn:(enemy,stacks)=>dbCombatElementResolution.addEnemyBurn(enemy,stacks),updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),addCombatHistory:text=>addCombatHistory(text),identityFlash:text=>identityFlash(text),
-    delay:ms=>delay(ms),winCombat:()=>dbCombat.win(),resolveEnemyResponse:(...args)=>dbCombat.enemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
+    delay:ms=>delay(ms),winCombat:()=>dbCombat.win(),resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
     clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document
   });
@@ -6479,7 +6471,7 @@ dbReturnToRoadTraceReady=true;
   dbInfoGuide.configure({
     find:$,
     getClasses:()=>Object.values(CLASSES),
-    isClassUnlocked:id=>dbProgression.isClassUnlocked(id),
+    isClassUnlocked:(...args)=>dbProgression.isClassUnlocked(...args),
     getElements:()=>ELEMENTS,
     getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
     getLifetimeStats:()=>ensureAlphaMeta(),
@@ -6595,8 +6587,8 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundCombatOracleTest=Object.freeze({
     snapshot:dbCombatOracleSnapshot,cleanup:dbCombatOracleCleanup,dismissTransient:dbCombatOracleDismissTransient,setup:dbCombatOracleSetup,prepareEncounter:dbCombatOraclePrepareEncounter,
     onEvent:(name,listener)=>DiceboundStateEvents.on(name,listener),
-    startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>dbCombat.attack(...args),guard:(...args)=>dbCombat.guard(...args),channel:(...args)=>dbCombat.channel(...args),spell:(...args)=>dbCombat.spell(...args),ultimate:(...args)=>useUltimate(...args),petTurn:(...args)=>dbCombat.petTurn(...args),enemyResponse:(...args)=>dbCombat.enemyResponse(...args),
-    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
+    startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>playerAttack(...args),guard:(...args)=>guardAction(...args),channel:(...args)=>dbCombat.channel(...args),spell:(...args)=>dbCombat.spell(...args),ultimate:(...args)=>useUltimate(...args),petTurn:(...args)=>petTurn(...args),enemyResponse:(...args)=>resolveEnemyResponse(...args),
+    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>rollD20Chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
   });
 
   // Test-only characterization surface for the Progression subsystem migration.
@@ -6626,13 +6618,13 @@ dbReturnToRoadTraceReady=true;
     setRunTalentSnapshot:value=>{runTalentSnapshot=value==null?null:dbRunClone(value);return dbRunClone(runTalentSnapshot);},
     talentRank:id=>talentRank(id),
     gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
-    talentAvailable:id=>{const talent=talents.find(entry=>entry.id===id);return !!talent&&dbProgression.talentAvailable(talent);},
+    talentAvailable:id=>{const talent=talents.find(entry=>entry.id===id);return !!talent&&talentAvailable(talent);},
     purchaseTalent:id=>purchaseTalentNode(id),
     repairTalentPrerequisites:()=>dbProgression.repairTalentPrerequisites(),
     allocatedTalentPoints:()=>dbProgression.allocatedTalentPoints(),
     legacyXpForLevel:level=>legacyXpForLevel(level),
-    grantLegacyXp:amount=>dbProgression.grantLegacyXp(amount),
-    finalizeRun:()=>dbProgression.finalizeRun(),
+    grantLegacyXp:amount=>grantLegacyXp(amount),
+    finalizeRun:()=>finalizeRun(),
     prestigeOffer:total=>db0633PrestigeOfferPoints(total),
     completePrestige:total=>dbProgression.completePrestige(total),
     setPrestige:value=>{meta.prestige=DB_PRESTIGE.normalize(dbRunClone(value||{}));return dbRunClone(meta.prestige);},

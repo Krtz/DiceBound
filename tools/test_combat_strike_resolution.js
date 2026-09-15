@@ -240,24 +240,25 @@ function makeHarness(options={}){
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
-for(const adapter of [
+for(const route of [
   "let dbCombatStrikes=null;",
-  "return dbCombat.strikeBaseDamage(...args);",
-  "return dbCombat.strike(...args);",
   "const dbCombatStrikeOwner=window.DiceboundCombatStrikeResolution;",
   "dbCombatStrikes=dbCombatStrikeOwner.configure({",
-  "strikes:dbCombatStrikes"
-])assert.ok(monolith.includes(adapter),`missing strike-resolution composition/facade route: ${adapter}`);
+  "strikes:dbCombatStrikes",
+  "dbCombat.strike("
+])assert.ok(monolith.includes(route),`missing strike-resolution composition/facade route: ${route}`);
 for(const retiredAdapter of [
   "return dbCombatStrikes.strikeBaseDamage(...args);",
-  "return dbCombatStrikes.performStrike(...args);"
-])assert.ok(!monolith.includes(retiredAdapter),`direct peer-public strike adapter returned: ${retiredAdapter}`);
+  "return dbCombatStrikes.performStrike(...args);",
+  "return dbCombat.strikeBaseDamage(...args);",
+  "return dbCombat.strike(...args);"
+])assert.ok(!monolith.includes(retiredAdapter),`call-only strike adapter returned: ${retiredAdapter}`);
 for(const retired of [
   "strikeBaseDamageV13","strikeBaseDamageV15","strikeBaseDamageV26OuroBase","db060StrikeBaseDamageBase",
   "performStrikeV13","performStrikeV16Base","performStrikeV17Base","performStrikeV18Base","performStrikeV24Base","performStrikeV25PoisonBase",
   "performStrikeV26SpeedBase","performStrikeV27SpeedDodgeBase","performStrikeV28SmokeBase","performStrikeBeta04Base","db060PerformStrikeBase"
 ])assert.ok(!monolith.includes(retired),`retired strike ownership remains in monolith: ${retired}`);
-assert.equal((monolith.match(/function strikeBaseDamage\(/g)||[]).length,1,"monolith should retain exactly one thin strikeBaseDamage adapter");
-assert.equal((monolith.match(/async function performStrike\(/g)||[]).length,1,"monolith should retain exactly one thin performStrike adapter");
+assert.equal((monolith.match(/(?:async\s+)?function strikeBaseDamage\(/g)||[]).length,0,"call-only strikeBaseDamage adapter must stay retired");
+assert.equal((monolith.match(/async function performStrike\(/g)||[]).length,0,"call-only performStrike adapter must stay retired");
 assert.doesNotMatch(monolith,/^\s*strikeBaseDamage\s*=\s*function/m,"strikeBaseDamage reassignment ladder must be gone");
 assert.doesNotMatch(monolith,/^\s*performStrike\s*=\s*async function/m,"performStrike reassignment ladder must be gone");
