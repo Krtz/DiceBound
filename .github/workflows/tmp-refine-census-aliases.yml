@@ -57,7 +57,7 @@ jobs:
           python .tmp_refine_census.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Remove-Item .tmp_refine_census.py
-          python -c "from pathlib import Path; from tools.test_historical_layer_census import analyze; p=Path('.tmp_census_probe.js'); p.write_text('async function f(){ const oldResponse=resolveEnemyResponse; resolveEnemyResponse=async()=>{}; try{} finally{resolveEnemyResponse=oldResponse;} }',encoding='utf-8'); r=analyze(p); p.unlink(); assert r['temporary_overrides']==1 and r['captures']==0 and r['repeated']==0, r; print('oldResponse save/override/restore probe PASS',r)"
+          python -c "from pathlib import Path; from tools.test_historical_layer_census import analyze; p=(Path.cwd()/'.tmp_census_probe.js').resolve(); p.write_text('async function f(){ const oldResponse=resolveEnemyResponse; resolveEnemyResponse=async()=>{}; try{} finally{resolveEnemyResponse=oldResponse;} }',encoding='utf-8'); r=analyze(p); p.unlink(); assert r['temporary_overrides']==1 and r['captures']==0 and r['repeated']==0, r; print('oldResponse save/override/restore probe PASS',r)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/test_historical_layer_census.py --markdown docs/HISTORICAL_LAYER_CENSUS.md
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
