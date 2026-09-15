@@ -32,9 +32,8 @@ assert.ok(module.provides.includes("DiceboundItemGeneration"));
 assert.ok(index.includes('<script src="js/items/generation.js"></script>'),"runtime index must load generation owner");
 assert.ok(manifest.loadOrder.indexOf("item-generation")<manifest.loadOrder.indexOf("items-facade"),"generation owner must load before Items facade");
 
-// Historical implementation ownership must be gone. A single compatibility
-// function named generateEquipment may remain so legacy internal callers route
-// through the public Items boundary.
+// Historical implementation ownership and the call-only root generator adapter
+// must stay gone. Ordinary monolith callers invoke DiceboundItems directly.
 for(const forbidden of [
   "const generateEquipmentV13=generateEquipment",
   "const generateEquipmentV24OrdinaryBase=generateEquipment",
@@ -45,8 +44,9 @@ for(const forbidden of [
   "function db060AttachLegendaryEffect(",
   "generateEquipment=function(forceRarity=null,forcedSlot=null)"
 ])assert.equal(monolith.includes(forbidden),false,`generator shadow ownership remains in monolith: ${forbidden}`);
-assert.ok(monolith.includes("return dbItems.generateEquipment(forceRarity,forcedSlot);"),"legacy generator alias must route through DiceboundItems");
+assert.doesNotMatch(monolith,/\bfunction\s+generateEquipment\s*\(/,"call-only generateEquipment adapter must stay retired");
+assert.ok(monolith.includes("dbItems.generateEquipment("),"ordinary generator callers must route directly through DiceboundItems");
 assert.ok(monolith.includes("dbItemGenerationOwner.createController({"),"composition must bind focused generation owner");
-assert.ok(monolith.includes("return dbItems.generateLegendary(forcedSlot,preferUndiscovered);"),"legacy Legendary alias must route through DiceboundItems");
+assert.ok(monolith.includes("return dbItems.generateLegendary(forcedSlot,preferUndiscovered);"),"Legendary first-class compatibility seam must route through DiceboundItems");
 
-console.log("Items generation owner boundary PASS: historical generator ladder retired behind DiceboundItems.");
+console.log("Items generation owner boundary PASS: historical generator ladder and call-only adapter retired behind DiceboundItems.");
