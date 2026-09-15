@@ -51,6 +51,12 @@ jobs:
           from pathlib import Path
           path = Path("runtime/js/dicebound.js")
           text = path.read_text(encoding="utf-8")
+          anchor = '  function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}'
+          bootstrap = '''  // Progression is used during immediate legacy-meta normalization, before the\n  // remainder of composition callbacks are ready. Configure that minimal\n  // canonical owner surface here; the later configure() call merges the rest.\n  dbProgression=dbProgressionOwner.configure({\n    getMeta:()=>meta,\n    getTalents:()=>talents,\n    saveMeta:()=>saveMeta()\n  });'''
+          if bootstrap not in text:
+              if anchor not in text:
+                  raise SystemExit('Could not locate saveMeta anchor for early Progression bootstrap')
+              text = text.replace(anchor, anchor + '\n\n' + bootstrap, 1)
           had_newline = text.endswith(("\n", "\r\n"))
           text = "\n".join(line.rstrip() for line in text.splitlines())
           if had_newline:
