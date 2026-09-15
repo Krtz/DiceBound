@@ -38,6 +38,19 @@ jobs:
           python tools/tmp_materialize_debug_action.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+          # The old monolith contains a few whitespace-only separator lines. The
+          # rewrite touches their surrounding regions, so normalize them rather
+          # than carrying patch-era trailing whitespace into the canonical tree.
+          @'
+          from pathlib import Path
+          import re
+          path=Path('runtime/js/dicebound.js')
+          text=path.read_text(encoding='utf-8')
+          text=re.sub(r'(?m)^[ \t]+$', '', text)
+          path.write_text(text,encoding='utf-8',newline='\n')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           python tools/set_project_version.py --version 0.6.6.38 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.38 --channel Beta --development-state Unreleased
