@@ -43,6 +43,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/tmp_materialize_0670_chainsaw_v2.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          from pathlib import Path
+          path = Path("runtime/js/dicebound.js")
+          text = path.read_text(encoding="utf-8")
+          had_newline = text.endswith(("\n", "\r\n"))
+          text = "\n".join(line.rstrip() for line in text.splitlines())
+          if had_newline:
+              text += "\n"
+          path.write_text(text, encoding="utf-8", newline="\n")
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.7.0 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.7.0 --channel Beta --development-state Unreleased
