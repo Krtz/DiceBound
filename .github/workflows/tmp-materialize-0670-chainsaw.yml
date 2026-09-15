@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   materialize:
-    # Revision 6: full suite understands retired call-only Combat adapters.
+    # Revision 7: full suite understands retired call-only Combat/View adapters.
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
