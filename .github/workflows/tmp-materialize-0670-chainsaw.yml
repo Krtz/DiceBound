@@ -2,6 +2,11 @@ name: Temporary Beta 0.6.7.0 chainsaw materializer
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - refactor/0.6.7.0-monolith-chainsaw
+    paths:
+      - .github/workflows/tmp-materialize-0670-chainsaw.yml
 
 permissions:
   contents: read
@@ -9,7 +14,7 @@ permissions:
 jobs:
   materialize:
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Mint repository write token
         id: app_token
@@ -25,6 +30,12 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ steps.app_token.outputs.token }}
+      - name: Reset runtime to released 0.6.6.39
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git checkout db7e6f423caaa06b5d8939dbf113da3a1236ccdb -- runtime
+          if (Test-Path runtime/js/combat/element-content.js) { Remove-Item runtime/js/combat/element-content.js -Force }
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -39,7 +50,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/tmp_materialize_0670_chainsaw_v2.py
+          python tools/tmp_materialize_0670_chainsaw_v5.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.7.0 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -52,6 +63,8 @@ jobs:
           node --check runtime/js/dicebound.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/combat/element-content.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/progression/lifecycle.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -75,4 +88,18 @@ jobs:
           go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit materialized source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name "dicebound-release-bot"
+          git config user.email "dicebound-release-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --stat
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw 'Chainsaw materializer produced no changes.' }
+          git commit -m "refactor: materialize 0.6.7.0 monolith chainsaw"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
