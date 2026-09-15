@@ -15,6 +15,15 @@ def replace_once(text: str, pattern: str, replacement: str, label: str, flags=0)
     return text
 
 
+def inject_after_once(text: str, anchor: str, insertion: str, label: str) -> str:
+    target=anchor+insertion
+    if target in text:
+        return text
+    if text.count(anchor)!=1:
+        raise RuntimeError(f"Expected exactly one {label} anchor, found {text.count(anchor)}")
+    return text.replace(anchor,target,1)
+
+
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
     progression=PROGRESSION.read_text(encoding="utf-8")
@@ -57,10 +66,8 @@ def main()->int:
     # shorthand. Route every remaining callback directly to Progression.
     text=re.sub(r"(?m)^(\s*)isClassUnlocked,\s*$",r"\1isClassUnlocked:id=>dbProgression.isClassUnlocked(id),",text)
 
-    # Historical patch titles/subtitles were source-control jokes, not runtime
-    # behavior. The canonical APP_IDENTITY assignment later in the file owns the
-    # real title. Remove the old random Alpha title generators and fixed Alpha
-    # version title/brand rewrites so composition no longer replays release history.
+    # Historical patch titles/subtitles were source-control jokes, not current
+    # presentation. APP_IDENTITY owns the actual title. Delete those strings.
     text=re.sub(
         r"\n\s*document\.title=`Dicebound: Alpha v[0-9.]+ — \$\{pick\(\[.*?\]\)\}`;\n",
         "\n",text,flags=re.S,
@@ -70,6 +77,22 @@ def main()->int:
     text=re.sub(r"\n\s*const brandSub=document\.querySelector\('\.brand p'\);if\(brandSub\)brandSub\.textContent=`\$\{(?:V|VERSION)\}[^`]*`;", "", text)
     text=re.sub(r"\n\s*const h=document\.querySelector\('\.brand h1'\);if\(h\)h\.textContent=`Dicebound: \$\{V\}`;", "", text)
     text=re.sub(r"\n\s*const p=document\.querySelector\('\.brand p'\);if\(p\)p\.textContent=`\$\{V\}[^`]*`;", "", text)
+
+    # Those seven decorative title pick() calls each consumed exactly one draw
+    # from the shared released gameplay RNG before a run began. Keep the strings
+    # gone while retaining the released cursor at the same historical boundaries;
+    # otherwise deterministic run/class behavior changes during a pure refactor.
+    rng_boundaries=[
+        ("  ensureV11Meta();", "v1.1 RNG boundary"),
+        ("  /* ---------- Alpha v1.2: identity, clarity, affinity and progression polish ---------- */", "v1.2 RNG boundary"),
+        ("  /* ---------- Alpha v1.3: class identities, enemy art and hidden AI simulation harness ---------- */", "v1.3 RNG boundary"),
+        ("  /* ---------- Alpha v1.4: affix gear, economy curve & career simulation ---------- */", "v1.4 RNG boundary"),
+        ("  /* ---------- Alpha v1.5: defense, treasure scaling, summon classes & completion hardening ---------- */", "v1.5 RNG boundary"),
+        ("  /* ---------- Alpha v1.6: refinement, alchemy, radiation and fifth-road hard stop ---------- */", "v1.6 RNG boundary"),
+        ("  /* ---------- Alpha v1.7: late-road curve, pet bonds, ninja smoke & reliable relic choices ---------- */", "v1.7 RNG boundary"),
+    ]
+    for anchor,label in rng_boundaries:
+        text=inject_after_once(text,anchor,"\n  random();",label)
 
     # These two blocks literally built arrays and then iterated them with an
     # empty callback. Their real authored powerups already live in
@@ -108,7 +131,7 @@ def main()->int:
 
     MONOLITH.write_text(text,encoding="utf-8",newline="\n")
     PROGRESSION.write_text(progression,encoding="utf-8",newline="\n")
-    print("0.6.7.0 startup-owner repair: canonical rewards/art/class callbacks + dead patch-era noise removed")
+    print("0.6.7.0 startup-owner repair: canonical owners + dead patch noise removed + released RNG cursor retained")
     return 0
 
 
