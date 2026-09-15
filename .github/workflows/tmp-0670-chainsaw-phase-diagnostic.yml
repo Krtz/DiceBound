@@ -10,20 +10,23 @@ permissions:
   contents: read
 
 jobs:
-  phase:
-    name: delegate (${{ matrix.slice }})
+  delegate-pairs:
+    name: delegates (${{ matrix.label }})
     runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
-        slice:
-          - none
-          - 22:23
-          - 23:24
-          - 24:25
-          - 37:38
-          - 38:39
-          - 39:40
+        include:
+          - label: control
+            names: ''
+          - label: pet-status
+            names: 'shuffledPetIds,statusDotsHTML'
+          - label: pet-strike-base
+            names: 'shuffledPetIds,strikeBaseDamage'
+          - label: status-strike-base
+            names: 'statusDotsHTML,strikeBaseDamage'
+          - label: all-three
+            names: 'shuffledPetIds,statusDotsHTML,strikeBaseDamage'
     steps:
       - name: Check out diagnostic tools
         uses: actions/checkout@v4
@@ -38,11 +41,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply known-good cuts plus delegate slice
+      - name: Apply known-good cuts plus delegate set
         shell: pwsh
         env:
-          CHAINSAW_PHASE: ${{ matrix.slice == 'none' && 'dead+element' || 'dead+element+delegates' }}
-          CHAINSAW_DELEGATE_SLICE: ${{ matrix.slice == 'none' && '' || matrix.slice }}
+          CHAINSAW_PHASE: ${{ matrix.names == '' && 'dead+element' || 'dead+element+delegates' }}
+          CHAINSAW_DELEGATE_NAMES: ${{ matrix.names }}
         run: |
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -53,3 +56,36 @@ jobs:
       - name: Run exact Classes oracle
         shell: pwsh
         run: node tools/test_classes_oracle.js
+
+  is-class-unlocked-surface:
+    name: isClassUnlocked startup surface
+    runs-on: windows-2022
+    steps:
+      - name: Check out diagnostic tools
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reset runtime to released 0.6.6.39
+        shell: pwsh
+        run: |
+          git checkout db7e6f423caaa06b5d8939dbf113da3a1236ccdb -- runtime
+          if (Test-Path runtime/js/combat/element-content.js) { Remove-Item runtime/js/combat/element-content.js -Force }
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Eliminate only isClassUnlocked after known-good cuts
+        shell: pwsh
+        env:
+          CHAINSAW_PHASE: dead+element+delegates
+          CHAINSAW_DELEGATE_NAMES: isClassUnlocked
+        run: |
+          python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_diagnose_0670_chainsaw_phases.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Dump browser startup surface and exceptions
+        shell: pwsh
+        run: node tools/tmp_classes_surface_diagnostic.js
