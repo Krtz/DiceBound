@@ -18,11 +18,10 @@ jobs:
       matrix:
         slice:
           - none
-          - 0:10
-          - 10:20
-          - 20:30
-          - 30:40
-          - 40:50
+          - 20:25
+          - 25:30
+          - 30:35
+          - 35:40
     steps:
       - name: Check out diagnostic tools
         uses: actions/checkout@v4
