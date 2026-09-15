@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import tmp_materialize_0670_chainsaw_v6 as v6
 
 
@@ -37,6 +39,25 @@ def _strip_lexical_portrait_bindings(text:str)->tuple[str,int]:
     return out.decode("utf-8"),len(spans)
 
 
+def _cut_ranger_class_fallbacks(text:str)->tuple[str,int]:
+    """Replace code-level CLASSES[classId] || CLASSES.ranger with strict lookup."""
+    source=text.encode("utf-8")
+    tree=v6.base.parse(source)
+    spans=[]
+    shape=re.compile(r"^CLASSES\s*\[\s*classId\s*\]\s*\|\|\s*CLASSES\.ranger$")
+    for node in v6.base.walk(tree.root_node):
+        if node.type!="binary_expression":
+            continue
+        snippet=v6.base.node_text(source,node).strip()
+        if shape.fullmatch(snippet):
+            spans.append((node.start_byte,node.end_byte))
+    out=source
+    replacement=b"CLASSES[classId]"
+    for start,end in sorted(spans,reverse=True):
+        out=out[:start]+replacement+out[end:]
+    return out.decode("utf-8"),len(spans)
+
+
 def canonicalize_class_portrait(text:str):
     # A late historical portrait layer is a lexical binding rather than a
     # function declaration/reassignment. Strip it structurally first; this also
@@ -44,6 +65,9 @@ def canonicalize_class_portrait(text:str):
     # preserve compatibility behavior.
     text,lexical_layers=_strip_lexical_portrait_bindings(text)
     result,removed=_original_canonicalize(text)
+    result,ranger_fallbacks=_cut_ranger_class_fallbacks(result)
+    if ranger_fallbacks:
+        print(f"0.6.7.0 portrait chainsaw: cut {ranger_fallbacks} surviving Ranger class fallback expression(s)")
     return result,removed+lexical_layers
 
 
