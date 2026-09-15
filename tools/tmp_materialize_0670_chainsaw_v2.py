@@ -57,5 +57,28 @@ def fixed_delete(text: str):
 
 base.delete_dead_proxy_statements=fixed_delete
 
+# module-manifest.json is the ownership graph, while runtime/index.html is the
+# actual browser load graph. Keep both in lockstep so the new canonical element
+# content owner exists before dicebound.js consumes it.
+_original_update_manifest=base.update_manifest
+
+
+def fixed_update_manifest():
+    _original_update_manifest()
+    index=base.ROOT/"runtime/index.html"
+    text=index.read_text(encoding="utf-8")
+    script='<script src="js/combat/element-content.js"></script>'
+    if script not in text:
+        anchor='<script src="js/combat/effective-stats.js"></script>'
+        if anchor not in text:
+            raise RuntimeError("Could not locate combat effective-stats script anchor in runtime/index.html")
+        text=text.replace(anchor,script+"\n"+anchor,1)
+        index.write_text(text,encoding="utf-8")
+    if text.index(script) > text.index('<script src="js/dicebound.js"></script>'):
+        raise RuntimeError("Element content script must load before dicebound.js")
+
+
+base.update_manifest=fixed_update_manifest
+
 if __name__ == "__main__":
     raise SystemExit(base.main())
