@@ -58,6 +58,12 @@ def _cut_ranger_class_fallbacks(text:str)->tuple[str,int]:
     return out.decode("utf-8"),len(spans)
 
 
+def _trim_trailing_whitespace(text:str)->str:
+    # Structural node removal can leave indentation on otherwise empty lines.
+    # Keep the source diff clean without changing any JavaScript tokens.
+    return "\n".join(line.rstrip(" \t") for line in text.split("\n"))
+
+
 def canonicalize_class_portrait(text:str):
     # A late historical portrait layer is a lexical binding rather than a
     # function declaration/reassignment. Strip it structurally first; this also
@@ -66,6 +72,7 @@ def canonicalize_class_portrait(text:str):
     text,lexical_layers=_strip_lexical_portrait_bindings(text)
     result,removed=_original_canonicalize(text)
     result,ranger_fallbacks=_cut_ranger_class_fallbacks(result)
+    result=_trim_trailing_whitespace(result)
     if ranger_fallbacks:
         print(f"0.6.7.0 portrait chainsaw: cut {ranger_fallbacks} surviving Ranger class fallback expression(s)")
     return result,removed+lexical_layers
