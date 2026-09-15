@@ -32,8 +32,8 @@ for alias in sorted(retired_aliases):
     if re.search(rf"\b{re.escape(alias)}\b", SOURCE):
         raise SystemExit(f"retired debugAction alias returned: {alias}")
 
-# Freeze the effective released action surface. Earlier handlers shadowed by the
-# final v26 layer are intentionally represented by the one surviving branch.
+# Freeze the effective released action surface. Some actions are represented as
+# object keys or array members in the canonical function rather than `action===`.
 required_literals = {
     "runxp", "level", "legacy", "talents", "gold", "cookies", "heal", "unlock",
     "mythic", "dibo50", "nightmare", "boss", "alwayschoose", "board5",
@@ -44,10 +44,13 @@ required_literals = {
     "legend_jacket_v25", "omega_horns_v25", "recover_road_v25",
     "kill_character_v26", "unlock_hell",
 }
-seen = set(re.findall(r"\baction\s*===?\s*['\"]([^'\"]+)['\"]", SOURCE))
-missing = sorted(required_literals - seen)
+missing = sorted(
+    action
+    for action in required_literals
+    if not re.search(rf"['\"]{re.escape(action)}['\"]", SOURCE)
+)
 if missing:
-    raise SystemExit("canonical debugAction lost released literal actions: " + ", ".join(missing))
+    raise SystemExit("canonical debugAction lost released action literals: " + ", ".join(missing))
 
 # These ordering anchors encode the non-obvious semantics discovered by the exact
 # ten-generation audit: Beta04/v26 intercept before v25 logging, then v22/v21,
@@ -92,5 +95,5 @@ for fragment in (
 
 print(
     f"Canonical debugAction PASS: one dispatcher, zero predecessor layers, "
-    f"{len(required_literals)} released literal actions guarded"
+    f"{len(required_literals)} released action literals guarded"
 )
