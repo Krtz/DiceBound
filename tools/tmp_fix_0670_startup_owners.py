@@ -53,26 +53,62 @@ def main()->int:
         text=replace_once(text,r"function db060GuardianTileArt\(id,alt='Guardian'\)\{\s*\n\s*const src=db060GuardianArt\(id\)\?\.boardMarker;","function guardianTileArt(id,alt='Guardian'){\n    const src=DB317_GUARDIANS.resolveById(id)?.art?.boardMarker||window.DiceboundAssets.resolveGuardianArt(id)?.boardMarker;","guardian tile resolver")
         text=text.replace("db060GuardianTileArt(","guardianTileArt(")
 
-    # The first chainsaw pass correctly deleted the isClassUnlocked forwarding
-    # function, but an Achievements configure object still used ES shorthand and
-    # therefore kept a hidden runtime dependency on the deleted local symbol.
-    # Route that callback straight to Progression instead of resurrecting it.
-    text,count=re.subn(r"\n    isClassUnlocked,\n", "\n    isClassUnlocked:id=>dbProgression.isClassUnlocked(id),\n", text, count=1)
-    if count==0 and "isClassUnlocked:id=>dbProgression.isClassUnlocked(id)" not in text:
-        raise RuntimeError("Could not canonicalize Achievements isClassUnlocked callback")
+    # Deleted class-unlock forwarding functions must not survive as ES object
+    # shorthand. Route every remaining callback directly to Progression.
+    text=re.sub(r"(?m)^(\s*)isClassUnlocked,\s*$",r"\1isClassUnlocked:id=>dbProgression.isClassUnlocked(id),",text)
+
+    # Historical patch titles/subtitles were source-control jokes, not runtime
+    # behavior. The canonical APP_IDENTITY assignment later in the file owns the
+    # real title. Remove the old random Alpha title generators and fixed Alpha
+    # version title/brand rewrites so composition no longer replays release history.
+    text=re.sub(
+        r"\n\s*document\.title=`Dicebound: Alpha v[0-9.]+ — \$\{pick\(\[.*?\]\)\}`;\n",
+        "\n",text,flags=re.S,
+    )
+    text=re.sub(r"\n\s*document\.title=`Dicebound: \$\{(?:V|VERSION)\}`;", "", text)
+    text=re.sub(r"\n\s*const brandTitle=document\.querySelector\('\.brand h1'\);if\(brandTitle\)brandTitle\.textContent=`Dicebound: \$\{(?:V|VERSION)\}`;", "", text)
+    text=re.sub(r"\n\s*const brandSub=document\.querySelector\('\.brand p'\);if\(brandSub\)brandSub\.textContent=`\$\{(?:V|VERSION)\}[^`]*`;", "", text)
+    text=re.sub(r"\n\s*const h=document\.querySelector\('\.brand h1'\);if\(h\)h\.textContent=`Dicebound: \$\{V\}`;", "", text)
+    text=re.sub(r"\n\s*const p=document\.querySelector\('\.brand p'\);if\(p\)p\.textContent=`\$\{V\}[^`]*`;", "", text)
+
+    # These two blocks literally built arrays and then iterated them with an
+    # empty callback. Their real authored powerups already live in
+    # powerups/registry.js, so retaining the dead historical literals only made
+    # dicebound.js look like a second Powerups owner.
+    mana_start="  // ---- More Mana augments --------------------------------------------------"
+    if mana_start in text:
+        start=text.index(mana_start)
+        end=text.index("].forEach(u=>{});",start)+len("].forEach(u=>{});")
+        text=text[:start]+"  // Mana augment definitions are owned by DiceboundPowerupRegistry.\n"+text[end:]
+    ouro_start="  const ouroborosPowers=["
+    if ouro_start in text:
+        if text.count("ouroborosPowers")!=2:
+            raise RuntimeError("Unexpected ouroborosPowers references; refusing unsafe dead-block removal")
+        start=text.index(ouro_start)
+        end=text.index("ouroborosPowers.forEach(u=>{});",start)+len("ouroborosPowers.forEach(u=>{});")
+        text=text[:start]+"  // Ouroboros powerups are owned by DiceboundPowerupRegistry.\n"+text[end:]
+
+    # Retire the old documentation claim that Alpha v1.8 intentionally forms a
+    # compatibility layer. Current code must be canonical ownership only.
+    text=text.replace(
+        "  /* ========================================================================\n     Alpha v1.8 — Identity, tooltip and reliability pass\n     ------------------------------------------------------------------------\n     This section intentionally lives as a documented compatibility layer on\n     top of the older Alpha systems. The project has grown through many small\n     versions, so keeping the newest behavior together makes future audits much\n     easier: each wrapper below states exactly which older behavior it extends.\n     ======================================================================== */",
+        "  /* Alpha v1.8 historical boundary — remaining live behavior below is being drained into canonical owners. */",
+    )
 
     code=re.sub(r"//.*?$|/\*.*?\*/|'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"|`(?:\\.|[^`\\])*`","",text,flags=re.M|re.S)
     for stale in ("db0512GateRewards","db0512RememberReward","db060GuardianArt","db060GuardianTileArt"):
         if re.search(rf"\b{re.escape(stale)}\b",code):
             raise RuntimeError(f"Historical startup alias still referenced: {stale}")
-    if re.search(r"\n\s*isClassUnlocked,\s*\n",code):
+    if re.search(r"(?m)^\s*isClassUnlocked,\s*$",code):
         raise RuntimeError("Deleted isClassUnlocked delegate is still used as shorthand")
+    if "ouroborosPowers" in code:
+        raise RuntimeError("Dead Ouroboros powerup shadow survived")
     if "window.DiceboundAssets.resolveGuardianArt" not in text or "DB317_GUARDIANS.resolveById" not in text:
         raise RuntimeError("Guardian art consumers are not routed through canonical owners")
 
     MONOLITH.write_text(text,encoding="utf-8",newline="\n")
     PROGRESSION.write_text(progression,encoding="utf-8",newline="\n")
-    print("0.6.7.0 startup-owner repair: canonical rewards, guardian art, class-unlock callback")
+    print("0.6.7.0 startup-owner repair: canonical rewards/art/class callbacks + dead patch-era noise removed")
     return 0
 
 
