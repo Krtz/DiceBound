@@ -35,8 +35,20 @@ def main()->int:
         print('element: extracted canonical element metadata')
 
     if 'delegates' in parts:
-        text,killed,skipped=chainsaw.eliminate_delegates(text)
-        print(f'delegates: killed={len(killed)} skipped={len(skipped)}')
+        spec=os.environ.get('CHAINSAW_DELEGATE_SLICE','').strip()
+        original=chainsaw.DELEGATES
+        if spec:
+            lo_text,hi_text=spec.split(':',1)
+            lo,hi=int(lo_text),int(hi_text)
+            names=list(original)
+            selected=names[lo:hi]
+            chainsaw.DELEGATES={name:original[name] for name in selected}
+            print(f'delegate slice {lo}:{hi}: {", ".join(selected)}')
+        try:
+            text,killed,skipped=chainsaw.eliminate_delegates(text)
+        finally:
+            chainsaw.DELEGATES=original
+        print(f'delegates: killed={len(killed)} skipped={len(skipped)} names={", ".join(killed)}')
 
     if 'support' in parts:
         if 'dead' not in parts:
