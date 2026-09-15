@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-# Exercise the exact corrected deletion/load-graph behavior plus the v3
-# hook-safe delegate cutter.
-import tmp_materialize_0670_chainsaw_v3 as chainsaw_v3
+# Exercise the exact corrected deletion/load-graph behavior, hook-safe delegate
+# cutter and evidence-based support cleanup.
+import tmp_materialize_0670_chainsaw_v4 as chainsaw_v4
 
-chainsaw=chainsaw_v3.base
+chainsaw=chainsaw_v4.base
 ROOT=Path(__file__).resolve().parents[1]
 MONOLITH=ROOT/'runtime/js/dicebound.js'
 
