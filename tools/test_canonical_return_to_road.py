@@ -18,7 +18,7 @@ if start<0 or end<0: raise SystemExit('could not isolate canonical returnToRoad 
 body=SOURCE[start:end]
 required=(
     'if(dbReturnToRoadFriendReady){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();}',
-    'const core=()=>{if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}};',
+    'const core=()=>{if(pendingLevelUps>0)dbPowerups.openLevelUp();else{rollLocked=false;updateHUD();}};',
     "v25TraceCommand('returnToRoad',core,'detailed',args,this)",
     'if(dbReturnToRoadStoneReady&&!currentEnemy)v26ClearStoneBattle();',
     'return result;',

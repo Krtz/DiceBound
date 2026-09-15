@@ -315,7 +315,27 @@ jobs:
             $curlStderr = if (Test-Path $stderrPath) { Get-Content $stderrPath -Raw } else { "" }
             if ($curlExitCode -ne 0 -or $httpStatus -notin @("200", "201")) {
               Write-ManifestPutFailureDiagnostic -CurlExitCode $curlExitCode -HttpStatus $httpStatus -ResponseBody $responseBody -CurlStderr $curlStderr
-              throw "Protected launcher-manifest PUT failed: curl exit $curlExitCode; HTTP $httpStatus."
+              $localTextAfterPutFailure = Get-Content $manifestPath -Raw
+              $remoteAlreadyReconciled = $false
+              for ($attempt = 1; $attempt -le 3; $attempt++) {
+                if ($attempt -gt 1) { Start-Sleep -Seconds 2 }
+                $remoteAfterPutFailureRaw = gh api "repos/Krtz/DiceBound/contents/${manifestPath}?ref=main" 2>$null
+                if ($LASTEXITCODE -ne 0) { continue }
+                try {
+                  $remoteAfterPutFailure = $remoteAfterPutFailureRaw | ConvertFrom-Json
+                  $remoteAfterPutFailureText = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(($remoteAfterPutFailure.content -replace '\s', '')))
+                  if ($remoteAfterPutFailureText -eq $localTextAfterPutFailure) {
+                    Write-Host "Protected launcher-manifest PUT reported failure, but remote manifest already matches the verified local manifest; treating reconciliation as success."
+                    $remoteAlreadyReconciled = $true
+                    break
+                  }
+                } catch {
+                  Write-Host "Post-failure manifest reconciliation probe $attempt could not decode the remote manifest."
+                }
+              }
+              if (-not $remoteAlreadyReconciled) {
+                throw "Protected launcher-manifest PUT failed and remote manifest did not reconcile: curl exit $curlExitCode; HTTP $httpStatus."
+              }
             }
           } finally {
             Remove-Item $payloadPath, $responsePath, $stderrPath -Force -ErrorAction SilentlyContinue

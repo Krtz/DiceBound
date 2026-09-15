@@ -2,6 +2,14 @@
 
 This file starts the durable Git-era release history. Earlier Alpha/Beta history exists in recovered project notes; Beta 0.6 is the first release established as the repository baseline.
 
+## Beta 0.6.6.39
+
+### Canonical-function archaeology wave 2 (#361)
+- Collapsed the Powerup choice presentation stack behind the existing `DiceboundPowerups` owner: five `openLevelUp` generations, three free-choice generations, three Legendary-choice generations, three card renderers and two reroll implementations are replaced by one renderer per responsibility. Ordinary callers now route through the public facade; Expanded Horizons remains owner policy instead of being duplicated in the monolith.
+- Preserved released Second Opinion consumption, level-choice counts, overlay/reroll ordering, Miniboss reward routing, Legendary→Epic exhaustion fallback and final gold/potion exhaustion reward. Existing Powerups oracle/facade tests plus a new anti-return guard freeze the composition.
+- Hardened protected-main launcher reconciliation for GitHub's observed HTTP-500-after-success case: after a failed Contents PUT, the workflow re-fetches `distribution/latest.json` up to three times and accepts success only when remote text exactly matches the already-verified local manifest; mismatches still fail closed.
+- `dicebound.js` changes from 653,889 bytes / 7,115 physical lines to 649,436 bytes / 7,174 physical lines before runtime-manifest materialization.
+
 ## Beta 0.6.6.38
 
 ### Canonical-function archaeology — Debug tooling (#359)

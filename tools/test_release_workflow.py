@@ -48,6 +48,9 @@ for marker in [
     "Manifest App comparative branch diagnostic omitted:",
     "contents/$manifestPath",
     "Published distribution/latest.json differs from the verified local manifest.",
+    "Protected launcher-manifest PUT reported failure, but remote manifest already matches the verified local manifest; treating reconciliation as success.",
+    "Protected launcher-manifest PUT failed and remote manifest did not reconcile",
+    "for ($attempt = 1; $attempt -le 3; $attempt++)",
 ]:
     assert marker in source, f"generic release workflow is missing {marker!r}"
 
@@ -59,7 +62,7 @@ assert source.count("secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY") == 2
 assert "DICEBOUND_RELEASE_TOKEN" not in source
 assert source.count("steps.manifest_app_token.outputs.token") == 2
 safe_manifest_get = 'repos/Krtz/DiceBound/contents/${manifestPath}?ref=main'
-assert source.count(safe_manifest_get) == 2, "both manifest GETs must delimit $manifestPath before the query string"
+assert source.count(safe_manifest_get) == 3, "all manifest GETs must delimit $manifestPath before the query string"
 assert 'repos/Krtz/DiceBound/contents/$manifestPath?ref=main' not in source, "PowerShell can treat ? as part of an unbraced variable name"
 publish_if = "github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))"
 assert f"""- name: Mint protected-main manifest App token

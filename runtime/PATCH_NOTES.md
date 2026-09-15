@@ -1,4 +1,10 @@
-# Unreleased — Beta 0.6.6.38
+# Unreleased — Beta 0.6.6.39
+
+## Beta 0.6.6.39 Canonical-function archaeology wave 2 (#361)
+- Powerup choice presentation now has one canonical card renderer, reroll renderer, level-up renderer, free-choice renderer and Legendary-choice renderer behind `DiceboundPowerups`; historical v16/v18/v26/V27 predecessor captures are removed.
+- Released Second Opinion, Expanded Horizons, Miniboss, Legendary/Epic exhaustion and reward behavior stays frozen by existing Powerups coverage plus a new anti-return guard.
+- Protected-main launcher reconciliation now recovers safely from an API error that occurs after GitHub has already committed the exact verified manifest, while still failing closed on any remote mismatch.
+- `dicebound.js` is 649,436 bytes / 7,174 physical lines before runtime-manifest materialization.
 
 ## Beta 0.6.6.38 Canonical-function archaeology — Debug tooling (#359)
 - Replaced the ten-layer historical `debugAction` chain with one canonical dispatcher while preserving the final released dispatch/logging/post-refresh order.
