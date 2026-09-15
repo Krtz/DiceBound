@@ -1,0 +1,28 @@
+name: Temporary chainsaw collision analysis
+
+on:
+  push:
+    branches:
+      - refactor/0.6.7.0-monolith-chainsaw
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: windows-2022
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Analyze collision candidates
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python tools/tmp_chainsaw_analysis.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
