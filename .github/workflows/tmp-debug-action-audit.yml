@@ -6,6 +6,7 @@ on:
       - refactor/0.6.6.38-canonical-functions
     paths:
       - .github/workflows/tmp-debug-action-audit.yml
+      - tools/test_canonical_debug_action.py
 
 permissions:
   contents: read
