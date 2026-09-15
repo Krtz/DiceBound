@@ -7,6 +7,7 @@ on:
       - refactor/0.6.7.0-monolith-chainsaw
     paths:
       - .github/workflows/tmp-materialize-0670-chainsaw.yml
+      - tools/tmp_materialize_0670_chainsaw_v*.py
       - tools/test_*.js
       - tools/test_*.py
 
@@ -15,7 +16,7 @@ permissions:
 
 jobs:
   materialize:
-    # Revision 8: rerun automatically as stale architecture tests are retired.
+    # Revision 9: rerun automatically as materializer surgery and stale tests are cut.
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
