@@ -352,6 +352,15 @@
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
+  // Progression is used during immediate legacy-meta normalization, before the
+  // remainder of composition callbacks are ready. Configure that minimal
+  // canonical owner surface here; the later configure() call merges the rest.
+  dbProgression=dbProgressionOwner.configure({
+    getMeta:()=>meta,
+    getTalents:()=>talents,
+    saveMeta:()=>saveMeta()
+  });
+
   /* ========================================================================
      Alpha v3.1.9 — state/render contracts
      Mutating domain helpers return result objects; render adapters consume
