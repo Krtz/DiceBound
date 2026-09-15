@@ -1,0 +1,140 @@
+name: Temporary canonical Mythical-set summary materializer
+
+on:
+  push:
+    branches:
+      - refactor/0.6.6.38-canonical-functions
+    paths:
+      - .github/workflows/tmp-canonical-mythical-summary.yml
+
+permissions:
+  contents: read
+
+jobs:
+  canonicalize:
+    runs-on: windows-latest
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collapse Mythical-set summary history and validate source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          from pathlib import Path
+          import re
+
+          root=Path.cwd();p=root/'runtime/js/dicebound.js';text=p.read_text(encoding='utf-8')
+          canonical='''  function mythicalSetSummary(){
+            const n=mythicalSetCount();
+            return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');
+          }'''
+
+          base=re.compile(r'''  function\s+mythicalSetSummary\s*\(\s*\)\s*\{\s*const\s+count\s*=\s*mythicalSetCount\(\)\s*;\s*return\s+`\$\{count\}/5\s+Impossible Road pieces.*?;\s*\}''',re.S)
+          text,n=base.subn(canonical,text,count=1)
+          if n!=1: raise SystemExit(f'expected one five-piece base summary, replaced {n}')
+
+          six=re.compile(r'''\s*mythicalSetSummary\s*=\s*function\s*\(\s*\)\s*\{\s*const\s+count\s*=\s*mythicalSetCount\(\)\s*;\s*return\s+`\$\{count\}/6\s+Impossible Road pieces.*?;\s*\}\s*;''',re.S)
+          text,n=six.subn('',text,count=1)
+          if n!=1: raise SystemExit(f'expected one six-piece summary layer, removed {n}')
+
+          seven_old=re.compile(r'''\s*mythicalSetSummary\s*=\s*function\s*\(\s*\)\s*\{\s*const\s+n\s*=\s*mythicalSetCount\(\)\s*;\s*return\s+`\$\{n\}/7\s+Impossible Road pieces.*?;\s*\}\s*;''',re.S)
+          text,n=seven_old.subn('',text,count=1)
+          if n!=1: raise SystemExit(f'expected one pre-v24 seven-piece summary layer, removed {n}')
+
+          final_old=re.compile(r'''\s*mythicalSetSummary\s*=\s*function\s*\(\s*\)\s*\{\s*const\s+n\s*=\s*mythicalSetCount\(\)\s*;\s*return\s+`\$\{n\}/7\s+Artifact-tier Impossible Road pieces\s+·\s+`\+v24SetTierData\(\)\.map\(t=>`\$\{t\.pieces\}:\s+\$\{t\.text\}`\)\.join\(' · '\)\s*;\s*\}\s*;''',re.S)
+          text,n=final_old.subn('',text,count=1)
+          if n!=1: raise SystemExit(f'expected one v24 final summary layer, removed {n}')
+          p.write_text(text,encoding='utf-8',newline='\n')
+
+          test=root/'tools/test_canonical_mythical_set_summary.py'
+          test.write_text(r'''from pathlib import Path
+          import re
+
+          ROOT=Path(__file__).resolve().parents[1]
+          SOURCE=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')
+          if len(re.findall(r'\bfunction\s+mythicalSetSummary\s*\(',SOURCE))!=1:
+              raise SystemExit('mythicalSetSummary must have exactly one canonical declaration')
+          if re.search(r'\bmythicalSetSummary\s*=\s*function\b',SOURCE):
+              raise SystemExit('historical mythicalSetSummary replacement returned')
+          start=SOURCE.find('function mythicalSetSummary()')
+          end=SOURCE.find('function enemyForPosition(',start)
+          if start<0 or end<0: raise SystemExit('could not isolate canonical mythicalSetSummary')
+          body=SOURCE[start:end]
+          final="return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');"
+          if final not in body: raise SystemExit('canonical mythicalSetSummary does not use final v24 summary policy')
+          for obsolete in ('/5 Impossible Road pieces','/6 Impossible Road pieces','/7 Impossible Road pieces · 2: +3% all damage'):
+              if obsolete in SOURCE: raise SystemExit('obsolete set-summary generation remains: '+obsolete)
+
+          tier_start=SOURCE.find('function v24SetTierData()')
+          tier_end=SOURCE.find('mythicalSetSummary',tier_start)
+          if tier_start<0: raise SystemExit('v24SetTierData final policy missing')
+          tier=SOURCE[tier_start:tier_end if tier_end>tier_start else tier_start+2500]
+          expected=(
+              "{pieces:2,text:'+2% all damage.'}",
+              "{pieces:3,text:'+4% all damage and +4% elemental proc chance.'}",
+              "{pieces:4,text:'+7% all damage, +5% elemental proc chance, 25 starting Ultimate, +8% pet double-attack chance and 5% less Guardian-special damage.'}",
+              "{pieces:5,text:'+10% all damage, +7% elemental proc chance, +5% elemental power, 30 starting Ultimate, 1 starting Barrier, +10% pet double-attack chance and 10% less Guardian-special damage.'}",
+              "{pieces:6,text:'+14% all damage, +10% elemental proc chance, +9% elemental power, 35 starting Ultimate, +13% pet double-attack chance and 15% less Guardian-special damage.'}",
+              "{pieces:7,text:'+20% all damage, +13% elemental proc chance, +14% elemental power, 40 starting Ultimate, +16% pet double-attack chance, 20% less Guardian-special damage, and once per battle at ≤25% HP restore 18% max HP + gain 1 Barrier.'}",
+          )
+          for fragment in expected:
+              if fragment not in tier: raise SystemExit('final set tier text changed: '+fragment)
+          print('Canonical mythicalSetSummary PASS: four generations collapsed to final seven-piece Artifact-tier presentation')
+          '''.replace('\n          ','\n').lstrip(),encoding='utf-8',newline='\n')
+          '@ | Set-Content -Encoding UTF8 .tmp_canonical_set.py
+          python .tmp_canonical_set.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item .tmp_canonical_set.py
+
+          python tools/test_canonical_mythical_set_summary.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_return_to_road.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_apply_run_theme.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_debug_action.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_debug_ui.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_tile_meta.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_historical_layer_census.py --markdown docs/HISTORICAL_LAYER_CENSUS.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit canonical summary and remove one-shot workflow
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Remove-Item .github/workflows/tmp-canonical-mythical-summary.yml
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "refactor: canonicalize Mythical set summary"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.6.38-canonical-functions
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
