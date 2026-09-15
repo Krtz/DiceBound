@@ -1,9 +1,7 @@
 name: Temporary chainsaw collision analysis
 
 on:
-  push:
-    branches:
-      - refactor/0.6.7.0-monolith-chainsaw
+  workflow_dispatch:
 
 permissions:
   contents: read
