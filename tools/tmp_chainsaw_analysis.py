@@ -12,6 +12,10 @@ def line_no(text: str, pos: int) -> int:
     return text.count("\n", 0, pos) + 1
 
 
+def safe(text: str) -> str:
+    return text.encode("unicode_escape").decode("ascii")
+
+
 def main() -> int:
     text = MONOLITH.read_text(encoding="utf-8")
     code = mask_non_code(text)
@@ -43,7 +47,7 @@ def main() -> int:
             last = min(len(source_lines), line + 7)
             preview = " ".join(part.strip() for part in source_lines[first - 1:last] if part.strip())
             ownerish = sorted(set(re.findall(r"\b(db[A-Z][A-Za-z0-9_$]*|window\.Dicebound[A-Za-z0-9_$]+|Dicebound[A-Za-z0-9_$]+)\b", preview)))
-            print(f"line {line}: {preview[:1000]}")
+            print(f"line {line}: {safe(preview[:1000])}")
             if ownerish:
                 print("owner refs: " + ", ".join(ownerish))
     return 0
