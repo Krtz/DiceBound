@@ -866,9 +866,16 @@
   function chooseDieResult(){
     return new Promise(resolve=>{pendingDiceChoiceResolve=resolve;const grid=$("diceChoiceGrid");grid.innerHTML="";diceFaces.forEach((face,i)=>{const b=document.createElement("button");b.textContent=face;b.addEventListener("click",()=>{pendingDiceChoiceResolve=null;$("diceChoiceOverlay").classList.add("hidden");resolve(i+1);});grid.appendChild(b);});$("diceChoiceOverlay").classList.remove("hidden");});
   }
-  function returnToRoad(){
-    if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}
-  }
+  let dbReturnToRoadTraceReady=false,dbReturnToRoadSafetyReady=false,dbReturnToRoadStoneReady=false,dbReturnToRoadFriendReady=false;
+function returnToRoad(...args){
+  if(dbReturnToRoadFriendReady){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();}
+  if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
+  const core=()=>{if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}};
+  const result=dbReturnToRoadTraceReady?v25TraceCommand('returnToRoad',core,'detailed',args,this):core();
+  if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
+  if(dbReturnToRoadStoneReady&&!currentEnemy)v26ClearStoneBattle();
+  return result;
+}
 
 
   function livingEnemies(){return currentEnemies.filter(e=>e.hp>0);}
@@ -3673,11 +3680,12 @@
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-    const fn=({rollDice,rollTwoDice,returnToRoad,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
-    const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-    if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='returnToRoad')returnToRoad=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
-  }
-  ['rollDice','rollTwoDice','returnToRoad','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
+  const fn=({rollDice,rollTwoDice,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
+  const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
+  if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
+}
+['rollDice','rollTwoDice','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
+dbReturnToRoadTraceReady=true;
 
   /* Final UI sync / tests -------------------------------------------------- */
     DB25.modules={logging:{log:v25Log,setLevel:v25SetLogLevel,state:v25State},recovery:{recover:v25RecoverRoadState},guide:{render:renderInfo}};
@@ -3714,13 +3722,7 @@
   // Returning to the board is, by definition, no longer combat. Older layers
   // only unlocked the dice and left combatBusy=true. That stale bit prevented
   // the v2.5 watchdog from recognising the exact soft-lock seen in the log.
-  const returnToRoadV251Base=returnToRoad;
-  returnToRoad=function(...args){
-    if(!currentEnemy)combatBusy=false;
-    const result=returnToRoadV251Base.apply(this,args);
-    if(!currentEnemy)combatBusy=false;
-    return result;
-  };
+  dbReturnToRoadSafetyReady=true;
 
   // Victory reward-side failure containment moved to combat/victory-resolution.
 
@@ -3807,7 +3809,7 @@
   function v26ClearStoneBattle(...args){return dbCombat.clearStoneBattle(...args);}
 
   /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
-  const returnToRoadV26Base=returnToRoad;returnToRoad=function(...args){const r=returnToRoadV26Base.apply(this,args);if(!currentEnemy)v26ClearStoneBattle();return r;};
+  dbReturnToRoadStoneReady=true;
 
 
   /* DEBUG MENU CLEANUP / DEATH SIMULATION / CURRENT ARTIFACT GEAR --------- */
@@ -6164,8 +6166,7 @@
     const fx=$('attackFx');if(fx){fx.className='attack-fx';fx.replaceChildren();}
     $('combatPlayerIcon')?.classList.remove('attack-lunge','db-dodge-backflip','db-dragoon-airborne','db-dragoon-landing');
   }
-  const dbFriendReturnToRoadBase=returnToRoad;
-  returnToRoad=function(...args){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();return dbFriendReturnToRoadBase.apply(this,args);};
+  dbReturnToRoadFriendReady=true;
 
   window.DiceboundCamp.configureShell({refreshActivePetArt:()=>db059RefreshActivePetArt?.()});
   function dbFriendHealAtCamp(){
