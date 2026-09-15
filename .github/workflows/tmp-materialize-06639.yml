@@ -48,7 +48,19 @@ jobs:
           new = 'levelChoices:()=>dbPowerups.levelChoices().map(dbPowerupsOracleSummary)'
           if s.count(old) != 1:
               raise SystemExit(f'expected one Powerups oracle v18LevelChoices reference, found {s.count(old)}')
-          p.write_text(s.replace(old, new, 1), encoding='utf-8', newline='\n')
+          s = s.replace(old, new, 1)
+
+          bridge = 'function powerupDisplayDesc(up){return dbPowerups.describe(up);}'
+          bridge_count = s.count(bridge)
+          if bridge_count > 1:
+              raise SystemExit(f'expected at most one powerupDisplayDesc bridge, found {bridge_count}')
+          if bridge_count == 1:
+              s = s.replace(bridge, '', 1)
+          marker = 'function choiceHTML(up){'
+          if s.count(marker) != 1:
+              raise SystemExit(f'expected one canonical choiceHTML marker, found {s.count(marker)}')
+          s = s.replace(marker, bridge + '\n\n  ' + marker, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
 
           test = Path('tools/test_canonical_powerup_presentation.py')
           test.write_text(r'''from pathlib import Path
@@ -72,12 +84,13 @@ jobs:
               if re.search(rf"(?<![.\w$]){re.escape(retired)}\s*=\s*function\b", SOURCE):
                   raise SystemExit(f"monolith {retired} replacement returned")
 
-          for canonical in ["choiceHTML", "attachPowerupReroll", "renderLevelUpChoices", "renderPowerupChoiceOverlay", "renderLegendaryChoice"]:
+          for canonical in ["powerupDisplayDesc", "choiceHTML", "attachPowerupReroll", "renderLevelUpChoices", "renderPowerupChoiceOverlay", "renderLegendaryChoice"]:
               count = SOURCE.count(f"function {canonical}(")
               if count != 1:
                   raise SystemExit(f"expected one canonical {canonical}, found {count}")
 
           required_source = [
+              "function powerupDisplayDesc(up){return dbPowerups.describe(up);}",
               "if(pendingLevelUps>0)dbPowerups.openLevelUp(onComplete);",
               "attachPowerupReroll(grid,()=>dbPowerups.openLevelUp(onComplete));",
               "attachPowerupReroll(grid,()=>dbPowerups.openChoice(source,onComplete,filter,subtitle));",
