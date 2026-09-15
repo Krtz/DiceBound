@@ -4,6 +4,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = (ROOT / "runtime/js/dicebound.js").read_text(encoding="utf-8")
 FACADE = (ROOT / "runtime/js/powerups/facade.js").read_text(encoding="utf-8")
+PRESENTATION = (ROOT / "runtime/js/powerups/presentation.js").read_text(encoding="utf-8")
 
 for token in [
     "openLevelUpV16Base", "showPowerupChoiceV16Base", "openLevelUpV26Base",
@@ -12,6 +13,30 @@ for token in [
 ]:
     if token in SOURCE:
         raise SystemExit(f"historical Powerup presentation token returned: {token}")
+
+for retired in [
+    "const PERFECTED_SIGNATURES=", "function perfectedSignatureForCurrentClass(",
+    "function applyPerfectedSignatureSafe(", "function showAllEligiblePowerupSelection(",
+]:
+    if retired in SOURCE:
+        raise SystemExit(f"monolith Perfected Signature/full-picker ownership returned: {retired}")
+
+for required in [
+    'const OWNER="powerups/presentation"', "const PERFECTED_SIGNATURES=",
+    "function perfectedSignatureForCurrentClass(", "function applyPerfectedSignatureSafe(",
+    "function showAllEligiblePowerupSelection(", "window.DiceboundPerfectedSignature=",
+    "window.DiceboundPowerupPresentation=api",
+]:
+    if required not in PRESENTATION:
+        raise SystemExit(f"Powerup presentation owner missing {required!r}")
+
+for route in [
+    "dbPowerups.openAllEligible('Debug · Full Eligible Powerup List',()=>{})",
+    "dbPowerupPresentation.openAllEligible('Powerups Oracle',()=>{})",
+    "renderAllEligible:(source,onComplete,filter)=>dbPowerupPresentation.openAllEligible(source,onComplete,filter)",
+]:
+    if route not in SOURCE:
+        raise SystemExit(f"Powerup presentation route missing {route!r}")
 
 for retired in ["openLevelUp", "showPowerupChoice", "showLegendaryChoice"]:
     if f"function {retired}(" in SOURCE:

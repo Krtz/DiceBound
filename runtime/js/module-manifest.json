@@ -79,6 +79,7 @@
     "powerup-registry",
     "powerup-borrowing",
     "powerup-facade",
+    "powerup-presentation",
     "ui-camp",
     "ui-camp-shell-policy",
     "ui-options",
@@ -987,6 +988,19 @@
       ]
     },
     {
+      "id": "powerup-presentation",
+      "path": "js/powerups/presentation.js",
+      "domain": "powerups/perfected-signature-and-full-eligible-chooser-presentation",
+      "status": "extracted",
+      "requires": [
+        "powerup-facade"
+      ],
+      "provides": [
+        "DiceboundPowerupPresentation",
+        "DiceboundPerfectedSignature"
+      ]
+    },
+    {
       "id": "ui-camp",
       "path": "js/ui/camp.js",
       "domain": "ui/camp-presentation-authoritative-stage-mobile-layout-art-hit-target-and-progression-object-dom-lifecycle",
@@ -1184,6 +1198,8 @@
         "progression-class-unlock-rules",
         "progression-class-unlock-feedback",
         "powerup-borrowing",
+        "powerup-facade",
+        "powerup-presentation",
         "ui-camp",
         "ui-options",
         "ui-equipment-heirlooms",

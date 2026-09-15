@@ -1406,7 +1406,7 @@ function returnToRoad(...args){
     }
     if(action==='all_powerups'){
       if(!gameStarted){showToast('Start a run first');return;}
-      $('debugOverlay').classList.add('hidden');showAllEligiblePowerupSelection('Debug · Full Eligible Powerup List',()=>{});return;
+      $('debugOverlay').classList.add('hidden');dbPowerups.openAllEligible('Debug · Full Eligible Powerup List',()=>{});return;
     }
 
     // v19 / v1.5 / v1.1 effective branches. Superseded Mythical branches that
@@ -1794,7 +1794,7 @@ function returnToRoad(...args){
 
 
   // ---- even more thematic class portraits -----------------------------------
-  
+
 
   // ---- monster and boss portraits -------------------------------------------
   function artHash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return Math.abs(h>>>0);}
@@ -2474,13 +2474,13 @@ function returnToRoad(...args){
   // The final runtime owner now uses Dicebound's visual powerup-choice overlay.
   // Older prompt/random-fallback logic was the reason Board 6 ignored the newer
   // chooser even though the UI existed earlier in the bundle.
-  
+
   // ---- Pet switching rules -------------------------------------------------
   // Beastmaster predates the class-tag pass, so make its pet identity explicit.
   // Summoner and Pokémon Trainer already carry the `pet` tag in their definitions.
 
   function v19PetTaggedClass(){return classHasMechanic("pet");}
-  
+
   // ---- Paladin: healing stores Grace, Grace empowers Guard ----------------
   // This deliberately fuses Cleric's healing feedback loop with Fighter's
   // defensive tempo. Healing stores up to 100 Grace. Guard consumes it for
@@ -2612,127 +2612,17 @@ function returnToRoad(...args){
 })();
 
 
-/* ---------- Alpha v2.1: Perfected Signatures + full eligible powerup chooser ---------- */
+/* ---------- Powerups presentation facade configuration ---------- */
 (function(){
-  const VERSION="Alpha v2.1";
+  const dbPowerupPresentation=window.DiceboundPowerupPresentation;
+  if(!dbPowerupPresentation?.configure)throw new Error("DiceBound Powerup presentation owner is unavailable.");
+  dbPowerupPresentation.configure({
+    getDocument:()=>document,find:selector=>$(selector),getPlayer:()=>player,getClasses:()=>CLASSES,clamp:(value,min,max)=>clamp(value,min,max),
+    isGameStarted:()=>!!gameStarted,eligible:filter=>eligibleUpgrades(filter),describe:powerup=>powerupDisplayDesc(powerup),
+    getRarityInfo:()=>rarityInfo,choiceHtml:powerup=>choiceHTML(powerup),apply:(powerup,source)=>applyUpgrade(powerup,source),
+    addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),updateHud:()=>updateHUD()
+  });
 
-  const style=document.createElement('style');
-  style.textContent=`
-    #powerupOverlay.all-powerup-selection .modal{max-width:min(1180px,96vw)}
-    #powerupOverlay.all-powerup-selection #powerupGrid{max-height:68vh;overflow:auto;padding-right:5px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-    .all-powerup-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
-    .all-powerup-search{flex:1;min-width:220px;border:1px solid rgba(255,255,255,.14);background:rgba(5,9,18,.62);color:var(--ink);border-radius:11px;padding:10px 12px;font:inherit;outline:none}
-    .all-powerup-search:focus{border-color:rgba(101,169,255,.55);box-shadow:0 0 0 2px rgba(101,169,255,.08)}
-    .all-powerup-count{font-size:11px;color:var(--muted);white-space:nowrap}
-    .choice-desc.signature-current{color:#fff}
-  `;
-  document.head.appendChild(style);
-
-  /*
-    Every class gets one deliberately explicit Perfected Signature definition.
-    The description and application live together here so UI text can never
-    silently drift away from the actual effect for a class.
-  */
-  const PERFECTED_SIGNATURES={
-    invoker:{desc:'Perfected Signature — Invoker: Orb passive bonuses are 25% stronger and the first Invoke each combat gains 25% spell potency.',apply(){player.invokerPerfected=true;}},
-    ranger:{desc:'Perfected Signature — Ranger: maximum Marks +2.',apply(){player.rangerMarkMax=(player.rangerMarkMax||3)+2;}},
-    sorcerer:{desc:'Perfected Signature — Sorcerer: +25 Max Mana, +6 Mana from Channel Bolt, and +10% Arcane Surge chance.',apply(){player.maxMana=(player.maxMana||100)+25;player.mana=Math.min(player.maxMana,(player.mana||0)+25);player.manaBuilderBonus=(player.manaBuilderBonus||0)+6;player.classBurst+=.10;}},
-    fighter:{desc:'Perfected Signature — Fighter: store +1 Counterblow and each stored Counterblow deals +20% more damage.',apply(){player.fighterCounterMax=(player.fighterCounterMax||1)+1;player.fighterCounterPowerBonus=(player.fighterCounterPowerBonus||0)+.20;}},
-    monk:{desc:'Perfected Signature — Monk: maximum Flowing Combo +2.',apply(){player.monkComboMax=(player.monkComboMax||5)+2;}},
-    clown:{desc:'Perfected Signature — Clown: +12% Unlicensed Comedy chance and Final Punchline deals +25% damage.',apply(){player.classBurst+=.12;player.classUltimateBonus+=.25;}},
-    rouge:{desc:'Perfected Signature — Rouge: +25 Max Mana, +6 Mana from Crimson Stroke, and +10% Lifesteal.',apply(){player.maxMana=(player.maxMana||100)+25;player.mana=Math.min(player.maxMana,(player.mana||0)+25);player.manaBuilderBonus=(player.manaBuilderBonus||0)+6;player.lifeSteal+=.10;}},
-    berserker:{desc:'Perfected Signature — Berserker: below half HP, Blood Rage deals another +25% damage; also gain +12 Max HP.',apply(){player.berserk=(player.berserk||0)+.25;player.maxHp+=12;player.hp+=12;}},
-    turtle:{desc:'Perfected Signature — Turtle: maximum Shell Momentum +2 and +4% base Guard power.',apply(){player.turtleGuardMax=(player.turtleGuardMax||5)+2;player.guardPower=clamp(player.guardPower+.04,0,.90);}},
-    frog:{desc:'Perfected Signature — Frog: +40% Echo Strike and Echo Strikes deal +10% more damage.',apply(){player.doubleStrike+=.40;player.echoDamageScale=(player.echoDamageScale||.70)+.10;}},
-    d20:{desc:'Perfected Signature — Twenty-Sider: +15% chance for an extra probability bonus and +8% chance to force a 17–20 roll.',apply(){player.d20BonusChance=(player.d20BonusChance||0)+.15;player.d20HighRollChance=(player.d20HighRollChance||0)+.08;}},
-    slime:{desc:'Perfected Signature — Slime: Borrowed Shapes gains +12% all damage, +12% Echo Strike, and +8% elemental activation.',apply(){player.damageBonus+=.12;player.doubleStrike+=.12;player.elementProcBonus+=.08;}},
-    vampire:{desc:'Perfected Signature — Vampire: +20% Lifesteal, +20 Max Mana, and +5 Mana from Night Siphon.',apply(){player.lifeSteal+=.20;player.maxMana=(player.maxMana||100)+20;player.mana=Math.min(player.maxMana,(player.mana||0)+20);player.manaBuilderBonus=(player.manaBuilderBonus||0)+5;}},
-    ninja:{desc:'Perfected Signature — Ninja: Smoke Execution needs 1 fewer Smoke and critical Echoes deal +15% damage.',apply(){player.ninjaSmokeNeed=Math.max(1,(player.ninjaSmokeNeed||3)-1);player.ninjaSmoke=Math.min(player.ninjaSmoke||0,player.ninjaSmokeNeed);player.criticalEchoBonus=(player.criticalEchoBonus||0)+.15;}},
-    ceo:{desc:'Perfected Signature — CEO: +20% Boss Damage and every 400 gold adds +1 effective Attack.',apply(){player.bossDamage+=.20;player.goldAttackScale=Math.max(player.goldAttackScale||0,.0025);}},
-    merchant:{desc:'Perfected Signature — Merchant: +50% gold, +15% shop discount, and +5 Mana from Ledger Tap.',apply(){player.goldBonus+=.50;player.shopDiscount+=.15;player.manaBuilderBonus=(player.manaBuilderBonus||0)+5;}},
-    cleric:{desc:'Perfected Signature — Cleric: healing generates 35% more Faith and Blessed attack heals gain +2 HP.',apply(){player.clericFaithGainBonus=(player.clericFaithGainBonus||0)+.35;player.clericHealBonus=(player.clericHealBonus||0)+2;}},
-    paladin:{desc:'Perfected Signature — Paladin: healing generates 50% more Oath Grace and base Guard power increases by 4%.',apply(){player.paladinGraceGainBonus=(player.paladinGraceGainBonus||0)+.50;player.guardPower=clamp(player.guardPower+.04,0,.90);}},
-    beastmaster:{desc:'Perfected Signature — Beastmaster: companion attacks gain +6 damage and +20% double-attack chance.',apply(){player.petDamageBonus+=6;player.petDoubleChance+=.20;}},
-    rogue:{desc:'Perfected Signature — Rogue: Steal gains +15% success chance and successful steals yield 50% more gold.',apply(){player.rogueStealChanceBonus=(player.rogueStealChanceBonus||0)+.15;player.rogueStealGoldMult=(player.rogueStealGoldMult||1)*1.50;}},
-    bloodmage:{desc:'Perfected Signature — Bloodmage: Exsanguinate costs 25% less HP and deals 25% more damage.',apply(){player.bloodmageExsanguinateCostMult=(player.bloodmageExsanguinateCostMult||1)*.75;player.bloodmageExsanguinateDamageMult=(player.bloodmageExsanguinateDamageMult||1)*1.25;}},
-    summoner:{desc:'Perfected Signature — Summoner: Spirit Circle holds +1 spirit and summoned spirits deal +25% damage.',apply(){player.summonerCap=(player.summonerCap||3)+1;player.summonerSpiritScale=(player.summonerSpiritScale||1)+.25;}},
-    pokemontrainer:{desc:'Perfected Signature — Pokémon Trainer: +20% roster assist chance, assists deal +25% more damage, and Six-Pack Stampede gains +15% damage.',apply(){player.trainerAssistBonus=(player.trainerAssistBonus||0)+.20;player.trainerAssistScale=(player.trainerAssistScale||.65)+.25;player.trainerUltimateBonus=(player.trainerUltimateBonus||0)+.15;}},
-    alchemist:{desc:'Perfected Signature — Alchemist: Combat Distillery needs 1 fewer basic attack to brew and Volatile Flask deals +35% damage.',apply(){player.alchemistBrewNeed=Math.max(1,(player.alchemistBrewNeed||3)-1);player.alchemistFlaskBonus=(player.alchemistFlaskBonus||0)+.35;}},
-    ouroboros:{desc:'Perfected Signature — Ouroboros: +75% Echo Strike, Poison gains +8% Attack damage per stack, and +5% random-element chance.',apply(){player.doubleStrike+=.75;player.poisonStackPower=(player.poisonStackPower||.12)+.08;player.omniElementChance=(player.omniElementChance||0)+.05;}}
-  };
-
-  function perfectedSignatureSourceClassId(){
-    if(player.classId==='slimerouge')return player.slimeRougeIdentityClass||'slime';
-    return player.classId;
-  }
-  function perfectedSignatureForCurrentClass(){
-    const sourceId=perfectedSignatureSourceClassId(),sourceClass=CLASSES[sourceId],entry=PERFECTED_SIGNATURES[sourceId]||{desc:`Perfected Signature — ${sourceClass?.name||'Current identity'}: +20% Ultimate damage.`,apply(){player.ultimateDamageBonus+=.20;}};
-    if(player.classId==='slimerouge'&&sourceId!=='slimerouge'){
-      const detail=String(entry.desc||'').replace(/^Perfected Signature\s*—\s*[^:]+:\s*/,'');
-      return {desc:`Perfected Signature — Slime Rouge (${sourceClass?.name||sourceId} identity): ${detail}`,apply:entry.apply,sourceId};
-    }
-    return {...entry,sourceId};
-  }
-  function applyPerfectedSignatureSafe(){
-    const entry=perfectedSignatureForCurrentClass(),sourceId=entry.sourceId||player.classId;
-    if(sourceId==='ranger')player.rangerMarkMax=Math.max(3,player.rangerMarkMax||3);
-    if(sourceId==='fighter')player.fighterCounterMax=Math.max(1,player.fighterCounterMax||1);
-    if(sourceId==='summoner')player.summonerCap=Math.max(3,player.summonerCap||3);
-    if(sourceId==='alchemist')player.alchemistBrewNeed=Math.max(1,player.alchemistBrewNeed||3);
-    if(sourceId==='ninja')player.ninjaSmokeNeed=Math.max(1,player.ninjaSmokeNeed||3);
-    entry.apply();
-    return entry;
-  }
-
-
-  // The authoritative registry is intentionally read-only. Its Perfected
-  // Signature entry calls this stable runtime service instead of reaching into
-  // this nested UI scope directly (the old cross-scope call made the card
-  // visible but unpickable in 3.2.4).
-  Object.defineProperty(window,'DiceboundPerfectedSignature',{configurable:true,value:Object.freeze({
-    applyCurrent:()=>applyPerfectedSignatureSafe(),
-    describeCurrent:()=>perfectedSignatureForCurrentClass().desc,
-    sourceClassId:()=>perfectedSignatureSourceClassId()
-  })});
-  // Every powerup card goes through the live description resolver. This means
-  // Perfected Signature updates immediately with the current class and never
-  // prints the effects for unrelated classes.
-
-
-  // Paladin's existing Grace gain happens inside the current healPlayer chain.
-  // Add only the bonus portion afterwards so old healing/Faith hooks remain intact.
-
-  // Rogue Steal and final Bloodmage Exsanguinate signature behavior are owned by DiceboundClasses.
-
-
-  /*
-    Full eligible-powerup picker.  /*
-    Full eligible-powerup picker. Unlike getUpgradeChoices(), this deliberately
-    does not sample or weight the pool: every powerup currently returned by
-    eligibleUpgrades() is displayed once. That automatically respects class,
-    achievement, unique-taken and Slime borrowing rules.
-  */
-  function showAllEligiblePowerupSelection(source='Special Powerup Selection',onComplete=()=>{},filter=()=>true){
-    if(!gameStarted){showToast('Start a run before opening the full powerup list.');return false;}
-    const pool=eligibleUpgrades(filter).slice();
-    const rarityOrder={legendary:0,epic:1,rare:2,uncommon:3,common:4};
-    pool.sort((a,b)=>(rarityOrder[a.rarity]??9)-(rarityOrder[b.rarity]??9)||a.name.localeCompare(b.name));
-    $('powerupTitle').textContent=source;
-    $('powerupSubtitle').innerHTML=`Choose <b>one</b> powerup from every option currently eligible for ${CLASSES[player.classId]?.icon||''} ${CLASSES[player.classId]?.name||'this run'}. Locked, class-ineligible and already-consumed Unique powers are omitted.`;
-    const overlay=$('powerupOverlay'),grid=$('powerupGrid');overlay.classList.add('all-powerup-selection');grid.innerHTML='';
-    let tools=overlay.querySelector('.all-powerup-tools');if(tools)tools.remove();
-    tools=document.createElement('div');tools.className='all-powerup-tools';tools.innerHTML=`<input class="all-powerup-search" type="search" placeholder="Search eligible powerups…"><span class="all-powerup-count"></span>`;grid.before(tools);
-    const count=tools.querySelector('.all-powerup-count'),search=tools.querySelector('.all-powerup-search');
-    const cards=[];
-    for(const up of pool){
-      const btn=document.createElement('button');btn.className=`choice-btn ${up.rarity}`;btn.dataset.search=`${up.name} ${powerupDisplayDesc(up)} ${up.rarity} ${(up.tags||[]).join(' ')}`.toLowerCase();btn.innerHTML=choiceHTML(up);
-      btn.addEventListener('click',()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose ${up.name} (${rarityInfo[up.rarity].label}) from the full eligible pool.`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);overlay.classList.add('hidden');overlay.classList.remove('all-powerup-selection');tools.remove();updateHUD();onComplete(up);});
-      cards.push(btn);grid.appendChild(btn);
-    }
-    const updateCount=()=>{const visible=cards.filter(c=>c.style.display!=='none').length;count.textContent=`${visible} / ${pool.length} eligible`;};
-    search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();cards.forEach(c=>c.style.display=!q||c.dataset.search.includes(q)?'':'none');updateCount();});
-    updateCount();overlay.classList.remove('hidden');setTimeout(()=>search.focus(),0);return true;
-  }
   // Test-only characterization surface for the Powerups subsystem migration.
   // It exposes the final released 0.6.6.32 behavior without changing ordinary
   // callers so capture/replay can freeze eligibility, choice, application and
@@ -2768,16 +2658,16 @@ function returnToRoad(...args){
     setModes:(nightmare=false,hell=false)=>{nightmareMode=!!nightmare;hellMode=!!hell;return {nightmareMode,hellMode};},
     setPendingLevelUps:value=>{pendingLevelUps=Math.max(0,Number(value)||0);return pendingLevelUps;},
     levelUi:()=>{dbPowerups.openLevelUp(()=>{});const grid=$("choiceGrid");return {subtitle:$("levelSubtitle")?.textContent||"",choices:[...grid.querySelectorAll("button.choice-btn")].map(b=>({name:b.querySelector('.choice-name')?.textContent||'',rarity:[...b.classList].find(x=>rarityInfo[x])||null})),reroll:grid.querySelector('.powerup-reroll-btn')?.textContent||null,overlayHidden:$("levelOverlay")?.classList.contains("hidden")??true};},
-    allEligibleUi:()=>{showAllEligiblePowerupSelection('Powerups Oracle',()=>{});const grid=$("powerupGrid");return {title:$("powerupTitle")?.textContent||"",subtitle:$("powerupSubtitle")?.textContent||"",names:[...grid.querySelectorAll("button.choice-btn")].map(b=>b.querySelector('.choice-name')?.textContent||''),countText:grid.querySelector('.powerup-selector-count')?.textContent||'',overlayHidden:$("powerupOverlay")?.classList.contains("hidden")??true};},
-    perfectedSignature:()=>{const up=perfectedSignatureForCurrentClass();return {name:up.name,desc:up.desc,classId:player.classId};},
+    allEligibleUi:()=>{dbPowerupPresentation.openAllEligible('Powerups Oracle',()=>{});const grid=$("powerupGrid");return {title:$("powerupTitle")?.textContent||"",subtitle:$("powerupSubtitle")?.textContent||"",names:[...grid.querySelectorAll("button.choice-btn")].map(b=>b.querySelector('.choice-name')?.textContent||''),countText:grid.querySelector('.powerup-selector-count')?.textContent||'',overlayHidden:$("powerupOverlay")?.classList.contains("hidden")??true};},
+    perfectedSignature:()=>{const up=dbPowerupPresentation.currentSignature();return {name:up.name,desc:up.desc,classId:player.classId};},
     closeOverlays:()=>{$("levelOverlay")?.classList.add("hidden");$("powerupOverlay")?.classList.add("hidden");return true;}
   });
   dbPowerups.configure({
     renderLevelUp:onComplete=>renderLevelUpChoices(onComplete),
     renderPowerupChoice:(source,onComplete,filter,subtitle)=>renderPowerupChoiceOverlay(source,onComplete,filter,subtitle),
     renderLegendaryChoice:(source,onComplete)=>renderLegendaryChoice(source,onComplete),
-    renderAllEligible:(source,onComplete,filter)=>showAllEligiblePowerupSelection(source,onComplete,filter),
-    perfectedSignature:()=>({...perfectedSignatureForCurrentClass(),apply:undefined})
+    renderAllEligible:(source,onComplete,filter)=>dbPowerupPresentation.openAllEligible(source,onComplete,filter),
+    perfectedSignature:()=>({...dbPowerupPresentation.currentSignature(),apply:undefined})
   });
 
   // Debug access makes the reusable selector easy to regression-test in an
@@ -4632,17 +4522,17 @@ dbReturnToRoadTraceReady=true;
     return meta;
   }
   function v319BoardDigest(){return tiles.map((t,i)=>({i,type:t?.type||null,pack:t?.packSize||1,enemy:t?.enemyBase?.name||null}));}
-                        
+
 
   /* ========================================================================
      Alpha 3.2 — wrapper-boundary / mechanic-eligibility regression API
      ======================================================================== */
-      
+
   /* Beta 0.3 — final-runtime regression API. */
                     /* ========================================================================
      Alpha 3.2.4 — touch/mobile + victory/eligibility regression API
      ======================================================================== */
-          
+
   /* ========================================================================
      Beta 0.5.11 — full-screen combat, elemental parity & progression fixes
      ======================================================================== */
@@ -4738,7 +4628,7 @@ dbReturnToRoadTraceReady=true;
 
 
   // Small exposed checks for future regression work.
-  
+
   /* ========================================================================
      Beta 0.5.12 — campsite placement + achievement powerup progression
      ======================================================================== */
@@ -4751,8 +4641,8 @@ dbReturnToRoadTraceReady=true;
     'legendary_star_eater_v27','legendary_venom_throne_v27','legendary_kings_ransom_v27','legendary_prismatic_choir_v27',
     'legendary_echo_crown','legendary_blood_contract','legendary_loaded_road','legendary_packbreaker','legendary_second_sun','perfected_signature'
   ]);
-    
-  
+
+
   /* ========================================================================
      Alpha v3.1.7 — infrastructure boundary: platform / storage / save schema
      ======================================================================== */
@@ -4834,7 +4724,7 @@ dbReturnToRoadTraceReady=true;
     ordinaryApi:window.DiceboundEquipment,logError:(message,data)=>v25Log('errors','loot',message,data),stateForLog:()=>v25State()
   });
   function db060HasEffect(id){return dbItemGeneration.hasEffect(id);}
-  
+
   // Generated Legendary effects count as real item value in comparisons.
   const db060FormatBonusesBase=formatBonuses;
   formatBonuses=function(item){const base=db060FormatBonusesBase(item);if(!item?.legendaryEffectId)return base;const e=DB060_EFFECT_BY_ID[item.legendaryEffectId];return `${base} · LEGENDARY EFFECT: ${e?.name||item.legendaryEffectName} — ${e?.desc||item.legendaryEffectDesc||''}`;};
@@ -5398,7 +5288,7 @@ dbReturnToRoadTraceReady=true;
     getBoard:level=>db317Board(level),enemyPolicy:db064EnemyPolicy,elementKeys:ELEMENT_KEYS,
     beta045EnemyArtForName,db046EnemyArtForName,db047UiArt
   });
-  
+
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
      a real completed Donut proc and never changes its target, timing or RNG. */
   window.DiceboundDonutVfxTest=Object.freeze({
@@ -5451,17 +5341,17 @@ dbReturnToRoadTraceReady=true;
   document.addEventListener('focusin',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target)db064ShowTooltip(target);});
   document.addEventListener('focusout',event=>{const target=event.target?.closest?.('[data-tip],[data-tooltip]');if(target&&target===db064TooltipTarget)db064HideTooltip(target);});
   window.addEventListener('resize',db064PositionTooltip);window.addEventListener('scroll',db064PositionTooltip,true);
-  
+
   // Isolated browser-harness coverage for the #123 semantic contract.  This
   // exercises the live composed strike pipeline, including the Ranger wrapper.
-  
+
   /* #75 / #122 — one source for the level-aware event Gold family.  The
      runtime applies its existing effective-Gold calculation exactly once. */
   const db064FriendsEventRewards=window.DiceboundEventRewards;
   if(!db064FriendsEventRewards)throw new Error('DiceBound requires the event reward policy domain.');
   const db064PurseTalent=talents.find(talent=>talent.id==='fortune_gold');
   if(db064PurseTalent)db064PurseTalent.desc='Each rank adds 35% of the level-scaled event-Gold reward at run start (25 Gold per rank at level 1) and +5% Gold Gain.';
-  
+
   /* #78 / #209 — achievement rules and mastery state remain here until their
      domain moves. The Trophy destination itself is owned by ui/achievements. */
   function db064AchievementUiSettings(){
