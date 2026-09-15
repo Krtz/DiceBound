@@ -36,8 +36,17 @@ def main()->int:
 
     if 'delegates' in parts:
         spec=os.environ.get('CHAINSAW_DELEGATE_SLICE','').strip()
+        explicit=[name.strip() for name in os.environ.get('CHAINSAW_DELEGATE_NAMES','').split(',') if name.strip()]
         original=chainsaw.DELEGATES
-        if spec:
+        if spec and explicit:
+            raise RuntimeError('Use CHAINSAW_DELEGATE_SLICE or CHAINSAW_DELEGATE_NAMES, not both')
+        if explicit:
+            missing=[name for name in explicit if name not in original]
+            if missing:
+                raise RuntimeError(f'Unknown delegate names: {missing}')
+            chainsaw.DELEGATES={name:original[name] for name in explicit}
+            print(f'delegate names: {", ".join(explicit)}')
+        elif spec:
             lo_text,hi_text=spec.split(':',1)
             lo,hi=int(lo_text),int(hi_text)
             names=list(original)
