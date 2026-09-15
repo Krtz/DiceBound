@@ -1,0 +1,95 @@
+name: Temporary Beta 0.6.7.0 chainsaw materializer
+
+on:
+  push:
+    branches:
+      - refactor/0.6.7.0-monolith-chainsaw
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Mint repository write token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app_token.outputs.token }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.7'
+      - name: Materialize chainsaw source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_materialize_0670_chainsaw.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/set_project_version.py --version 0.6.7.0 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.7.0 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_historical_layer_census.py --markdown docs/HISTORICAL_LAYER_CENSUS.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_monolith_chainsaw.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/combat/element-content.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run full source validation gate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.7.0 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit exact validated source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git rm tools/tmp_materialize_0670_chainsaw.py tools/tmp_chainsaw_analysis.py .github/workflows/tmp-chainsaw-analysis.yml .github/workflows/tmp-materialize-0670-chainsaw.yml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git add -A
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git commit -m "Beta 0.6.7.0: chainsaw monolith dead code"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
