@@ -87,7 +87,7 @@
   const resolveEnemyModeAura=mode=>ENEMY_MODE_AURAS[normalizeEnemyMode(mode)];
   const resolveGuardianArt=id=>manifest.minibosses[String(id)]||manifest.bosses[String(id)]||manifest.secretBosses[String(id)]||null;
   const resolveMarkerByName=name=>{const normal=resolveEnemyMarker(name);if(normal)return normal;const m=GUARDIAN_MARKER_MATCHERS.find(x=>x.test.test(String(name)));if(!m)return null;const e=resolveGuardianArt(m.key);return e?Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)}):null};
-  const resolveClassArt=id=>manifest.classes[String(id)]||manifest.classes.ranger; const resolveRandomClassArt=()=>manifest.randomClass; const resolvePetArt=id=>manifest.pets[String(id)]||manifest.pets.neutral;
+  const resolveClassArt=id=>manifest.classes[String(id)]||null; const resolveRandomClassArt=()=>manifest.randomClass; const resolvePetArt=id=>manifest.pets[String(id)]||manifest.pets.neutral;
   const resolveCampObject=key=>manifest.camp.objects[key]||null; const resolveCampBackground=key=>manifest.camp.backgrounds[key]||manifest.camp.backgrounds.campsite;
   const resolveUiIcon=key=>manifest.ui.icons[key]||manifest.powerups[key]||null; const resolvePowerupArt=key=>manifest.powerups[key]||manifest.ui.icons[key]||null;
   const resolveBoardBackground=level=>manifest.board.backgrounds[String(Number(level)||1)]||manifest.board.backgrounds["1"];

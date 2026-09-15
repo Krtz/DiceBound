@@ -34,8 +34,9 @@ for symbol in presentation_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired combat presentation owner returned: {symbol}"
 assert mono.count('function updateCombatUI(') == 1, 'updateCombatUI must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*updateCombatUI\s*=', mono), 'updateCombatUI reassignment chain must not return'
-assert mono.count('function renderEnemyParty(') == 1, 'renderEnemyParty must have exactly one thin compatibility adapter'
+assert mono.count('function renderEnemyParty(') == 0, 'call-only renderEnemyParty adapter must stay retired'
 assert not re.search(r'(?m)^\s*renderEnemyParty\s*=', mono), 'renderEnemyParty reassignment chain must not return'
+assert 'dbCombatView.renderEnemyParty(' in mono, 'enemy-party callers no longer route through Combat View'
 assert "dbCombatView.configurePresentation({" in mono, 'combat presentation must be configured through Combat View'
 assert not re.search(r"(?<![\w$])dbCombatPresentation(?![\w$])", mono), 'peer-public Combat Presentation variable returned'
 assert not re.search(r"(?<![\w$])dbCombatVfx(?![\w$])", mono), 'peer-public Combat VFX variable returned'
@@ -61,7 +62,7 @@ combat_turn_retired = [
 ]
 for symbol in combat_turn_retired:
     assert symbol not in mono, f"retired combat turn owner returned to compatibility monolith: {symbol}"
-assert mono.count("async function enemyTurn(") == 1, "enemyTurn must have exactly one thin compatibility adapter"
+assert mono.count("async function enemyTurn(") == 0, "retired enemyTurn compatibility adapter returned"
 assert mono.count("async function resolveEnemyResponse(") == 1, "resolveEnemyResponse must have exactly one thin compatibility adapter"
 assert "dbCombatTurns=dbCombatTurnOwner.configure({" in mono, "combat turn owner is not configured by the compatibility composition root"
 
@@ -72,8 +73,8 @@ strike_retired = [
 ]
 for symbol in strike_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired strike-resolution owner returned: {symbol}"
-assert mono.count('function strikeBaseDamage(') == 1, 'strikeBaseDamage must have exactly one thin compatibility adapter'
-assert mono.count('async function performStrike(') == 1, 'performStrike must have exactly one thin compatibility adapter'
+assert mono.count('function strikeBaseDamage(') == 0, 'retired strikeBaseDamage compatibility adapter returned'
+assert mono.count('async function performStrike(') == 0, 'retired performStrike compatibility adapter returned'
 assert not re.search(r'(?m)^\s*strikeBaseDamage\s*=\s*function', mono), 'strikeBaseDamage reassignment chain must not return'
 assert not re.search(r'(?m)^\s*performStrike\s*=\s*async function', mono), 'performStrike reassignment chain must not return'
 assert "dbCombatStrikes=dbCombatStrikeOwner.configure({" in mono, 'combat strike-resolution owner is not configured by the composition root'
@@ -115,14 +116,14 @@ for symbol in pet_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Pet-resolution owner returned: {symbol}"
 assert mono.count('async function petTurn(') == 1, 'petTurn must have exactly one thin compatibility adapter'
 assert mono.count('function petDamage(') == 1, 'petDamage must have exactly one thin compatibility adapter'
-assert mono.count('function trainerPetDamage(') == 1, 'trainerPetDamage must have exactly one thin compatibility adapter'
+assert mono.count('function trainerPetDamage(') == 0, 'retired trainerPetDamage compatibility adapter returned'
 assert not re.search(r'(?m)^  petTurn\s*=', mono), 'top-level petTurn reassignment chain must not return'
 assert not re.search(r'(?m)^  petDamage\s*=', mono), 'top-level petDamage reassignment chain must not return'
 assert not re.search(r'(?m)^  trainerPetDamage\s*=', mono), 'top-level trainerPetDamage reassignment chain must not return'
 assert "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" in mono, 'combat Pet turn-resolution owner is not configured by the composition root'
 assert "return dbCombat.petTurn(...args);" in mono, 'Combat facade Pet turn adapter is missing'
 assert "if(dbCombat)return dbCombat.petDamage();" in mono, 'Combat facade Pet damage adapter/fallback is missing'
-assert "return dbCombat.trainerPetDamage(id);" in mono, 'Combat facade Trainer Pet damage adapter is missing'
+assert 'trainerPetDamage:id=>dbCombat.trainerPetDamage(id)' in mono, 'Combat owner configuration no longer routes trainer Pet damage through the facade'
 
 victory_retired = [
     'winCombatV15','winCombatV15Patch','winCombatV16Base','winCombatV19Base','v266ResolveLateFinalBase',
@@ -131,10 +132,10 @@ victory_retired = [
 ]
 for symbol in victory_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Victory-resolution owner returned: {symbol}"
-assert mono.count('async function winCombat(') == 1, 'winCombat must have exactly one thin compatibility adapter'
+assert mono.count('async function winCombat(') == 0, 'retired winCombat compatibility adapter returned'
 assert not re.search(r'(?m)^  winCombat\s*=\s*async function', mono), 'winCombat reassignment chain must not return'
 assert "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" in mono, 'combat Victory-resolution owner is not configured by the composition root'
-assert "return dbCombat.win(...args);" in mono, 'Combat facade Victory adapter is missing'
+assert 'dbCombat.win(' in mono, 'Victory callers no longer route through the Combat facade'
 
 
 consumables_retired = [
@@ -160,16 +161,16 @@ healing_retired = [
 ]
 for symbol in healing_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Healing owner returned: {symbol}"
-assert mono.count('function healPlayer(') == 1, 'healPlayer must have exactly one thin compatibility adapter'
-assert mono.count('function recordHealing(') == 1, 'recordHealing must have exactly one thin compatibility adapter'
-assert mono.count('function clearBloodOverhealTemp(') == 1, 'Blood Overheal cleanup must have exactly one thin compatibility adapter'
+assert mono.count('function healPlayer(') == 0, 'retired healPlayer compatibility adapter returned'
+assert mono.count('function recordHealing(') == 0, 'retired recordHealing compatibility adapter returned'
+assert mono.count('function clearBloodOverhealTemp(') == 0, 'retired Blood Overheal cleanup compatibility adapter returned'
 assert mono.count('function v26ClearStoneBattle(') == 1, 'Stone cleanup must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*healPlayer\s*=\s*function', mono), 'healPlayer reassignment chain must not return'
 assert "dbCombatHealingResolution=dbCombatHealingOwner.configure({" in mono, 'Healing owner is not configured by the composition root'
-assert "return dbCombat.heal(...args);" in mono, 'Combat facade heal adapter is missing'
-assert "return dbCombat.recordHealing(...args);" in mono, 'Combat facade healing-record adapter is missing'
-assert "return dbCombat.clearBloodOverhealTemp(...args);" in mono, 'Combat facade Blood Overheal cleanup adapter is missing'
-assert "return dbCombat.clearStoneBattle(...args);" in mono, 'Combat facade Stone cleanup adapter is missing'
+assert 'dbCombat.heal(' in mono, 'Healing callers no longer route through the Combat facade'
+assert 'dbCombat.recordHealing(' in mono, 'Healing-record callers no longer route through the Combat facade'
+assert 'dbCombat.clearBloodOverhealTemp(' in mono, 'Blood Overheal cleanup no longer routes through the Combat facade'
+assert 'dbCombat.clearStoneBattle(' in mono, 'Stone cleanup no longer routes through the Combat facade'
 
 
 element_retired = [
@@ -183,17 +184,17 @@ element_retired = [
 ]
 for symbol in element_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Element owner returned: {symbol}"
-assert mono.count('function triggerElementEffect(') == 1, 'triggerElementEffect must have exactly one thin compatibility adapter'
-assert mono.count('function enemyElementProc(') == 1, 'enemyElementProc must have exactly one thin compatibility adapter'
-assert mono.count('function triggerWeaponElement(') == 1, 'triggerWeaponElement must have exactly one thin compatibility adapter'
+assert mono.count('function triggerElementEffect(') == 0, 'retired triggerElementEffect compatibility adapter returned'
+assert mono.count('function enemyElementProc(') == 0, 'retired enemyElementProc compatibility adapter returned'
+assert mono.count('function triggerWeaponElement(') == 0, 'retired triggerWeaponElement compatibility adapter returned'
 assert not re.search(r'(?m)^\s*triggerElementEffect\s*=\s*function', mono), 'triggerElementEffect reassignment chain must not return'
 assert not re.search(r'(?m)^\s*enemyElementProc\s*=\s*function', mono), 'enemyElementProc reassignment chain must not return'
 assert not re.search(r'(?m)^\s*triggerWeaponElement\s*=\s*function', mono), 'triggerWeaponElement reassignment chain must not return'
 assert "dbCombatElementResolution=dbCombatElementOwner.configure({" in mono, 'Element owner is not configured by the composition root'
-assert "return dbCombat.element(...args);" in mono, 'Combat facade element adapter is missing'
-assert "return dbCombat.enemyElementProc(...args);" in mono, 'Combat facade enemy element adapter is missing'
-assert "return dbCombat.triggerWeaponElement(...args);" in mono, 'Combat facade weapon-element adapter is missing'
-assert "return dbCombat.restoreEnemyElementDebuffs(...args);" in mono, 'Combat facade enemy-element cleanup adapter is missing'
+assert 'dbCombat.element(' in mono, 'Element callers no longer route through the Combat facade'
+assert 'dbCombat.enemyElementProc(' in mono, 'Enemy-element callers no longer route through the Combat facade'
+assert 'dbCombat.triggerWeaponElement(' in mono, 'Weapon-element callers no longer route through the Combat facade'
+assert 'dbCombat.restoreEnemyElementDebuffs(' in mono, 'Enemy-element cleanup no longer routes through the Combat facade'
 
 
 

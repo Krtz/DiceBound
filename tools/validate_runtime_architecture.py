@@ -750,13 +750,19 @@ def main() -> int:
                 + required_board_generation_behavior
             )
     if monolith_source:
-        for expected_board_generation_adapter in [
+        for required_board_generation_route in [
             "dbRun.configure({generation:{",
-            "function enemyForPosition(index){return dbRun.enemyForPosition(index);}",
-            "function generateBoard(){return dbRun.generateBoard();}",
+            "dbRun.enemyForPosition(",
+            "dbRun.generateBoard()",
         ]:
-            if expected_board_generation_adapter not in monolith_source:
-                errors.append("dicebound.js must use the board-generation composition owner")
+            if required_board_generation_route not in monolith_source:
+                errors.append("dicebound.js must route board generation through the board-generation owner")
+        for retired_board_generation_adapter in [
+            "function enemyForPosition(",
+            "function generateBoard(",
+        ]:
+            if retired_board_generation_adapter in monolith_source:
+                errors.append("dicebound.js retains a retired board-generation compatibility adapter")
         for retired_board_generation_layer in [
             "function drawSpecialIndexes(",
             "function plannedPackSize(",
@@ -877,8 +883,8 @@ def main() -> int:
             errors.append("dicebound.js must retain only the thin updateCombatUI presentation adapter")
         if re.search(r"(?m)^\s*updateCombatUI\s*=", monolith_source):
             errors.append("dicebound.js retains an updateCombatUI reassignment after presentation extraction")
-        if monolith_source.count("function renderEnemyParty(") != 1 or "dbCombatView.renderEnemyParty()" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin renderEnemyParty presentation adapter")
+        if monolith_source.count("function renderEnemyParty(") != 0 or "dbCombatView.renderEnemyParty(" not in monolith_source:
+            errors.append("dicebound.js must route enemy-party presentation directly through Combat View")
         if re.search(r"(?m)^\s*renderEnemyParty\s*=", monolith_source):
             errors.append("dicebound.js retains a renderEnemyParty reassignment after presentation extraction")
         for symbol in ("updateCombatUIBase","updateCombatUIV12","updateCombatUIV13","updateCombatUIV15Patch","updateCombatUIV16Base","updateCombatUIV17Base","updateCombatUIV17SmokeBase","updateCombatUIV18Base","updateCombatUIV19Base","updateCombatUIV24Base","updateCombatUIV25BurnBase","updateCombatUIV27EnemyBase","updateCombatUIV28SmokeBase","updateCombatUIV28RougeBase","updateCombatUIBeta04Base","db0511UpdateCombatUIBase","db060UpdateCombatUIBase","dbFriendUpdateCombatUiBase","renderEnemyPartyV17Base","db0636RenderEnemyPartyBase"):
@@ -1121,8 +1127,8 @@ def main() -> int:
             errors.append("dicebound.js must retain only the thin petTurn adapter through DiceboundCombat")
         if monolith_source.count("function petDamage(") != 1 or "if(dbCombat)return dbCombat.petDamage();" not in monolith_source:
             errors.append("dicebound.js must retain the Camp-safe petDamage fallback and route configured Combat through DiceboundCombat")
-        if monolith_source.count("function trainerPetDamage(") != 1 or "return dbCombat.trainerPetDamage(id);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin trainerPetDamage adapter through DiceboundCombat")
+        if monolith_source.count("function trainerPetDamage(") != 0 or "trainerPetDamage:id=>dbCombat.trainerPetDamage(id)" not in monolith_source:
+            errors.append("dicebound.js must route trainer Pet damage through DiceboundCombat without a compatibility adapter")
         if any(peer in monolith_source for peer in (
             "return dbCombatPetTurnResolution.petTurn(...args);",
             "if(dbCombatPetTurnResolution)return dbCombatPetTurnResolution.petDamage();",
@@ -1155,8 +1161,8 @@ def main() -> int:
     if monolith_source:
         if "dbCombatVictoryResolution=dbCombatVictoryOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Victory-resolution owner")
-        if monolith_source.count("async function winCombat(") != 1 or "return dbCombat.win(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin winCombat adapter through DiceboundCombat")
+        if monolith_source.count("async function winCombat(") != 0 or "dbCombat.win(" not in monolith_source:
+            errors.append("dicebound.js must route victory callers through DiceboundCombat without a compatibility adapter")
         if "return dbCombatVictoryResolution.winCombat(...args);" in monolith_source:
             errors.append("dicebound.js must not expose the Victory specialist as a peer-public seam")
         if re.search(r"(?m)^  winCombat\s*=\s*async function", monolith_source):
@@ -1197,16 +1203,24 @@ def main() -> int:
         if required_mana_behavior not in mana_action_source:
             errors.append("Combat Mana action owner is missing required behavior: " + required_mana_behavior)
     if monolith_source:
-        for expected_mana_adapter in [
+        for required_mana_route in [
             "const dbCombatManaActionOwner=window.DiceboundCombatManaActionResolution;",
-            "function manaGain(amount){return dbCombat.manaGain(amount);}",
-            "async function occultChannelAttack(...args){return dbCombat.channel(...args);}",
-            "async function occultSpellAttack(...args){return dbCombat.spell(...args);}",
-            "async function summonerConjure(...args){return dbCombat.summonerConjure(...args);}",
+            "dbCombat.manaGain(",
+            "dbCombat.channel(",
+            "dbCombat.spell(",
+            "dbCombat.summonerConjure(",
             "mana:dbCombatManaActionResolution",
         ]:
-            if expected_mana_adapter not in monolith_source:
-                errors.append("dicebound.js must retain only the thin Mana action composition adapters through DiceboundCombat")
+            if required_mana_route not in monolith_source:
+                errors.append("dicebound.js must route Mana actions through DiceboundCombat")
+        for retired_mana_adapter in [
+            "function manaGain(",
+            "async function occultChannelAttack(",
+            "async function occultSpellAttack(",
+            "async function summonerConjure(",
+        ]:
+            if retired_mana_adapter in monolith_source:
+                errors.append("dicebound.js retains a retired Mana action compatibility adapter")
         for retired_mana_adapter in [
             "return dbCombatManaActionResolution.manaGain(amount);",
             "return dbCombatManaActionResolution.occultChannelAttack.apply(this,args);",

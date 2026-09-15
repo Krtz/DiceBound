@@ -1610,7 +1610,7 @@ function returnToRoad(...args){
   function classBoardMarkerSrc(classId){const root=(window.DiceboundAssets?.paths?.uiClassMarkers)||"assets/ui/class-markers";return `${root}/${classId}.png`;}
   function applyClassBoardMarker(el,classId){
     if(!el)return;
-    const cls=CLASSES[classId]||CLASSES.ranger;
+    const cls=CLASSES[classId];
     el.setAttribute('aria-label', `${cls.name} board marker`);
     el.innerHTML='';
     const img=document.createElement('img');
@@ -1729,34 +1729,6 @@ function returnToRoad(...args){
   // The historical portrait extension chain starts below and is ultimately
   // replaced by the semantic-art owner. Keep its single lexical binding so
   // early startup assignments remain valid in strict mode.
-  let classPortraitSVG;
-  classPortraitSVG=function(classId){
-    const cls=CLASSES[classId]||CLASSES.ranger;
-    const cfg={
-      ranger:{bg:"#102b24",accent:"#5ecb76",skin:"#d2a06b",hair:"#5c3827",head:`<path d="M14 29c3-15 10-22 18-22 10 0 16 8 18 22-8-7-27-7-36 0z" fill="#255f3b"/><path d="M47 8c10 10 8 31 2 44" fill="none" stroke="#d09a4f" stroke-width="3"/><path d="M48 12l8 3-8 5" fill="#e9eef2"/>`},
-      fighter:{bg:"#182233",accent:"#829ac9",skin:"#c89263",hair:"#3b2b24",head:`<path d="M15 26c1-13 7-20 17-20s17 7 18 20l-5-4H20z" fill="#8797ad"/><path d="M18 21h28v8H18z" fill="#27364b"/><rect x="29" y="7" width="6" height="15" rx="2" fill="#d5ad58"/>`},
-      sorcerer:{bg:"#1b1236",accent:"#8c60ff",skin:"#d6a97d",hair:"#443158",head:`<path d="M8 20h48L37 5H27z" fill="#4a287f"/><path d="M15 19c6-4 28-4 35 0" stroke="#d5b0ff" stroke-width="3"/><circle cx="48" cy="11" r="3" fill="#fff2a6"/>`},
-      monk:{bg:"#3b2415",accent:"#d7924f",skin:"#c98d5f",hair:"#382117",head:`<path d="M18 16c4-8 24-8 28 0" stroke="#d9553e" stroke-width="5"/><circle cx="32" cy="13" r="8" fill="#c98d5f"/>`},
-      clown:{bg:"#35102e",accent:"#ff61bc",skin:"#f5ddd7",hair:"#d93d7d",head:`<circle cx="21" cy="14" r="7" fill="#ff5c55"/><circle cx="43" cy="14" r="7" fill="#5fcfff"/><path d="M21 10c8-8 16-5 21 1" stroke="#ffe265" stroke-width="5"/><circle cx="32" cy="28" r="3" fill="#ee3e4d"/>`},
-      berserker:{bg:"#2e0f12",accent:"#d04444",skin:"#b97955",hair:"#4c241d",head:`<path d="M15 20L8 7l14 7M49 20l7-13-14 7" fill="#d9c7a6"/><path d="M14 24c3-13 32-17 37 2" fill="#5e201e"/>`},
-      turtle:{bg:"#153027",accent:"#51b46f",skin:"#71b77d",hair:"#22523a",head:`<ellipse cx="32" cy="23" rx="16" ry="13" fill="#74bd82"/><path d="M17 20h30M21 13l7 20M43 13l-7 20" stroke="#27583b" stroke-width="2" opacity=".65"/>`},
-      frog:{bg:"#17341d",accent:"#8be26f",skin:"#6fd86a",hair:"#2c7b45",head:`<ellipse cx="32" cy="25" rx="17" ry="13" fill="#6fd86a"/><circle cx="23" cy="14" r="7" fill="#7fe878"/><circle cx="41" cy="14" r="7" fill="#7fe878"/><circle cx="23" cy="14" r="2" fill="#101820"/><circle cx="41" cy="14" r="2" fill="#101820"/>`},
-      d20:{bg:"#161b42",accent:"#6fc9ff",skin:"#d4a276",hair:"#22294c",head:`<polygon points="32,5 51,17 44,38 20,38 13,17" fill="#295c9a" stroke="#9ee4ff" stroke-width="2"/><text x="32" y="26" text-anchor="middle" font-size="12" fill="white" font-weight="900">20</text>`},
-      slime:{bg:"#12351b",accent:"#61dc72",skin:"#66d977",hair:"#1f6b34",head:`<path d="M14 34c0-16 8-26 18-26s18 10 18 26c0 5-4 8-8 6l-5 5-5-5-5 5-5-5c-4 2-8-1-8-6z" fill="#66d977"/><circle cx="26" cy="25" r="2" fill="#122018"/><circle cx="38" cy="25" r="2" fill="#122018"/>`},
-      vampire:{bg:"#2b0c1c",accent:"#ef4c78",skin:"#eee4df",hair:"#25151f",head:`<path d="M14 22c4-13 32-17 37 2-8-4-27-4-37-2z" fill="#20131d"/><path d="M27 33l3 6 2-5 2 5 3-6" fill="#fff"/><path d="M14 40L5 20l16 11M50 40l9-20-16 11" fill="#5c1637"/>`},
-      ninja:{bg:"#111820",accent:"#8ca7c8",skin:"#d1a071",hair:"#101317",head:`<path d="M12 18c7-11 32-13 41 0v19H12z" fill="#151b22"/><path d="M17 23h30v9H17z" fill="#a9bfd7" opacity=".85"/>`},
-      rouge:{bg:"#491324",accent:"#ff7d9c",skin:"#e0ad82",hair:"#7c2f42",head:`<path d="M17 13c7-8 27-8 32 1-9 3-23 3-32-1z" fill="#c42f52"/><path d="M20 10l18-4 11 7" fill="#d84668"/><path d="M48 31l9-12" stroke="#ffd69e" stroke-width="3"/><path d="M54 17l4-5" stroke="#ff5d89" stroke-width="5"/>`},
-      ceo:{bg:"#2c2411",accent:"#e4c258",skin:"#d1a06d",hair:"#4b3823",head:`<path d="M18 15c6-8 24-8 29 1" fill="#5a4935"/><rect x="18" y="23" width="11" height="7" rx="2" fill="none" stroke="#111" stroke-width="2"/><rect x="35" y="23" width="11" height="7" rx="2" fill="none" stroke="#111" stroke-width="2"/><path d="M29 26h6" stroke="#111" stroke-width="2"/><path d="M27 42l5 10 5-10" fill="#df3f4a"/>`},
-      merchant:{bg:"#2e1d10",accent:"#d49b4d",skin:"#ca9362",hair:"#654128",head:`<path d="M13 18h38l-8-10H21z" fill="#6e4826"/><path d="M22 31c2 11 18 15 21 0-1 14-5 19-11 19-6 0-10-5-10-19z" fill="#74442f"/><circle cx="50" cy="14" r="7" fill="#e4b54c"/><text x="50" y="17" text-anchor="middle" font-size="8" font-weight="900">G</text>`},
-      cleric:{bg:"#162b4c",accent:"#f7d780",skin:"#deb383",hair:"#6a5038",head:`<ellipse cx="32" cy="8" rx="13" ry="4" fill="none" stroke="#ffe891" stroke-width="3"/><path d="M18 18c5-9 23-11 29 0" fill="#e7edf7"/><path d="M32 7v12M25 13h14" stroke="#f6d45f" stroke-width="3"/>`},
-      paladin:{bg:"#182440",accent:"#edce72",skin:"#d4a77a",hair:"#544531",head:`<path d="M14 26c2-14 8-21 18-21s16 7 18 21l-5-3H19z" fill="#d1b45e"/><path d="M20 21h24v11H20z" fill="#39445f"/><path d="M32 5v15M26 12h12" stroke="#fff2a8" stroke-width="2"/>`},
-      beastmaster:{bg:"#2e2516",accent:"#c49a53",skin:"#ca9469",hair:"#5b3d25",head:`<path d="M16 20l5-13 8 10M48 20L43 7l-8 10" fill="#8b6336"/><path d="M17 20c5-10 26-12 31 0" fill="#6b4828"/><circle cx="51" cy="45" r="8" fill="#2c2117"/><text x="51" y="49" text-anchor="middle" font-size="11">🐾</text>`},
-      rogue:{bg:"#10171e",accent:"#76c9f5",skin:"#c99068",hair:"#252a32",head:`<path d="M10 26c5-16 13-21 22-21s17 5 22 21l-8-3H18z" fill="#1f2934"/><path d="M17 25h30v8H17z" fill="#0d131a"/><path d="M49 8l7 18" stroke="#a9d8f3" stroke-width="2"/>`},
-      bloodmage:{bg:"#300c18",accent:"#ff4f70",skin:"#e5c0b0",hair:"#501b2b",head:`<path d="M11 28c4-16 12-23 21-23s17 7 21 23l-9-5H20z" fill="#5a1227"/><path d="M32 7l4 8-4 8-4-8z" fill="#ef4461"/><path d="M10 45c8-7 11-10 13-18M54 45c-8-7-11-10-13-18" stroke="#ff6a80" stroke-width="2"/>`}
-    }[classId]||{bg:"#1b2740",accent:"#65dcff",skin:"#d3a174",hair:"#403028",head:""};
-    const special=["frog","slime","d20"].includes(classId);
-    return `<svg viewBox="0 0 64 64" role="img" aria-label="${cls.name} portrait"><defs><linearGradient id="pv12_${classId}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${cfg.bg}"/><stop offset="1" stop-color="${cfg.accent}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#08101b"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#pv12_${classId})"/><circle cx="32" cy="27" r="13" fill="${special?"transparent":cfg.skin}"/>${cfg.head}${special?"":`<circle cx="27.5" cy="26" r="1.5" fill="#181818"/><circle cx="36.5" cy="26" r="1.5" fill="#181818"/><path d="M28 32c3 2 5 2 8 0" fill="none" stroke="#8a4c3c" stroke-width="1.5" stroke-linecap="round"/>`}<path d="M15 58c3-13 10-19 17-19s14 6 17 19" fill="rgba(7,14,24,.76)"/><path d="M20 57c3-10 8-15 12-15 5 0 10 5 12 15" fill="${cfg.accent}" opacity=".28"/></svg>`;
-  };
 
 
 
@@ -1856,10 +1828,6 @@ function returnToRoad(...args){
     bloodmage:{bg1:"#280712",bg2:"#8f1733",skin:"#e5c0b0",body:"#551126",motif:`<circle cx="32" cy="30" r="26" fill="none" stroke="#ff4969" stroke-width="1.5" opacity=".45"/><path d="M32 4l4 9-4 9-4-9zM6 45l9-2-4 9M58 45l-9-2 4 9" fill="#ff5673"/>`,head:`<path d="M10 28Q15 4 32 4T54 28l-10-5H20z" fill="#5c1128"/><path d="M32 7l5 9-5 9-5-9z" fill="#ef4461"/>`,gear:`<path d="M7 61Q13 37 32 39T57 61" fill="#571126"/><path d="M16 48q16 13 32 0" stroke="#ff5b78" stroke-width="3" fill="none"/>`}
   };
 
-  classPortraitSVG=function(classId){
-    const cls=CLASSES[classId]||CLASSES.ranger,cfg=classArtV13[classId]||classArtV13.ranger,special=["frog","slime","d20"].includes(classId),gid=`c13_${classId}`;
-    return `<svg viewBox="0 0 64 64" role="img" aria-label="${cls.name} portrait"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${cfg.bg1}"/><stop offset="1" stop-color="${cfg.bg2}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#060b13"/><rect x="2" y="2" width="60" height="60" rx="13" fill="url(#${gid})"/><g opacity=".9">${cfg.motif||""}</g>${special?"":`<circle cx="32" cy="27" r="13" fill="${cfg.skin}"/><circle cx="27.5" cy="26" r="1.4" fill="#171717"/><circle cx="36.5" cy="26" r="1.4" fill="#171717"/><path d="M28 32q4 2 8 0" stroke="#8a4c3c" stroke-width="1.4" fill="none" stroke-linecap="round"/>`}<g>${cfg.head||""}</g><g>${cfg.gear||""}</g></svg>`;
-  };
 
   // ---- monster and boss portraits -------------------------------------------
   function artHash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return Math.abs(h>>>0);}
@@ -2163,12 +2131,6 @@ function returnToRoad(...args){
   // ---- Debug: all Mythic pieces + item seed recreation ----------------------
 
   // ---- New class portraits and sensible selection order --------------------
-  const classPortraitV15Patch=classPortraitSVG;
-  classPortraitSVG=function(classId){
-    if(classId==="summoner")return `<svg viewBox="0 0 64 64" role="img" aria-label="Summoner portrait"><defs><linearGradient id="sum15" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111936"/><stop offset="1" stop-color="#7047b8"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#07101c"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#sum15)"/><circle cx="32" cy="25" r="12" fill="#d6a77e"/><path d="M14 22c4-13 31-18 38 0l-9-4H21z" fill="#37245f"/><path d="M17 57c2-13 9-19 15-19 7 0 14 6 16 19" fill="#281b49"/><path d="M8 46l14-7v18L8 52zM56 46l-14-7v18l14-5z" fill="#d5c2ff" stroke="#6e50aa"/><circle cx="13" cy="18" r="5" fill="#79d7ff" opacity=".8"/><circle cx="51" cy="15" r="4" fill="#ffcb71" opacity=".85"/><circle cx="27" cy="26" r="1.5"/><circle cx="37" cy="26" r="1.5"/></svg>`;
-    if(classId==="pokemontrainer")return `<svg viewBox="0 0 64 64" role="img" aria-label="Pokemon Trainer portrait"><defs><linearGradient id="pt15" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#163152"/><stop offset="1" stop-color="#d84343"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#08101b"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#pt15)"/><circle cx="32" cy="27" r="12" fill="#d6a477"/><path d="M15 19c5-11 27-15 35-3l-5 5H18z" fill="#d63e45"/><path d="M31 11h14v7H31z" fill="#f0ece1"/><path d="M15 58c3-13 10-19 17-19s14 6 17 19" fill="#17365a"/><circle cx="12" cy="49" r="7" fill="#f3f3ef" stroke="#d23c43" stroke-width="4"/><circle cx="52" cy="48" r="7" fill="#f3f3ef" stroke="#d23c43" stroke-width="4"/><circle cx="12" cy="49" r="2" fill="#1b2430"/><circle cx="52" cy="48" r="2" fill="#1b2430"/><circle cx="27" cy="27" r="1.5"/><circle cx="37" cy="27" r="1.5"/></svg>`;
-    return classPortraitV15Patch(classId);
-  };
 
 
 
@@ -2247,7 +2209,6 @@ function returnToRoad(...args){
   ["restartBtn","endRestartBtn","startBtn"].forEach(id=>$(id)?.addEventListener("click",preciousGuardV16,true));$("startBtn")?.addEventListener("click",()=>setTimeout(()=>v16PreciousWarningAcknowledged=false,0));
 
   // ---- Alchemist art and class ordering ------------------------------------
-  const classPortraitV16Base=classPortraitSVG;classPortraitSVG=function(classId){if(classId!=="alchemist")return classPortraitV16Base(classId);return `<svg viewBox="0 0 64 64" role="img" aria-label="Alchemist portrait"><defs><linearGradient id="alc16" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#193d2b"/><stop offset="1" stop-color="#713c82"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#08120d"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#alc16)"/><circle cx="31" cy="25" r="11" fill="#d8a97f"/><path d="M17 20c6-12 28-13 34 0l-8-2H23z" fill="#292133"/><circle cx="27" cy="25" r="2" fill="#8cff9d"/><circle cx="36" cy="25" r="2" fill="#8cff9d"/><path d="M16 58c2-14 9-20 16-20s14 6 17 20" fill="#243d30"/><path d="M44 37l7 17H38z" fill="#b9ff73" opacity=".75" stroke="#efffcf"/><path d="M43 36h6v5h-6z" fill="#dfe8e4"/><circle cx="12" cy="15" r="4" fill="#db69ff" opacity=".8"/><circle cx="54" cy="19" r="3" fill="#77ffab" opacity=".9"/></svg>`;};
 
   // Combat-kind metadata remains available to existing final-combat routing.
   // Board 5 terminal ownership was retired: Board 5 advances into Board 6.
@@ -2430,11 +2391,6 @@ function returnToRoad(...args){
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;fx.textContent="♾️🐍☠️";fx.classList.add("ultimate-ouroboros");sfx.holy();await delay(760);enemy.classList.add("enemy-hit");await delay(190);enemy.classList.remove("enemy-hit");
   };
 
-  const classPortraitV18Base=classPortraitSVG;
-  classPortraitSVG=function(classId){
-    if(classId!=="ouroboros")return classPortraitV18Base(classId);
-    return `<svg viewBox="0 0 64 64" role="img" aria-label="Ouroboros portrait"><defs><linearGradient id="ouro18" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#123326"/><stop offset="1" stop-color="#5c256e"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#07110d"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#ouro18)"/><circle cx="32" cy="32" r="20" fill="none" stroke="#9df26d" stroke-width="7"/><path d="M47 18c9 5 10 16 5 22l-8-5 5 11c-9 7-23 8-31 0" fill="none" stroke="#e0ff8b" stroke-width="4" stroke-linecap="round"/><path d="M47 18l9-4-4 9z" fill="#f0ff9b"/><circle cx="48" cy="18" r="1.7" fill="#231124"/><text x="32" y="37" text-anchor="middle" font-size="17" fill="#f2d9ff">∞</text></svg>`;
-  };
 
 
   // ---- Reliable Sovereign/Contract choice for Edge -------------------------
@@ -4036,11 +3992,6 @@ dbReturnToRoadTraceReady=true;
   /* ======================================================================
      Beta 0.4.3 — options menu, camp cleanup and home-PC HUD follow-up
      ====================================================================== */
-  const classPortraitBeta042Base=classPortraitSVG;
-  classPortraitSVG=function(classId){
-    if(classId!=='slimerouge')return classPortraitBeta042Base(classId);
-    return `<svg viewBox="0 0 64 64" role="img" aria-label="Slime Rouge portrait"><defs><linearGradient id="sr042" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2c0f14"/><stop offset="1" stop-color="#7f1826"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#09060a"/><rect x="3" y="3" width="58" height="58" rx="12" fill="url(#sr042)"/><path d="M14 45c0-14 8-22 18-22 6 0 11 2 15 6 2 3 4 8 4 16v10H14z" fill="#d92d47" stroke="#ff8a9d" stroke-width="2"/><path d="M18 28c5-7 13-11 21-11 7 0 12 2 16 6-4-10-14-15-24-15-11 0-21 8-25 20z" fill="#b3142a" opacity=".9"/><path d="M20 24l7 4 6-5 7 4 6-5 4 7-6 5-8-3-7 5-7-4-6 4-3-7z" fill="#181321" stroke="#ffd0d7" stroke-width="1.4" stroke-linejoin="round"/><circle cx="27" cy="35" r="3" fill="#fff3ee"/><circle cx="42" cy="35" r="3" fill="#fff3ee"/><circle cx="27" cy="35" r="1.3" fill="#1a0b0f"/><circle cx="42" cy="35" r="1.3" fill="#1a0b0f"/><path d="M27 45q5 3 10 0" stroke="#5d0f18" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M48 44l9 2-6 7-5-3z" fill="#f4d0a4" stroke="#fff3de" stroke-width="1.3"/><path d="M46 43l5 3-7 5-4-2z" fill="#d9dadf" stroke="#fff" stroke-width="1.1"/><path d="M11 50q6-2 12 5" stroke="#ff98aa" stroke-width="2" fill="none" stroke-linecap="round" opacity=".75"/></svg>`;
-  };
 
   const beta042Style=document.createElement('style');
   beta042Style.textContent=`
@@ -4607,37 +4558,32 @@ dbReturnToRoadTraceReady=true;
      ======================================================================== */
   const DB054_CLASS_ART_IDS=Object.freeze(Object.keys(CLASSES));
   function db054ClassArt(classId){
-    const id=DB054_CLASS_ART_IDS.includes(String(classId))?String(classId):'ranger';
-    const fromRegistry=window.DiceboundAssets?.resolveClassArt?.(id);
-    return fromRegistry||{
-      headshot:`assets/ui/class-art/headshots/${id}.png`,
-      marker:`assets/ui/class-markers/${id}.png`,
-      battle:`assets/ui/class-art/battle/${id}.png`,
-      alt:CLASSES[id]?.name||id
-    };
+    const id=String(classId);
+    if(!DB054_CLASS_ART_IDS.includes(id))throw new Error(`Unknown class art id: ${id}`);
+    const assets=window.DiceboundAssets;
+    if(!assets)throw new Error("DiceboundAssets must load before class artwork");
+    const art=assets.resolveClassArt(id);
+    if(!art)throw new Error(`Missing class art asset: ${id}`);
+    return art;
   }
   function db054ClassImageHtml(classId,kind='headshot'){
-    const cls=CLASSES[classId]||CLASSES.ranger,art=db054ClassArt(cls.id),src=kind==='battle'?art.battle:art.headshot;
+    const cls=CLASSES[classId];
+    if(!cls)throw new Error(`Unknown class id: ${classId}`);
+    const art=db054ClassArt(cls.id),src=kind==='battle'?art.battle:art.headshot;
     return `<img class="db054-class-art db054-class-art-${kind}" src="${src}" alt="${cls.name}" draggable="false">`;
   }
-  const db054LegacyPortraitSVG=classPortraitSVG;
-  classPortraitSVG=function(classId){
-    const cls=CLASSES[classId]||CLASSES.ranger;
-    return db054ClassImageHtml(cls.id,'headshot');
-  };
+      function classPortraitSVG(classId){
+    return db054ClassImageHtml(classId,'headshot');
+  }
   applyClassPortrait=function(el,classId,combat=false){
     if(!el)return;
-    const cls=CLASSES[classId]||CLASSES.ranger,kind=combat?'battle':'headshot';
+    const cls=CLASSES[classId];
+    if(!cls)throw new Error(`Unknown class id: ${classId}`);
+    const kind=combat?'battle':'headshot';
     el.classList.remove('ranger-portrait');
     el.classList.add(combat?'combat-portrait':'class-portrait','db054-art-frame');
     el.dataset.classArt=cls.id;
     el.innerHTML=db054ClassImageHtml(cls.id,kind);
-    const img=el.querySelector('img');
-    if(img)img.addEventListener('error',()=>{
-      el.classList.remove('db054-art-frame');
-      el.innerHTML='';
-      try{el.innerHTML=db054LegacyPortraitSVG(cls.id);}catch(_){el.textContent=cls.icon||'🎲';}
-    },{once:true});
   };
   // Existing HUD and combat owners already call classPortraitSVG/applyClassPortrait.
   // Keeping the art swap below those owner boundaries prevents another late-patch ownership fight.
