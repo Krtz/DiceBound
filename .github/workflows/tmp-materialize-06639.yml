@@ -62,6 +62,14 @@ jobs:
           s = s.replace(marker, bridge + '\n\n  ' + marker, 1)
           p.write_text(s, encoding='utf-8', newline='\n')
 
+          release_test = Path('tools/test_release_workflow.py')
+          release_source = release_test.read_text(encoding='utf-8')
+          old_assert = 'assert source.count(safe_manifest_get) == 2, "both manifest GETs must delimit $manifestPath before the query string"'
+          new_assert = 'assert source.count(safe_manifest_get) == 3, "all manifest GETs must delimit $manifestPath before the query string"'
+          if release_source.count(old_assert) != 1:
+              raise SystemExit(f'expected one legacy safe-manifest GET count assertion, found {release_source.count(old_assert)}')
+          release_test.write_text(release_source.replace(old_assert, new_assert, 1), encoding='utf-8', newline='\n')
+
           test = Path('tools/test_canonical_powerup_presentation.py')
           test.write_text(r'''from pathlib import Path
           import re
