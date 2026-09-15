@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   materialize:
+    # Revision 2: ownership tests now reject call-only Combat adapters instead of requiring them.
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
