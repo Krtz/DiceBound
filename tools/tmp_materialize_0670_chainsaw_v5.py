@@ -79,4 +79,5 @@ def main()->int:
 
 
 if __name__=="__main__":
-    raise SystemExit(main())
+    import tmp_materialize_0670_chainsaw_v6 as v6
+    raise SystemExit(v6.main())
