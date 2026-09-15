@@ -7,13 +7,15 @@ on:
       - refactor/0.6.7.0-monolith-chainsaw
     paths:
       - .github/workflows/tmp-materialize-0670-chainsaw.yml
+      - tools/test_*.js
+      - tools/test_*.py
 
 permissions:
   contents: read
 
 jobs:
   materialize:
-    # Revision 7: full suite understands retired call-only Combat/View adapters.
+    # Revision 8: rerun automatically as stale architecture tests are retired.
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
