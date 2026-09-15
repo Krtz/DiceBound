@@ -64,6 +64,8 @@ jobs:
           path.write_text(text, encoding="utf-8", newline="\n")
           '@ | python -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_fix_0670_startup_owners.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.7.0 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.7.0 --channel Beta --development-state Unreleased
@@ -123,7 +125,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           git config user.name "dicebound-manifest-publisher[bot]"
           git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
-          git rm tools/tmp_materialize_0670_chainsaw.py tools/tmp_materialize_0670_chainsaw_v2.py tools/tmp_chainsaw_analysis.py .github/workflows/tmp-chainsaw-analysis.yml .github/workflows/tmp-materialize-0670-chainsaw.yml
+          git rm tools/tmp_materialize_0670_chainsaw.py tools/tmp_materialize_0670_chainsaw_v2.py tools/tmp_fix_0670_startup_owners.py tools/tmp_chainsaw_analysis.py .github/workflows/tmp-chainsaw-analysis.yml .github/workflows/tmp-materialize-0670-chainsaw.yml
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git add -A
           git diff --cached --check
