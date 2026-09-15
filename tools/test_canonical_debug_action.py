@@ -67,18 +67,18 @@ order = [
     "v25Log('events','debug'",
     "if(action==='unlockclasses')",
     "if(action==='all_powerups')",
-    "if(action==\"board6\"&&gameStarted)",
-    "if(action==\"seed_item\")",
-    "if(action==\"alwayschoose\")",
-    "if(action==\"omega_stone\"&&gameStarted)",
-    "if(action==\"runxp\"&&gameStarted)",
+    "if(action===\"board6\"&&gameStarted)",
+    "if(action===\"seed_item\")",
+    "if(action===\"alwayschoose\")",
+    "if(action===\"omega_stone\"&&gameStarted)",
+    "if(action===\"runxp\"&&gameStarted)",
 ]
 positions = [pos(fragment) for fragment in order]
 if positions != sorted(positions):
     raise SystemExit("canonical debugAction released dispatch ordering changed")
 
 omega = re.search(
-    r'if\(action=="omega_stone"&&gameStarted\)\{(?P<body>.*?)\n\s*\}',
+    r'if\(action==="omega_stone"&&gameStarted\)\{(?P<body>.*?)\n\s*\}',
     SOURCE,
     re.S,
 )
