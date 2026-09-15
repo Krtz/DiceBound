@@ -10,23 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  support-candidates:
-    name: support (${{ matrix.label }})
+  semantic-startup-owners:
+    name: semantic startup-owner surgery
     runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - label: none
-            names: ''
-          - label: guardian-art
-            names: 'db060GuardianArt'
-          - label: gate-rewards
-            names: 'db0512GateRewards'
-          - label: v16-talents
-            names: 'v16Talents'
-          - label: all-three
-            names: 'db060GuardianArt,db0512GateRewards,v16Talents'
+    timeout-minutes: 30
     steps:
       - name: Check out diagnostic tools
         uses: actions/checkout@v4
@@ -41,20 +28,46 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply safe chainsaw plus exact support candidate
+      - name: Apply hook-safe chainsaw and semantic owner repair
         shell: pwsh
         env:
-          CHAINSAW_PHASE: ${{ matrix.names == '' && 'dead+element+delegates' || 'dead+element+delegates+support' }}
-          CHAINSAW_SUPPORT_NAMES: ${{ matrix.names }}
+          CHAINSAW_PHASE: dead+element+delegates+support
+          CHAINSAW_SUPPORT_NAMES: v16Talents
         run: |
+          $ErrorActionPreference = 'Stop'
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/tmp_diagnose_0670_chainsaw_phases.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_fix_0670_startup_owners.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/dicebound.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/combat/element-content.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Run exact Classes oracle
+          node --check runtime/js/progression/lifecycle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_monolith_chainsaw.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run focused owner and frozen-behavior gates
         shell: pwsh
-        run: node tools/test_classes_oracle.js
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node tools/test_classes_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_progression_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_progression_owner.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_combat_view_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_guardian_registry.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_board_generation.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_powerups_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_tile_meta.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
