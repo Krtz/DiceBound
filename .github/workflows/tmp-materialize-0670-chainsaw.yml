@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   materialize:
-    # Revision 3: call-only Combat adapters stay retired; strike callers use dbCombat.strike().
+    # Revision 4: full suite understands retired call-only Combat adapters.
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
