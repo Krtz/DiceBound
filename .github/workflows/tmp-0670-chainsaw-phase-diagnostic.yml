@@ -41,6 +41,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/tmp_fix_0670_startup_owners.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/tmp_normalize_0670_source.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/dicebound.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --check runtime/js/combat/element-content.js
