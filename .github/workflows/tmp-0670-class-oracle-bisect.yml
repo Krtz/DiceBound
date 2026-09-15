@@ -1,9 +1,6 @@
 name: Temporary 0.6.7.0 class oracle bisect
 
 on:
-  push:
-    branches:
-      - refactor/0.6.7.0-monolith-chainsaw
   workflow_dispatch:
 
 permissions:
@@ -19,31 +16,14 @@ jobs:
         include:
           - label: released-main
             ref: db7e6f423caaa06b5d8939dbf113da3a1236ccdb
-          - label: analysis-only
-            ref: 13786d9be1c6eb95ef5060aa98eaf5feace535ea
-          - label: materializer-added
-            ref: b1eafda9dbe9a2e0e1255444ad04971f70415923
-          - label: first-materialization
-            ref: 2f9eb2429b9f61e74faf8d039737f3d0e3efef25
-          - label: corrected-materializer-trigger
-            ref: bda05b87c10110112abd870fdfc61175275543a5
-          - label: element-owner-load
-            ref: c5cf2c6d60f4958914fed03402860e25e3c10710
           - label: first-checkpoint
             ref: 8004ed651b1f405bc1c0a0a802b6d9dce77c9458
-          - label: progression-bootstrap
-            ref: e60dcf3dfbf4d318e2b043fa7ae19d6a14e1106c
-          - label: pre-startup-repair
-            ref: 6b2ff149cd0683fa455f3a30317001ceef0609b1
     steps:
       - name: Check out candidate
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.ref }}
           fetch-depth: 0
-      - name: Show candidate
-        shell: pwsh
-        run: git log -1 --oneline
       - name: Run exact Classes oracle
         shell: pwsh
         run: node tools/test_classes_oracle.js
