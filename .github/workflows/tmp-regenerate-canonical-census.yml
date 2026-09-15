@@ -1,0 +1,64 @@
+name: Temporary refined historical-layer census
+
+on:
+  push:
+    branches:
+      - refactor/0.6.6.38-canonical-functions
+    paths:
+      - .github/workflows/tmp-regenerate-canonical-census.yml
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    runs-on: windows-latest
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Regenerate refined census and validate completed canonical waves
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          python tools/test_historical_layer_census.py --markdown docs/HISTORICAL_LAYER_CENSUS.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_debug_action.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_debug_ui.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_tile_meta.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit report and remove one-shot workflow
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Remove-Item .github/workflows/tmp-regenerate-canonical-census.yml
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: refresh refined historical-layer census"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.6.38-canonical-functions
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
