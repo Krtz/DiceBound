@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import collections
 import pathlib
 import re
@@ -100,10 +101,45 @@ def analyze(path: pathlib.Path) -> dict[str, object]:
     }
 
 
-def main() -> None:
+def census_rows() -> list[dict[str, object]]:
     rows = [analyze(path) for path in sorted(RUNTIME.rglob("*.js"))]
     rows.sort(key=lambda row: (-int(row["score"]), -int(row["captures"]), -int(row["repeated"]), str(row["path"])))
+    return rows
 
+
+def render_markdown(rows: list[dict[str, object]]) -> str:
+    lines = [
+        "# Runtime historical-layer census",
+        "",
+        "Generated deterministically by `tools/test_historical_layer_census.py`. This is an archaeology ranking, not an ownership verdict: legitimate current facades/composition adapters are reviewed separately before any rewrite.",
+        "",
+        "Score weights true replacement/capture evidence most heavily: repeated definitions, predecessor captures and resolvable alias depth outweigh naming-only hints.",
+        "",
+        "| Rank | Score | Runtime file | Replacements | Repeated symbols | Predecessor captures | Versioned defs | History-named defs | Max alias depth | Lines | Repeated symbols |",
+        "| ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    ]
+    for rank, row in enumerate(rows, 1):
+        worst = str(row["worst_symbols"]).replace("|", "\\|")
+        lines.append(
+            f"| {rank} | {row['score']} | `{row['path']}` | {row['repeated']} | {row['repeated_symbols']} | "
+            f"{row['captures']} | {row['versioned']} | {row['history_named']} | {row['depth']} | {row['lines']} | {worst} |"
+        )
+    lines.extend([
+        "",
+        "## Interpretation",
+        "",
+        "A high rank means **inspect first**. Before changing a row, verify which hits are real historical composition debt versus intentional current facade/dependency wiring, characterize released behavior when needed, then collapse only the proven historical chain into the current authoritative owner.",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Rank runtime JavaScript files by surviving historical layering.")
+    parser.add_argument("--markdown", type=pathlib.Path, help="Optionally write the deterministic ranked census as Markdown.")
+    args = parser.parse_args()
+
+    rows = census_rows()
     print("HISTORICAL_LAYER_CENSUS_BEGIN")
     print("rank | score | file | repeats | repeated-symbols | predecessor-captures | versioned-defs | history-named-defs | max-alias-depth | lines | repeated symbols")
     for rank, row in enumerate(rows, 1):
@@ -116,6 +152,13 @@ def main() -> None:
 
     if not rows:
         raise SystemExit("Historical-layer census found no runtime JavaScript files.")
+    if args.markdown:
+        path = args.markdown
+        if not path.is_absolute():
+            path = ROOT / path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(render_markdown(rows), encoding="utf-8", newline="\n")
+        print(f"Historical-layer census Markdown written to {path.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
