@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Temporary same-name collision probe for the 0.6.7.0 chainsaw pass.  Keep this
+# file until the materialized checkpoint survives the full runtime/oracle gate.
 import collections
 import re
 
@@ -38,18 +40,12 @@ def main() -> int:
     collisions = sorted(name for name in monolith_defs if name in module_sources)
     print(f"CHAINSAW_COLLISIONS {len(collisions)}")
     for name in collisions:
-        occurrences = list(re.finditer(rf"\b{re.escape(name)}\b", code))
-        refs = max(0, len(occurrences) - len(monolith_defs[name]))
-        print(f"\n{name} | defs={len(monolith_defs[name])} | refs~{refs}")
-        print("modules: " + ", ".join(module_sources[name]))
-        for _, line in monolith_defs[name]:
-            first = max(1, line)
-            last = min(len(source_lines), line + 7)
-            preview = " ".join(part.strip() for part in source_lines[first - 1:last] if part.strip())
-            ownerish = sorted(set(re.findall(r"\b(db[A-Z][A-Za-z0-9_$]*|window\.Dicebound[A-Za-z0-9_$]+|Dicebound[A-Za-z0-9_$]+)\b", preview)))
-            print(f"line {line}: {safe(preview[:1000])}")
-            if ownerish:
-                print("owner refs: " + ", ".join(ownerish))
+        refs = len(re.findall(rf"\b{re.escape(name)}\b", code))
+        defs = monolith_defs[name]
+        snippets=[]
+        for _,line in defs[:3]:
+            snippets.append(safe(source_lines[line-1].strip())[:280])
+        print(f"{name}|refs={refs}|defs={','.join(str(line) for _,line in defs)}|modules={';'.join(module_sources[name])}|snippets={' || '.join(snippets)}")
     return 0
 
 
