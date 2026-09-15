@@ -22,6 +22,19 @@ Presentation owners render semantic IDs, selected authored art and hit targets.
 Domain owners retain mechanics, data, persistence, RNG and progression policy.
 Do not duplicate computed values or make UI text the source of gameplay truth.
 
+## Canonical-function changes
+
+Whenever behavior is added or changed, update or rewrite the affected
+authoritative function or owner implementation so the new behavior is expressed
+directly in that canonical implementation. Do not add another patch wrapper,
+predecessor capture, replacement layer, version generation or compatibility
+function when the existing function can be changed instead.
+
+If older behavior must remain, fold that behavior into the canonical function in
+its current owner and protect the final composed behavior with focused tests.
+Temporary test monkey-patches are allowed only when they are scoped and restored;
+they are not a substitute for production ownership.
+
 ## Progression and secrets
 
 Locked content must remain understandable without exposing secret content ahead
