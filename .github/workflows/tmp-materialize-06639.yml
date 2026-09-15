@@ -1,0 +1,81 @@
+name: Temporary 0.6.6.39 canonical materializer
+
+on:
+  push:
+    branches:
+      - refactor/0.6.6.39-canonical-functions-2
+    paths:
+      - .github/workflows/tmp-materialize-06639.yml
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Materialize canonical Powerup presentation and release hardening
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python tools/tmp_materialize_06639.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/set_project_version.py --version 0.6.6.39 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.6.39 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_historical_layer_census.py --markdown docs/HISTORICAL_LAYER_CENSUS.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_canonical_powerup_presentation.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_powerups_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_powerups_oracle.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_release_workflow.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --check runtime/js/dicebound.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_pr_version.py --base-ref origin/main
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit exact tested tree and remove one-shot materializer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Remove-Item tools/tmp_materialize_06639.py
+          Remove-Item .github/workflows/tmp-materialize-06639.yml
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Beta 0.6.6.39: canonicalize Powerup presentation"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.6.39-canonical-functions-2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
