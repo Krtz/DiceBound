@@ -3,11 +3,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import tmp_materialize_0670_chainsaw as chainsaw
+# Import the corrected v2 materializer so the diagnostic exercises the exact
+# deletion/load-graph behavior that produced the first committed checkpoint.
+import tmp_materialize_0670_chainsaw_v2 as chainsaw_v2
 
+chainsaw=chainsaw_v2.base
 ROOT=Path(__file__).resolve().parents[1]
 MONOLITH=ROOT/'runtime/js/dicebound.js'
-INDEX=ROOT/'runtime/index.html'
 
 
 def main()->int:
@@ -30,14 +32,6 @@ def main()->int:
         text=chainsaw.replace_element_content(text)
         chainsaw.ELEMENT_MODULE.write_text(chainsaw.ELEMENT_MODULE_TEXT,encoding='utf-8')
         chainsaw.update_manifest()
-        index=INDEX.read_text(encoding='utf-8')
-        element_tag='<script src="js/combat/element-content.js"></script>'
-        if element_tag not in index:
-            anchor='<script src="js/combat/effective-stats.js"></script>'
-            if anchor not in index:
-                raise RuntimeError('Could not find effective-stats script anchor')
-            index=index.replace(anchor,element_tag+'\n'+anchor,1)
-            INDEX.write_text(index,encoding='utf-8',newline='\n')
         print('element: extracted canonical element metadata')
 
     if 'delegates' in parts:
