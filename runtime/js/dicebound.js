@@ -1580,14 +1580,6 @@ function returnToRoad(...args){
   }
   ensureV11Meta();
 
-  document.title=`Dicebound: Alpha v1 — ${pick([
-    "blood, rings & tax evasion",
-    "the update with too many secret bosses",
-    "portraits, power tags and bad blood",
-    "five roads and one terrible accountant",
-    "now with Hell Mode, probably unwisely"
-  ])}`;
-
   const extraStyle=document.createElement("style");
   extraStyle.textContent=`
     .class-portrait,.combat-portrait{display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden}
@@ -1710,13 +1702,6 @@ function returnToRoad(...args){
 
 
   /* ---------- Alpha v1.2: identity, clarity, affinity and progression polish ---------- */
-  document.title=`Dicebound: Alpha v1.3 — ${pick([
-    "the gambler has developed empathy",
-    "donuts are weapons now",
-    "statistically fewer haunted tooltips",
-    "monks dodge your dodge",
-    "affinity finally means something"
-  ])}`;
 
   const v12Style=document.createElement("style");
   v12Style.textContent=`
@@ -1794,13 +1779,6 @@ function returnToRoad(...args){
   renderClassChoices();
   /* SEMANTIC OWNER — Class identity mechanics, combat resources, portraits and action dispatch. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1.3: class identities, enemy art and hidden AI simulation harness ---------- */
-  document.title=`Dicebound: Alpha v1.3 — ${pick([
-    "mana was a terrible idea, so naturally we added it",
-    "the bosses have faces now",
-    "the rogue has checked your pockets",
-    "the d20 insists on rolling again",
-    "now internally tested by tiny imaginary adventurers"
-  ])}`;
 
   const v13Style=document.createElement("style");
   v13Style.textContent=`
@@ -2059,13 +2037,6 @@ function returnToRoad(...args){
 
   /* SEMANTIC OWNER — Equipment economy, defense, companions, alchemy and fifth-road systems. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1.4: affix gear, economy curve & career simulation ---------- */
-  document.title=`Dicebound: Alpha v1.4 — ${pick([
-    "the loot has developed adjectives",
-    "legendary trousers now have a pension plan",
-    "the economy has been asked to calm down",
-    "tiny imaginary adventurers formed a testing department",
-    "prefixes, suffixes and suspicious accounting"
-  ])}`;
 
   const v14Style=document.createElement("style");
   v14Style.textContent=`
@@ -2137,13 +2108,6 @@ function returnToRoad(...args){
 
 
   /* ---------- Alpha v1.5: defense, treasure scaling, summon classes & completion hardening ---------- */
-  document.title=`Dicebound: Alpha v1.9 — ${pick([
-    "treasure learned about inflation",
-    "six definitely-not-pocket-monsters entered the road",
-    "defense discovered percentages",
-    "the fifth road now actually ends",
-    "elemental swords are back on the menu"
-  ])}`;
 
   const v15Style=document.createElement("style");
   v15Style.textContent=`
@@ -2205,13 +2169,6 @@ function returnToRoad(...args){
 
 
   /* ---------- Alpha v1.6: refinement, alchemy, radiation and fifth-road hard stop ---------- */
-  document.title=`Dicebound: Alpha v1.9 — ${pick([
-    "the turtle has discovered patience",
-    "radiation is now a build choice",
-    "potions may be thrown at management",
-    "the fifth road has been legally prohibited from looping",
-    "clown ultimates now respect comedy continuity"
-  ])}`;
 
   const v16Style=document.createElement("style");
   v16Style.textContent=`
@@ -2310,13 +2267,6 @@ function returnToRoad(...args){
 
   /* SEMANTIC OWNER — Late class mechanics, talents, Ouroboros and meta progression. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ---------- Alpha v1.7: late-road curve, pet bonds, ninja smoke & reliable relic choices ---------- */
-  document.title=`Dicebound: Alpha v1.9 — ${pick([
-    "the wheel finally understands inflation",
-    "ninjas are now legally made of smoke",
-    "the bloodwell icon knows something you do not",
-    "late roads have been put back in numerical order",
-    "summoners brought visual paperwork"
-  ])}`;
 
   const v17Style=document.createElement("style");
   v17Style.textContent=`
@@ -2356,12 +2306,8 @@ function returnToRoad(...args){
 
   // ---- D20: show the roll, pause, then let the calling attack resolve ------
 
-  // ---- More Mana augments --------------------------------------------------
-  [
-    {id:"mana_deep_reservoir",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"uncommon",icon:"🔷",name:"Deep Reservoir",desc:"+25 max Mana and restore 25 Mana immediately.",tags:["mana","occult"],apply(){player.maxMana=(player.maxMana||0)+25;player.mana=Math.min(player.maxMana,(player.mana||0)+25);}},
-    {id:"mana_quick_channel",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"rare",icon:"⚡🔮",name:"Quick Channel",desc:"Mana-building attacks generate +8 Mana.",tags:["mana","tempo"],apply(){player.manaBuilderBonus=(player.manaBuilderBonus||0)+8;}},
-    {id:"mana_overflow",classIds:["sorcerer","vampire","rouge","merchant","summoner"],rarity:"epic",icon:"🌊🔮",name:"Arcane Overflow",desc:"+35 max Mana. Spending Mana grants 8 Ultimate charge.",tags:["mana","ultimate"],apply(){player.maxMana=(player.maxMana||0)+35;player.mana=Math.min(player.maxMana,(player.mana||0)+35);player.manaSpendUltimate=(player.manaSpendUltimate||0)+8;}}
-  ].forEach(u=>{});
+  // Mana augment definitions are owned by DiceboundPowerupRegistry.
+
 
   // ---- Summoner spirits become visible in combat --------------------------
 
@@ -2379,14 +2325,7 @@ function returnToRoad(...args){
   }});
 
 
-  /* ========================================================================
-     Alpha v1.8 — Identity, tooltip and reliability pass
-     ------------------------------------------------------------------------
-     This section intentionally lives as a documented compatibility layer on
-     top of the older Alpha systems. The project has grown through many small
-     versions, so keeping the newest behavior together makes future audits much
-     easier: each wrapper below states exactly which older behavior it extends.
-     ======================================================================== */
+  /* Alpha v1.8 historical boundary — remaining live behavior below is being drained into canonical owners. */
 
   // ---- Live board-stat tooltips --------------------------------------------
   // Native `title` tooltips can cache stale text in Chromium/Edge. These CSS
@@ -2442,14 +2381,8 @@ function returnToRoad(...args){
     gearNames[slot]=gearNames[slot]||{};gearNames[slot].ouroboros=[`Recursive ${SLOT_LABELS[slot]}`];
   }
 
-  const ouroborosPowers=[
-    {id:"ouro_venom_coil",classId:"ouroboros",rarity:"rare",icon:"🐍☠️",name:"Venom Coil",desc:"Gain +35% Echo Strike, +15% Poison-on-hit chance and +4% Attack damage per Poison stack.",tags:["echo","poison"],apply(){player.doubleStrike+=.35;player.poisonOnHitChance=(player.poisonOnHitChance||0)+.15;player.poisonStackPower=(player.poisonStackPower||.12)+.04;}},
-    {id:"ouro_irradiated_molt",classId:"ouroboros",rarity:"rare",icon:"☢️🐍",name:"Irradiated Molt",desc:"Gain +25% Echo Strike, +10% elemental activation and +15% Element Power.",tags:["echo","elemental"],apply(){player.doubleStrike+=.25;player.elementProcBonus+=.10;player.elementDamageBonus+=.15;}},
-    {id:"ouro_recursive_toxin",classId:"ouroboros",rarity:"epic",icon:"♾️☠️",name:"Recursive Toxin",desc:"Gain +60% Echo Strike. Poison gains +8% Attack damage per stack and Echoes gain +12% Poison chance.",tags:["echo","poison"],apply(){player.doubleStrike+=.60;player.poisonStackPower=(player.poisonStackPower||.12)+.08;player.poisonOnHitChance=(player.poisonOnHitChance||0)+.12;}},
-    {id:"ouro_elemental_molting",classId:"ouroboros",rarity:"epic",icon:"🌈🐍",name:"Elemental Molting",desc:"Gain +40% Echo Strike, +20% Element Power and 6% chance for attacks to trigger an additional random element.",tags:["echo","elemental"],apply(){player.doubleStrike+=.40;player.elementDamageBonus+=.20;player.omniElementChance=(player.omniElementChance||0)+.06;}},
-    {id:"ouro_tail_world",classId:"ouroboros",rarity:"legendary",unique:true,icon:"👑♾️",name:"The Tail Devours the World",desc:"Gain +100% Echo Strike. Poison gains +15% Attack damage per stack, +20% Poison-on-hit and +10% random-element chance.",tags:["echo","poison","elemental","legendary"],apply(){player.doubleStrike+=1;player.poisonStackPower=(player.poisonStackPower||.12)+.15;player.poisonOnHitChance=(player.poisonOnHitChance||0)+.20;player.omniElementChance=(player.omniElementChance||0)+.10;}}
-  ];
-  ouroborosPowers.forEach(u=>{});
+  // Ouroboros powerups are owned by DiceboundPowerupRegistry.
+
 
   // A one-copy identity power that complements the broader Endless Form talent.
 
@@ -2739,9 +2672,6 @@ function returnToRoad(...args){
 /* ---------- Alpha v2.0: camp hub, set readability and alchemy tuning ---------- */
 (function(){
   const V="Alpha v2.0";
-  document.title=`Dicebound: ${V}`;
-  const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${V}`;
-  const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${V} · Six roads, impossible builds and a proper between-runs camp.`;
 
 
 
@@ -2762,9 +2692,6 @@ function returnToRoad(...args){
 /* ---------- Alpha v2.1: Perfected Signatures + full eligible powerup chooser ---------- */
 (function(){
   const VERSION="Alpha v2.1";
-  document.title=`Dicebound: ${VERSION}`;
-  const brandTitle=document.querySelector('.brand h1');if(brandTitle)brandTitle.textContent=`Dicebound: ${VERSION}`;
-  const brandSub=document.querySelector('.brand p');if(brandSub)brandSub.textContent=`${VERSION} · Every class has a perfected signature, and the road can expose the whole eligible power pool.`;
 
   const style=document.createElement('style');
   style.textContent=`
@@ -2943,9 +2870,6 @@ function returnToRoad(...args){
 /* ---------- Alpha v2.2: full-screen camp, progressive set tiers and 2d6 fate ---------- */
 (function(){
   const V='Alpha v2.2';
-  document.title=`Dicebound: ${V}`;
-  const h=document.querySelector('.brand h1');if(h)h.textContent=`Dicebound: ${V}`;
-  const p=document.querySelector('.brand p');if(p)p.textContent=`${V} · The Legacy Camp is now a real full-screen between-runs state, with cleaner meta-progression and fate controls.`;
 
   // Older class-render layers still write the legacy start button label. The
   // visual camp no longer uses that button, but keeping a hidden compatibility
@@ -3137,7 +3061,6 @@ function returnToRoad(...args){
 /* ---------- Alpha v2.3: talents, guardian attack patterns and camp polish ---------- */
 (function(){
   const V='Alpha v2.3';
-  document.title=`Dicebound: ${V}`;
   const brandH=document.querySelector('.brand h1');if(brandH)brandH.textContent=`Dicebound: ${V}`;
   const brandP=document.querySelector('.brand p');if(brandP)brandP.textContent=`${V} · Cleaner talents, repaired Prestige, richer bosses and a more readable camp.`;
 
@@ -6603,7 +6526,7 @@ dbReturnToRoadTraceReady=true;
   dbInfoGuide.configure({
     find:$,
     getClasses:()=>Object.values(CLASSES),
-    isClassUnlocked,
+    isClassUnlocked:id=>dbProgression.isClassUnlocked(id),
     getElements:()=>ELEMENTS,
     getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
     getLifetimeStats:()=>ensureAlphaMeta(),
