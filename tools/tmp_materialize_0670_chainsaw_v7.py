@@ -83,6 +83,19 @@ v6.canonicalize_class_portrait=canonicalize_class_portrait
 _original_augment=v6.augment_anti_return
 
 
+def _retire_stale_combat_view_test_expectation()->None:
+    path=v6.ROOT/"tools/test_shadow_ownership_drain.py"
+    text=path.read_text(encoding="utf-8")
+    old="""assert mono.count('function renderEnemyParty(') == 1, 'renderEnemyParty must have exactly one thin compatibility adapter'\nassert not re.search(r'(?m)^\\s*renderEnemyParty\\s*=', mono), 'renderEnemyParty reassignment chain must not return'"""
+    new="""assert mono.count('function renderEnemyParty(') == 0, 'call-only renderEnemyParty adapter must stay retired'\nassert not re.search(r'(?m)^\\s*renderEnemyParty\\s*=', mono), 'renderEnemyParty reassignment chain must not return'\nassert 'dbCombatView.renderEnemyParty(' in mono, 'enemy-party callers no longer route through Combat View'"""
+    if old in text:
+        text=text.replace(old,new,1)
+        path.write_text(text,encoding="utf-8",newline="\n")
+        print("0.6.7.0 owner-test repair: retired stale renderEnemyParty compatibility-adapter expectation")
+    elif new not in text:
+        raise RuntimeError("Could not reconcile stale renderEnemyParty owner-test expectation")
+
+
 def augment_anti_return()->None:
     _original_augment()
     path=v6.ANTI_RETURN
@@ -100,6 +113,7 @@ def augment_anti_return()->None:
         'assert not re.search(r"\\bclassPortraitSVG\\s*=\\s*function\\b",text), "classPortraitSVG replacement ladder returned"'
     )
     path.write_text(text,encoding="utf-8",newline="\n")
+    _retire_stale_combat_view_test_expectation()
 
 
 v6.augment_anti_return=augment_anti_return
