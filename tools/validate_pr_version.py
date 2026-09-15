@@ -16,6 +16,7 @@ NON_IMPLEMENTATION_PATHS = frozenset({
     "distribution/latest.json",
     "tools/validate_pr_version.py",
     "tools/test_pr_version_gate.py",
+    "tools/test_historical_layer_census.py",
 })
 
 
@@ -92,7 +93,7 @@ def main() -> int:
         for error in errors:
             print(f"PR VERSION ERROR: {error}")
         return 1
-    print(f"PR version PASS: {candidate} is four-component and unused on {args.base_ref}; implementation paths require this gate")
+    print(f"PR version PASS: {candidate} is four-component and unused on {base_ref}; implementation paths require this gate")
     return 0
 
 
