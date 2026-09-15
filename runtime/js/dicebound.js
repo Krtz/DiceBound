@@ -1168,7 +1168,69 @@
 
   function enemyForPosition(index){return dbRun.enemyForPosition(index);}
   function generateBoard(){return dbRun.generateBoard();}
-  function tileMeta(tile){if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];}
+  let dbTileMetaFinalReady=false;
+  function tileMeta(tile){
+    if(dbTileMetaFinalReady){
+      // Final 0.6 guardian art was the outermost generation.
+      if(tile?.type==='miniboss'&&tile.enemyBase?.id&&db060GuardianArt(tile.enemyBase.id))return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
+      if(tile?.type==='boss'){
+        const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
+        if(boss?.id&&boss.art?.boardMarker)return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
+      }
+
+      // Beta 0.4.9 current pack rendering supersedes earlier enemy art when it applies.
+      if(tile?.type==='enemy'&&Number(tile.packSize||1)>1&&tile?.enemyBase){
+        const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||'Enemy';
+        return [`<span class="db-enemy-pack-art">${db049EnemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
+      }
+      if(tile?.type==='enemy'&&tile?.enemyBase&&(/bandit|troll/i.test(tile.enemyBase.name||''))){
+        return [db049EnemyTileIcon(tile),`${tile.enemyBase.name} · 1 enemy`];
+      }
+
+      // Preserve the exact 0.4.7 fallback for non-standard Bandit/Troll tiles or
+      // when the later enemy-specific generations do not apply.
+      const enemyName=tile?.enemyBase?.name||'';
+      if(enemyName){
+        let icon='';
+        if(/bandit/i.test(enemyName))icon=db047UiArt('bandit',enemyName,'db-art-portrait');
+        else if(/troll/i.test(enemyName))icon=db047UiArt('troll',enemyName,'db-art-portrait');
+        if(icon){
+          const n=Math.max(1,Number(tile.packSize||1)||1);
+          const visual=n>1?`<span class="db-enemy-pack-art">${icon}<b>×${n}</b></span>`:icon;
+          return [visual,n>1?`${enemyName} · ${n} enemies`:`${enemyName} · 1 enemy`];
+        }
+      }
+
+      // Older art generations remain as real fallbacks because their asset helper
+      // can succeed even when a newer helper does not.
+      if(tile?.enemyBase?.name){
+        const art=db046EnemyArtForName(tile.enemyBase.name);
+        if(art&&tile.type==='enemy'){
+          const count=tile.packSize||1;
+          return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
+        }
+        if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
+      }
+      if(tile?.enemyBase?.name){
+        const art=beta045EnemyArtForName(tile.enemyBase.name);
+        if(art&&tile.type==='enemy'){
+          const count=tile.packSize||1;
+          return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
+        }
+        if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
+      }
+
+      if(tile?.type==='treasure')return [beta043Art('coins','Treasure','db-art-tile')||'💰','Treasure'];
+      if(tile?.type==='gambler')return [beta043Art('gambler','Gambler','db-art-tile')||'🪙','Gambler'];
+      if(tile?.type==='devilboss')return ['👿🌙','???'];
+    }
+
+    // Original base metadata remains the bootstrap fallback until all later art
+    // helpers are initialized, and the final fallback after they decline a tile.
+    if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}
+    if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];
+    return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];
+  }
   function buildBoard(){
     const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=tileMeta(tile),el=document.createElement("div");el.className=`tile ${tile.type}`;el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
   }
@@ -3407,7 +3469,6 @@
   document.addEventListener('pointercancel',()=>{if(v24DanceArmed)v24CancelDance();},{passive:true});
   document.addEventListener('pointerdown',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(icon&&hellMode){v24SuppressHellClickUntil=Date.now()+900;e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   document.addEventListener('click',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(!icon||!hellMode)return;if(Date.now()<v24SuppressHellClickUntil){e.preventDefault();e.stopImmediatePropagation();return;}if(e.detail===0){e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
-  const tileMetaV24Base=tileMeta;tileMeta=function(tile){if(tile?.type==='devilboss')return ['👿🌙','???'];return tileMetaV24Base(tile);};
 
   /* MODULE: Energy Shield / special Legendary combat hooks ---------------- */
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
@@ -4332,12 +4393,6 @@
     return gearIconBeta043Base(slot);
   };
 
-  const tileMetaBeta043Base=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.type==='treasure')return [beta043Art('coins','Treasure','db-art-tile')||'💰','Treasure'];
-    if(tile?.type==='gambler')return [beta043Art('gambler','Gambler','db-art-tile')||'🪙','Gambler'];
-    return tileMetaBeta043Base(tile);
-  };
 
 
 
@@ -4420,18 +4475,6 @@
 
 
   // ----- Bandit / troll board presentation fallback -----------------------
-  const tileMetaBeta045Base=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.enemyBase?.name){
-      const art=beta045EnemyArtForName(tile.enemyBase.name);
-      if(art&&tile.type==='enemy'){
-        const count=tile.packSize||1;
-        return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
-      }
-      if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
-    }
-    return tileMetaBeta045Base(tile);
-  };
 
   // ----- Sovereign / Contract hardening -----------------------------------
 
@@ -4549,18 +4592,6 @@
 
 
 
-  const db046TileMetaBase=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.enemyBase?.name){
-      const art=db046EnemyArtForName(tile.enemyBase.name);
-      if(art&&tile.type==='enemy'){
-        const count=tile.packSize||1;
-        return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
-      }
-      if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
-    }
-    return db046TileMetaBase(tile);
-  };
 
   window.DiceboundBeta046Debug=Object.freeze({
     boardTuning:()=>({
@@ -4606,20 +4637,6 @@
   }
   db047ApplyKnownArt();
 
-  const db047TileMetaBase=tileMeta;
-  function db047CompactEnemyTile(icon,enemyName,count=1){
-    const n=Math.max(1,Number(count)||1);
-    const visual=n>1?`<span class="db-enemy-pack-art">${icon}<b>×${n}</b></span>`:icon;
-    return [visual,n>1?`${enemyName} · ${n} enemies`:`${enemyName} · 1 enemy`];
-  }
-  tileMeta=function(tile){
-    const enemyName=tile?.enemyBase?.name||'';
-    if(enemyName){
-      if(/bandit/i.test(enemyName)){const icon=db047UiArt('bandit',enemyName,'db-art-portrait');if(icon)return db047CompactEnemyTile(icon,enemyName,tile.packSize||1);}
-      if(/troll/i.test(enemyName)){const icon=db047UiArt('troll',enemyName,'db-art-portrait');if(icon)return db047CompactEnemyTile(icon,enemyName,tile.packSize||1);}
-    }
-    return db047TileMetaBase(tile);
-  };
 
   // --- board pass: make the climb smoother and Board 5 > Board 4 ----------
   const DB047_BOARD_OVERRIDES={
@@ -4752,17 +4769,6 @@
   db049ApplyArtBindings();
   setTimeout(db049ApplyArtBindings,0);
 
-  const db049TileMetaBase=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.type==='enemy'&&Number(tile.packSize||1)>1&&tile?.enemyBase){
-      const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||'Enemy';
-      return [`<span class="db-enemy-pack-art">${db049EnemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
-    }
-    if(tile?.type==='enemy'&&tile?.enemyBase&&(/bandit|troll/i.test(tile.enemyBase.name||''))){
-      return [db049EnemyTileIcon(tile),`${tile.enemyBase.name} · 1 enemy`];
-    }
-    return db049TileMetaBase(tile);
-  };
 
   // Travel width changed; immediately offer the reclaimed space to the square board.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
@@ -5278,15 +5284,8 @@
     const src=db060GuardianArt(id)?.boardMarker;
     return src?`<img class="db060-guardian-tile-art" src="${src}" alt="${alt}" draggable="false">`:'';
   }
-  const db060TileMetaBase=tileMeta;
-  tileMeta=function(tile){
-    if(tile?.type==='miniboss'&&tile.enemyBase?.id&&db060GuardianArt(tile.enemyBase.id))return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
-    if(tile?.type==='boss'){
-      const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
-      if(boss?.id&&boss.art?.boardMarker)return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
-    }
-    return db060TileMetaBase(tile);
-  };
+
+  dbTileMetaFinalReady=true;
 
   const db060GuardianArtStyle=document.createElement('style');
   db060GuardianArtStyle.id='dicebound-beta-0-6-guardian-art-style';
