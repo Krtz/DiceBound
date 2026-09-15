@@ -36,6 +36,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
           python tools/tmp_materialize_debug_ui.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          @'
+          from pathlib import Path
+          import re
+          path=Path('runtime/js/dicebound.js')
+          text=path.read_text(encoding='utf-8')
+          text=re.sub(r'(?m)[ \t]+$', '', text)
+          path.write_text(text,encoding='utf-8',newline='\n')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           python tools/refresh_runtime_manifest.py --version 0.6.6.38 --channel Beta --development-state Unreleased
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/test_canonical_debug_action.py
