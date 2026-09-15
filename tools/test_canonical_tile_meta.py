@@ -75,8 +75,8 @@ if positions != sorted(positions):
 for fragment in (
     "`${name} pack · ${count} enemies`",
     "`${enemyName} · ${n} enemies`",
-    '"Mini Boss · 1 enemy"',
-    '"Final Boss · 1 enemy"',
+    "Mini Boss · 1 enemy",
+    "Final Boss · 1 enemy",
     "['👿🌙','???']",
 ):
     if fragment not in body:
