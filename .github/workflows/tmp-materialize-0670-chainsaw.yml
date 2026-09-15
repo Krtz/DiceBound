@@ -41,7 +41,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/tmp_materialize_0670_chainsaw.py
+          python tools/tmp_materialize_0670_chainsaw_v2.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.7.0 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -84,7 +84,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           git config user.name "dicebound-manifest-publisher[bot]"
           git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
-          git rm tools/tmp_materialize_0670_chainsaw.py tools/tmp_chainsaw_analysis.py .github/workflows/tmp-chainsaw-analysis.yml .github/workflows/tmp-materialize-0670-chainsaw.yml
+          git rm tools/tmp_materialize_0670_chainsaw.py tools/tmp_materialize_0670_chainsaw_v2.py tools/tmp_chainsaw_analysis.py .github/workflows/tmp-chainsaw-analysis.yml .github/workflows/tmp-materialize-0670-chainsaw.yml
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git add -A
           git diff --cached --check
