@@ -99,7 +99,7 @@ jobs:
               raise SystemExit("Expanded Horizons policy no longer lives in DiceboundPowerups.openLevelUp")
 
           print("Canonical Powerup presentation PASS: chooser/reroll/Legendary history collapsed behind DiceboundPowerups with one renderer per responsibility")
-          ''').replace('\n          ', '\n').lstrip(), encoding='utf-8', newline='\n')
+          ''', encoding='utf-8', newline='\n')
           '@ | python -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.6.39 --channel Beta
