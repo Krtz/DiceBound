@@ -17,6 +17,7 @@ NON_IMPLEMENTATION_PATHS = frozenset({
     "tools/validate_pr_version.py",
     "tools/test_pr_version_gate.py",
     "tools/test_historical_layer_census.py",
+    "tools/audit_monolith_shadow_ownership.py",
 })
 
 
@@ -91,7 +92,7 @@ def main() -> int:
     errors = validate_candidate(candidate, used)
     if errors:
         for error in errors:
-            print(f"PR VERSION ERROR: {error}")
+            print(f"PR version FAIL: {error}")
         return 1
     print(f"PR version PASS: {candidate} is four-component and unused on {args.base_ref}; implementation paths require this gate")
     return 0
