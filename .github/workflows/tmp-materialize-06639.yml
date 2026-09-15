@@ -40,6 +40,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
           python tools/tmp_materialize_06639.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          @'
+          from pathlib import Path
+          p = Path('runtime/js/dicebound.js')
+          s = p.read_text(encoding='utf-8')
+          old = 'levelChoices:()=>v18LevelChoices().map(dbPowerupsOracleSummary)'
+          new = 'levelChoices:()=>dbPowerups.levelChoices().map(dbPowerupsOracleSummary)'
+          if s.count(old) != 1:
+              raise SystemExit(f'expected one Powerups oracle v18LevelChoices reference, found {s.count(old)}')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8', newline='\n')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/set_project_version.py --version 0.6.6.39 --channel Beta
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.6.39 --channel Beta --development-state Unreleased
