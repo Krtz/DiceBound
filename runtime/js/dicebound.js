@@ -5820,7 +5820,7 @@ dbReturnToRoadTraceReady=true;
     find:$,
     getRegistry:()=>ACHIEVEMENT_REGISTRY,
     getClasses:()=>Object.values(CLASSES),
-    isClassUnlocked,
+    isClassUnlocked:id=>dbProgression.isClassUnlocked(id),
     isDone:achievement=>dbProgression.achievementDone(achievement),
     descriptionFor:achievement=>dbProgression.achievementConditionText(achievement)+dbProgression.achievementRewardText(achievement),
     heroMasteryEntries:classId=>dbProgression.heroMasteryEntries(classId),
