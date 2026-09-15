@@ -60,6 +60,7 @@ jobs:
           if s.count(marker) != 1:
               raise SystemExit(f'expected one canonical choiceHTML marker, found {s.count(marker)}')
           s = s.replace(marker, bridge + '\n\n  ' + marker, 1)
+          s = '\n'.join(line.rstrip(' \t') for line in s.split('\n'))
           p.write_text(s, encoding='utf-8', newline='\n')
 
           release_test = Path('tools/test_release_workflow.py')
