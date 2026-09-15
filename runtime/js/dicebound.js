@@ -695,7 +695,7 @@
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
     storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
-    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,getAchievementGateRewards:()=>db0512GateRewards,
+    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,
     getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
     classUnlockRecordObservedProgress:ctx=>DB_CLASS_UNLOCK_RULES.recordObservedProgress(ctx),classUnlockResolveDynamic:options=>DB_CLASS_UNLOCK_RULES.resolveDynamic(options),
     classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>renderClassChoices(),addLog:html=>addLog(html),
@@ -1183,10 +1183,10 @@ function returnToRoad(...args){
   function tileMeta(tile){
     if(dbTileMetaFinalReady){
       // Final 0.6 guardian art was the outermost generation.
-      if(tile?.type==='miniboss'&&tile.enemyBase?.id&&db060GuardianArt(tile.enemyBase.id))return [db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
+      if(tile?.type==='miniboss'&&tile.enemyBase?.id&&DB317_GUARDIANS.resolveById(tile.enemyBase.id)?.art?.boardMarker)return [guardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
       if(tile?.type==='boss'){
         const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
-        if(boss?.id&&boss.art?.boardMarker)return [db060GuardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
+        if(boss?.id&&boss.art?.boardMarker)return [guardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
       }
 
       // Beta 0.4.9 current pack rendering supersedes earlier enemy art when it applies.
@@ -5035,54 +5035,36 @@ dbReturnToRoadTraceReady=true;
      Beta 0.5.12 — campsite placement + achievement powerup progression
      ======================================================================== */
 
-  // ACHIEVEMENT GATES — 0.5.12 expands the long-term reward pool. Existing
-  // saves unlock these immediately if the corresponding achievement is already
-  // complete; no progress is reset or re-earned.
-  const db0512GlobalPowerGates=Object.freeze({
-    toxic_bloom:'nature-master',
-    elemental_predator:'road3',
-    mana_overflow:'prestige5',
-    true_legend_attack_v24:'road4',
-    true_legend_guard_v24:'road5',
-    legendary_star_eater_v27:'prestige20',
-    legendary_venom_throne_v27:'nature-master',
-    legendary_kings_ransom_v27:'gold4000',
-    legendary_prismatic_choir_v27:'mythic5',
-    legendary_echo_crown:'legendary3',
-    legendary_blood_contract:'blood-well',
-    legendary_loaded_road:'double-dice',
-    legendary_packbreaker:'menagerie',
-    legendary_second_sun:'hell-gate',
-    perfected_signature:'road3'
-  });
-
-    function db0512RememberReward(achievementId,up){
-    if(!achievementId||!up)return;
-    (db0512GateRewards[achievementId]??=[]).push(up.id);
+  // Beta 0.5.12 reward gates are now authored once in DiceboundPowerupRegistry.
+  // Keep only a read-only regression snapshot here; do not replay historical
+  // mutation/copy passes into the canonical registry during startup.
+  const DB0512_GLOBAL_POWER_IDS=Object.freeze([
+    'toxic_bloom','elemental_predator','mana_overflow','true_legend_attack_v24','true_legend_guard_v24',
+    'legendary_star_eater_v27','legendary_venom_throne_v27','legendary_kings_ransom_v27','legendary_prismatic_choir_v27',
+    'legendary_echo_crown','legendary_blood_contract','legendary_loaded_road','legendary_packbreaker','legendary_second_sun','perfected_signature'
+  ]);
+  function db0512GlobalGateSnapshot(){
+    return DB0512_GLOBAL_POWER_IDS.map(id=>{
+      const up=upgrades.find(entry=>entry.id===id),gate=String(up?.achievementGate||''),achievement=gate.startsWith('achievement:')?gate.slice('achievement:'.length):gate;
+      return {id,name:up?.name,achievement,unlocked:!!gate&&dbProgression.achievementGateUnlocked(gate)};
+    });
   }
-  Object.entries(db0512GlobalPowerGates).forEach(([id,achievementId])=>{
-    const up=upgrades.find(u=>u.id===id);if(!up)return;
-    up.achievementGate=`achievement:${achievementId}`;
-    db0512RememberReward(achievementId,up);
-  });
-
-  // One additional Epic per class is earned by clearing Board 2 with that
-  // class; if a class has a second ungated Legendary, that becomes a Board 5
-  // mastery reward. v19 already owns the Board 3 Epic / Board 4 Legendary pair.
-  const db0512ClassMastery={};
-  Object.keys(CLASSES).forEach(id=>{
-    const owned=upgrades.filter(u=>u.classId===id||(u.classIds||[]).includes(id));
-    const epic=owned.filter(u=>u.rarity==='epic'&&!u.achievementGate).slice(-1)[0];
-    if(epic){epic.achievementGate=`class_b2:${id}`;(db0512ClassMastery[id]??=[]).push({board:2,id:epic.id});}
-    const legendary=owned.filter(u=>u.rarity==='legendary'&&!u.achievementGate).slice(-1)[0];
-    if(legendary){legendary.achievementGate=`class_b5:${id}`;(db0512ClassMastery[id]??=[]).push({board:5,id:legendary.id});}
-  });
-
-  // Achievement-gated reward copy is resolved by DiceboundProgression.
+  function db0512ClassMasterySnapshot(){
+    const out={};
+    Object.keys(CLASSES).forEach(classId=>{
+      const rows=[];
+      upgrades.forEach(up=>{
+        if(up?.achievementGate===`class_b2:${classId}`)rows.push({board:2,id:up.id});
+        if(up?.achievementGate===`class_b5:${classId}`)rows.push({board:5,id:up.id});
+      });
+      if(rows.length)out[classId]=rows;
+    });
+    return out;
+  }
 
   window.DiceboundBeta0512Test=Object.freeze({
-    globalGates:()=>Object.entries(db0512GlobalPowerGates).map(([id,a])=>({id,name:upgrades.find(u=>u.id===id)?.name,achievement:a,unlocked:dbProgression.achievementGateUnlocked(`achievement:${a}`)})),
-    classGates:()=>JSON.parse(JSON.stringify(db0512ClassMastery)),
+    globalGates:()=>db0512GlobalGateSnapshot(),
+    classGates:()=>db0512ClassMasterySnapshot(),
     eligibleLegendaryCount:()=>eligibleUpgrades(u=>u.rarity==='legendary').length,
     eligibleEpicCount:()=>eligibleUpgrades(u=>u.rarity==='epic').length
   });
@@ -5119,12 +5101,12 @@ dbReturnToRoadTraceReady=true;
   // camp owners actually exist.
     const db060EnemyPortraitBase=enemyPortraitSVG;
   enemyPortraitSVG=function(enemy){
-    const src=db060GuardianArt(enemy?.id)?.battle;
+    const src=DB317_GUARDIANS.resolveById(enemy?.id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(enemy?.id)?.battle;
     if(src)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${src}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
     return db060EnemyPortraitBase(enemy);
   };
-  function db060GuardianTileArt(id,alt='Guardian'){
-    const src=db060GuardianArt(id)?.boardMarker;
+  function guardianTileArt(id,alt='Guardian'){
+    const src=DB317_GUARDIANS.resolveById(id)?.art?.boardMarker||window.DiceboundAssets.resolveGuardianArt(id)?.boardMarker;
     return src?`<img class="db060-guardian-tile-art" src="${src}" alt="${alt}" draggable="false">`:'';
   }
 

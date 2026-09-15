@@ -148,8 +148,8 @@
       if(type==='class')base=` · unlocks ${classRegistry[id]?.name||id}`;
       else if(type==='powerup')base=` · unlocks ${upgrades().find(upgrade=>upgrade.id===id)?.name||id}`;
     }
-    const ids=call('getAchievementGateRewards')?.[a.id]||[];
-    const names=ids.map(id=>upgrades().find(upgrade=>upgrade.id===id)?.name).filter(Boolean).filter(name=>!base.includes(name));
+    const names=upgrades().filter(upgrade=>String(upgrade.achievementGate||'')===`achievement:${a.id}`)
+      .map(upgrade=>upgrade.name).filter(Boolean).filter(name=>!base.includes(name));
     if(!names.length)return base;
     return `${base}${base?' · also':' ·'} unlocks ${names.join(', ')}`;
   }
