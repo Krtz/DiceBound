@@ -10,15 +10,23 @@ permissions:
   contents: read
 
 jobs:
-  full-delegates:
-    name: full delegates (${{ matrix.phase }})
+  delegate-slices:
+    name: delegates (${{ matrix.slice }})
     runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
-        phase:
-          - dead+element+delegates
-          - dead+element+delegates+support
+        slice:
+          - none
+          - 0:10
+          - 10:20
+          - 20:30
+          - 30:40
+          - 40:49
+          - 0:20
+          - 20:40
+          - 0:30
+          - 0:40
     steps:
       - name: Check out diagnostic tools
         uses: actions/checkout@v4
@@ -33,10 +41,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Apply corrected chainsaw phase
+      - name: Apply known-good cuts plus delegate slice
         shell: pwsh
         env:
-          CHAINSAW_PHASE: ${{ matrix.phase }}
+          CHAINSAW_PHASE: ${{ matrix.slice == 'none' && 'dead+element' || 'dead+element+delegates' }}
+          CHAINSAW_DELEGATE_SLICE: ${{ matrix.slice == 'none' && '' || matrix.slice }}
         run: |
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
