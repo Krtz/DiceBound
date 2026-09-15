@@ -1,14 +1,17 @@
 from pathlib import Path
 import re
 
+from audit_monolith_shadow_ownership import mask_non_code
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = (ROOT / "runtime/js/dicebound.js").read_text(encoding="utf-8")
+CODE = mask_non_code(SOURCE)
 
-if len(re.findall(r"\bfunction\s+tileMeta\s*\(", SOURCE)) != 1:
+if len(re.findall(r"\bfunction\s+tileMeta\s*\(", CODE)) != 1:
     raise SystemExit("tileMeta must have exactly one canonical declaration")
-if re.search(r"\btileMeta\s*=\s*function\b", SOURCE):
+if re.search(r"\btileMeta\s*=\s*function\b", CODE):
     raise SystemExit("historical tileMeta function replacement returned")
-if re.search(r"\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*tileMeta\s*;", SOURCE):
+if re.search(r"\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*tileMeta\s*;", CODE):
     raise SystemExit("historical tileMeta predecessor capture returned")
 
 retired = {
@@ -23,8 +26,8 @@ retired = {
     "db060GuardianTileArt",
 }
 for alias in sorted(retired):
-    if re.search(rf"\b{re.escape(alias)}\b", SOURCE):
-        raise SystemExit(f"retired tileMeta/guardian alias returned: {alias}")
+    if re.search(rf"\b{re.escape(alias)}\b", CODE):
+        raise SystemExit(f"retired tileMeta/guardian alias returned as executable code: {alias}")
 
 for fragment in (
     "let dbTileMetaFinalReady=false;",
