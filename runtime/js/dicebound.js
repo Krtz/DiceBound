@@ -870,7 +870,7 @@
 function returnToRoad(...args){
   if(dbReturnToRoadFriendReady){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();}
   if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
-  const core=()=>{if(pendingLevelUps>0)openLevelUp();else{rollLocked=false;updateHUD();}};
+  const core=()=>{if(pendingLevelUps>0)dbPowerups.openLevelUp();else{rollLocked=false;updateHUD();}};
   const result=dbReturnToRoadTraceReady?v25TraceCommand('returnToRoad',core,'detailed',args,this):core();
   if(dbReturnToRoadSafetyReady&&!currentEnemy)combatBusy=false;
   if(dbReturnToRoadStoneReady&&!currentEnemy)v26ClearStoneBattle();
@@ -953,35 +953,114 @@ function returnToRoad(...args){
   function weightedUpgrade(pool){return dbPowerups.weighted(pool);}
   function getUpgradeChoices(filter=()=>true){return dbPowerups.choices(filter,3);}
   function applyRandomHighRarity(source="Sealed Relic",announce=true){return dbPowerups.applyRandomHighRarity(source,announce);}
-  function openLevelUp(onComplete=null){
-    sfx.level();$("levelSubtitle").textContent=pendingLevelUps>1?`Choose a powerup. ${pendingLevelUps} levels are waiting.`:"Choose one powerup for this run.";
-    const grid=$("choiceGrid");grid.innerHTML="";
-    getUpgradeChoices().forEach(up=>{
-      const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;
-      btn.innerHTML=`<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc">${up.desc}</span>`;
-      btn.addEventListener("click",()=>{applyUpgrade(up,"Level Up");pendingLevelUps--;addLog(`Level ${player.level}: gained <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);updateHUD();
-        if(pendingLevelUps>0)openLevelUp(onComplete);else{$("levelOverlay").classList.add("hidden");if(onComplete)onComplete();else{rollLocked=false;updateHUD();}}});
-      grid.appendChild(btn);
-    });
-    $("levelOverlay").classList.remove("hidden");
+  function powerupDisplayDesc(up){return dbPowerups.describe(up);}
+
+  function choiceHTML(up){
+    inferUpgradeTags(up);
+    const signature=up?.id==='perfected_signature';
+    return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc${signature?' signature-current':''}">${powerupDisplayDesc(up)}</span><span class="choice-tags">${tagChips(up.tags,'power')}</span>`;
   }
 
-  function showPowerupChoice(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){
-    $("powerupTitle").textContent=source;$("powerupSubtitle").textContent=subtitle;
-    const grid=$("powerupGrid");grid.innerHTML="";
-    getUpgradeChoices(filter).forEach(up=>{
-      const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;
-      btn.innerHTML=`<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc">${up.desc}</span>`;
-      btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> gained ${up.name} (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete();});
+  function attachPowerupReroll(grid,reroll){
+    if(!grid)return;
+    grid.querySelectorAll('.powerup-reroll-btn').forEach(x=>x.remove());
+    const total=Math.max(0,Number(player.v26SecondOpinionRank??gameplayTalentRank('fortune_powerup_rerolls'))||0);
+    const spent=Math.max(0,Number(player.v26SecondOpinionSpent)||0);
+    const remaining=Math.max(0,total-spent);
+    player.powerupRerolls=remaining;
+    const b=document.createElement('button');
+    b.className='powerup-reroll-btn';
+    b.disabled=remaining<=0;
+    b.textContent=`🔄 Reroll choices · ${remaining} remaining`;
+    b.addEventListener('click',()=>{
+      if((player.v26SecondOpinionSpent||0)>=total)return;
+      player.v26SecondOpinionSpent=(player.v26SecondOpinionSpent||0)+1;
+      player.powerupRerolls=Math.max(0,total-player.v26SecondOpinionSpent);
+      sfx.roll();
+      reroll();
+    });
+    grid.appendChild(b);
+  }
+
+  function renderLevelUpChoices(onComplete=null){
+    sfx.level();
+    const count=3+(player.levelChoiceBonus?1:0);
+    $('levelSubtitle').textContent=pendingLevelUps>1
+      ?`Choose 1 of ${count} powerups. ${pendingLevelUps} levels are waiting.`
+      :`Choose 1 of ${count} powerups for this run.`;
+    const grid=$('choiceGrid');
+    grid.innerHTML='';
+    dbPowerups.levelChoices().forEach(up=>{
+      const btn=document.createElement('button');
+      btn.className=`choice-btn ${up.rarity}`;
+      btn.innerHTML=choiceHTML(up);
+      btn.addEventListener('click',()=>{
+        applyUpgrade(up,'Level Up');
+        pendingLevelUps--;
+        addLog(`Level ${player.level}: gained <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);
+        showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);
+        updateHUD();
+        if(pendingLevelUps>0)dbPowerups.openLevelUp(onComplete);
+        else{
+          $('levelOverlay').classList.add('hidden');
+          if(onComplete)onComplete();
+          else{rollLocked=false;updateHUD();}
+        }
+      });
       grid.appendChild(btn);
     });
-    $("powerupOverlay").classList.remove("hidden");
+    attachPowerupReroll(grid,()=>dbPowerups.openLevelUp(onComplete));
+    $('levelOverlay').classList.remove('hidden');
   }
-  function showLegendaryChoice(source,onComplete){
-    showPowerupChoice(source,onComplete,u=>u.rarity==="legendary","The miniboss yields. Choose one guaranteed Legendary powerup.");
+
+  function renderPowerupChoiceOverlay(source,onComplete,filter=()=>true,subtitle='Choose one free rarity-based powerup. Your character level does not change.'){
+    $('powerupTitle').textContent=source;
+    $('powerupSubtitle').textContent=subtitle;
+    const grid=$('powerupGrid');
+    grid.innerHTML='';
+    getUpgradeChoices(filter).forEach(up=>{
+      const btn=document.createElement('button');
+      btn.className=`choice-btn ${up.rarity}`;
+      btn.innerHTML=choiceHTML(up);
+      btn.addEventListener('click',()=>{
+        applyUpgrade(up,source);
+        addLog(`<b>${source}:</b> gained ${up.name} (${rarityInfo[up.rarity].label}).`);
+        showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);
+        $('powerupOverlay').classList.add('hidden');
+        updateHUD();
+        onComplete();
+      });
+      grid.appendChild(btn);
+    });
+    // Released V16 ordering made the overlay visible before appending its reroll.
+    $('powerupOverlay').classList.remove('hidden');
+    attachPowerupReroll(grid,()=>dbPowerups.openChoice(source,onComplete,filter,subtitle));
   }
+
+  function renderLegendaryChoice(source,onComplete=()=>{}){
+    if(String(source).toLowerCase().includes('miniboss'))return v27ShowMinibossReward(source,onComplete);
+    const legends=eligibleUpgrades(u=>u.rarity==='legendary');
+    if(!legends.length){
+      const epics=eligibleUpgrades(u=>u.rarity==='epic');
+      if(epics.length)return dbPowerups.openChoice(source,onComplete,u=>u.rarity==='epic','Every eligible Legendary is exhausted. Choose an Epic power instead.');
+      const gold=modifiedGold(250);
+      player.gold+=gold;
+      player.potions+=2;
+      addLog(`<b>${source}:</b> every eligible Legendary power is already owned this run. The guardian converts the exhausted boon into <b>${gold} gold</b> and <b>2 potions</b>.`);
+      showToast(`👑 Legendary pool exhausted · +${gold} gold · +2 potions`,3000,true);
+      updateHUD();
+      setTimeout(()=>onComplete(false),0);
+      return;
+    }
+    return dbPowerups.openChoice(source,onComplete,u=>u.rarity==='legendary','The guardian yields. Choose one guaranteed Legendary powerup.');
+  }
+
+
+
+
+
   function openFreePowerup(){
-    showPowerupChoice("Power Shrine",()=>{tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);returnToRoad();});
+    dbPowerups.openChoice("Power Shrine",()=>{tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);returnToRoad();});
     addLog("A <b>Power Shrine</b> offers a free gift.");
   }
 
@@ -1685,11 +1764,11 @@ function returnToRoad(...args){
     return up.tags;
   }
   upgrades.forEach(inferUpgradeTags);
-  function choiceHTML(up){inferUpgradeTags(up);return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc">${up.desc}</span><span class="choice-tags">${tagChips(up.tags,"power")}</span>`;}
+
 
   // Powerup eligibility is owned by DiceboundPowerups.
-  openLevelUp=function(onComplete=null){sfx.level();$("levelSubtitle").textContent=pendingLevelUps>1?`Choose a powerup. ${pendingLevelUps} levels are waiting.`:"Choose one powerup for this run.";const grid=$("choiceGrid");grid.innerHTML="";getUpgradeChoices().forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,"Level Up");pendingLevelUps--;addLog(`Level ${player.level}: gained <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);updateHUD();if(pendingLevelUps>0)openLevelUp(onComplete);else{$("levelOverlay").classList.add("hidden");if(onComplete)onComplete();else{rollLocked=false;updateHUD();}}});grid.appendChild(btn);});$("levelOverlay").classList.remove("hidden");};
-  showPowerupChoice=function(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){ $("powerupTitle").textContent=source;$("powerupSubtitle").textContent=subtitle;const grid=$("powerupGrid");grid.innerHTML="";getUpgradeChoices(filter).forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> gained ${up.name} (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);$("powerupOverlay").classList.add("hidden");updateHUD();onComplete();});grid.appendChild(btn);});$("powerupOverlay").classList.remove("hidden");};
+
+
 
   function ensureHellToggle(){
     if($("hellBox")){
@@ -2356,9 +2435,9 @@ function returnToRoad(...args){
   function syncActivePetBonusV16(force=false){return dbPets.syncActiveBonus(force);}
 
   // ---- Powerup rerolls ------------------------------------------------------
-  function attachPowerupRerollV16(grid,reroll){if(!grid)return;const b=document.createElement("button");b.className="powerup-reroll-btn";b.disabled=(player.powerupRerolls||0)<=0;b.textContent=`🔄 Reroll choices · ${player.powerupRerolls||0} remaining`;b.addEventListener("click",()=>{if((player.powerupRerolls||0)<=0)return;player.powerupRerolls--;sfx.roll();reroll();});grid.appendChild(b);}
-  const openLevelUpV16Base=openLevelUp;openLevelUp=function(onComplete=null){openLevelUpV16Base(onComplete);attachPowerupRerollV16($("choiceGrid"),()=>openLevelUp(onComplete));};
-  const showPowerupChoiceV16Base=showPowerupChoice;showPowerupChoice=function(source,onComplete,filter=()=>true,subtitle="Choose one free rarity-based powerup. Your character level does not change."){showPowerupChoiceV16Base(source,onComplete,filter,subtitle);attachPowerupRerollV16($("powerupGrid"),()=>showPowerupChoice(source,onComplete,filter,subtitle));};
+
+
+
 
   // ---- Ranger / Fighter / Monk / Turtle identities -------------------------
 
@@ -2603,12 +2682,8 @@ function returnToRoad(...args){
   // ---- Endless Form support hooks ------------------------------------------
 
   // ---- Level-up fourth choice ----------------------------------------------
-  function v18LevelChoices(){return dbPowerups.levelChoices();}
-  openLevelUp=function(onComplete=null){
-    sfx.level();const count=3+(player.levelChoiceBonus?1:0);$("levelSubtitle").textContent=pendingLevelUps>1?`Choose 1 of ${count} powerups. ${pendingLevelUps} levels are waiting.`:`Choose 1 of ${count} powerups for this run.`;
-    const grid=$("choiceGrid");grid.innerHTML="";v18LevelChoices().forEach(up=>{const btn=document.createElement("button");btn.className=`choice-btn ${up.rarity}`;btn.innerHTML=choiceHTML(up);btn.addEventListener("click",()=>{applyUpgrade(up,"Level Up");pendingLevelUps--;addLog(`Level ${player.level}: gained <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`${rarityInfo[up.rarity].label}: ${up.name}`);updateHUD();if(pendingLevelUps>0)openLevelUp(onComplete);else{$("levelOverlay").classList.add("hidden");if(onComplete)onComplete();else{rollLocked=false;updateHUD();}}});grid.appendChild(btn);});
-    attachPowerupRerollV16(grid,()=>openLevelUp(onComplete));$("levelOverlay").classList.remove("hidden");
-  };
+
+
 
   // ---- CEO wealth barriers --------------------------------------------------
   // Older logic grants the first barrier at 1,000 gold. These are additive
@@ -2647,7 +2722,7 @@ function returnToRoad(...args){
     sovereign:()=>{player.gold=99999;currentMerchantItems=[{id:"v18_sovereign",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");renderMerchant();return true;},
     ouroborosConversion:()=>{meta.unlocks.ouroboros=true;resetPlayer("ouroboros");const before=player.doubleStrike;player.attack+=5;updateHUD();return {attack:player.attack,before,after:player.doubleStrike,unlocked:isClassUnlocked("ouroboros")};},
     bloodmageHp:()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");const before=player.maxHp;player.maxHp+=10;player.hp+=10;updateHUD();return {before,after:player.maxHp,delta:player.maxHp-before};},
-    levelChoices:()=>{resetPlayer("ranger");player.levelChoiceBonus=1;pendingLevelUps=1;openLevelUp();return {choices:$("choiceGrid").querySelectorAll("button.choice-btn").length,reroll:!!$("choiceGrid").querySelector(".powerup-reroll-btn")};},
+    levelChoices:()=>{resetPlayer("ranger");player.levelChoiceBonus=1;pendingLevelUps=1;dbPowerups.openLevelUp();return {choices:$("choiceGrid").querySelectorAll("button.choice-btn").length,reroll:!!$("choiceGrid").querySelector(".powerup-reroll-btn")};},
     replenishGuard:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let guarded=null;const old=resolveEnemyResponse;resolveEnemyResponse=async g=>{guarded=g;combatBusy=false;};try{await dbClasses.bloodmageReplenish();return {guarded,hp:player.hp,enemyHp:currentEnemy.hp};}finally{resolveEnemyResponse=old;}},
     conjureRally:async()=>{meta.unlocks.summoner=true;Object.values(meta.pets).forEach(p=>p.unlocked=true);resetPlayer("summoner");player.mana=100;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let pet=0,response=0;const oldPet=petTurn,oldResponse=resolveEnemyResponse;petTurn=async()=>{pet++;};resolveEnemyResponse=async()=>{response++;combatBusy=false;};try{await summonerConjure();return {pet,response,spirits:player.summonerSpirits.length,mana:player.mana};}finally{petTurn=oldPet;resolveEnemyResponse=oldResponse;}},
     guardMana:async()=>{meta.unlocks.sorcerer=true;resetPlayer("sorcerer");player.mana=0;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;const old=guardAction;guardAction=async()=>{combatBusy=false;};try{await identityGuardAction();return {mana:player.mana,gain:player.guardManaGain};}finally{guardAction=old;}},
@@ -2964,7 +3039,7 @@ function returnToRoad(...args){
     entry.apply();
     return entry;
   }
-  function powerupDisplayDesc(up){return dbPowerups.describe(up);}
+
 
   // The authoritative registry is intentionally read-only. Its Perfected
   // Signature entry calls this stable runtime service instead of reaching into
@@ -2978,11 +3053,7 @@ function returnToRoad(...args){
   // Every powerup card goes through the live description resolver. This means
   // Perfected Signature updates immediately with the current class and never
   // prints the effects for unrelated classes.
-  choiceHTML=function(up){
-    inferUpgradeTags(up);
-    const signature=up?.id==='perfected_signature';
-    return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc${signature?' signature-current':''}">${powerupDisplayDesc(up)}</span><span class="choice-tags">${tagChips(up.tags,'power')}</span>`;
-  };
+
 
   // Paladin's existing Grace gain happens inside the current healPlayer chain.
   // Add only the bonus portion afterwards so old healing/Faith hooks remain intact.
@@ -3041,7 +3112,7 @@ function returnToRoad(...args){
     eligible:(rarity=null)=>eligibleUpgrades(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
     weighted:(ids=null)=>{const pool=ids?ids.map(id=>upgrades.find(u=>u.id===id)).filter(Boolean):eligibleUpgrades();return dbPowerupsOracleSummary(weightedUpgrade(pool));},
     choices:(rarity=null)=>getUpgradeChoices(rarity?u=>u.rarity===rarity:()=>true).map(dbPowerupsOracleSummary),
-    levelChoices:()=>v18LevelChoices().map(dbPowerupsOracleSummary),
+    levelChoices:()=>dbPowerups.levelChoices().map(dbPowerupsOracleSummary),
     apply:(id,source='Powerups Oracle')=>{const up=upgrades.find(u=>u.id===id);if(!up)throw new Error(`unknown powerup ${id}`);return dbPowerupsOracleSummary(applyUpgrade(up,source));},
     randomHigh:(source='Powerups Oracle')=>dbPowerupsOracleSummary(applyRandomHighRarity(source,false)),
     legendaryChoices:()=>v17LegendaryChoices().map(dbPowerupsOracleSummary),
@@ -3052,15 +3123,15 @@ function returnToRoad(...args){
     setBoardLevel:value=>{boardLevel=Math.max(1,Number(value)||1);return boardLevel;},
     setModes:(nightmare=false,hell=false)=>{nightmareMode=!!nightmare;hellMode=!!hell;return {nightmareMode,hellMode};},
     setPendingLevelUps:value=>{pendingLevelUps=Math.max(0,Number(value)||0);return pendingLevelUps;},
-    levelUi:()=>{openLevelUp(()=>{});const grid=$("choiceGrid");return {subtitle:$("levelSubtitle")?.textContent||"",choices:[...grid.querySelectorAll("button.choice-btn")].map(b=>({name:b.querySelector('.choice-name')?.textContent||'',rarity:[...b.classList].find(x=>rarityInfo[x])||null})),reroll:grid.querySelector('.powerup-reroll-btn')?.textContent||null,overlayHidden:$("levelOverlay")?.classList.contains("hidden")??true};},
+    levelUi:()=>{dbPowerups.openLevelUp(()=>{});const grid=$("choiceGrid");return {subtitle:$("levelSubtitle")?.textContent||"",choices:[...grid.querySelectorAll("button.choice-btn")].map(b=>({name:b.querySelector('.choice-name')?.textContent||'',rarity:[...b.classList].find(x=>rarityInfo[x])||null})),reroll:grid.querySelector('.powerup-reroll-btn')?.textContent||null,overlayHidden:$("levelOverlay")?.classList.contains("hidden")??true};},
     allEligibleUi:()=>{showAllEligiblePowerupSelection('Powerups Oracle',()=>{});const grid=$("powerupGrid");return {title:$("powerupTitle")?.textContent||"",subtitle:$("powerupSubtitle")?.textContent||"",names:[...grid.querySelectorAll("button.choice-btn")].map(b=>b.querySelector('.choice-name')?.textContent||''),countText:grid.querySelector('.powerup-selector-count')?.textContent||'',overlayHidden:$("powerupOverlay")?.classList.contains("hidden")??true};},
     perfectedSignature:()=>{const up=perfectedSignatureForCurrentClass();return {name:up.name,desc:up.desc,classId:player.classId};},
     closeOverlays:()=>{$("levelOverlay")?.classList.add("hidden");$("powerupOverlay")?.classList.add("hidden");return true;}
   });
   dbPowerups.configure({
-    renderLevelUp:onComplete=>openLevelUp(onComplete),
-    renderPowerupChoice:(source,onComplete,filter,subtitle)=>showPowerupChoice(source,onComplete,filter,subtitle),
-    renderLegendaryChoice:(source,onComplete)=>showLegendaryChoice(source,onComplete),
+    renderLevelUp:onComplete=>renderLevelUpChoices(onComplete),
+    renderPowerupChoice:(source,onComplete,filter,subtitle)=>renderPowerupChoiceOverlay(source,onComplete,filter,subtitle),
+    renderLegendaryChoice:(source,onComplete)=>renderLegendaryChoice(source,onComplete),
     renderAllEligible:(source,onComplete,filter)=>showAllEligiblePowerupSelection(source,onComplete,filter),
     perfectedSignature:()=>({...perfectedSignatureForCurrentClass(),apply:undefined})
   });
@@ -3665,7 +3736,7 @@ function returnToRoad(...args){
     if(!gameStarted)return false;const blocker=v25VisibleBlocker();if(blocker||combatBusy||currentEnemy){v25Log('detailed','recovery','Recovery skipped: legitimate blocker',{reason,blocker,state:v25State()});return false;}
     const die=$('dice');if(die?.classList.contains('rolling'))return false;
     v25Recoveries++;v25LastRecovery=Date.now();v25Log('errors','recovery','Recovering stuck road state',{reason,tile:tiles[player.position],state:v25State()});
-    if(pendingLevelUps>0){openLevelUp();return true;}
+    if(pendingLevelUps>0){dbPowerups.openLevelUp();return true;}
     const tile=tiles[player.position];if(tile&&!tile.cleared&&!['empty','start'].includes(tile.type)){rollLocked=true;try{dbRun.dispatchTile();}catch(e){v25Log('errors','recovery','resolveTile failed during recovery',{error:String(e),state:v25State()});rollLocked=false;updateHUD();}return true;}
     rollLocked=false;updateHUD();$('rollBtn')?.classList.add('debug-recovered');setTimeout(()=>$('rollBtn')?.classList.remove('debug-recovered'),900);showToast('🛠️ Road state recovered');return true;
   }
@@ -3763,12 +3834,8 @@ dbReturnToRoadTraceReady=true;
   // Keep a stable per-run snapshot. Rerolls track consumption separately, so
   // refreshing a chooser cannot erase or accidentally refill the talent.
 
-  attachPowerupRerollV16=function(grid,reroll){
-    if(!grid)return;grid.querySelectorAll('.powerup-reroll-btn').forEach(x=>x.remove());
-    const total=Math.max(0,Number(player.v26SecondOpinionRank??gameplayTalentRank('fortune_powerup_rerolls'))||0),spent=Math.max(0,Number(player.v26SecondOpinionSpent)||0),remaining=Math.max(0,total-spent);player.powerupRerolls=remaining;
-    const b=document.createElement('button');b.className='powerup-reroll-btn';b.disabled=remaining<=0;b.textContent=`🔄 Reroll choices · ${remaining} remaining`;b.addEventListener('click',()=>{if((player.v26SecondOpinionSpent||0)>=total)return;player.v26SecondOpinionSpent=(player.v26SecondOpinionSpent||0)+1;player.powerupRerolls=Math.max(0,total-player.v26SecondOpinionSpent);sfx.roll();reroll();});grid.appendChild(b);
-  };
-  const openLevelUpV26Base=openLevelUp;openLevelUp=function(onComplete=null){if(gameStarted&&player.v26ExpandedHorizons)player.levelChoiceBonus=1;return openLevelUpV26Base(onComplete);};
+
+
 
   /* COUNTER RESERVE -> ENDLESS FORM --------------------------------------- */
   const v26CounterIdx=talents.findIndex(t=>t.id==='fighter_counter_reserve');
@@ -3796,7 +3863,7 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundCamp.configureShell({syncGoldGainStat:()=>v266SyncGoldGainStat()});
 
   /* LEGENDARY REWARD EXHAUSTION ------------------------------------------- */
-  showLegendaryChoice=function(source,onComplete=()=>{}){const pool=eligibleUpgrades(u=>u.rarity==='legendary');if(!pool.length){const gold=modifiedGold(250);player.gold+=gold;player.potions+=2;addLog(`<b>${source}:</b> every eligible Legendary power is already owned this run. The guardian converts the exhausted boon into <b>${gold} gold</b> and <b>2 potions</b>.`);showToast(`👑 Legendary pool exhausted · +${gold} gold · +2 potions`,3000,true);updateHUD();setTimeout(()=>onComplete(false),0);return;}showPowerupChoice(source,onComplete,u=>u.rarity==='legendary','The guardian yields. Choose one guaranteed Legendary powerup.');};
+
 
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
   // Runtime conversion policy is owned by DiceboundClasses.
@@ -3873,8 +3940,8 @@ dbReturnToRoadTraceReady=true;
   function beta03MinibossOddsText(level=boardLevel){return dbPowerups.minibossOddsText(level);}
   function v27RollMinibossRarity(){return dbPowerups.rollMinibossRarity();}
   function v27MinibossChoices(){return dbPowerups.minibossChoices();}
-  function v27ShowMinibossReward(source,onComplete=()=>{}){const overlay=$('powerupOverlay'),grid=$('powerupGrid');if(!overlay||!grid){onComplete(false);return;}const render=()=>{grid.innerHTML='';const choices=v27MinibossChoices();if(!choices.length){addLog('<b>Miniboss boon:</b> no eligible powerups remain.');overlay.classList.add('hidden');onComplete(false);return;}$('powerupTitle').textContent='👑 Guardian Boon';$('powerupSubtitle').textContent=`Guardian reward base odds on Board ${boardLevel}: ${beta03MinibossOddsText()}. Luck and harder modes can still improve the roll.`;choices.forEach(up=>{const b=document.createElement('button');b.className=`choice-btn ${up.rarity}`;b.innerHTML=choiceHTML(up);b.addEventListener('click',()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose ${rarityInfo[up.rarity]?.label||up.rarity} <b>${up.name}</b>.`);overlay.classList.add('hidden');updateHUD();onComplete(up);});grid.appendChild(b);});attachPowerupRerollV16?.(grid,render);overlay.classList.remove('hidden');};render();}
-  const showLegendaryChoiceV27Base=showLegendaryChoice;showLegendaryChoice=function(source,onComplete=()=>{}){if(String(source).toLowerCase().includes('miniboss'))return v27ShowMinibossReward(source,onComplete);const legends=eligibleUpgrades(u=>u.rarity==='legendary');if(!legends.length){const epics=eligibleUpgrades(u=>u.rarity==='epic');if(epics.length)return showPowerupChoice(source,onComplete,u=>u.rarity==='epic','Every eligible Legendary is exhausted. Choose an Epic power instead.');}return showLegendaryChoiceV27Base(source,onComplete);};
+  function v27ShowMinibossReward(source,onComplete=()=>{}){const overlay=$('powerupOverlay'),grid=$('powerupGrid');if(!overlay||!grid){onComplete(false);return;}const render=()=>{grid.innerHTML='';const choices=v27MinibossChoices();if(!choices.length){addLog('<b>Miniboss boon:</b> no eligible powerups remain.');overlay.classList.add('hidden');onComplete(false);return;}$('powerupTitle').textContent='👑 Guardian Boon';$('powerupSubtitle').textContent=`Guardian reward base odds on Board ${boardLevel}: ${beta03MinibossOddsText()}. Luck and harder modes can still improve the roll.`;choices.forEach(up=>{const b=document.createElement('button');b.className=`choice-btn ${up.rarity}`;b.innerHTML=choiceHTML(up);b.addEventListener('click',()=>{applyUpgrade(up,source);addLog(`<b>${source}:</b> chose ${rarityInfo[up.rarity]?.label||up.rarity} <b>${up.name}</b>.`);overlay.classList.add('hidden');updateHUD();onComplete(up);});grid.appendChild(b);});attachPowerupReroll?.(grid,render);overlay.classList.remove('hidden');};render();}
+
 
   /* NIGHTMARE / HELL ENEMY DEFENSES --------------------------------------- */
 
@@ -4404,7 +4471,7 @@ dbReturnToRoadTraceReady=true;
      Legendary chooser. This removes the old Edge-specific fallback layer and
      ensures Sovereign Relic / Tyrant's Contract use the same maintained UI. */
   v17OpenLegendaryChoice=function(source,onComplete=()=>{}){
-    return showLegendaryChoice(source,onComplete);
+    return dbPowerups.openLegendary(source,onComplete);
   };
 
   Object.defineProperty(window,'DiceboundBeta044Test',{configurable:true,value:Object.freeze({
@@ -5135,17 +5202,11 @@ dbReturnToRoadTraceReady=true;
   `;
   document.head.appendChild(db0511Style);
 
-  // GLASS NEEDLE — the asset existed, but older code looked for window.upgrades
-  // even though upgrades is lexical. Render it at the final card boundary so
-  // every level-up/free/miniboss/contract choice uses the real art.
+  // GLASS NEEDLE — normalize the live registry icon once so every canonical
+  // powerup-choice renderer receives the real art without wrapping choiceHTML.
   const db0511GlassNeedleArt=window.DiceboundAssets?.resolveUiIcon?.('glassNeedle')?.image||'';
-  const db0511ChoiceHTMLBase=choiceHTML;
-  choiceHTML=function(up){
-    if(up?.name!=='Glass Needle'||!db0511GlassNeedleArt)return db0511ChoiceHTMLBase(up);
-    const old=up.icon;
-    up.icon=`<img class="db-art-icon db-art-choice db-art-glass-needle" src="${db0511GlassNeedleArt}" alt="Glass Needle">`;
-    try{return db0511ChoiceHTMLBase(up);}finally{up.icon=old;}
-  };
+
+
   const db0511GlassNeedle=upgrades.find?.(u=>u?.name==='Glass Needle');
   if(db0511GlassNeedle&&db0511GlassNeedleArt)db0511GlassNeedle.icon=`<img class="db-art-icon db-art-choice db-art-glass-needle" src="${db0511GlassNeedleArt}" alt="Glass Needle">`;
 
