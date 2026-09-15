@@ -23,6 +23,7 @@ for pos in range(brace,len(SOURCE)):
             break
 if end<0: raise SystemExit('canonical mythicalSetSummary body is unbalanced')
 body=SOURCE[start:end]
+# enemyForPosition is intentionally gone; this test must never need a retired wrapper as a delimiter.
 if re.search(r'\bfunction\s+enemyForPosition\s*\(',SOURCE):
     raise SystemExit('retired enemyForPosition wrapper returned just to delimit mythicalSetSummary')
 final="return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');"
