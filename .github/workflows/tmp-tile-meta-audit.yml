@@ -1,0 +1,103 @@
+name: Temporary tile metadata audit
+
+on:
+  push:
+    branches:
+      - refactor/0.6.6.38-canonical-functions
+    paths:
+      - .github/workflows/tmp-tile-meta-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: windows-latest
+    steps:
+      - name: Mint repository App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DICEBOUND_RELEASE_APP_ID }}
+          private-key: ${{ secrets.DICEBOUND_RELEASE_APP_PRIVATE_KEY }}
+          owner: Krtz
+          repositories: DiceBound
+          permission-contents: write
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extract exact tileMeta generations
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          @'
+          from pathlib import Path
+          import re
+
+          src=Path('runtime/js/dicebound.js').read_text(encoding='utf-8')
+
+          def close_brace(s,o):
+              depth=0;state='code';quote='';esc=False;i=o
+              while i<len(s):
+                  c=s[i];n=s[i+1] if i+1<len(s) else ''
+                  if state=='line':
+                      if c=='\n': state='code'
+                      i+=1;continue
+                  if state=='block':
+                      if c=='*' and n=='/': state='code';i+=2;continue
+                      i+=1;continue
+                  if state=='string':
+                      if esc: esc=False;i+=1;continue
+                      if c=='\\': esc=True;i+=1;continue
+                      if c==quote: state='code';quote=''
+                      i+=1;continue
+                  if c=='/' and n=='/': state='line';i+=2;continue
+                  if c=='/' and n=='*': state='block';i+=2;continue
+                  if c in ('"',"'",'`'): state='string';quote=c;i+=1;continue
+                  if c=='{': depth+=1
+                  elif c=='}':
+                      depth-=1
+                      if depth==0:return i
+                  i+=1
+              raise RuntimeError('unclosed brace')
+
+          entries=[]
+          base=re.search(r'\bfunction\s+tileMeta\s*\(\s*tile\s*\)\s*\{',src)
+          if not base: raise SystemExit('base tileMeta missing')
+          o=src.find('{',base.start(),base.end());e=close_brace(src,o)
+          entries.append((base.start(),'BASE',src[base.start():e+1]))
+
+          for m in re.finditer(r'\btileMeta\s*=\s*function\s*\(\s*tile\s*\)\s*\{',src):
+              o=src.find('{',m.start(),m.end());e=close_brace(src,o)
+              window=src[max(0,m.start()-500):m.start()]
+              captures=list(re.finditer(r'\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*tileMeta\s*;',window))
+              name=captures[-1].group(1) if captures else 'NO_CAPTURE'
+              start=m.start()
+              if captures:
+                  start=max(0,m.start()-500)+captures[-1].start()
+              entries.append((m.start(),name,src[start:e+1]))
+
+          entries.sort()
+          out=['# Exact released `tileMeta` generation audit','',f'Found **{len(entries)}** generations in source order.','']
+          for i,(_,name,body) in enumerate(entries,1):
+              out += [f'## {i}. `{name}`','', '```js',body,'```','']
+          Path('docs/TILE_META_AUDIT.md').write_text('\n'.join(out),encoding='utf-8',newline='\n')
+          print('tileMeta generations:',[(i+1,n) for i,(_,n,_) in enumerate(entries)])
+          if len(entries)!=8: raise SystemExit(f'expected 8 tileMeta generations, found {len(entries)}')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit audit report
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          git config user.name "dicebound-manifest-publisher[bot]"
+          git config user.email "323488390+dicebound-manifest-publisher[bot]@users.noreply.github.com"
+          git add docs/TILE_META_AUDIT.md
+          git commit -m "docs: audit tile metadata generations"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:refactor/0.6.6.38-canonical-functions
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
