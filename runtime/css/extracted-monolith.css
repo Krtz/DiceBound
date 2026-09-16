@@ -89,6 +89,325 @@
     .attack-fx.ouroboros{opacity:1;animation:echoSlash .56s ease-out forwards;font-size:46px;filter:drop-shadow(0 0 20px #9df26d)}
     .attack-fx.ultimate-ouroboros{opacity:1;animation:ultimateSorcerer .9s ease-in forwards;font-size:78px;filter:drop-shadow(0 0 30px #bfff79)}
 
+/* 0.6.7.0 extracted static runtime patch styles */
+/* These blocks retain their original dicebound.js source order. */
+
+/* v19Style */
+.status-count{display:inline-flex;align-items:center;justify-content:center;min-width:27px;height:18px;padding:0 5px;border-radius:999px;font-size:9px;font-weight:950;margin:0 2px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+    .barrier-count{background:rgba(65,151,255,.22);color:#a9d3ff}.poison-count{background:rgba(79,193,105,.20);color:#aaffb5}
+    .prestige-keep-btn{position:relative}.prestige-keep-btn.kept{border:2px solid var(--gold)!important;background:linear-gradient(145deg,#4b4120,#2c3550)!important;box-shadow:0 0 0 3px rgba(245,200,91,.18),0 0 24px rgba(245,200,91,.18)!important;transform:translateY(-1px)}
+    .prestige-keep-btn.kept::after{content:"✓";position:absolute;right:10px;top:8px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#22180a;font-weight:1000;font-size:18px}
+    .prestige-selected-label{display:block;margin-top:8px;font-size:9px;font-style:normal;font-weight:950;color:var(--muted)}.prestige-keep-btn.kept .prestige-selected-label{color:#ffeaa0}
+    .between-runs-modal{width:min(1040px,97vw)!important}.between-runs-hub{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0 18px}.hub-card{display:flex;flex-direction:column;gap:7px;min-height:128px;padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(44,57,90,.74),rgba(19,28,48,.86));border:1px solid rgba(255,255,255,.08)}.hub-card>b{font-size:12px;color:#f1e8ff}.hub-card>span{font-size:10px;line-height:1.42;color:var(--muted);flex:1}.hub-mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hub-class-heading{text-align:center;margin:17px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:#ded6ed}
+    .travel-actions:has(#roll2Btn){display:grid!important;grid-template-columns:1fr 1fr;gap:7px}.travel-actions:has(#roll2Btn) .road-status,.travel-actions:has(#roll2Btn) .hint,.travel-actions:has(#roll2Btn) .run-buff-btn{grid-column:1/-1}.double-dice-btn{background:linear-gradient(180deg,#e2c1ff,#9066d2)!important;color:#24162d!important}.dice.double-mode{font-size:29px!important;white-space:nowrap}
+    .achievement-category-head{grid-column:1/-1;margin:14px 0 2px;padding:7px 10px;border-radius:10px;background:rgba(181,140,255,.11);border:1px solid rgba(181,140,255,.2);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.11em}
+    @media(max-width:800px){.between-runs-hub{grid-template-columns:1fr 1fr}}@media(max-width:520px){.between-runs-hub{grid-template-columns:1fr}.travel-actions:has(#roll2Btn){grid-template-columns:1fr}}
+
+/* style */
+/* Prestige survivor selection must sit above the full-screen camp. */
+    #prestigeHeirloomOverlay{z-index:140!important}
+    #prestigeHeirloomOverlay .modal{max-height:92vh;overflow-y:auto}
+    .talent-link[data-v23-link="1"]{transition:stroke .16s ease,opacity .16s ease,stroke-width .16s ease}
+    .talent-link[data-v23-link="1"].active{stroke-width:5px}
+    .node-req.always-visible{display:block;margin-top:7px;color:#d9c9ff}
+
+/* v24Style */
+/* v2.4 rarity palette. Ordinary gear stops at Epic; Legendary+ is handcrafted. */
+    .choice-btn.poor,.equipment-slot.poor,.loot-card.poor{border-color:#a8adb7;background:linear-gradient(145deg,rgba(142,148,160,.14),rgba(70,75,86,.12))}
+    .choice-btn.common,.equipment-slot.common,.loot-card.common{border-color:#f3f4f7;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(150,158,171,.08))}
+    .choice-btn.uncommon,.equipment-slot.uncommon,.loot-card.uncommon{border-color:#82c7ff;background:linear-gradient(145deg,rgba(82,167,232,.18),rgba(35,76,120,.12))}
+    .choice-btn.rare,.equipment-slot.rare,.loot-card.rare{border-color:#438bd8;background:linear-gradient(145deg,rgba(39,105,179,.23),rgba(25,55,104,.15))}
+    .choice-btn.epic,.equipment-slot.epic,.loot-card.epic{border-color:#f2e49a;background:linear-gradient(145deg,rgba(230,210,99,.19),rgba(112,91,24,.13))}
+    .choice-btn.legendary,.equipment-slot.legendary,.loot-card.legendary{border-color:#ffd45f;box-shadow:0 0 18px rgba(255,212,95,.18),inset 0 0 20px rgba(255,212,95,.06);background:linear-gradient(145deg,rgba(255,209,77,.24),rgba(121,77,16,.16))}
+    .choice-btn.artifact,.equipment-slot.artifact,.loot-card.artifact{border-color:#ff982f;box-shadow:0 0 20px rgba(255,126,35,.20),inset 0 0 22px rgba(255,126,35,.08);background:linear-gradient(145deg,rgba(185,76,16,.29),rgba(85,36,18,.20))}
+    .choice-btn.mythical,.equipment-slot.mythical,.loot-card.mythical{border-color:#bd83ff;box-shadow:0 0 22px rgba(181,105,255,.22),inset 0 0 24px rgba(181,105,255,.08);background:linear-gradient(145deg,rgba(103,44,170,.30),rgba(45,25,82,.24))}
+    .choice-btn.omega,.equipment-slot.omega,.loot-card.omega{border-color:#fff;box-shadow:0 0 30px rgba(255,255,255,.22),0 0 18px rgba(168,71,255,.30),inset 0 0 28px rgba(255,255,255,.08)}
+    .choice-btn.poor .rarity-badge,.loot-card.poor .rarity-badge{color:#c4c8cf}.choice-btn.common .rarity-badge,.loot-card.common .rarity-badge{color:#fff}
+    .choice-btn.uncommon .rarity-badge,.loot-card.uncommon .rarity-badge{color:#a9dbff}.choice-btn.rare .rarity-badge,.loot-card.rare .rarity-badge{color:#69adff}
+    .choice-btn.epic .rarity-badge,.loot-card.epic .rarity-badge{color:#f5e9a8}.choice-btn.legendary .rarity-badge,.loot-card.legendary .rarity-badge{color:#ffd45f;text-shadow:0 0 9px rgba(255,212,95,.48)}
+    .choice-btn.artifact .rarity-badge,.loot-card.artifact .rarity-badge{color:#ff9c38;text-shadow:0 0 9px rgba(255,126,35,.40)}
+    .choice-btn.mythical .rarity-badge,.loot-card.mythical .rarity-badge{color:#d6b4ff}.choice-btn.omega .rarity-badge,.loot-card.omega .rarity-badge{color:#fff}
+    .artifact-title{color:#ff9c38;text-shadow:0 0 14px rgba(255,126,35,.42)}
+    .legendary-title{color:#ffd45f;text-shadow:0 0 14px rgba(255,212,95,.40)}
+    .gear-keep-btn.poor .journey-gear-name{color:#c4c8cf}.gear-keep-btn.common .journey-gear-name{color:#fff}
+    .gear-keep-btn.uncommon .journey-gear-name{color:#a9dbff}.gear-keep-btn.rare .journey-gear-name{color:#69adff}
+    .gear-keep-btn.epic .journey-gear-name{color:#f5e9a8}.gear-keep-btn.legendary .journey-gear-name{color:#ffd45f;text-shadow:0 0 8px rgba(255,212,95,.38)}
+    .gear-keep-btn.artifact .journey-gear-name{color:#ff9c38;text-shadow:0 0 8px rgba(255,126,35,.36)}.gear-keep-btn.mythical .journey-gear-name{color:#d6b4ff}
+    .gear-keep-btn.omega .journey-gear-name{color:#fff;text-shadow:0 0 8px rgba(168,71,255,.55)}
+    .energy-shield-fill{position:absolute!important;left:0;top:0;bottom:0;height:100%;background:linear-gradient(90deg,rgba(78,171,255,.94),rgba(105,211,255,.82));box-shadow:0 0 14px rgba(73,173,255,.65);z-index:3;pointer-events:none;transition:width .18s ease;border-radius:inherit}
+    .hpbar{position:relative;overflow:hidden}.hpbar>i:not(.energy-shield-fill){position:relative;z-index:2}
+    .storage-locked{padding:12px;border-radius:13px;background:rgba(255,255,255,.04);color:var(--muted);line-height:1.5}
+    .devil-ritual-armed{animation:v24DevilPulse .7s ease-in-out infinite alternate}@keyframes v24DevilPulse{from{filter:drop-shadow(0 0 4px #f44)}to{filter:drop-shadow(0 0 18px #ff4422) brightness(1.35)}}
+
+/* v25Style */
+#endOverlay .modal{width:min(1120px,96vw);max-height:92vh;overflow:auto;padding:24px}
+    #endOverlay .gear-keep-grid{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));max-height:none}
+    #endTalentBtn{display:none!important}
+    .debug-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.debug-tabs .small-btn.active{border-color:var(--gold);color:#fff;background:rgba(245,200,91,.13)}
+    #debugGrid{display:block}.debug-tab-panel{display:none}.debug-tab-panel.active{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+    .debug-log-panel{display:none}.debug-log-panel.active{display:block}
+    .debug-log-levels{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.debug-log-levels button.active{border-color:var(--gold);color:#fff}
+    .debug-log-output{width:100%;height:330px;overflow:auto;white-space:pre-wrap;word-break:break-word;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.11);background:#070b13;color:#cfd9ec;font:10px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}
+    .debug-log-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.debug-log-note{font-size:10px;color:var(--muted);line-height:1.4;margin:8px 0}
+    .debug-class-unlock{grid-column:1/-1;display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:8px;padding:10px;border:1px solid rgba(255,255,255,.11);border-radius:12px;background:rgba(0,0,0,.12)}
+    .debug-class-unlock label{grid-column:1/-1;font-size:10px;font-weight:900;color:var(--gold);text-transform:uppercase;letter-spacing:.08em}.debug-class-unlock select{min-width:0;border:1px solid rgba(255,255,255,.15);background:#0b1120;color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit}
+    .burn-status{display:inline-flex;align-items:center;gap:2px;margin-left:5px;font-size:11px;font-weight:900;color:#ff845b;text-shadow:0 0 8px rgba(255,80,30,.48)}
+    .debug-recovered{animation:v25RecoveryFlash .8s ease}@keyframes v25RecoveryFlash{50%{box-shadow:0 0 28px rgba(98,215,154,.7)}}
+
+/* v27Style */
+.energy-shield-fill{background:linear-gradient(90deg,rgba(62,154,255,.42),rgba(99,208,255,.58))!important;box-shadow:inset 0 0 0 1px rgba(150,225,255,.35),0 0 10px rgba(65,170,255,.28)!important;z-index:4!important}
+    .hpbar>i:not(.energy-shield-fill){z-index:2!important}
+    .stage-mini-status .status-count{height:12px!important;min-width:18px!important;padding:0 3px!important;font-size:7px!important;margin:0 1px!important;line-height:12px!important}
+    .status-count.poison-count{color:#baf3a5;background:rgba(56,118,48,.32)}.status-count.barrier-count{color:#a8dfff;background:rgba(44,97,151,.32)}
+
+/* beta042Style */
+body[data-run-mode="nightmare"] .world-atmosphere-layer{opacity:.21!important}
+    body[data-run-mode="hell"] .world-atmosphere-layer{opacity:.24!important}
+    body[data-hud-flow="expanded"] .sidebar>.card:first-child{grid-column:1;grid-row:1}
+    body[data-hud-flow="expanded"] .sidebar>.equipment-card{grid-column:2;grid-row:1}
+    body[data-hud-flow="expanded"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2}
+    body[data-hud-flow="expanded"][data-sidebar-companion="below"] .sidebar>.pet-card{grid-column:1;grid-row:2}
+    body[data-hud-flow="expanded"] .sidebar>.log-card{grid-column:1/-1;grid-row:3}
+    body[data-hud-flow="landscape-2"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2!important}
+    body[data-hud-flow="landscape-2"][data-sidebar-companion="below"] .sidebar>.pet-card{grid-column:1;grid-row:2!important}
+    body[data-hud-flow="landscape-2"] .sidebar>.log-card{grid-column:1/-1!important;grid-row:3!important}
+    body[data-hud-flow="landscape-3"] .sidebar>.card:first-child{grid-column:1;grid-row:1}
+    body[data-hud-flow="landscape-3"] .sidebar>.equipment-card{grid-column:2;grid-row:1}
+    body[data-hud-flow="landscape-3"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2!important}
+    body[data-hud-flow="landscape-3"][data-sidebar-companion="below"] .sidebar>.pet-card{grid-column:1;grid-row:2!important}
+    body[data-hud-flow="landscape-3"] .sidebar>.log-card{grid-column:1/-1!important;grid-row:3!important}
+
+/* beta043ArtStyle */
+.db-art-icon{display:inline-block;vertical-align:middle;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.32))}
+    .db-art-inline{width:1.2em;height:1.2em}
+    .db-art-tile{width:30px;height:30px}
+    .db-art-choice{width:42px;height:42px}
+    .db-art-portrait{width:56px;height:56px}
+    .db-art-camp{width:54px;height:54px}
+    .tile-icon .db-art-icon{margin-top:1px}
+    .choice-icon .db-art-icon{display:block;margin:0 auto}
+    .enemy-card-icon .db-art-icon{width:42px;height:42px}
+    .camp-spot .camp-icon .db-art-icon{filter:drop-shadow(0 3px 10px rgba(0,0,0,.38))}
+    #gamblerOverlay .gambler-art{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 12px}
+    #gamblerOverlay .gambler-art .db-art-icon:first-child{width:68px;height:68px}
+    #gamblerOverlay .gambler-art .db-art-icon:last-child{width:48px;height:48px}
+
+/* beta045Style */
+.gear-keep-btn .journey-gear-name.common{color:#e7edf7}
+    .gear-keep-btn .journey-gear-name.uncommon{color:#8cf3a8}
+    .gear-keep-btn .journey-gear-name.rare{color:#72b8ff}
+    .gear-keep-btn .journey-gear-name.epic{color:#d2a3ff}
+    .gear-keep-btn .journey-gear-name.legendary{color:#ffd86d}
+    .gear-keep-btn .journey-gear-name.mythical{color:#ff95bf}
+    .gear-keep-btn .journey-gear-name.omega{color:#9ef0ff}
+
+/* db048Style */
+/* Large portrait assets are great in combat, but were overpowering 10×10 board tiles. */
+    .tile .db-art-portrait{width:clamp(25px,2.15vw,35px)!important;height:clamp(25px,2.15vw,35px)!important;object-fit:contain!important}
+    .tile .db-enemy-pack-art{display:inline-flex;align-items:center;justify-content:center;gap:2px;line-height:1;white-space:nowrap}
+    .tile .db-enemy-pack-art .db-art-portrait{width:clamp(23px,1.95vw,32px)!important;height:clamp(23px,1.95vw,32px)!important}
+    .tile .db-enemy-pack-art b{font-size:clamp(9px,.82vw,12px);color:#fff2c0;text-shadow:0 2px 4px #000;letter-spacing:-.02em}
+
+    /* Desktop Travel becomes a compact control strip. The responsive board
+       controller measures its real height, so every pixel saved here is
+       automatically offered back to the square board. */
+    @media (min-width:901px){
+      .game-panel{gap:clamp(5px,.7vh,8px)!important}
+      .road-controls{grid-template-columns:64px minmax(0,1fr)!important;grid-template-rows:auto!important;padding:7px 10px!important;gap:6px 9px!important;border-radius:15px!important}
+      .road-controls h2{display:none!important}
+      .road-controls .dice{grid-row:1!important;width:56px!important;height:56px!important;font-size:36px!important;border-radius:14px!important;margin:0!important}
+      .road-controls .travel-actions{grid-row:1!important;gap:4px!important}
+      .road-controls .main-btn{padding:9px 11px!important;border-radius:10px!important}
+      .road-status{gap:6px!important;margin-top:1px!important}
+      .road-status .stat{padding:5px 8px!important;border-radius:9px!important}
+      .road-status .stat span{font-size:8px!important}
+      .road-status .stat strong{font-size:10px!important;margin-top:1px!important}
+      .road-controls .hint{font-size:9px!important;line-height:1.2!important;margin-top:1px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .travel-actions:has(#roll2Btn){gap:4px!important}
+      .travel-actions:has(#roll2Btn) .main-btn{padding:9px 10px!important}
+      .board{gap:5px!important}
+    }
+
+    /* On genuinely large screens we can lean even harder into the board and
+       keep Travel visually secondary without making it tiny. */
+    @media (min-width:1450px) and (min-height:800px){
+      .road-controls{grid-template-columns:60px minmax(0,1fr)!important;padding:6px 9px!important}
+      .road-controls .dice{width:52px!important;height:52px!important;font-size:34px!important}
+      .road-controls .main-btn{padding:8px 10px!important}
+      .board{gap:4px!important}
+    }
+
+/* db049Style */
+/* Board enemy portraits were still a little too dominant on tiles. */
+    .tile .db-art-portrait{width:clamp(20px,1.82vw,28px)!important;height:clamp(20px,1.82vw,28px)!important;object-fit:contain!important}
+    .tile .db-enemy-pack-art{display:inline-flex;align-items:center;justify-content:center;gap:3px;line-height:1;white-space:nowrap}
+    .tile .db-enemy-pack-art .db-art-portrait{width:clamp(19px,1.68vw,26px)!important;height:clamp(19px,1.68vw,26px)!important}
+    .tile .db-enemy-pack-art b{font-size:clamp(9px,.82vw,12px);color:#fff2c0;text-shadow:0 2px 4px #000;letter-spacing:-.02em}
+
+    /* Glass Needle used a non-transparent source art and looked like a white sliver.
+       Give it a slightly larger dedicated presentation inside powerup cards. */
+    .choice-icon .db-art-glass-needle{width:58px!important;height:58px!important;filter:drop-shadow(0 4px 10px rgba(38,177,255,.35))}
+
+    /* Keep Travel tighter and visually aligned with the centered square board. */
+    @media (min-width:901px){
+      .road-controls{width:min(100%,calc(var(--db-board-size) - clamp(10px,.8vw,24px)))!important;align-self:center!important;margin-inline:auto!important}
+    }
+
+/* db050Style */
+/* --- Desktop road/HUD pass ----------------------------------------- */
+    @media (min-width:1200px) and (min-height:780px){
+      body[data-hud-flow="rail"] .app{grid-template-columns:minmax(0,1fr) clamp(350px,26vw,410px)!important}
+      body[data-hud-flow="expanded"] .app{grid-template-columns:minmax(0,1fr) clamp(600px,40vw,760px)!important}
+      body[data-hud-flow="expanded"] .stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+      body[data-hud-flow="expanded"] .stat{padding:7px 8px!important}
+      body[data-hud-flow="expanded"] .stat strong{font-size:15px!important}
+      body[data-hud-flow="expanded"] .card{padding:11px 12px!important}
+      body[data-hud-flow="expanded"] .hero-line{margin-bottom:8px!important}
+      body[data-hud-flow="expanded"] .equipment-grid{gap:6px!important}
+      body[data-hud-flow="expanded"] .equipment-slot{padding:7px 8px!important;min-height:52px!important}
+      body[data-hud-flow="expanded"] .pet-card{padding-top:10px!important;padding-bottom:10px!important}
+      body[data-hud-flow="expanded"] .pet-actions{gap:6px!important}
+      body[data-hud-flow="expanded"] .sidebar{gap:8px!important}
+      .app{padding:clamp(6px,.75vw,12px)!important;gap:clamp(6px,.65vw,10px)!important}
+      .game-panel{gap:4px!important;padding:3px 5px!important}
+      .board-wrap{padding:2px!important}
+      .road-controls{padding:5px 8px!important;gap:4px 7px!important}
+      .road-controls .dice{width:48px!important;height:48px!important;font-size:31px!important}
+      .road-controls .main-btn{padding:7px 9px!important}
+      .road-status .stat{padding:4px 7px!important}
+      .road-controls .hint{font-size:8px!important}
+    }
+
+    /* Landscape cards become wider before they become taller. */
+    @media (min-width:1260px) and (max-height:779px){
+      body[data-hud-flow="landscape-3"] .app{grid-template-columns:minmax(390px,1fr) minmax(610px,48vw)!important}
+      body[data-hud-flow="landscape-2"] .app{grid-template-columns:minmax(390px,1fr) minmax(520px,46vw)!important}
+      body[data-hud-flow="landscape-2"] .stats-grid,
+      body[data-hud-flow="landscape-3"] .stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+    }
+
+    /* --- Camp heirloom actions ---------------------------------------- */
+
+/* db054Style */
+.db054-art-frame{font-size:0!important;line-height:0!important;background:transparent!important}
+    .db054-class-art{display:block;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;user-select:none}
+    .hero-avatar.class-portrait{width:58px!important;height:58px!important;padding:0!important;overflow:hidden!important;border-radius:15px!important;background:linear-gradient(145deg,rgba(35,51,81,.95),rgba(16,25,43,.95))!important}
+    .hero-avatar.class-portrait .db054-class-art-headshot{object-fit:cover}
+    #campClassIcon.class-portrait{overflow:hidden!important}
+    #campClassIcon.class-portrait .db054-class-art-headshot{object-fit:cover}
+    #combatOverlay .modal{width:min(780px,calc(100vw - 30px))!important}
+    #combatOverlay .combat-head{align-items:flex-end!important;gap:12px!important}
+    #combatPlayerIcon.combat-portrait{width:190px!important;height:230px!important;margin:0 auto 7px!important;padding:0!important;overflow:visible!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;filter:drop-shadow(0 15px 18px rgba(0,0,0,.42))}
+    #combatPlayerIcon.combat-portrait .db054-class-art-battle{object-fit:contain;object-position:center bottom}
+    #combatOverlay .fighter:first-child{min-width:220px}
+    #combatOverlay .fighter:first-child .fighter-name{margin-top:-2px}
+    .pawn .db054-board-marker{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+    @media(max-width:760px){
+      #combatOverlay .modal{width:min(700px,calc(100vw - 16px))!important;padding:15px!important}
+      #combatPlayerIcon.combat-portrait{width:130px!important;height:160px!important}
+      #combatOverlay .fighter:first-child{min-width:145px}
+    }
+    @media(max-height:650px){
+      #combatPlayerIcon.combat-portrait{width:125px!important;height:145px!important}
+      #combatOverlay .combat-head{margin-bottom:8px!important}
+    }
+
+/* db059Style */
+/* Pet artwork --------------------------------------------------------- */
+    .db059-pet-art{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 5px 7px rgba(0,0,0,.34))}
+    .pet-avatar{overflow:visible!important}
+    .pet-avatar .db059-pet-art{width:54px;height:54px;max-width:none;max-height:none}
+    #combatPet{width:78px;height:78px;font-size:0!important;display:block!important;margin:5px auto 4px!important;overflow:visible!important}
+    #combatPet .db059-pet-art{width:78px;height:78px;filter:drop-shadow(0 8px 8px rgba(0,0,0,.42))}
+    #campPetIcon{width:96px!important;height:96px!important;font-size:0!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}
+    #campPetIcon .db059-pet-art{width:96px;height:96px}
+    .summoner-spirit-token .db059-pet-art{width:28px;height:28px}
+
+    @media(max-width:999px){
+      #combatPet{width:62px;height:62px}
+      #combatPet .db059-pet-art{width:62px;height:62px}
+    }
+    body[data-window-height="very-short"] #combatPet,
+    body[data-window-height="very-short"] #combatPet .db059-pet-art{width:50px!important;height:50px!important}
+
+/* db0511Style */
+/* Combat is now a game screen rather than a floating desktop modal. */
+    #combatOverlay{
+      padding:0!important;
+      align-items:stretch!important;
+      justify-content:stretch!important;
+      background:
+        radial-gradient(circle at 50% 28%,rgba(45,66,113,.38),rgba(7,12,25,.94) 64%),
+        linear-gradient(180deg,rgba(10,18,35,.96),rgba(5,9,19,.99))!important;
+      backdrop-filter:none!important;
+    }
+    #combatOverlay>.modal{
+      width:100vw!important;
+      max-width:none!important;
+      min-height:100dvh!important;
+      height:100dvh!important;
+      max-height:none!important;
+      margin:0!important;
+      padding:clamp(16px,2.2vh,30px) clamp(18px,4vw,72px)!important;
+      border:0!important;
+      border-radius:0!important;
+      box-shadow:none!important;
+      overflow:auto!important;
+      background:
+        radial-gradient(circle at 50% 30%,rgba(65,89,142,.22),transparent 45%),
+        linear-gradient(180deg,rgba(25,38,68,.80),rgba(10,17,33,.92))!important;
+    }
+    #combatOverlay>.modal>h2,
+    #combatOverlay>.modal>.subtitle,
+    #combatOverlay .combat-head,
+    #combatOverlay .enemy-party,
+    #combatOverlay .boss-special,
+    #combatOverlay .combat-text,
+    #combatOverlay .battle-victory,
+    #combatOverlay .combat-history,
+    #combatOverlay .ultimate-wrap,
+    #combatOverlay .combat-actions{
+      width:min(1220px,100%)!important;
+      max-width:1220px!important;
+      margin-left:auto!important;
+      margin-right:auto!important;
+    }
+    #combatOverlay>.modal>h2{text-align:center;margin-top:0!important}
+    #combatOverlay>.modal>.subtitle{text-align:center}
+    #combatOverlay .combat-head{min-height:clamp(250px,39vh,500px)!important}
+    #combatOverlay .combat-history{height:clamp(92px,15vh,180px)!important;max-height:180px!important}
+    #combatOverlay .combat-actions{padding-bottom:12px}
+    @media(max-height:760px) and (min-width:800px){
+      #combatOverlay>.modal{padding-top:10px!important;padding-bottom:10px!important}
+      #combatOverlay .combat-head{min-height:215px!important}
+      #combatOverlay .combat-history{height:82px!important}
+    }
+
+    .db0511-player-status{display:inline-flex;align-items:center;gap:4px;margin-left:5px;padding:2px 6px;border-radius:999px;background:rgba(0,0,0,.24);font-size:9px;font-weight:900;white-space:nowrap}
+
+/* style */
+.run-resume-panel{margin:0 0 14px;padding:12px 14px;border:1px solid rgba(125,211,252,.35);border-radius:14px;background:rgba(5,15,30,.72);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.run-resume-copy{min-width:220px;flex:1}.run-resume-copy strong{display:block;color:#dff6ff;margin-bottom:4px}.run-resume-copy span{color:var(--muted);font-size:11px}.run-resume-actions{display:flex;gap:8px;flex-wrap:wrap}.run-resume-actions button{min-height:42px}
+
+/* db0635CombatBackgroundStyle */
+#combatOverlay[data-combat-background]{isolation:isolate;overflow:hidden;background:#07101c!important}
+    #combatOverlay[data-combat-background]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--db0635-combat-background-image);background-size:cover;background-position:center;transform:scale(1.01)}
+    #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.22),rgba(4,9,19,.48))}
+    #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.55),rgba(7,14,28,.72))!important}
+
+/* style */
+#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(224px,35vh,430px)!important;align-items:flex-end!important;gap:clamp(8px,2vw,28px)!important;padding-top:24px!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:clamp(100px,18vw,250px)!important;min-height:clamp(205px,32vh,400px)!important;justify-content:flex-end!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-sprite{display:block!important;width:min(22vw,260px)!important;height:clamp(200px,31vh,390px)!important;line-height:0!important;overflow:visible!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:clamp(86px,14.5vw,205px)!important;min-height:clamp(164px,25vh,315px)!important}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:min(17vw,200px)!important;height:clamp(160px,25vh,310px)!important}
+      .db0636-tiered-enemy-art{position:relative;display:block;width:100%;height:100%;isolation:isolate;overflow:visible}
+      .db0636-tiered-enemy-image{position:relative;z-index:1;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center bottom!important;overflow:visible!important;border-radius:0!important;filter:drop-shadow(0 14px 13px rgba(0,0,0,.56))}
+      .db0636-tiered-enemy-art::before{content:"";position:absolute;z-index:0;inset:13% 12% 8%;border-radius:50%;opacity:0;filter:blur(18px);pointer-events:none}
+      .db0636-tiered-enemy-art.db-enemy-mode-nightmare::before{opacity:.52;background:radial-gradient(ellipse,rgba(129,69,179,.64),rgba(41,17,71,.38) 48%,transparent 74%)}
+      .db0636-tiered-enemy-art.db-enemy-mode-hell::before{opacity:.56;background:radial-gradient(ellipse,rgba(230,84,43,.68),rgba(135,25,24,.42) 50%,transparent 75%)}
+      #enemyIcon.db0636-tiered-enemy-stage .stage-enemy.selected .db0636-tiered-enemy-image{filter:drop-shadow(0 0 15px rgba(245,200,91,.34)) drop-shadow(0 14px 13px rgba(0,0,0,.56))}
+      @media(max-width:760px){#enemyIcon.enemy-stage-icons.db0636-tiered-enemy-stage{min-height:clamp(172px,32vh,270px)!important;gap:4px!important;padding-top:18px!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy{min-width:calc((100vw - 48px)/3)!important;min-height:clamp(150px,28vh,235px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-sprite{width:calc((100vw - 48px)/3)!important;height:clamp(146px,27vh,225px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]),#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]){min-width:calc((100vw - 82px)/3)!important;min-height:clamp(120px,23vh,190px)!important}#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"]) .stage-sprite,#enemyIcon.db0636-tiered-enemy-stage .stage-enemy:has(.db0636-tiered-enemy-art[data-enemy-battle-art="wolf"]) .stage-sprite{width:calc((100vw - 82px)/3)!important;height:clamp(116px,22vh,182px)!important}.db0636-tiered-enemy-art::before{filter:blur(12px)}}
+
 /* 0.6.7.0 extracted guardian art styles */
     .db060-guardian-tile-art{display:block;width:42px;height:42px;object-fit:cover;object-position:center;border-radius:10px;box-shadow:0 5px 14px rgba(0,0,0,.42)}
     .db060-guardian-art{object-fit:cover!important;object-position:center!important}
