@@ -1,16 +1,14 @@
 /* DiceBound Items generation owner.
  *
- * Owns the released ordinary-generation compatibility ladder and generated
- * Legendary effect selection. The monolith supplies runtime state/RNG adapters;
- * callers reach this owner through DiceboundItems.
+ * Owns canonical ordinary generation plus generated Legendary effects. Invalid
+ * rarities and broken generators fail loudly; compatibility demotion/retry/
+ * fabricated-item ladders are intentionally retired in 0.6.7.0.
  */
 (function(){
   'use strict';
 
   const OWNER='items/generation';
   const ORDINARY_RARITIES=Object.freeze(['poor','common','uncommon','rare','epic']);
-  const COMPAT_DEMOTE_RARITIES=Object.freeze(['legendary','artifact','mythical','omega']);
-
   const EFFECTS=Object.freeze([
     Object.freeze({id:'twin_surge',name:'Twin Surge',icon:'⚡⚡',classes:['sorcerer'],desc:'Arcane Surge hits twice. Each hit deals 70% of the normal Surge hit.'}),
     Object.freeze({id:'sword_and_shield',name:'Sword and Shield',icon:'⚔️🛡️',desc:'Powerups that increase Attack also grant the same Defense; Defense increases also grant the same Attack.'}),
@@ -36,130 +34,42 @@
   const EFFECT_BY_ID=Object.freeze(Object.fromEntries(EFFECTS.map(effect=>[effect.id,effect])));
 
   function createController(services={}){
-    const {
-      getPlayer,getMeta,getBoardLevel,getClassIdentityId,
-      slots,slotLabels,rarityValues,gearNames,rarityPrefixes,rarityBudgets,elementKeys,
-      rollGearRarity,pick,random,rand,clamp,gearIcon,elementChanceForRarity,
-      seedCode,generateFromSeedCode,ordinaryApi,logError,stateForLog
-    }=services;
-    const requiredFunctions={getPlayer,getMeta,getBoardLevel,getClassIdentityId,rollGearRarity,pick,random,rand,clamp,gearIcon,elementChanceForRarity,seedCode,generateFromSeedCode,logError,stateForLog};
+    const {getPlayer,getMeta,getClassIdentityId,slots,rollGearRarity,pick,random,clamp,seedCode,generateFromSeedCode,rarityBudgets,ordinaryApi}=services;
+    const requiredFunctions={getPlayer,getMeta,getClassIdentityId,rollGearRarity,pick,random,clamp,seedCode,generateFromSeedCode};
     for(const [name,value] of Object.entries(requiredFunctions))if(typeof value!=='function')throw new Error(`DiceboundItemGeneration requires ${name}.`);
     if(!Array.isArray(slots)||!slots.length)throw new Error('DiceboundItemGeneration requires equipment slots.');
     if(!ordinaryApi?.generateOrdinaryItem)throw new Error('DiceboundItemGeneration requires DiceboundEquipment ordinary generation.');
-    if(!rarityBudgets||!rarityValues||!gearNames||!rarityPrefixes||!slotLabels||!Array.isArray(elementKeys))throw new Error('DiceboundItemGeneration requires released item registries.');
+    if(!rarityBudgets)throw new Error('DiceboundItemGeneration requires rarity budgets.');
 
-    function player(){return getPlayer();}
-    function meta(){return getMeta();}
-    function boardLevel(){return Number(getBoardLevel())||1;}
-
-    // Exact pre-v1.4 fallback. This looks odd on invalid rarity by design: the
-    // 0.6.6.26 oracle freezes that shipped compatibility behavior.
-    function legacyGenerate(forceRarity=null,forcedSlot=null){
-      const p=player(),rarity=forceRarity||rollGearRarity(0),tier=rarityValues[rarity],slot=forcedSlot||pick(slots),progress=Math.floor(p.position/16);
-      const names=(gearNames[slot]&&gearNames[slot][p.classId])||gearNames[slot];
-      const item={id:`gear_${Date.now()}_${random().toString(36).slice(2,8)}`,slot,rarity,icon:gearIcon(slot),name:`${rarityPrefixes[rarity]} ${pick(names)}`,bonuses:{}};
-      const power=tier+Math.floor(progress/2);
-      if(slot==='weapon')item.bonuses.attack=Math.max(1,power+rand(0,1));
-      if(slot==='offhand'){
-        if(p.classId==='fighter')item.bonuses.defense=Math.max(1,Math.ceil(power*.65));
-        else if(p.classId==='ranger')item.bonuses.crit=.015*tier+.005*progress;
-        else if(p.classId==='sorcerer')item.bonuses.attack=Math.max(1,Math.ceil(power*.55));
-        else if(p.classId==='monk'){item.bonuses.doubleStrike=.012*tier;item.bonuses.dodge=.008*tier;}
-        else if(p.classId==='clown')item.bonuses.luck=.025*tier;
-        else if(p.classId==='rouge')item.bonuses.lifeSteal=.014*tier;
-        else if(p.classId==='berserker')item.bonuses.attack=Math.max(1,Math.ceil(power*.55));
-        else if(p.classId==='turtle')item.bonuses.defense=Math.max(1,Math.ceil(power*.8));
-        else if(p.classId==='frog')item.bonuses.doubleStrike=.015*tier;
-        else if(p.classId==='d20')item.bonuses.luck=.03*tier;
-        else if(p.classId==='slime')item.bonuses.maxHp=2*tier;
-      }
-      if(slot==='boots')item.bonuses.dodge=.012*tier+.003*progress;
-      if(slot==='legs')item.bonuses.maxHp=3*tier+progress*2;
-      if(slot==='chest')item.bonuses.defense=Math.max(1,Math.ceil(tier*.55)+Math.floor(progress/3));
-      if(slot==='hat')item.bonuses.crit=.01*tier+.002*progress;
-      if(slot==='ring')item.bonuses.goldBonus=.04*tier;
-      if(slot==='amulet')item.bonuses.lifeSteal=.018*tier;
-      if(tier>=3){
-        const secondary=pick(['maxHp','attack','crit','luck','potionPower','bossDamage']);
-        if(secondary==='maxHp')item.bonuses.maxHp=(item.bonuses.maxHp||0)+tier*2;
-        if(secondary==='attack')item.bonuses.attack=(item.bonuses.attack||0)+Math.max(1,tier-2);
-        if(secondary==='crit')item.bonuses.crit=(item.bonuses.crit||0)+.01*(tier-1);
-        if(secondary==='luck')item.bonuses.luck=(item.bonuses.luck||0)+.035*(tier-2);
-        if(secondary==='potionPower')item.bonuses.potionPower=(item.bonuses.potionPower||0)+.12*(tier-2);
-        if(secondary==='bossDamage')item.bonuses.bossDamage=(item.bonuses.bossDamage||0)+.08*(tier-2);
-      }
-      if(item.slot==='weapon'&&random()<elementChanceForRarity(item.rarity))item.element=pick(elementKeys);
+    const player=()=>getPlayer(),meta=()=>getMeta();
+    function rawGeneratedGear(rarity,forcedSlot=null){
+      if(rarity!=='legendary'&&!ORDINARY_RARITIES.includes(rarity))throw new RangeError(`Unsupported generated gear rarity: ${rarity}`);
+      if(forcedSlot!=null&&!slots.includes(forcedSlot))throw new RangeError(`Unsupported equipment slot: ${forcedSlot}`);
+      const p=player(),item=ordinaryApi.generateOrdinaryItem({rarity,forcedSlot,slots,pick,random,classId:p.classId,seedCode,generateFromSeedCode,rarityBudgets,clamp});
+      if(!item||!slots.includes(item.slot))throw new Error(`Canonical equipment generation failed for ${rarity}${forcedSlot?`/${forcedSlot}`:''}.`);
       return item;
     }
-
-    // Released v1.5 ordinary path. Unsupported rarity intentionally falls to
-    // the old generator rather than inventing a new compatibility rule.
-    function ordinaryV15(forceRarity=null,forcedSlot=null){
-      const p=player(),rarity=forceRarity||rollGearRarity(0);
-      if(!rarityBudgets[rarity])return legacyGenerate(forceRarity,forcedSlot);
-      const slot=forcedSlot||pick(slots),classId=p.classId,qualityBoost=Math.min(8,Math.floor((boardLevel()-1)*1.5+p.position/32));
-      const core=`${Math.floor(random()*0xffffffff).toString(36)}${Math.floor(random()*0xffffffff).toString(36)}`;
-      return generateFromSeedCode(seedCode(rarity,slot,classId,qualityBoost,core));
-    }
-
-    function compatibilityV24(forceRarity=null,forcedSlot=null){
-      if(forceRarity&&COMPAT_DEMOTE_RARITIES.includes(forceRarity))forceRarity='epic';
-      return ordinaryV15(forceRarity,forcedSlot);
-    }
-
-    function safeCompatibility(forceRarity=null,forcedSlot=null){
-      let item=null;
-      try{item=compatibilityV24(forceRarity,forcedSlot);}catch(error){
-        logError('Equipment generation threw',{error:String(error),stack:error?.stack||'',forceRarity,forcedSlot,state:stateForLog()});
-      }
-      if(item&&slots.includes(item.slot))return item;
-      logError('Invalid/null generated equipment; using Common fallback',{forceRarity,forcedSlot,item,state:stateForLog()});
-      try{item=compatibilityV24('common',forcedSlot||pick(slots));}catch(error){
-        logError('Common equipment fallback threw',{error:String(error),stack:error?.stack||'',state:stateForLog()});
-      }
-      if(item&&slots.includes(item.slot))return item;
-      const slot=forcedSlot&&slots.includes(forcedSlot)?forcedSlot:pick(slots);
-      return {id:`gear_failsafe_${Date.now()}_${random().toString(36).slice(2,7)}`,slot,rarity:'common',icon:gearIcon(slot),name:`Reliable ${slotLabels[slot]}`,bonuses:{maxHp:5},failsafe:true};
-    }
-
-    function rawGeneratedGear(rarity,forcedSlot=null){
-      const p=player();
-      return ordinaryApi.generateOrdinaryItem({rarity,forcedSlot,slots,pick,random,classId:p.classId,seedCode,generateFromSeedCode,rarityBudgets,clamp});
-    }
-
-    function eligibleEffects(){
-      const id=getClassIdentityId();
-      return EFFECTS.filter(effect=>!effect.classes||effect.classes.includes(id));
-    }
-    function discoveredEffects(){
-      const m=meta();
-      if(!Array.isArray(m.legendaryEffectsDiscovered))m.legendaryEffectsDiscovered=[];
-      return m.legendaryEffectsDiscovered;
-    }
+    function eligibleEffects(){const id=getClassIdentityId();return EFFECTS.filter(effect=>!effect.classes||effect.classes.includes(id));}
+    function discoveredEffects(){const m=meta();if(!Array.isArray(m.legendaryEffectsDiscovered))m.legendaryEffectsDiscovered=[];return m.legendaryEffectsDiscovered;}
     function chooseEffect(preferUndiscovered=false){
       let pool=eligibleEffects();
       if(preferUndiscovered){const seen=discoveredEffects(),unseen=pool.filter(effect=>!seen.includes(effect.id));if(unseen.length)pool=unseen;}
-      return pick(pool.length?pool:EFFECTS);
+      if(!pool.length)throw new Error('No Legendary effects are eligible for the active class.');
+      return pick(pool);
     }
-    function attachLegendaryEffect(item,effect=null){
-      if(!item)return item;
-      const chosen=effect||chooseEffect(false);
-      item.rarity='legendary';item.legendaryGenerated=true;item.legendaryEffectId=chosen.id;item.legendaryEffectName=chosen.name;item.legendaryEffectDesc=chosen.desc;item.uniqueEffect=`${chosen.icon} ${chosen.name}: ${chosen.desc}`;item.v24Rarity=true;
-      return item;
+    function attachLegendaryEffect(item,effect){
+      if(!item)throw new Error('Cannot attach a Legendary effect to missing equipment.');
+      if(!effect)throw new Error('Legendary effect selection returned no effect.');
+      item.rarity='legendary';item.legendaryGenerated=true;item.legendaryEffectId=effect.id;item.legendaryEffectName=effect.name;item.legendaryEffectDesc=effect.desc;item.uniqueEffect=`${effect.icon} ${effect.name}: ${effect.desc}`;item.v24Rarity=true;return item;
     }
-    function generateLegendary(forcedSlot=null,preferUndiscovered=false){
-      let item=rawGeneratedGear('legendary',forcedSlot);
-      if(!item){item=rawGeneratedGear('epic',forcedSlot);if(item)item.rarity='legendary';}
-      return attachLegendaryEffect(item,chooseEffect(preferUndiscovered));
-    }
+    function generateLegendary(forcedSlot=null,preferUndiscovered=false){return attachLegendaryEffect(rawGeneratedGear('legendary',forcedSlot),chooseEffect(preferUndiscovered));}
     function generateEquipment(forceRarity=null,forcedSlot=null){
       const rarity=forceRarity||rollGearRarity(0);
       if(rarity==='legendary')return generateLegendary(forcedSlot,false);
-      if(ORDINARY_RARITIES.includes(rarity))return rawGeneratedGear(rarity,forcedSlot)||safeCompatibility(rarity,forcedSlot);
-      return safeCompatibility(forceRarity,forcedSlot);
+      if(!ORDINARY_RARITIES.includes(rarity))throw new RangeError(`Unsupported generated gear rarity: ${rarity}`);
+      return rawGeneratedGear(rarity,forcedSlot);
     }
     function hasEffect(id){return Object.values(player().equipment||{}).some(item=>item?.legendaryEffectId===id);}
-
     return Object.freeze({generateEquipment,generateLegendary,hasEffect,eligibleEffects,chooseEffect,rawGeneratedGear,owner:OWNER});
   }
 
