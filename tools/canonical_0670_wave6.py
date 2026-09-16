@@ -64,7 +64,7 @@ def canonicalize_monolith()->tuple[int,int]:
     elif new not in text:raise RuntimeError('canonical toast function drifted')
     toast_start='  const showToastV27Base=showToast;\n  showToast=function(text,...args){\n'
     if toast_start in text:
-        text=cut_between(text,toast_start,'\n\n  // ---- Per-run state for upgraded powerups -------------------------------\n','toast suppression predecessor')
+        text=cut_between(text,toast_start,'\n\n  /* LEGENDARY DESIGN: RARITY != UNIQUE ------------------------------------ */\n','toast suppression predecessor')
 
     # End-of-run checkpoint clearing is current behavior, not a wrapper layer.
     old='  function showEnd(victory){const first=!runFinalized;'
