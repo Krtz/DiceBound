@@ -113,6 +113,13 @@ def route_consumers(text: str) -> str:
     elif new_full not in text:
         raise RuntimeError("Full Artifact debug loadout changed unexpectedly")
 
+    old_ring_debug = "if(action===\"mythicring\"&&gameStarted){dbItems.equip(generateMythicalRing(),true);updateHUD();showToast(\"Artifact Ring added\");return;}"
+    new_ring_debug = "if(action===\"mythicring\"&&gameStarted){dbItems.equip(dbArtifacts.create('ring'),true);updateHUD();showToast(\"Artifact Ring added\");return;}"
+    if old_ring_debug in text:
+        text = text.replace(old_ring_debug, new_ring_debug, 1)
+    elif new_ring_debug not in text:
+        raise RuntimeError("Artifact ring debug shortcut changed unexpectedly")
+
     old_table = "const DB060_ARTIFACT_TABLE=window.DiceboundArtifacts?.entries;\n  if(!DB060_ARTIFACT_TABLE)throw new Error('DiceboundArtifacts must load before dicebound.js');"
     new_table = "const DB060_ARTIFACT_TABLE=dbArtifacts.entries;"
     if old_table in text:
