@@ -60,6 +60,8 @@ function testManaDescriptors(){
   assert.equal(summoner.spell,"Conjure Familiar");
   assert.equal(summoner.cost,40);
   assert.equal(summoner.gain,26);
+  assert.equal(api.spells().summoner,summoner,"Mana owner spell table must expose canonical Summoner descriptor");
+  assert.equal(api.spells().sorcerer,sorcerer,"Mana owner spell table must expose canonical Sorcerer descriptor");
   assert.equal(api.isManaClass("invoker"),true);
   assert.equal(api.isManaClass("ninja"),false);
   assert.equal(api.identityNote("summoner"),"Mana class — Spirit Bolt builds Mana; Conjure Familiar spends it.");
@@ -101,6 +103,7 @@ function testSourceOwnership(){
   assert.equal(consumables.includes("v24RoadAccountingLayer"),false,"Consumables road-accounting repair returned");
   assert.equal(mana.includes('"spellFor",'),false,"Mana owner regained monolith spell registry dependency");
   assert.ok(monolith.includes("dbCombatManaActionResolution.identityNote(cls.id)"),"class chooser does not use Mana owner descriptions");
+  assert.ok(monolith.includes("getOccultSpells:()=>dbCombatManaActionResolution.spells()"),"combat presentation does not use Mana owner spell table");
 }
 
 testConsumables();
