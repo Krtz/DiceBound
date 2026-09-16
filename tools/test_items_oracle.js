@@ -33,10 +33,7 @@ function assertCoverage(actual){
   assert.ok(generated.some(c=>c.forcedSlot==="ring"||c.forcedSlot==="chest"),"missing forced non-weapon generation");
   assert.ok(generated.some(c=>c.item?.slot==="weapon"&&c.item?.element),"missing elemental weapon result");
   assert.ok(generated.some(c=>c.item?.slot==="weapon"&&!c.item?.element),"missing non-elemental weapon result");
-  assert.ok(generated.some(c=>c.requestedRarity==="artifact"),"missing Artifact compatibility case");
-  assert.ok(generated.some(c=>c.requestedRarity==="mythical"),"missing Mythical compatibility case");
-  assert.ok(generated.some(c=>c.requestedRarity==="omega"),"missing Omega compatibility case");
-  assert.ok(generated.some(c=>c.requestedRarity==="bogus"&&c.item),"invalid rarity compatibility path must remain non-null");
+  for(const rarity of ["artifact","mythical","omega","bogus"]){const rejected=actual.cases.find(c=>c.kind==="reject"&&c.requestedRarity===rarity);assert.ok(rejected?.error,`missing strict rejection for ${rarity}`);assert.equal(rejected.rngCalls,0,`${rarity} rejection must not consume gameplay RNG`);}
   const leg=actual.cases.filter(c=>c.kind==="legendary");
   assert.ok(leg.some(c=>c.preferUndiscovered===false));
   assert.ok(leg.some(c=>c.preferUndiscovered===true&&c.discoveredMode==="some"));
@@ -71,10 +68,11 @@ async function main(){
         ['poor-weapon-ranger','poor','weapon','ranger',1,5],['common-ring-fighter','common','ring','fighter',2,18],['uncommon-random-sorcerer','uncommon',null,'sorcerer',3,30],['rare-random-ranger','rare',null,'ranger',4,42],['epic-weapon-fighter','epic','weapon','fighter',5,54],
         ['weapon-element-a','rare','weapon','ranger',4,40],['weapon-element-b','epic','weapon','sorcerer',5,50],['weapon-element-c','common','weapon','fighter',2,20],['weapon-element-d','poor','weapon','ranger',1,8],
         ['legendary-random','legendary',null,'ranger',5,50],['legendary-ring','legendary','ring','fighter',6,60],
-        ['compat-artifact','artifact',null,'ranger',4,40],['compat-mythical','mythical','chest','fighter',4,40],['compat-omega','omega','ring','sorcerer',4,40],['invalid-bogus','bogus',null,'ranger',2,20],
+
         ['repeat-a','rare','ring','ranger',3,30],['repeat-b','rare','ring','ranger',3,30]
       ];
       for(const [name,rarity,slot,classId,board,position] of genCases){const before=restore(name,{classId,board,position});const item=gen.generateEquipment(rarity,slot);finish({name,kind:'generate',requestedRarity:rarity,forcedSlot:slot,classId,board,position,item:compactItem(item)},before);}
+      for(const rarity of ['artifact','mythical','omega','bogus']){const before=restore('reject-'+rarity,{classId:'ranger',board:4,position:40});let error=null;try{gen.generateEquipment(rarity,null);}catch(reason){error=String(reason?.message||reason);}finish({name:'reject-'+rarity,kind:'reject',requestedRarity:rarity,error},before);}
       const allEffects=window.DiceboundBeta06Test.legendaryEffects().map(e=>e.id);
       const legCases=[['legendary-normal',null,false,'none',[]],['legendary-forced-weapon','weapon',false,'none',[]],['legendary-undiscovered','ring',true,'some',allEffects.slice(0,Math.max(1,Math.floor(allEffects.length/2)))],['legendary-all-seen','chest',true,'all',allEffects]];
       for(const [name,slot,preferUndiscovered,discoveredMode,discovered] of legCases){const before=restore(name,{classId:'ranger',board:5,position:50,discovered});const item=gen.generateLegendary(slot,preferUndiscovered);finish({name,kind:'legendary',forcedSlot:slot,preferUndiscovered,discoveredMode,discovered:[...discovered],item:compactItem(item)},before);}
@@ -90,7 +88,8 @@ async function main(){
     if(CAPTURE){console.log("ITEMS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("ITEMS_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.26","Items fixture must remain the released 0.6.6.26 baseline");
-    assert.deepEqual(actual.cases,fixture.cases);
+    const retired=new Set(['compat-artifact','compat-mythical','compat-omega','invalid-bogus']);
+    assert.deepEqual(actual.cases.filter(c=>c.kind!=='reject'),fixture.cases.filter(c=>!retired.has(c.name)));
     console.log(`Items oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}

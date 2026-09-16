@@ -553,30 +553,10 @@
 
   /* Alpha v3.1.7: normal enemy pool now lives in registries/01-authoritative-content.js. */
   /* Alpha v3.1.7: rarityInfo and upgrades are registry-owned. */
-  const gearNames = {
-    weapon:{fighter:["Iron Longsword","Mercenary Axe","Knight's Blade","Warhammer"],ranger:["Yew Longbow","Recurve Bow","Hunting Crossbow","Falcon Bow"],sorcerer:["Ashen Staff","Crystal Wand","Star Rod","Runed Scepter"],monk:["Iron Knuckles","Prayer Beads","Dragon Fists","Temple Tonfa"],clown:["Rubber Chicken","Juggling Sabre","Oversized Mallet","Pie Launcher"],rouge:["Crimson Brush","Vermilion Rapier","Scarlet Palette Knife","Rosewood Baton"],berserker:["Bloodaxe","Rage Cleaver","Skullsplitter","War Maul"]},
-    offhand:{fighter:["Kite Shield","Tower Shield","Buckler","Lion Guard"],ranger:["Hunter's Quiver","Barbed Quiver","Scout Quiver","Falcon Quiver"],sorcerer:["Spellbook","Arcane Tome","Moon Grimoire","Orb of Focus"],monk:["Meditation Bell","Prayer Wheel","Silk Handwraps","Temple Talisman"],clown:["Bag of Confetti","Emergency Pie","Comedy Mask","Pocket Horn"],rouge:["Rouge Palette","Rose Mirror","Crimson Vial","Velvet Fan"],berserker:["Spiked Buckler","Trophy Skull","Rage Totem","Iron Fist"]},
-    boots:{fighter:["Marching Greaves","Lion Sabatons"],ranger:["Trail Boots","Windstep Boots"],sorcerer:["Starwoven Shoes","Astral Slippers"],monk:["Cloudstep Sandals","Temple Footwraps"],clown:["Squeaky Shoes","Impossible Stilts"],rouge:["Velvet Boots","Scarlet Heels"],berserker:["Bloodmarch Boots","Ravager Greaves"]},
-    legs:{fighter:["Knight's Cuisses","Chain Leggings"],ranger:["Ranger Trousers","Hunter Legguards"],sorcerer:["Runed Legwraps","Moonweave Trousers"],monk:["Temple Gi Trousers","Flowing Sash"],clown:["Striped Pantaloons","Suspiciously Large Trousers"],rouge:["Crimson Breeches","Velvet Leggings"],berserker:["Warhide Leggings","Ragebound Tassets"]},
-    chest:{fighter:["Scale Cuirass","Roadwarden Plate"],ranger:["Leather Jerkin","Falcon Coat"],sorcerer:["Mystic Robe","Constellation Mantle"],monk:["Temple Gi","Iron-Soul Vest"],clown:["Ringmaster Coat","Patchwork Tuxedo"],rouge:["Vermilion Coat","Rose-Dyed Corslet"],berserker:["Ravager Harness","Blood-Iron Cuirass"]},
-    hat:{fighter:["Iron Helm","Lion Visor"],ranger:["Feathered Cap","Hunter Hood"],sorcerer:["Circlet","Starcaller Hood"],monk:["Temple Headband","Third-Eye Wrap"],clown:["Jester Crown","Tiny Hat"],rouge:["Rose Beret","Crimson Veil"],berserker:["Horned Helm","Warpaint Crown"]},
-    ring:{fighter:["Lion Signet","Iron Oath Ring"],ranger:["Falcon Band","Tracker's Ring"],sorcerer:["Star Ring","Moonstone Loop"],monk:["Jade Band","Ring of Still Water"],clown:["Mood Ring","Ring-Pop of Power"],rouge:["Garnet Ring","Rosegold Band"],berserker:["Ring of Fury","Blood Oath Band"]},
-    amulet:{fighter:["Dragon Tooth","Saint's Pendant"],ranger:["Hawkeye Charm","Wolf Fang"],sorcerer:["Moon Amulet","Astral Prism"],monk:["Prayer Beads","Lotus Pendant"],clown:["Honking Medallion","Golden Ticket"],rouge:["Ruby Choker","Heart of Carmine"],berserker:["Wolf-Tooth Fetish","Heart of Rage"]}
-  };
 
-  Object.assign(gearNames.weapon,{turtle:["Shellhammer","Tideworn Mace","Ancient Flipper Blade"],frog:["Tongue Lash","Croakstaff","Bog Spear"],d20:["Twenty-Edged Die","Probability Scepter","Chaos Icosahedron"],slime:["Gelatinous Blade","Ooze Wand","Puddle Hammer"]});
-  Object.assign(gearNames.offhand,{turtle:["Ancestral Shell","Reef Bulwark"],frog:["Lily Pad","Echo Sac"],d20:["Probability Table","Loaded Fate"],slime:["Smaller Slime","Acid Bubble"]});
-  Object.assign(gearNames.boots,{turtle:["Tidecrawler Greaves"],frog:["Springheel Webbing"],d20:["Probability Boots"],slime:["Pseudopod Shoes"]});
-  Object.assign(gearNames.legs,{turtle:["Shellbound Tassets"],frog:["Bogstrider Wraps"],d20:["Twenty-Faced Legguards"],slime:["Gel Trousers"]});
-  Object.assign(gearNames.chest,{turtle:["Worldshell Carapace"],frog:["Croaking Vest"],d20:["Icosahedral Plate"],slime:["Viscous Cuirass"]});
-  Object.assign(gearNames.hat,{turtle:["Tiny Shell Crown"],frog:["Royal Flycatcher"],d20:["Crown of Twenty Faces"],slime:["Bucket"]});
-  Object.assign(gearNames.ring,{turtle:["Tidal Ring"],frog:["Pond Circle"],d20:["Ring of Random Integers"],slime:["Gel Loop"]});
-  Object.assign(gearNames.amulet,{turtle:["Pearl of Patience"],frog:["Golden Fly"],d20:["Pendant of Natural Twenty"],slime:["Suspicious Droplet"]});
-  const rarityPrefixes={common:"Worn",uncommon:"Fine",rare:"Royal",epic:"Mythic",legendary:"Godforged",mythical:"Impossible"};
-  /* rarityValues is registry-owned. */
+                    /* rarityValues is registry-owned. */
 
-  function gearIcon(slot){const offhand={fighter:"🛡️",ranger:"🪶",sorcerer:"📖",monk:"📿",clown:"🎭",rouge:"🎨",berserker:"💀",turtle:"🐚",frog:"🪷",d20:"🎲",slime:"🫧"};return {weapon:CLASSES[player.classId].attackIcon,offhand:offhand[player.classId]||"📖",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"}[slot];}
-    function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
+      function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
     function generateMythicalBoots(){return {id:`mythical_boots_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"boots",rarity:"mythical",mythical:true,mythicPiece:"boots",setName:"Impossible Road",uniqueEffect:"Titanstep: rolling 5 or 6 restores 5% max HP and grants 10 ultimate charge.",icon:"🥾",name:"Titanstep, Boots of the Astral Road",bonuses:{maxHp:20,defense:3,dodge:.15,extraStepChance:.25}};}
   function generateMythicalAmulet(){return {id:`mythical_amulet_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"mythical",mythical:true,mythicPiece:"amulet",setName:"Impossible Road",uniqueEffect:"Devourer's Gaze: once per battle below 35% HP, consume 12% of every living enemy's max HP and heal for half the damage.",icon:"👁️",name:"The Devourer's Last Eye",bonuses:{maxHp:30,attack:8,crit:.15,luck:.20,lifeSteal:.10,bossDamage:.50}};}
   function generateMythicalPants(){return {id:`mythical_legs_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"legs",rarity:"mythical",mythical:true,mythicPiece:"legs",setName:"Impossible Road",uniqueEffect:"Paradox Loop: every third player action restores 6% max HP and grants 15 ultimate charge.",icon:"👖",name:"Paradox Weave, Legguards Outside Time",bonuses:{maxHp:34,defense:5,attack:5,doubleStrike:.16,luck:.14}};}
@@ -1068,10 +1048,7 @@ function returnToRoad(...args){
   /* ---------- v13: Blood & Fortune systems expansion ---------- */
 
   const PUBLIC_SLIME_EXEMPT=new Set(["slime","d20","ceo","merchant"]);
-  Object.assign(gearNames.weapon,{vampire:["Sanguine Rapier","Nightfang","Blood Chalice Blade"],ninja:["Moon Kunai","Silent Katana","Storm Shuriken"],ceo:["Executive Pen","Hostile Takeover Briefcase","Quarterly Cleaver"],merchant:["Golden Abacus","Coinblade","Ledger of Ruin"]});
-  Object.assign(gearNames.offhand,{vampire:["Blood Goblet","Batwing Mantle"],ninja:["Smoke Bomb Satchel","Shadow Scroll"],ceo:["Expense Account","Golden Parachute"],merchant:["Bottomless Purse","Portable Stall"]});
-  for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].vampire=[`Bloodbound ${SLOT_LABELS[slot]}`];gearNames[slot].ninja=[`Shadow ${SLOT_LABELS[slot]}`];gearNames[slot].ceo=[`Executive ${SLOT_LABELS[slot]}`];gearNames[slot].merchant=[`Gilded ${SLOT_LABELS[slot]}`];}
-  const evasive=upgrades.find(u=>u.id==="evasive_bulwark");if(evasive){}
+        const evasive=upgrades.find(u=>u.id==="evasive_bulwark");if(evasive){}
 
   /* v14: broader Rare pool and deeper class identities */
 
@@ -1418,10 +1395,6 @@ function returnToRoad(...args){
 
   // Four new public classes. Rouge remains the colour; Rogue is the thief.
 
-  Object.assign(gearNames.weapon,{cleric:["Pilgrim Mace","Sunlit Crozier","Reliquary Hammer"],paladin:["Oathblade","Sunsteel Sword","Aegis Hammer"],beastmaster:["Pack Spear","Beast Hook","Alpha Whip"],rogue:["Cutpurse Dirk","Night Knife","Guild Stiletto"]});
-  Object.assign(gearNames.offhand,{cleric:["Prayer Book","Saintly Censer","Sun Disc"],paladin:["Aegis Shield","Oathbound Buckler","Lion Ward"],beastmaster:["Whistle of Command","Treat Satchel","Pack Totem"],rogue:["Lockpick Roll","Smoke Satchel","Second Dagger"]});
-  for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].cleric=[`Consecrated ${SLOT_LABELS[slot]}`];gearNames[slot].paladin=[`Oathbound ${SLOT_LABELS[slot]}`];gearNames[slot].beastmaster=[`Packlord ${SLOT_LABELS[slot]}`];gearNames[slot].rogue=[`Guild ${SLOT_LABELS[slot]}`];}
-
   // Class powers and achievement-hidden Legendaries.
 
   const goldenLaw=upgrades.find(u=>u.id==="legendary_golden_law");if(goldenLaw){}
@@ -1492,8 +1465,6 @@ function returnToRoad(...args){
   }
   ensureV11Meta();
   random();
-
-  rarityPrefixes.omega="Omega";
 
   /* Alpha v3.1.7: CLASS_TAGS is registry-owned. */
 
@@ -1860,9 +1831,6 @@ function returnToRoad(...args){
 
   MANA_OCCULT_CLASSES.add("summoner");
   OCCULT_SPELLS.summoner={builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."};
-  Object.assign(gearNames.weapon,{summoner:["Conjurer's Crook","Pact Tome","Astral Bell"],pokemontrainer:["Trainer Baton","Red Capture Orb","Champion Whistle"]});
-  Object.assign(gearNames.offhand,{summoner:["Spirit Ledger","Familiar Seal","Summoning Grimoire"],pokemontrainer:["Creature Index","Treat Belt","Six-Slot Harness"]});
-  for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].summoner=[`Pactbound ${SLOT_LABELS[slot]}`];gearNames[slot].pokemontrainer=[`Champion ${SLOT_LABELS[slot]}`];}
 
   // ---- Defense becomes diminishing percentage reduction --------------------
   function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+25),0,.82);}
@@ -1871,7 +1839,7 @@ function returnToRoad(...args){
   function v15SafeClassId(id){return CLASSES[id]?id:"ranger";}
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
   function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(poor|common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
-  function v15GenerateEquipmentFromSeedCode(code){return window.DiceboundEquipment.generateOrdinaryFromSeedCode(code,{parseSeedCode:v15ParseSeedCode,seedRng:v14SeedRng,seedInt:v14SInt,seedPick:v14SPick,hashSeed:v14HashSeed,rarityBudgets:V14_RARITY_BUDGETS,affixTiers:V14_RARITY_AFFIX_TIER,prefixes:V14_PREFIXES,suffixes:V14_SUFFIXES,elementKeys:ELEMENT_KEYS,elementChanceForRarity,pickAffix:window.DiceboundEquipment.pickOrdinaryAffix,spendBase:v14SpendBase,gearIcon,baseName:window.DiceboundEquipment.ordinaryBaseName});}
+  function v15GenerateEquipmentFromSeedCode(code){return window.DiceboundEquipment.generateOrdinaryFromSeedCode(code,{parseSeedCode:v15ParseSeedCode,seedRng:v14SeedRng,seedInt:v14SInt,seedPick:v14SPick,hashSeed:v14HashSeed,rarityBudgets:V14_RARITY_BUDGETS,affixTiers:V14_RARITY_AFFIX_TIER,prefixes:V14_PREFIXES,suffixes:V14_SUFFIXES,elementKeys:ELEMENT_KEYS,elementChanceForRarity,pickAffix:window.DiceboundEquipment.pickOrdinaryAffix,spendBase:v14SpendBase,gearIcon:slot=>{const parsed=v15ParseSeedCode(code);if(!parsed||!CLASSES[parsed.classId])throw new Error(`Invalid equipment seed class: ${parsed?.classId||"unknown"}`);const offhand={fighter:"🛡️",ranger:"🪶",sorcerer:"📖",monk:"📿",clown:"🎭",rouge:"🎨",berserker:"💀",turtle:"🐚",frog:"🪷",d20:"🎲",slime:"🫧"};const icon={weapon:CLASSES[parsed.classId].attackIcon,offhand:Object.prototype.hasOwnProperty.call(offhand,parsed.classId)?offhand[parsed.classId]:"📖",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"}[slot];if(!icon)throw new Error(`Missing equipment icon policy for slot: ${slot}`);return icon;},baseName:window.DiceboundEquipment.ordinaryBaseName});}
 
   {const oldBtn=$("equipLootBtn");if(oldBtn){const neo=oldBtn.cloneNode(true);oldBtn.replaceWith(neo);neo.addEventListener("click",async()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot],delta=current?dbItems.score(pendingLootItem)-dbItems.score(current):999;if(current&&delta<0&&!(await diceboundConfirm(`${pendingLootItem.name} rolls lower overall quality than ${current.name} after considering its hidden quality budget and visible stats. Replace it anyway? ${current.name} will automatically be sold for ${dbItems.sellValue(current)} gold.`,{title:"Replace stronger gear?",confirmLabel:"Replace anyway",danger:true})))return;dbItems.equip(pendingLootItem);closeLoot();});}}
 
@@ -1897,8 +1865,6 @@ function returnToRoad(...args){
   // Enemy affinity can never contradict its weakness.
 
   // ---- New Alchemist class --------------------------------------------------
-
-  Object.assign(gearNames.weapon,{alchemist:["Catalyst Rod","Glassbreaker","Distillation Staff"]});Object.assign(gearNames.offhand,{alchemist:["Reagent Case","Portable Still","Unlabelled Flask Rack"]});for(const slot of ["boots","legs","chest","hat","ring","amulet"]){gearNames[slot]=gearNames[slot]||{};gearNames[slot].alchemist=[`Distiller's ${SLOT_LABELS[slot]}`];}
 
   function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
   // Volatile Flask consumption/action mechanics are owned by DiceboundClasses.
@@ -1941,13 +1907,6 @@ function returnToRoad(...args){
   // Board 5 terminal ownership was retired: Board 5 advances into Board 6.
   let v16CombatKind=null;
   // ---- Info additions -------------------------------------------------------
-
-  try{Object.defineProperty(window,"DiceboundV16Regression",{value:{
-    state:()=>({boardLevel,gameStarted,runFinalized,playerClass:player.classId,gold:player.gold,gear:EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]?.name).filter(Boolean),endVisible:!$("endOverlay").classList.contains("hidden"),powerVisible:!$("powerupOverlay").classList.contains("hidden")}),
-    prepareSovereign:()=>{boardLevel=4;gameStarted=true;player.gold=99999;currentMerchantNotice="";currentMerchantItems=[{id:"relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one of three random Legendary powerups.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");dbMerchant.render();return true;},
-    prepareAlchemist:()=>{meta.stats.potionsUsed=100;dbProgression.checkDynamicClassUnlocks();window.DiceboundClassChooser.render();return dbProgression.isClassUnlocked("alchemist");},
-    forceFifthWin:async()=>{gameStarted=true;runFinalized=false;boardLevel=5;player.position=0;player.gold=0;player.level=1;player.xp=0;player.xpNext=20;player.equipment=player.equipment||{};player.equipment.ring=generateMythicalRing();dbRun.generateBoard();player.position=tiles.length-1;currentEnemyTile=tiles.length-1;const e={name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,finalBoss:true,boss:true,guardian:true};currentEnemies=[e];currentEncounterLead=e;currentEnemy=e;v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await new Promise(r=>setTimeout(r,80));return {boardLevel,gameStarted,runFinalized,gear:player.equipment.ring?.name,endVisible:!$("endOverlay").classList.contains("hidden")};}finally{Math.random=oldRandom;}}
-  },enumerable:false,configurable:false,writable:false});}catch(e){}
 
   saveMeta();dbProgression.checkDynamicClassUnlocks();window.DiceboundClassChooser.render();renderInfo();refreshDebugButtons();updateHUD();
 
@@ -1995,13 +1954,6 @@ function returnToRoad(...args){
   const toxic=upgrades.find(u=>u.name==="Toxic Bloom");
 
   // Hidden regression helpers: these never appear in the player UI/debug menu.
-  Object.defineProperty(window,"DiceboundV17Regression",{configurable:true,value:{
-    prepareSovereign:()=>{player.gold=99999;currentMerchantItems=[{id:"v17_sovereign_test",icon:"👑",name:"Sovereign Relic",desc:"Choose from three random Legendary powerups.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");dbMerchant.render();return true;},
-    prepareContract:()=>{player.gold=99999;currentMerchantItems=[{id:"v17_contract_test",icon:"📜",name:"Tyrant's Legendary Contract",desc:"Choose from three random Legendary powerups.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");dbMerchant.render();return true;},
-    legendaryState:()=>({merchantHidden:$("merchantOverlay").classList.contains("hidden"),powerupVisible:!$("powerupOverlay").classList.contains("hidden"),choices:$("powerupGrid").querySelectorAll("button.choice-btn").length,subtitle:$("powerupSubtitle").textContent}),
-    difficulty:(level=10)=>{const saveBoard=boardLevel,saveLevel=player.level;player.level=level;const out={};for(const b of [2,3,4,5]){boardLevel=b;const e=scaleEnemy({name:"Regression Enemy",icon:"👾",hp:50,attack:10,xp:1,gold:1,weakness:"fire"},"normal",1);out[b]={hp:e.maxHp,attack:e.attack,defense:e.defense||0};}boardLevel=saveBoard;player.level=saveLevel;return out;},
-    bossDifficulty:(level=10)=>{const saveBoard=boardLevel,saveLevel=player.level;player.level=level;const defs={2:{name:"Astral Devourer Dragon",hp:74,attack:16,weakness:"donut"},3:{name:"Nullstar Hydra",hp:112,attack:24,weakness:"light"},4:{name:"Crown-Eater",hp:162,attack:31,weakness:"nature"},5:{name:"Ring Tyrant of the Fifth Road",hp:248,attack:44,weakness:"radiation"}};const out={};for(const b of [2,3,4,5]){boardLevel=b;const e=scaleEnemy({...defs[b],icon:"👑",xp:1,gold:1},"final",1);out[b]={hp:e.maxHp,attack:e.attack,defense:e.defense||0};}boardLevel=saveBoard;player.level=saveLevel;return out;}
-  }});
 
   /* Alpha v1.8 historical boundary — remaining live behavior below is being drained into canonical owners. */
 
@@ -2034,12 +1986,6 @@ function returnToRoad(...args){
   // Attack is deliberately fixed at 10. Any system that tries to add/remove
   // Attack is translated into +/-10% Echo per Attack point instead. This hook
   // makes talents, gear, Bloodwell exchanges and powerups all obey one rule.
-
-  gearNames.weapon.ouroboros=["Tailbite Fang","Recursive Fang","Serpent Loopblade"];
-  gearNames.offhand.ouroboros=["Shed Scale","Venom Ouroboros Idol","Looped Egg"];
-  for(const slot of ["boots","legs","chest","hat","ring","amulet"]){
-    gearNames[slot]=gearNames[slot]||{};gearNames[slot].ouroboros=[`Recursive ${SLOT_LABELS[slot]}`];
-  }
 
   // Ouroboros powerups are owned by DiceboundPowerupRegistry.
 
@@ -2080,20 +2026,6 @@ function returnToRoad(...args){
   // ---- Regression helpers (not visible in normal UI) -----------------------
   // These functions make browser checks reproducible without exposing another
   // player-facing debug button. They are safe to ignore during normal play.
-  Object.defineProperty(window,"DiceboundV18Regression",{configurable:true,value:{
-    tooltipState:()=>({potion:$("potionText")?.closest('.stat')?.dataset.tip,defense:$("defenseText")?.closest('.stat')?.dataset.tip,echo:$("echoText")?.closest('.stat')?.dataset.tip}),
-    unlockOuroboros:()=>{meta.unlocks.ouroboros=true;saveMeta();window.DiceboundClassChooser.render();return dbProgression.isClassUnlocked("ouroboros");},
-    alchemistCounter:()=>{window.DiceboundClassChooser.render();const progress=window.DiceboundClassChooser?.alchemistProgress?.();return progress?`Potion uses: ${progress.used} / ${progress.required}`:"";},
-    sovereign:()=>{player.gold=99999;currentMerchantItems=[{id:"v18_sovereign",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];$("merchantOverlay").classList.remove("hidden");dbMerchant.render();return true;},
-    ouroborosConversion:()=>{meta.unlocks.ouroboros=true;resetPlayer("ouroboros");const before=player.doubleStrike;player.attack+=5;updateHUD();return {attack:player.attack,before,after:player.doubleStrike,unlocked:dbProgression.isClassUnlocked("ouroboros")};},
-    bloodmageHp:()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");const before=player.maxHp;player.maxHp+=10;player.hp+=10;updateHUD();return {before,after:player.maxHp,delta:player.maxHp-before};},
-    levelChoices:()=>{resetPlayer("ranger");player.levelChoiceBonus=1;pendingLevelUps=1;dbPowerups.openLevelUp();return {choices:$("choiceGrid").querySelectorAll("button.choice-btn").length,reroll:!!$("choiceGrid").querySelector(".powerup-reroll-btn")};},
-    replenishGuard:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let guarded=null;const old=resolveEnemyResponse;resolveEnemyResponse=async g=>{guarded=g;combatBusy=false;};try{await dbClasses.bloodmageReplenish();return {guarded,hp:player.hp,enemyHp:currentEnemy.hp};}finally{resolveEnemyResponse=old;}},
-    conjureRally:async()=>{meta.unlocks.summoner=true;Object.values(meta.pets).forEach(p=>p.unlocked=true);resetPlayer("summoner");player.mana=100;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;let pet=0,response=0;const oldPet=petTurn,oldResponse=resolveEnemyResponse;petTurn=async()=>{pet++;};resolveEnemyResponse=async()=>{response++;combatBusy=false;};try{await dbCombat.summonerConjure();return {pet,response,spirits:player.summonerSpirits.length,mana:player.mana};}finally{petTurn=oldPet;resolveEnemyResponse=oldResponse;}},
-    guardMana:async()=>{meta.unlocks.sorcerer=true;resetPlayer("sorcerer");player.mana=0;currentEnemies=[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0}];currentEnemy=currentEnemies[0];combatBusy=false;const old=guardAction;guardAction=async()=>{combatBusy=false;};try{await identityGuardAction();return {mana:player.mana,gain:player.guardManaGain};}finally{guardAction=old;}},
-    exsanguinateTwo:async()=>{meta.unlocks.bloodmage=true;resetPlayer("bloodmage");currentEnemies=[{name:"Dummy A",hp:1000,maxHp:1000,attack:1,defense:0},{name:"Dummy B",hp:1000,maxHp:1000,attack:1,defense:0}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;currentEncounterLead={boss:false};combatBusy=false;const oldResponse=resolveEnemyResponse,oldChaos=rollD20Chaos,oldAnim=animateClassAttack;resolveEnemyResponse=async()=>{combatBusy=false;};rollD20Chaos=async()=>({mult:1});animateClassAttack=async()=>{};try{await dbClasses.bloodmageExsanguinate();return {firstDamage:1000-currentEnemies[0].hp,secondDamage:1000-currentEnemies[1].hp};}finally{resolveEnemyResponse=oldResponse;rollD20Chaos=oldChaos;animateClassAttack=oldAnim;}},
-    healingNuzzle:async()=>{resetPlayer("ranger");player.petTurnHeal=2;player.hp=Math.max(1,player.maxHp-8);currentEnemies=[{name:"Dummy",hp:5000,maxHp:5000,attack:1,defense:0,weakness:"fire"}];currentEnemy=currentEnemies[0];currentEnemyIndex=0;combatBusy=false;const before=player.hp,oldUpdate=updateCombatUI;updateCombatUI=()=>{};try{await dbCombat.petTurn();return {before,after:player.hp,healed:player.hp-before};}finally{updateCombatUI=oldUpdate;}}
-  }});
 
   /* SEMANTIC OWNER — Prestige, Double Dice, Board 6, set bonuses and road runtime. Migrated from the retired Alpha legacy stack in 3.1.6. */
   /* ========================================================================
@@ -2275,20 +2207,6 @@ function returnToRoad(...args){
   `;document.head.appendChild(v19Style);
 
   // ---- Regression helpers --------------------------------------------------
-  Object.defineProperty(window,"DiceboundV19Regression",{configurable:true,value:{
-    sovereign:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");player.gold=99999;currentMerchantItems=[{id:"v19_relic",icon:"👑",name:"Sovereign Relic",desc:"Choose one Legendary.",base:1,sold:false,alphaChooseLegendary:true,buy(){return null;}}];dbMerchant.render();return true;},
-    board6:()=>{gameStarted=true;runFinalized=false;boardLevel=6;player.position=0;dbRun.generateBoard();buildBoard();return {tiles:tiles.length,mini:tiles[currentMinibossTile()-1]?.enemyBase?.name,last:tiles.at(-1)?.type};},
-    doubleDice:()=>{meta.doubleDiceUnlocked=true;updateHUD();return {visible:$("roll2Btn")?.style.display!=="none",label:$("roll2Btn")?.textContent};},
-    prestige:()=>({pointsPerPrestige:9,capacity20:2,capacity60:3,tenPointRemainder:10%9}),
-    set:()=>({summary:mythicalSetSummary(),offhand:generateMythicalOffhand()}),
-    petSwitch:()=>({classId:player.classId,petTagged:v19PetTaggedClass(),gameStarted,beastmasterTagged:(CLASSES.beastmaster.tags||[]).includes("pet")}),
-    paladinGrace:()=>{meta.unlocks.paladin=true;resetPlayer("paladin");player.hp=Math.max(1,player.maxHp-20);dbCombat.heal(10);return {grace:player.paladinGrace,hp:player.hp};},
-    outsidePotion:()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;rollLocked=false;boardLevel=1;player.position=0;dbRun.generateBoard();buildBoard();player.hp=Math.max(1,player.maxHp-10);player.potions=1;const before=ensureAlphaMeta().potionsUsed||0;dbConsumablesResolution.usePotionOutsideCombat();return {used:(ensureAlphaMeta().potionsUsed||0)-before,potions:player.potions};},
-    statusCounts:()=>dbCombatView.statusDotsHTML(5,7),
-    haste:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;player.maxHp=999;player.hp=999;const e={name:"Cooldown Dummy",icon:"🎯",hp:9999,maxHp:9999,attack:1,defense:0,weakness:"fire",affinity:null,poisonStacks:0,enemyBarrier:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyTile=0;player.hasteTurns=1;player.hasteCooldown=0;await resolveEnemyResponse(false);const afterUse=player.hasteCooldown;const beforeBlocked=player.hasteTurns;dbCombat.element("coffee",e,{forced:true,source:"Regression"});const blocked=player.hasteTurns===beforeBlocked;await resolveEnemyResponse(false);return {afterUse,blocked,afterEnemyTurn:player.hasteCooldown};},
-    forceFifthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=5;player.position=0;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Ring Tyrant",icon:"💍🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,doubleDice:!!meta.doubleDiceUnlocked,endHidden:$('endOverlay')?.classList.contains('hidden')};},
-    forceSixthWin:async()=>{meta.unlocks.ranger=true;resetPlayer("ranger");gameStarted=true;runFinalized=false;v19CompletingSixth=false;boardLevel=6;player.position=0;dbRun.generateBoard();buildBoard();player.position=currentTileCount()-1;currentEnemyTile=player.position;currentEnemies=[{name:"Regression Last Equation",icon:"♾️🐉",hp:0,maxHp:1,attack:1,defense:0,xp:0,gold:0,boss:true,guardian:true,finalBoss:true}];currentEnemy=currentEncounterLead=currentEnemies[0];v16CombatKind="final";const oldRandom=Math.random;Math.random=()=>1;try{await dbCombat.win();await delay(80);}finally{Math.random=oldRandom;}return {boardLevel,gameStarted,runFinalized,endHidden:$('endOverlay')?.classList.contains('hidden')};}
-  }});
 
   // Final refresh.
   upgrades.forEach(inferUpgradeTags);saveMeta();window.DiceboundTalentTree.render();window.DiceboundPetChooser.render();window.DiceboundClassChooser.render();renderInfo();updateHUD();
@@ -2643,8 +2561,7 @@ function returnToRoad(...args){
 
   /* MODULE: rarity schema -------------------------------------------------- */
 
-  Object.assign(rarityPrefixes,{poor:'Worn',common:'Reliable',uncommon:'Fine',rare:'Royal',epic:'Godforged',legendary:'Legendary',artifact:'Artifact',mythical:'Mythical',omega:'Omega'});
-  Object.keys(V14_RARITY_BUDGETS).forEach(k=>delete V14_RARITY_BUDGETS[k]);
+    Object.keys(V14_RARITY_BUDGETS).forEach(k=>delete V14_RARITY_BUDGETS[k]);
   Object.assign(V14_RARITY_BUDGETS,{poor:[11,18],common:[20,31],uncommon:[34,49],rare:[54,76],epic:[84,116]});
   Object.keys(V14_RARITY_AFFIX_TIER).forEach(k=>delete V14_RARITY_AFFIX_TIER[k]);
   Object.assign(V14_RARITY_AFFIX_TIER,{poor:1,common:2,uncommon:3,rare:4,epic:5});
@@ -3179,7 +3096,6 @@ dbReturnToRoadTraceReady=true;
   /* SLIME ROUGE ------------------------------------------------------------ */
   // Alpha 3.1.9: the class definition/tags are registry-owned. Only generated
   // gear-name presentation remains here; runtime identity lives below.
-  for(const slot of EQUIPMENT_SLOTS){gearNames[slot]=gearNames[slot]||{};gearNames[slot].slimerouge=[...(gearNames[slot].slime||[`Rouge Slime ${SLOT_LABELS[slot]}`])].map(n=>`Rouge ${n}`);}
 
   /* SLIME ROUGE 3.1.8 — real random identity + real borrowed ultimate ------- */
   function v318SlimeRougeDonorPool(){return Object.values(CLASSES).filter(c=>c.id!=='slime'&&c.id!=='slimerouge'&&dbProgression.isClassUnlocked(c.id));}
@@ -3583,11 +3499,6 @@ dbReturnToRoadTraceReady=true;
   }
   beta043ApplyArtMutations();
 
-  const gearIconBeta043Base=gearIcon;
-  gearIcon=function(slot){
-    if(slot==='hat')return beta043Art('helmet','Helmet','db-art-inline')||gearIconBeta043Base(slot);
-    return gearIconBeta043Base(slot);
-  };
 
   setTimeout(beta043RefreshEquipmentArt,0);
   /* ========================================================================
@@ -4290,14 +4201,6 @@ dbReturnToRoadTraceReady=true;
 
   dbTileMetaFinalReady=true;
 
-  const db060GuardianArtStyle=document.createElement('style');
-  db060GuardianArtStyle.id='dicebound-beta-0-6-guardian-art-style';
-  db060GuardianArtStyle.textContent=`
-    .db060-guardian-tile-art{display:block;width:42px;height:42px;object-fit:cover;object-position:center;border-radius:10px;box-shadow:0 5px 14px rgba(0,0,0,.42)}
-    .db060-guardian-art{object-fit:cover!important;object-position:center!important}
-  `;
-  document.head.appendChild(db060GuardianArtStyle);
-
   // RARITY BODY -------------------------------------------------------------
   // Exact 0.6 item-power ranges. Road depth now improves rarity odds rather
   // than pushing a generated item beyond the advertised range.
@@ -4318,11 +4221,9 @@ dbReturnToRoadTraceReady=true;
   const DB060_EFFECT_BY_ID=dbItemGenerationOwner.effectById;
   meta.legendaryEffectsDiscovered=Array.isArray(meta.legendaryEffectsDiscovered)?meta.legendaryEffectsDiscovered:[];
   dbItemGeneration=dbItemGenerationOwner.createController({
-    getPlayer:()=>player,getMeta:()=>meta,getBoardLevel:()=>boardLevel,getClassIdentityId:()=>classIdentityId(),
-    slots:EQUIPMENT_SLOTS,slotLabels:SLOT_LABELS,rarityValues,gearNames,rarityPrefixes,rarityBudgets:V14_RARITY_BUDGETS,elementKeys:ELEMENT_KEYS,
-    rollGearRarity:bonus=>rollGearRarity(bonus),pick:list=>pick(list),random:()=>random(),rand:(min,max)=>rand(min,max),clamp:(value,min,max)=>clamp(value,min,max),
-    gearIcon:slot=>gearIcon(slot),elementChanceForRarity:rarity=>elementChanceForRarity(rarity),seedCode:v15SeedCode,generateFromSeedCode:v15GenerateEquipmentFromSeedCode,
-    ordinaryApi:window.DiceboundEquipment,logError:(message,data)=>v25Log('errors','loot',message,data),stateForLog:()=>v25State()
+    getPlayer:()=>player,getMeta:()=>meta,getClassIdentityId:()=>classIdentityId(),slots:EQUIPMENT_SLOTS,
+    rollGearRarity:bonus=>rollGearRarity(bonus),pick:list=>pick(list),random:()=>random(),clamp:(value,min,max)=>clamp(value,min,max),
+    seedCode:v15SeedCode,generateFromSeedCode:v15GenerateEquipmentFromSeedCode,rarityBudgets:V14_RARITY_BUDGETS,ordinaryApi:window.DiceboundEquipment
   });
   function db060HasEffect(id){return dbItemGeneration.hasEffect(id);}
 

@@ -88,3 +88,7 @@
     .achievement-reward{display:block;margin-top:5px;color:#ffe59a;font-size:9px;font-weight:900}
     .attack-fx.ouroboros{opacity:1;animation:echoSlash .56s ease-out forwards;font-size:46px;filter:drop-shadow(0 0 20px #9df26d)}
     .attack-fx.ultimate-ouroboros{opacity:1;animation:ultimateSorcerer .9s ease-in forwards;font-size:78px;filter:drop-shadow(0 0 30px #bfff79)}
+
+/* 0.6.7.0 extracted guardian art styles */
+    .db060-guardian-tile-art{display:block;width:42px;height:42px;object-fit:cover;object-position:center;border-radius:10px;box-shadow:0 5px 14px rgba(0,0,0,.42)}
+    .db060-guardian-art{object-fit:cover!important;object-position:center!important}
