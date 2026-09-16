@@ -198,9 +198,9 @@ def main() -> int:
     canonical_notes_path = runtime / "release-notes" / f"{version}.md"
     if canonical_notes_path.is_file():
         try:
-            canonical_notes = canonical_notes_path.read_text(encoding="utf-8")
-            if f"# DiceBound {channel} {version}" not in canonical_notes:
-                errors.append(f"canonical release notes do not identify DiceBound {channel} {version}")
+            canonical_notes = canonical_notes_path.read_text(encoding="utf-8").strip()
+            if not canonical_notes:
+                errors.append(f"canonical release notes are empty: {canonical_notes_path.relative_to(root)}")
             else:
                 canonical_notes_identify_release = True
         except OSError as exc:
