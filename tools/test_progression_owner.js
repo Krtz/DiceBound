@@ -17,7 +17,7 @@ assert.match(lifecycle,/owner:OWNER,apiVersion:1/);
 // exists; unused adapters are simply gone.
 const retiredForwarders=[
   "achievementGateUnlocked","allocatedTalentPoints","checkDynamicClassUnlocks",
-  "commitClassUnlock","gameplayTalentRank","isClassUnlocked",
+  "commitClassUnlock","finalizeRun","gameplayTalentRank","isClassUnlocked",
   "repairTalentPrerequisites","unlockClass"
 ];
 for(const name of retiredForwarders){
@@ -27,6 +27,7 @@ for(const direct of [
   "dbProgression.achievementGateUnlocked(",
   "dbProgression.allocatedTalentPoints(",
   "dbProgression.checkDynamicClassUnlocks(",
+  "dbProgression.finalizeRun(",
   "dbProgression.gameplayTalentRank(",
   "dbProgression.isClassUnlocked(",
   "dbProgression.repairTalentPrerequisites(",
@@ -38,12 +39,11 @@ for(const direct of [
 // be recreated just to make an architecture test happy.
 assert.ok(lifecycle.includes("commitClassUnlock"),"Progression commitClassUnlock capability missing");
 
-// These three remain first-class seams because the released runtime passes them
+// These two remain first-class seams because the released runtime passes them
 // around as values/hooks.  They may be thin, but deleting them would erase an
 // intentional interception surface rather than a redundant call-only wrapper.
 for(const seam of [
   "function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}",
-  "function finalizeRun(){return dbProgression.finalizeRun();}",
   "function talentAvailable(t){return dbProgression.talentAvailable(t);}"
 ])assert.ok(monolith.includes(seam),`required Progression hook/value seam missing: ${seam}`);
 
