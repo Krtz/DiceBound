@@ -14,6 +14,7 @@ KILLED=['achievementGateUnlocked', 'activePetDef', 'activePetState', 'activeTrai
 STALE_STARTUP_ALIASES=['db0512GateRewards','db0512RememberReward','db060GuardianArt','db060GuardianTileArt']
 STALE_CLASS_PORTRAIT_ALIASES=['classPortraitV13Base','classPortraitV15Patch','classPortraitV16Base','classPortraitV18Base','classPortraitBeta042Base','db054LegacyPortraitSVG']
 STALE_DOUBLE_DICE_ALIASES=['v19EnsureDoubleDiceButton','rollTwoDice','v22RollTwoDice','v22WireDoubleDice','v22ChooseDice','v22ShouldChooseRoll']
+STALE_ARTIFACT_FACTORY_NAMES=['generateMythicalWeapon','generateMythicalOffhand','generateMythicalBoots','generateMythicalPants','generateMythicalAmulet','generateMythicalHat','generateMythicalRing','v24Artifactize','DB060_ARTIFACT_FACTORIES']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -28,7 +29,6 @@ def main()->int:
         assert re.search(rf"\b{ident}\s*:",element_text), f"missing canonical element {ident}"
     for name in KILLED:
         assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"shadow delegate {name} returned to monolith"
-    # Progression bootstrap must be direct and ordered before legacy-meta repair.
     early_progression="dbProgression=dbProgressionOwner.configure({"
     legacy_import="importOldSaveIfNeeded();"
     repair_call="dbProgression.repairTalentPrerequisites();"
@@ -36,8 +36,6 @@ def main()->int:
     assert repair_call in text, "legacy-meta repair no longer routes directly to Progression owner"
     assert text.index(early_progression)<text.index(legacy_import), "Progression owner bootstrap must precede legacy-meta repair"
 
-    # Historical startup aliases must stay retired now that their consumers read
-    # canonical Powerup/Guardian/Asset owners directly.
     for name in STALE_STARTUP_ALIASES:
         assert not re.search(rf"\b{re.escape(name)}\b",code), f"historical startup alias {name} returned"
     assert "DB0512_GLOBAL_POWER_IDS" in text, "0.5.12 regression snapshot no longer reads canonical powerup metadata"
@@ -58,9 +56,12 @@ def main()->int:
         assert marker in dice_text, f"run/dice owner missing {marker}"
     assert "dbRunDice.configure({" in text and "dbRunDice.ensureButton();" in text, "monolith no longer configures the authoritative run/dice owner"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, startup aliases, class portraits and Double Dice ladders retired")
-    return 0
+    for name in STALE_ARTIFACT_FACTORY_NAMES:
+        assert not re.search(rf"\b{re.escape(name)}\b",code), f"Artifact predecessor {name} returned to monolith"
+    assert "dbArtifacts.configure({" in text and "dbArtifacts.create(" in text, "monolith no longer routes Artifact creation through items/artifacts.js"
 
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits and Double Dice ladders retired")
+    return 0
 
 
 def live_chainsaw_wave_guards(text:str)->None:
