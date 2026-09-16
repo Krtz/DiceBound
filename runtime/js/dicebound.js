@@ -2011,7 +2011,6 @@ function returnToRoad(...args){
   function v14SeedRng(seed){let x=v14HashSeed(seed)||1;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
   function v14SPick(R,a){return a[Math.floor(R()*a.length)];}
   function v14SInt(R,a,b){return Math.floor(R()*(b-a+1))+a;}
-  function v14ClassTags(){return new Set(CLASSES[classIdentityId()]?.tags||[]);}
       function v14SpendBase(item,R,remaining){const b=item.bonuses,key=V14_SLOT_BASE[item.slot];let spent=0;
     const add=(k,val,cost)=>{if(remaining-spent<cost)return false;b[k]=(b[k]||0)+val;spent+=cost;return true;};
     while(remaining-spent>=4){
@@ -3437,7 +3436,6 @@ dbReturnToRoadTraceReady=true;
   /* MYSTIC & MINIBOSS POWERUP REWARDS ------------------------------------- */
   function v27FallbackRarityPool(wanted){return dbPowerups.fallbackRarityPool(wanted);}
 
-  function beta03MinibossBaseTable(level=boardLevel){return dbPowerups.minibossBaseTable(level);}
   function beta03MinibossOddsText(level=boardLevel){return dbPowerups.minibossOddsText(level);}
   function v27RollMinibossRarity(){return dbPowerups.rollMinibossRarity();}
   function v27MinibossChoices(){return dbPowerups.minibossChoices();}
@@ -3448,7 +3446,6 @@ dbReturnToRoadTraceReady=true;
 
   /* BRAIN HACK / RADIATION ------------------------------------------------- */
   const BETA03_FIREBALL_BURN_CHANCE=window.DiceboundCombatElementResolution.fireBurnChance,BETA03_BURN_CAP=window.DiceboundCombatElementResolution.fireBurnCap;
-  function beta03AddBurn(...args){return dbCombat.addEnemyBurn(...args);}
   if(ELEMENTS.fire)ELEMENTS.fire.description='Fireball deals elemental damage and has a 15% chance to add 1 Burn stack. Burn deals 1% enemy max HP per stack each turn and caps at 10 stacks.';
   if(ELEMENTS.tech)ELEMENTS.tech.description='Deals damage and lowers the target\'s current Attack by about 10% for the battle.';
   if(ELEMENTS.radiation)ELEMENTS.radiation.description='Deals light elemental damage and shreds Defense. At 0 Defense or below it keeps pushing Defense negative, making later hits deal more damage.';
