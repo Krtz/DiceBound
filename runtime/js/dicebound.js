@@ -11,6 +11,9 @@
   if(!dbCombatView)throw new Error("dicebound.js requires DiceboundCombatView before loading.");
   const dbRun=window.DiceboundRun;
   if(!dbRun)throw new Error("dicebound.js requires DiceboundRun before loading.");
+  const dbBoardPresentation=window.DiceboundBoardPresentation;
+  if(!dbBoardPresentation?.configure||!dbBoardPresentation?.tileMeta)throw new Error("dicebound.js requires DiceboundBoardPresentation before loading.");
+  dbBoardPresentation.configure({getBoardLevel:()=>boardLevel});
   const dbProgressionOwner=window.DiceboundProgression;
   if(!dbProgressionOwner)throw new Error("dicebound.js requires DiceboundProgression before loading.");
   let dbProgression=null;
@@ -774,7 +777,7 @@
   }
   function refreshTile(index){
     const tile=tiles[index],el=tileEls[index];if(!tile||!el)return;
-    const [icon,label]=tileMeta(tile);
+    const [icon,label]=dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady});
     el.className=`tile ${tile.type}${tile.cleared?" cleared":""}${index===player.position?" current":""}`;
     el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;
   }
@@ -1072,69 +1075,8 @@ function returnToRoad(...args){
 }
 
       let dbTileMetaFinalReady=false;
-  function tileMeta(tile){
-    if(dbTileMetaFinalReady){
-      // Final 0.6 guardian art was the outermost generation.
-      if(tile?.type==='miniboss'&&tile.enemyBase?.id&&DB317_GUARDIANS.resolveById(tile.enemyBase.id)?.art?.boardMarker)return [guardianTileArt(tile.enemyBase.id,tile.enemyBase.name),'Mini Boss · 1 enemy'];
-      if(tile?.type==='boss'){
-        const boss=DB317_GUARDIANS.resolveFinal(boardLevel);
-        if(boss?.id&&boss.art?.boardMarker)return [guardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
-      }
-
-      if(tile?.type==='enemy'&&Number(tile.packSize||1)>1&&tile?.enemyBase){
-        const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||'Enemy';
-        return [`<span class="db-enemy-pack-art">${db049EnemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
-      }
-      if(tile?.type==='enemy'&&tile?.enemyBase&&(/bandit|troll/i.test(tile.enemyBase.name||''))){
-        return [db049EnemyTileIcon(tile),`${tile.enemyBase.name} · 1 enemy`];
-      }
-
-      // Preserve the exact 0.4.7 fallback for non-standard Bandit/Troll tiles or
-      // when the later enemy-specific generations do not apply.
-      const enemyName=tile?.enemyBase?.name||'';
-      if(enemyName){
-        let icon='';
-        if(/bandit/i.test(enemyName))icon=db047UiArt('bandit',enemyName,'db-art-portrait');
-        else if(/troll/i.test(enemyName))icon=db047UiArt('troll',enemyName,'db-art-portrait');
-        if(icon){
-          const n=Math.max(1,Number(tile.packSize||1)||1);
-          const visual=n>1?`<span class="db-enemy-pack-art">${icon}<b>×${n}</b></span>`:icon;
-          return [visual,n>1?`${enemyName} · ${n} enemies`:`${enemyName} · 1 enemy`];
-        }
-      }
-
-      // Older art generations remain as real fallbacks because their asset helper
-      // can succeed even when a newer helper does not.
-      if(tile?.enemyBase?.name){
-        const art=db046EnemyArtForName(tile.enemyBase.name);
-        if(art&&tile.type==='enemy'){
-          const count=tile.packSize||1;
-          return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
-        }
-        if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
-      }
-      if(tile?.enemyBase?.name){
-        const art=beta045EnemyArtForName(tile.enemyBase.name);
-        if(art&&tile.type==='enemy'){
-          const count=tile.packSize||1;
-          return [count>1?`${art}${art}`:art,count>1?`${tile.enemyBase.name} pack ×${count}`:`${tile.enemyBase.name} · 1 enemy`];
-        }
-        if(art&&tile.type==='miniboss')return [art,'Mini Boss · 1 enemy'];
-      }
-
-      if(tile?.type==='treasure')return [beta043Art('coins','Treasure','db-art-tile')||'💰','Treasure'];
-      if(tile?.type==='gambler')return [beta043Art('gambler','Gambler','db-art-tile')||'🪙','Gambler'];
-      if(tile?.type==='devilboss')return ['👿🌙','???'];
-    }
-
-    // Original base metadata remains the bootstrap fallback until all later art
-    // helpers are initialized, and the final fallback after they decline a tile.
-    if(tile.type==="enemy"&&tile.enemyBase){const n=tile.packSize||1;return [n===1?tile.enemyBase.icon:n===2?"👹👹":"👹👹👹",n===1?`${tile.enemyBase.name} · 1 enemy`:`Enemy pack · ${n}`];}
-    if(tile.type==="miniboss"&&tile.enemyBase)return [tile.enemyBase.icon,"Mini Boss · 1 enemy"];
-    return {start:["🏠","Start"],empty:["·","Road"],event:["🎰","Slots"],wheel:["🎡","Wheel"],powerup:["🎁","Powerup"],treasure:["💰","Treasure"],camp:["🔥","Camp"],merchant:["🧔","Merchant"],blessing:["✨","Blessing"],mystic:["🔮","Mystic"],bloodwell:["🩸","Bloodwell"],gambler:["🪙","Gambler"],boss:["🐉","Final Boss · 1"]}[tile.type];
-  }
-  function buildBoard(){
-    const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=tileMeta(tile),el=document.createElement("div");el.className=`tile ${tile.type}`;el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
+    function buildBoard(){
+    const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady}),el=document.createElement("div");el.className=`tile ${tile.type}`;el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
   }
   function updateHUD(){
     const cls=CLASSES[player.classId];$("heroAvatar").textContent=cls.icon;$("heroName").textContent=cls.name;$("pawn").textContent=cls.icon;$("combatPlayerIcon").textContent=cls.icon;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=dbPets.activeDefinition().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
@@ -1187,8 +1129,6 @@ function returnToRoad(...args){
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
   function showEnd(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
-
-
 
     dbPowerups.configure({
     getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
@@ -3316,19 +3256,7 @@ dbReturnToRoadTraceReady=true;
     const alt=(label||entry.alt||key||'').replace(/"/g,'&quot;');
     return `<img class="db-art-icon ${klass}" src="${entry.image}" alt="${alt}">`;
   }
-  function db049EnemyTileIcon(tile){
-    const name=tile?.enemyBase?.name||'';
-    if(/bandit/i.test(name))return db049UiArt('bandit',name,'db-art-portrait')||tile?.enemyBase?.icon||'👹';
-    if(/troll/i.test(name))return db049UiArt('troll',name,'db-art-portrait')||tile?.enemyBase?.icon||'👹';
-    const icon=tile?.enemyBase?.icon;
-    if(typeof icon==='string'&&icon.trim()){
-      if(icon.includes('db-enemy-pack-art'))return '👹';
-      if(icon==='👹👹'||icon==='👹👹👹')return '👹';
-      return icon;
-    }
-    return '👹';
-  }
-  function db049ApplyArtBindings(){
+    function db049ApplyArtBindings(){
     const glass=db049UiArt('glassNeedle','Glass Needle','db-art-choice db-art-glass-needle');
     if(Array.isArray(window.upgrades))window.upgrades.forEach(up=>{});
     if(window.ENEMY_REGISTRY){
@@ -3477,10 +3405,6 @@ dbReturnToRoadTraceReady=true;
     if(src)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${src}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
     return db060EnemyPortraitBase(enemy);
   };
-  function guardianTileArt(id,alt='Guardian'){
-    const src=DB317_GUARDIANS.resolveById(id)?.art?.boardMarker||window.DiceboundAssets.resolveGuardianArt(id)?.boardMarker;
-    return src?`<img class="db060-guardian-tile-art" src="${src}" alt="${alt}" draggable="false">`:'';
-  }
 
   dbTileMetaFinalReady=true;
 
@@ -4006,7 +3930,7 @@ dbReturnToRoadTraceReady=true;
   dbEnemyScalingResolution=dbEnemyScalingOwner.configure({
     getState:()=>({player,boardLevel,nightmareMode,hellMode}),currentTileCount,clamp,random,pick,
     getBoard:level=>db317Board(level),enemyPolicy:db064EnemyPolicy,elementKeys:ELEMENT_KEYS,
-    beta045EnemyArtForName,db046EnemyArtForName,db047UiArt
+    enemyArtForName:name=>dbBoardPresentation.enemyArtForName(name)
   });
 
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes

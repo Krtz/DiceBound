@@ -59,6 +59,7 @@
     "run-dice",
     "combat-enemies",
     "combat-guardians",
+    "board-presentation",
     "item-rarities",
     "item-equipment",
     "item-consumables",
@@ -721,6 +722,19 @@
       ],
       "provides": [
         "DiceboundGuardians"
+      ]
+    },
+    {
+      "id": "board-presentation",
+      "path": "js/board/presentation.js",
+      "domain": "board/tile-and-road-presentation",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "combat-guardians"
+      ],
+      "provides": [
+        "DiceboundBoardPresentation"
       ]
     },
     {

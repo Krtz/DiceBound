@@ -10,12 +10,14 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 MONOLITH=ROOT/"runtime/js/dicebound.js"
 ELEMENTS=ROOT/"runtime/js/combat/element-content.js"
 DICE=ROOT/"runtime/js/run/dice.js"
+BOARD_PRESENTATION=ROOT/"runtime/js/board/presentation.js"
 KILLED=['achievementGateUnlocked', 'activePetDef', 'activePetState', 'activeTrainerPetId', 'affinityElementMultiplier', 'allocatedTalentPoints', 'applyRandomHighRarity', 'beta03AddBurn', 'beta03MinibossBaseTable', 'checkDynamicClassUnlocks', 'clearBloodOverhealTemp', 'commitClassUnlock', 'currentWeaponElement', 'elementHit', 'elementHitAll', 'enemyElementProc', 'enemyForPosition', 'enemyTurn', 'gameplayTalentRank', 'generateBoard', 'generateEquipment', 'healPlayer', 'isClassUnlocked', 'manaGain', 'maybePetElementProc', 'occultChannelAttack', 'occultSpellAttack', 'performStrike', 'petElementFor', 'recordHealing', 'renderEnemyParty', 'repairTalentPrerequisites', 'shuffledPetIds', 'statusDotsHTML', 'strikeBaseDamage', 'summonerConjure', 'trackElementProgress', 'trainerPetDamage', 'trainerStrike', 'triggerElementEffect', 'triggerWeaponElement', 'unlockClass', 'v14ClassTags', 'winCombat']
 STALE_STARTUP_ALIASES=['db0512GateRewards','db0512RememberReward','db060GuardianArt','db060GuardianTileArt']
 STALE_CLASS_PORTRAIT_ALIASES=['classPortraitV13Base','classPortraitV15Patch','classPortraitV16Base','classPortraitV18Base','classPortraitBeta042Base','db054LegacyPortraitSVG']
 STALE_DOUBLE_DICE_ALIASES=['v19EnsureDoubleDiceButton','rollTwoDice','v22RollTwoDice','v22WireDoubleDice','v22ChooseDice','v22ShouldChooseRoll']
 STALE_ARTIFACT_FACTORY_NAMES=['generateMythicalWeapon','generateMythicalOffhand','generateMythicalBoots','generateMythicalPants','generateMythicalAmulet','generateMythicalHat','generateMythicalRing','v24Artifactize','DB060_ARTIFACT_FACTORIES']
 STALE_SCHEMA_MARKERS=['v13NormalizeMeta','normalizeV15','importOldSaveIfNeeded','v24MigrateItemRarity','raritySchemaV24','v24Rarity','db060MigratedNamed','ACHIEVEMENT_POWER_GATES','fighter_counter_reserve']
+STALE_BOARD_PRESENTATION_NAMES=['tileMeta','guardianTileArt','db049EnemyTileIcon']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -64,8 +66,14 @@ def main()->int:
     for marker in STALE_SCHEMA_MARKERS:
         assert marker not in text, f"historical schema/migration marker {marker} returned"
     assert "function normalizeCareerMeta(raw={}){" in code, "canonical career normalizer is missing"
+    board_text=BOARD_PRESENTATION.read_text(encoding="utf-8")
+    for name in STALE_BOARD_PRESENTATION_NAMES:
+        assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"Board presentation predecessor {name} returned to monolith"
+    assert "dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady})" in text, "board rendering no longer routes through board/presentation"
+    for marker in ['const OWNER="board/presentation"','function tileMeta(','function enemyArtForName(','window.DiceboundBoardPresentation=api']:
+        assert marker in board_text, f"board/presentation owner missing {marker}"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent")
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent, Board presentation canonical")
     return 0
 
 

@@ -66,6 +66,7 @@
     "js/run/dice.js",
     "js/combat/enemies.js",
     "js/combat/guardians.js",
+    "js/board/presentation.js",
     "js/items/rarities.js",
     "js/items/equipment.js",
     "js/items/consumables.js",
