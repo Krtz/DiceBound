@@ -54,7 +54,10 @@ async function main(){
   const profile=fs.mkdtempSync(path.join(os.tmpdir(),"dicebound-camp-shell-oracle-"));
   const {server,url}=await serveRuntime();let child,page;
   try{
-    child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--no-sandbox","--no-first-run","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
+    // Match the permanent browser smoke's isolated Edge launch contract. The
+    // temporary headless profile must tolerate local Chromium child-process
+    // sandbox denials without changing the shipped WebView2 wrapper.
+    child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--disable-gpu-sandbox","--no-sandbox","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
     page=await connect(url);await page.send("Runtime.enable");
     const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundCamp&&!!window.DiceboundCampShellOracleTest&&!!window.DiceboundRunResumeTest&&!!window.DiceboundClasses&&!!window.DiceboundRng");if(ready)break;await sleep(100);}if(!ready){const diagnostic=await startupDiagnostics(page);assert.fail(`Camp/App-Shell oracle runtime surface did not become ready\n${JSON.stringify(diagnostic,null,2)}`);}
     const actual=await page.evaluate(`(async()=>{const api=window.DiceboundCampShellOracleTest,out=[];const add=(name,result)=>out.push({name,result:result==null?result:JSON.parse(JSON.stringify(result))});add('startup-camp',api.startup());add('camp-recovery',api.recovery());add('camp-entry-checkpoint-reset',api.checkpointReset());add('camp-entry-reset',api.campReset());add('meta-refresh',api.metaRefresh());add('hud-board5-premini',api.hudBoard5Pre());add('hud-board5-final',api.hudBoard5Final());add('hud-board6-premini',api.hudBoard6Pre());add('hud-board6-final',api.hudBoard6Final());add('hud-hell-floor',api.hudHell());add('hud-stat-sync',api.hudStats());add('hud-checkpoint-schedule',await api.hudCheckpoint());add('camp-art-refresh',api.artRefresh());api.cleanup();return {baselineVersion:'0.6.6.35',runtimeVersion:window.DiceboundVersion?.version||null,cases:out};})()`);
