@@ -9,12 +9,16 @@ const vm=require("node:vm");
 const ROOT=path.join(__dirname,"..");
 const source=fs.readFileSync(path.join(ROOT,"runtime","js","board","presentation.js"),"utf8");
 let boardLevel=4;
-let uiResolutions=0,guardianResolutions=0;
+let uiResolutions=0,guardianResolutions=0,enemyPortraitResolutions=0;
 const ui={
   bandit:{image:"assets/enemies/normal/battle/bandit.png",alt:"Bandit"},
   troll:{image:"assets/enemies/normal/battle/troll.png",alt:"Troll"},
   coins:{image:"assets/ui/currencies/coins.png",alt:"Coins"},
   gambler:{image:"assets/board/tiles/events/gambler.png",alt:"Gambler"},
+};
+const enemyPortraits={
+  bandit:{key:"bandit",src:"assets/enemies/normal/battle/bandit.png",alt:"Bandit"},
+  troll:{key:"troll",src:"assets/enemies/normal/battle/troll.png",alt:"Troll"},
 };
 const guardianById={
   "mini-known":{id:"mini-known",name:"Known Mini",art:{boardMarker:"assets/enemies/minibosses/board-markers/mini-known.png"}},
@@ -24,6 +28,7 @@ const context={
   window:{
     DiceboundAssets:{
       resolveUiIcon:key=>{uiResolutions++;return ui[key]||null;},
+      resolveEnemyPortraitById:id=>{enemyPortraitResolutions++;return enemyPortraits[id]||null;},
       resolveGuardianArt:id=>{guardianResolutions++;return {boardMarker:`assets/fallback/${id}.png`};},
     },
     DiceboundGuardians:{
@@ -41,9 +46,9 @@ presentation.configure({getBoardLevel:()=>boardLevel});
 
 const meta=(tile,ready=true)=>Array.from(presentation.tileMeta(tile,{ready}));
 
-assert.deepEqual(meta({type:"enemy",enemyBase:{name:"Goblin",icon:"👺"}},false),["👺","Goblin · 1 enemy"]);
-assert.deepEqual(meta({type:"enemy",packSize:2,enemyBase:{name:"Goblin",icon:"👺"}},false),["👹👹","Enemy pack · 2"]);
-assert.deepEqual(meta({type:"enemy",packSize:5,enemyBase:{name:"Goblin",icon:"👺"}},false),["👹👹👹","Enemy pack · 5"]);
+assert.deepEqual(meta({type:"enemy",enemyBase:{id:"goblin",name:"Goblin",icon:"👺"}},false),["👺","Goblin · 1 enemy"]);
+assert.deepEqual(meta({type:"enemy",packSize:2,enemyBase:{id:"goblin",name:"Goblin",icon:"👺"}},false),["👹👹","Enemy pack · 2"]);
+assert.deepEqual(meta({type:"enemy",packSize:5,enemyBase:{id:"goblin",name:"Goblin",icon:"👺"}},false),["👹👹👹","Enemy pack · 5"]);
 assert.deepEqual(meta({type:"miniboss",enemyBase:{id:"mini-known",name:"Known Mini",icon:"🪨"}},false),["🪨","Mini Boss · 1 enemy"]);
 
 const staticExpected={
@@ -60,19 +65,19 @@ assert.deepEqual(meta({type:"boss"}),[
   "Final Boss · 1 enemy",
 ]);
 
-assert.deepEqual(meta({type:"enemy",enemyBase:{name:"Road Bandit",icon:"🗡️"}}),[
+assert.deepEqual(meta({type:"enemy",enemyBase:{id:"bandit",name:"Road Bandit",icon:"🗡️"}}),[
   '<img class="db-art-icon db-art-portrait" src="assets/enemies/normal/battle/bandit.png" alt="Road Bandit">',
   "Road Bandit · 1 enemy",
 ]);
-assert.deepEqual(meta({type:"enemy",packSize:3,enemyBase:{name:"Cave Troll",icon:"👹"}}),[
+assert.deepEqual(meta({type:"enemy",packSize:3,enemyBase:{id:"troll",name:"Cave Troll",icon:"👹"}}),[
   '<span class="db-enemy-pack-art"><img class="db-art-icon db-art-portrait" src="assets/enemies/normal/battle/troll.png" alt="Cave Troll"><b>×3</b></span>',
   "Cave Troll pack · 3 enemies",
 ]);
-assert.deepEqual(meta({type:"enemy",packSize:4,enemyBase:{name:"Goblin",icon:"👺"}}),[
+assert.deepEqual(meta({type:"enemy",packSize:4,enemyBase:{id:"goblin",name:"Goblin",icon:"👺"}}),[
   '<span class="db-enemy-pack-art">👺<b>×4</b></span>',
   "Goblin pack · 4 enemies",
 ]);
-assert.deepEqual(meta({type:"enemy",enemyBase:{name:"Goblin",icon:"👺"}}),["👺","Goblin · 1 enemy"]);
+assert.deepEqual(meta({type:"enemy",enemyBase:{id:"goblin",name:"Goblin",icon:"👺"}}),["👺","Goblin · 1 enemy"]);
 
 assert.deepEqual(meta({type:"treasure"}),[
   '<img class="db-art-icon db-art-tile" src="assets/ui/currencies/coins.png" alt="Treasure">',"Treasure",
@@ -86,7 +91,8 @@ assert.equal(presentation.tileMeta({type:"mystery"},{ready:true}),undefined);
 assert.equal(presentation.test.uiArt("bandit",'Bandit "Prime"',"db-art-portrait"),'<img class="db-art-icon db-art-portrait" src="assets/enemies/normal/battle/bandit.png" alt="Bandit &quot;Prime&quot;">');
 assert.equal(presentation.inspect().owner,"board/presentation");
 assert.ok(uiResolutions>0,"oracle must exercise canonical UI asset resolution");
+assert.ok(enemyPortraitResolutions>0,"oracle must exercise ID-driven enemy portrait resolution");
 assert.equal(guardianResolutions,0,"registered guardians must not need fallback asset lookup in frozen cases");
 assert.ok(!/Math\.random|\brandom\s*\(/.test(source),"Board presentation must not consume gameplay RNG");
 
-console.log("Board presentation oracle PASS: bootstrap/final tile metadata, guardian art, enemy packs, Bandit/Troll art, event art and zero-gameplay-RNG contract are frozen.");
+console.log("Board presentation oracle PASS: bootstrap/final tile metadata, guardian art, ID-driven enemy packs, Bandit/Troll art, event art and zero-gameplay-RNG contract are frozen.");
