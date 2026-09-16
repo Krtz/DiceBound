@@ -52,6 +52,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/bulk_0670_cleanup.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/live_chainsaw_item_icon_cleanup.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_whitespace_cleanup.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_update_guards.py
