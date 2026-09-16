@@ -805,7 +805,7 @@
   function addCombatHistory(text){const box=$("combatHistory");if(!box)return;const p=document.createElement("p");p.textContent=text;box.appendChild(p);box.scrollTop=box.scrollHeight;}
   function setCombatText(text,record=true){$("combatText").textContent=text;if(record)addCombatHistory(text);}
   const toastQueue=[];let toastActive=false;
-  function showToast(text,duration=1900,isUnlock=false){toastQueue.push({text,duration,isUnlock});if(!toastActive)showNextToast();}
+  function showToast(text,duration=1900,isUnlock=false){const value=String(text??''),procToast=Object.values(ELEMENTS).some(e=>value.startsWith(`${e.icon} ${e.spell}`))||/^☢️\s*-?\d+\s*DEF/.test(value);if(procToast)return;toastQueue.push({text,duration,isUnlock});if(!toastActive)showNextToast();}
   function showNextToast(){const t=$("toast"),entry=toastQueue.shift();if(!entry){toastActive=false;t.classList.remove("show","unlock-toast");return;}toastActive=true;t.textContent=entry.text;t.classList.toggle("unlock-toast",!!entry.isUnlock);t.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>{t.classList.remove("show");setTimeout(showNextToast,170);},entry.duration);}
 
   function chooseDieResult(){
@@ -1128,7 +1128,7 @@ function returnToRoad(...args){
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
-  function showEnd(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){dbRunClearCheckpoint();const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
     dbPowerups.configure({
     getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
@@ -1674,7 +1674,7 @@ function returnToRoad(...args){
   OCCULT_SPELLS.summoner={builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."};
 
   // ---- Defense becomes diminishing percentage reduction --------------------
-  function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+25),0,.82);}
+  function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return v24HasJeanJacket()?clamp(d/(d+13),0,.90):clamp(d/(d+25),0,.82);}
   // ---- Rarity/Luck and deterministic v1.5 seed codes -----------------------
 
   function v15SafeClassId(id){if(!CLASSES[id])throw new Error(`Unknown equipment seed class: ${id}`);return id;}
@@ -2353,7 +2353,6 @@ function returnToRoad(...args){
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
-  const defenseDamageReductionV24Base=defenseDamageReduction;defenseDamageReduction=function(defense=player.defense){if(v24HasJeanJacket()){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+13),0,.90);}return defenseDamageReductionV24Base(defense);};
     function v24UpdateShieldBars(){if(!dbCombatView.isPresentationConfigured())return;return dbCombatView.syncEnergyShieldBars();}
   window.DiceboundCamp.configureShell({refreshShieldBars:()=>v24UpdateShieldBars()});
 
@@ -2592,13 +2591,6 @@ dbReturnToRoadTraceReady=true;
   /* QUIETER COMBAT FEEDBACK ------------------------------------------------ */
   // Elemental activations remain in the combat text/history and animations,
   // but no longer create a toast in the middle of every proc chain.
-  const showToastV27Base=showToast;
-  showToast=function(text,...args){
-    const s=String(text??'');
-    const procToast=Object.values(ELEMENTS).some(e=>s.startsWith(`${e.icon} ${e.spell}`))||/^☢️\s*-?\d+\s*DEF/.test(s);
-    if(procToast)return;
-    return showToastV27Base(text,...args);
-  };
 
   /* LEGENDARY DESIGN: RARITY != UNIQUE ------------------------------------ */
   ['legendary_worldheart','legendary_echo_crown','legendary_prismatic','legendary_blood_contract','true_legend_attack_v24','true_legend_echo_v24','true_legend_guard_v24','true_legend_element_v24'].forEach(id=>{const u=v27Upgrade(id);});
@@ -3162,19 +3154,6 @@ dbReturnToRoadTraceReady=true;
 
   if(window.DiceboundV16Debug?.prepareAlchemist)window.DiceboundV16Debug.prepareAlchemist=()=>{meta.stats.potionsUsed=15;dbProgression.checkDynamicClassUnlocks();window.DiceboundClassChooser.render();return dbProgression.isClassUnlocked('alchemist');};
 
-  // Board balance pass. Goal: a smoother climb with Board 5 clearly harder than Board 4.
-  const DB046_BOARD_OVERRIDES={
-    2:{entryHeal:.12,entryPotions:1},
-    3:{entryHeal:.18,entryPotions:1},
-    4:{entryHeal:.22,entryPotions:2},
-    5:{entryHeal:.18,entryPotions:2,extraHp:.52,extraAttack:.34,extraDefense:6,threePackChance:.42},
-    6:{entryHeal:.22,entryPotions:2,extraHp:.62,extraAttack:.42,extraDefense:7}
-  };
-  if(typeof db317Board==='function'){
-    const db046BoardBase=db317Board;
-    db317Board=function(level=boardLevel){const base=db046BoardBase(level),ov=DB046_BOARD_OVERRIDES[level]||DB046_BOARD_OVERRIDES[String(level)]||null;return ov?Object.assign({},base,ov):base;};
-  }
-
   // Hard anti-lock: only one haste skip can be banked before an enemy actually acts.
   // Coffee still deals damage, but if Haste has already been granted in this response chain,
   // additional coffee procs cannot create another skipped enemy response.
@@ -3219,22 +3198,6 @@ dbReturnToRoadTraceReady=true;
     }
   }
   db047ApplyKnownArt();
-
-  // --- board pass: make the climb smoother and Board 5 > Board 4 ----------
-  const DB047_BOARD_OVERRIDES={
-    1:{entryHeal:.10,entryPotions:1},
-    2:{entryHeal:.12,entryPotions:1,extraHp:.05,extraAttack:.03,extraDefense:0},
-    3:{entryHeal:.16,entryPotions:1,extraHp:.11,extraAttack:.07,extraDefense:1},
-    4:{entryHeal:.20,entryPotions:2,extraHp:.18,extraAttack:.12,extraDefense:2,threePackChance:.24},
-    5:{entryHeal:.16,entryPotions:2,extraHp:.38,extraAttack:.26,extraDefense:5,threePackChance:.46},
-    6:{entryHeal:.20,entryPotions:2,extraHp:.56,extraAttack:.38,extraDefense:7,threePackChance:.58}
-  };
-  const db047BoardBase=db317Board;
-  db317Board=function(level=boardLevel){
-    const base=db047BoardBase(level);
-    const ov=DB047_BOARD_OVERRIDES[level]||null;
-    return ov?Object.assign({},base,ov):base;
-  };
 
   // --- haste anti-lock: never queue more than one skipped response ---------
 
@@ -3415,14 +3378,6 @@ dbReturnToRoadTraceReady=true;
   Object.assign(V14_RARITY_BUDGETS,{poor:[11,25],common:[26,45],uncommon:[46,70],rare:[71,105],epic:[106,150],legendary:[151,210]});
   Object.keys(V14_RARITY_AFFIX_TIER).forEach(k=>delete V14_RARITY_AFFIX_TIER[k]);
   Object.assign(V14_RARITY_AFFIX_TIER,{poor:1,common:2,uncommon:3,rare:4,epic:5,legendary:5});
-
-  // New seed parser accepts the full generated ladder including Legendary.
-  const db060SeedParserBase=v15ParseSeedCode;
-  v15ParseSeedCode=function(code){
-    const m=String(code||'').trim().match(/^D15\|(poor|common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);
-    if(!m)return db060SeedParserBase(code);
-    return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};
-  };
 
   const DB060_LEGENDARY_EFFECTS=dbItemGenerationOwner.effects;
   const DB060_EFFECT_BY_ID=dbItemGenerationOwner.effectById;
@@ -3656,7 +3611,6 @@ dbReturnToRoadTraceReady=true;
   }
 
   window.DiceboundCamp.configureShell({scheduleRunCheckpoint:()=>dbRunScheduleCheckpoint(),clearCheckpoint:()=>dbRunClearCheckpoint(),refreshRunControls:()=>dbRunRefreshControls()});
-  const dbRunShowEndBase=showEnd;showEnd=function(...args){dbRunClearCheckpoint();return dbRunShowEndBase.apply(this,args);};
   document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
   // Test-only exercise of the live final-boss path. It deliberately resets the

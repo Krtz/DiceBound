@@ -18,6 +18,7 @@ STALE_DOUBLE_DICE_ALIASES=['v19EnsureDoubleDiceButton','rollTwoDice','v22RollTwo
 STALE_ARTIFACT_FACTORY_NAMES=['generateMythicalWeapon','generateMythicalOffhand','generateMythicalBoots','generateMythicalPants','generateMythicalAmulet','generateMythicalHat','generateMythicalRing','v24Artifactize','DB060_ARTIFACT_FACTORIES']
 STALE_SCHEMA_MARKERS=['v13NormalizeMeta','normalizeV15','importOldSaveIfNeeded','v24MigrateItemRarity','raritySchemaV24','v24Rarity','db060MigratedNamed','ACHIEVEMENT_POWER_GATES','fighter_counter_reserve']
 STALE_BOARD_PRESENTATION_NAMES=['tileMeta','guardianTileArt','db049EnemyTileIcon']
+STALE_WAVE6_PREDECESSORS=['DB046_BOARD_OVERRIDES','DB047_BOARD_OVERRIDES','db046BoardBase','db047BoardBase','defenseDamageReductionV24Base','showToastV27Base','dbRunShowEndBase','db060SeedParserBase']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -66,6 +67,8 @@ def main()->int:
     for marker in STALE_SCHEMA_MARKERS:
         assert marker not in text, f"historical schema/migration marker {marker} returned"
     assert "function normalizeCareerMeta(raw={}){" in code, "canonical career normalizer is missing"
+    for marker in STALE_WAVE6_PREDECESSORS:
+        assert marker not in text, f"historical Wave 6 predecessor {marker} returned"
     board_text=BOARD_PRESENTATION.read_text(encoding="utf-8")
     for name in STALE_BOARD_PRESENTATION_NAMES:
         assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"Board presentation predecessor {name} returned to monolith"

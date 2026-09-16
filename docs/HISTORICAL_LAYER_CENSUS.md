@@ -8,7 +8,7 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 
 | Rank | Score | Runtime file | Replacement pairs | Same-scope repeats | Repeated symbols | Predecessor captures | Temp overrides ignored | Versioned defs | History-named defs | Max alias depth | Lines | Repeated symbols |
 | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | 1134 | `runtime/js/dicebound.js` | 8 | 14 | 13 | 25 | 4 | 109 | 4 | 2 | 5105 | onComplete×3, add×2, addCombatHistory×2, addLog×2, applyPoisonTick×2, beta04SyncHud×2, db317Board×2, defenseDamageReduction×2, filter×2, playElementAnimation×2, saveMeta×2, setCombatText×2, showToast×2 |
+| 1 | 940 | `runtime/js/dicebound.js` | 5 | 11 | 10 | 21 | 4 | 108 | 4 | 1 | 5059 | onComplete×3, add×2, addCombatHistory×2, addLog×2, applyPoisonTick×2, beta04SyncHud×2, filter×2, playElementAnimation×2, saveMeta×2, setCombatText×2 |
 | 2 | 114 | `runtime/js/combat/turn-resolution.js` | 0 | 0 | 0 | 7 | 0 | 0 | 2 | 1 | 354 | - |
 | 3 | 109 | `runtime/js/combat/ultimate-resolution.js` | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 1 | 266 | - |
 | 4 | 89 | `runtime/js/combat/strike-resolution.js` | 0 | 0 | 0 | 2 | 0 | 13 | 5 | 1 | 342 | - |
@@ -50,7 +50,7 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 | 40 | 0 | `runtime/js/board/generation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 221 | - |
 | 41 | 0 | `runtime/js/board/movement.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 74 | - |
 | 42 | 0 | `runtime/js/board/presentation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 75 | - |
-| 43 | 0 | `runtime/js/board/registry.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 71 | - |
+| 43 | 0 | `runtime/js/board/registry.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 89 | - |
 | 44 | 0 | `runtime/js/board/tile-dispatch.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 64 | - |
 | 45 | 0 | `runtime/js/board/transition.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 69 | - |
 | 46 | 0 | `runtime/js/classes/invoker.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 160 | - |
