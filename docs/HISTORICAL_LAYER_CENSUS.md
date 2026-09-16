@@ -8,7 +8,7 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 
 | Rank | Score | Runtime file | Replacement pairs | Same-scope repeats | Repeated symbols | Predecessor captures | Temp overrides ignored | Versioned defs | History-named defs | Max alias depth | Lines | Repeated symbols |
 | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | 1527 | `runtime/js/dicebound.js` | 10 | 31 | 30 | 28 | 4 | 113 | 5 | 2 | 5589 | onComplete×3, add×2, addCombatHistory×2, addLog×2, applyPoisonTick×2, beta04SyncHud×2, db317Board×2, defenseDamageReduction×2, filter×2, generateMythicalAmulet×2, generateMythicalBoots×2, generateMythicalHat×2, generateMythicalOffhand×2, generateMythicalPants×2, generateMythicalRing×2, generateMythicalWeapon×2, grantXp×2, handlePlayerDeath×2, loseGame×2, playElementAnimation×2, rollDice×2, rollGearRarity×2, saveMeta×2, setCombatText×2, showEnd×2, showToast×2, unboundPreciousGearV16×2, useCamp×2, v13NormalizeMeta×2, weightedUpgrade×2 |
+| 1 | 1405 | `runtime/js/dicebound.js` | 10 | 24 | 23 | 28 | 4 | 112 | 5 | 2 | 5302 | onComplete×3, add×2, addCombatHistory×2, addLog×2, applyPoisonTick×2, beta04SyncHud×2, db317Board×2, defenseDamageReduction×2, filter×2, grantXp×2, handlePlayerDeath×2, loseGame×2, playElementAnimation×2, rollDice×2, rollGearRarity×2, saveMeta×2, setCombatText×2, showEnd×2, showToast×2, unboundPreciousGearV16×2, useCamp×2, v13NormalizeMeta×2, weightedUpgrade×2 |
 | 2 | 114 | `runtime/js/combat/turn-resolution.js` | 0 | 0 | 0 | 7 | 0 | 0 | 2 | 1 | 354 | - |
 | 3 | 109 | `runtime/js/combat/ultimate-resolution.js` | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 1 | 266 | - |
 | 4 | 89 | `runtime/js/combat/strike-resolution.js` | 0 | 0 | 0 | 2 | 0 | 13 | 5 | 1 | 342 | - |
@@ -71,7 +71,7 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 | 61 | 0 | `runtime/js/events/facade.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 39 | - |
 | 62 | 0 | `runtime/js/events/merchant-facade.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 85 | - |
 | 63 | 0 | `runtime/js/events/merchant-transaction.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 135 | - |
-| 64 | 0 | `runtime/js/items/artifacts.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44 | - |
+| 64 | 0 | `runtime/js/items/artifacts.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 138 | - |
 | 65 | 0 | `runtime/js/items/facade.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 54 | - |
 | 66 | 0 | `runtime/js/items/generation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 78 | - |
 | 67 | 0 | `runtime/js/items/loot.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 142 | - |

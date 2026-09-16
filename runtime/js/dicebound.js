@@ -28,8 +28,7 @@
   const dbItems=window.DiceboundItems;
   if(!dbItems)throw new Error("dicebound.js requires DiceboundItems before loading.");
   let dbItemGeneration=null,dbItemOperations=null;
-  // Final live policy assignments occur after the historical bootstrap block.
-  // These bindings preserve that order without retaining superseded bodies.
+
   let elementChanceForRarity,rollGearRarity,generatePhilosophersStone;
   let v19SetDamageBonus,v19SetProcBonus,v19SetPetDoubleBonus;
   let v19SetElementPower,v19SetStartUltimate,v19SetGuardianSpecialMult;
@@ -116,7 +115,7 @@
   const STATIC_CAMP_TILES = [10,30,55,70,90];
   const POWERUP_TILE_COUNT = 5;
   const WHEEL_TILE_COUNT = 5;
-  // The Info/Guide module is configured after legacy bootstrap has supplied
+
   // its runtime callbacks. These stable adapters deliberately stay safe
   // during that bootstrap window instead of recreating a wrapper chain.
   let dbInfoGuide=null;
@@ -134,11 +133,7 @@
   const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';
   const DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i';
   const DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';
-  /* ========================================================================
-     Alpha v3.1.7 — authoritative content registries
-     Final definitions are canonical. Historical patch-era writes later in the
-     bundle are compatibility no-ops against these read-only proxy views.
-     ======================================================================== */
+
         const DB317_CLASSES_RAW=window.DiceboundClasses?.createRegistry();
   if(!DB317_CLASSES_RAW)throw new Error("DiceboundClasses must load before dicebound.js");
   const CLASSES=DB317_CLASSES_RAW;
@@ -232,7 +227,7 @@
   const DB317_CLASS_UNLOCKS_RAW=window.DiceboundClasses?.createUnlockRegistry?.();
   if(!DB317_CLASS_UNLOCKS_RAW)throw new Error("DiceboundClasses unlock registry must load before dicebound.js");
   const CLASS_UNLOCK_REGISTRY=DB317_CLASS_UNLOCKS_RAW;
-  /* Alpha v3.1.9 — hidden mechanic tags. These are runtime capability tags, not player-facing class labels. */
+
   const DB317_CLASS_MECHANICS_RAW=window.DiceboundClasses?.createMechanicsRegistry?.();
   if(!DB317_CLASS_MECHANICS_RAW)throw new Error("DiceboundClasses mechanics registry must load before dicebound.js");
   const CLASS_MECHANICS_REGISTRY=DB317_CLASS_MECHANICS_RAW;
@@ -284,12 +279,12 @@
   function db317MinibossGuardian(level=boardLevel){return DB317_GUARDIANS.resolveMiniboss(level).combat;}
   const DiceboundContentRegistry={version:3,classes:CLASSES,classUnlocks:CLASS_UNLOCK_REGISTRY,classTagVocabulary:CLASS_TAG_VOCABULARY,powerups:upgrades,powerupGates:POWERUP_GATE_REGISTRY,equipment:EQUIPMENT_REGISTRY,pets:PETS,enemies:{normal:enemyPool,special:ENEMY_REGISTRY},talents,achievements:ACHIEVEMENT_REGISTRY,boards:BOARD_REGISTRY,rarities:rarityInfo,classTags:CLASS_TAGS,classPassives:CLASS_PASSIVES,classMechanics:CLASS_MECHANICS_REGISTRY,mechanicTagVocabulary:MECHANIC_TAG_VOCABULARY,powerupMechanics:POWERUP_MECHANICS_REGISTRY,ultimateSupportMechanics:ULTIMATE_SUPPORT_MECHANICS,elementIds:ELEMENT_ID_VOCABULARY};
   window.DiceboundContent=DiceboundContentRegistry;
-  /* Alpha v3.1.7: foundation continues after authoritative registries. */
+
   const diceFaces = ["⚀","⚁","⚂","⚃","⚄","⚅"];
   const $ = (id) => document.getElementById(id);
   const delay = (ms) => new Promise(resolve => { const cap=Number(window.__DB_FAST_ECHO_CAP__||0); setTimeout(resolve, cap>0 ? Math.min(ms,cap) : (window.__DB_V26_FAST_ECHO__ ? Math.min(ms,55) : ms)); });
   const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
-  // Alpha 3.1.9: all gameplay randomness routes through the injectable RNG service.
+
   const random = () => window.DiceboundRng?.random?.() ?? Math.random();
   const rand = (min,max) => window.DiceboundRng?.int?.(min,max) ?? Math.floor(random()*(max-min+1))+min;
   const pick = (arr) => window.DiceboundRng?.pick?.(arr) ?? arr[Math.floor(random()*arr.length)];
@@ -341,15 +336,10 @@
   normalizePrestigeState();
   function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
-  /* ========================================================================
-     Alpha v3.1.9 — state/render contracts
-     Mutating domain helpers return result objects; render adapters consume
-     those results. This is intentionally small and framework-free.
-     ======================================================================== */
   const DiceboundStateEvents=dbRuntime.createEventBus();
 
   // Classes owns runtime identity/capability policy. These thin local names remain
-  // temporarily as compatibility adapters while ordinary callers are drained.
+
   const dbClasses=window.DiceboundClasses;
   if(!dbClasses?.configure)throw new Error("Dicebound.js requires the DiceboundClasses runtime facade.");
   dbClasses.configure({
@@ -559,16 +549,14 @@
     elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{}
   };
 
-  /* Alpha v3.1.7: normal enemy pool now lives in registries/01-authoritative-content.js. */
-  /* Alpha v3.1.7: rarityInfo and upgrades are registry-owned. */
+  const dbArtifacts=window.DiceboundArtifacts;
+  if(!dbArtifacts?.configure||!dbArtifacts?.create)throw new Error('DiceboundArtifacts final factory owner must load before dicebound.js');
+  dbArtifacts.configure({getPlayer:()=>player,random:()=>random(),pick:values=>pick(values),getElementKeys:()=>ELEMENT_KEYS});
 
                     /* rarityValues is registry-owned. */
 
       function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
-    function generateMythicalBoots(){return {id:`mythical_boots_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"boots",rarity:"mythical",mythical:true,mythicPiece:"boots",setName:"Impossible Road",uniqueEffect:"Titanstep: rolling 5 or 6 restores 5% max HP and grants 10 ultimate charge.",icon:"🥾",name:"Titanstep, Boots of the Astral Road",bonuses:{maxHp:20,defense:3,dodge:.15,extraStepChance:.25}};}
-  function generateMythicalAmulet(){return {id:`mythical_amulet_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"amulet",rarity:"mythical",mythical:true,mythicPiece:"amulet",setName:"Impossible Road",uniqueEffect:"Devourer's Gaze: once per battle below 35% HP, consume 12% of every living enemy's max HP and heal for half the damage.",icon:"👁️",name:"The Devourer's Last Eye",bonuses:{maxHp:30,attack:8,crit:.15,luck:.20,lifeSteal:.10,bossDamage:.50}};}
-  function generateMythicalPants(){return {id:`mythical_legs_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"legs",rarity:"mythical",mythical:true,mythicPiece:"legs",setName:"Impossible Road",uniqueEffect:"Paradox Loop: every third player action restores 6% max HP and grants 15 ultimate charge.",icon:"👖",name:"Paradox Weave, Legguards Outside Time",bonuses:{maxHp:34,defense:5,attack:5,doubleStrike:.16,luck:.14}};}
-  function bonusLabel(key,value){
+          function bonusLabel(key,value){
     const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage"};
     if(key==="luck")return `+${Math.round(value*100)} Luck`;
     const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
@@ -666,7 +654,6 @@
   });
   const talentRank=id=>dbProgression.talentRank(id);
 
-  /* Alpha v3.1.7: talents are registry-owned; lifecycle policy is Progression-owned. */
     dbProgression.repairTalentPrerequisites();
 
   const customSoundState={};
@@ -975,7 +962,7 @@ function returnToRoad(...args){
       });
       grid.appendChild(btn);
     });
-    // Released V16 ordering made the overlay visible before appending its reroll.
+
     $('powerupOverlay').classList.remove('hidden');
     attachPowerupReroll(grid,()=>dbPowerups.openChoice(source,onComplete,filter,subtitle));
   }
@@ -1016,10 +1003,9 @@ function returnToRoad(...args){
   function requirementText(t){return (t.requires||[]).map(r=>{const node=talents.find(x=>x.id===r.id);return `${node?node.name:r.id} rank ${r.rank}`;}).join(" + ");}
     // The extracted owner renders and navigates the Talent destination. These
   // adapters remain because existing lifecycle/composition callers still use
-  // the historical function names.
 
   // #206 / #209: Pet chooser DOM, portrait presentation and persistent Done
-  // chrome live in ui/pet-chooser.js. Historical lifecycle callers retain this
+
   // one forwarding name while pet mechanics remain in this composition layer.
 
   function renderRunBuffs(){
@@ -1049,12 +1035,9 @@ function returnToRoad(...args){
   function loseGame(){sfx.lose();$("combatOverlay").classList.add("hidden");showEnd(false);}
 
   /* SEMANTIC OWNER — Class/content expansion, powerups and equipment definitions. Migrated from the retired Alpha legacy stack in 3.1.6. */
-  /* ---------- v13: Blood & Fortune systems expansion ---------- */
 
   const PUBLIC_SLIME_EXEMPT=new Set(["slime","d20","ceo","merchant"]);
         const evasive=upgrades.find(u=>u.id==="evasive_bulwark");if(evasive){}
-
-  /* v14: broader Rare pool and deeper class identities */
 
   let merchantFaceClicks=new Set(),merchantFaceTotal=0,merchantBossPrimed=false,merchantBossDefeatedThisBoard=false,merchantBossBattle=false;
   const currentTileCount=()=>db317Board(boardLevel).tiles;
@@ -1077,7 +1060,7 @@ function returnToRoad(...args){
     return out;
   }
   function importOldSaveIfNeeded(){
-    // Alpha 3.1.4 intentionally starts a new save schema. Legacy localStorage keys are not auto-loaded.
+
     try{meta=v13NormalizeMeta(meta);saveMeta();}
     catch(e){meta=v13NormalizeMeta({});saveMeta();}
     dbProgression.repairTalentPrerequisites();
@@ -1088,18 +1071,8 @@ function returnToRoad(...args){
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
 
         // Merchant stock, transactions and presentation are internal to DiceboundMerchant.
-  // These lexical adapters remain only for compatibility callers inside this composition root.
 
-  function generateMythicalHat(){return {id:`mythical_hat_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"hat",rarity:"mythical",mythical:true,mythicPiece:"hat",setName:"Impossible Road",uniqueEffect:"Crown of the Fourth Road: after surviving a guardian special, restore 10% max HP and gain 25 ultimate charge.",icon:"👑",name:"Crown of the Road That Should Not Exist",bonuses:{maxHp:38,attack:7,defense:5,crit:.18,luck:.18,bossDamage:.45}};}
-  function generateMythicalWeapon(){
-    if(player.classId==="merchant")return {id:`mythical_merchant_${Date.now()}`,slot:"weapon",rarity:"mythical",mythical:true,mythicPiece:"weapon",setName:"Impossible Road",uniqueEffect:"Reality Rend and Compound Interest: every fifth attack guarantees an element, and attacks add 10% of current gold.",merchantWeaponScale:.10,icon:"💰",name:"Monopoly, Ledger of the Last Market",element:"coffee",bonuses:{attack:16,luck:.35,goldBonus:.70,bossDamage:.45}};
-    if(player.classId==="vampire")return {id:`mythical_vampire_${Date.now()}`,slot:"weapon",rarity:"mythical",mythical:true,mythicPiece:"weapon",setName:"Impossible Road",uniqueEffect:"Reality Rend: every fifth attack guarantees a strengthened Void activation.",icon:"🩸",name:"Nocturne, Fang of the Empty Sun",element:"void",bonuses:{attack:16,crit:.16,lifeSteal:.35,bossDamage:.40,maxHp:24}};
-    if(player.classId==="ninja")return {id:`mythical_ninja_${Date.now()}`,slot:"weapon",rarity:"mythical",mythical:true,mythicPiece:"weapon",setName:"Impossible Road",uniqueEffect:"Reality Rend: every fifth attack guarantees a strengthened Electric activation.",icon:"🥷",name:"Zero Footstep, Blade Between Frames",element:"electric",bonuses:{attack:16,crit:.35,doubleStrike:.25,dodge:.18,bossDamage:.40}};
-    if(player.classId==="ceo")return {id:`mythical_ceo_${Date.now()}`,slot:"weapon",rarity:"mythical",mythical:true,mythicPiece:"weapon",setName:"Impossible Road",uniqueEffect:"Reality Rend: every fifth attack guarantees Brain Hack; guardian rewards grant 50% more gold.",icon:"📈",name:"The Bottom Line, Executive Reality Cutter",element:"tech",bonuses:{attack:18,bossDamage:.65,goldBonus:.50,crit:.20,luck:.25}};
-    const data={fighter:["Worldsplitter, Blade of the Last Road","🗡️",{attack:14,maxHp:24,defense:3,lifeSteal:.12,bossDamage:.35}],ranger:["Starpiercer, Bow Beyond Distance","🏹",{attack:12,crit:.20,dodge:.10,doubleStrike:.25,bossDamage:.35}],sorcerer:["Eventide, Staff of Infinite Sparks","🪄",{attack:15,crit:.12,lifeSteal:.18,classBurst:.20,bossDamage:.35}],monk:["Heaven's Knuckles, Hands of the Silent Road","🥊",{attack:13,dodge:.14,doubleStrike:.28,lifeSteal:.10,bossDamage:.30}],clown:["The Last Laugh, Impossible Rubber Chicken","🐔",{attack:11,crit:.22,luck:.25,doubleStrike:.25,bossDamage:.30}],rouge:["Vermilion, Brush of the Red Beyond","🖌️",{attack:14,crit:.16,lifeSteal:.24,doubleStrike:.16,bossDamage:.35}],berserker:["World-Ender, Axe of Ten Thousand Scars","🪓",{attack:17,maxHp:30,crit:.14,lifeSteal:.15,bossDamage:.40,damageBonus:.20}],turtle:["Atlas Shellbreaker, Hammer of Patient Worlds","🔨",{attack:10,maxHp:42,defense:9,bossDamage:.40,damageBonus:.12}],frog:["Ribbitus Maximus, Spear of Infinite Echoes","🐸",{attack:13,doubleStrike:.45,dodge:.18,crit:.15,bossDamage:.35}],d20:["The Unfair Die, Edge of Twenty Outcomes","🎲",{attack:14,crit:.20,doubleStrike:.20,luck:.30,bossDamage:.35}],slime:["Primordial Puddle, Weapon of Everything","🟢",{attack:14,maxHp:28,crit:.14,doubleStrike:.16,lifeSteal:.14,bossDamage:.35}]}[player.classId]||["Worldsplitter","🗡️",{attack:14,bossDamage:.35}];
-    return {id:`mythical_${player.classId}_${Date.now()}`,slot:"weapon",rarity:"mythical",mythical:true,mythicPiece:"weapon",setName:"Impossible Road",uniqueEffect:"Reality Rend: every fifth basic attack guarantees a strengthened elemental activation.",icon:data[1],name:data[0],element:pick(ELEMENT_KEYS),bonuses:data[2]};
-  }
-  function mythicalSetSummary(){
+      function mythicalSetSummary(){
   const n=mythicalSetCount();
   return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');
 }
@@ -1114,7 +1087,6 @@ function returnToRoad(...args){
         if(boss?.id&&boss.art?.boardMarker)return [guardianTileArt(boss.id,boss.name),'Final Boss · 1 enemy'];
       }
 
-      // Beta 0.4.9 current pack rendering supersedes earlier enemy art when it applies.
       if(tile?.type==='enemy'&&Number(tile.packSize||1)>1&&tile?.enemyBase){
         const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||'Enemy';
         return [`<span class="db-enemy-pack-art">${db049EnemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
@@ -1222,8 +1194,6 @@ function returnToRoad(...args){
   function startNewGame(){return dbRun.startFreshRun();}
   function showEnd(victory){rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
-  // ===== v15: Venom & Arsenal systems =====
-
   if(!meta.pets.gun)meta.pets.gun=defaultPetState(false);
   if(meta.elementProgress.gun==null)meta.elementProgress.gun=0;
 
@@ -1278,7 +1248,6 @@ function returnToRoad(...args){
     if(total){playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;
   }
 
-  // Beta 0.6.6.0: enemy-response and enemy-turn orchestration is owned by
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
   // existing regression hooks can temporarily replace them without creating
   // a second production owner.
@@ -1295,8 +1264,7 @@ function returnToRoad(...args){
   function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}
 
   function debugAction(action){
-    // Final released dispatch order, collapsed from ten historical generations.
-    // Beta 0.4 was the outermost wrapper.
+
     if(action==='unlock_hell'){
       meta.nightmareUnlocked=true;meta.hellUnlocked=true;saveMeta();
       try{window.DiceboundClassChooser.render();}catch(_){}
@@ -1304,7 +1272,6 @@ function returnToRoad(...args){
       return;
     }
 
-    // v26 was the next outer layer and therefore intercepts these before v25 logging.
     if(action==='kill_character_v26'){
       if(!gameStarted){showToast('Start a run first');return;}
       $('debugOverlay')?.classList.add('hidden');
@@ -1313,18 +1280,17 @@ function returnToRoad(...args){
       addLog('<b>Debug monster</b> deals lethal damage. Running the normal death/revive pipeline.');
       showToast('☠️ Debug monster attacks');handlePlayerDeath();updateHUD();return;
     }
-    const artifactFns={mythic_weapon:generateMythicalWeapon,mythic_offhand:generateMythicalOffhand,mythic_boots:generateMythicalBoots,mythic_legs:generateMythicalPants,mythic_amulet:generateMythicalAmulet,mythic_hat:generateMythicalHat,mythic_ring:generateMythicalRing};
-    if(artifactFns[action]){
+    const artifactSlots={mythic_weapon:'weapon',mythic_offhand:'offhand',mythic_boots:'boots',mythic_legs:'legs',mythic_amulet:'amulet',mythic_hat:'hat',mythic_ring:'ring'};
+    if(artifactSlots[action]){
       if(!gameStarted){showToast('Start a run first');return;}
-      const item=artifactFns[action]();dbItems.equip(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;
+      const item=dbArtifacts.create(artifactSlots[action]);dbItems.equip(item,true);renderEquipment();updateHUD();showToast(`Artifact ${SLOT_LABELS[item.slot]} added`);return;
     }
     if(action==='mythic'){
       if(!gameStarted){showToast('Start a run first');return;}
-      [generateMythicalWeapon,generateMythicalOffhand,generateMythicalBoots,generateMythicalPants,generateMythicalAmulet,generateMythicalHat,generateMythicalRing].forEach(fn=>dbItems.equip(fn(),true));
+      ['weapon','offhand','boots','legs','amulet','hat','ring'].forEach(slot=>dbItems.equip(dbArtifacts.create(slot),true));
       renderEquipment();updateHUD();showToast('Full current seven-piece Artifact set equipped');return;
     }
 
-    // v25 logging occurred only after all later v26/Beta04 intercepts.
     v25Log('events','debug',`debugAction(${action})`,v25State());
     if(['legend_mug_v25','legend_headphones_v25','legend_jacket_v25','omega_horns_v25'].includes(action)){
       if(!gameStarted){showToast('Start a run first');return;}
@@ -1345,8 +1311,6 @@ function returnToRoad(...args){
       $('debugOverlay').classList.add('hidden');dbPowerups.openAllEligible('Debug · Full Eligible Powerup List',()=>{});return;
     }
 
-    // v19 / v1.5 / v1.1 effective branches. Superseded Mythical branches that
-    // are unreachable behind v26 are intentionally not carried forward.
     if(action==="board6"&&gameStarted){boardLevel=6;player.position=0;applyRunTheme();dbRun.generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board6");return;}
     if(action==="double_dice"){meta.doubleDiceUnlocked=true;saveMeta();updateHUD();showToast("Double Dice unlocked");return;}
     if(action==="seed_item"){
@@ -1357,11 +1321,11 @@ function returnToRoad(...args){
     }
     if(action==="alwayschoose"){meta.debugAlwaysChooseRolls=!meta.debugAlwaysChooseRolls;saveMeta();refreshDebugButtons();showToast(`Always choose rolls ${meta.debugAlwaysChooseRolls?"enabled":"disabled"}`);return;}
     if(action==="board5"&&gameStarted){boardLevel=5;player.position=0;applyRunTheme();dbRun.generateBoard();buildBoard();rollLocked=false;$("debugOverlay").classList.add("hidden");updateHUD();showToast("Debug: board5");return;}
-    if(action==="mythicring"&&gameStarted){dbItems.equip(generateMythicalRing(),true);updateHUD();showToast("Artifact Ring added");return;}
+    if(action==="mythicring"&&gameStarted){dbItems.equip(dbArtifacts.create('ring'),true);updateHUD();showToast("Artifact Ring added");return;}
     if(action==="omega_merchant"&&gameStarted){dbItems.equip(generateMerchantWeapon(),true);updateHUD();showToast("The Final Price added");return;}
     if(action==="omega_stone"&&gameStarted){
       dbItems.equip(generatePhilosophersStone(),true);updateHUD();showToast("Philosopher's Stone added");
-      // The former v1.10 outer wrapper performed this presentation refresh after
+
       // the older handler returned; keep that order exactly once.
       renderEquipment();updateHUD();return;
     }
@@ -1384,7 +1348,7 @@ function returnToRoad(...args){
   }
 
   /* SEMANTIC OWNER — Progression, achievements, board expansion and early run lifecycle. Migrated from the retired Alpha legacy stack in 3.1.6. */
-  /* ---------- Alpha v1: achievements, classes, stats and combat polish ---------- */
+
   const ALPHA_COMBAT_DELAY=200;
   let runTalentSnapshot=null,statsLastHp=null,statsLastGold=null;
   const defaultLifetimeStats=()=>({runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}});
@@ -1397,7 +1361,6 @@ function returnToRoad(...args){
   function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();dbProgression.checkDynamicClassUnlocks();}
         function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)dbCombat.recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
-  // Preserve v15 save compatibility while enriching imported saves with Alpha fields.
   const normalizeV15=v13NormalizeMeta;
   v13NormalizeMeta=function(raw={}){const out=normalizeV15(raw);const base=defaultLifetimeStats(),r=out.stats||{};out.version="Alpha v1";out.stats={...base,...r,boardClears:{...(r.boardClears||{})},classMaxLevel:{...(r.classMaxLevel||{})}};out.stats.damageTaken=Math.max(Number(out.stats.damageTaken)||0,Number(out.damageTaken)||0);out.achievements={...(out.achievements||{})};return out;};
   ensureAlphaMeta();
@@ -1429,7 +1392,6 @@ function returnToRoad(...args){
   const showEndV15=showEnd;showEnd=function(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}return showEndV15(victory);};
   const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);dbProgression.checkDynamicClassUnlocks();saveMeta();return r;};
 
-  // Ensure transferred v14 saves gain the new Gun companion/progress fields immediately.
   saveMeta();
 
   $("startBtn").addEventListener("click",startNewGame);$("nightmareToggle").addEventListener("click",()=>{if(!meta.nightmareUnlocked)return;nightmareMode=!nightmareMode;window.DiceboundClassChooser.render();});$("rollBtn").addEventListener("click",rollDice);$("outsidePotionBtn").addEventListener("click",()=>dbConsumablesResolution.usePotionOutsideCombat());$("attackBtn").addEventListener("click",()=>dbCombat.attack());$("guardBtn").addEventListener("click",()=>dbCombat.guard());$("potionBtn").addEventListener("click",()=>dbConsumablesResolution.usePotion());$("ultimateBtn").addEventListener("click",()=>dbCombat.ultimate());
@@ -1449,12 +1411,11 @@ function returnToRoad(...args){
   window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
 
   dbRun.generateBoard();buildBoard();window.DiceboundClassChooser.render();renderEquipment();updateHUD();updateMetaUI();
-  // Historically the first-run timer prepared the Guide tab but did not open
+
   // the surface. Keep that timing contract explicit now that openInfo is a
   // stable module adapter rather than a captured legacy wrapper.
   if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);
 
-  /* ---------- Alpha v1.1: portraits, tags, board 5, hell mode and bloodmage ---------- */
   let hellMode=false;
   function ensureV11Meta(){
     ensureAlphaMeta();
@@ -1471,8 +1432,6 @@ function returnToRoad(...args){
   }
   ensureV11Meta();
   random();
-
-  /* Alpha v3.1.7: CLASS_TAGS is registry-owned. */
 
   function classBoardMarkerSrc(classId){const root=(window.DiceboundAssets?.paths?.uiClassMarkers)||"assets/ui/class-markers";return `${root}/${classId}.png`;}
   function applyClassBoardMarker(el,classId){
@@ -1520,8 +1479,7 @@ function returnToRoad(...args){
 
   window.DiceboundCamp.configureShell({ensureHellToggle:()=>ensureHellToggle()});
 
-  function generateMythicalRing(){return {id:`mythical_ring_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"ring",rarity:"mythical",mythical:true,mythicPiece:"ring",setName:"Impossible Road",uniqueEffect:"Ouroboros Halo: every fourth player action grants 1 barrier and 12 ultimate charge.",icon:"💍",name:"Ouroboros Halo, Ring of the Fifth Road",bonuses:{maxHp:22,attack:6,defense:4,crit:.12,luck:.18,bossDamage:.28}};}
-  function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
+    function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
   function applyMythicRingPulse(){if(!(player.equipment?.ring?.mythicPiece==="ring")||player.combatActionCount<1||player.combatActionCount%4!==0)return "";player.combatShield=(player.combatShield||0)+1;player.ultimateCharge=clamp(player.ultimateCharge+12,0,100);return "💍 Ouroboros Halo grants 1 barrier and 12 ultimate.";}
 
   // Bloodmage bespoke combat actions are owned by DiceboundClasses.
@@ -1534,7 +1492,6 @@ function returnToRoad(...args){
     const grid=$("debugGrid");if(!grid)return;
     const ensure=(id,label)=>{let btn=grid.querySelector(`[data-debug="${id}"]`);if(!btn){btn=document.createElement("button");btn.dataset.debug=id;btn.className="small-btn";grid.appendChild(btn);}btn.textContent=label;return btn;};
 
-    // The static controls accumulated through v11, v1.5 and v21 now have one owner.
     ensure("alwayschoose",`${meta.debugAlwaysChooseRolls?"☑":"☐"} Always choose dice`);
     ensure("board5","Board 5");
     ensure("mythicring","Artifact Ring");
@@ -1546,13 +1503,11 @@ function returnToRoad(...args){
       ["all_powerups","🎁 Choose any eligible powerup"]
     ])ensure(id,label);
 
-    // v22 split the old destructive unlock button into separate class/Pet cheats.
     const old=grid.querySelector('[data-debug="unlock"]');
     if(old){old.dataset.debug="unlockclasses";old.textContent="🔓 Unlock all classes";}
     else ensure("unlockclasses","🔓 Unlock all classes");
     ensure("unlockpets","🐾 Unlock all pets");
 
-    // During source evaluation the later v25/V26 control machinery is not ready
     // yet. Once the final debug UI generation has initialized, every ordinary
     // refresh also performs the current tab/control sync exactly once.
     if(dbDebugUiReady)v25EnsureDebugControls();
@@ -1561,13 +1516,10 @@ function returnToRoad(...args){
   refreshDebugButtons();
   saveMeta();
 
-  /* ---------- Alpha v1.2: identity, clarity, affinity and progression polish ---------- */
   random();
 
-  /* Alpha v3.1.7: CLASS_PASSIVES is registry-owned. */
   Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{});
 
-  // The historical portrait extension chain starts below and is ultimately
   // replaced by the semantic-art owner. Keep its single lexical binding so
   // early startup assignments remain valid in strict mode.
 
@@ -1578,7 +1530,7 @@ function returnToRoad(...args){
   // Re-render once so the updated class order/portraits are immediately visible.
   window.DiceboundClassChooser.render();
   /* SEMANTIC OWNER — Class identity mechanics, combat resources, portraits and action dispatch. Migrated from the retired Alpha legacy stack in 3.1.6. */
-  /* ---------- Alpha v1.3: class identities, enemy art and hidden AI simulation harness ---------- */
+
   random();
 
   // ---- identity descriptions -------------------------------------------------
@@ -1761,7 +1713,7 @@ function returnToRoad(...args){
   // This never touches the live player/meta objects. It is deliberately non-enumerable and has no menu button.
 
   /* SEMANTIC OWNER — Equipment economy, defense, companions, alchemy and fifth-road systems. Migrated from the retired Alpha legacy stack in 3.1.6. */
-  /* ---------- Alpha v1.4: affix gear, economy curve & career simulation ---------- */
+
   random();
 
   const V14_RARITY_BUDGETS={common:[10,16],uncommon:[18,28],rare:[30,44],epic:[48,68],legendary:[75,105]};
@@ -1811,7 +1763,6 @@ function returnToRoad(...args){
 
   // Update rarity/explanation text without exposing the hidden number itself.
 
-  /* ---------- Alpha v1.5: defense, treasure scaling, summon classes & completion hardening ---------- */
   random();
 
   meta.beastmasterNightmareBoard5=!!meta.beastmasterNightmareBoard5;
@@ -1839,7 +1790,6 @@ function returnToRoad(...args){
 
   // ---- New class portraits and sensible selection order --------------------
 
-  /* ---------- Alpha v1.6: refinement, alchemy, radiation and fifth-road hard stop ---------- */
   random();
 
   // ---- Radiation ------------------------------------------------------------
@@ -1905,7 +1855,7 @@ function returnToRoad(...args){
   renderInfo();
 
   /* SEMANTIC OWNER — Late class mechanics, talents, Ouroboros and meta progression. Migrated from the retired Alpha legacy stack in 3.1.6. */
-  /* ---------- Alpha v1.7: late-road curve, pet bonds, ninja smoke & reliable relic choices ---------- */
+
   random();
 
   // ---- Pet bond scaling is owned by DiceboundPets / pets/lifecycle.js. -----
@@ -1918,11 +1868,9 @@ function returnToRoad(...args){
   // ---- Reliable Legendary choice flow -------------------------------------
     function v17LegendaryChoices(){return dbPowerups.legendaryChoices();}
   // ---- Explicit late-road difficulty curve --------------------------------
-  // Soften the historical Board-4-only overboost by compensating it, then let v1.7's monotonic layer rebuild the curve.
 
   // ---- Ninja Smoke ---------------------------------------------------------
 
-  // ---- Prismatic Birthright runtime migration -----------------------------
   const prismaticTalent=talents.find(t=>t.id==="element_prismatic");if(prismaticTalent){}
 
   // ---- Poison marker compacting -------------------------------------------
@@ -1942,8 +1890,6 @@ function returnToRoad(...args){
   const toxic=upgrades.find(u=>u.name==="Toxic Bloom");
 
   // Hidden regression helpers: these never appear in the player UI/debug menu.
-
-  /* Alpha v1.8 historical boundary — remaining live behavior below is being drained into canonical owners. */
 
   // ---- Live board-stat tooltips --------------------------------------------
   // Native `title` tooltips can cache stale text in Chromium/Edge. These CSS
@@ -2016,16 +1962,6 @@ function returnToRoad(...args){
   // player-facing debug button. They are safe to ignore during normal play.
 
   /* SEMANTIC OWNER — Prestige, Double Dice, Board 6, set bonuses and road runtime. Migrated from the retired Alpha legacy stack in 3.1.6. */
-  /* ========================================================================
-     Alpha v1.9 — Between-Runs Hub, Double Dice and Sixth Road
-     ------------------------------------------------------------------------
-     This patch deliberately centralizes several systems that had accumulated
-     wrappers across older alpha versions. New v1.9 behavior lives here so the
-     authoritative rules are easy to audit: late-road progression, Prestige,
-     set bonuses, Edge-safe Legendary contracts, pet switching and Paladin
-     Grace. Older functions remain for save compatibility but these definitions
-     are the runtime authority from this point onward.
-     ======================================================================== */
 
   // ---- Save/schema enrichment ---------------------------------------------
   meta.unlocks=meta.unlocks||{};
@@ -2088,7 +2024,6 @@ function returnToRoad(...args){
   function v19SetStartBarrier(){return mythicalSetCount()>=5?1:0;}
 
   // Board 6 adds the seventh Impossible Road slot.
-  function generateMythicalOffhand(){return {id:`mythical_offhand_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"offhand",rarity:"mythical",mythical:true,mythicPiece:"offhand",setName:"Impossible Road",uniqueEffect:"Event Horizon Ward: Guard grants 8 additional Ultimate; every third Guard also raises one Barrier.",icon:"🌌🛡️",name:"Event Horizon Ward, Offhand Beyond the Sixth Road",bonuses:{maxHp:30,defense:7,attack:7,crit:.10,doubleStrike:.12,bossDamage:.32,flatReduction:2}};}
 
   // ---- Haste: one-turn lockout --------------------------------------------
   // Haste may grant one immediate extra action, but cannot chain itself again
@@ -2140,7 +2075,6 @@ function returnToRoad(...args){
 
   // Sixth-road merchant: much richer stock and distinctly higher cost.
 
-  // The historical callers still use this name, but board-transition.js now
   // owns the complete Board 5 -> 6 / final-road transition contract.
   function advanceToNextBoard(){return dbRun.advanceBoard();}
   let v19CompletingSixth=false;
@@ -2186,12 +2120,12 @@ function returnToRoad(...args){
   upgrades.forEach(inferUpgradeTags);saveMeta();window.DiceboundTalentTree.render();window.DiceboundPetChooser.render();window.DiceboundClassChooser.render();renderInfo();updateHUD();
 
   /* SEMANTIC OWNER — Campsite hub, Perfected Signatures and powerup selection UI. Migrated from the retired Alpha legacy stack in 3.1.6. */
-/* ---------- Alpha v2.0: camp hub, set readability and alchemy tuning ---------- */
+
 (function(){
   const V="Alpha v2.0";
 
   // Camp DOM/presentation ownership moved to runtime/js/ui/camp.js.  These
-  // compatibility-shaped callers preserve current lifecycle order only.
+
   function v110EnsureCampScene(){return window.DiceboundCamp?.ensure();}
   function v110UpdateCampScene(){return window.DiceboundCamp?.refresh();}
 
@@ -2213,10 +2147,9 @@ function returnToRoad(...args){
     addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),updateHud:()=>updateHUD()
   });
 
-  // Test-only characterization surface for the Powerups subsystem migration.
   // It exposes the final released 0.6.6.32 behavior without changing ordinary
   // callers so capture/replay can freeze eligibility, choice, application and
-  // exact RNG semantics before DiceboundPowerups ownership moves.
+
   const dbPowerupsOracleSummary=up=>up?({id:up.id,name:up.name,rarity:up.rarity,classId:up.classId||null,classIds:[...(up.classIds||[])],unique:!!up.unique,achievementGate:up.achievementGate||null}):null;
   const dbPowerupsOracleState=()=>({
     boardLevel,nightmareMode:!!nightmareMode,hellMode:!!hellMode,pendingLevelUps,
@@ -2269,12 +2202,12 @@ function returnToRoad(...args){
 })();
 
   /* SEMANTIC OWNER — Fullscreen camp, talent presentation and guardian/UI refinements. Migrated from the retired Alpha legacy stack in 3.1.6. */
-/* ---------- Alpha v2.2: full-screen camp, progressive set tiers and 2d6 fate ---------- */
+
 (function(){
   const V='Alpha v2.2';
 
   // Older class-render layers still write the legacy start button label. The
-  // visual camp no longer uses that button, but keeping a hidden compatibility
+
   // target prevents those inherited renderers from dereferencing null.
   if(!$('startBtn')){const compat=document.createElement('button');compat.id='startBtn';compat.className='camp-hidden';compat.type='button';compat.setAttribute('aria-hidden','true');$('startOverlay')?.querySelector('.start-modal')?.appendChild(compat);}
 
@@ -2440,7 +2373,6 @@ function returnToRoad(...args){
   // Public regression hooks for this patch.
 })();
 
-/* ---------- Alpha v2.3: talents, guardian attack patterns and camp polish ---------- */
 (function(){
   const V='Alpha v2.3';
   const brandH=document.querySelector('.brand h1');if(brandH)brandH.textContent=`Dicebound: ${V}`;
@@ -2459,23 +2391,15 @@ function returnToRoad(...args){
   // so Road Wisdom's real total is the documented +3/rank.
 
   // Camp owns its own scene dimensions and refresh.  Keep only the inherited
-  // domain refreshes that this historical checkpoint still needs.
+
   setTimeout(()=>{window.DiceboundTalentTree.render();renderEquipment();},0);
 
 })();
 
-  /* ========================================================================
-     Alpha v2.4 — rarity rebuild, heirloom storage and the Pale Devil
-     ------------------------------------------------------------------------
-     This patch intentionally remains one Edge-friendly HTML file. New systems
-     are grouped into extraction-ready modules so they can later move into
-     separate JS files without changing save semantics or gameplay APIs.
-     ======================================================================== */
   const DB24={version:'2.4',modules:{}};
 
   if($('restartBtn'))$('restartBtn').textContent='⛺ Back to camp';
 
-  /* MODULE: save migration ------------------------------------------------- */
   meta.heirloomStorageUnlocked=!!meta.heirloomStorageUnlocked;
   meta.heirloomStorage=Array.isArray(meta.heirloomStorage)?meta.heirloomStorage.map(normalizeSavedItem):[];
   meta.devilPrimed=!!meta.devilPrimed;meta.devilBossKills=Number(meta.devilBossKills)||0;meta.devilHornsFound=Number(meta.devilHornsFound)||0;
@@ -2490,8 +2414,6 @@ function returnToRoad(...args){
   if(!meta.raritySchemaV24){
     (meta.heirlooms||[]).forEach(v24MigrateItemRarity);meta.heirloomStorage.forEach(v24MigrateItemRarity);meta.raritySchemaV24=true;saveMeta();
   }
-
-  /* MODULE: rarity schema -------------------------------------------------- */
 
     Object.keys(V14_RARITY_BUDGETS).forEach(k=>delete V14_RARITY_BUDGETS[k]);
   Object.assign(V14_RARITY_BUDGETS,{poor:[11,18],common:[20,31],uncommon:[34,49],rare:[54,76],epic:[84,116]});
@@ -2511,7 +2433,6 @@ function returnToRoad(...args){
   // sell Poor→Epic generated gear; handcrafted Legendary+ pieces never enter
   // ordinary merchant inventory.
 
-  /* MODULE: powerup tier rebuild ------------------------------------------ */
   const V24_POWER_SHIFT={common:'poor',uncommon:'common',rare:'uncommon',epic:'rare',legendary:'epic'};
   upgrades.forEach(up=>{if(!up.v24Tiered){}const dd=Object.getOwnPropertyDescriptor(up,'desc');});
   function v24EditUpgrade(id,desc,apply){const up=upgrades.find(x=>x.id===id);if(up){}return up;}
@@ -2538,7 +2459,6 @@ function returnToRoad(...args){
   v24NewPowerups.forEach(up=>{});
   weightedUpgrade=function(pool){return dbPowerups.weighted(pool);};
 
-  /* MODULE: handcrafted Legendary relics ---------------------------------- */
   function generateAxelsCoffeeMug(){return {id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'legendary',specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}};}
   function generateKratzHeadphones(){return {id:`legend_headphones_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'legendary',specialLegendary:true,oneHitPerRound:true,icon:'🎧',name:'Kratz Headphones',uniqueEffect:'Once an attack actually reaches you in an enemy round, every later hit that round is drowned out. Dodges and Barriers do not consume this protection.',bonuses:{dodge:.25,defense:25,doubleStrike:-.25,attack:15,bossDamage:.25,crit:.25,goldBonus:-.50}};}
   function generateKellysJeanJacket(){return {id:`legend_jacket_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'chest',rarity:'legendary',specialLegendary:true,softDefenseCurve:true,icon:'🧥',name:"The Jean Jacket Lost at Kelly's",uniqueEffect:'Defense suffers dramatically less diminishing returns while this jacket is equipped.',bonuses:{dodge:.30,defense:30,luck:-.50,doubleStrike:.15,lifeSteal:.15,attack:-10}};}
@@ -2546,14 +2466,7 @@ function returnToRoad(...args){
   function v24HasLegendaryRelic(id){return (meta.legendaryRelics||[]).includes(id)||(meta.heirloomStorage||[]).some(x=>x?.specialLegendary&&x.name===id)||(meta.heirlooms||[]).some(x=>x?.specialLegendary&&x.name===id);}
   function v24RandomLegendaryRelic(){const candidates=V24_LEGENDARY_RELICS.map(fn=>fn()).filter(i=>!v24HasLegendaryRelic(i.name));return candidates.length?pick(candidates):pick(V24_LEGENDARY_RELICS)();}
 
-  /* MODULE: Artifact-tier Impossible Road --------------------------------- */
-  function v24Artifactize(item){
-    if(!item)return item;item.rarity='artifact';item.artifact=true;item.mythical=false;item.v24Rarity=true;
-    Object.keys(item.bonuses||{}).forEach(k=>{const v=item.bonuses[k];if(typeof v!=='number')return;item.bonuses[k]=Math.abs(v)<1?Math.round(v*.86*1000)/1000:Math.round(v*.86);});return item;
-  }
-  const v24MythWeapon=generateMythicalWeapon,v24MythBoots=generateMythicalBoots,v24MythPants=generateMythicalPants,v24MythAmulet=generateMythicalAmulet,v24MythHat=generateMythicalHat,v24MythRing=generateMythicalRing,v24MythOffhand=generateMythicalOffhand;
-  generateMythicalWeapon=function(){return v24Artifactize(v24MythWeapon());};generateMythicalBoots=function(){return v24Artifactize(v24MythBoots());};generateMythicalPants=function(){return v24Artifactize(v24MythPants());};generateMythicalAmulet=function(){return v24Artifactize(v24MythAmulet());};generateMythicalHat=function(){return v24Artifactize(v24MythHat());};generateMythicalRing=function(){return v24Artifactize(v24MythRing());};generateMythicalOffhand=function(){return v24Artifactize(v24MythOffhand());};
-  v19SetDamageBonus=function(){const n=mythicalSetCount();return n>=7?.20:n>=6?.14:n>=5?.10:n>=4?.07:n>=3?.04:n>=2?.02:0;};
+        v19SetDamageBonus=function(){const n=mythicalSetCount();return n>=7?.20:n>=6?.14:n>=5?.10:n>=4?.07:n>=3?.04:n>=2?.02:0;};
   v19SetProcBonus=function(){const n=mythicalSetCount();return n>=7?.13:n>=6?.10:n>=5?.07:n>=4?.05:n>=3?.04:0;};
   v19SetPetDoubleBonus=function(){const n=mythicalSetCount();return n>=7?.16:n>=6?.13:n>=5?.10:n>=4?.08:0;};
   v19SetElementPower=function(){const n=mythicalSetCount();return n>=7?1.14:n>=6?1.09:n>=5?1.05:1;};
@@ -2565,12 +2478,10 @@ function returnToRoad(...args){
 
   unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
 
-  /* MODULE: class tuning / Alchemist counter ------------------------------- */
   if(CLASSES.fighter){}
   if(CLASSES.paladin){}
   if(CLASSES.beastmaster){}
 
-  /* MODULE: permanent Heirloom Storage ------------------------------------ */
   function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
   function v24StorageCapacity(){if(!v24StorageUnlocked())return 0;let n=EQUIPMENT_SLOTS.length;if((meta.board5Clears||0)>0)n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE))n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE))n++;if((meta.merchantKills||0)>=1)n++;return n;}
   function v24SyncStorage(){
@@ -2578,7 +2489,6 @@ function returnToRoad(...args){
   }
   function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE),text:'Storage Slot I purchased'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE),text:'Storage Slot II purchased'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
 
-  /* MODULE: Pale Devil ritual / secret boss ------------------------------- */
   function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
   let v24DanceArmed=false,v24DanceLastAngle=null,v24DanceAccum=0,v24DanceDirection=0,v24DanceTimer=null,v24SuppressHellClickUntil=0;
   function v24ArmDance(){if(!hellMode||!meta.hellUnlocked)return;v24DanceArmed=true;v24DanceLastAngle=null;v24DanceAccum=0;v24DanceDirection=0;const icon=$('campHellBtn')?.querySelector('.camp-icon');icon?.classList.add('devil-ritual-armed');$('campScene')?.classList.add('devil-ritual-tracking');clearTimeout(v24DanceTimer);v24DanceTimer=setTimeout(v24CancelDance,14000);showToast('The devil watches the fire. Circle the bonfire three times with mouse or finger.',2200);}
@@ -2589,7 +2499,6 @@ function returnToRoad(...args){
   document.addEventListener('pointerdown',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(icon&&hellMode){v24SuppressHellClickUntil=Date.now()+900;e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
   document.addEventListener('click',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(!icon||!hellMode)return;if(Date.now()<v24SuppressHellClickUntil){e.preventDefault();e.stopImmediatePropagation();return;}if(e.detail===0){e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
 
-  /* MODULE: Energy Shield / special Legendary combat hooks ---------------- */
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
@@ -2597,7 +2506,6 @@ function returnToRoad(...args){
     function v24UpdateShieldBars(){if(!dbCombatView.isPresentationConfigured())return;return dbCombatView.syncEnergyShieldBars();}
   window.DiceboundCamp.configureShell({refreshShieldBars:()=>v24UpdateShieldBars()});
 
-  /* MODULE: camp synchronization ------------------------------------------ */
   function v24RefreshCamp(){
     const overlay=$('startOverlay'),modal=overlay?.querySelector('.start-modal');if(modal){const h=modal.querySelector('h2');if(h)h.textContent='Campsite';const sub=modal.querySelector('.subtitle');if(sub)sub.innerHTML='Between expeditions. Choose who leaves camp, what they carry, and which terrible idea to enable next.';}overlay?.querySelector('.camp-help')?.remove();
     const hell=$('campHellBtn');if(hell){const icon=hell.querySelector('.camp-icon'),sub=hell.querySelector('.camp-sub');if(icon)icon.textContent=hellMode?'👿':'😈';if(sub&&meta.hellUnlocked)sub.innerHTML=`${hellMode?'HELL ON':'HELL OFF'} <span class="camp-mode-state">${hellMode?'ON':'OFF'}</span>`;hell.setAttribute('aria-pressed',String(!!hellMode));}
@@ -2607,16 +2515,9 @@ function returnToRoad(...args){
   window.DiceboundCamp.configureShell({refreshCampV24:()=>v24RefreshCamp()});
   document.addEventListener('click',e=>{if(e.target.closest?.('#campHellBtn')&&!e.target.closest?.('#campHellBtn .camp-icon'))setTimeout(v24RefreshCamp,0);},true);
 
-  /* MODULE: info ----------------------------------------------------------- */
-
-  /* MODULE: v2.4 smoke/regression helpers --------------------------------- */
       DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
   setTimeout(()=>{if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();window.DiceboundTalentTree.render();renderEquipment();v24UpdateShieldBars();},0);
-
-  /* v2.4 compatibility hardening: old callers cannot generate random
-     handcrafted Legendary gear, Merchant keeps double resale, and the board
-     set card uses the authoritative Artifact-tier table. */
 
   /* v2.4 final presentation consistency ----------------------------------- */
   function v24RefreshDebugLabels(){
@@ -2626,9 +2527,6 @@ function returnToRoad(...args){
 
   v24RefreshDebugLabels();
 
-  /* ========================================================================
-     Alpha v2.5 — reliability, current guide, debug logging and combat tuning
-     ======================================================================== */
   const DB25={version:'2.5.1',modules:{}};
 
   /* POWERUP BALANCE ------------------------------------------------------- */
@@ -2757,20 +2655,6 @@ dbReturnToRoadTraceReady=true;
 
   setTimeout(()=>{if($('endRestartBtn'))$('endRestartBtn').textContent='Return to camp';v25EnsureDebugControls();renderInfo();},0);
 
-  /* ========================================================================
-     Alpha v2.5.1 — combat/loot soft-lock hotfix
-     ------------------------------------------------------------------------
-     Root cause found from an Edge debug log: the v2.4 rarity migration added
-     ordinary Poor gear, but the older D15 seed parser did not accept "poor".
-     Poor equipment therefore occasionally decoded to null. Combat victory had
-     already cleared the enemy by then, so openLoot(null) threw on item.slot and
-     stranded rollLocked/combatBusy. This hotfix fixes the schema mismatch and
-     makes the victory/road cleanup defensive so the same class of failure can
-     never permanently lock a run again.
-     ======================================================================== */
-
-  // Equipment no-null compatibility is owned by items/generation.js.
-
   // Loot UI is also defensive now. Invalid rewards are skipped and their
   // continuation callback still fires so victory resolution can finish.
   // Returning to the board is, by definition, no longer combat. Older layers
@@ -2791,9 +2675,6 @@ dbReturnToRoadTraceReady=true;
 
   v25Log('events','hotfix','Alpha v2.5.1 hotfix loaded',{fixes:['poor-seed-parser','null-loot-guard','combatBusy-cleanup','victory-error-containment']});
 
-  /* ========================================================================
-     Alpha v2.6 — progression reliability, poison visibility and secret polish
-     ======================================================================== */
   document.title='Dicebound: Alpha v2.6';
   const v26Brand=document.querySelector('.brand h1');if(v26Brand)v26Brand.textContent='Dicebound: Alpha v2.6';
   const v26Sub=document.querySelector('.brand p');if(v26Sub)v26Sub.textContent='The road grows stranger: sturdier talents, clearer poison, sharper secrets and cleaner debug tools.';
@@ -2860,9 +2741,6 @@ dbReturnToRoadTraceReady=true;
 
   setTimeout(()=>{v26EnsurePoisonStat();v25EnsureDebugControls();updateHUD();window.DiceboundTalentTree.render();},0);
 
-  /* ========================================================================
-     Alpha v2.7 — rarity rewards, nightmare defenses, Ouroboros & UI polish
-     ======================================================================== */
   document.title='Dicebound: Alpha v2.7';
   const v27Brand=document.querySelector('.brand h1');if(v27Brand)v27Brand.textContent='Dicebound: Alpha v2.7';
   const v27Sub=document.querySelector('.brand p');if(v27Sub)v27Sub.textContent='The road fights back: smarter rewards, tougher difficulties, cleaner shields and faster impossible snakes.';
@@ -2958,9 +2836,6 @@ dbReturnToRoadTraceReady=true;
     prestigeUsesChooser:()=>false
   });
 
-  /* ========================================================================
-     Alpha v3.1.3 — caravan camp control and wrapper-ready platform boundary
-     ======================================================================== */
   document.title='Dicebound: Beta v0.4';
   const v28Brand=document.querySelector('.brand h1');if(v28Brand)v28Brand.textContent='Dicebound: Beta v0.4';
   const v28Sub=document.querySelector('.brand p');if(v28Sub)v28Sub.textContent='Split development source · stable Edge bundle · campsite gathered around the bonfire.';
@@ -2984,7 +2859,7 @@ dbReturnToRoadTraceReady=true;
 
   /* SLIME ROUGE ------------------------------------------------------------ */
   /* SLIME ROUGE ------------------------------------------------------------ */
-  // Alpha 3.1.9: the class definition/tags are registry-owned. Only generated
+
   // gear-name presentation remains here; runtime identity lives below.
 
   /* SLIME ROUGE 3.1.8 — real random identity + real borrowed ultimate ------- */
@@ -3044,9 +2919,6 @@ dbReturnToRoadTraceReady=true;
     stateContract:()=>{resetPlayer('ranger');const result=ProgressionState.grantXp(25);return {domain:result.domain,type:result.type,applied:result.applied,levelsGained:result.levelsGained};}
   });
 
-  /* ========================================================================
-     Alpha v3.1.9 — poison card cleanup
-     ======================================================================== */
   const db315VenomEdge=upgrades.find(u=>u.id==='venom_edge');
   if(db315VenomEdge){
 
@@ -3056,13 +2928,6 @@ dbReturnToRoadTraceReady=true;
 
   }
 
-  /* ========================================================================
-     Beta 0.1 — difficulty atmosphere boundary
-     ------------------------------------------------------------------------
-     Board artwork remains board-specific. The page/world behind the board is
-     difficulty-specific so Nightmare/Hell can visually transform every road
-     without baking mode effects into the six source background images.
-     ======================================================================== */
   function dbBeta01DifficultyMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function dbBeta01SyncDifficultyAtmosphere(){
     const mode=dbBeta01DifficultyMode();
@@ -3075,10 +2940,7 @@ dbReturnToRoadTraceReady=true;
   },true);
   dbBeta01SyncDifficultyAtmosphere();
   window.DiceboundBeta01=Object.freeze({difficultyMode:dbBeta01DifficultyMode,syncDifficultyAtmosphere:dbBeta01SyncDifficultyAtmosphere});
-  /* Alpha v3.1.7 Achievement policy is now owned by DiceboundProgression. */
-  /* ========================================================================
-     Alpha v3.2.4 — touch/mobile UI contract
-     ======================================================================== */
+
   let db322DialogPending=null;
   function diceboundConfirm(message,{title='Confirm',confirmLabel='Confirm',cancelLabel='Cancel',danger=false}={}){
     const overlay=$('appConfirmOverlay'),heading=$('appConfirmTitle'),body=$('appConfirmMessage'),yes=$('appConfirmAccept'),no=$('appConfirmCancel');
@@ -3102,15 +2964,7 @@ dbReturnToRoadTraceReady=true;
   })();
   Object.defineProperty(window,'DiceboundDialogs',{value:Object.freeze({confirm:diceboundConfirm}),configurable:false});
   Object.defineProperty(window,'DiceboundTouchInfo',{value:DiceboundTouchInfo,configurable:false});
-  /* ========================================================================
-     Beta 0.2 — responsive game-window controller
-     ------------------------------------------------------------------------
-     Dicebound is still a normal browser app, but the main road view now sizes
-     itself like a game surface. On desktop the board uses whichever is smaller:
-     the available panel width or the vertical space left after Travel controls.
-     Stacked/mobile layouts remain width-driven. Resize events also reposition
-     the pawn because its coordinates are derived from tile geometry.
-     ======================================================================== */
+
   const DB_BETA02_STACK_BREAKPOINT=900;
   const DB_BETA02_COMPACT_BREAKPOINT=1120;
   let dbBeta02Frame=0,dbBeta02Last=null;
@@ -3158,13 +3012,6 @@ dbReturnToRoadTraceReady=true;
   setTimeout(dbBeta02Schedule,0);
   window.DiceboundResponsive=Object.freeze({apiVersion:1,calculateBoardSize:dbBeta02CalculateBoardSize,layoutName:dbBeta02LayoutName,heightName:dbBeta02HeightName,measure:dbBeta02MeasureNow,schedule:dbBeta02Schedule,diagnostics:()=>dbBeta02Last});
 
-  /* ======================================================================
-     Beta 0.2.1 — final campsite interaction layer.
-     This file is intentionally last in the normal UI build order, so these
-     listeners cannot be silently replaced by older popup-era camp handlers.
-     ====================================================================== */
-
-  // Beta 0.2.1 regression hooks. Hidden from normal UI; these exercise the
   // real combat and Steal implementations instead of reimplementing formulas.
   Object.defineProperty(window,'DiceboundBeta021Test',{configurable:true,value:Object.freeze({
     rageDamage(missing=.40){
@@ -3182,9 +3029,6 @@ dbReturnToRoadTraceReady=true;
     },
     ui(){return {systemGuide:[...document.querySelectorAll('#startOverlay .rule')].some(el=>/Systems guide/i.test(el.textContent||'')),petChooser:!!window.DiceboundPetChooser,classGrid:!!document.getElementById('classGrid')};}
   })});
-  /* ========================================================================
-     Beta 0.4 — native-wrapper game boundary + world-board presentation
-     ======================================================================== */
 
   document.title='Dicebound: Beta v0.4.9';
   const db04Brand=document.querySelector('.brand h1');if(db04Brand)db04Brand.textContent='Dicebound: Beta v0.4.9';
@@ -3260,10 +3104,6 @@ dbReturnToRoadTraceReady=true;
     world:beta04SyncWorldScene
   })});
 
-  /* ======================================================================
-     Beta 0.4.3 — options menu, camp cleanup and home-PC HUD follow-up
-     ====================================================================== */
-
   function beta042CampSummary(){
     const parts=[`Legacy Lv ${meta.level}`,`${meta.points||0} unspent`,`Prestige ${meta.prestige?.count||0}`];
     if(meta.doubleDiceUnlocked)parts.push('Double Dice ready');
@@ -3314,10 +3154,6 @@ dbReturnToRoadTraceReady=true;
   window.addEventListener('resize',beta042ScheduleRefresh,{passive:true});
   setTimeout(beta042RefreshCampAndHud,0);
 
-  /* ========================================================================
-     Beta 0.4.3 — integrated UI art assets + custom-sound hooks follow-up
-     ======================================================================== */
-
   function beta043AssetEntry(key){return window.DiceboundAssets?.resolveUiIcon?.(key)||null;}
   function beta043Art(key,label='',className='db-art-inline'){
     const entry=beta043AssetEntry(key);
@@ -3352,14 +3188,7 @@ dbReturnToRoadTraceReady=true;
   beta043ApplyArtMutations();
 
   setTimeout(beta043RefreshEquipmentArt,0);
-  /* ========================================================================
-     Beta 0.4.4 — small balance + Sovereign chooser reliability
-     ======================================================================== */
 
-  /* Keep the historical v19 merchant contract boundary for compatibility,
-     but make its late-resolved v17 chooser route through the final shared
-     Legendary chooser. This removes the old Edge-specific fallback layer and
-     ensures Sovereign Relic / Tyrant's Contract use the same maintained UI. */
   v17OpenLegendaryChoice=function(source,onComplete=()=>{}){
     return dbPowerups.openLegendary(source,onComplete);
   };
@@ -3369,9 +3198,6 @@ dbReturnToRoadTraceReady=true;
     cultistRates:()=>({normal:.01,nightmare:.10,hell:.20}),
     sovereignUsesFinalChooser:()=>String(v17OpenLegendaryChoice).includes('showLegendaryChoice')
   })});
-  /* ========================================================================
-     Beta 0.4.5 — board-balance pass, camp cleanup and harness ordering
-     ======================================================================== */
 
   // ----- Version-visible cosmetics ----------------------------------------
   document.title='Dicebound: Beta v0.4.5';
@@ -3472,10 +3298,6 @@ dbReturnToRoadTraceReady=true;
 
   // ----- Simple diagnostics for the harness/tooling layer -----------------
 
-  /* ========================================================================
-     Beta 0.4.6 — missing art assets, camp centering, board pass and haste fix
-     ======================================================================== */
-
   document.title='Dicebound: Beta v0.4.6';
   const db046Brand=document.querySelector('.brand h1');if(db046Brand)db046Brand.textContent='Dicebound: Beta v0.4.6';
   const db046Sub=document.querySelector('.brand p');if(db046Sub)db046Sub.textContent='Beta v0.4.6 · missing art restored, camp centered, haste anti-lock tightened, and a full board balance pass.';
@@ -3536,9 +3358,6 @@ dbReturnToRoadTraceReady=true;
     hasteState:()=>({turns:player.hasteTurns||0,cooldown:player.hasteCooldown||0,locked:!!player._db046HasteLocked}),
     alchemist:()=>({potionsUsed:meta.stats?.potionsUsed||0,unlocked:!!meta.unlocks?.alchemist,threshold:15})
   });
-  /* ========================================================================
-     Beta 0.4.7 — explicit user-requested fixes pass
-     ======================================================================== */
 
   document.title='Dicebound: Beta v0.4.7';
   const db047Brand=document.querySelector('.brand h1');if(db047Brand)db047Brand.textContent='Dicebound: Beta v0.4.7';
@@ -3587,10 +3406,6 @@ dbReturnToRoadTraceReady=true;
 
   // --- haste anti-lock: never queue more than one skipped response ---------
 
-  /* ========================================================================
-     Beta 0.4.9 — class order, compact pack icons and road-space polish
-     ======================================================================== */
-
   document.title='Dicebound: Beta v0.4.9';
   const db048Brand=document.querySelector('.brand h1');if(db048Brand)db048Brand.textContent='Dicebound: Beta v0.4.9';
   const db048Sub=document.querySelector('.brand p');if(db048Sub)db048Sub.textContent='Beta v0.4.9 · compact travel controls, better board space, smaller enemy art and cleaner pack icons.';
@@ -3598,9 +3413,6 @@ dbReturnToRoadTraceReady=true;
   // Travel height changed; make the responsive controller immediately
   // recalculate the board instead of waiting for the next manual resize.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
-  /* ========================================================================
-     Beta 0.4.9 — battle art, pack counters and slimmed travel strip
-     ======================================================================== */
 
   document.title='Dicebound: Beta v0.4.9';
   const db049Brand=document.querySelector('.brand h1');if(db049Brand)db049Brand.textContent='Dicebound: Beta v0.4.9';
@@ -3640,9 +3452,6 @@ dbReturnToRoadTraceReady=true;
 
   // Travel width changed; immediately offer the reclaimed space to the square board.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
-  /* ========================================================================
-     Beta 0.5.10 — wider HUD, larger road view and Legacy Constellation polish
-     ======================================================================== */
 
   document.title='Dicebound: Beta v0.5.12';
   const db050Brand=document.querySelector('.brand h1');if(db050Brand)db050Brand.textContent='Dicebound: Beta v0.5.10';
@@ -3650,9 +3459,7 @@ dbReturnToRoadTraceReady=true;
 
   // Layout geometry changed: immediately let the board claim the reclaimed pixels.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
-  /* ========================================================================
-     Beta 0.5.10 — authoritative class artwork
-     ======================================================================== */
+
   const DB054_CLASS_ART_IDS=Object.freeze(Object.keys(CLASSES));
   function db054ClassArt(classId){
     const id=String(classId);
@@ -3685,22 +3492,6 @@ dbReturnToRoadTraceReady=true;
   // Existing HUD and combat owners already call classPortraitSVG/applyClassPortrait.
   // Keeping the art swap below those owner boundaries prevents another late-patch ownership fight.
 
-  /* ========================================================================
-     Beta 0.5.10 — campsite environment art & alchemist scaling presentation
-     ======================================================================== */
-  /* ========================================================================
-     Beta 0.5.10 — campsite spatial composition + wheel-zoom talent atlas
-     ======================================================================== */
-  /* ========================================================================
-     Beta 0.5.10 — campsite spatial refinement
-     ======================================================================== */
-  /* ========================================================================
-     Beta 0.5.10 — campsite art replacement + selected-class figure
-     ======================================================================== */
-  /* ========================================================================
-     Beta 0.5.10 — pet artwork + campsite composition tuning
-     ======================================================================== */
-
   function db059PetArtEntry(petId){
     const id=String(petId||'neutral');
     return window.DiceboundAssets?.resolvePetArt?.(id)||{portrait:`assets/pets/portraits/${id}.png`,alt:PETS[id]?.name||id};
@@ -3721,15 +3512,7 @@ dbReturnToRoadTraceReady=true;
     const combat=$('combatPet');if(combat)combat.dataset.name=def.name;
   }
   setTimeout(db059RefreshActivePetArt,0);
-  /* ========================================================================
-     Beta 0.5.10 — campsite placement refinement + Arcane Lance scaling pass
-     ======================================================================== */
-  /* ========================================================================
-     Alpha 3.1.9 — deterministic actual-system regression API
-     ------------------------------------------------------------------------
-     This is intentionally thin: tests call the real character, board, combat,
-     equipment, prestige, storage and save systems. No approximate simulator.
-     ======================================================================== */
+
   function v319ResetCareer(){
     dbRuntime.save?.reset?.();
     meta=normalizeMetaCore(defaultMeta());
@@ -3738,19 +3521,6 @@ dbReturnToRoadTraceReady=true;
     return meta;
   }
   function v319BoardDigest(){return tiles.map((t,i)=>({i,type:t?.type||null,pack:t?.packSize||1,enemy:t?.enemyBase?.name||null}));}
-
-  /* ========================================================================
-     Alpha 3.2 — wrapper-boundary / mechanic-eligibility regression API
-     ======================================================================== */
-
-  /* Beta 0.3 — final-runtime regression API. */
-                    /* ========================================================================
-     Alpha 3.2.4 — touch/mobile + victory/eligibility regression API
-     ======================================================================== */
-
-  /* ========================================================================
-     Beta 0.5.11 — full-screen combat, elemental parity & progression fixes
-     ======================================================================== */
 
   // GLASS NEEDLE — normalize the live registry icon once so every canonical
   // powerup-choice renderer receives the real art without wrapping choiceHTML.
@@ -3783,12 +3553,6 @@ dbReturnToRoadTraceReady=true;
 
   // Small exposed checks for future regression work.
 
-  /* ========================================================================
-     Beta 0.5.12 — campsite placement + achievement powerup progression
-     ======================================================================== */
-
-  // Beta 0.5.12 reward gates are now authored once in DiceboundPowerupRegistry.
-  // Keep only a read-only regression snapshot here; do not replay historical
   // mutation/copy passes into the canonical registry during startup.
   const DB0512_GLOBAL_POWER_IDS=Object.freeze([
     'toxic_bloom','elemental_predator','mana_overflow','true_legend_attack_v24','true_legend_guard_v24',
@@ -3796,9 +3560,6 @@ dbReturnToRoadTraceReady=true;
     'legendary_echo_crown','legendary_blood_contract','legendary_loaded_road','legendary_packbreaker','legendary_second_sun','perfected_signature'
   ]);
 
-  /* ========================================================================
-     Alpha v3.1.7 — infrastructure boundary: platform / storage / save schema
-     ======================================================================== */
   document.title='Dicebound: Beta v0.5.12';
   const db314Brand=document.querySelector('.brand h1');if(db314Brand)db314Brand.textContent='Dicebound: Beta v0.5.12';
   const db0410BrandSub=document.querySelector('.brand p');if(db0410BrandSub)db0410BrandSub.textContent='Beta v0.5.12 · campsite placement and expanded achievement-gated Epic/Legendary progression.';
@@ -3811,10 +3572,6 @@ dbReturnToRoadTraceReady=true;
     wrapper:()=>dbRuntime.platform?.wrapperDiagnostics?.(),
     load:()=>window.__DiceboundSaveLoadResult||null
   });
-
-  /* ========================================================================
-     Beta 0.6 — gear rarity, Legendary effects and explicit guardian loot tables
-     ======================================================================== */
 
   // VERSION -----------------------------------------------------------------
   document.title=APP_IDENTITY.displayTitle;
@@ -3885,20 +3642,10 @@ dbReturnToRoadTraceReady=true;
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
   // weighted set piece from this table; independent slot rolls are retired.
-  const DB060_ARTIFACT_TABLE=window.DiceboundArtifacts?.entries;
-  if(!DB060_ARTIFACT_TABLE)throw new Error('DiceboundArtifacts must load before dicebound.js');
+  const DB060_ARTIFACT_TABLE=dbArtifacts.entries;
   const DB060_LOOT=window.DiceboundLoot;
   if(!DB060_LOOT)throw new Error('DiceboundLoot must load before dicebound.js');
-  const DB060_ARTIFACT_FACTORIES=Object.freeze({
-    weapon:()=>generateMythicalWeapon(),
-    boots:()=>generateMythicalBoots(),
-    legs:()=>generateMythicalPants(),
-    ring:()=>generateMythicalRing(),
-    hat:()=>generateMythicalHat(),
-    amulet:()=>generateMythicalAmulet(),
-    offhand:()=>generateMythicalOffhand()
-  });
-  function db060RollArtifact(){const entry=window.DiceboundArtifacts.pick(random),make=DB060_ARTIFACT_FACTORIES[entry.slot];if(typeof make!=='function')throw new Error(`No Artifact item factory registered for ${entry.slot}`);const item=make();item.artifactTableSlot=entry.slot;return item;}
+  function db060RollArtifact(){const entry=dbArtifacts.pick(random),item=dbArtifacts.create(entry.slot);item.artifactTableSlot=entry.slot;return item;}
 
   // Guardian ordinary item tables. Miniboss ordinary gear is no longer a
   // 100% automatic reward on Normal: 85% Normal, 92% Nightmare, 100% Hell.
@@ -3967,7 +3714,6 @@ dbReturnToRoadTraceReady=true;
   // topping it up from 1 to 10 after the reward is resolved.
   // (The literal formula is also replaced in the source packaging script.)
 
-  // Test-only characterization surface for the Pet subsystem migration.
   // It deliberately exposes the current final Pet lifecycle wrappers without changing ordinary callers.
   window.DiceboundPetsOracleTest=Object.freeze({
     snapshot:()=>({
@@ -3995,7 +3741,6 @@ dbReturnToRoadTraceReady=true;
     shuffledPetIds:()=>dbPets.shuffledPetIds()
   });
 
-  // Test-only characterization surface for the Items subsystem migration.
   // It deliberately exposes the current final wrappers without changing ordinary callers.
   window.DiceboundItemsOracleTest=Object.freeze({
     generateEquipment:(rarity=null,slot=null)=>dbItems.generateEquipment(rarity,slot),
@@ -4017,7 +3762,7 @@ dbReturnToRoadTraceReady=true;
     minibossGearChance:()=>JSON.parse(JSON.stringify(DB060_LOOT.minibossGearChances)),
     secretSignatureRates:()=>JSON.parse(JSON.stringify(DB060_LOOT.secretSignatureRates)),
     namedMythicals:()=>[generateAxelsCoffeeMug(),generateKratzHeadphones(),generateKellysJeanJacket()].map(x=>({name:x.name,rarity:x.rarity,slot:x.slot})),
-    artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=window.DiceboundArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
+    artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=dbArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });
 
   /* ACTIVE-RUN CHECKPOINT COMPOSITION -------------------------------------
@@ -4127,15 +3872,10 @@ dbReturnToRoadTraceReady=true;
 
   window.DiceboundInfrastructure=Object.freeze({version:APP_IDENTITY.version,channel:APP_IDENTITY.channel,platform:()=>dbRuntime.platform?.runtimeInfo?.(),storage:()=>dbRuntime.storage?.diagnostics?.(),save:()=>dbRuntime.save?.diagnostics?.(),runCheckpoint:()=>DB_RUN_CHECKPOINT.diagnostics(),wrapper:()=>dbRuntime.platform?.wrapperDiagnostics?.(),load:()=>window.__DiceboundSaveLoadResult||null});
 
-  /* BETA 0.6.6.22 — class-unlock policy now resolves in progression/class-unlock-rules.js. */
   if(!dbPowerups||!window.DiceboundEquipment?.pickOrdinaryAffix)throw new Error('Powerups/progression/equipment rule modules must load before dicebound.js');
 
   dbProgression.checkDynamicClassUnlocks();
 
-  /* BETA 0.6.3.3 — #109 progressive Camp reveals.
-     This intentionally stays in the existing Camp owner. The persisted facts
-     are one-way, while the achievement/Legacy/Prestige inputs remain the
-     authoritative progression systems that already existed before this UI. */
   const DB0633_CAMP_TROPHY_TIERS=Object.freeze([
     Object.freeze({id:'current-trophy',minimumAchievementCount:2})
   ]);
@@ -4204,12 +3944,6 @@ dbReturnToRoadTraceReady=true;
   });
   setTimeout(()=>db0633RefreshCampProgression(),0);
 
-  /* BETA 0.6.3.5 — #115 Normal-mode combat backgrounds; #286 adds approved
-     Nightmare plates through the same semantic registry.
-     Board environment resolves independently from combatants and difficulty
-     presentation. Hell remains an explicit future #88 asset decision rather
-     than a generated filter. */
-
   function db0635CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function db0635ApplyCombatBackground(){
     const overlay=$('combatOverlay'),mode=db0635CombatMode(),entry=window.DiceboundAssets?.resolveCombatBackground?.(boardLevel,mode)||null;
@@ -4219,10 +3953,7 @@ dbReturnToRoadTraceReady=true;
     return entry;
   }
   window.DiceboundCombatBackgrounds=Object.freeze({mode:db0635CombatMode,resolve:(board,mode='normal')=>window.DiceboundAssets?.resolveCombatBackground?.(board,mode)||null,active:db0635ApplyCombatBackground});
-  /* BETA 0.6.3.6 — #81 Slime Board battle progression.
-     The assets owner resolves transparent Board base art. This integration
-     deliberately knows only the current visual mode, so difficulty aura never
-     leaks into the physical Board-progression files or board-marker resolver. */
+
   function db0636CurrentCombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function db0636TieredEnemyMarkup(enemy){
     const art=window.DiceboundAssets?.resolveEnemyBattleArt?.(enemy?.name||'',boardLevel);
@@ -4256,7 +3987,7 @@ dbReturnToRoadTraceReady=true;
   // Browser/native smoke adapter for the authored Nature VFX.  This owns no
   // gameplay: it drives the already-configured element-resolution and VFX
   // owners with a deterministic fixture so presentation regressions remain
-  // observable after combat mechanics move out of the compatibility monolith.
+
   function dbNatureProcRegressionExercise(key='nature'){
     document.querySelectorAll('.db-nature-vines-vfx,.element-proc-fx,.enemy-proc-fx').forEach(node=>node.remove());
     resetPlayer('ranger');
@@ -4290,7 +4021,7 @@ dbReturnToRoadTraceReady=true;
     exercisePresentation:dbCombatPresentationExercise,
     active:dbCombatView.natureEntries
   });
-  // #128/#83 compatibility composition binds the extracted equipment owner
+
   // once before any legacy UI/effective-Mana adapters consume it.
   const db06314Equipment=window.DiceboundEquipment;
   if(!db06314Equipment)throw new Error('DiceBound requires the equipment identity owner before dicebound.js');
@@ -4488,9 +4219,6 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundCamp.configureShell({scheduleCampHitTargetSync:()=>db064Camp.scheduleHitTargetSync()});
   db064Camp.scheduleHitTargetSync();
 
-  /* #124: keep the recorder independent from game ownership. The compatibility
-     monolith supplies a read-only live context; sampling/retention/UI controls
-     stay in the extracted core owner and do not wrap combat or timer behavior. */
   const db064MemoryDiagnostics=dbRuntime.memoryDiagnostics;
   if(!db064MemoryDiagnostics)throw new Error('DiceBound requires Runtime memory diagnostics.');
   db064MemoryDiagnostics.configure({getContext:()=>{
@@ -4626,8 +4354,6 @@ dbReturnToRoadTraceReady=true;
     run:db06411RunMemoryStressCycles
   });
 
-  /* Beta 0.6.4.29 — Friends Patch presentation and Dragoon integration.
-     These adapters consume the authoritative combat/state owners above. */
   function dbFriendSuccessfulDodgePresentation(){
     const icon=$('combatPlayerIcon');if(!icon)return false;
     icon.classList.remove('db-dodge-backflip');void icon.offsetWidth;icon.classList.add('db-dodge-backflip');
@@ -5284,7 +5010,6 @@ dbReturnToRoadTraceReady=true;
   });
   dbCombatD20ChaosResolution.initializePlayerState();
 
-  // Beta 0.6.6.31 — one ordinary public Combat Engine boundary. Focused
   // resolution modules remain authoritative internals; presentation/VFX stay
   // outside this facade for the separate Combat View ownership wave.
   dbCombat=dbCombatOwner.configure({
@@ -5310,8 +5035,6 @@ dbReturnToRoadTraceReady=true;
     initializeD20State:()=>dbCombatD20ChaosResolution.initializePlayerState()
   });
 
-  // Test-only characterization surface for the Combat subsystem migration.
-  // This freezes released 0.6.6.30 engine composition before DiceboundCombat
   // becomes the ordinary public facade. It is never wired to player-facing UI.
   function dbCombatOracleClone(value){return value==null?value:JSON.parse(JSON.stringify(value));}
   function dbCombatOracleEnemy(spec={},index=0){
@@ -5368,10 +5091,9 @@ dbReturnToRoadTraceReady=true;
     element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
   });
 
-  // Test-only characterization surface for the Progression subsystem migration.
   // It exposes the final released 0.6.6.28 behavior without changing ordinary
   // callers so capture/replay can freeze Talent, Legacy, Prestige, Achievement
-  // and class-unlock integration before ownership moves.
+
   window.DiceboundProgressionOracleTest=Object.freeze({
     snapshot:()=>({
       gameStarted:!!gameStarted,
@@ -5421,10 +5143,6 @@ dbReturnToRoadTraceReady=true;
     logHtml:()=>String($('log')?.innerHTML||'')
   });
 
-  /* BETA 0.6.6.36 — Camp / App-Shell public-owner convergence.
-     The focused policy owner preserves the released wrapper ordering while the
-     compatibility root supplies domain collaborators. No peer HUD global is
-     introduced: DiceboundCamp remains the one ordinary shell boundary. */
   db064Camp.configureShell({});
   const dbCampOpenStartCore=openStartScreen;
   openStartScreen=function(...args){return db064Camp.enterShell(dbCampOpenStartCore,this,args);};
@@ -5433,9 +5151,6 @@ dbReturnToRoadTraceReady=true;
   const dbCampHudCore=updateHUD;
   updateHUD=function(...args){return db064Camp.refreshHudShell(dbCampHudCore,this,args);};
 
-  // Test-only characterization surface for the Camp / App Shell convergence.
-  // It freezes released 0.6.6.35 shell lifecycle/HUD behavior before the
-  // historical openStartScreen/updateMetaUI/updateHUD wrapper ladders move.
   const dbCampShellOracleClone=value=>value==null?value:JSON.parse(JSON.stringify(value));
   function dbCampShellOracleRng(action){
     const before=window.DiceboundRng.snapshot(),result=action(),after=window.DiceboundRng.snapshot();
@@ -5523,8 +5238,6 @@ dbReturnToRoadTraceReady=true;
     cleanup:()=>{dbRunClearCheckpoint();dbClasses.invokerResetCombat();dbCampShellOracleHideBlocking();openStartScreen();return true;}
   });
 
-  // Test-only characterization surface for the Classes subsystem migration.
-  // This freezes released 0.6.6.33 class identity/capability/action behavior
   // before ordinary runtime ownership moves behind DiceboundClasses.
   const dbClassesOracleClone=value=>value==null?value:JSON.parse(JSON.stringify(value));
   function dbClassesOracleEnemy(index=0,patch={}){
