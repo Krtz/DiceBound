@@ -10,5 +10,19 @@ if old in text:
     text=text.replace(old,new,1)
 elif 'Missing equipment icon policy for slot' not in text:
     raise SystemExit('seed generator gearIcon dependency changed unexpectedly')
+
+beta043='''  const gearIconBeta043Base=gearIcon;
+  gearIcon=function(slot){
+    if(slot==='hat')return beta043Art('helmet','Helmet','db-art-inline')||gearIconBeta043Base(slot);
+    return gearIconBeta043Base(slot);
+  };
+'''
+if beta043 in text:
+    text=text.replace(beta043,'',1)
+elif 'gearIconBeta043Base' in text:
+    raise SystemExit('Beta 0.4.3 gearIcon monkey patch shape changed unexpectedly')
+
+if 'gearIconBeta043Base' in text:
+    raise SystemExit('Beta 0.4.3 gearIcon predecessor survived')
 MONOLITH.write_text(text,encoding='utf-8',newline='\n')
-print('ITEM_ICON_CANONICAL legacy gearIcon dependency retired')
+print('ITEM_ICON_CANONICAL legacy gearIcon dependency and Beta 0.4.3 monkey patch retired')
