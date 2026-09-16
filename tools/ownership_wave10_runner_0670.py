@@ -53,6 +53,30 @@ if any(marker in ultimate for marker in ('frogEchoCap','v27OuroborosSpeed','v28F
 ultimate_path.write_text(ultimate, encoding='utf-8')
 subprocess.run(['git','add','runtime/js/combat/ultimate-resolution.js'],check=True)
 
+# The released 0.6.6.30 Combat fixture remains immutable history. Wave 10 adds
+# stable enemy identity, so extend the current expected state explicitly instead
+# of recapturing the old fixture or hiding the new id from comparison.
+combat_oracle_path = pathlib.Path('tools/test_combat_oracle.js')
+combat_oracle = combat_oracle_path.read_text(encoding='utf-8')
+old_compare = '''    const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
+    assert.equal(fixture.baselineVersion,"0.6.6.30","Combat fixture must remain the released 0.6.6.30 baseline");
+    assert.deepEqual(actual.cases,fixture.cases);
+'''
+new_compare = '''    const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
+    assert.equal(fixture.baselineVersion,"0.6.6.30","Combat fixture must remain the released 0.6.6.30 baseline");
+    const expected=structuredClone(fixture.cases);
+    const encounter=expected.find(c=>c.name==="encounter-start");
+    assert.equal(encounter?.state?.enemies?.[0]?.name,"Ascended Cultist","Combat identity extension must target the frozen Cultist encounter");
+    encounter.state.enemies[0].id="cultist";
+    assert.deepEqual(actual.cases,expected);
+'''
+if new_compare not in combat_oracle:
+    if old_compare not in combat_oracle:
+        raise RuntimeError('Combat oracle comparison block is not in the expected baseline shape')
+    combat_oracle = combat_oracle.replace(old_compare, new_compare)
+    combat_oracle_path.write_text(combat_oracle, encoding='utf-8')
+subprocess.run(['git','add','tools/test_combat_oracle.js'],check=True)
+
 # Temporary replay shim; removed before the 0.6.7.0 PR.
 def update_combat_presentation() -> int:
     text = wave.COMBAT_PRESENTATION.read_text(encoding='utf-8')
