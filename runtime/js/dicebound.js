@@ -626,7 +626,7 @@
     }
     if(item.specialLegendary&&!meta.legendaryRelics.includes(item.name)){meta.legendaryRelics.push(item.name);saveMeta();}
     if(item.legendaryEffectId&&!meta.legendaryEffectsDiscovered.includes(item.legendaryEffectId)){meta.legendaryEffectsDiscovered.push(item.legendaryEffectId);saveMeta();}
-    db060MythicalizeNamed?.(item);return true;
+    return true;
   }
   dbEquipmentUi.configure({
     find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,
@@ -1161,6 +1161,7 @@ function returnToRoad(...args){
   }
 
   function playElementAnimation(key,target=currentEnemy,enemySource=false){
+    if(key==='fire'||key==='gun'||key==='donut'||dbCombatView.suppressLegacyElementAnimation(key))return false;
     const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;
     const el=document.createElement("div");el.className=`element-proc-fx ${key}`;
     const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;
@@ -1465,6 +1466,9 @@ function returnToRoad(...args){
   // ---- monster and boss portraits -------------------------------------------
   function artHash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return Math.abs(h>>>0);}
   function enemyPortraitSVG(enemy){
+    const tieredArt=db0636TieredEnemyMarkup(enemy);if(tieredArt)return tieredArt;
+    const guardianSrc=DB317_GUARDIANS.resolveById(enemy?.id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(enemy?.id)?.battle;
+    if(guardianSrc)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${guardianSrc}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
     // External artwork is authoritative when present in js/assets.js.
     // It bypasses the procedural SVG renderer completely, preventing old art from showing behind/over it.
     const externalArt=window.DiceboundAssets?.resolveEnemyPortrait?.(enemy?.name||"");
@@ -2316,9 +2320,9 @@ function returnToRoad(...args){
     {id:'true_legend_element_v24',rarity:'legendary',icon:'🌈🌟',name:'Legend of the Prismatic Road',unique:true,desc:'Gain +20% elemental proc chance and +35% elemental power this run.',apply(){player.elementProcBonus=(player.elementProcBonus||0)+.20;player.elementDamageBonus=(player.elementDamageBonus||0)+.35;}}
   ];
 
-  function generateAxelsCoffeeMug(){return {id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'legendary',specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}};}
-  function generateKratzHeadphones(){return {id:`legend_headphones_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'legendary',specialLegendary:true,oneHitPerRound:true,icon:'🎧',name:'Kratz Headphones',uniqueEffect:'Once an attack actually reaches you in an enemy round, every later hit that round is drowned out. Dodges and Barriers do not consume this protection.',bonuses:{dodge:.25,defense:25,doubleStrike:-.25,attack:15,bossDamage:.25,crit:.25,goldBonus:-.50}};}
-  function generateKellysJeanJacket(){return {id:`legend_jacket_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'chest',rarity:'legendary',specialLegendary:true,softDefenseCurve:true,icon:'🧥',name:"The Jean Jacket Lost at Kelly's",uniqueEffect:'Defense suffers dramatically less diminishing returns while this jacket is equipped.',bonuses:{dodge:.30,defense:30,luck:-.50,doubleStrike:.15,lifeSteal:.15,attack:-10}};}
+  function generateAxelsCoffeeMug(){return {id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'mythical',specialMythical:true,specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}};}
+  function generateKratzHeadphones(){return {id:`legend_headphones_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'mythical',specialMythical:true,specialLegendary:true,oneHitPerRound:true,icon:'🎧',name:'Kratz Headphones',uniqueEffect:'Once an attack actually reaches you in an enemy round, every later hit that round is drowned out. Dodges and Barriers do not consume this protection.',bonuses:{dodge:.25,defense:25,doubleStrike:-.25,attack:15,bossDamage:.25,crit:.25,goldBonus:-.50}};}
+  function generateKellysJeanJacket(){return {id:`legend_jacket_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'chest',rarity:'mythical',specialMythical:true,specialLegendary:true,softDefenseCurve:true,icon:'🧥',name:"The Jean Jacket Lost at Kelly's",uniqueEffect:'Defense suffers dramatically less diminishing returns while this jacket is equipped.',bonuses:{dodge:.30,defense:30,luck:-.50,doubleStrike:.15,lifeSteal:.15,attack:-10}};}
   const V24_LEGENDARY_RELICS=[generateAxelsCoffeeMug,generateKratzHeadphones,generateKellysJeanJacket];
   function v24HasLegendaryRelic(id){return (meta.legendaryRelics||[]).includes(id)||(meta.heirloomStorage||[]).some(x=>x?.specialLegendary&&x.name===id)||(meta.heirlooms||[]).some(x=>x?.specialLegendary&&x.name===id);}
   function v24RandomLegendaryRelic(){const candidates=V24_LEGENDARY_RELICS.map(fn=>fn()).filter(i=>!v24HasLegendaryRelic(i.name));return candidates.length?pick(candidates):pick(V24_LEGENDARY_RELICS)();}
@@ -2907,7 +2911,7 @@ dbReturnToRoadTraceReady=true;
   }
   function beta04SyncHud(){
     beta04HudFrame=0;const mode=beta04HudMode();beta04HudLast=mode;document.body?.setAttribute('data-hud-flow',mode);
-    window.DiceboundResponsive?.schedule?.();return mode;
+    window.DiceboundResponsive?.schedule?.();beta042SyncSidebarLayout();return mode;
   }
   function beta04ScheduleHud(){if(beta04HudFrame)cancelAnimationFrame(beta04HudFrame);beta04HudFrame=requestAnimationFrame(beta04SyncHud);}
   window.addEventListener('resize',beta04ScheduleHud,{passive:true});window.addEventListener('orientationchange',beta04ScheduleHud,{passive:true});document.addEventListener('fullscreenchange',beta04ScheduleHud,true);
@@ -2963,9 +2967,6 @@ dbReturnToRoadTraceReady=true;
       window.DiceboundCamp?.refreshArt?.();
     }
   }
-
-  const beta04SyncHudBeta042Base=beta04SyncHud;
-  beta04SyncHud=function(){const mode=beta04SyncHudBeta042Base();beta042SyncSidebarLayout();return mode;};
 
   let beta042RefreshFrame=0;
   function beta042ScheduleRefresh(){
@@ -3361,13 +3362,6 @@ dbReturnToRoadTraceReady=true;
   // The original 0.5.13 handoff appended these bindings outside the runtime
   // closure. Keep the art/assets, but bind them here where the live combat and
   // camp owners actually exist.
-  const db060GuardianArt=id=>DB317_GUARDIANS.resolveById(id)?.art||window.DiceboundAssets.resolveGuardianArt(id)||null;
-  const db060EnemyPortraitBase=enemyPortraitSVG;
-  enemyPortraitSVG=function(enemy){
-    const src=DB317_GUARDIANS.resolveById(enemy?.id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(enemy?.id)?.battle;
-    if(src)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${src}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
-    return db060EnemyPortraitBase(enemy);
-  };
 
   dbTileMetaFinalReady=true;
 
@@ -3395,12 +3389,6 @@ dbReturnToRoadTraceReady=true;
 
   // CURRENT NAMED LEGENDARIES -> MYTHICAL ----------------------------------
   const db060NamedMythicals=new Set(["Axel's Coffee Mug",'Kratz Headphones',"The Jean Jacket Lost at Kelly's"]);
-  function db060MythicalizeNamed(item){if(!item||!db060NamedMythicals.has(item.name))return item;item.rarity='mythical';item.specialMythical=true;item.specialLegendary=true;return item;}
-  const db060MugBase=generateAxelsCoffeeMug,db060HeadphonesBase=generateKratzHeadphones,db060JacketBase=generateKellysJeanJacket;
-  generateAxelsCoffeeMug=function(){return db060MythicalizeNamed(db060MugBase());};
-  generateKratzHeadphones=function(){return db060MythicalizeNamed(db060HeadphonesBase());};
-  generateKellysJeanJacket=function(){return db060MythicalizeNamed(db060JacketBase());};
-  V24_LEGENDARY_RELICS.splice(0,V24_LEGENDARY_RELICS.length,generateAxelsCoffeeMug,generateKratzHeadphones,generateKellysJeanJacket);
 
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
@@ -3721,8 +3709,6 @@ dbReturnToRoadTraceReady=true;
     const aura=window.DiceboundAssets.resolveEnemyModeAura(db0636CurrentCombatMode());
     return `<span class="db0636-tiered-enemy-art ${aura.className}" data-enemy-battle-art="${art.key}" data-enemy-battle-board="${art.board}" data-enemy-battle-mode="${aura.id}"><img class="enemy-art-frame enemy-art-image db0636-tiered-enemy-image" src="${art.src}" alt="${art.alt} · Board ${art.board}" draggable="false"></span>`;
   }
-  const db0636EnemyPortraitBase=enemyPortraitSVG;
-  enemyPortraitSVG=function(enemy){return db0636TieredEnemyMarkup(enemy)||db0636EnemyPortraitBase(enemy);};
 
   window.DiceboundEnemyBattleArt=Object.freeze({
     mode:db0636CurrentCombatMode,
@@ -3735,15 +3721,6 @@ dbReturnToRoadTraceReady=true;
      RNG and turns remain owned by the live combat pipeline. */
   dbCombatView.configureVfx({getEnemies:()=>currentEnemies,getPlayer:()=>player});
   dbCombatView.prepareNature();
-  const dbNatureLegacyAnimationBase=playElementAnimation;
-  playElementAnimation=function(key,target=currentEnemy,enemySource=false){
-    // The authored vine sequence replaces (rather than stacks on) the old
-    // Nature emoji burst for a real Nature elemental proc. Other uses of the
-    // generic Nature cue, such as a normal poison tick, are intentionally
-    // untouched, as are all other elements.
-    if(dbCombatView.suppressLegacyElementAnimation(key))return false;
-    return dbNatureLegacyAnimationBase(key,target,enemySource);
-  };
   // Browser/native smoke adapter for the authored Nature VFX.  This owns no
   // gameplay: it drives the already-configured element-resolution and VFX
 
@@ -4119,11 +4096,6 @@ dbReturnToRoadTraceReady=true;
   }
 
   dbCombatView.prepareProjectileEffects?.();
-  const dbFriendLegacyElementPresentation=playElementAnimation;
-  playElementAnimation=function(key,target=currentEnemy,enemySource=false){
-    if(key==='fire'||key==='gun'||key==='donut')return false;
-    return dbFriendLegacyElementPresentation(key,target,enemySource);
-  };
   function dbFriendClearCombatPresentation(){
     dbCombatView.clearTransient();
     document.querySelectorAll('.element-proc-fx,.enemy-proc-fx,.db-combat-projectile-vfx').forEach(node=>node.remove());
