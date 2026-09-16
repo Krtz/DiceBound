@@ -117,7 +117,8 @@ def canonicalize_mana_owner() -> None:
     text = text.replace("rt.spellFor(", "spellFor(")
 
     helper_anchor = "  const livingEnemies = () => requireRuntime().livingEnemies();\n"
-    helpers = '''  function spellFor(id) { return SPELLS[id] || null; }
+    helpers = '''  function spells() { return SPELLS; }
+  function spellFor(id) { return SPELLS[id] || null; }
   function isManaClass(id) { return !!SPELLS[id]; }
   function identityNote(id) {
     const spell = spellFor(id);
@@ -129,7 +130,7 @@ def canonicalize_mana_owner() -> None:
 
     text = text.replace(
         "    manaGain,\n    occultChannelAttack,",
-        "    manaGain,\n    spellFor,\n    isManaClass,\n    identityNote,\n    occultChannelAttack,",
+        "    manaGain,\n    spells,\n    spellFor,\n    isManaClass,\n    identityNote,\n    occultChannelAttack,",
     )
 
     comment_rewrites = {
@@ -143,7 +144,7 @@ def canonicalize_mana_owner() -> None:
 
     if "rt.spellFor(" in text or '"spellFor",' in text:
         raise RuntimeError("Mana owner still depends on monolith spellFor runtime injection")
-    for marker in ["function spellFor(id)", "function isManaClass(id)", "function identityNote(id)"]:
+    for marker in ["function spells()", "function spellFor(id)", "function isManaClass(id)", "function identityNote(id)"]:
         if marker not in text:
             raise RuntimeError(f"Mana owner missing {marker}")
     MANA.write_text(text, encoding="utf-8", newline="\n")
@@ -171,6 +172,10 @@ def canonicalize_monolith() -> tuple[int, int]:
         '',
     )
     text = text.replace("    spellFor:id=>OCCULT_SPELLS[id],\n", "")
+    text = text.replace(
+        "    getOccultSpells:()=>OCCULT_SPELLS,\n",
+        "    getOccultSpells:()=>dbCombatManaActionResolution.spells(),\n",
+    )
     text = text.replace(
         "      if(MANA_OCCULT_CLASSES.has(cls.id)){const spell=OCCULT_SPELLS[cls.id];return spell?`Mana class — ${spell.builder} builds Mana; ${spell.spell} spends it.`:'Mana class.';}\n",
         "      const manaNote=dbCombatManaActionResolution.identityNote(cls.id);if(manaNote)return manaNote;\n",
@@ -226,6 +231,8 @@ def canonicalize_monolith() -> tuple[int, int]:
             raise RuntimeError(f"Wave 9 historical marker survived in monolith: {marker}")
     if "dbCombatManaActionResolution.identityNote(cls.id)" not in text:
         raise RuntimeError("class chooser no longer reads Mana identity description from its owner")
+    if "getOccultSpells:()=>dbCombatManaActionResolution.spells()" not in text:
+        raise RuntimeError("combat presentation no longer reads occult spells from Mana owner")
     if "dbConsumablesResolution.potionHealValue" not in text:
         raise RuntimeError("Potion formula no longer routes through Consumables owner")
 
