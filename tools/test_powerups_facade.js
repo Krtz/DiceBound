@@ -117,7 +117,8 @@ for(const retired of ["applyUpgradeV15","applyUpgradeV27Base","db060ApplyUpgrade
 assert.match(monolith,/eligibleUpgrades:filter=>dbPowerups\.eligible\(filter\)/);
 assert.match(monolith,/applyUpgrade:\(up,source\)=>dbPowerups\.apply\(up,source\)/);
 assert.match(monolith,/function applyUpgrade\(up,source="Powerup"\)\{return dbPowerups\.apply\(up,source\);\}/);
-assert.match(monolith,/function weightedUpgrade\(pool\)\{return dbPowerups\.weighted\(pool\);\}/);
+assert.match(monolith,/dbPowerups\.weighted\(pool\)/,'permanent Powerups oracle must route weighted selection directly through the facade');
+assert.doesNotMatch(monolith,/function\s+weightedUpgrade\s*\(/,'retired weightedUpgrade call-only adapter returned to the monolith');
 const facadeModule=manifest.modules.find(m=>m.id==="powerup-facade");
 assert.ok(facadeModule);
 assert.deepEqual(facadeModule.requires,["powerup-registry","powerup-borrowing"]);
