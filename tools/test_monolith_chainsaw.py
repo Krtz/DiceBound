@@ -9,9 +9,11 @@ from audit_monolith_shadow_ownership import mask_non_code, readonly_mutations
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 MONOLITH=ROOT/"runtime/js/dicebound.js"
 ELEMENTS=ROOT/"runtime/js/combat/element-content.js"
+DICE=ROOT/"runtime/js/run/dice.js"
 KILLED=['achievementGateUnlocked', 'activePetDef', 'activePetState', 'activeTrainerPetId', 'affinityElementMultiplier', 'allocatedTalentPoints', 'applyRandomHighRarity', 'checkDynamicClassUnlocks', 'clearBloodOverhealTemp', 'commitClassUnlock', 'currentWeaponElement', 'elementHit', 'elementHitAll', 'enemyElementProc', 'enemyForPosition', 'enemyTurn', 'gameplayTalentRank', 'generateBoard', 'generateEquipment', 'healPlayer', 'isClassUnlocked', 'manaGain', 'maybePetElementProc', 'occultChannelAttack', 'occultSpellAttack', 'performStrike', 'petElementFor', 'recordHealing', 'renderEnemyParty', 'repairTalentPrerequisites', 'shuffledPetIds', 'statusDotsHTML', 'strikeBaseDamage', 'summonerConjure', 'trackElementProgress', 'trainerPetDamage', 'trainerStrike', 'triggerElementEffect', 'triggerWeaponElement', 'unlockClass', 'winCombat']
 STALE_STARTUP_ALIASES=['db0512GateRewards','db0512RememberReward','db060GuardianArt','db060GuardianTileArt']
 STALE_CLASS_PORTRAIT_ALIASES=['classPortraitV13Base','classPortraitV15Patch','classPortraitV16Base','classPortraitV18Base','classPortraitBeta042Base','db054LegacyPortraitSVG']
+STALE_DOUBLE_DICE_ALIASES=['v19EnsureDoubleDiceButton','rollTwoDice','v22RollTwoDice','v22WireDoubleDice','v22ChooseDice','v22ShouldChooseRoll']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -48,7 +50,14 @@ def main()->int:
     assert "db054LegacyPortraitSVG" not in text, "class portrait legacy fallback returned"
     assert "CLASSES[classId]||CLASSES.ranger" not in text, "class portrait Ranger fallback returned"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, Progression bootstrap ordered, startup aliases retired, class portrait fallbacks retired")
+    for name in STALE_DOUBLE_DICE_ALIASES:
+        assert f"function {name}(" not in code and f"async function {name}(" not in code, f"historical Double Dice owner {name} returned"
+    dice_text=DICE.read_text(encoding="utf-8")
+    for marker in ['const OWNER="run/dice"','function ensureButton(','async function roll(','window.DiceboundRunDice=api']:
+        assert marker in dice_text, f"run/dice owner missing {marker}"
+    assert "dbRunDice.configure({" in text and "dbRunDice.ensureButton();" in text, "monolith no longer configures the authoritative run/dice owner"
+
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, startup aliases, class portraits and Double Dice ladders retired")
     return 0
 
 if __name__=="__main__":

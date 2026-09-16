@@ -2498,15 +2498,21 @@ function returnToRoad(...args){
 
   // ---- Between-runs hub ----------------------------------------------------
 
-  // ---- Double Dice ---------------------------------------------------------
-  function v19EnsureDoubleDiceButton(){
-    if($("roll2Btn"))return;const one=$("rollBtn");if(!one)return;one.textContent="🎲 Roll 1d6";const two=document.createElement("button");two.id="roll2Btn";two.className="main-btn double-dice-btn";two.textContent="🎲🎲 Roll 2d6";two.addEventListener("click",rollTwoDice);one.parentElement.insertBefore(two,one.nextSibling);
-  }
-  async function rollTwoDice(){
-    if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling","double-mode");for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}let a=rand(1,6),b=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){a=await chooseDieResult();b=await chooseDieResult();chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;if(hasMythicPiece("boots")&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast("🥾 Titanstep!");}const total=a+b;addLog(`${chosen?"Fate bends. You choose":"Double Dice rolls"} <b>${a} + ${b} = ${total}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.`);await dbRun.move(total+bonus,total,bonus>0,chosen);
-  }
-  v19EnsureDoubleDiceButton();
-  window.DiceboundCamp.configureShell({refreshDoubleDiceControls:()=>{v19EnsureDoubleDiceButton();const b=$("roll2Btn");if(b){b.style.display=meta.doubleDiceUnlocked?"block":"none";b.disabled=rollLocked||!gameStarted;}const one=$("rollBtn");if(one)one.textContent=meta.doubleDiceUnlocked?"🎲 Roll 1d6":"🎲 Roll the dice";}});
+  // ---- Double Dice: authoritative run/dice owner ---------------------------
+  const dbRunDice=window.DiceboundRunDice;
+  if(!dbRunDice?.configure)throw new Error("DiceBound requires the run/dice owner before dicebound.js");
+  dbRunDice.configure({
+    getDocument:()=>document,find:selector=>$(selector),getMeta:()=>meta,getPlayer:()=>player,
+    isRollLocked:()=>!!rollLocked,setRollLocked:value=>{rollLocked=!!value;},
+    isGameStarted:()=>!!gameStarted,ensureAudio:()=>ensureAudio(),updateHud:()=>updateHUD(),
+    diceFaces:()=>diceFaces,pick:list=>pick(list),rollSound:()=>sfx.roll(),delay:ms=>delay(ms),
+    rand:(min,max)=>rand(min,max),random:()=>random(),chooseDieResult:()=>chooseDieResult(),
+    clamp:(value,min,max)=>clamp(value,min,max),incrementRolls:()=>{rolls++;ensureAlphaMeta().rolls++;},
+    hasMythicPiece:id=>hasMythicPiece(id),showToast:(...args)=>showToast(...args),addLog:html=>addLog(html),
+    move:(...args)=>dbRun.move(...args)
+  });
+  dbRunDice.ensureButton();
+  window.DiceboundCamp.configureShell({refreshDoubleDiceControls:()=>dbRunDice.refreshControls()});
 
   // ---- Board 6 -------------------------------------------------------------
 
@@ -2845,29 +2851,10 @@ function returnToRoad(...args){
   }
       refreshDebugButtons();
 
-  // ----- Shared fate chooser for 1d6 and 2d6. -------------------------------
-  async function v22ChooseDice(count,reason='Fate'){
-    const values=[];for(let i=0;i<count;i++){showToast(count===2?`${reason}: choose die ${i+1} of 2`:`${reason}: choose the die`);values.push(await chooseDieResult());}return values;
-  }
-  function v22ShouldChooseRoll(){return !!meta.debugAlwaysChooseRolls||(player.diceChoiceChance>0&&random()<player.diceChoiceChance);}
-  async function v22RollTwoDice(){
-    if(rollLocked||!gameStarted||!meta.doubleDiceUnlocked)return;ensureAudio();rollLocked=true;updateHUD();const die=$('dice');die.classList.add('rolling','double-mode');for(let i=0;i<10;i++){die.textContent=`${pick(diceFaces)} + ${pick(diceFaces)}`;sfx.roll();await delay(45+i*5);}
-    let a=rand(1,6),b=rand(1,6),chosen=false;if(v22ShouldChooseRoll()){[a,b]=await v22ChooseDice(2,meta.debugAlwaysChooseRolls?'Debug fate':'Fate');chosen=true;showToast(`🎲🎲 Fate chosen: ${a}+${b}=${a+b}`);}
-    let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=`${diceFaces[a-1]} + ${diceFaces[b-1]}`;die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;
-    if(hasMythicPiece('boots')&&(a>=5||b>=5)){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);showToast('🥾 Titanstep!');}
-    const total=a+b;addLog(`${chosen?(meta.debugAlwaysChooseRolls?'Debug fate chooses':'Fate bends. You choose'):'Double Dice rolls'} <b>${a} + ${b} = ${total}</b>${bonus?' and Long Stride adds <b>+1</b>':''}.`);await dbRun.move(total+bonus,total,bonus>0,chosen);
-  }
-  function v22WireDoubleDice(){
-    const old=$('roll2Btn');if(!old||old.dataset.v22Wired)return;const fresh=old.cloneNode(true);fresh.dataset.v22Wired='1';old.replaceWith(fresh);fresh.addEventListener('click',v22RollTwoDice);
-  }
-  const ensureDoubleV22Base=v19EnsureDoubleDiceButton;
-  v19EnsureDoubleDiceButton=function(){ensureDoubleV22Base();v22WireDoubleDice();};
-  v22WireDoubleDice();
-  window.DiceboundCamp.configureShell({ensureDoubleDiceButton:()=>v19EnsureDoubleDiceButton()});
+  // Double Dice UI and roll sequencing live in runtime/js/run/dice.js.
+  setTimeout(()=>{v22EnsureDebugUnlockButtons();dbRunDice.ensureButton();v22UpdateCamp();},0);
 
   // Public regression hooks for this patch.
-
-  setTimeout(()=>{v22EnsureDebugUnlockButtons();v22WireDoubleDice();v22UpdateCamp();},0);
 })();
 
 
@@ -3262,11 +3249,11 @@ function returnToRoad(...args){
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-  const fn=({rollDice,rollTwoDice,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
+  const fn=({rollDice,applyUpgrade,equipItem})[name];if(typeof fn!=='function')return;
   const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-  if(name==='rollDice')rollDice=wrapped;else if(name==='rollTwoDice')rollTwoDice=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
+  if(name==='rollDice')rollDice=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
 }
-['rollDice','rollTwoDice','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'||n==='rollTwoDice'?'events':'detailed'));
+['rollDice','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'?'events':'detailed'));
 dbReturnToRoadTraceReady=true;
 
   /* Final UI sync / tests -------------------------------------------------- */
