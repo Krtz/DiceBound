@@ -74,6 +74,13 @@ def main() -> int:
 
     text = replace_once(
         text,
+        "  const defaultLifetimeStats=()=>({runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,potionsUsed:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}});",
+        "  function defaultLifetimeStats(){return {runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,potionsUsed:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}};}",
+        "hoist lifetime-stat defaults for startup normalization",
+    )
+
+    text = replace_once(
+        text,
         "\n  if(!meta.pets.gun)meta.pets.gun=defaultPetState(false);\n"
         "  if(meta.elementProgress.gun==null)meta.elementProgress.gun=0;\n",
         "\n",
