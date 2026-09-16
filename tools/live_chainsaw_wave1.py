@@ -117,6 +117,19 @@ def route_call_only_adapters(text:str)->tuple[str,list[str],list[str]]:
     killed=[]
     skipped=[]
     for name,target in routes.items():
+        # A number of old aliases survived only because they were injected as
+        # object-literal shorthand capabilities (`itemSellValue,`). Route those
+        # through the real owner too; otherwise deleting the alias leaves a
+        # startup ReferenceError even though all ordinary call sites are clean.
+        tree=base.parse(source)
+        capability_replacements=[]
+        for node in base.walk(tree.root_node):
+            if node.type in {'shorthand_property_identifier','shorthand_property_identifier_pattern'} and base.node_text(source,node)==name:
+                routed=f'{name}:(...args)=>{target}(...args)'.encode('utf-8')
+                capability_replacements.append((node.start_byte,node.end_byte,routed))
+        for start,end,repl in sorted(capability_replacements,reverse=True):
+            source=source[:start]+repl+source[end:]
+
         tree=base.parse(source)
         replacements=[]
         for node in base.walk(tree.root_node):
@@ -134,7 +147,7 @@ def route_call_only_adapters(text:str)->tuple[str,list[str],list[str]]:
                 ident=node.child_by_field_name('name')
                 if ident and base.node_text(source,ident)==name:
                     decls.append(node)
-            elif node.type=='identifier' and base.node_text(source,node)==name:
+            elif node.type in {'identifier','shorthand_property_identifier','shorthand_property_identifier_pattern'} and base.node_text(source,node)==name:
                 parent=node.parent
                 if parent and parent.type=='function_declaration' and parent.child_by_field_name('name')==node:
                     continue
@@ -232,17 +245,14 @@ def strict_powerup_signature()->int:
 
 def update_anti_return(killed:list[str])->None:
     text=ANTI_RETURN.read_text(encoding='utf-8')
-    marker="if __name__=='__main__':"
     block='''\n\ndef live_chainsaw_wave_guards(text:str)->None:\n    assert 'db317Readonly' not in text, 'DB317 read-only compatibility proxy returned'\n    assert 'DB317_CONTENT_MUTATORS' not in text, 'DB317 mutator compatibility table returned'\n    assert 'DB317_READONLY_CACHE' not in text, 'DB317 proxy cache returned'\n    assert 'CLASSES[player.classId]||CLASSES.ranger' not in text, 'Ranger class fallback returned'\n    assert 'Object.entries(CLASS_TAGS).forEach(([id,tags])=>{});' not in text, 'empty CLASS_TAGS compatibility pass returned'\n'''
     for name in killed:
         block+=f"    assert not re.search(r'\\bfunction\\s+{re.escape(name)}\\s*\\(',text), 'call-only adapter {name} returned'\n"
     block+="    assert len(re.findall(r'\\b(?:async\\s+)?function\\s+animateUltimate\\s*\\(',text))<=1, 'Ultimate animation patch ladder returned'\n"
     if 'live_chainsaw_wave_guards' not in text:
-        # Insert before the existing main invocation and call from it if possible.
         idx=text.rfind("if __name__")
         if idx<0: raise RuntimeError('anti-return main anchor missing')
         text=text[:idx]+block+'\n'+text[idx:]
-        # Existing script usually has main() below. Make the guard run inside main before PASS by adding a call near text load.
         anchor="text=MONOLITH.read_text(encoding=\"utf-8\")"
         if anchor in text:
             text=text.replace(anchor,anchor+"\n    live_chainsaw_wave_guards(text)",1)
