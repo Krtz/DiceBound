@@ -21,15 +21,20 @@
     return `<img class="db-art-icon ${klass}" src="${entry.image}" alt="${alt}">`;
   }
 
+  function enemyArtForName(name){
+    if(/bandit/i.test(String(name||"")))return uiArt("bandit",name,"db-art-portrait");
+    if(/troll/i.test(String(name||"")))return uiArt("troll",name,"db-art-portrait");
+    return "";
+  }
+
   function guardianTileArt(id,alt="Guardian"){
     const src=guardians.resolveById(id)?.art?.boardMarker||assets.resolveGuardianArt(id)?.boardMarker;
     return src?`<img class="db060-guardian-tile-art" src="${src}" alt="${alt}" draggable="false">`:"";
   }
 
   function enemyTileIcon(tile){
-    const name=tile?.enemyBase?.name||"";
-    if(/bandit/i.test(name))return uiArt("bandit",name,"db-art-portrait")||tile.enemyBase?.icon||"👹";
-    if(/troll/i.test(name))return uiArt("troll",name,"db-art-portrait")||tile.enemyBase?.icon||"👹";
+    const art=enemyArtForName(tile?.enemyBase?.name);
+    if(art)return art;
     return typeof tile?.enemyBase?.icon==="string"&&tile.enemyBase.icon?tile.enemyBase.icon:"👹";
   }
 
@@ -64,6 +69,6 @@
     }[tile?.type];
   }
 
-  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});
+  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForName,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});
   window.DiceboundBoardPresentation=api;
 })();
