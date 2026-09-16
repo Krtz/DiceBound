@@ -67,8 +67,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/artifact_owner_0670.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/canonical_0670_wave3.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (Select-String -Path runtime/js/dicebound.js -Pattern 'const showEndV15=showEnd|const handlePlayerDeathV16Base=handlePlayerDeath|const grantXpV15=grantXp|const loseGameV15=loseGame' -Quiet) {
+            python tools/canonical_0670_wave3.py
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            Write-Host 'CANONICAL_0670_WAVE3 already canonical'
+          }
           if (Select-String -Path runtime/js/dicebound.js -Pattern 'function v13NormalizeMeta' -Quiet) {
             python tools/canonical_0670_wave4.py
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
