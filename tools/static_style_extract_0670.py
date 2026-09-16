@@ -36,13 +36,39 @@ def locate_block(source:str,match:re.Match[str]):
     append_token=next((candidate for candidate in append_tokens if source.startswith(candidate,cursor)),None)
     if not append_token:
         raise RuntimeError(f'{name}: canonical document.head append was not found immediately after static CSS')
+
+    start=match.start()
     end=cursor+len(append_token)
     style_id=id_match.group(2) if id_match else None
+    guarded=False
     if style_id:
-        outside=source[:match.start()]+source[end:]
+        # Some late patches guarded one-time style creation with exactly:
+        # if(!document.getElementById('the-style-id')) { const style=...; ... }
+        # A real stylesheet makes that entire installer obsolete. Recognize only
+        # this exact immediately-enclosing shape; any other style-node use still
+        # fails closed below.
+        prefix=source[:start]
+        guard_re=re.compile(
+            r"(?:^|\n)(?P<guard>[ \t]*if\(!document\.getElementById\((['\"])"
+            +re.escape(style_id)
+            +r"\2\)\)\{[ \t]*\n?)\Z"
+        )
+        guard=guard_re.search(prefix)
+        if guard:
+            after=end
+            while after<len(source) and source[after].isspace():
+                after+=1
+            if after>=len(source) or source[after]!='}':
+                raise RuntimeError(f'{name}: guarded style installer has no immediate closing brace')
+            start=guard.start('guard')
+            end=after+1
+            guarded=True
+
+        outside=source[:start]+source[end:]
         if style_id in outside:
-            raise RuntimeError(f'{name}: style element id {style_id!r} is referenced outside its declaration')
-    return match.start(),end,name,css.strip()
+            context=' after removing its one-time installer' if guarded else ''
+            raise RuntimeError(f'{name}: style element id {style_id!r} is referenced outside its declaration{context}')
+    return start,end,name,css.strip()
 
 
 def main()->int:
@@ -60,8 +86,12 @@ def main()->int:
     # Every style constructor must be understood before we mutate anything.
     if len(blocks)<10:
         raise RuntimeError(f'Expected a substantial static-style wave, found only {len(blocks)} blocks')
+    ordered=sorted(blocks,key=lambda block:block[0])
+    for previous,current in zip(ordered,ordered[1:]):
+        if previous[1]>current[0]:
+            raise RuntimeError(f'Overlapping style extraction spans: {previous[2]} and {current[2]}')
 
-    for start,end,_,_ in reversed(blocks):
+    for start,end,_,_ in reversed(ordered):
         source=source[:start]+source[end:]
 
     if CREATE_RE.search(source):
@@ -72,7 +102,7 @@ def main()->int:
         raise RuntimeError('Guardian-art CSS marker missing; cannot preserve final cascade order safely')
 
     chunks=[STATIC_MARKER,'/* These blocks retain their original dicebound.js source order. */']
-    for _,_,name,css in blocks:
+    for _,_,name,css in ordered:
         chunks.extend(['',f'/* {name} */',css])
     insertion='\n'.join(chunks).rstrip()+'\n\n'
     css_file=css_file.replace(GUARDIAN_MARKER,insertion+GUARDIAN_MARKER,1)
@@ -82,9 +112,9 @@ def main()->int:
     MONOLITH.write_text(source,encoding='utf-8',newline='\n')
     STYLES.write_text(css_file,encoding='utf-8',newline='\n')
     after_lines=source.count('\n')+1
-    css_lines=sum(css.count('\n')+1 for *_,css in blocks)
-    print(f'STATIC_STYLE_EXTRACT {before_lines}->{after_lines} monolith lines; blocks={len(blocks)}; css_lines={css_lines}; cascade inserted before guardian-art rules')
-    print('extracted: '+', '.join(name for _,_,name,_ in blocks))
+    css_lines=sum(css.count('\n')+1 for *_,css in ordered)
+    print(f'STATIC_STYLE_EXTRACT {before_lines}->{after_lines} monolith lines; blocks={len(ordered)}; css_lines={css_lines}; cascade inserted before guardian-art rules')
+    print('extracted: '+', '.join(name for _,_,name,_ in ordered))
     return 0
 
 
