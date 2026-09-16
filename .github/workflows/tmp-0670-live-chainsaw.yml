@@ -43,6 +43,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_proxy_cleanup.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/live_chainsaw_ultimate_cleanup.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_wave1.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_update_guards.py
