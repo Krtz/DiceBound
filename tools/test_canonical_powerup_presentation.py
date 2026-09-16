@@ -44,13 +44,16 @@ for retired in ["openLevelUp", "showPowerupChoice", "showLegendaryChoice"]:
     if re.search(rf"(?<![.\w$]){re.escape(retired)}\s*=\s*function\b", SOURCE):
         raise SystemExit(f"monolith {retired} replacement returned")
 
-for canonical in ["powerupDisplayDesc", "choiceHTML", "attachPowerupReroll", "renderLevelUpChoices", "renderPowerupChoiceOverlay", "renderLegendaryChoice"]:
+for canonical in ["choiceHTML", "attachPowerupReroll", "renderLevelUpChoices", "renderPowerupChoiceOverlay", "renderLegendaryChoice"]:
     count = SOURCE.count(f"function {canonical}(")
     if count != 1:
         raise SystemExit(f"expected one canonical {canonical}, found {count}")
 
+if "function powerupDisplayDesc(" in SOURCE:
+    raise SystemExit("retired powerupDisplayDesc pass-through returned")
+
 required_source = [
-    "function powerupDisplayDesc(up){return dbPowerups.describe(up);}",
+    "${dbPowerups.describe(up)}</span><span class=\"choice-tags\">",
     "if(pendingLevelUps>0)dbPowerups.openLevelUp(onComplete);",
     "attachPowerupReroll(grid,()=>dbPowerups.openLevelUp(onComplete));",
     "attachPowerupReroll(grid,()=>dbPowerups.openChoice(source,onComplete,filter,subtitle));",
