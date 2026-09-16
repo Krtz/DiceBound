@@ -10,5 +10,8 @@ def update_combat_presentation() -> int:
     return 1
 
 
+strike = wave.STRIKE.read_text(encoding='utf-8')
+strike = strike.replace('"getV26FastEcho",', '').replace('"setV26FastEcho",', '')
+wave.write(wave.STRIKE, strike)
 wave.update_combat_presentation = update_combat_presentation
 raise SystemExit(wave.main())
