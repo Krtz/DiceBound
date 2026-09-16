@@ -165,7 +165,7 @@ assert.doesNotMatch(fs.readFileSync(path.join(root, "runtime", "js", "combat", "
 assert.match(monolith, /dbCombatView\.clearTransient\(\)/, "Combat transitions must explicitly clear authored transient VFX through the Combat View facade");
 assert.match(monolith, /playProjectileProc:\(key,payload\)=>dbCombatView\.playProjectileProc\?\.\(key,payload\)/, "Element owner composition must inject the authored projectile presentation callback");
 assert.match(elementOwner, /if \(result && \(key === "fire" \|\| key === "gun"\)\) rt\.playProjectileProc\(key, \{ origin: "player", enemy: target \}\);/, "Player Fire/Gun procs must use the authored projectile owner");
-assert.match(monolith, /if\(key==='fire'\|\|key==='gun'\|\|key==='donut'\)return false;/, "Legacy emoji Donut presentation must be suppressed when authored Donut VFX owns the proc");
+assert.match(monolith, /if\(key==='fire'\|\|key==='gun'\|\|key==='donut'\|\|dbCombatView\.suppressLegacyElementAnimation\(key\)\)return false;/, "Legacy emoji Fire/Gun/Donut presentation and Combat View scoped suppression must share the canonical animation gate");
 
 console.log("Combat VFX ownership PASS: Nature suppression scope, live-target filter, asset contracts and monolith adapters");
 
