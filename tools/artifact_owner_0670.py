@@ -144,8 +144,8 @@ def main() -> int:
         return 0
 
     text = insert_owner_configuration(text)
-    text, removed_spans = remove_legacy_factories(text)
     text = route_consumers(text)
+    text, removed_spans = remove_legacy_factories(text)
 
     survivors = [name for name in FACTORY_NAMES if name in text]
     if survivors:
