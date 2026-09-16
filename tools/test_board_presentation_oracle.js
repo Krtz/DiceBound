@@ -18,6 +18,7 @@ const ui={
 };
 const guardianById={
   "mini-known":{id:"mini-known",name:"Known Mini",art:{boardMarker:"assets/enemies/minibosses/board-markers/mini-known.png"}},
+  "boss-4":{id:"boss-4",name:"Board 4 Boss",art:{boardMarker:"assets/enemies/bosses/board-markers/boss-4.png"}},
 };
 const context={
   window:{
@@ -27,7 +28,7 @@ const context={
     },
     DiceboundGuardians:{
       resolveById:id=>guardianById[id]||null,
-      resolveFinal:level=>({id:`boss-${level}`,name:`Board ${level} Boss`,art:{boardMarker:`assets/enemies/bosses/board-markers/boss-${level}.png`}}),
+      resolveFinal:level=>guardianById[`boss-${level}`]||null,
     },
   },
   console,
