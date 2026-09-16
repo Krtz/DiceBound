@@ -8,7 +8,7 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 
 | Rank | Score | Runtime file | Replacement pairs | Same-scope repeats | Repeated symbols | Predecessor captures | Temp overrides ignored | Versioned defs | History-named defs | Max alias depth | Lines | Repeated symbols |
 | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | 1405 | `runtime/js/dicebound.js` | 10 | 24 | 23 | 28 | 4 | 112 | 5 | 2 | 5302 | onComplete×3, add×2, addCombatHistory×2, addLog×2, applyPoisonTick×2, beta04SyncHud×2, db317Board×2, defenseDamageReduction×2, filter×2, grantXp×2, handlePlayerDeath×2, loseGame×2, playElementAnimation×2, rollDice×2, rollGearRarity×2, saveMeta×2, setCombatText×2, showEnd×2, showToast×2, unboundPreciousGearV16×2, useCamp×2, v13NormalizeMeta×2, weightedUpgrade×2 |
+| 1 | 1176 | `runtime/js/dicebound.js` | 8 | 15 | 14 | 26 | 4 | 112 | 5 | 2 | 5209 | onComplete×3, add×2, addCombatHistory×2, addLog×2, applyPoisonTick×2, beta04SyncHud×2, db317Board×2, defenseDamageReduction×2, filter×2, playElementAnimation×2, saveMeta×2, setCombatText×2, showToast×2, v13NormalizeMeta×2 |
 | 2 | 114 | `runtime/js/combat/turn-resolution.js` | 0 | 0 | 0 | 7 | 0 | 0 | 2 | 1 | 354 | - |
 | 3 | 109 | `runtime/js/combat/ultimate-resolution.js` | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 1 | 266 | - |
 | 4 | 89 | `runtime/js/combat/strike-resolution.js` | 0 | 0 | 0 | 2 | 0 | 13 | 5 | 1 | 342 | - |

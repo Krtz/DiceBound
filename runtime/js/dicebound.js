@@ -116,8 +116,6 @@
   const POWERUP_TILE_COUNT = 5;
   const WHEEL_TILE_COUNT = 5;
 
-  // its runtime callbacks. These stable adapters deliberately stay safe
-  // during that bootstrap window instead of recreating a wrapper chain.
   let dbInfoGuide=null;
   const DB_EQUIPMENT_CONFIG=window.DiceboundEquipment?.createRegistry?.();
   if(!DB_EQUIPMENT_CONFIG)throw new Error("DiceboundEquipment must load before dicebound.js");
@@ -868,14 +866,16 @@ function returnToRoad(...args){
   let dbCombatAttackResolution=null;
 
   function handlePlayerDeath(){
+    if(player.hp<=0&&db060HasEffect('last_stand')&&!player._db060LastStandUsed){player._db060LastStandUsed=true;player.hp=Math.max(1,Math.ceil(player.maxHp*.25));player.combatShield=(player.combatShield||0)+3;combatBusy=false;addCombatHistory('❤️‍🔥🛡️ Last Stand refuses death: 25% HP and 3 Barriers.');showToast('❤️‍🔥 LAST STAND',2400,true);updateCombatUI();return;}
+    if(player.hp<=0&&player.secondSun&&!player.secondSunUsedBoards?.[boardLevel]){player.secondSunUsedBoards=player.secondSunUsedBoards||{};player.secondSunUsedBoards[boardLevel]=true;player.hp=1;combatBusy=false;sfx.holy();const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];let holy="";if(target){const r=dbCombat.element("light",target,{forced:true,source:"Second Sun"});holy=r?.message||"Holy erupts across the pack.";}addLog(`<b>Second Sun!</b> Death is refused on Board ${boardLevel}.`);setCombatText(`☀️☀️ Second Sun returns you at 1 HP. ${holy}`);updateCombatUI();if(!livingEnemies().length)return dbCombat.win();return;}
     if(player.revives>0){player.revives--;player.hp=Math.max(1,Math.ceil(player.maxHp*.5));combatBusy=false;sfx.holy();addLog("A <b>Phoenix Feather</b> drags you back from death.");setCombatText(`You revive at ${player.hp} HP. Phoenix feathers remaining: ${player.revives}.`);updateCombatUI();return;}
-    loseGame();
+    loseGame();if(player.hp<=0)db0511RestoreEnemyElementDebuffs();
   }
 
   function currentGoldSnapshot(){return DB_EFFECTIVE_STATS.goldSnapshot(player,{nightmare:nightmareMode});}
   function modifiedGold(base){return DB_EFFECTIVE_STATS.scaleGold(base,player,{nightmare:nightmareMode});}
 
-  function grantXp(amount){const result=ProgressionState.grantXp(amount);ProgressionUI.render(result);return result;}
+  function grantXp(amount){const result=ProgressionState.grantXp(amount);ProgressionUI.render(result);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);dbProgression.checkDynamicClassUnlocks();saveMeta();return result;}
   function forceLevels(count){const result=ProgressionState.forceLevels(count);ProgressionUI.render(result);return result;}
 
   function recordRunBuff(icon,name,desc,rarity="special",source="Road"){
@@ -990,10 +990,7 @@ function returnToRoad(...args){
     addLog("A <b>Power Shrine</b> offers a free gift.");
   }
 
-  function useCamp(){
-    const heal=Math.max(1,Math.round(player.maxHp*.38)),actual=Math.min(heal,player.maxHp-player.hp);player.hp+=actual;
-    tiles[player.position].cleared=true;tiles[player.position].type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();
-  }
+  function useCamp(){const tile=tiles[player.position];if(player.hp>=player.maxHp){tile.cleared=true;tile.type="empty";refreshTile(player.position);const pool=eligibleUpgrades(u=>u.rarity==="common"||u.rarity==="uncommon");if(pool.length){const up=pick(pool);dbPowerups.apply(up,"Campfire Inspiration");sfx.holy();addLog(`<b>Camp:</b> Already fully rested, so the quiet fire grants <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`🔥 ${up.name}`);}else{player.maxHp+=5;player.hp+=5;showToast("🔥 +5 max HP");}updateHUD();returnToRoad();return;}const heal=Math.max(1,Math.round(player.maxHp*.38)),actual=Math.min(heal,player.maxHp-player.hp);player.hp+=actual;tile.cleared=true;tile.type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();}
 
   // Merchant presentation is reached through the subsystem facade.
 
@@ -1032,12 +1029,9 @@ function returnToRoad(...args){
     v25EnsureDebugControls();
   }
 
-  function loseGame(){sfx.lose();$("combatOverlay").classList.add("hidden");showEnd(false);}
-
-  /* SEMANTIC OWNER — Class/content expansion, powerups and equipment definitions. Migrated from the retired Alpha legacy stack in 3.1.6. */
+  function loseGame(){dbCombat.clearBloodOverhealTemp();sfx.lose();$("combatOverlay").classList.add("hidden");showEnd(false);}
 
   const PUBLIC_SLIME_EXEMPT=new Set(["slime","d20","ceo","merchant"]);
-        const evasive=upgrades.find(u=>u.id==="evasive_bulwark");if(evasive){}
 
   let merchantFaceClicks=new Set(),merchantFaceTotal=0,merchantBossPrimed=false,merchantBossDefeatedThisBoard=false,merchantBossBattle=false;
   const currentTileCount=()=>db317Board(boardLevel).tiles;
@@ -1147,7 +1141,7 @@ function returnToRoad(...args){
     const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;$("rollBtn").disabled=rollLocked||!gameStarted;$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;dbProgression.checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
   }
   async function rollDice(){
-    if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
+    if(rollLocked||!gameStarted)return;ensureAudio();if(meta.debugAlwaysChooseRolls){rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);return;}if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
   }
   function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}
   function damageEnemy(enemy,amount,ignoreDefense=false){
@@ -1192,7 +1186,7 @@ function returnToRoad(...args){
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
-  function showEnd(victory){rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
   if(!meta.pets.gun)meta.pets.gun=defaultPetState(false);
   if(meta.elementProgress.gun==null)meta.elementProgress.gun=0;
@@ -1249,7 +1243,7 @@ function returnToRoad(...args){
   }
 
   // combat/turn-resolution.js. These lexical adapters stay mutable so the
-  // existing regression hooks can temporarily replace them without creating
+
   // a second production owner.
   let dbCombatStrikes=null;
   let dbCombatUltimateResolution=null;
@@ -1347,8 +1341,6 @@ function returnToRoad(...args){
     updateMetaUI();if(gameStarted)updateHUD();showToast(`Debug: ${action}`);
   }
 
-  /* SEMANTIC OWNER — Progression, achievements, board expansion and early run lifecycle. Migrated from the retired Alpha legacy stack in 3.1.6. */
-
   const ALPHA_COMBAT_DELAY=200;
   let runTalentSnapshot=null,statsLastHp=null,statsLastGold=null;
   const defaultLifetimeStats=()=>({runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}});
@@ -1386,11 +1378,8 @@ function returnToRoad(...args){
   // Sovereign Relic now actually lets the player choose one of three Legendaries.
 
   // Track board/class feats; victory ownership now lives in combat/victory-resolution.
-  const loseGameV15=loseGame;loseGame=function(){dbCombat.clearBloodOverhealTemp();return loseGameV15();};
 
   // Stats hooks around existing run lifecycle.
-  const showEndV15=showEnd;showEnd=function(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}return showEndV15(victory);};
-  const grantXpV15=grantXp;grantXp=function(amount){const r=grantXpV15(amount);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);dbProgression.checkDynamicClassUnlocks();saveMeta();return r;};
 
   saveMeta();
 
@@ -1413,7 +1402,7 @@ function returnToRoad(...args){
   dbRun.generateBoard();buildBoard();window.DiceboundClassChooser.render();renderEquipment();updateHUD();updateMetaUI();
 
   // the surface. Keep that timing contract explicit now that openInfo is a
-  // stable module adapter rather than a captured legacy wrapper.
+
   if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);
 
   let hellMode=false;
@@ -1484,9 +1473,6 @@ function returnToRoad(...args){
 
   // Bloodmage bespoke combat actions are owned by DiceboundClasses.
 
-  const rollDiceV11=rollDice;rollDice=async function(){if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return rollDiceV11();ensureAudio();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}let value=await chooseDieResult(),bonus=0;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);};
-  $("rollBtn").addEventListener("click",e=>{if(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked){e.preventDefault();e.stopImmediatePropagation();rollDice();}},true);
-
   let dbDebugUiReady=false;
   function refreshDebugButtons(){
     const grid=$("debugGrid");if(!grid)return;
@@ -1518,8 +1504,6 @@ function returnToRoad(...args){
 
   random();
 
-  Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{});
-
   // replaced by the semantic-art owner. Keep its single lexical binding so
   // early startup assignments remain valid in strict mode.
 
@@ -1529,7 +1513,6 @@ function returnToRoad(...args){
 
   // Re-render once so the updated class order/portraits are immediately visible.
   window.DiceboundClassChooser.render();
-  /* SEMANTIC OWNER — Class identity mechanics, combat resources, portraits and action dispatch. Migrated from the retired Alpha legacy stack in 3.1.6. */
 
   random();
 
@@ -1544,17 +1527,6 @@ function returnToRoad(...args){
   };
 
   Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{});
-
-  if(CLASSES.sorcerer){}
-  if(CLASSES.vampire){}
-  if(CLASSES.rouge){}
-  if(CLASSES.merchant){}
-  if(CLASSES.rogue){}
-  if(CLASSES.bloodmage){}
-  if(CLASSES.d20){}
-  if(CLASSES.slime){}
-
-  ["sorcerer","vampire","rouge","merchant"].forEach(id=>{});
 
   // ---- even more thematic class portraits -----------------------------------
 
@@ -1712,8 +1684,6 @@ function returnToRoad(...args){
   // ---- Hidden AI simulation harness -----------------------------------------
   // This never touches the live player/meta objects. It is deliberately non-enumerable and has no menu button.
 
-  /* SEMANTIC OWNER — Equipment economy, defense, companions, alchemy and fifth-road systems. Migrated from the retired Alpha legacy stack in 3.1.6. */
-
   random();
 
   const V14_RARITY_BUDGETS={common:[10,16],uncommon:[18,28],rare:[30,44],epic:[48,68],legendary:[75,105]};
@@ -1828,21 +1798,19 @@ function returnToRoad(...args){
   window.DiceboundCamp.configureShell({refreshDefenseTooltip:()=>{const d=$("defenseText");if(d){const pct=Math.round(defenseDamageReduction(player.defense)*100);d.classList.add("defense-tooltip");d.title=`${Math.round(player.defense)} Defense currently reduces ordinary incoming damage by about ${pct}%. Defense has diminishing returns; guardian specials receive only part of this reduction.`;const box=d.closest(".stat");if(box)box.title=d.title;}}});
 
   // ---- Second Sun actually works -------------------------------------------
-  const handlePlayerDeathV16Base=handlePlayerDeath;
-  handlePlayerDeath=function(){if(player.hp<=0&&player.secondSun&&!player.secondSunUsedBoards?.[boardLevel]){player.secondSunUsedBoards=player.secondSunUsedBoards||{};player.secondSunUsedBoards[boardLevel]=true;player.hp=1;combatBusy=false;sfx.holy();const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];let holy="";if(target){const r=dbCombat.element("light",target,{forced:true,source:"Second Sun"});holy=r?.message||"Holy erupts across the pack.";}addLog(`<b>Second Sun!</b> Death is refused on Board ${boardLevel}.`);setCombatText(`☀️☀️ Second Sun returns you at 1 HP. ${holy}`);updateCombatUI();if(!livingEnemies().length)return dbCombat.win();return;}return handlePlayerDeathV16Base();};
 
   // ---- Sovereign Relic: force a visible choice flow ------------------------
 
   // ---- Preserve valuable end-run gear warnings -----------------------------
   let v16PreciousWarningAcknowledged=false;
-  function unboundPreciousGearV16(){const bound=meta.heirlooms||[];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&(i.rarity==="mythical"||i.rarity==="omega")&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));}
+  function unboundPreciousGearV16(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&["legendary","artifact","mythical","omega"].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));}
   async function preciousGuardV16(e){if(v16PreciousWarningAcknowledged)return;const items=unboundPreciousGearV16();if(!items.length)return;e.preventDefault();e.stopImmediatePropagation();const target=e.currentTarget||e.target;const ok=await diceboundConfirm(`WARNING: You are about to leave behind ${items.length} unbound Legendary/Artifact/Mythical/Omega item${items.length===1?"":"s"}:\n\n${items.map(i=>`• ${i.name}`).join("\n")}\n\nStart/leave this run without binding one as an heirloom anyway?`,{title:"Leave valuable gear?",confirmLabel:"Leave anyway",danger:true});if(!ok)return;v16PreciousWarningAcknowledged=true;target?.click?.();}
   ["restartBtn","endRestartBtn","startBtn"].forEach(id=>$(id)?.addEventListener("click",preciousGuardV16,true));$("startBtn")?.addEventListener("click",()=>setTimeout(()=>v16PreciousWarningAcknowledged=false,0));
 
   // ---- Alchemist art and class ordering ------------------------------------
 
   // Combat-kind metadata remains available to existing final-combat routing.
-  // Board 5 terminal ownership was retired: Board 5 advances into Board 6.
+
   let v16CombatKind=null;
   // ---- Info additions -------------------------------------------------------
 
@@ -1853,8 +1821,6 @@ function returnToRoad(...args){
   // Refresh visible UI once the new identity/art layer is active.
   window.DiceboundClassChooser.render();
   renderInfo();
-
-  /* SEMANTIC OWNER — Late class mechanics, talents, Ouroboros and meta progression. Migrated from the retired Alpha legacy stack in 3.1.6. */
 
   random();
 
@@ -1871,12 +1837,9 @@ function returnToRoad(...args){
 
   // ---- Ninja Smoke ---------------------------------------------------------
 
-  const prismaticTalent=talents.find(t=>t.id==="element_prismatic");if(prismaticTalent){}
-
   // ---- Poison marker compacting -------------------------------------------
 
   // ---- Camp full-health consolation ---------------------------------------
-  useCamp=function(){const tile=tiles[player.position];if(player.hp>=player.maxHp){tile.cleared=true;tile.type="empty";refreshTile(player.position);const pool=eligibleUpgrades(u=>u.rarity==="common"||u.rarity==="uncommon");if(pool.length){const up=pick(pool);dbPowerups.apply(up,"Campfire Inspiration");sfx.holy();addLog(`<b>Camp:</b> Already fully rested, so the quiet fire grants <b>${up.name}</b> (${rarityInfo[up.rarity].label}).`);showToast(`🔥 ${up.name}`);}else{player.maxHp+=5;player.hp+=5;showToast("🔥 +5 max HP");}updateHUD();returnToRoad();return;}const heal=Math.max(1,Math.round(player.maxHp*.38)),actual=Math.min(heal,player.maxHp-player.hp);player.hp+=actual;tile.cleared=true;tile.type="empty";refreshTile(player.position);sfx.heal();addLog(`Rested by the fire and recovered <b>${actual} HP</b>.`);showToast(`Recovered ${actual} HP`);returnToRoad();};
 
   // ---- Bloodmage secrecy + boss tuning ------------------------------------
 
@@ -1888,8 +1851,6 @@ function returnToRoad(...args){
 
   // ---- Toxic Bloom wording -------------------------------------------------
   const toxic=upgrades.find(u=>u.name==="Toxic Bloom");
-
-  // Hidden regression helpers: these never appear in the player UI/debug menu.
 
   // ---- Live board-stat tooltips --------------------------------------------
   // Native `title` tooltips can cache stale text in Chromium/Edge. These CSS
@@ -1957,11 +1918,8 @@ function returnToRoad(...args){
 
   // ---- Info/documentation updates ------------------------------------------
 
-  // ---- Regression helpers (not visible in normal UI) -----------------------
   // These functions make browser checks reproducible without exposing another
   // player-facing debug button. They are safe to ignore during normal play.
-
-  /* SEMANTIC OWNER — Prestige, Double Dice, Board 6, set bonuses and road runtime. Migrated from the retired Alpha legacy stack in 3.1.6. */
 
   // ---- Save/schema enrichment ---------------------------------------------
   meta.unlocks=meta.unlocks||{};
@@ -1973,7 +1931,6 @@ function returnToRoad(...args){
 
   // CEO is intentionally a later secret now. Existing unlocked saves remain
   // unlocked; only future unlock checks use the new 300% threshold.
-  if(CLASSES.ceo){}
   // ---- Gear point budgets --------------------------------------------------
   // Hidden point budgets are a little wider at every ordinary rarity. Mythic
   // and Omega pieces remain handcrafted rather than budget-generated.
@@ -2045,9 +2002,6 @@ function returnToRoad(...args){
   // This deliberately fuses Cleric's healing feedback loop with Fighter's
   // defensive tempo. Healing stores up to 100 Grace. Guard consumes it for
   // stronger Guard and barriers, turning sustain into deliberate defense.
-  if(CLASSES.paladin){
-
-  }
 
   // ---- Runtime reset hooks -------------------------------------------------
 
@@ -2095,7 +2049,7 @@ function returnToRoad(...args){
   // Board-6 guardian labels in the road HUD.
   window.DiceboundCamp.configureShell({refreshBoard6RoadLabels:()=>{if(boardLevel===6&&gameStarted){const count=currentTileCount(),mini=currentMinibossTile();$("floorText").textContent=`Board 6 · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Abyssal Custodian · tile ${mini}`:`The Last Equation · tile ${count}`;}}});
   // Keep the road HUD on the same final guardian identity used for combat,
-  // including Boards 4-6 where legacy labels previously drifted.
+
   window.DiceboundCamp.configureShell({refreshFinalGuardianLabel:()=>{if(!gameStarted)return;const guardian=DB317_GUARDIANS.resolveFinal(boardLevel),count=currentTileCount(),mini=currentMinibossTile();if(guardian&&player.position>=mini-1)$("guardianText").textContent=`${guardian.name} · tile ${count}`;}});
 
   // ---- Set bonuses: runtime hooks ------------------------------------------
@@ -2114,12 +2068,8 @@ function returnToRoad(...args){
 
   // Styling added in JS keeps the single-file build self-contained.
 
-  // ---- Regression helpers --------------------------------------------------
-
   // Final refresh.
   upgrades.forEach(inferUpgradeTags);saveMeta();window.DiceboundTalentTree.render();window.DiceboundPetChooser.render();window.DiceboundClassChooser.render();renderInfo();updateHUD();
-
-  /* SEMANTIC OWNER — Campsite hub, Perfected Signatures and powerup selection UI. Migrated from the retired Alpha legacy stack in 3.1.6. */
 
 (function(){
   const V="Alpha v2.0";
@@ -2131,7 +2081,6 @@ function returnToRoad(...args){
 
   window.DiceboundCamp.configureShell({ensureCampScene:()=>v110EnsureCampScene(),refreshCampV110:()=>v110UpdateCampScene()});
 
-  // The module is configured after all legacy action owners have initialized;
   // this timer deliberately runs after that deterministic bootstrap boundary.
   setTimeout(()=>{v110EnsureCampScene();v110UpdateCampScene();renderEquipment();},0);
 })();
@@ -2193,20 +2142,13 @@ function returnToRoad(...args){
     perfectedSignature:()=>({...dbPowerupPresentation.currentSignature(),apply:undefined})
   });
 
-  // Debug access makes the reusable selector easy to regression-test in an
   // ordinary run without manufacturing a special event first.
       refreshDebugButtons();
 
-  // Tiny regression hooks kept out of visible UI.
-
 })();
-
-  /* SEMANTIC OWNER — Fullscreen camp, talent presentation and guardian/UI refinements. Migrated from the retired Alpha legacy stack in 3.1.6. */
 
 (function(){
   const V='Alpha v2.2';
-
-  // Older class-render layers still write the legacy start button label. The
 
   // target prevents those inherited renderers from dereferencing null.
   if(!$('startBtn')){const compat=document.createElement('button');compat.id='startBtn';compat.className='camp-hidden';compat.type='button';compat.setAttribute('aria-hidden','true');$('startOverlay')?.querySelector('.start-modal')?.appendChild(compat);}
@@ -2370,7 +2312,6 @@ function returnToRoad(...args){
   // Double Dice UI and roll sequencing live in runtime/js/run/dice.js.
   setTimeout(()=>{v22EnsureDebugUnlockButtons();dbRunDice.ensureButton();v22UpdateCamp();},0);
 
-  // Public regression hooks for this patch.
 })();
 
 (function(){
@@ -2425,8 +2366,8 @@ function returnToRoad(...args){
     if(p<.006+boost*.055)return 'epic';
     if(p<.038+boost*.14)return 'rare';
     if(p<.145+boost*.31)return 'uncommon';
-    if(p<.45+boost*.58)return 'common';
-    return 'poor';
+    let rarity;if(p<.45+boost*.58)rarity='common';else rarity='poor';
+    return DB_RARITIES.promoteOrdinaryRarityForLuck?.(rarity,player.luck)||rarity;
   };
 
   // Board merchants understand the shifted ordinary rarity ladder. They can
@@ -2456,8 +2397,6 @@ function returnToRoad(...args){
     {id:'true_legend_guard_v24',rarity:'legendary',icon:'🏰🌟',name:'Legend of the Last Wall',unique:true,desc:'Gain +12 Defense and start every battle with 2 additional Barriers this run.',apply(){player.defense+=12;player.firstHitBlocks=(player.firstHitBlocks||0)+2;}},
     {id:'true_legend_element_v24',rarity:'legendary',icon:'🌈🌟',name:'Legend of the Prismatic Road',unique:true,desc:'Gain +20% elemental proc chance and +35% elemental power this run.',apply(){player.elementProcBonus=(player.elementProcBonus||0)+.20;player.elementDamageBonus=(player.elementDamageBonus||0)+.35;}}
   ];
-  v24NewPowerups.forEach(up=>{});
-  weightedUpgrade=function(pool){return dbPowerups.weighted(pool);};
 
   function generateAxelsCoffeeMug(){return {id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'legendary',specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}};}
   function generateKratzHeadphones(){return {id:`legend_headphones_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'legendary',specialLegendary:true,oneHitPerRound:true,icon:'🎧',name:'Kratz Headphones',uniqueEffect:'Once an attack actually reaches you in an enemy round, every later hit that round is drowned out. Dodges and Barriers do not consume this protection.',bonuses:{dodge:.25,defense:25,doubleStrike:-.25,attack:15,bossDamage:.25,crit:.25,goldBonus:-.50}};}
@@ -2475,12 +2414,6 @@ function returnToRoad(...args){
   function v24SetTierData(){return [
     {pieces:2,text:'+2% all damage.'},{pieces:3,text:'+4% all damage and +4% elemental proc chance.'},{pieces:4,text:'+7% all damage, +5% elemental proc chance, 25 starting Ultimate, +8% pet double-attack chance and 5% less Guardian-special damage.'},{pieces:5,text:'+10% all damage, +7% elemental proc chance, +5% elemental power, 30 starting Ultimate, 1 starting Barrier, +10% pet double-attack chance and 10% less Guardian-special damage.'},{pieces:6,text:'+14% all damage, +10% elemental proc chance, +9% elemental power, 35 starting Ultimate, +13% pet double-attack chance and 15% less Guardian-special damage.'},{pieces:7,text:'+20% all damage, +13% elemental proc chance, +14% elemental power, 40 starting Ultimate, +16% pet double-attack chance, 20% less Guardian-special damage, and once per battle at ≤25% HP restore 18% max HP + gain 1 Barrier.'}
   ];}
-
-  unboundPreciousGearV16=function(){const bound=[...(meta.heirlooms||[]),...(meta.heirloomStorage||[])];return EQUIPMENT_SLOTS.map(s=>player.equipment?.[s]).filter(i=>i&&['legendary','artifact','mythical','omega'].includes(i.rarity)&&!bound.some(h=>h.id===i.id||(h.seed&&i.seed&&h.seed===i.seed)));};
-
-  if(CLASSES.fighter){}
-  if(CLASSES.paladin){}
-  if(CLASSES.beastmaster){}
 
   function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
   function v24StorageCapacity(){if(!v24StorageUnlocked())return 0;let n=EQUIPMENT_SLOTS.length;if((meta.board5Clears||0)>0)n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE))n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE))n++;if((meta.merchantKills||0)>=1)n++;return n;}
@@ -2612,7 +2545,7 @@ function returnToRoad(...args){
     }
     {
       const grid=$('debugGrid');if(!grid)return;
-          // Remove the three legacy v1.9 orphan controls; recreate them as ordinary
+
           // data-debug controls so the tab router owns them exactly once.
           grid.querySelectorAll('[data-v19-action]').forEach(b=>b.remove());grid.querySelector('[data-debug="mythicring"]')?.remove();
           const ensure=(id,label)=>{let b=grid.querySelector(`[data-debug="${id}"]`);if(!b){b=document.createElement('button');b.className='small-btn';b.dataset.debug=id;grid.appendChild(b);}b.textContent=label;return b;};
@@ -2702,16 +2635,11 @@ dbReturnToRoadTraceReady=true;
   if(v26CounterIdx>=0){const t=talents[v26CounterIdx],rank=Math.max(0,Number(meta.purchased?.fighter_counter_reserve)||0);if(rank){meta.points=(meta.points||0)+rank*(t.cost||2);delete meta.purchased.fighter_counter_reserve;showToast('Counter Reserve refunded — its effect moved into Endless Form');}if(runTalentSnapshot?.fighter_counter_reserve)delete runTalentSnapshot.fighter_counter_reserve;saveMeta();}
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
-  const rollGearRarityV26Base=rollGearRarity;rollGearRarity=function(...args){const rarity=rollGearRarityV26Base.apply(this,args);return DB_RARITIES.promoteOrdinaryRarityForLuck?.(rarity,player.luck)||rarity;};
   // High-Luck Powerup pool filtering is owned by DiceboundPowerups.
 
   /* LONG STRIDE: FATE CHOICES ARE EXACT ----------------------------------- */
-  // The legacy debug 1d6 capture path predates the shared fate rule. Replace
+
   // it with a capture handler that never grants Long Stride on chosen results.
-  $('rollBtn')?.addEventListener('click',async e=>{
-    if(!(meta.debugAlwaysChooseRolls&&gameStarted&&!rollLocked))return;
-    e.preventDefault();e.stopImmediatePropagation();ensureAudio();rollLocked=true;updateHUD();const die=$('dice');die.classList.add('rolling');for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove('rolling');rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);
-  },true);
 
   /* POISON AS A FIRST-CLASS VISIBLE STAT ---------------------------------- */
   function v26EnsurePoisonStat(){if($('poisonChanceText'))return;const echo=$('echoText')?.closest('.stat'),grid=echo?.parentElement;if(!grid)return;const box=document.createElement('div');box.className='stat v18-stat-tooltip';box.id='poisonChanceStat';box.innerHTML='<span>Poison Chance</span><strong id="poisonChanceText">0%</strong>';echo.after(box);}
@@ -2730,14 +2658,11 @@ dbReturnToRoadTraceReady=true;
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
   function v26ClearStoneBattle(...args){return dbCombat.clearStoneBattle(...args);}
 
-  /* SECRET BOSS LEGACY PAYOUTS -------------------------------------------- */
   dbReturnToRoadStoneReady=true;
 
   /* DEBUG MENU CLEANUP / DEATH SIMULATION / CURRENT ARTIFACT GEAR --------- */
 
   dbDebugUiReady=true;refreshDebugButtons();
-
-  /* Regression helpers ---------------------------------------------------- */
 
   setTimeout(()=>{v26EnsurePoisonStat();v25EnsureDebugControls();updateHUD();window.DiceboundTalentTree.render();},0);
 
@@ -2918,15 +2843,6 @@ dbReturnToRoadTraceReady=true;
     ouroborosIdentityStrike:async()=>{window.DiceboundV318Test.forceRun('ouroboros','ranger');const beforeEcho=player.doubleStrike||0;player.attack=20;const e={name:'Rouge Ouro Dummy',icon:'👹',hp:99999,maxHp:99999,attack:1,defense:0,weakness:'fire',affinity:null,dodge:0};currentEnemies=[e];currentEnemy=currentEncounterLead=e;currentEnemyIndex=0;gameStarted=true;combatBusy=false;await dbCombat.strike(e,{echo:false,index:0});return {attack:player.attack,echoGain:(player.doubleStrike||0)-beforeEcho,identity:player.slimeRougeIdentityClass};},
     stateContract:()=>{resetPlayer('ranger');const result=ProgressionState.grantXp(25);return {domain:result.domain,type:result.type,applied:result.applied,levelsGained:result.levelsGained};}
   });
-
-  const db315VenomEdge=upgrades.find(u=>u.id==='venom_edge');
-  if(db315VenomEdge){
-
-  }
-  const db315RoadToxicology=upgrades.find(u=>u.id==='toxicology');
-  if(db315RoadToxicology){
-
-  }
 
   function dbBeta01DifficultyMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function dbBeta01SyncDifficultyAtmosphere(){
@@ -3548,10 +3464,6 @@ dbReturnToRoadTraceReady=true;
 
   // ENEMY ELEMENTAL PARITY — mechanical ownership lives in combat/element-resolution.js.
   function db0511RestoreEnemyElementDebuffs(...args){return dbCombat.restoreEnemyElementDebuffs(...args);}
-  const db0511HandleDeathBase=handlePlayerDeath;
-  handlePlayerDeath=function(...args){const r=db0511HandleDeathBase.apply(this,args);if(player.hp<=0)db0511RestoreEnemyElementDebuffs();return r;};
-
-  // Small exposed checks for future regression work.
 
   // mutation/copy passes into the canonical registry during startup.
   const DB0512_GLOBAL_POWER_IDS=Object.freeze([
@@ -3641,7 +3553,7 @@ dbReturnToRoadTraceReady=true;
 
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
-  // weighted set piece from this table; independent slot rolls are retired.
+
   const DB060_ARTIFACT_TABLE=dbArtifacts.entries;
   const DB060_LOOT=window.DiceboundLoot;
   if(!DB060_LOOT)throw new Error('DiceboundLoot must load before dicebound.js');
@@ -3706,8 +3618,6 @@ dbReturnToRoadTraceReady=true;
 
   // Battle-lifetime Legendary state cleanup + Last Stand.
   function db060ClearBattleLegendaryTemps(){if(player._db060IronEchoDefense){player.defense=Math.max(0,player.defense-player._db060IronEchoDefense);player._db060IronEchoDefense=0;}if(player._db060BloodPriceStacks){player.damageBonus=Math.max(0,(player.damageBonus||0)-player._db060BloodPriceStacks*.08);player._db060BloodPriceStacks=0;}player._db060LastStandUsed=false;}
-  const db060HandleDeathBase=handlePlayerDeath;
-  handlePlayerDeath=function(...args){if(player.hp<=0&&db060HasEffect('last_stand')&&!player._db060LastStandUsed){player._db060LastStandUsed=true;player.hp=Math.max(1,Math.ceil(player.maxHp*.25));player.combatShield=(player.combatShield||0)+3;combatBusy=false;addCombatHistory('❤️‍🔥🛡️ Last Stand refuses death: 25% HP and 3 Barriers.');showToast('❤️‍🔥 LAST STAND',2400,true);updateCombatUI();return;}return db060HandleDeathBase(...args);};
 
   // Board 6 miniboss cookie correction. The mature victory owner still uses
   // the explicit sequence 1/3/5/7/8, so patch its live 6th-road fallback by
@@ -3986,7 +3896,6 @@ dbReturnToRoadTraceReady=true;
   };
   // Browser/native smoke adapter for the authored Nature VFX.  This owns no
   // gameplay: it drives the already-configured element-resolution and VFX
-  // owners with a deterministic fixture so presentation regressions remain
 
   function dbNatureProcRegressionExercise(key='nature'){
     document.querySelectorAll('.db-nature-vines-vfx,.element-proc-fx,.enemy-proc-fx').forEach(node=>node.remove());
@@ -4022,7 +3931,6 @@ dbReturnToRoadTraceReady=true;
     active:dbCombatView.natureEntries
   });
 
-  // once before any legacy UI/effective-Mana adapters consume it.
   const db06314Equipment=window.DiceboundEquipment;
   if(!db06314Equipment)throw new Error('DiceBound requires the equipment identity owner before dicebound.js');
   const db06314FormatBonusesBase=formatBonuses;
@@ -4095,7 +4003,7 @@ dbReturnToRoadTraceReady=true;
       const starter=JSON.parse(JSON.stringify(player.equipment.weapon));dbEquipmentUi.renderEndGear();
       const endStarterCandidates=[...document.querySelectorAll('#endGearGrid .gear-keep-btn')].map(button=>button.textContent);
       gameStarted=true;
-      // Prestige no longer opens the retired survivor-choice surface. Its
+
       // persistent storage stays account-owned, so characterize that current
       // candidate set directly instead of reviving the removed UI helper.
       const prestigeStarterCandidates=(meta.heirlooms||[]).map(item=>({id:item.id,name:item.name,eligible:db06314Equipment.isHeirloomEligible(item)}));
@@ -5092,7 +5000,6 @@ dbReturnToRoadTraceReady=true;
   });
 
   // It exposes the final released 0.6.6.28 behavior without changing ordinary
-  // callers so capture/replay can freeze Talent, Legacy, Prestige, Achievement
 
   window.DiceboundProgressionOracleTest=Object.freeze({
     snapshot:()=>({
