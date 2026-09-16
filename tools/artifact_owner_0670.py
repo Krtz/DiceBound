@@ -57,11 +57,18 @@ def remove_legacy_factories(text: str) -> tuple[str, int]:
                 continue
         if node.type == "expression_statement":
             snippet = base.node_text(source, node)
-            if "v24Artifactize" in snippet and any(name in snippet for name in FACTORY_NAMES):
+            stripped = snippet.lstrip()
+            direct_factory_replacement = any(
+                stripped.startswith(f"{name}=function") or stripped.startswith(f"{name} = function")
+                for name in FACTORY_NAMES
+            )
+            if direct_factory_replacement and "v24Artifactize" in snippet and len(snippet) < 5000:
                 spans.append((node.start_byte, statement_end(source, node)))
 
     merged: list[tuple[int, int]] = []
     for start, end in sorted(set(spans)):
+        if end - start > 12000:
+            raise RuntimeError(f"Refusing oversized Artifact predecessor span: {end-start} bytes")
         if merged and start < merged[-1][1]:
             merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
         else:
