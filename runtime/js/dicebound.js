@@ -208,8 +208,7 @@
   const DB317_ACHIEVEMENT_REGISTRY_RAW=window.DiceboundAchievements?.createRegistry?.();
   if(!DB317_ACHIEVEMENT_REGISTRY_RAW)throw new Error("DiceboundAchievements must load before dicebound.js");
   const ACHIEVEMENT_REGISTRY=DB317_ACHIEVEMENT_REGISTRY_RAW;
-  const CLASS_TAG_VOCABULARY=[...(window.DiceboundClasses?.tagVocabulary||[])];
-  if(!CLASS_TAG_VOCABULARY.length)throw new Error("DiceboundClasses tag vocabulary must load before dicebound.js");
+  if(!window.DiceboundClasses?.tagVocabulary?.length)throw new Error("DiceboundClasses tag vocabulary must load before dicebound.js");
   const ELEMENT_ID_VOCABULARY=[...DB_ELEMENT_CONTENT.ids];
   const POWERUP_GATE_REGISTRY={
     prestige10:{type:"prestige",minimum:10},
@@ -233,7 +232,7 @@
   const DB317_CLASS_MECHANICS_RAW=window.DiceboundClasses?.createMechanicsRegistry?.();
   if(!DB317_CLASS_MECHANICS_RAW)throw new Error("DiceboundClasses mechanics registry must load before dicebound.js");
   const CLASS_MECHANICS_REGISTRY=DB317_CLASS_MECHANICS_RAW;
-  const MECHANIC_TAG_VOCABULARY=[...new Set(Object.values(CLASS_MECHANICS_REGISTRY).flat().concat([...CLASS_TAG_VOCABULARY],DB317_POWERUPS_RAW.flatMap(u=>u.tags||[]),[
+  const MECHANIC_TAG_VOCABULARY=[...new Set(Object.values(CLASS_MECHANICS_REGISTRY).flat().concat([...window.DiceboundClasses.tagVocabulary],DB317_POWERUPS_RAW.flatMap(u=>u.tags||[]),[
     "ultimate","damage","tempo","defense","crit","luck","healing","sustain","elemental","poison","pet","pack","mana","guard","barrier","wealth","potions","alchemy","lifesteal","evasion"
   ]))];
   function db318InferPowerupMechanics(u){
@@ -279,7 +278,7 @@
   function db317Board(level=boardLevel){return BOARD_REGISTRY[String(level)]||BOARD_REGISTRY["1"];}
   function db317FinalGuardian(level=boardLevel){return DB317_GUARDIANS.resolveFinal(level).combat;}
   function db317MinibossGuardian(level=boardLevel){return DB317_GUARDIANS.resolveMiniboss(level).combat;}
-  const DiceboundContentRegistry={version:3,classes:CLASSES,classUnlocks:CLASS_UNLOCK_REGISTRY,classTagVocabulary:CLASS_TAG_VOCABULARY,powerups:upgrades,powerupGates:POWERUP_GATE_REGISTRY,equipment:EQUIPMENT_REGISTRY,pets:PETS,enemies:{normal:enemyPool,special:ENEMY_REGISTRY},talents,achievements:ACHIEVEMENT_REGISTRY,boards:BOARD_REGISTRY,rarities:rarityInfo,classTags:CLASS_TAGS,classPassives:CLASS_PASSIVES,classMechanics:CLASS_MECHANICS_REGISTRY,mechanicTagVocabulary:MECHANIC_TAG_VOCABULARY,powerupMechanics:POWERUP_MECHANICS_REGISTRY,ultimateSupportMechanics:ULTIMATE_SUPPORT_MECHANICS,elementIds:ELEMENT_ID_VOCABULARY};
+  const DiceboundContentRegistry={version:3,classes:CLASSES,classUnlocks:CLASS_UNLOCK_REGISTRY,classTagVocabulary:window.DiceboundClasses.tagVocabulary,powerups:upgrades,powerupGates:POWERUP_GATE_REGISTRY,equipment:EQUIPMENT_REGISTRY,pets:PETS,enemies:{normal:enemyPool,special:ENEMY_REGISTRY},talents,achievements:ACHIEVEMENT_REGISTRY,boards:BOARD_REGISTRY,rarities:rarityInfo,classTags:CLASS_TAGS,classPassives:CLASS_PASSIVES,classMechanics:CLASS_MECHANICS_REGISTRY,mechanicTagVocabulary:MECHANIC_TAG_VOCABULARY,powerupMechanics:POWERUP_MECHANICS_REGISTRY,ultimateSupportMechanics:ULTIMATE_SUPPORT_MECHANICS,elementIds:ELEMENT_ID_VOCABULARY};
   window.DiceboundContent=DiceboundContentRegistry;
 
   const diceFaces = ["⚀","⚁","⚂","⚃","⚄","⚅"];
