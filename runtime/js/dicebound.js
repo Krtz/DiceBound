@@ -4,6 +4,7 @@
   const dbRuntime=window.DiceboundRuntime;
   if(!dbRuntime)throw new Error("dicebound.js requires DiceboundRuntime before loading.");
   const APP_IDENTITY=dbRuntime.identity;
+  let dbDebugLogSink=null;
   const dbCombatOwner=window.DiceboundCombat;
   if(!dbCombatOwner)throw new Error("dicebound.js requires DiceboundCombat before loading.");
   let dbCombat=null;
@@ -335,7 +336,7 @@
   syncMutedFromSettings();
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
-  function saveMeta(){normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
+  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
   const DiceboundStateEvents=dbRuntime.createEventBus();
 
@@ -801,9 +802,9 @@
   }
   function rawDodgeChance(){return Math.max(0,player.dodge+player.defense*player.defenseDodgeScale);}
   function effectiveDodgeChance(){const raw=rawDodgeChance(),base=raw/(1+raw);return dbClasses.identityDodgeAdjustments(dbClasses.legacyMonkDodge(base));}
-  function addLog(text){const p=document.createElement("p");p.innerHTML=text;$("log").prepend(p);}
-  function addCombatHistory(text){const box=$("combatHistory");if(!box)return;const p=document.createElement("p");p.textContent=text;box.appendChild(p);box.scrollTop=box.scrollHeight;}
-  function setCombatText(text,record=true){$("combatText").textContent=text;if(record)addCombatHistory(text);}
+  function addLog(text){dbDebugLogSink?.log('events','adventure',String(text).replace(/<[^>]*>/g,''),dbDebugLogSink.state());const p=document.createElement("p");p.innerHTML=text;$("log").prepend(p);}
+  function addCombatHistory(text){dbDebugLogSink?.log('detailed','combat-history',text,dbDebugLogSink.state());const box=$("combatHistory");if(!box)return;const p=document.createElement("p");p.textContent=text;box.appendChild(p);box.scrollTop=box.scrollHeight;}
+  function setCombatText(text,record=true){dbDebugLogSink?.log('detailed','combat-text',text,dbDebugLogSink.state());$("combatText").textContent=text;if(record)addCombatHistory(text);}
   const toastQueue=[];let toastActive=false;
   function showToast(text,duration=1900,isUnlock=false){const value=String(text??''),procToast=Object.values(ELEMENTS).some(e=>value.startsWith(`${e.icon} ${e.spell}`))||/^☢️\s*-?\d+\s*DEF/.test(value);if(procToast)return;toastQueue.push({text,duration,isUnlock});if(!toastActive)showNextToast();}
   function showNextToast(){const t=$("toast"),entry=toastQueue.shift();if(!entry){toastActive=false;t.classList.remove("show","unlock-toast");return;}toastActive=true;t.textContent=entry.text;t.classList.toggle("unlock-toast",!!entry.isUnlock);t.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>{t.classList.remove("show");setTimeout(showNextToast,170);},entry.duration);}
@@ -2429,14 +2430,11 @@ function returnToRoad(...args){
   function v25SetLogLevel(level){if(V25_LOG_LEVELS[level]==null)return;meta.debugLogLevel=level;saveMeta();v25Log('events','logging',`Logging level changed to ${level}.`,v25State());v25RefreshLogOutput();}
   function v25DownloadLog(){const now=dbRuntime.platform.nowIso(),header=`Dicebound debug log\nLogging level: ${meta.debugLogLevel}\nGenerated: ${now}\n\n`,text=header+v25LogBuffer.join('\n'),filename=`dicebound_debug_${dbRuntime.platform.nowMs()}.txt`;return dbRuntime.platform.downloadText(filename,text);}
   async function v25CopyLog(){const text=v25LogBuffer.join('\n');try{await dbRuntime.platform.copyText(text);showToast('Debug log copied');}catch(e){showToast('Could not copy debug log');}}
+  dbDebugLogSink=Object.freeze({log:(...args)=>v25Log(...args),state:()=>v25State()});
   window.addEventListener('error',e=>v25Log('errors','window',e.message,{file:e.filename,line:e.lineno,col:e.colno,state:v25State()}));window.addEventListener('unhandledrejection',e=>v25Log('errors','promise',String(e.reason),v25State()));
   document.addEventListener('click',e=>{if((V25_LOG_LEVELS[meta.debugLogLevel]||0)>=4){const t=e.target.closest?.('button,[data-debug],[data-tile-index],.camp-spot')||e.target;v25Log('all','input','click',{id:t?.id||'',debug:t?.dataset?.debug||'',text:(t?.textContent||'').trim().slice(0,100),state:v25State()});}},true);
   document.addEventListener('keydown',e=>{if((V25_LOG_LEVELS[meta.debugLogLevel]||0)>=4)v25Log('all','input','keydown',{key:e.key,code:e.code,state:v25State()});},true);
   ['log','warn','error'].forEach(method=>{const original=console[method]?.bind(console);if(!original)return;console[method]=(...args)=>{try{const level=method==='error'?'errors':'all';v25Log(level,'console',args.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' '));}catch(e){}return original(...args);};});
-  const addLogV25Base=addLog;addLog=function(html){v25Log('events','adventure',String(html).replace(/<[^>]*>/g,''),v25State());return addLogV25Base(html);};
-  const addCombatHistoryV25Base=addCombatHistory;addCombatHistory=function(text){v25Log('detailed','combat-history',text,v25State());return addCombatHistoryV25Base(text);};
-  const setCombatTextV25Base=setCombatText;setCombatText=function(text,...args){v25Log('detailed','combat-text',text,v25State());return setCombatTextV25Base(text,...args);};
-  const saveMetaV25Base=saveMeta;saveMeta=function(){v25Log('all','save','saveMeta()',v25State());return saveMetaV25Base();};
   window.DiceboundDebugLog=Object.freeze({setLevel:v25SetLogLevel,getLevel:()=>meta.debugLogLevel,lines:()=>[...v25LogBuffer],snapshot:()=>v25State(),download:v25DownloadLog,clear:()=>{v25LogBuffer.length=0;v25RefreshLogOutput();}});
   window.DiceboundDebugClasses=Object.freeze({unlock:id=>v25DebugUnlockClass(id),list:()=>Object.values(CLASSES).map(c=>({id:c.id,name:c.name,unlocked:dbProgression.isClassUnlocked(c.id)}))});
 

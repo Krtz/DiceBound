@@ -20,6 +20,7 @@ STALE_SCHEMA_MARKERS=['v13NormalizeMeta','normalizeV15','importOldSaveIfNeeded',
 STALE_BOARD_PRESENTATION_NAMES=['tileMeta','guardianTileArt','db049EnemyTileIcon']
 STALE_WAVE6_PREDECESSORS=['DB046_BOARD_OVERRIDES','DB047_BOARD_OVERRIDES','db046BoardBase','db047BoardBase','defenseDamageReductionV24Base','showToastV27Base','dbRunShowEndBase','db060SeedParserBase']
 STALE_WAVE7_PREDECESSORS=['beta04SyncHudBeta042Base','db060GuardianArt','db060EnemyPortraitBase','db0636EnemyPortraitBase','dbNatureLegacyAnimationBase','dbFriendLegacyElementPresentation','db060MythicalizeNamed','db060MugBase','db060HeadphonesBase','db060JacketBase']
+STALE_DEBUG_LOG_PREDECESSORS=['addLogV25Base','addCombatHistoryV25Base','setCombatTextV25Base','saveMetaV25Base']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -72,6 +73,8 @@ def main()->int:
         assert marker not in text, f"historical Wave 6 predecessor {marker} returned"
     for marker in STALE_WAVE7_PREDECESSORS:
         assert marker not in text, f"historical Wave 7 predecessor {marker} returned"
+    for marker in STALE_DEBUG_LOG_PREDECESSORS:
+        assert marker not in text, f"debug-log predecessor {marker} returned"
     board_text=BOARD_PRESENTATION.read_text(encoding="utf-8")
     for name in STALE_BOARD_PRESENTATION_NAMES:
         assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"Board presentation predecessor {name} returned to monolith"
