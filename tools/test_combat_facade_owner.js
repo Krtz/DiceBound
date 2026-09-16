@@ -45,14 +45,12 @@ const monolith=fs.readFileSync(path.join(root,'runtime','js','dicebound.js'),'ut
 assert(monolith.includes('const dbCombatOwner=window.DiceboundCombat;'),'Combat public facade owner binding missing');
 assert(monolith.includes('dbCombat=dbCombatOwner.configure({'),'Combat public facade composition binding missing');
 
-// These are genuine first-class seams: the released runtime passes/replaces
-// them as values or hooks, so they remain narrow root-level interception points.
+// These remain genuine first-class seams because the released runtime passes
+// or replaces them as values/hooks. Attack, Guard and Ultimate callers now use
+// the public Combat facade directly and must not regain call-only wrappers.
 for(const snippet of [
-  'async function playerAttack(...args){return dbCombat.attack(...args);}',
-  'async function guardAction(...args){return dbCombat.guard(...args);}',
   'function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}',
   'async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}',
-  'async function useUltimate(...args){return dbCombat.ultimate(...args);}',
   'if(dbCombat)return dbCombat.petDamage();'
 ])assert(monolith.includes(snippet),`Missing intentional Combat seam/composition route: ${snippet}`);
 
@@ -60,6 +58,7 @@ for(const snippet of [
 // invoke DiceboundCombat directly; rebuilding these wrappers would recreate the
 // historical layer this release is removing.
 const retiredForwarders=[
+  'playerAttack','guardAction','useUltimate',
   'activeTrainerPetId','affinityElementMultiplier','clearBloodOverhealTemp',
   'currentWeaponElement','elementHit','elementHitAll','enemyElementProc','enemyTurn',
   'healPlayer','manaGain','maybePetElementProc','occultChannelAttack',
@@ -75,6 +74,9 @@ for(const name of retiredForwarders){
 // callers after the chainsaw pass. A facade method need not have a monolith
 // caller merely because focused owners can consume it.
 for(const direct of [
+  'dbCombat.attack(',
+  'dbCombat.guard(',
+  'dbCombat.ultimate(',
   'dbCombat.win(',
   'dbCombat.element(',
   'dbCombat.heal(',
