@@ -11,6 +11,7 @@ on:
       - tools/canonical_0670_wave2.py
       - tools/canonical_0670_wave3.py
       - tools/canonical_0670_wave4.py
+      - tools/canonical_0670_wave5.py
       - tools/static_style_extract_0670.py
       - tools/artifact_owner_0670.py
       - tools/comment_cleanup_0670.py
@@ -70,6 +71,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/canonical_0670_wave4.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/canonical_0670_wave5.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/comment_cleanup_0670.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_whitespace_cleanup.py
@@ -117,11 +120,11 @@ jobs:
           $ErrorActionPreference = 'Stop'
           git config user.name "dicebound-release-bot"
           git config user.email "dicebound-release-bot@users.noreply.github.com"
-          git add runtime/js/dicebound.js runtime/js/items/generation.js runtime/js/progression/lifecycle.js runtime/js/powerups/presentation.js runtime/css/extracted-monolith.css runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json runtime/index.html runtime/js/version.js wrapper-source/wrappers/webview2/native-go/main.go tools/test_items_oracle.js tools/test_monolith_chainsaw.py tools/validate_runtime_architecture.py docs/HISTORICAL_LAYER_CENSUS.md
+          git add runtime/js/dicebound.js runtime/js/combat/enemy-scaling-resolution.js runtime/js/module-manifest.json runtime/js/items/generation.js runtime/js/progression/lifecycle.js runtime/js/powerups/presentation.js runtime/css/extracted-monolith.css runtime/build-info.json runtime/build-manifest.json wrapper-source/config/project.json runtime/index.html runtime/js/version.js wrapper-source/wrappers/webview2/native-go/main.go tools/test_items_oracle.js tools/test_monolith_chainsaw.py tools/validate_runtime_architecture.py docs/HISTORICAL_LAYER_CENSUS.md
           git diff --cached --stat
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { throw 'Live chainsaw produced no source changes.' }
-          git commit -m "refactor: retire historical save-schema migrations"
+          git commit -m "refactor: extract Board tile presentation owner"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
