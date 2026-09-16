@@ -72,11 +72,14 @@ function runtime() {
     getPets: () => pets,
     getOccultSpells: () => occult,
     getGagInfo: () => ({}),
+    enemyBattleArtById: () => null,
+    enemyPortraitById: () => null,
+    enemyModeAura: mode => ({ id: mode, className: `mode-${mode}` }),
+    guardianBattleArt: () => null,
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
     classIdentityId: () => state.player.classId,
     applyClassPortrait() {},
-    enemyPortraitHTML: enemy => enemy.icon || 'x',
     potionHealValue: () => 23,
     potionTooltip: () => 'Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP.',
     describeUltimate: id => `description:${id}`,
@@ -156,4 +159,4 @@ out = model(); assert.strictEqual(out.attack.text, '🐉 Land'); assert.strictEq
 
 assert(owner.statusDotsHTML(2, 3, 'fire').includes('Fire affinity'));
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
-console.log('Combat presentation owner PASS: final class controls, statuses, thresholds and zero-RNG view models are deterministic');
+console.log('Combat presentation owner PASS: final class controls, stable-ID art ports, statuses, thresholds and zero-RNG view models are deterministic');
