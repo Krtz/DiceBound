@@ -18,7 +18,7 @@ assert.match(lifecycle,/owner:OWNER,apiVersion:1/);
 const retiredForwarders=[
   "achievementGateUnlocked","allocatedTalentPoints","checkDynamicClassUnlocks",
   "commitClassUnlock","finalizeRun","gameplayTalentRank","isClassUnlocked",
-  "repairTalentPrerequisites","unlockClass"
+  "purchaseTalentNode","repairTalentPrerequisites","unlockClass"
 ];
 for(const name of retiredForwarders){
   assert.ok(!new RegExp(`\\bfunction\\s+${name}\\s*\\(`).test(monolith),`retired Progression forwarding adapter returned: ${name}`);
@@ -30,6 +30,7 @@ for(const direct of [
   "dbProgression.finalizeRun(",
   "dbProgression.gameplayTalentRank(",
   "dbProgression.isClassUnlocked(",
+  "dbProgression.purchaseTalent(",
   "dbProgression.repairTalentPrerequisites(",
   "dbProgression.unlockClass("
 ])assert.ok(monolith.includes(direct),`composition no longer routes directly through Progression owner: ${direct}`);
@@ -52,7 +53,7 @@ for(const seam of [
 // DiceboundProgression.
 for(const adapter of [
   "const talentRank=id=>dbProgression.talentRank(id);",
-  "function purchaseTalentNode(id){return dbProgression.purchaseTalent(id);}",
+  "purchase:id=>dbProgression.purchaseTalent(id),",
   "async function prestigeTree(){",
   "return dbProgression.completePrestige(total);"
 ])assert.ok(monolith.includes(adapter),`missing Progression composition helper: ${adapter}`);
