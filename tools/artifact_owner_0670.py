@@ -74,30 +74,19 @@ def remove_legacy_factories(text: str) -> tuple[str, int]:
 def insert_owner_configuration(text: str) -> str:
     if CONFIG_MARKER in text:
         return text
-    source = text.encode("utf-8")
-    tree = base.parse(source)
-    player_decl = None
-    for node in base.walk(tree.root_node):
-        if node.type not in {"lexical_declaration", "variable_declaration"}:
-            continue
-        for child in node.named_children:
-            if child.type != "variable_declarator":
-                continue
-            ident = child.child_by_field_name("name")
-            if ident and base.node_text(source, ident) == "player":
-                player_decl = node
-                break
-        if player_decl:
-            break
-    if not player_decl:
+    start = text.find("  const player = {")
+    if start < 0:
         raise RuntimeError("Could not locate canonical player declaration for Artifact owner configuration")
-    end = statement_end(source, player_decl)
+    end = text.find("\n  };", start)
+    if end < 0:
+        raise RuntimeError("Could not locate end of canonical player declaration")
+    end += len("\n  };")
     config = (
-        "\n  const dbArtifacts=window.DiceboundArtifacts;\n"
+        "\n\n  const dbArtifacts=window.DiceboundArtifacts;\n"
         "  if(!dbArtifacts?.configure||!dbArtifacts?.create)throw new Error('DiceboundArtifacts final factory owner must load before dicebound.js');\n"
-        "  dbArtifacts.configure({getPlayer:()=>player,random:()=>random(),pick:values=>pick(values),getElementKeys:()=>ELEMENT_KEYS});\n"
-    ).encode("utf-8")
-    return (source[:end] + config + source[end:]).decode("utf-8")
+        "  dbArtifacts.configure({getPlayer:()=>player,random:()=>random(),pick:values=>pick(values),getElementKeys:()=>ELEMENT_KEYS});"
+    )
+    return text[:end] + config + text[end:]
 
 
 def route_consumers(text: str) -> str:
