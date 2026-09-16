@@ -77,6 +77,24 @@ def main()->int:
             errors.append("dicebound.js must route Ultimate calls directly through DiceboundCombat")''',
 'Ultimate guard')
 
+    text=replace_once(text,
+'''        if monolith_source.count("async function guardAction(") != 1 or "return dbCombat.guard(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin guardAction adapter through DiceboundCombat")''',
+'''        if monolith_source.count("async function guardAction(") != 0:
+            errors.append("dicebound.js retains an obsolete guardAction compatibility adapter")
+        if "dbCombat.guard(" not in monolith_source:
+            errors.append("dicebound.js must route Guard calls directly through DiceboundCombat")''',
+'Guard action guard')
+
+    text=replace_once(text,
+'''        if monolith_source.count("async function petTurn(") != 1 or "return dbCombat.petTurn(...args);" not in monolith_source:
+            errors.append("dicebound.js must retain only the thin petTurn adapter through DiceboundCombat")''',
+'''        if monolith_source.count("async function petTurn(") != 0:
+            errors.append("dicebound.js retains an obsolete petTurn compatibility adapter")
+        if "dbCombat.petTurn(" not in monolith_source:
+            errors.append("dicebound.js must route Pet turns directly through DiceboundCombat")''',
+'Pet turn guard')
+
     VALIDATOR.write_text(text,encoding='utf-8',newline='\n')
     print('Runtime architecture validator now enforces direct owner routing for retired compatibility adapters')
     return 0
