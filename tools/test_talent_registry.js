@@ -87,7 +87,8 @@ const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js")
 const monolith = fs.readFileSync(monolithPath, "utf8");
 assert.doesNotMatch(monolith, /const\s+DB317_TALENTS_RAW\s*=\s*\[/, "talent data is still owned by the monolith");
 assert.match(monolith, /window\.DiceboundTalents\?\.createRegistry\(\)/);
-assert.match(monolith, /const talents=db317Readonly\(DB317_TALENTS_RAW\)/);
+assert.match(monolith, /const talents=DB317_TALENTS_RAW;/, "composition must use the canonical extracted talent registry directly");
+assert.doesNotMatch(monolith, /const talents=db317Readonly\(DB317_TALENTS_RAW\)/, "retired talent readonly adapter must stay drained");
 assert.match(monolith, /DiceboundTalents must load before dicebound\.js/);
 
 console.log("Talent registry preserved: exact 46-node snapshot, valid acyclic prerequisites and isolated clones pass");
