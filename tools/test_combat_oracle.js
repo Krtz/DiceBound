@@ -110,7 +110,11 @@ async function main(){
     if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Combat fixture captured: ${actual.cases.length} cases -> ${FIXTURE_PATH}`);return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.30","Combat fixture must remain the released 0.6.6.30 baseline");
-    assert.deepEqual(actual.cases,fixture.cases);
+    const expected=structuredClone(fixture.cases);
+    const encounter=expected.find(c=>c.name==="encounter-start");
+    assert.equal(encounter?.state?.enemies?.[0]?.name,"Ascended Cultist","Combat identity extension must target the frozen Cultist encounter");
+    encounter.state.enemies[0].id="cultist";
+    assert.deepEqual(actual.cases,expected);
     console.log(`Combat oracle PASS: ${actual.cases.length} exact released-output/state/event/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}

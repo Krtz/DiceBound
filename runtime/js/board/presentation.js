@@ -4,7 +4,7 @@
   const OWNER="board/presentation";
   const assets=window.DiceboundAssets;
   const guardians=window.DiceboundGuardians;
-  if(!assets?.resolveUiIcon||!assets?.resolveGuardianArt)throw new Error("DiceboundBoardPresentation requires DiceboundAssets before loading.");
+  if(!assets?.resolveUiIcon||!assets?.resolveGuardianArt||!assets?.resolveEnemyPortraitById)throw new Error("DiceboundBoardPresentation requires DiceboundAssets before loading.");
   if(!guardians?.resolveById||!guardians?.resolveFinal)throw new Error("DiceboundBoardPresentation requires DiceboundGuardians before loading.");
 
   let runtime=Object.freeze({getBoardLevel:()=>1});
@@ -21,10 +21,11 @@
     return `<img class="db-art-icon ${klass}" src="${entry.image}" alt="${alt}">`;
   }
 
-  function enemyArtForName(name){
-    if(/bandit/i.test(String(name||"")))return uiArt("bandit",name,"db-art-portrait");
-    if(/troll/i.test(String(name||"")))return uiArt("troll",name,"db-art-portrait");
-    return "";
+  function enemyArtForId(id,label=""){
+    const entry=assets.resolveEnemyPortraitById(id);
+    if(!entry)return "";
+    const alt=(label||entry.alt||id||"Enemy").replace(/"/g,"&quot;");
+    return `<img class="db-art-icon db-art-portrait" src="${entry.src}" alt="${alt}">`;
   }
 
   function guardianTileArt(id,alt="Guardian"){
@@ -33,7 +34,7 @@
   }
 
   function enemyTileIcon(tile){
-    const art=enemyArtForName(tile?.enemyBase?.name);
+    const art=enemyArtForId(tile?.enemyBase?.id,tile?.enemyBase?.name);
     if(art)return art;
     return typeof tile?.enemyBase?.icon==="string"&&tile.enemyBase.icon?tile.enemyBase.icon:"👹";
   }
@@ -51,7 +52,7 @@
         const count=Math.max(2,Number(tile.packSize)||2),name=tile.enemyBase.name||"Enemy";
         return [`<span class="db-enemy-pack-art">${enemyTileIcon(tile)}<b>×${count}</b></span>`,`${name} pack · ${count} enemies`];
       }
-      if(tile?.type==="enemy"&&tile?.enemyBase&&(/bandit|troll/i.test(tile.enemyBase.name||""))){
+      if(tile?.type==="enemy"&&tile?.enemyBase&&["bandit","troll"].includes(tile.enemyBase.id)){
         return [enemyTileIcon(tile),`${tile.enemyBase.name} · 1 enemy`];
       }
       if(tile?.type==="treasure")return [uiArt("coins","Treasure","db-art-tile")||"💰","Treasure"];
@@ -69,6 +70,6 @@
     }[tile?.type];
   }
 
-  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForName,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});
+  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForId,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});
   window.DiceboundBoardPresentation=api;
 })();

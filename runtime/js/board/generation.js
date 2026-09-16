@@ -149,7 +149,7 @@
     const mini=runtime.currentMinibossTile?.()-1,lo=Math.max(mini+10,Math.floor(tiles.length*.62)),hi=Math.min(tiles.length-3,Math.floor(tiles.length*.82)),candidates=[];
     for(let i=lo;i<=hi;i++)if(['enemy','event','treasure','empty'].includes(tiles[i]?.type))candidates.push(i);
     const index=candidates.length?pick(candidates):Math.min(tiles.length-3,mini+18);
-    tiles[index]={type:'devilboss',cleared:false,packSize:1,enemyBase:{name:'The Pale Devil',icon:'👿🌙',hp:260,attack:39,defenseBias:8,xp:740,gold:666,weakness:'light',specialName:'Pale Moon Waltz',devilBoss:true,enemyBarrier:5}};
+    tiles[index]={type:'devilboss',cleared:false,packSize:1,enemyBase:{id:'pale-devil',name:'The Pale Devil',icon:'👿🌙',hp:260,attack:39,defenseBias:8,xp:740,gold:666,weakness:'light',specialName:'Pale Moon Waltz',devilBoss:true,enemyBarrier:5}};
   }
   function applyBoardFourFivePass046(tiles,current){
     const mini=runtime.currentMinibossTile?.()-1;

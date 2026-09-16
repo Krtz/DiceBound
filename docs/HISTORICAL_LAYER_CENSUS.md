@@ -8,11 +8,11 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 
 | Rank | Score | Runtime file | Replacement pairs | Same-scope repeats | Repeated symbols | Predecessor captures | Temp overrides ignored | Versioned defs | History-named defs | Max alias depth | Lines | Repeated symbols |
 | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | 656 | `runtime/js/dicebound.js` | 0 | 6 | 5 | 16 | 4 | 105 | 4 | 1 | 4933 | onComplete×3, add×2, applyPoisonTick×2, filter×2, playElementAnimation×2 |
+| 1 | 653 | `runtime/js/dicebound.js` | 0 | 6 | 5 | 16 | 4 | 104 | 4 | 1 | 4884 | onComplete×3, add×2, applyPoisonTick×2, filter×2, playElementAnimation×2 |
 | 2 | 114 | `runtime/js/combat/turn-resolution.js` | 0 | 0 | 0 | 7 | 0 | 0 | 2 | 1 | 354 | - |
-| 3 | 109 | `runtime/js/combat/ultimate-resolution.js` | 0 | 0 | 0 | 5 | 0 | 9 | 0 | 1 | 266 | - |
-| 4 | 89 | `runtime/js/combat/strike-resolution.js` | 0 | 0 | 0 | 2 | 0 | 13 | 5 | 1 | 342 | - |
-| 5 | 86 | `runtime/js/powerups/facade.js` | 0 | 4 | 2 | 1 | 0 | 0 | 1 | 1 | 175 | filter×4, onComplete×2 |
+| 3 | 86 | `runtime/js/powerups/facade.js` | 0 | 4 | 2 | 1 | 0 | 0 | 1 | 1 | 175 | filter×4, onComplete×2 |
+| 4 | 83 | `runtime/js/combat/strike-resolution.js` | 0 | 0 | 0 | 2 | 0 | 11 | 5 | 1 | 339 | - |
+| 5 | 75 | `runtime/js/combat/ultimate-resolution.js` | 0 | 0 | 0 | 3 | 0 | 7 | 0 | 1 | 255 | - |
 | 6 | 72 | `runtime/js/combat/mana-action-resolution.js` | 0 | 0 | 0 | 4 | 0 | 0 | 2 | 1 | 303 | - |
 | 7 | 72 | `runtime/js/ui/camp.js` | 0 | 0 | 0 | 4 | 0 | 0 | 2 | 1 | 567 | - |
 | 8 | 68 | `runtime/js/combat/element-resolution.js` | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 1 | 471 | - |
@@ -45,22 +45,22 @@ Score weights predecessor+replacement pairs most heavily, then surviving predece
 | 35 | 6 | `runtime/js/progression/class-unlock-rules.js` | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 247 | - |
 | 36 | 4 | `runtime/js/progression/lifecycle.js` | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 223 | - |
 | 37 | 2 | `runtime/js/ui/camp-shell.js` | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 83 | - |
-| 38 | 0 | `runtime/js/assets.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 183 | - |
+| 38 | 0 | `runtime/js/assets.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 187 | - |
 | 39 | 0 | `runtime/js/board/generation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 221 | - |
 | 40 | 0 | `runtime/js/board/movement.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 74 | - |
-| 41 | 0 | `runtime/js/board/presentation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 75 | - |
+| 41 | 0 | `runtime/js/board/presentation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 76 | - |
 | 42 | 0 | `runtime/js/board/registry.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 89 | - |
 | 43 | 0 | `runtime/js/board/tile-dispatch.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 64 | - |
 | 44 | 0 | `runtime/js/board/transition.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 69 | - |
 | 45 | 0 | `runtime/js/classes/invoker.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 160 | - |
 | 46 | 0 | `runtime/js/classes/registry.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1310 | - |
 | 47 | 0 | `runtime/js/combat/element-content.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 34 | - |
-| 48 | 0 | `runtime/js/combat/enemies.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 291 | - |
+| 48 | 0 | `runtime/js/combat/enemies.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 302 | - |
 | 49 | 0 | `runtime/js/combat/enemy-policy.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44 | - |
-| 50 | 0 | `runtime/js/combat/enemy-scaling-resolution.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 83 | - |
+| 50 | 0 | `runtime/js/combat/enemy-scaling-resolution.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 80 | - |
 | 51 | 0 | `runtime/js/combat/facade.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 80 | - |
 | 52 | 0 | `runtime/js/combat/guardians.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 55 | - |
-| 53 | 0 | `runtime/js/combat/presentation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 338 | - |
+| 53 | 0 | `runtime/js/combat/presentation.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 370 | - |
 | 54 | 0 | `runtime/js/combat/strike-policy.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 30 | - |
 | 55 | 0 | `runtime/js/combat/targeting.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 47 | - |
 | 56 | 0 | `runtime/js/combat/view-facade.js` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 88 | - |

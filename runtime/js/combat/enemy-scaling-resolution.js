@@ -14,7 +14,6 @@
     const db317Board=deps.getBoard;
     const db064EnemyPolicy=deps.enemyPolicy;
     const ELEMENT_KEYS=[...(deps.elementKeys||[])];
-    const enemyArtForName=deps.enemyArtForName||(()=>null);
 
     if(typeof getState!=="function")throw new Error("Enemy scaling requires getState().");
     if(typeof currentTileCount!=="function")throw new Error("Enemy scaling requires currentTileCount().");
@@ -67,8 +66,6 @@
 
       // Beta 0.4.7 --------------------------------------------------------
       {const perBoard={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.08,1.06,1],4:[1.15,1.10,2],5:[1.38,1.24,5],6:[1.55,1.33,7]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*perBoard[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*perBoard[1]));enemy.defense=Math.max(0,(enemy.defense||0)+perBoard[2]);}
-
-      {const art=enemyArtForName(enemy.name);if(art)enemy.icon=art;}
 
       // Beta 0.6.4 ordinary Devil policy ---------------------------------
       if(isStandardDevil(enemy)){enemy.innateElement='fire';enemy.elementProcChance=db064EnemyPolicy.standardDevilFlameChance(boardLevel,combatMode(hellMode,nightmareMode));}

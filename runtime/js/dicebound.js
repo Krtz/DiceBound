@@ -284,7 +284,7 @@
 
   const diceFaces = ["⚀","⚁","⚂","⚃","⚄","⚅"];
   const $ = (id) => document.getElementById(id);
-  const delay = (ms) => new Promise(resolve => { const cap=Number(window.__DB_FAST_ECHO_CAP__||0); setTimeout(resolve, cap>0 ? Math.min(ms,cap) : (window.__DB_V26_FAST_ECHO__ ? Math.min(ms,55) : ms)); });
+  const delay = (ms) => new Promise(resolve => { const cap=Number(window.__DB_FAST_ECHO_CAP__||0); setTimeout(resolve,cap>0?Math.min(ms,cap):ms); });
   const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
 
   const random = () => window.DiceboundRng?.random?.() ?? Math.random();
@@ -1441,48 +1441,6 @@ function returnToRoad(...args){
   // ---- even more thematic class portraits -----------------------------------
 
   // ---- monster and boss portraits -------------------------------------------
-  function artHash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return Math.abs(h>>>0);}
-  function enemyPortraitSVG(enemy){
-    const tieredArt=db0636TieredEnemyMarkup(enemy);if(tieredArt)return tieredArt;
-    const guardianSrc=DB317_GUARDIANS.resolveById(enemy?.id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(enemy?.id)?.battle;
-    if(guardianSrc)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${guardianSrc}" alt="${enemy?.name||'Guardian'}" draggable="false">`;
-    // External artwork is authoritative when present in js/assets.js.
-    // It bypasses the procedural SVG renderer completely, preventing old art from showing behind/over it.
-    const externalArt=window.DiceboundAssets?.resolveEnemyPortrait?.(enemy?.name||"");
-    if(externalArt){
-      return `<img class="enemy-art-frame enemy-art-image" src="${externalArt.src}" alt="${externalArt.alt}" draggable="false">`;
-    }
-    const name=(enemy?.name||"Unknown").toLowerCase(),h=artHash(name),board=boardLevel||1;
-    const palettes=[null,["#15271c","#4a724b","#9bc26c"],["#15172e","#51448b","#8eb5ff"],["#1b0d25","#6d275f","#dd6dad"],["#160f21","#755b31","#e3c36c"],["#0b1720","#356c78","#80e1dd"]];
-    let [bg1,bg2,accent]=palettes[Math.min(5,Math.max(1,board))];
-    let shape="",eye="#fff2a8",frame="";
-    const boss=enemy?.guardian||enemy?.boss;
-    if(name.includes("ancient road dragon")){bg1="#12261b";bg2="#486332";accent="#d6b567";shape=`<path d="M15 58Q8 37 25 24L15 9l18 9L48 6l-2 18q19 12 6 35z" fill="#365f35" stroke="#8eb36c" stroke-width="2"/><path d="M25 27l8 8 12-9" fill="none" stroke="#d0b064" stroke-width="3"/><path d="M21 43q12-8 25 0" fill="none" stroke="#172419" stroke-width="4"/><circle cx="26" cy="34" r="3" fill="#ffdc67"/><circle cx="43" cy="33" r="3" fill="#ffdc67"/><path d="M17 50l9-5M49 46l9 5" stroke="#bca272" stroke-width="4"/>`;}
-    else if(name.includes("astral devourer")){bg1="#0d0c2d";bg2="#482978";accent="#a992ff";shape=`<path d="M13 57Q10 31 27 21L19 6l15 10L49 4l-3 18q19 13 5 35z" fill="#35265f" stroke="#8b6de3" stroke-width="2"/><path d="M22 42q13-14 27 0q-13 16-27 0" fill="#080817"/><circle cx="28" cy="32" r="3" fill="#bce8ff"/><circle cx="44" cy="31" r="3" fill="#bce8ff"/><circle cx="35" cy="44" r="2" fill="#fff"/><circle cx="30" cy="47" r="1" fill="#fff"/><circle cx="40" cy="48" r="1.4" fill="#fff"/>`;}
-    else if(name.includes("nullstar hydra")){bg1="#090812";bg2="#351743";accent="#d05cff";shape=`<path d="M11 60q1-23 12-31l-8-17 15 11 2-17 7 16 14-12-7 19q11 11 7 31z" fill="#22132d" stroke="#7a3a91" stroke-width="2"/><circle cx="22" cy="29" r="8" fill="#341941"/><circle cx="36" cy="22" r="9" fill="#3f1c4e"/><circle cx="49" cy="30" r="8" fill="#341941"/><circle cx="22" cy="28" r="2" fill="#ff59df"/><circle cx="36" cy="21" r="2" fill="#ff59df"/><circle cx="49" cy="29" r="2" fill="#ff59df"/><circle cx="35" cy="44" r="11" fill="#050509"/><circle cx="35" cy="44" r="5" fill="#1d1230"/>`;}
-    else if(name.includes("crown-eater")){bg1="#140b1f";bg2="#61422c";accent="#f1d46d";shape=`<path d="M12 59q1-25 15-34L19 8l13 8 9-13 6 16 12-5-8 17q10 13 3 28z" fill="#2c1b33" stroke="#b18950" stroke-width="2"/><path d="M19 15l8 5 5-9 7 9 9-6 3 11H18z" fill="#d3aa4f"/><path d="M24 40q10-9 22 0" stroke="#f1d46d" stroke-width="4" fill="none"/><circle cx="27" cy="32" r="2.5" fill="#f5c85b"/><circle cx="44" cy="32" r="2.5" fill="#f5c85b"/>`;}
-    else if(name.includes("ring tyrant")){bg1="#071720";bg2="#245f6e";accent="#80e1dd";shape=`<circle cx="36" cy="34" r="25" fill="none" stroke="#8af2e6" stroke-width="5" opacity=".75"/><circle cx="36" cy="34" r="18" fill="none" stroke="#d8c56a" stroke-width="2" opacity=".7"/><path d="M16 58q1-26 17-34L25 9l13 8L49 5l-2 20q15 13 5 33z" fill="#173e48" stroke="#79bfc2" stroke-width="2"/><circle cx="29" cy="33" r="3" fill="#e6ffff"/><circle cx="45" cy="32" r="3" fill="#e6ffff"/><path d="M24 47q13-9 25 0" stroke="#d8c56a" stroke-width="3" fill="none"/>`;}
-    else if(name.includes("ogre roadwarden")){shape=`<path d="M13 59q0-23 12-31L18 13l11 8 7-13 8 13 11-8-6 16q12 10 8 30z" fill="#52623b" stroke="#9bb06c" stroke-width="2"/><circle cx="28" cy="33" r="3" fill="#f0c662"/><circle cx="45" cy="33" r="3" fill="#f0c662"/><path d="M25 45h24" stroke="#31281d" stroke-width="5"/><path d="M10 52h12M16 47v10" stroke="#d3a75e" stroke-width="4"/>`;}
-    else if(name.includes("titan guard")){bg1="#16172a";bg2="#4b4c72";shape=`<path d="M14 59V24l11-13 11 8 12-9 9 14v35z" fill="#55586d" stroke="#a5a9bd" stroke-width="2"/><path d="M21 23l12 8 13-9" stroke="#c7c8d2" stroke-width="3" fill="none"/><rect x="23" y="34" width="9" height="4" rx="2" fill="#8fe4ff"/><rect x="42" y="34" width="9" height="4" rx="2" fill="#8fe4ff"/><path d="M29 47h18" stroke="#242536" stroke-width="5"/>`;}
-    else if(name.includes("paradox warden")){bg1="#160c22";bg2="#60305f";shape=`<circle cx="36" cy="32" r="24" fill="none" stroke="#e2b2ff" stroke-width="2" opacity=".5"/><path d="M36 9v11M36 44v11M13 32h11M48 32h11" stroke="#f0d4ff" stroke-width="2"/><path d="M18 58q0-27 18-39q18 12 18 39z" fill="#44264b" stroke="#b678bd" stroke-width="2"/><path d="M25 28h22v17H25z" fill="#1d1427"/><path d="M27 33l7 4 7-4" stroke="#ff81d7" stroke-width="2" fill="none"/>`;}
-    else if(name.includes("ringbound chancellor")){bg1="#0c1821";bg2="#3d6b67";shape=`<circle cx="36" cy="27" r="22" fill="none" stroke="#d7c566" stroke-width="4" opacity=".65"/><path d="M15 59q3-26 21-38 18 12 21 38z" fill="#25484a" stroke="#79b7ae" stroke-width="2"/><path d="M22 22l8-7 6 5 7-6 8 8-4 8H25z" fill="#d0b658"/><path d="M25 34h9M42 34h9" stroke="#d9ffff" stroke-width="3"/>`;}
-    else if(name.includes("road merchant")){bg1="#271807";bg2="#83551e";shape=`<path d="M13 58q4-27 23-37 19 10 23 37z" fill="#5a3c20" stroke="#c08d42" stroke-width="2"/><path d="M17 21h38L47 9H25z" fill="#704827"/><path d="M25 32q3 16 11 16t12-16q-5 9-12 8-7 1-11-8z" fill="#70422d"/><circle cx="54" cy="14" r="8" fill="#dfb54c"/><text x="54" y="18" text-anchor="middle" font-size="10" font-weight="900" fill="#523710">G</text>`;}
-    else if(name.includes("bloodmage")){bg1="#280713";bg2="#8d1933";shape=`<circle cx="36" cy="34" r="25" fill="none" stroke="#ff4767" stroke-width="2" opacity=".4"/><path d="M12 59q4-28 24-39 20 11 24 39z" fill="#5b1228" stroke="#bd3552" stroke-width="2"/><path d="M17 25Q23 5 36 5t20 20l-9-5H25z" fill="#71132f"/><path d="M36 7l5 9-5 9-5-9z" fill="#ff4c6d"/><circle cx="29" cy="32" r="2.5" fill="#ffd9df"/><circle cx="44" cy="32" r="2.5" fill="#ffd9df"/>`;}
-    else if(name.includes("slime")){shape=`<path d="M13 57q-4-10 2-18Q13 13 36 12q22 2 21 27 7 9 0 18l-7-5-7 6-7-6-7 6-7-6z" fill="#5fce69" stroke="#9cf4a5" stroke-width="2"/><circle cx="28" cy="34" r="3" fill="#17311c"/><circle cx="44" cy="34" r="3" fill="#17311c"/>`;}
-    else if(name.includes("goblin")){shape=`<path d="M10 30l13-8 3-13 10 10 13-10 1 14 13 7-12 4q4 21-15 24Q17 56 21 34z" fill="#758b42" stroke="#aec76c" stroke-width="2"/><circle cx="29" cy="34" r="3" fill="#ffe26c"/><circle cx="44" cy="33" r="3" fill="#ffe26c"/><path d="M31 47l10-3" stroke="#2c311c" stroke-width="3"/>`;}
-    else if(name.includes("skeleton")){shape=`<circle cx="36" cy="30" r="18" fill="#d4cfbd" stroke="#f2eddc" stroke-width="2"/><circle cx="29" cy="28" r="5" fill="#19191c"/><circle cx="44" cy="28" r="5" fill="#19191c"/><path d="M36 34l-3 6h6z" fill="#19191c"/><path d="M25 47h22M28 51h16" stroke="#6a665e" stroke-width="3"/>`;}
-    else if(name.includes("bandit")){shape=`<path d="M11 59q1-29 25-43 24 14 25 43z" fill="#202732" stroke="#667488" stroke-width="2"/><path d="M15 29Q21 7 36 7t21 22l-9-5H24z" fill="#121820"/><path d="M22 27h28v9H22z" fill="#080d12"/><path d="M11 53L28 14M59 53L44 14" stroke="#9cb2c8" stroke-width="2"/>`;}
-    else if(name.includes("orc")){shape=`<path d="M13 58q0-25 12-35L21 8l13 10 12-9 4 15q12 9 8 34z" fill="#587644" stroke="#9ab977" stroke-width="2"/><circle cx="29" cy="32" r="3" fill="#ffd56a"/><circle cx="45" cy="32" r="3" fill="#ffd56a"/><path d="M26 46l6-6 4 8 5-8 7 6" fill="#e9dfbe"/>`;}
-    else if(name.includes("cultist")){shape=`<path d="M10 60q4-34 26-50 22 16 26 50z" fill="#39213f" stroke="#815589" stroke-width="2"/><path d="M19 28Q24 11 36 11t17 17l-8-4H27z" fill="#211329"/><circle cx="29" cy="33" r="2.5" fill="#ed65db"/><circle cx="44" cy="33" r="2.5" fill="#ed65db"/><path d="M36 42l5 8-5 5-5-5z" fill="#a9489d"/>`;}
-    else if(name.includes("wraith")){shape=`<path d="M15 59q-5-16 3-27Q18 8 36 8t18 24q8 11 3 27l-8-7-7 8-6-7-6 7-7-8z" fill="#9aa8c2" opacity=".65" stroke="#d5e5ff" stroke-width="2"/><circle cx="29" cy="30" r="3" fill="#243147"/><circle cx="44" cy="30" r="3" fill="#243147"/>`;}
-    else if(name.includes("troll")){shape=`<path d="M9 59q2-28 14-34L18 10l14 9 14-10 4 16q13 8 12 34z" fill="#53654b" stroke="#98aa84" stroke-width="2"/><circle cx="28" cy="34" r="3" fill="#efcd68"/><circle cx="45" cy="34" r="3" fill="#efcd68"/><path d="M23 49q13-8 27 0" stroke="#2d3729" stroke-width="5" fill="none"/>`;}
-    else if(name.includes("demon")){shape=`<path d="M12 59q0-25 14-35L16 5l17 13L52 4l-6 20q14 10 10 35z" fill="#76273b" stroke="#c95a67" stroke-width="2"/><circle cx="29" cy="33" r="3" fill="#ffdb4c"/><circle cx="45" cy="33" r="3" fill="#ffdb4c"/><path d="M25 47q11-9 24 0" stroke="#3a1019" stroke-width="5"/>`;}
-    else if(name.includes("lich")){shape=`<path d="M11 59q3-30 25-42 22 12 25 42z" fill="#2b2848" stroke="#716fa0" stroke-width="2"/><path d="M20 21l5-11 11 7 9-9 7 13-5 7H24z" fill="#7c6aac"/><circle cx="29" cy="33" r="3" fill="#8cf5ff"/><circle cx="44" cy="33" r="3" fill="#8cf5ff"/><path d="M53 14v39M48 18l5-8 5 8" stroke="#b8dfff" stroke-width="3"/>`;}
-    else{shape=`<path d="M12 59q2-29 24-43 22 14 24 43z" fill="${bg2}" stroke="${accent}" stroke-width="2"/><circle cx="29" cy="33" r="3" fill="${eye}"/><circle cx="44" cy="33" r="3" fill="${eye}"/>`;}
-    if(boss)frame=`<circle cx="36" cy="34" r="31" fill="none" stroke="${accent}" stroke-width="2" opacity=".35"/><path d="M17 8l6 5 5-8 7 7 8-8 6 9 7-5 2 12H14z" fill="${accent}" opacity=".65"/>`;
-    const gid=`e13_${h}`;
-    return `<svg class="enemy-art-frame" viewBox="0 0 72 72" role="img" aria-label="${enemy?.name||"Enemy"}"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg1}"/><stop offset="1" stop-color="${bg2}"/></linearGradient></defs><rect x="2" y="2" width="68" height="68" rx="17" fill="#060a10"/><rect x="4" y="4" width="64" height="64" rx="15" fill="url(#${gid})"/>${frame}<g transform="translate(0 2)">${shape}</g></svg>`;
-  }
 
   // ---- identity resource UI --------------------------------------------------
   const combatActions=document.querySelector("#combatOverlay .combat-actions");
@@ -2652,7 +2610,6 @@ dbReturnToRoadTraceReady=true;
   }
 
   /* FROG / OUROBOROS EXTREME SPEED ---------------------------------------- */
-  function v28FrogEchoCap(echo){echo=Math.max(0,Number(echo)||0);return echo>=50?8:echo>=10?20:echo>=5?34:echo>=2?58:echo>=1?85:0;}
 
   /* RANDOM -> BOARD 6 -> SLIME ROUGE SECRET ------------------------------- */
   function dbRunApplyClassStartEffects({wasRandom}){
@@ -3611,12 +3568,6 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundCombatBackgrounds=Object.freeze({mode:db0635CombatMode,resolve:(board,mode='normal')=>window.DiceboundAssets?.resolveCombatBackground?.(board,mode)||null,active:db0635ApplyCombatBackground});
 
   function db0636CurrentCombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
-  function db0636TieredEnemyMarkup(enemy){
-    const art=window.DiceboundAssets?.resolveEnemyBattleArt?.(enemy?.name||'',boardLevel);
-    if(!art)return null;
-    const aura=window.DiceboundAssets.resolveEnemyModeAura(db0636CurrentCombatMode());
-    return `<span class="db0636-tiered-enemy-art ${aura.className}" data-enemy-battle-art="${art.key}" data-enemy-battle-board="${art.board}" data-enemy-battle-mode="${aura.id}"><img class="enemy-art-frame enemy-art-image db0636-tiered-enemy-image" src="${art.src}" alt="${art.alt} · Board ${art.board}" draggable="false"></span>`;
-  }
 
   window.DiceboundEnemyBattleArt=Object.freeze({
     mode:db0636CurrentCombatMode,
@@ -3768,8 +3719,7 @@ dbReturnToRoadTraceReady=true;
   if(!dbEnemyScalingOwner)throw new Error('DiceBound requires the enemy scaling-resolution owner.');
   dbEnemyScalingResolution=dbEnemyScalingOwner.configure({
     getState:()=>({player,boardLevel,nightmareMode,hellMode}),currentTileCount,clamp,random,pick,
-    getBoard:level=>db317Board(level),enemyPolicy:db064EnemyPolicy,elementKeys:ELEMENT_KEYS,
-    enemyArtForName:name=>dbBoardPresentation.enemyArtForName(name)
+    getBoard:level=>db317Board(level),enemyPolicy:db064EnemyPolicy,elementKeys:ELEMENT_KEYS
   });
 
   /* #145 Donut Rain is a non-blocking battlefield presentation.  It observes
@@ -4390,8 +4340,7 @@ dbReturnToRoadTraceReady=true;
     renderStrike:result=>CombatUI.renderStrike(result),delay:ms=>delay(ms),chargeUltimate:amount=>chargeUltimate(amount),
     hasDevilsHorns:()=>v24HasHorns(),hasLegendaryEffect:id=>db060HasEffect(id),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
     syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
-    setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getV26FastEcho:()=>!!window.__DB_V26_FAST_ECHO__,
-    setV26FastEcho:value=>{window.__DB_V26_FAST_ECHO__=!!value;},getElementKeys:()=>ELEMENT_KEYS,
+    setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getElementKeys:()=>ELEMENT_KEYS,
     outgoingDamageMultiplier:()=>dbClasses.invokerOutgoingMultiplier(),
     afterPlayerHit:(target,options)=>dbClasses.invokerAfterPlayerHit(target,options)
   });
@@ -4447,7 +4396,6 @@ dbReturnToRoadTraceReady=true;
     slimeRougeUltimate:()=>v318UseSlimeRougeUltimate(),
     getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
     setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},
-    frogEchoCap:echo=>v28FrogEchoCap(echo),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
@@ -4458,7 +4406,7 @@ dbReturnToRoadTraceReady=true;
   dbCombatView.configurePresentation({
     document,
     guardianSpecialInterval:GUARDIAN_SPECIAL_INTERVAL,
-    getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy}),
+    getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode}),
     find:$,
     getClasses:()=>CLASSES,
     getElements:()=>ELEMENTS,
@@ -4469,7 +4417,10 @@ dbReturnToRoadTraceReady=true;
     hasClassMechanic:id=>classHasMechanic(id),
     classIdentityId:()=>classIdentityId(),
     applyClassPortrait:(...args)=>applyClassPortrait(...args),
-    enemyPortraitHTML:enemy=>enemyPortraitSVG(enemy),
+    enemyBattleArtById:(id,level)=>window.DiceboundAssets.resolveEnemyBattleArtById(id,level),
+    enemyPortraitById:id=>window.DiceboundAssets.resolveEnemyPortraitById(id),
+    enemyModeAura:mode=>window.DiceboundAssets.resolveEnemyModeAura(mode),
+    guardianBattleArt:id=>DB317_GUARDIANS.resolveById(id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(id)?.battle||null,
     potionHealValue:()=>dbConsumablesResolution.potionHealValue(),
     potionTooltip:()=>v18PotionTooltip(),
     describeUltimate:id=>describeCurrentUltimate(id),
