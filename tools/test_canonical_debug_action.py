@@ -86,12 +86,14 @@ if not omega:
     raise SystemExit("canonical omega_stone debug branch missing")
 omega_body = omega.group("body")
 for fragment in (
-    "equipItem(generatePhilosophersStone(),true)",
+    "dbItems.equip(generatePhilosophersStone(),true)",
     "showToast(\"Philosopher's Stone added\")",
     "renderEquipment();updateHUD();return;",
 ):
     if fragment not in omega_body:
         raise SystemExit("canonical omega_stone branch lost released post-refresh semantics: " + fragment)
+if "equipItem(generatePhilosophersStone(),true)" in omega_body:
+    raise SystemExit("retired omega_stone equipItem route returned")
 
 print(
     f"Canonical debugAction PASS: one dispatcher, zero predecessor layers, "
