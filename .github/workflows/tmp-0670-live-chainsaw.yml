@@ -8,10 +8,7 @@ on:
       - .github/workflows/tmp-0670-live-chainsaw.yml
       - tools/live_chainsaw_*.py
       - tools/bulk_0670_cleanup.py
-      - tools/canonical_0670_wave2.py
-      - tools/canonical_0670_wave3.py
-      - tools/canonical_0670_wave4.py
-      - tools/canonical_0670_wave5.py
+      - tools/canonical_0670_wave*.py
       - tools/static_style_extract_0670.py
       - tools/artifact_owner_0670.py
       - tools/comment_cleanup_0670.py
@@ -78,6 +75,8 @@ jobs:
             Write-Host 'CANONICAL_0670_WAVE4 already canonical'
           }
           python tools/canonical_0670_wave5.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/canonical_0670_wave5b.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/comment_cleanup_0670.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
