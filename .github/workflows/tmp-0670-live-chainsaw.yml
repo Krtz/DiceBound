@@ -69,8 +69,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/canonical_0670_wave3.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/canonical_0670_wave4.py
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (Select-String -Path runtime/js/dicebound.js -Pattern 'function v13NormalizeMeta' -Quiet) {
+            python tools/canonical_0670_wave4.py
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            Write-Host 'CANONICAL_0670_WAVE4 already canonical'
+          }
           python tools/canonical_0670_wave5.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/comment_cleanup_0670.py
