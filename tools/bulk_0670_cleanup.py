@@ -34,9 +34,6 @@ def is_item_feeder_statement(node,snippet:str)->bool:
 
 
 def remove_item_compat_feeders(text:str)->tuple[str,int]:
-    # Item generation now accepts only canonical supported rarities. Remove the
-    # pre-v1.4 naming/icon fallback data and historical extensions that only fed
-    # the retired compatibility generator.
     current='''    getPlayer:()=>player,getMeta:()=>meta,getBoardLevel:()=>boardLevel,getClassIdentityId:()=>classIdentityId(),
     slots:EQUIPMENT_SLOTS,slotLabels:SLOT_LABELS,rarityValues,gearNames,rarityPrefixes,rarityBudgets:V14_RARITY_BUDGETS,elementKeys:ELEMENT_KEYS,
     rollGearRarity:bonus=>rollGearRarity(bonus),pick:list=>pick(list),random:()=>random(),rand:(min,max)=>rand(min,max),clamp:(value,min,max)=>clamp(value,min,max),
@@ -65,12 +62,8 @@ def remove_item_compat_feeders(text:str)->tuple[str,int]:
             snippet=base.node_text(source,node)
             if is_item_feeder_statement(node,snippet):spans.append((node.start_byte,statement_end(source,node)))
 
-    # A defensive size guard makes a future parser/shape change fail loudly
-    # instead of deleting a giant enclosing block.
     for start,end in spans:
-        if end-start>12000:
-            raise RuntimeError(f'Refusing oversized item-feeder span: {end-start} bytes')
-
+        if end-start>12000:raise RuntimeError(f'Refusing oversized item-feeder span: {end-start} bytes')
     merged=[]
     for start,end in sorted(set(spans)):
         if merged and start<merged[-1][1]:
@@ -78,14 +71,12 @@ def remove_item_compat_feeders(text:str)->tuple[str,int]:
         else:merged.append((start,end))
     for start,end in reversed(merged):source=source[:start]+source[end:]
     out=source.decode('utf-8')
-    if re.search(r'\bgearNames\b|\brarityPrefixes\b|\bfunction\s+gearIcon\b',out):
-        raise RuntimeError('Obsolete item compatibility feeder survived')
+    if re.search(r'\bgearNames\b|\brarityPrefixes\b|\bfunction\s+gearIcon\b',out):raise RuntimeError('Obsolete item compatibility feeder survived')
     return out,len(merged)
 
 
 def extract_dynamic_css(text:str)->tuple[str,int]:
-    css=CSS.read_text(encoding='utf-8').rstrip()+"\n"
-    moved=0
+    css=CSS.read_text(encoding='utf-8').rstrip()+"\n";moved=0
     patterns=[
         ('v19 runtime styles',re.compile(r'''\n\s*// Styling added in JS keeps the single-file build self-contained\.\s*\n\s*const v19Style=document\.createElement\("style"\);v19Style\.textContent=`(?P<css>.*?)`;\s*\n\s*document\.head\.appendChild\(v19Style\);''',re.S)),
         ('guardian art styles',re.compile(r'''\n\s*const db060GuardianArtStyle=document\.createElement\('style'\);\s*\n\s*db060GuardianArtStyle\.id='dicebound-beta-0-6-guardian-art-style';\s*\n\s*db060GuardianArtStyle\.textContent=`(?P<css>.*?)`;\s*\n\s*document\.head\.appendChild\(db060GuardianArtStyle\);''',re.S)),
@@ -93,8 +84,7 @@ def extract_dynamic_css(text:str)->tuple[str,int]:
     for label,pattern in patterns:
         match=pattern.search(text)
         if not match:continue
-        block=match.group('css').strip('\n')
-        marker=f'/* 0.6.7.0 extracted {label} */'
+        block=match.group('css').strip('\n');marker=f'/* 0.6.7.0 extracted {label} */'
         if marker not in css:css+=f"\n{marker}\n{block}\n"
         text=text[:match.start()]+"\n"+text[match.end():];moved+=1
     CSS.write_text(css,encoding='utf-8',newline='\n')
@@ -105,16 +95,23 @@ def remove_regression_surfaces(text:str)->tuple[str,int]:
     names={'DiceboundV16Regression','DiceboundV17Regression','DiceboundV18Regression','DiceboundV19Regression'}
     source=text.encode('utf-8');tree=base.parse(source);spans=[]
     for node in base.walk(tree.root_node):
-        if node.type not in {'expression_statement','try_statement'}:continue
-        snippet=base.node_text(source,node)
-        if not any(name in snippet for name in names):continue
+        if node.type!='expression_statement':continue
+        snippet=base.node_text(source,node).lstrip()
+        matched=next((name for name in names if snippet.startswith(f'Object.defineProperty(window,"{name}"')),None)
+        if not matched:continue
+        removal=node
+        # V16 wrapped only its hidden export in a try/catch. Remove that empty
+        # historical shell too, but never select an enclosing runtime block.
         parent=node.parent
-        if parent and parent.type in {'expression_statement','try_statement'} and any(name in base.node_text(source,parent) for name in names):continue
-        if node.end_byte-node.start_byte>12000:raise RuntimeError('Refusing oversized regression-surface span')
-        spans.append((node.start_byte,statement_end(source,node)))
+        if parent and parent.type=='statement_block' and parent.parent and parent.parent.type=='try_statement':
+            candidate=parent.parent
+            candidate_text=base.node_text(source,candidate).lstrip()
+            if candidate_text.startswith(f'try{{Object.defineProperty(window,"{matched}"') and candidate.end_byte-candidate.start_byte<12000:
+                removal=candidate
+        if removal.end_byte-removal.start_byte>12000:raise RuntimeError(f'Refusing oversized regression export span for {matched}')
+        spans.append((removal.start_byte,statement_end(source,removal)))
     for start,end in sorted(set(spans),reverse=True):source=source[:start]+source[end:]
-    out=source.decode('utf-8')
-    survivors=[name for name in names if name in out]
+    out=source.decode('utf-8');survivors=[name for name in names if name in out]
     if survivors:raise RuntimeError(f'Regression-only globals survived: {survivors}')
     return out,len(spans)
 
@@ -128,26 +125,18 @@ def update_items_oracle()->int:
     new_assert='''  for(const rarity of ["artifact","mythical","omega","bogus"]){const rejected=actual.cases.find(c=>c.kind==="reject"&&c.requestedRarity===rarity);assert.ok(rejected?.error,`missing strict rejection for ${rarity}`);assert.equal(rejected.rngCalls,0,`${rarity} rejection must not consume gameplay RNG`);}'''
     if old_assert in text:text=text.replace(old_assert,new_assert,1)
     elif new_assert not in text:raise RuntimeError('Items oracle compatibility assertions changed unexpectedly')
-
-    for entry in [
-        "['compat-artifact','artifact',null,'ranger',4,40],",
-        "['compat-mythical','mythical','chest','fighter',4,40],",
-        "['compat-omega','omega','ring','sorcerer',4,40],",
-        "['invalid-bogus','bogus',null,'ranger',2,20],",
-    ]:text=text.replace(entry,'')
+    for entry in ["['compat-artifact','artifact',null,'ranger',4,40],","['compat-mythical','mythical','chest','fighter',4,40],","['compat-omega','omega','ring','sorcerer',4,40],","['invalid-bogus','bogus',null,'ranger',2,20],"]:text=text.replace(entry,'')
     loop='''      for(const [name,rarity,slot,classId,board,position] of genCases){const before=restore(name,{classId,board,position});const item=gen.generateEquipment(rarity,slot);finish({name,kind:'generate',requestedRarity:rarity,forcedSlot:slot,classId,board,position,item:compactItem(item)},before);}'''
     reject='''      for(const [name,rarity,slot,classId,board,position] of genCases){const before=restore(name,{classId,board,position});const item=gen.generateEquipment(rarity,slot);finish({name,kind:'generate',requestedRarity:rarity,forcedSlot:slot,classId,board,position,item:compactItem(item)},before);}
       for(const rarity of ['artifact','mythical','omega','bogus']){const before=restore('reject-'+rarity,{classId:'ranger',board:4,position:40});let error=null;try{gen.generateEquipment(rarity,null);}catch(reason){error=String(reason?.message||reason);}finish({name:'reject-'+rarity,kind:'reject',requestedRarity:rarity,error},before);}'''
     if loop in text:text=text.replace(loop,reject,1)
     elif "kind:'reject'" not in text:raise RuntimeError('Items oracle generation loop changed unexpectedly')
-
     compare='''    assert.deepEqual(actual.cases,fixture.cases);'''
     strict_compare='''    const retired=new Set(['compat-artifact','compat-mythical','compat-omega','invalid-bogus']);
     assert.deepEqual(actual.cases.filter(c=>c.kind!=='reject'),fixture.cases.filter(c=>!retired.has(c.name)));'''
     if compare in text:text=text.replace(compare,strict_compare,1)
     elif strict_compare not in text:raise RuntimeError('Items oracle fixture comparison changed unexpectedly')
-    ITEMS_ORACLE.write_text(text,encoding='utf-8',newline='\n')
-    return 1
+    ITEMS_ORACLE.write_text(text,encoding='utf-8',newline='\n');return 1
 
 
 def main()->int:
@@ -159,8 +148,7 @@ def main()->int:
     text=re.sub(r'\n(?:[ \t]*\n){2,}','\n\n',text)
     after=text.count('\n')+1
     if after<4500:raise RuntimeError(f'Bulk cutter removed implausibly much source in one pass: {before}->{after}')
-    MONOLITH.write_text(text,encoding='utf-8',newline='\n')
-    update_items_oracle()
+    MONOLITH.write_text(text,encoding='utf-8',newline='\n');update_items_oracle()
     print(f'BULK_0670_CLEANUP {before}->{after} lines; item feeder spans={item_spans}; dynamic styles={styles}; regression surfaces={regressions}')
     return 0
 
