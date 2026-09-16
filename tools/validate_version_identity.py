@@ -194,6 +194,18 @@ def main() -> int:
         errors.append(f"native wrapper DiceBound versions disagree: {sorted(native_versions)}")
     checks.append("native-wrapper")
 
+    canonical_notes_identify_release = False
+    canonical_notes_path = runtime / "release-notes" / f"{version}.md"
+    if canonical_notes_path.is_file():
+        try:
+            canonical_notes = canonical_notes_path.read_text(encoding="utf-8")
+            if f"# DiceBound {channel} {version}" not in canonical_notes:
+                errors.append(f"canonical release notes do not identify DiceBound {channel} {version}")
+            else:
+                canonical_notes_identify_release = True
+        except OSError as exc:
+            errors.append(f"canonical release notes could not be read: {exc}")
+
     if bool(args.release_spec) != bool(args.release_notes):
         errors.append("--release-spec and --release-notes must be supplied together")
     if args.release_spec and args.release_notes:
@@ -212,13 +224,26 @@ def main() -> int:
                 errors.append(f"release notes heading does not identify DiceBound {channel} {version}")
         except OSError as exc:
             errors.append(f"release notes could not be read: {exc}")
-    for path, label in [(root / "CHANGELOG.md", "changelog"), (runtime / "PATCH_NOTES.md", "runtime patch notes")]:
-        try:
-            documentation = path.read_text(encoding="utf-8")
-            if display_version not in documentation and f"{channel} {version}" not in documentation:
-                errors.append(f"{label} does not mention {channel} {version}")
-        except OSError as exc:
-            errors.append(f"{label} could not be read: {exc}")
+
+    changelog_path = root / "CHANGELOG.md"
+    try:
+        changelog = changelog_path.read_text(encoding="utf-8")
+        if (
+            display_version not in changelog
+            and f"{channel} {version}" not in changelog
+            and not canonical_notes_identify_release
+        ):
+            errors.append(f"changelog does not mention {channel} {version} and no canonical version-owned release note exists")
+    except OSError as exc:
+        errors.append(f"changelog could not be read: {exc}")
+
+    patch_notes_path = runtime / "PATCH_NOTES.md"
+    try:
+        patch_notes = patch_notes_path.read_text(encoding="utf-8")
+        if display_version not in patch_notes and f"{channel} {version}" not in patch_notes:
+            errors.append(f"runtime patch notes do not mention {channel} {version}")
+    except OSError as exc:
+        errors.append(f"runtime patch notes could not be read: {exc}")
     checks.append("release-identity" if args.release_spec else "release-documentation")
 
     release_metadata: dict = {}
