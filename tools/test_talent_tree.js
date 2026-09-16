@@ -46,8 +46,10 @@ assert.match(source,/layoutAudit/,'layout must retain a deterministic geometry g
 
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');
 const stylesheet=fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),'utf8');
-assert.match(monolith,/function renderTalents\(\)\{return window\.DiceboundTalentTree\?\.render\?\.\(\)\|\|null;\}/,'monolith must retain only the documented Talent render adapter');
-assert.match(monolith,/function openTalentTree\(returnOverlay=null\)\{return window\.DiceboundTalentTree\?\.open\?\.\(returnOverlay\)\|\|null;\}/,'monolith must retain only the documented Talent open adapter');
+assert.match(monolith,/renderTalents:\(\)=>window\.DiceboundTalentTree\.render\(\)/,'Progression/Camp composition must render through the Talent Tree owner directly');
+assert.match(monolith,/openTalents:\(\)=>window\.DiceboundTalentTree\.open\('startOverlay'\)/,'Camp composition must open the Talent Tree owner directly');
+assert.doesNotMatch(monolith,/function renderTalents\(/,'retired Talent render adapter must stay drained');
+assert.doesNotMatch(monolith,/function openTalentTree\(/,'retired Talent open adapter must stay drained');
 for(const retired of ['renderTalents=function','renderTalentsV','createTalentButton','applyTalentZoom','changeTalentZoom','V235_TALENT','v235Talent','db050Talent','db056Talent'])assert(!monolith.includes(retired),`retired Talent presentation chain remains in dicebound.js: ${retired}`);
 for(const retiredStyle of ['.talent-summary{','.talent-viewport{','.talent-canvas{','.talent-node.radial{','.modal.talent-modal{'])assert(!stylesheet.includes(retiredStyle),`retired Talent presentation style remains in shared CSS: ${retiredStyle}`);
 
