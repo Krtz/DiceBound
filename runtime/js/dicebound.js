@@ -584,9 +584,6 @@
     $("lootOverlay").classList.add("hidden");const cb=pendingLootCallback;pendingLootItem=null;pendingLootCallback=null;if(cb)cb();
   }
 
-  /* #209 / #40: equipment and Heirloom presentation is owned by
-     ui/equipment-heirlooms.js. The monolith supplies runtime facts and the
-     existing storage/persistence transactions only. */
   const dbEquipmentUi=window.DiceboundEquipmentHeirlooms;
   if(!dbEquipmentUi)throw new Error('DiceBound requires the equipment and Heirloom UI module before dicebound.js');
   function dbEquipmentUiState(){return {
@@ -1065,11 +1062,6 @@ function returnToRoad(...args){
   saveMeta();
   dbProgression.repairTalentPrerequisites();
 
-    // Thin composition adapter only.  The real Class chooser, including
-  // roster/detail rendering and Random state, is owned by ui/class-chooser.
-
-        // Merchant stock, transactions and presentation are internal to DiceboundMerchant.
-
       function mythicalSetSummary(){
   const n=mythicalSetCount();
   return `${n}/7 Artifact-tier Impossible Road pieces · `+v24SetTierData().map(t=>`${t.pieces}: ${t.text}`).join(' · ');
@@ -1307,13 +1299,9 @@ function returnToRoad(...args){
 
   window.DiceboundCamp.configureShell({clearRunTalentSnapshot:()=>{runTalentSnapshot=null;}});
 
-  // Powerup career accounting/save ordering is owned by DiceboundPowerups.
-
   // Board 4 is now intentionally cruel.
 
   // Sovereign Relic now actually lets the player choose one of three Legendaries.
-
-  // Track board/class feats; victory ownership now lives in combat/victory-resolution.
 
   // Stats hooks around existing run lifecycle.
 
@@ -1389,8 +1377,6 @@ function returnToRoad(...args){
   }
   upgrades.forEach(inferUpgradeTags);
 
-  // Powerup eligibility is owned by DiceboundPowerups.
-
   function ensureHellToggle(){
     if($("hellBox")){
       const box=$("hellBox"),btn=$("hellToggle"),text=$("hellText");
@@ -1406,8 +1392,6 @@ function returnToRoad(...args){
 
     function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
   function applyMythicRingPulse(){if(!(player.equipment?.ring?.mythicPiece==="ring")||player.combatActionCount<1||player.combatActionCount%4!==0)return "";player.combatShield=(player.combatShield||0)+1;player.ultimateCharge=clamp(player.ultimateCharge+12,0,100);return "💍 Ouroboros Halo grants 1 barrier and 12 ultimate.";}
-
-  // Bloodmage bespoke combat actions are owned by DiceboundClasses.
 
   let dbDebugUiReady=false;
   function refreshDebugButtons(){
@@ -1453,14 +1437,6 @@ function returnToRoad(...args){
   random();
 
   // ---- identity descriptions -------------------------------------------------
-  const MANA_OCCULT_CLASSES=new Set(["sorcerer","vampire","rouge","merchant","invoker"]);
-  const OCCULT_SPELLS={
-    sorcerer:{builder:"Channel Bolt",builderIcon:"🔮",spell:"Arcane Lance",spellIcon:"✦",cost:35,gain:28,desc:"Channel Bolt deals slightly reduced normal attack damage and builds Mana. Arcane Lance spends 35 Mana for a heavy spell, converts half of your Echo Strike chance into bonus Lance damage, applies Lifesteal, and guarantees a random core-element eruption."},
-    vampire:{builder:"Night Siphon",builderIcon:"🦇",spell:"Grave Lance",spellIcon:"🌑",cost:35,gain:26,desc:"Night Siphon builds Mana while attacking. Grave Lance spends 35 Mana for heavy damage and drains 30% of the direct damage as HP."},
-    rouge:{builder:"Crimson Stroke",builderIcon:"🖌️",spell:"Scarlet Hex",spellIcon:"🌹",cost:35,gain:27,desc:"Crimson Stroke paints Mana into existence. Scarlet Hex spends 35 Mana for a high-crit occult strike and splashes crimson damage into the pack."},
-    merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana and converts part of your current gold into occult damage."},
-    invoker:{builder:"Arcane Current",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Arcane Current generates Mana and a Green orb. Elemental Lance spends 50 Mana for a Red orb. Guard forms Blue; three orbs unlock Invoke."}
-  };
 
   // ---- even more thematic class portraits -----------------------------------
 
@@ -1524,16 +1500,12 @@ function returnToRoad(...args){
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};
     return (spec.requires||[]).every(req=>!req.startsWith("ultimate:")&&caps.has(req));
   }
-  // Slime borrowing eligibility is owned by DiceboundPowerups.
 
   // ---- core class identity hooks --------------------------------------------
 
   // ---- D20: make every combat roll readable and slightly more chaotic -------
 
   // ---- occult attacks --------------------------------------------------------
-  // Mana / occult action ownership lives in combat/mana-action-resolution.js.
-
-  // Rogue Steal mechanics are owned by DiceboundClasses.
 
   // Guard/potion identity wrappers.
   async function identityGuardAction(...args){
@@ -1584,7 +1556,7 @@ function returnToRoad(...args){
     selectFirstLivingEnemy:()=>setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0])),
     hasEffect:id=>db060HasEffect(id),
     addCombatHistory:text=>addCombatHistory(text),
-    potionHealValue:mult=>v16PotionHealValue(mult),
+    potionHealValue:mult=>dbConsumablesResolution.potionHealValue(mult),
     recordPotionUse:()=>{if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();},
     chargeUltimate:amount=>chargeUltimate(amount),
     pickElementKey:()=>pick(ELEMENT_KEYS),
@@ -1666,17 +1638,12 @@ function returnToRoad(...args){
 
   // Later boards become meaningful progression walls instead of a Board-1 check followed by a snowball.
 
-  // Item score/value ownership now lives behind DiceboundItems.
-
   // Update rarity/explanation text without exposing the hidden number itself.
 
   random();
 
   meta.beastmasterNightmareBoard5=!!meta.beastmasterNightmareBoard5;
   meta.unlocks=meta.unlocks||{};
-
-  MANA_OCCULT_CLASSES.add("summoner");
-  OCCULT_SPELLS.summoner={builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."};
 
   // ---- Defense becomes diminishing percentage reduction --------------------
   function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return v24HasJeanJacket()?clamp(d/(d+13),0,.90):clamp(d/(d+25),0,.82);}
@@ -1707,15 +1674,12 @@ function returnToRoad(...args){
 
   // ---- New Alchemist class --------------------------------------------------
 
-  function v16PotionHealValue(mult=1){if(dbConsumablesResolution)return dbConsumablesResolution.potionHealValue(mult);return Math.max(1,Math.round((10+player.maxHp*.10)*(1+player.potionPower)*mult));}
-  // Volatile Flask consumption/action mechanics are owned by DiceboundClasses.
-
   // ---- Talents --------------------------------------------------------------  // ---- Talents --------------------------------------------------------------
 
   // ---- Per-run identity state ----------------------------------------------
 
   // ---- Companion differentiation -------------------------------------------
-  // Pet stat identities and their V1.7 bond scaling are owned by pets/lifecycle.js.
+
   function syncActivePetBonusV16(force=false){return dbPets.syncActiveBonus(force);}
 
   // ---- Powerup rerolls ------------------------------------------------------
@@ -1757,11 +1721,7 @@ function returnToRoad(...args){
 
   random();
 
-  // ---- Pet bond scaling is owned by DiceboundPets / pets/lifecycle.js. -----
-
   // ---- Guardian elemental Guard talent + Turtle/Slime powerup -------------
-  const resonantTalent=talents.find(t=>t.id==="turtle_guard_element");if(resonantTalent){}
-
   // ---- Potion / Echo tooltips ----------------------------------------------
 
   // ---- Reliable Legendary choice flow -------------------------------------
@@ -1778,8 +1738,6 @@ function returnToRoad(...args){
 
   // ---- D20: show the roll, pause, then let the calling attack resolve ------
 
-  // Mana augment definitions are owned by DiceboundPowerupRegistry.
-
   // ---- Summoner spirits become visible in combat --------------------------
 
   // ---- Toxic Bloom wording -------------------------------------------------
@@ -1791,7 +1749,7 @@ function returnToRoad(...args){
   // always reflect the current player state after gear, talents and powerups.
 
   function v18PotionTooltip(){
-    const heal=v16PotionHealValue();
+    const heal=dbConsumablesResolution.potionHealValue();
     return `Potions currently restore about ${heal} HP. Potion Healing bonus: +${Math.round((player.potionPower||0)*100)}%. Base healing is 10 + 10% of max HP.`;
   }
   function v18DefenseTooltip(){
@@ -1815,8 +1773,6 @@ function returnToRoad(...args){
   // Attack is translated into +/-10% Echo per Attack point instead. This hook
   // makes talents, gear, Bloodwell exchanges and powerups all obey one rule.
 
-  // Ouroboros powerups are owned by DiceboundPowerupRegistry.
-
   // A one-copy identity power that complements the broader Endless Form talent.
 
   // ---- Talent revisions and new fourth-choice node -------------------------
@@ -1829,10 +1785,8 @@ function returnToRoad(...args){
   // ---- Per-run state and class-passive normalization -----------------------
 
   function v18SyncOuroborosAttack(){return dbClasses.syncOuroborosAttack();}
-  // Bloodmage max-HP normalization is owned by DiceboundClasses.
 
   // ---- Guard, Replenish and pet-turn behavior ------------------------------
-  // Bloodmage Replenish and Exsanguinate are owned by DiceboundClasses.
 
   // ---- Endless Form support hooks ------------------------------------------
 
@@ -2151,12 +2105,11 @@ function returnToRoad(...args){
       return {used,required:Number(match?.[1])||15};
     },
     identityNote:cls=>{
-      if(MANA_OCCULT_CLASSES.has(cls.id)){const spell=OCCULT_SPELLS[cls.id];return spell?`Mana class — ${spell.builder} builds Mana; ${spell.spell} spends it.`:'Mana class.';}
+      const manaNote=dbCombatManaActionResolution.identityNote(cls.id);if(manaNote)return manaNote;
       if(cls.id==='bloodmage')return 'Occult blood-fuel class — HP replaces Mana.';
       if(cls.id==='rogue')return 'Extra combat action — Steal once per battle.';
       if(cls.id==='beastmaster')return 'Extra combat control — switch pet stance.';
       if(cls.id==='cleric')return 'Healing builds Faith for Consecration.';
-      if(cls.id==='summoner')return 'Mana pet-caster — build a temporary spirit circle every battle.';
       if(cls.id==='pokemontrainer')return 'Secret six-creature roster — randomized once at the beginning of each run.';
       if(cls.id==='alchemist')return 'Potion engineer — brew, drink or weaponize your restorative stock.';
       return cls.passive?`Identity: ${cls.passive.name}.`:'';
@@ -2552,7 +2505,6 @@ dbReturnToRoadTraceReady=true;
   /* COUNTER RESERVE -> ENDLESS FORM --------------------------------------- */
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
-  // High-Luck Powerup pool filtering is owned by DiceboundPowerups.
 
   /* LONG STRIDE: FATE CHOICES ARE EXACT ----------------------------------- */
 
@@ -2569,7 +2521,6 @@ dbReturnToRoadTraceReady=true;
   /* LEGENDARY REWARD EXHAUSTION ------------------------------------------- */
 
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
-  // Runtime conversion policy is owned by DiceboundClasses.
 
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
   generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
@@ -2588,29 +2539,17 @@ dbReturnToRoadTraceReady=true;
   const v27Sub=document.querySelector('.brand p');if(v27Sub)v27Sub.textContent='The road fights back: smarter rewards, tougher difficulties, cleaner shields and faster impossible snakes.';
 
   const v27Upgrade=id=>upgrades.find(u=>u.id===id);
-  function v27EnsureUpgrade(def){return v27Upgrade(def.id);}
 
   /* QUIETER COMBAT FEEDBACK ------------------------------------------------ */
   // Elemental activations remain in the combat text/history and animations,
   // but no longer create a toast in the middle of every proc chain.
 
   /* LEGENDARY DESIGN: RARITY != UNIQUE ------------------------------------ */
-  ['legendary_worldheart','legendary_echo_crown','legendary_prismatic','legendary_blood_contract','true_legend_attack_v24','true_legend_echo_v24','true_legend_guard_v24','true_legend_element_v24'].forEach(id=>{const u=v27Upgrade(id);});
-  const golden27=v27Upgrade('legendary_golden_law');if(golden27){}
-
-  v27EnsureUpgrade({id:'legendary_crimson_aegis_v27',rarity:'legendary',unique:true,icon:'🩸🔵',name:'Crimson Aegis',desc:'Gain +30% Lifesteal. Overhealing converts 1% of the excess into Energy Shield.',apply(){player.lifeSteal+=.30;player.legendaryOverhealShieldRate=Math.max(player.legendaryOverhealShieldRate||0,.01);}});
-  v27EnsureUpgrade({id:'legendary_star_eater_v27',rarity:'legendary',icon:'🌠🗡️',name:"Star-Eater's Rhythm",desc:'Gain +35% Crit, +60% Echo Strike and +20% Boss Damage.',apply(){player.crit+=.35;player.doubleStrike+=.60;player.bossDamage+=.20;}});
-  v27EnsureUpgrade({id:'legendary_adamant_v27',rarity:'legendary',icon:'🛡️🌟',name:'Adamant Testament',desc:'Gain +10 Defense, +35 max HP and +2 flat damage reduction.',apply(){player.defense+=10;player.maxHp+=35;player.hp+=35;player.flatReduction+=2;}});
-  v27EnsureUpgrade({id:'legendary_venom_throne_v27',rarity:'legendary',icon:'☠️👑',name:'Throne of Venom',desc:'Gain +50% Poison Chance, +40% Poison damage and +10% Lifesteal.',apply(){player.poisonOnHitChance=(player.poisonOnHitChance||0)+.50;player.poisonStackPower=(player.poisonStackPower||.12)+.40;player.lifeSteal+=.10;}});
-  v27EnsureUpgrade({id:'legendary_kings_ransom_v27',rarity:'legendary',icon:'👑🪙',name:"King's Ransom",desc:'Gain +150% gold, +25 Luck and +30% Boss Damage.',apply(){player.goldBonus+=1.50;player.luck+=.25;player.bossDamage+=.30;}});
-  v27EnsureUpgrade({id:'legendary_prismatic_choir_v27',rarity:'legendary',icon:'🌈🎼',name:'Prismatic Choir',desc:'Gain +30% elemental proc chance, +75% elemental power and +10 Ultimate whenever you exploit a weakness.',apply(){player.elementProcBonus+=.30;player.elementDamageBonus+=.75;player.elementUltimateGain=(player.elementUltimateGain||0)+10;}});
-  v27EnsureUpgrade({id:'legendary_wanderer_v27',rarity:'legendary',icon:'🥾🌟',name:'Legend of the Endless Mile',desc:'Gain +25 Luck, +20% Dodge, +30% Boss Damage and +30 starting Ultimate.',apply(){player.luck+=.25;player.dodge+=.20;player.bossDamage+=.30;player.ultimateCharge=clamp(player.ultimateCharge+30,0,100);}});
 
   /* OUROBOROS: EVERY ATTACK SOURCE BECOMES ECHO --------------------------- */
 
   function v27SyncOuroborosEconomy(){return dbClasses.syncOuroborosEconomy();}
 
-  // Ouroboros post-Powerup economy sync is owned by DiceboundPowerups.
   window.DiceboundCamp.configureShell({syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),forceOuroborosAttackLabel:()=>{if($('attackText'))$('attackText').textContent='10';}});
 
   /* EXTREME ECHO SPEED ----------------------------------------------------- */
@@ -2681,15 +2620,7 @@ dbReturnToRoadTraceReady=true;
 
     try{Object.defineProperty(purse28,'desc',{configurable:true,enumerable:true,get(){const total=modifiedGold(100),bonus=Math.round((player.goldBonus||0)*100);return `Gain ${total} gold now (100 base${bonus?`, ${bonus}% Gold bonus`:''}${nightmareMode?', Nightmare reward reduction included':''}).`;}});}catch(e){}
   }
-  const vampEdge28=upgrades.find(u=>u.id==='vampire');
-  if(vampEdge28){}
-
   /* POISON CLASS TAGS / THRONE OF VENOM ---------------------------------- */
-  const venomThrone28=upgrades.find(u=>u.id==='legendary_venom_throne_v27');
-  if(venomThrone28){
-
-  }
-
   /* NINJA: ONE SMOKE PER CRITICAL TIER ------------------------------------ */
 
   /* SLIME ROUGE ------------------------------------------------------------ */
@@ -2706,9 +2637,6 @@ dbReturnToRoadTraceReady=true;
     const spec=window.DiceboundContent?.powerupMechanics?.[u.id]||{requires:[]};const caps=slimeRougeCapabilities();
     return (spec.requires||[]).every(req=>req.startsWith('ultimate:')?player.slimeRougeUltimateClass===req.slice(9):caps.has(req));
   }
-  // Slime Rouge borrowed identity/Ultimate support initialization is owned by DiceboundClasses.
-
-  // Slime Rouge Powerup eligibility is owned by DiceboundPowerups.
 
   async function v318UseSlimeRougeUltimate(){
     if(combatBusy||!currentEnemy||player.ultimateCharge<100)return;const donorId=player.slimeRougeUltimateClass||player.v28BorrowedUltimateClass||'ranger',identityId=player.slimeRougeIdentityClass||player.v28BorrowedPassiveClass;
@@ -3314,21 +3242,7 @@ dbReturnToRoadTraceReady=true;
   // ALCHEMIST — the outside-potion DOM listener was registered against an old
   // function object before later tracking wrappers replaced usePotionOutsideCombat.
   // Capture the click and route it through the current live function instead.
-  const db0511OutsidePotionBtn=$('outsidePotionBtn');
-  if(db0511OutsidePotionBtn&&!db0511OutsidePotionBtn.dataset.db0511LivePotion){
-    db0511OutsidePotionBtn.dataset.db0511LivePotion='1';
-    db0511OutsidePotionBtn.addEventListener('click',event=>{
-      const usable=gameStarted&&!rollLocked&&!currentEnemy&&player.potions>0&&player.hp<player.maxHp;
-      if(!usable)return;
-      event.preventDefault();event.stopImmediatePropagation();
-      dbConsumablesResolution.usePotionOutsideCombat();
-      const counter=document.querySelector('.v18-potion-counter');
-      if(counter)counter.textContent=`Potion uses: ${Math.floor(meta.stats?.potionsUsed||0)} / 15`;
-      dbProgression.checkDynamicClassUnlocks();
-    },true);
-  }
 
-  // ENEMY ELEMENTAL PARITY — mechanical ownership lives in combat/element-resolution.js.
   function db0511RestoreEnemyElementDebuffs(...args){return dbCombat.restoreEnemyElementDebuffs(...args);}
 
   // mutation/copy passes into the canonical registry during startup.
@@ -3430,14 +3344,10 @@ dbReturnToRoadTraceReady=true;
   }
 
   // Attack/Defense powerup cross-feed.
-  // Sword-and-Shield Powerup cross-feed is owned by DiceboundPowerups.
 
   // Ouroboros Perfect Specimen baseline is applied inside DiceboundClasses.
 
-  // Basic Attack action-level Echo Chamber sequencing is owned by combat/attack-action-resolution.
   // Individual strike-level effects remain owned by combat/strike-resolution.
-
-  // Weapon-proc effects and Pet Mirror element memory are owned by combat/element-resolution.js.
 
   // Poison recursion.
   const db060PoisonTickBase=applyPoisonTick;
@@ -3923,8 +3833,6 @@ dbReturnToRoadTraceReady=true;
   const db064FriendsEventRewards=window.DiceboundEventRewards;
   if(!db064FriendsEventRewards)throw new Error('DiceBound requires the event reward policy domain.');
 
-  /* #78 / #209 — achievement rules and mastery state remain here until their
-     domain moves. The Trophy destination itself is owned by ui/achievements. */
   function db064AchievementUiSettings(){
     if(!meta.settings||typeof meta.settings!=='object')meta.settings={};
     if(!meta.settings.achievementGroups||typeof meta.settings.achievementGroups!=='object')meta.settings.achievementGroups={};
@@ -4384,7 +4292,6 @@ dbReturnToRoadTraceReady=true;
     livingEnemies:()=>livingEnemies(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
-    spellFor:id=>OCCULT_SPELLS[id],
     classIdentityId:()=>classIdentityId(),
     isClassActive:id=>classIdentityActive(id),
     clamp:(value,min,max)=>clamp(value,min,max),
@@ -4534,7 +4441,7 @@ dbReturnToRoadTraceReady=true;
     petTurn:(...args)=>dbCombat.petTurn(...args),
     applyMythicPantsPulse:()=>applyMythicPantsPulse(),
     applyMythicRingPulse:()=>applyMythicRingPulse(),
-    potionHealValue:fraction=>v16PotionHealValue(fraction),
+    potionHealValue:fraction=>dbConsumablesResolution.potionHealValue(fraction),
     getPets:()=>PETS,
     getGagInfo:()=>GAG_INFO,
     slimeRougeUltimate:()=>v318UseSlimeRougeUltimate(),
@@ -4556,14 +4463,14 @@ dbReturnToRoadTraceReady=true;
     getClasses:()=>CLASSES,
     getElements:()=>ELEMENTS,
     getPets:()=>PETS,
-    getOccultSpells:()=>OCCULT_SPELLS,
+    getOccultSpells:()=>dbCombatManaActionResolution.spells(),
     getGagInfo:()=>GAG_INFO,
     isClassActive:id=>classIdentityActive(id),
     hasClassMechanic:id=>classHasMechanic(id),
     classIdentityId:()=>classIdentityId(),
     applyClassPortrait:(...args)=>applyClassPortrait(...args),
     enemyPortraitHTML:enemy=>enemyPortraitSVG(enemy),
-    potionHealValue:()=>v16PotionHealValue(),
+    potionHealValue:()=>dbConsumablesResolution.potionHealValue(),
     potionTooltip:()=>v18PotionTooltip(),
     describeUltimate:id=>describeCurrentUltimate(id),
     berserkerRageBonus:()=>DB_EFFECTIVE_STATS.berserkerRageBonus(player),
@@ -4684,9 +4591,6 @@ dbReturnToRoadTraceReady=true;
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document
   });
 
-  /* INFO / ROADKEEPER'S GUIDE ------------------------------------------------
-     Presentation is owned by ui/info-guide.js. Runtime facts, save transfer and
-     progression state remain here as injected callbacks. */
   dbInfoGuide=window.DiceboundInfoGuide;
   if(!dbInfoGuide)throw new Error('DiceBound requires the Info Guide UI module before dicebound.js');
   function dbInfoExportSave(){
