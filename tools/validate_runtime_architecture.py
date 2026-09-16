@@ -1100,8 +1100,10 @@ def main() -> int:
     if monolith_source:
         if "dbCombatGuardResolution=dbCombatGuardOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Guard-resolution owner")
-        if monolith_source.count("async function guardAction(") != 1 or "return dbCombat.guard(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin guardAction adapter through DiceboundCombat")
+        if monolith_source.count("async function guardAction(") != 0:
+            errors.append("dicebound.js retains an obsolete guardAction compatibility adapter")
+        if "dbCombat.guard(" not in monolith_source:
+            errors.append("dicebound.js must route Guard calls directly through DiceboundCombat")
         if monolith_source.count("async function identityGuardAction(") != 1 or "dbCombat.identityGuard" not in monolith_source:
             errors.append("dicebound.js must retain only the thin traced identityGuardAction adapter through DiceboundCombat")
         if "return dbCombatGuardResolution.guardAction(...args);" in monolith_source or "dbCombatGuardResolution.identityGuardAction" in monolith_source:
@@ -1129,8 +1131,10 @@ def main() -> int:
     if monolith_source:
         if "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Pet turn-resolution owner")
-        if monolith_source.count("async function petTurn(") != 1 or "return dbCombat.petTurn(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin petTurn adapter through DiceboundCombat")
+        if monolith_source.count("async function petTurn(") != 0:
+            errors.append("dicebound.js retains an obsolete petTurn compatibility adapter")
+        if "dbCombat.petTurn(" not in monolith_source:
+            errors.append("dicebound.js must route Pet turns directly through DiceboundCombat")
         if monolith_source.count("function petDamage(") != 1 or "if(dbCombat)return dbCombat.petDamage();" not in monolith_source:
             errors.append("dicebound.js must retain the Camp-safe petDamage fallback and route configured Combat through DiceboundCombat")
         if monolith_source.count("function trainerPetDamage(") != 0 or "trainerPetDamage:id=>dbCombat.trainerPetDamage(id)" not in monolith_source:

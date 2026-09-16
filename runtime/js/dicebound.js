@@ -361,6 +361,14 @@
     shuffledPetIds:()=>dbPets.shuffledPetIds(),
     getPetIds:()=>Object.keys(PETS)
   });
+  dbClasses.configureRuntimeHooks({
+    getPlayer:()=>player,
+    isClassActive:id=>classIdentityActive(id),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    scaleBerserkerRageDamage:(amount,targetPlayer)=>DB_EFFECTIVE_STATS.scaleBerserkerRageDamage(amount,targetPlayer),
+    hasEffect:id=>db060HasEffect(id)
+  });
+
   function classIdentityId(){return dbClasses.identityId();}
   function classIdentityActive(id){return dbClasses.active(id);}
   function classMechanicsFor(id){return dbClasses.mechanicsFor(id);}
@@ -730,7 +738,7 @@
     holy(){playSfx('holy',()=>{[392,523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.23,"sine",.045),i*115));},1)}
   };
 
-  function getHeirloomSlots(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0);}
+  function getHeirloomSlots(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0)+((meta.prestige?.count||0)>=60?1:0);}
   function applyTalentBonuses(){
     const rank=talentRank;
     if(rank("roadborn")){player.maxHp+=5;player.hp+=5;player.attack+=2;player.defense+=2;}
@@ -804,7 +812,7 @@
     $("feedPetBtn").disabled=meta.petCookies<=0;$("feedAllPetBtn").disabled=meta.petCookies<=0;
   }
   function rawDodgeChance(){return Math.max(0,player.dodge+player.defense*player.defenseDodgeScale);}
-  function effectiveDodgeChance(){const raw=rawDodgeChance();return raw/(1+raw);}
+  function effectiveDodgeChance(){const raw=rawDodgeChance(),base=raw/(1+raw);return dbClasses.identityDodgeAdjustments(dbClasses.legacyMonkDodge(base));}
   function addLog(text){const p=document.createElement("p");p.innerHTML=text;$("log").prepend(p);}
   function addCombatHistory(text){const box=$("combatHistory");if(!box)return;const p=document.createElement("p");p.textContent=text;box.appendChild(p);box.scrollTop=box.scrollHeight;}
   function setCombatText(text,record=true){$("combatText").textContent=text;if(record)addCombatHistory(text);}
@@ -840,7 +848,6 @@ function returnToRoad(...args){
     await delay(mode==="crit"?520:mode==="echo"?350:({fighter:360,ranger:460,sorcerer:460,monk:420,clown:500,rouge:450,berserker:500}[player.classId]||460));enemy.classList.add("enemy-hit");await delay(130);enemy.classList.remove("enemy-hit");icon.classList.remove("attack-lunge");
   }
   function chargeUltimate(amount){player.ultimateCharge=clamp(player.ultimateCharge+amount,0,100);updateCombatUI();}
-    async function petTurn(...args){return dbCombat.petTurn(...args);}
 
   async function animateUltimate(){
     const fx=$("attackFx"),enemy=$("enemyIcon");fx.className="attack-fx";void fx.offsetWidth;
@@ -860,8 +867,7 @@ function returnToRoad(...args){
     return {totalDamage:results.reduce((n,r)=>n+(r.totalDamage||0),0),heal:results.reduce((n,r)=>n+(r.heal||0),0),message:results.map(r=>r.message).join(" ")};
   }
 
-  async function rollD20Chaos(action){return dbCombat.chaos(action);}
-  function applyMythicPantsPulse(){
+    function applyMythicPantsPulse(){
     if(!hasMythicPiece("legs"))return "";player.mythicActionCount++;if(player.mythicActionCount%3)return "";
     const heal=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.06)));player.hp+=heal;player.ultimateCharge=clamp(player.ultimateCharge+15,0,100);const note=`👖 Paradox Loop restores ${heal} HP and grants 15 ultimate.`;addCombatHistory(note);showToast("👖 Paradox Loop");return note;
   }
@@ -873,8 +879,6 @@ function returnToRoad(...args){
   let dbConsumablesResolution=null;
   let dbCombatVictoryResolution=null;
   let dbCombatAttackResolution=null;
-
-  async function guardAction(...args){return dbCombat.guard(...args);}
 
   function handlePlayerDeath(){
     if(player.revives>0){player.revives--;player.hp=Math.max(1,Math.ceil(player.maxHp*.5));combatBusy=false;sfx.holy();addLog("A <b>Phoenix Feather</b> drags you back from death.");setCombatText(`You revive at ${player.hp} HP. Phoenix feathers remaining: ${player.revives}.`);updateCombatUI();return;}
@@ -1174,7 +1178,13 @@ function returnToRoad(...args){
     if(rollLocked||!gameStarted)return;ensureAudio();if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
   }
   function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}
-  function damageEnemy(enemy,amount,ignoreDefense=false){if(!enemy||enemy.hp<=0)return 0;if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);return 0;}const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0))),dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;return dealt;}
+  function damageEnemy(enemy,amount,ignoreDefense=false){
+    const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);amount=dbClasses.berserkerDamage(adjusted.amount);ignoreDefense=adjusted.ignoreDefense;let dealt=0;
+    if(enemy&&enemy.hp>0){if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);}else{const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0)));dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;}}
+    if(gameStarted&&dealt>0)ensureAlphaMeta().damageDealt+=dealt;
+    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
+    return dealt;
+  }
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
 
     function applyRunTheme(){
@@ -1383,8 +1393,7 @@ function returnToRoad(...args){
   }
     function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
   function boardClearKey(classId,board,mode=boardClearMode()){return `${classId}:${mode}:b${board}`;}
-  function legacyBoardClearKey(classId,board){return `${classId}:b${board}`;}
-  function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')||key===legacyBoardClearKey(classId,board)));}
+  function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')));}
   function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();dbProgression.checkDynamicClassUnlocks();}
         function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)dbCombat.recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
@@ -1404,12 +1413,9 @@ function returnToRoad(...args){
   window.DiceboundCamp.configureShell({recordVitals:()=>recordVitals(),refreshLegacyHeroAvatar:()=>{const avatar=$("heroAvatar");if(player.classId==="ranger"){avatar.classList.add("ranger-portrait");avatar.innerHTML=rangerPortraitSVG();}else{avatar.classList.remove("ranger-portrait");avatar.textContent=CLASSES[player.classId]?.icon||"🎲";}},checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks()});
 
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
-  const getHeirloomSlotsV15=getHeirloomSlots;getHeirloomSlots=function(){const source=runTalentSnapshot;if(!source)return getHeirloomSlotsV15();return 1+(Number(source.legacy_heirloom)||0)+((meta.prestige?.count||0)>=20?1:0);};
 
   window.DiceboundCamp.configureShell({clearRunTalentSnapshot:()=>{runTalentSnapshot=null;}});
 
-  // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.
-  const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};
   // Powerup career accounting/save ordering is owned by DiceboundPowerups.
 
   // Board 4 is now intentionally cruel.
@@ -1565,11 +1571,6 @@ function returnToRoad(...args){
   // replaced by the semantic-art owner. Keep its single lexical binding so
   // early startup assignments remain valid in strict mode.
 
-  const effectiveDodgeChanceV12=effectiveDodgeChance;
-  effectiveDodgeChance=function(){return dbClasses.legacyMonkDodge(effectiveDodgeChanceV12());};
-  const damageEnemyV12=damageEnemy;
-  damageEnemy=function(enemy,amount,ignoreDefense=false){return damageEnemyV12(enemy,dbClasses.berserkerDamage(amount),ignoreDefense);};
-
   playElementAnimation=function(key,target=currentEnemy,enemySource=false){const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;if(enemySource){const el=document.createElement("div");el.className="enemy-proc-fx";el.innerHTML=`<span>${target?.icon||"👹"} → ${art}</span><small>ENEMY ELEMENT PROC</small>`;head.appendChild(el);setTimeout(()=>el.remove(),900);return;}const el=document.createElement("div");el.className=`element-proc-fx ${key}`;el.textContent=art;head.appendChild(el);setTimeout(()=>el.remove(),850);};
 
   applyPoisonTick=function(){const selectedBeforeTick=currentEnemy;let total=0,notes=[];for(const e of livingEnemies()){const stacks=e.poisonStacks||0;if(!stacks)continue;let dmg=Math.max(1,Math.round(player.attack*(player.poisonStackPower||.12)*stacks));if(e.affinity==="nature")dmg*=.5;const dealt=damageEnemy(e,dmg,true);total+=dealt;notes.push(`${e.name}: ${dealt} (${stacks} stack${stacks===1?"":"s"})`);}if(selectedBeforeTick?.hp<=0)db0648ReconcileDefeatedTarget(selectedBeforeTick,"poison");if(total){if(currentEnemy?.hp>0)playElementAnimation("nature",currentEnemy,false);setCombatText(`☠️ Poison ticks — ${notes.join(" · ")}.`);updateCombatUI();}return total;};
@@ -1665,11 +1666,6 @@ function returnToRoad(...args){
   // Slime borrowing eligibility is owned by DiceboundPowerups.
 
   // ---- core class identity hooks --------------------------------------------
-  const effectiveDodgeChanceV13=effectiveDodgeChance;
-  effectiveDodgeChance=function(){return dbClasses.identityDodgeAdjustments(effectiveDodgeChanceV13());};
-
-  const damageEnemyV13=damageEnemy;
-  damageEnemy=function(enemy,amount,ignoreDefense=false){const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);return damageEnemyV13(enemy,adjusted.amount,adjusted.ignoreDefense);};
 
   // ---- D20: make every combat roll readable and slightly more chaotic -------
 
@@ -1688,14 +1684,6 @@ function returnToRoad(...args){
 
   // Classes owns class-action selection policy. Generic Combat/Consumable/Ultimate
   // resolution remains in its existing owners and is injected as collaborators.
-  dbClasses.configureRuntimeHooks({
-    getPlayer:()=>player,
-    isClassActive:id=>classIdentityActive(id),
-    clamp:(value,min,max)=>clamp(value,min,max),
-    scaleBerserkerRageDamage:(amount,targetPlayer)=>DB_EFFECTIVE_STATS.scaleBerserkerRageDamage(amount,targetPlayer),
-    hasEffect:id=>db060HasEffect(id)
-  });
-
   dbClasses.configureActionMechanics({
     getPlayer:()=>player,
     getCurrentEnemy:()=>currentEnemy,
@@ -1836,7 +1824,7 @@ function returnToRoad(...args){
   function defenseDamageReduction(defense=player.defense){const d=Math.max(0,Number(defense)||0);return clamp(d/(d+25),0,.82);}
   // ---- Rarity/Luck and deterministic v1.5 seed codes -----------------------
 
-  function v15SafeClassId(id){return CLASSES[id]?id:"ranger";}
+  function v15SafeClassId(id){if(!CLASSES[id])throw new Error(`Unknown equipment seed class: ${id}`);return id;}
   function v15SeedCode(rarity,slot,classId,qualityBoost,core){return `D15|${rarity}|${slot}|${classId}|q${qualityBoost}|${core}`;}
   function v15ParseSeedCode(code){const m=String(code||"").trim().match(/^D15\|(poor|common|uncommon|rare|epic|legendary)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);if(!m)return null;return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};}
   function v15GenerateEquipmentFromSeedCode(code){return window.DiceboundEquipment.generateOrdinaryFromSeedCode(code,{parseSeedCode:v15ParseSeedCode,seedRng:v14SeedRng,seedInt:v14SInt,seedPick:v14SPick,hashSeed:v14HashSeed,rarityBudgets:V14_RARITY_BUDGETS,affixTiers:V14_RARITY_AFFIX_TIER,prefixes:V14_PREFIXES,suffixes:V14_SUFFIXES,elementKeys:ELEMENT_KEYS,elementChanceForRarity,pickAffix:window.DiceboundEquipment.pickOrdinaryAffix,spendBase:v14SpendBase,gearIcon:slot=>{const parsed=v15ParseSeedCode(code);if(!parsed||!CLASSES[parsed.classId])throw new Error(`Invalid equipment seed class: ${parsed?.classId||"unknown"}`);const offhand={fighter:"🛡️",ranger:"🪶",sorcerer:"📖",monk:"📿",clown:"🎭",rouge:"🎨",berserker:"💀",turtle:"🐚",frog:"🪷",d20:"🎲",slime:"🫧"};const icon={weapon:CLASSES[parsed.classId].attackIcon,offhand:Object.prototype.hasOwnProperty.call(offhand,parsed.classId)?offhand[parsed.classId]:"📖",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"}[slot];if(!icon)throw new Error(`Missing equipment icon policy for slot: ${slot}`);return icon;},baseName:window.DiceboundEquipment.ordinaryBaseName});}
@@ -2101,9 +2089,6 @@ function returnToRoad(...args){
 
   // Board 6 adds the seventh Impossible Road slot.
   function generateMythicalOffhand(){return {id:`mythical_offhand_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"offhand",rarity:"mythical",mythical:true,mythicPiece:"offhand",setName:"Impossible Road",uniqueEffect:"Event Horizon Ward: Guard grants 8 additional Ultimate; every third Guard also raises one Barrier.",icon:"🌌🛡️",name:"Event Horizon Ward, Offhand Beyond the Sixth Road",bonuses:{maxHp:30,defense:7,attack:7,crit:.10,doubleStrike:.12,bossDamage:.32,flatReduction:2}};}
-
-  // ---- Heirloom slot capacity retained after V27 Prestige no-choice flow --
-  getHeirloomSlots=function(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0)+((meta.prestige?.count||0)>=60?1:0);};
 
   // ---- Haste: one-turn lockout --------------------------------------------
   // Haste may grant one immediate extra action, but cannot chain itself again
@@ -2747,15 +2732,6 @@ function returnToRoad(...args){
   // one guaranteed stack plus a 25% chance for a second; 240% means two
   // guaranteed stacks plus a 40% chance for a third.
 
-  // Endless Form makes Croak Cascade poisonous: each jump gets an independent
-  // 5% chance per Endless Form rank to leave one Poison stack.
-  const damageEnemyV25CroakBase=damageEnemy;
-  damageEnemy=function(enemy,amount,ignoreDefense=false){
-    const dealt=damageEnemyV25CroakBase(enemy,amount,ignoreDefense);
-    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
-    return dealt;
-  };
-
   /* PALE DEVIL: later Hell encounter, barriers, varied attacks and Hellfire ---- */
 
   /* JOURNEY END: larger storage-focused management ------------------------ */
@@ -2863,15 +2839,6 @@ dbReturnToRoadTraceReady=true;
      makes the victory/road cleanup defensive so the same class of failure can
      never permanently lock a run again.
      ======================================================================== */
-
-  // Accept the complete current ordinary-rarity ladder in item seed codes.
-  // Fall back to the historical parser for old saved/hand-entered seed codes.
-  const v15ParseSeedCodeV251Historical=v15ParseSeedCode;
-  v15ParseSeedCode=function(code){
-    const m=String(code||'').trim().match(/^D15\|(poor|common|uncommon|rare|epic)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);
-    if(!m)return v15ParseSeedCodeV251Historical(code);
-    return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};
-  };
 
   // Equipment no-null compatibility is owned by items/generation.js.
 
@@ -3498,7 +3465,6 @@ dbReturnToRoadTraceReady=true;
     });
   }
   beta043ApplyArtMutations();
-
 
   setTimeout(beta043RefreshEquipmentArt,0);
   /* ========================================================================
