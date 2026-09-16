@@ -200,12 +200,12 @@ function makeHarness(options={}){
     const h=makeHarness({classId:"ouroboros",player:{attack:20,doubleStrike:12},fastCap:7,randomValues:[.9,.3]});
     await strikes.performStrike(h.enemies[0]);
     assert.equal(h.fastCap(),7,"Ouroboros fast-Echo cap must restore after the strike");
-    assert.equal(h.v26Fast(),false);
+    assert.equal(h.v26Fast(),false,"retired V26 fast-Echo flag must remain untouched");
     assert.equal(h.player.attack,10,"V26 Ouroboros strike wrapper must retain its historical attack reset");
     assert.equal(h.player.doubleStrike,13,"Ouroboros attack currency conversion must preserve the existing 10% Echo conversion");
-    assert.deepEqual(h.calls.filter(c=>c[0]==="fast-cap").map(c=>c[1]),[32,7]);
-    assert.deepEqual(h.calls.filter(c=>c[0]==="v26-fast").map(c=>c[1]),[true,false]);
-    const coreDelay=h.calls.find(c=>c[0]==="delay"&&c[1]===460);assert.equal(coreDelay[3],32);assert.equal(coreDelay[5],true);
+    assert.deepEqual(h.calls.filter(c=>c[0]==="fast-cap").map(c=>c[1]),[20,7],"Wave 10 universal Echo timing must cap 12x Echo at 20ms and then restore the previous cap");
+    assert.deepEqual(h.calls.filter(c=>c[0]==="v26-fast").map(c=>c[1]),[],"retired V26 fast-Echo flag must not be toggled");
+    const coreDelay=h.calls.find(c=>c[0]==="delay"&&c[1]===460);assert.equal(coreDelay[3],20);assert.equal(coreDelay[5],false);
   }
   {
     const h=makeHarness({classId:"sorcerer",player:{classBurst:1},legendary:["twin_surge"],randomValues:[.9,.3,.1]});
@@ -236,7 +236,7 @@ function makeHarness(options={}){
     assert.ok(h.calls.some(c=>c[0]==="reconcile"&&c[2]==="strike"));
   }
 
-  console.log("Combat strike-resolution owner PASS: base/Echo damage, Crit tiers, Marks, Counter/Shell, Smoke, Poison, Dodge, Horns, Ouroboros, lifesteal and Legendary ordering are deterministic");
+  console.log("Combat strike-resolution owner PASS: base/Echo damage, Crit tiers, Marks, Counter/Shell, Smoke, Poison, Dodge, Horns, Ouroboros, universal Echo timing, lifesteal and Legendary ordering are deterministic");
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
