@@ -56,6 +56,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Sync development build metadata
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content runtime/js/module-manifest.json -Raw | ConvertFrom-Json
+          $info = Get-Content runtime/build-info.json -Raw | ConvertFrom-Json
+          $paths = @{}
+          foreach ($module in $manifest.modules) { $paths[$module.id] = $module.path }
+          $info.runtimeScripts = @($manifest.loadOrder | ForEach-Object { $paths[$_] })
+          $info | ConvertTo-Json -Depth 32 | Set-Content runtime/build-info.json -Encoding utf8NoBOM
       - name: Syntax and architecture gates
         shell: pwsh
         run: |
@@ -83,7 +93,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           git config user.name "dicebound-release-bot"
           git config user.email "dicebound-release-bot@users.noreply.github.com"
-          git add runtime/js/dicebound.js runtime/js/powerups/presentation.js tools/test_monolith_chainsaw.py tools/validate_runtime_architecture.py docs/HISTORICAL_LAYER_CENSUS.md
+          git add runtime/js/dicebound.js runtime/js/powerups/presentation.js runtime/build-info.json tools/test_monolith_chainsaw.py tools/validate_runtime_architecture.py docs/HISTORICAL_LAYER_CENSUS.md
           git diff --cached --stat
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { throw 'Live chainsaw produced no source changes.' }
