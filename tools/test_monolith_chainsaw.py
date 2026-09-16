@@ -15,6 +15,7 @@ STALE_STARTUP_ALIASES=['db0512GateRewards','db0512RememberReward','db060Guardian
 STALE_CLASS_PORTRAIT_ALIASES=['classPortraitV13Base','classPortraitV15Patch','classPortraitV16Base','classPortraitV18Base','classPortraitBeta042Base','db054LegacyPortraitSVG']
 STALE_DOUBLE_DICE_ALIASES=['v19EnsureDoubleDiceButton','rollTwoDice','v22RollTwoDice','v22WireDoubleDice','v22ChooseDice','v22ShouldChooseRoll']
 STALE_ARTIFACT_FACTORY_NAMES=['generateMythicalWeapon','generateMythicalOffhand','generateMythicalBoots','generateMythicalPants','generateMythicalAmulet','generateMythicalHat','generateMythicalRing','v24Artifactize','DB060_ARTIFACT_FACTORIES']
+STALE_SCHEMA_MARKERS=['v13NormalizeMeta','normalizeV15','importOldSaveIfNeeded','v24MigrateItemRarity','raritySchemaV24','v24Rarity','db060MigratedNamed','ACHIEVEMENT_POWER_GATES','fighter_counter_reserve']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -30,11 +31,12 @@ def main()->int:
     for name in KILLED:
         assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"shadow delegate {name} returned to monolith"
     early_progression="dbProgression=dbProgressionOwner.configure({"
-    legacy_import="importOldSaveIfNeeded();"
+    canonical_normalize="meta=normalizeCareerMeta(meta)"
     repair_call="dbProgression.repairTalentPrerequisites();"
     assert early_progression in text, "Progression owner is not bootstrapped directly"
-    assert repair_call in text, "legacy-meta repair no longer routes directly to Progression owner"
-    assert text.index(early_progression)<text.index(legacy_import), "Progression owner bootstrap must precede legacy-meta repair"
+    assert canonical_normalize in text, "current career meta is no longer normalized canonically"
+    assert repair_call in text, "career-meta repair no longer routes directly to Progression owner"
+    assert text.index(early_progression)<text.index(canonical_normalize), "Progression owner bootstrap must precede career-meta normalization"
 
     for name in STALE_STARTUP_ALIASES:
         assert not re.search(rf"\b{re.escape(name)}\b",code), f"historical startup alias {name} returned"
@@ -59,8 +61,11 @@ def main()->int:
     for name in STALE_ARTIFACT_FACTORY_NAMES:
         assert not re.search(rf"\b{re.escape(name)}\b",code), f"Artifact predecessor {name} returned to monolith"
     assert "dbArtifacts.configure({" in text and "dbArtifacts.create(" in text, "monolith no longer routes Artifact creation through items/artifacts.js"
+    for marker in STALE_SCHEMA_MARKERS:
+        assert marker not in text, f"historical schema/migration marker {marker} returned"
+    assert "function normalizeCareerMeta(raw={}){" in code, "canonical career normalizer is missing"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits and Double Dice ladders retired")
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent")
     return 0
 
 

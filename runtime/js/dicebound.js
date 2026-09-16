@@ -883,7 +883,6 @@ function returnToRoad(...args){
     player.runBuffs.push({icon,name,desc,rarity,source});
   }
   function applyUpgrade(up,source="Powerup"){return dbPowerups.apply(up,source);}
-  function weightedUpgrade(pool){return dbPowerups.weighted(pool);}
 
   function choiceHTML(up){
     inferUpgradeTags(up);
@@ -1042,7 +1041,7 @@ function returnToRoad(...args){
   const currentPowerupCount=()=>boardLevel>=4?3:POWERUP_TILE_COUNT;
   const currentWheelCount=()=>boardLevel>=4?3:WHEEL_TILE_COUNT;
 
-  function v13NormalizeMeta(raw={}){
+  function normalizeCareerMeta(raw={}){
     const base=defaultMeta(),pets=defaultPets();
     Object.entries(raw.pets||{}).forEach(([id,state])=>{if(pets[id])pets[id]={...pets[id],...state};});
     const unlocks={...Object.fromEntries(Object.keys(CLASSES).map(id=>[id,id==="ranger"])),...(raw.unlocks||{})};
@@ -1051,15 +1050,16 @@ function returnToRoad(...args){
     let refund=0;const known=new Map(talents.map(t=>[t.id,t]));
     for(const [id,val] of Object.entries(out.purchased)){const rank=Math.max(0,Number(val)||0),t=known.get(id);if(!t){refund+=rank*2;delete out.purchased[id];continue;}if(rank>t.maxRank){refund+=(rank-t.maxRank)*t.cost;out.purchased[id]=t.maxRank;}}
     out.points=(out.points||0)+refund;
+    const statsBase=defaultLifetimeStats(),stats=out.stats||{};
+    out.version="Alpha v1";
+    out.stats={...statsBase,...stats,boardClears:{...(stats.boardClears||{})},classMaxLevel:{...(stats.classMaxLevel||{})}};
+    out.stats.damageTaken=Math.max(Number(out.stats.damageTaken)||0,Number(out.damageTaken)||0);
+    out.achievements={...(out.achievements||{})};
     return out;
   }
-  function importOldSaveIfNeeded(){
-
-    try{meta=v13NormalizeMeta(meta);saveMeta();}
-    catch(e){meta=v13NormalizeMeta({});saveMeta();}
-    dbProgression.repairTalentPrerequisites();
-  }
-  importOldSaveIfNeeded();
+  try{meta=normalizeCareerMeta(meta);}catch(e){meta=normalizeCareerMeta({});}
+  saveMeta();
+  dbProgression.repairTalentPrerequisites();
 
     // Thin composition adapter only.  The real Class chooser, including
   // roster/detail rendering and Random state, is owned by ui/class-chooser.
@@ -1188,11 +1188,7 @@ function returnToRoad(...args){
   function startNewGame(){return dbRun.startFreshRun();}
   function showEnd(victory){const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
-  if(!meta.pets.gun)meta.pets.gun=defaultPetState(false);
-  if(meta.elementProgress.gun==null)meta.elementProgress.gun=0;
 
-  const ACHIEVEMENT_POWER_GATES={destiny:"prestige10",godslayer:"road2",immortal:"road3",chaos:"road4",plague_lord:"nature_master"};
-  for(const [id,gate] of Object.entries(ACHIEVEMENT_POWER_GATES)){const up=upgrades.find(x=>x.id===id);}
 
     dbPowerups.configure({
     getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
@@ -1343,7 +1339,7 @@ function returnToRoad(...args){
 
   const ALPHA_COMBAT_DELAY=200;
   let runTalentSnapshot=null,statsLastHp=null,statsLastGold=null;
-  const defaultLifetimeStats=()=>({runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}});
+  function defaultLifetimeStats(){return {runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,potionsUsed:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}};}
   function ensureAlphaMeta(){
     const base=defaultLifetimeStats(),raw=meta.stats||{};meta.stats={...base,...raw,boardClears:{...(raw.boardClears||{})},classMaxLevel:{...(raw.classMaxLevel||{})}};meta.stats.damageTaken=Math.max(Number(meta.stats.damageTaken)||0,Number(meta.damageTaken)||0);meta.achievements={...(meta.achievements||{})};return meta.stats;
   }
@@ -1353,8 +1349,6 @@ function returnToRoad(...args){
   function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();dbProgression.checkDynamicClassUnlocks();}
         function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)dbCombat.recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
-  const normalizeV15=v13NormalizeMeta;
-  v13NormalizeMeta=function(raw={}){const out=normalizeV15(raw);const base=defaultLifetimeStats(),r=out.stats||{};out.version="Alpha v1";out.stats={...base,...r,boardClears:{...(r.boardClears||{})},classMaxLevel:{...(r.classMaxLevel||{})}};out.stats.damageTaken=Math.max(Number(out.stats.damageTaken)||0,Number(out.damageTaken)||0);out.achievements={...(out.achievements||{})};return out;};
   ensureAlphaMeta();
 
   // Four new public classes. Rouge remains the colour; Rogue is the thief.
@@ -1525,8 +1519,6 @@ function returnToRoad(...args){
     merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana and converts part of your current gold into occult damage."},
     invoker:{builder:"Arcane Current",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Arcane Current generates Mana and a Green orb. Elemental Lance spends 50 Mana for a Red orb. Guard forms Blue; three orbs unlock Invoke."}
   };
-
-  Object.entries(CLASS_PASSIVES).forEach(([id,p])=>{});
 
   // ---- even more thematic class portraits -----------------------------------
 
@@ -1763,10 +1755,6 @@ function returnToRoad(...args){
   random();
 
   // ---- Radiation ------------------------------------------------------------
-  meta.pets=meta.pets||{};if(!meta.pets.radiation)meta.pets.radiation=defaultPetState(false);
-  meta.elementProgress=meta.elementProgress||{};if(meta.elementProgress.radiation==null)meta.elementProgress.radiation=0;
-  meta.stats=meta.stats||defaultLifetimeStats();if(meta.stats.potionsUsed==null)meta.stats.potionsUsed=0;
-  meta.unlocks=meta.unlocks||{};if(meta.unlocks.alchemist==null)meta.unlocks.alchemist=false;
 
   function restoreRadiationDefenseV16(...args){return dbCombat.restoreRadiationDefense(...args);}
 
@@ -2345,16 +2333,6 @@ function returnToRoad(...args){
   meta.heirloomStorage=Array.isArray(meta.heirloomStorage)?meta.heirloomStorage.map(normalizeSavedItem):[];
   meta.devilPrimed=!!meta.devilPrimed;meta.devilBossKills=Number(meta.devilBossKills)||0;meta.devilHornsFound=Number(meta.devilHornsFound)||0;
   meta.legendaryRelics=Array.isArray(meta.legendaryRelics)?meta.legendaryRelics:[];
-  function v24MigrateItemRarity(item){
-    if(!item||item.v24Rarity)return item;
-    const old=item.rarity;
-    if(item.setName==='Impossible Road')item.rarity='artifact';
-    else item.rarity=({common:'poor',uncommon:'common',rare:'uncommon',epic:'rare',legendary:'epic'}[old]||old);
-    item.v24Rarity=true;return item;
-  }
-  if(!meta.raritySchemaV24){
-    (meta.heirlooms||[]).forEach(v24MigrateItemRarity);meta.heirloomStorage.forEach(v24MigrateItemRarity);meta.raritySchemaV24=true;saveMeta();
-  }
 
     Object.keys(V14_RARITY_BUDGETS).forEach(k=>delete V14_RARITY_BUDGETS[k]);
   Object.assign(V14_RARITY_BUDGETS,{poor:[11,18],common:[20,31],uncommon:[34,49],rare:[54,76],epic:[84,116]});
@@ -2631,8 +2609,6 @@ dbReturnToRoadTraceReady=true;
   // refreshing a chooser cannot erase or accidentally refill the talent.
 
   /* COUNTER RESERVE -> ENDLESS FORM --------------------------------------- */
-  const v26CounterIdx=talents.findIndex(t=>t.id==='fighter_counter_reserve');
-  if(v26CounterIdx>=0){const t=talents[v26CounterIdx],rank=Math.max(0,Number(meta.purchased?.fighter_counter_reserve)||0);if(rank){meta.points=(meta.points||0)+rank*(t.cost||2);delete meta.purchased.fighter_counter_reserve;showToast('Counter Reserve refunded — its effect moved into Endless Form');}if(runTalentSnapshot?.fighter_counter_reserve)delete runTalentSnapshot.fighter_counter_reserve;saveMeta();}
 
   /* HIGH-LUCK POOR SUPPRESSION -------------------------------------------- */
   // High-Luck Powerup pool filtering is owned by DiceboundPowerups.
@@ -3540,16 +3516,12 @@ dbReturnToRoadTraceReady=true;
 
   // CURRENT NAMED LEGENDARIES -> MYTHICAL ----------------------------------
   const db060NamedMythicals=new Set(["Axel's Coffee Mug",'Kratz Headphones',"The Jean Jacket Lost at Kelly's"]);
-  function db060MythicalizeNamed(item){if(!item||!db060NamedMythicals.has(item.name))return item;item.rarity='mythical';item.specialMythical=true;item.specialLegendary=true;item.v24Rarity=true;return item;}
+  function db060MythicalizeNamed(item){if(!item||!db060NamedMythicals.has(item.name))return item;item.rarity='mythical';item.specialMythical=true;item.specialLegendary=true;return item;}
   const db060MugBase=generateAxelsCoffeeMug,db060HeadphonesBase=generateKratzHeadphones,db060JacketBase=generateKellysJeanJacket;
   generateAxelsCoffeeMug=function(){return db060MythicalizeNamed(db060MugBase());};
   generateKratzHeadphones=function(){return db060MythicalizeNamed(db060HeadphonesBase());};
   generateKellysJeanJacket=function(){return db060MythicalizeNamed(db060JacketBase());};
   V24_LEGENDARY_RELICS.splice(0,V24_LEGENDARY_RELICS.length,generateAxelsCoffeeMug,generateKratzHeadphones,generateKellysJeanJacket);
-  let db060MigratedNamed=false;
-  for(const list of [meta.heirlooms||[],meta.heirloomStorage||[]])for(const item of list)if(db060NamedMythicals.has(item?.name)&&item.rarity!=='mythical'){db060MythicalizeNamed(item);db060MigratedNamed=true;}
-  for(const item of Object.values(player.equipment||{}))if(db060NamedMythicals.has(item?.name)&&item.rarity!=='mythical'){db060MythicalizeNamed(item);db060MigratedNamed=true;}
-  if(db060MigratedNamed)saveMeta();
 
   // ARTIFACT LOOT TABLE -----------------------------------------------------
   // One Artifact roll per guardian. A successful roll chooses EXACTLY ONE
@@ -4870,14 +4842,14 @@ dbReturnToRoadTraceReady=true;
   dbInfoGuide=window.DiceboundInfoGuide;
   if(!dbInfoGuide)throw new Error('DiceBound requires the Info Guide UI module before dicebound.js');
   function dbInfoExportSave(){
-    const data=dbRuntime.save.exportText(v13NormalizeMeta(meta));
+    const data=dbRuntime.save.exportText(normalizeCareerMeta(meta));
     dbRuntime.platform.copyText(data).then(ok=>showToast(ok?'Save copied to clipboard':'Save placed in text box')).catch(()=>showToast('Save placed in text box'));
     return data;
   }
   function dbInfoImportSave(raw){
     try{
       const text=String(raw||'').trim();if(!text)throw new Error('empty');
-      meta=dbRuntime.save.importText(text,{defaultFactory:defaultMeta,normalize:x=>v13NormalizeMeta(x)});
+      meta=dbRuntime.save.importText(text,{defaultFactory:defaultMeta,normalize:x=>normalizeCareerMeta(x)});
       ensureAlphaMeta();saveMeta();dbProgression.repairTalentPrerequisites();window.DiceboundClassChooser.render();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
     }catch(error){dbRuntime.platform.alert('That save string could not be imported.');return false;}
   }
