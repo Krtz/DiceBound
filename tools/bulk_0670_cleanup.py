@@ -19,16 +19,24 @@ def statement_end(source:bytes,node)->int:
     return end
 
 
+def is_item_feeder_statement(node,snippet:str)->bool:
+    """Only remove concrete legacy feeder statements, never an enclosing IIFE."""
+    stripped=snippet.lstrip()
+    if node.type=='expression_statement':
+        return (
+            stripped.startswith('Object.assign(gearNames.') or
+            stripped.startswith('Object.assign(rarityPrefixes') or
+            bool(re.match(r'^gearNames(?:\.|\[)',stripped))
+        )
+    if node.type in {'for_statement','for_in_statement','for_of_statement'}:
+        return 'gearNames' in snippet and len(snippet)<6000
+    return False
+
+
 def remove_item_compat_feeders(text:str)->tuple[str,int]:
-    # Item generation no longer accepts the pre-v1.4 naming/icon fallback data.
-    # Remove the monolith content tables and every historical extension of them.
-    old='''    getPlayer:()=>player,getMeta:()=>meta,getBoardLevel:()=>boardLevel,getClassIdentityId:()=>classIdentityId(),
-    slots:EQUIPMENT_SLOTS,slotLabels:SLOT_LABELS,rarityValues,gearNames,rarityPrefixes,rarityBudgets:V14_RARITY_BUDGETS,elementKeys:ELEMENT_KEYS,
-    rollGearRarity:bonus=>rollGearRarity(bonus),pick:list=>pick(list),random:()=>random(),rand:(min,max)=>rand(min,max),clamp:(value,min,max)=>clamp(value,max===undefined?0:min,max===undefined?min:max),
-    gearIcon:slot=>gearIcon(slot),elementChanceForRarity:rarity=>elementChanceForRarity(rarity),seedCode:v15SeedCode,generateFromSeedCode:v15GenerateEquipmentFromSeedCode,
-    ordinaryApi:window.DiceboundEquipment,logError:(message,data)=>v25Log('errors','loot',message,data),stateForLog:()=>v25State()'''
-    # Current clamp is ordinary three-argument form; keep alternate above only as
-    # documentation of what must not be reintroduced.
+    # Item generation now accepts only canonical supported rarities. Remove the
+    # pre-v1.4 naming/icon fallback data and historical extensions that only fed
+    # the retired compatibility generator.
     current='''    getPlayer:()=>player,getMeta:()=>meta,getBoardLevel:()=>boardLevel,getClassIdentityId:()=>classIdentityId(),
     slots:EQUIPMENT_SLOTS,slotLabels:SLOT_LABELS,rarityValues,gearNames,rarityPrefixes,rarityBudgets:V14_RARITY_BUDGETS,elementKeys:ELEMENT_KEYS,
     rollGearRarity:bonus=>rollGearRarity(bonus),pick:list=>pick(list),random:()=>random(),rand:(min,max)=>rand(min,max),clamp:(value,min,max)=>clamp(value,min,max),
@@ -42,7 +50,6 @@ def remove_item_compat_feeders(text:str)->tuple[str,int]:
 
     source=text.encode('utf-8');tree=base.parse(source);spans=[]
     dead_vars={'gearNames','rarityPrefixes'}
-    dead_functions={'gearIcon'}
     for node in base.walk(tree.root_node):
         if node.type in {'lexical_declaration','variable_declaration'}:
             names=[]
@@ -53,11 +60,17 @@ def remove_item_compat_feeders(text:str)->tuple[str,int]:
             if names and all(name in dead_vars for name in names):spans.append((node.start_byte,statement_end(source,node)))
         elif node.type=='function_declaration':
             ident=node.child_by_field_name('name')
-            if ident and base.node_text(source,ident) in dead_functions:spans.append((node.start_byte,statement_end(source,node)))
+            if ident and base.node_text(source,ident)=='gearIcon':spans.append((node.start_byte,statement_end(source,node)))
         elif node.type in {'expression_statement','for_statement','for_in_statement','for_of_statement'}:
             snippet=base.node_text(source,node)
-            if re.search(r'\bgearNames\b|\brarityPrefixes\b',snippet):spans.append((node.start_byte,statement_end(source,node)))
-    # Do not remove nested statements separately from an already removed owner.
+            if is_item_feeder_statement(node,snippet):spans.append((node.start_byte,statement_end(source,node)))
+
+    # A defensive size guard makes a future parser/shape change fail loudly
+    # instead of deleting a giant enclosing block.
+    for start,end in spans:
+        if end-start>12000:
+            raise RuntimeError(f'Refusing oversized item-feeder span: {end-start} bytes')
+
     merged=[]
     for start,end in sorted(set(spans)):
         if merged and start<merged[-1][1]:
@@ -95,9 +108,9 @@ def remove_regression_surfaces(text:str)->tuple[str,int]:
         if node.type not in {'expression_statement','try_statement'}:continue
         snippet=base.node_text(source,node)
         if not any(name in snippet for name in names):continue
-        # Pick only the outer statement for each surface.
         parent=node.parent
         if parent and parent.type in {'expression_statement','try_statement'} and any(name in base.node_text(source,parent) for name in names):continue
+        if node.end_byte-node.start_byte>12000:raise RuntimeError('Refusing oversized regression-surface span')
         spans.append((node.start_byte,statement_end(source,node)))
     for start,end in sorted(set(spans),reverse=True):source=source[:start]+source[end:]
     out=source.decode('utf-8')
@@ -121,8 +134,7 @@ def update_items_oracle()->int:
         "['compat-mythical','mythical','chest','fighter',4,40],",
         "['compat-omega','omega','ring','sorcerer',4,40],",
         "['invalid-bogus','bogus',null,'ranger',2,20],",
-    ]:
-        text=text.replace(entry,'')
+    ]:text=text.replace(entry,'')
     loop='''      for(const [name,rarity,slot,classId,board,position] of genCases){const before=restore(name,{classId,board,position});const item=gen.generateEquipment(rarity,slot);finish({name,kind:'generate',requestedRarity:rarity,forcedSlot:slot,classId,board,position,item:compactItem(item)},before);}'''
     reject='''      for(const [name,rarity,slot,classId,board,position] of genCases){const before=restore(name,{classId,board,position});const item=gen.generateEquipment(rarity,slot);finish({name,kind:'generate',requestedRarity:rarity,forcedSlot:slot,classId,board,position,item:compactItem(item)},before);}
       for(const rarity of ['artifact','mythical','omega','bogus']){const before=restore('reject-'+rarity,{classId:'ranger',board:4,position:40});let error=null;try{gen.generateEquipment(rarity,null);}catch(reason){error=String(reason?.message||reason);}finish({name:'reject-'+rarity,kind:'reject',requestedRarity:rarity,error},before);}'''
@@ -145,9 +157,11 @@ def main()->int:
     text,regressions=remove_regression_surfaces(text)
     text='\n'.join(line.rstrip() for line in text.split('\n'))
     text=re.sub(r'\n(?:[ \t]*\n){2,}','\n\n',text)
+    after=text.count('\n')+1
+    if after<4500:raise RuntimeError(f'Bulk cutter removed implausibly much source in one pass: {before}->{after}')
     MONOLITH.write_text(text,encoding='utf-8',newline='\n')
     update_items_oracle()
-    print(f'BULK_0670_CLEANUP {before}->{text.count(chr(10))+1} lines; item feeder spans={item_spans}; dynamic styles={styles}; regression surfaces={regressions}')
+    print(f'BULK_0670_CLEANUP {before}->{after} lines; item feeder spans={item_spans}; dynamic styles={styles}; regression surfaces={regressions}')
     return 0
 
 
