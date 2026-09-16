@@ -22,7 +22,7 @@ STALE_WAVE6_PREDECESSORS=['DB046_BOARD_OVERRIDES','DB047_BOARD_OVERRIDES','db046
 STALE_WAVE7_PREDECESSORS=['beta04SyncHudBeta042Base','db060GuardianArt','db060EnemyPortraitBase','db0636EnemyPortraitBase','dbNatureLegacyAnimationBase','dbFriendLegacyElementPresentation','db060MythicalizeNamed','db060MugBase','db060HeadphonesBase','db060JacketBase']
 STALE_DEBUG_LOG_PREDECESSORS=['addLogV25Base','addCombatHistoryV25Base','setCombatTextV25Base','saveMetaV25Base']
 STALE_WAVE9_MARKERS=['db0511OutsidePotionBtn','v16PotionHealValue','MANA_OCCULT_CLASSES','OCCULT_SPELLS','v27EnsureUpgrade','golden27','vampEdge28','venomThrone28','resonantTalent']
-
+STALE_WAVE10_MARKERS=['enemyPortraitSVG','db0636TieredEnemyMarkup','v28FrogEchoCap','__DB_V26_FAST_ECHO__']
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
@@ -67,34 +67,62 @@ def main()->int:
     assert "dbRunDice.configure({" in text and "dbRunDice.ensureButton();" in text, "monolith no longer configures the authoritative run/dice owner"
 
     for name in STALE_ARTIFACT_FACTORY_NAMES:
-        assert name not in code, f"retired Artifact factory layer {name} returned to monolith"
+        assert not re.search(rf"\b{re.escape(name)}\b",code), f"Artifact predecessor {name} returned to monolith"
+    assert "dbArtifacts.configure({" in text and "dbArtifacts.create(" in text, "monolith no longer routes Artifact creation through items/artifacts.js"
     for marker in STALE_SCHEMA_MARKERS:
-        assert marker not in code, f"retired schema/migration marker {marker} returned to monolith"
-    for name in STALE_BOARD_PRESENTATION_NAMES:
-        assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"retired Board presentation function {name} returned to monolith"
+        assert marker not in text, f"historical schema/migration marker {marker} returned"
+    assert "function normalizeCareerMeta(raw={}){" in code, "canonical career normalizer is missing"
     for marker in STALE_WAVE6_PREDECESSORS:
-        assert marker not in code, f"retired Wave 6 predecessor {marker} returned to monolith"
+        assert marker not in text, f"historical Wave 6 predecessor {marker} returned"
     for marker in STALE_WAVE7_PREDECESSORS:
-        assert marker not in code, f"retired Wave 7 predecessor {marker} returned to monolith"
+        assert marker not in text, f"historical Wave 7 predecessor {marker} returned"
     for marker in STALE_DEBUG_LOG_PREDECESSORS:
-        assert marker not in code, f"retired debug-log predecessor {marker} returned to monolith"
+        assert marker not in text, f"debug-log predecessor {marker} returned"
     for marker in STALE_WAVE9_MARKERS:
-        assert marker not in code, f"retired Wave 9 marker {marker} returned to monolith"
+        assert marker not in text, f"historical Wave 9 marker {marker} returned"
+    for marker in STALE_WAVE10_MARKERS:
+        assert marker not in text, f"historical Wave 10 marker {marker} returned"
+    board_text=BOARD_PRESENTATION.read_text(encoding="utf-8")
+    for name in STALE_BOARD_PRESENTATION_NAMES:
+        assert not re.search(rf"\bfunction\s+{re.escape(name)}\s*\(",code), f"Board presentation predecessor {name} returned to monolith"
+    assert "dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady})" in text, "board rendering no longer routes through board/presentation"
+    for marker in ['const OWNER="board/presentation"','function tileMeta(','function enemyArtForId(','window.DiceboundBoardPresentation=api']:
+        assert marker in board_text, f"board/presentation owner missing {marker}"
 
-    print("MONOLITH_CHAINSAW PASS")
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent, Board presentation canonical")
     return 0
 
 
 def live_chainsaw_wave_guards(text:str)->None:
-    stale=[
-        "db317Compatibility", "db317RegistryWrite", "v13Ultimate", "v15Ultimate", "v16Ultimate", "v17Ultimate",
-        "v18Ultimate", "v19Ultimate", "v24Ultimate", "v25Ultimate", "v26Ultimate", "v27Ultimate", "v28Ultimate",
-        "petTurn", "rollD20Chaos", "guardAction", "Perfected Signature adapts to the current class.",
-    ]
-    for marker in stale:
-        if marker in text:
-            raise AssertionError(f"retired monolith compatibility marker returned: {marker}")
-
+    assert 'db317Readonly' not in text, 'DB317 read-only compatibility proxy returned'
+    assert 'DB317_CONTENT_MUTATORS' not in text, 'DB317 mutator compatibility table returned'
+    assert 'DB317_READONLY_CACHE' not in text, 'DB317 proxy cache returned'
+    assert 'CLASSES[player.classId]||CLASSES.ranger' not in text, 'Ranger class fallback returned'
+    assert 'Object.entries(CLASS_TAGS).forEach(([id,tags])=>{});' not in text, 'empty CLASS_TAGS compatibility pass returned'
+    assert not re.search(r'\bfunction\s+renderMerchant\s*\(',text), 'call-only adapter renderMerchant returned'
+    assert not re.search(r'\bfunction\s+finalizeRun\s*\(',text), 'call-only adapter finalizeRun returned'
+    assert not re.search(r'\bfunction\s+purchaseTalentNode\s*\(',text), 'call-only adapter purchaseTalentNode returned'
+    assert not re.search(r'\bfunction\s+renderTalents\s*\(',text), 'call-only adapter renderTalents returned'
+    assert not re.search(r'\bfunction\s+openTalentTree\s*\(',text), 'call-only adapter openTalentTree returned'
+    assert not re.search(r'\bfunction\s+renderPetCollection\s*\(',text), 'call-only adapter renderPetCollection returned'
+    assert not re.search(r'\bfunction\s+feedActivePet\s*\(',text), 'call-only adapter feedActivePet returned'
+    assert not re.search(r'\bfunction\s+renderClassChoices\s*\(',text), 'call-only adapter renderClassChoices returned'
+    assert not re.search(r'\bfunction\s+makeMerchantGear\s*\(',text), 'call-only adapter makeMerchantGear returned'
+    assert not re.search(r'\bfunction\s+merchantCatalog\s*\(',text), 'call-only adapter merchantCatalog returned'
+    assert not re.search(r'\bfunction\s+merchantPrice\s*\(',text), 'call-only adapter merchantPrice returned'
+    assert not re.search(r'\bfunction\s+openMerchant\s*\(',text), 'call-only adapter openMerchant returned'
+    assert not re.search(r'\bfunction\s+useUltimate\s*\(',text), 'call-only adapter useUltimate returned'
+    assert not re.search(r'\bfunction\s+playerAttack\s*\(',text), 'call-only adapter playerAttack returned'
+    assert not re.search(r'\bfunction\s+usePotion\s*\(',text), 'call-only adapter usePotion returned'
+    assert not re.search(r'\bfunction\s+usePotionOutsideCombat\s*\(',text), 'call-only adapter usePotionOutsideCombat returned'
+    assert not re.search(r'\bfunction\s+gearPowerScore\s*\(',text), 'call-only adapter gearPowerScore returned'
+    assert not re.search(r'\bfunction\s+itemSellValue\s*\(',text), 'call-only adapter itemSellValue returned'
+    assert not re.search(r'\bfunction\s+formatGearComparison\s*\(',text), 'call-only adapter formatGearComparison returned'
+    assert not re.search(r'\bfunction\s+updateBossSpecialIndicator\s*\(',text), 'call-only adapter updateBossSpecialIndicator returned'
+    assert not re.search(r'\bfunction\s+getUpgradeChoices\s*\(',text), 'call-only adapter getUpgradeChoices returned'
+    assert not re.search(r'\bfunction\s+powerupDisplayDesc\s*\(',text), 'call-only adapter powerupDisplayDesc returned'
+    assert not re.search(r'\bfunction\s+renderEndGear\s*\(',text), 'call-only adapter renderEndGear returned'
+    assert len(re.findall(r'\b(?:async\s+)?function\s+animateUltimate\s*\(',text))<=1, 'Ultimate animation patch ladder returned'
 
 if __name__=="__main__":
     raise SystemExit(main())
