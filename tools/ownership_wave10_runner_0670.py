@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ownership_wave10_0670 as wave
 
-
+# Temporary replay shim; removed before the 0.6.7.0 PR.
 def update_combat_presentation() -> int:
     text = wave.COMBAT_PRESENTATION.read_text(encoding='utf-8')
     text = text.replace('enemyPortraitHTML', '')
