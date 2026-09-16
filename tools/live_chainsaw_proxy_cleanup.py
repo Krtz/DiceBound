@@ -81,6 +81,41 @@ def remove_dead_lookup_helpers(text:str,helpers:set[str])->tuple[str,int]:
     return text,removed
 
 
+def canonicalize_mastery_map(text:str)->tuple[str,int]:
+    """Keep released side-map discovery but retire writes into read-only Powerups.
+
+    The old v19 helper selected the last ungated Epic/Legendary per class, wrote an
+    achievementGate/description onto that powerup, and also populated
+    classMasteryGate. DB317 swallowed the registry writes but the side-map writes
+    were real. Once DB317 is removed, leaving the function untouched creates two
+    new achievement gates. Preserve only the side-map behavior.
+    """
+    old='''  function v19AssignMasteryGates(){
+    const groups={};
+    upgrades.forEach(u=>{const ids=u.classId?[u.classId]:(u.classIds||[]);ids.forEach(id=>{if(!CLASSES[id])return;(groups[id]??=[]).push(u);});});
+    Object.entries(groups).forEach(([id,list])=>{
+      const epic=list.filter(u=>u.rarity==="epic"&&!u.achievementGate).slice(-1)[0];
+      const leg=list.filter(u=>u.rarity==="legendary"&&!u.achievementGate).slice(-1)[0];
+      if(epic){epic.achievementGate=`class_b3:${id}`;classMasteryGate[epic.id]={board:3,id};if(!/Board 3 mastery/i.test(epic.desc))epic.desc=`Board 3 mastery: ${epic.desc}`;}
+      if(leg){leg.achievementGate=`class_b4:${id}`;classMasteryGate[leg.id]={board:4,id};if(!/Board 4 mastery/i.test(leg.desc))leg.desc=`Board 4 mastery: ${leg.desc}`;}
+    });
+  }'''
+    new='''  function v19AssignMasteryGates(){
+    const groups={};
+    upgrades.forEach(u=>{const ids=u.classId?[u.classId]:(u.classIds||[]);ids.forEach(id=>{if(!CLASSES[id])return;(groups[id]??=[]).push(u);});});
+    Object.entries(groups).forEach(([id,list])=>{
+      const epic=list.filter(u=>u.rarity==="epic"&&!u.achievementGate).slice(-1)[0];
+      const leg=list.filter(u=>u.rarity==="legendary"&&!u.achievementGate).slice(-1)[0];
+      if(epic)classMasteryGate[epic.id]={board:3,id};
+      if(leg)classMasteryGate[leg.id]={board:4,id};
+    });
+  }'''
+    if old not in text:
+        if new in text:return text,0
+        raise RuntimeError('Could not find v19 mastery-gate patch block')
+    return text.replace(old,new,1),1
+
+
 def main()->int:
     text=MONOLITH.read_text(encoding='utf-8')
     before_lines=text.count('\n')+1
@@ -94,11 +129,12 @@ def main()->int:
         base.PROXIES.clear();base.PROXIES.update(original)
     text,dead_aliases=remove_dead_alias_declarations(text,aliases)
     text,dead_helpers=remove_dead_lookup_helpers(text,helpers)
+    text,mastery_maps=canonicalize_mastery_map(text)
     text=re.sub(r'\n(?:[ \t]*\n){3,}', '\n\n', text)
     MONOLITH.write_text(text,encoding='utf-8',newline='\n')
     after_lines=text.count('\n')+1
     after_bytes=len(text.encode('utf-8'))
-    print(f'REGISTRY_MUTATION_CUT {before_lines}->{after_lines} lines, {before_bytes}->{after_bytes} bytes; helpers={len(helpers)}; aliases={len(aliases)}; mutations={mutation_nodes}; statements={statements}; dead_aliases={dead_aliases}; dead_helpers={dead_helpers}')
+    print(f'REGISTRY_MUTATION_CUT {before_lines}->{after_lines} lines, {before_bytes}->{after_bytes} bytes; helpers={len(helpers)}; aliases={len(aliases)}; mutations={mutation_nodes}; statements={statements}; dead_aliases={dead_aliases}; dead_helpers={dead_helpers}; mastery_maps={mastery_maps}')
     return 0
 
 
