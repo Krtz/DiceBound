@@ -26,7 +26,7 @@ def is_item_feeder_statement(node,snippet:str)->bool:
         return (
             stripped.startswith('Object.assign(gearNames.') or
             stripped.startswith('Object.assign(rarityPrefixes') or
-            bool(re.match(r'^gearNames(?:\.|\[)',stripped))
+            bool(re.match(r'^(?:gearNames|rarityPrefixes)(?:\.|\[)',stripped))
         )
     if node.type in {'for_statement','for_in_statement','for_of_statement'}:
         return 'gearNames' in snippet and len(snippet)<6000
