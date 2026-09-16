@@ -41,6 +41,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           python -m pip install --disable-pip-version-check tree-sitter tree-sitter-javascript
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/live_chainsaw_proxy_cleanup.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_wave1.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_update_guards.py
