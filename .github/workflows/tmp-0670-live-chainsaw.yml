@@ -9,6 +9,7 @@ on:
       - tools/live_chainsaw_*.py
       - tools/bulk_0670_cleanup.py
       - tools/canonical_0670_wave*.py
+      - tools/historical_score_wave*.py
       - tools/static_style_extract_0670.py
       - tools/artifact_owner_0670.py
       - tools/comment_cleanup_0670.py
@@ -84,6 +85,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/canonical_0670_wave6.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/historical_score_wave7.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/comment_cleanup_0670.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_whitespace_cleanup.py
@@ -135,7 +138,7 @@ jobs:
           git diff --cached --stat
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { throw 'Live chainsaw produced no source changes.' }
-          git commit -m "refactor: collapse historical predecessor chains"
+          git commit -m "refactor: reduce historical layering"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
