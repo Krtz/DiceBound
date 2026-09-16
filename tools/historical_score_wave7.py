@@ -106,7 +106,9 @@ def main()->int:
   V24_LEGENDARY_RELICS.splice(0,V24_LEGENDARY_RELICS.length,generateAxelsCoffeeMug,generateKratzHeadphones,generateKellysJeanJacket);
 '''
     if predecessor_block in text:text=text.replace(predecessor_block,'',1)
-    elif any(marker in text for marker in ['db060MythicalizeNamed','db060MugBase','db060HeadphonesBase','db060JacketBase']):raise RuntimeError('named Mythical predecessor block drifted')
+    elif any(marker in text for marker in ['db060MugBase','db060HeadphonesBase','db060JacketBase']):raise RuntimeError('named Mythical predecessor block drifted')
+    # Old-save/load normalization for these named items is intentionally retired with the old factories.
+    text=text.replace('    db060MythicalizeNamed?.(item);return true;','    return true;',1)
 
     stale=['beta04SyncHudBeta042Base','db060GuardianArt','db060EnemyPortraitBase','db0636EnemyPortraitBase','dbNatureLegacyAnimationBase','dbFriendLegacyElementPresentation','db060MythicalizeNamed','db060MugBase','db060HeadphonesBase','db060JacketBase']
     for marker in stale:
