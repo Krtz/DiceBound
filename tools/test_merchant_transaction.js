@@ -27,7 +27,8 @@ assert.deepEqual(window.db06314IntrinsicParts({ equipmentId: fakeIdentity.id }),
 });
 assert.equal(window.db06314IntrinsicParts({ equipmentId: "unknown" }), null);
 assert.match(monolith, /db06314IntrinsicParts\(item\)/, "live equipment formatter no longer consumes the compatibility bridge");
-assert.match(monolith, /function formatGearComparison\(item,current\)\{return dbItems\.formatComparison\(item,current\);\}/, "live equipment comparison is not routed through DiceboundItems");
+assert.match(monolith, /formatGearComparison:\(item,current\)=>dbItems\.formatComparison\(item,current\)/, "Merchant equipment comparison is not routed directly through DiceboundItems");
+assert.doesNotMatch(monolith, /function formatGearComparison\(item,current\)/, "retired Merchant comparison pass-through adapter returned to the monolith");
 
 // Merchant integration regression: renderMerchant() establishes the visit for
 // currentMerchantItems before the outer openMerchant() wrapper returns. The
