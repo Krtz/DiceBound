@@ -143,8 +143,8 @@ def main() -> int:
         print(f"ARTIFACT_OWNER already canonical; monolith={before_lines} lines")
         return 0
 
-    text, removed_spans = remove_legacy_factories(text)
     text = insert_owner_configuration(text)
+    text, removed_spans = remove_legacy_factories(text)
     text = route_consumers(text)
 
     survivors = [name for name in FACTORY_NAMES if name in text]
