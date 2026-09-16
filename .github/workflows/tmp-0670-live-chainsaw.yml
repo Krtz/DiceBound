@@ -98,3 +98,5 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+# Triggered after retiring the obsolete trainer class compatibility alias from the Pet oracle.
