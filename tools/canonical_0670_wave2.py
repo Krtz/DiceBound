@@ -22,6 +22,27 @@ def main()->int:
     text=MONOLITH.read_text(encoding='utf-8')
     before=text.count('\n')+1
 
+    # Canonical Dodge now consults Classes hooks during the initial HUD render.
+    # Configure the hook owner beside the main Classes runtime composition rather
+    # than at the later Alpha v1.3 boundary. Collaborators remain lazy closures,
+    # so this changes initialization order without changing gameplay order.
+    runtime_hooks='''  dbClasses.configureRuntimeHooks({
+    getPlayer:()=>player,
+    isClassActive:id=>classIdentityActive(id),
+    clamp:(value,min,max)=>clamp(value,min,max),
+    scaleBerserkerRageDamage:(amount,targetPlayer)=>DB_EFFECTIVE_STATS.scaleBerserkerRageDamage(amount,targetPlayer),
+    hasEffect:id=>db060HasEffect(id)
+  });
+
+'''
+    text=remove_once(text,runtime_hooks,'late Classes runtime hook configuration')
+    text=replace_once(
+        text,
+        '  function classIdentityId(){return dbClasses.identityId();}\n',
+        runtime_hooks+'  function classIdentityId(){return dbClasses.identityId();}\n',
+        'early Classes runtime hook configuration',
+    )
+
     # Collapse the two historical dodge wrappers into the one behavior that is
     # actually shipped: base diminishing dodge -> Monk hook -> identity hook.
     text=replace_once(
@@ -53,7 +74,15 @@ def main()->int:
         'function v15SafeClassId(id){if(!CLASSES[id])throw new Error(`Unknown equipment seed class: ${id}`);return id;}',
         'strict equipment seed class',
     )
-    historical_parser='''  // Accept the complete current ordinary-rarity ladder in item seed codes.\n  // Fall back to the historical parser for old saved/hand-entered seed codes.\n  const v15ParseSeedCodeV251Historical=v15ParseSeedCode;\n  v15ParseSeedCode=function(code){\n    const m=String(code||'').trim().match(/^D15\\|(poor|common|uncommon|rare|epic)\\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\\|([a-z0-9_]+)\\|q(\\d+)\\|([a-z0-9_-]+)$/i);\n    if(!m)return v15ParseSeedCodeV251Historical(code);\n    return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};\n  };\n'''
+    historical_parser='''  // Accept the complete current ordinary-rarity ladder in item seed codes.
+  // Fall back to the historical parser for old saved/hand-entered seed codes.
+  const v15ParseSeedCodeV251Historical=v15ParseSeedCode;
+  v15ParseSeedCode=function(code){
+    const m=String(code||'').trim().match(/^D15\|(poor|common|uncommon|rare|epic)\|(weapon|offhand|boots|legs|chest|hat|ring|amulet)\|([a-z0-9_]+)\|q(\d+)\|([a-z0-9_-]+)$/i);
+    if(!m)return v15ParseSeedCodeV251Historical(code);
+    return {rarity:m[1].toLowerCase(),slot:m[2].toLowerCase(),classId:v15SafeClassId(m[3].toLowerCase()),qualityBoost:clamp(Number(m[4])||0,0,8),core:m[5]};
+  };
+'''
     text=remove_once(text,historical_parser,'V2.5.1 historical seed parser fallback')
 
     # New saves have mode-qualified board-clear keys. The pre-mode key is an
@@ -70,13 +99,27 @@ def main()->int:
     # and matches the shipped wrappers exactly: Ninja -> Berserker -> base hit ->
     # career accounting -> Croak/Endless Form post-hook.
     old_damage='''function damageEnemy(enemy,amount,ignoreDefense=false){if(!enemy||enemy.hp<=0)return 0;if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);return 0;}const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0))),dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;return dealt;}'''
-    new_damage='''function damageEnemy(enemy,amount,ignoreDefense=false){\n    const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);amount=dbClasses.berserkerDamage(adjusted.amount);ignoreDefense=adjusted.ignoreDefense;let dealt=0;\n    if(enemy&&enemy.hp>0){if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);}else{const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0)));dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;}}\n    if(gameStarted&&dealt>0)ensureAlphaMeta().damageDealt+=dealt;\n    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}\n    return dealt;\n  }'''
+    new_damage='''function damageEnemy(enemy,amount,ignoreDefense=false){
+    const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);amount=dbClasses.berserkerDamage(adjusted.amount);ignoreDefense=adjusted.ignoreDefense;let dealt=0;
+    if(enemy&&enemy.hp>0){if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);}else{const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0)));dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;}}
+    if(gameStarted&&dealt>0)ensureAlphaMeta().damageDealt+=dealt;
+    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
+    return dealt;
+  }'''
     text=replace_once(text,old_damage,new_damage,'damageEnemy canonical body')
     for label,block in [
         ('damageEnemy V12','  const damageEnemyV12=damageEnemy;\n  damageEnemy=function(enemy,amount,ignoreDefense=false){return damageEnemyV12(enemy,dbClasses.berserkerDamage(amount),ignoreDefense);};\n'),
         ('damageEnemy V13','  const damageEnemyV13=damageEnemy;\n  damageEnemy=function(enemy,amount,ignoreDefense=false){const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);return damageEnemyV13(enemy,adjusted.amount,adjusted.ignoreDefense);};\n'),
         ('damageEnemy V15','  // Lifetime damage is measured centrally so pets, poison, elements, basic hits and ultimates all count.\n  const damageEnemyV15=damageEnemy;damageEnemy=function(enemy,amount,ignoreDefense=false){const dealt=damageEnemyV15(enemy,amount,ignoreDefense);if(gameStarted&&dealt>0){ensureAlphaMeta().damageDealt+=dealt;}return dealt;};\n'),
-        ('damageEnemy V25 Croak','''  // Endless Form makes Croak Cascade poisonous: each jump gets an independent\n  // 5% chance per Endless Form rank to leave one Poison stack.\n  const damageEnemyV25CroakBase=damageEnemy;\n  damageEnemy=function(enemy,amount,ignoreDefense=false){\n    const dealt=damageEnemyV25CroakBase(enemy,amount,ignoreDefense);\n    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}\n    return dealt;\n  };\n'''),
+        ('damageEnemy V25 Croak','''  // Endless Form makes Croak Cascade poisonous: each jump gets an independent
+  // 5% chance per Endless Form rank to leave one Poison stack.
+  const damageEnemyV25CroakBase=damageEnemy;
+  damageEnemy=function(enemy,amount,ignoreDefense=false){
+    const dealt=damageEnemyV25CroakBase(enemy,amount,ignoreDefense);
+    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
+    return dealt;
+  };
+'''),
     ]:
         text=remove_once(text,block,label)
 
@@ -87,12 +130,16 @@ def main()->int:
     )
     survivors=[name for name in forbidden if name in text]
     if survivors:raise RuntimeError(f'canonical-wave predecessor survived: {survivors}')
+    if text.count('dbClasses.configureRuntimeHooks({')!=1:
+        raise RuntimeError('Classes runtime hooks must have exactly one canonical configuration')
+    if text.index('dbClasses.configureRuntimeHooks({')>text.index('function effectiveDodgeChance('):
+        raise RuntimeError('Classes runtime hooks must be configured before canonical Dodge can render')
 
     # Tidy the gaps left by predecessor blocks without compressing useful code.
     while '\n\n\n' in text:text=text.replace('\n\n\n','\n\n')
     MONOLITH.write_text(text,encoding='utf-8',newline='\n')
     after=text.count('\n')+1
-    print(f'CANONICAL_0670_WAVE2 {before}->{after} lines; dodge 3->1; heirloom slots 3->1; damage 5->1; seed parser 2->1; legacy board key retired')
+    print(f'CANONICAL_0670_WAVE2 {before}->{after} lines; class hooks moved before HUD; dodge 3->1; heirloom slots 3->1; damage 5->1; seed parser 2->1; legacy board key retired')
     return 0
 
 
