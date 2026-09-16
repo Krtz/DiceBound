@@ -39,7 +39,7 @@ assert.equal(boards["1"].tiles, 100);
 assert.equal(boards["6"].tiles, 64);
 assert.equal(boards["6"].bossId, "last-equation");
 assert.equal(boards["6"].balance.threePackChance, 0.95);
-snapshot(boards, 1122, "0da53093300c77c15098e7a5b472a396165ebdf991f024d7767319d6aab47fa0", "board registry");
+snapshot(boards, 1446, "398e75f3d11ce978236ed91a1125e85562829c1f1858b94c567d83fd1bceaaae", "board registry");
 
 const equipment = equipmentApi.createRegistry();
 assert.deepEqual(Array.from(equipment.slots), ["weapon", "offhand", "boots", "legs", "chest", "hat", "ring", "amulet"]);
