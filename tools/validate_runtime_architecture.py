@@ -296,9 +296,10 @@ def main() -> int:
                 + required_chooser_behavior
             )
     if monolith_source:
-        expected_adapter = "function renderClassChoices(){return window.DiceboundClassChooser?.render();}"
-        if expected_adapter not in monolith_source:
-            errors.append("dicebound.js must retain only the thin Class chooser composition adapter")
+        if re.search(r"\bfunction\s+renderClassChoices\s*\(", monolith_source):
+            errors.append("dicebound.js retains an obsolete Class chooser compatibility adapter")
+        if "window.DiceboundClassChooser.render(" not in monolith_source:
+            errors.append("dicebound.js must route Class chooser calls directly to DiceboundClassChooser")
         for retired_chooser_layer in [
             "renderClassChoices=function",
             "renderClassChoicesV",
@@ -350,9 +351,10 @@ def main() -> int:
                 + required_pet_chooser_behavior
             )
     if monolith_source:
-        expected_pet_adapter = "function renderPetCollection(){return window.DiceboundPetChooser?.render?.()||null;}"
-        if expected_pet_adapter not in monolith_source:
-            errors.append("dicebound.js must retain only the thin Pet chooser lifecycle adapter")
+        if re.search(r"\bfunction\s+renderPetCollection\s*\(", monolith_source):
+            errors.append("dicebound.js retains an obsolete Pet chooser compatibility adapter")
+        if "window.DiceboundPetChooser.render(" not in monolith_source:
+            errors.append("dicebound.js must route Pet chooser calls directly to DiceboundPetChooser")
         for retired_pet_chooser_layer in [
             "renderPetCollection=function",
             "renderPetCollectionV",
@@ -543,13 +545,15 @@ def main() -> int:
                 + required_equipment_ui_behavior
             )
     if monolith_source:
-        for expected_equipment_ui_adapter in [
+        for expected_equipment_ui_route in [
             "function renderEquipment(){\n    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();\n  }",
-            "function renderEndGear(){\n    return dbEquipmentUi.renderEndGear();\n  }",
             "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}",
+            "dbEquipmentUi.renderEndGear()",
         ]:
-            if expected_equipment_ui_adapter not in monolith_source:
-                errors.append("dicebound.js must retain only the thin equipment/Heirloom UI lifecycle adapters")
+            if expected_equipment_ui_route not in monolith_source:
+                errors.append("dicebound.js must route equipment/Heirloom UI lifecycle through DiceboundEquipmentHeirlooms")
+        if re.search(r"\bfunction\s+renderEndGear\s*\(", monolith_source):
+            errors.append("dicebound.js retains obsolete renderEndGear compatibility adapter")
         for retired_equipment_ui_layer in [
             "renderEquipment=function",
             "renderEndGear=function",
@@ -1072,8 +1076,10 @@ def main() -> int:
     if monolith_source:
         if "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" not in monolith_source:
             errors.append("dicebound.js must configure the combat Ultimate-resolution owner")
-        if monolith_source.count("async function useUltimate(") != 1 or "return dbCombat.ultimate(...args);" not in monolith_source:
-            errors.append("dicebound.js must retain only the thin useUltimate adapter through DiceboundCombat")
+        if monolith_source.count("async function useUltimate(") != 0:
+            errors.append("dicebound.js retains an obsolete useUltimate compatibility adapter")
+        if "dbCombat.ultimate(" not in monolith_source:
+            errors.append("dicebound.js must route Ultimate calls directly through DiceboundCombat")
         if "return dbCombatUltimateResolution.start(...args);" in monolith_source:
             errors.append("dicebound.js must not expose the Ultimate specialist as a peer-public seam")
         if re.search(r"(?m)^\s*useUltimate\s*=", monolith_source):

@@ -22,7 +22,6 @@
   function showToast(...args){return call("showToast",...args);}
   function updateHUD(){return call("updateHud");}
 
-
   const style=document.createElement('style');
   style.textContent=`
     #powerupOverlay.all-powerup-selection .modal{max-width:min(1180px,96vw)}
@@ -73,7 +72,7 @@
     return player.classId;
   }
   function perfectedSignatureForCurrentClass(){
-    const sourceId=perfectedSignatureSourceClassId(),sourceClass=CLASSES[sourceId],entry=PERFECTED_SIGNATURES[sourceId]||{desc:`Perfected Signature — ${sourceClass?.name||'Current identity'}: +20% Ultimate damage.`,apply(){player.ultimateDamageBonus+=.20;}};
+    const sourceId=perfectedSignatureSourceClassId(),sourceClass=CLASSES[sourceId],entry=PERFECTED_SIGNATURES[sourceId];if(!sourceClass||!entry)throw new Error(`Missing Perfected Signature owner for class: ${sourceId}`);
     if(player.classId==='slimerouge'&&sourceId!=='slimerouge'){
       const detail=String(entry.desc||'').replace(/^Perfected Signature\s*—\s*[^:]+:\s*/,'');
       return {desc:`Perfected Signature — Slime Rouge (${sourceClass?.name||sourceId} identity): ${detail}`,apply:entry.apply,sourceId};
@@ -90,7 +89,6 @@
     entry.apply();
     return entry;
   }
-
 
   // The authoritative registry is intentionally read-only. Its Perfected
   // Signature entry calls this stable runtime service instead of reaching into
@@ -116,15 +114,12 @@
   // Perfected Signature updates immediately with the current class and never
   // prints the effects for unrelated classes.
 
-
   // Paladin's existing Grace gain happens inside the current healPlayer chain.
   // Add only the bonus portion afterwards so old healing/Faith hooks remain intact.
 
   // Rogue Steal and final Bloodmage Exsanguinate signature behavior are owned by DiceboundClasses.
 
-
   /*
-    Full eligible-powerup picker.  /*
     Full eligible-powerup picker. Unlike getUpgradeChoices(), this deliberately
     does not sample or weight the pool: every powerup currently returned by
     eligibleUpgrades() is displayed once. That automatically respects class,

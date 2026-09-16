@@ -17,6 +17,7 @@ STALE_DOUBLE_DICE_ALIASES=['v19EnsureDoubleDiceButton','rollTwoDice','v22RollTwo
 
 def main()->int:
     text=MONOLITH.read_text(encoding="utf-8")
+    live_chainsaw_wave_guards(text)
     code=mask_non_code(text)
     _,dead=readonly_mutations(text,code)
     assert not dead, f"DB317 runtime-dead writes returned: {[(x['var'],x['line']) for x in dead[:8]]}"
@@ -59,6 +60,39 @@ def main()->int:
 
     print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element owner, {len(KILLED)} shadow delegates absent, startup aliases, class portraits and Double Dice ladders retired")
     return 0
+
+
+
+def live_chainsaw_wave_guards(text:str)->None:
+    assert 'db317Readonly' not in text, 'DB317 read-only compatibility proxy returned'
+    assert 'DB317_CONTENT_MUTATORS' not in text, 'DB317 mutator compatibility table returned'
+    assert 'DB317_READONLY_CACHE' not in text, 'DB317 proxy cache returned'
+    assert 'CLASSES[player.classId]||CLASSES.ranger' not in text, 'Ranger class fallback returned'
+    assert 'Object.entries(CLASS_TAGS).forEach(([id,tags])=>{});' not in text, 'empty CLASS_TAGS compatibility pass returned'
+    assert not re.search(r'\bfunction\s+renderMerchant\s*\(',text), 'call-only adapter renderMerchant returned'
+    assert not re.search(r'\bfunction\s+finalizeRun\s*\(',text), 'call-only adapter finalizeRun returned'
+    assert not re.search(r'\bfunction\s+purchaseTalentNode\s*\(',text), 'call-only adapter purchaseTalentNode returned'
+    assert not re.search(r'\bfunction\s+renderTalents\s*\(',text), 'call-only adapter renderTalents returned'
+    assert not re.search(r'\bfunction\s+openTalentTree\s*\(',text), 'call-only adapter openTalentTree returned'
+    assert not re.search(r'\bfunction\s+renderPetCollection\s*\(',text), 'call-only adapter renderPetCollection returned'
+    assert not re.search(r'\bfunction\s+feedActivePet\s*\(',text), 'call-only adapter feedActivePet returned'
+    assert not re.search(r'\bfunction\s+renderClassChoices\s*\(',text), 'call-only adapter renderClassChoices returned'
+    assert not re.search(r'\bfunction\s+makeMerchantGear\s*\(',text), 'call-only adapter makeMerchantGear returned'
+    assert not re.search(r'\bfunction\s+merchantCatalog\s*\(',text), 'call-only adapter merchantCatalog returned'
+    assert not re.search(r'\bfunction\s+merchantPrice\s*\(',text), 'call-only adapter merchantPrice returned'
+    assert not re.search(r'\bfunction\s+openMerchant\s*\(',text), 'call-only adapter openMerchant returned'
+    assert not re.search(r'\bfunction\s+useUltimate\s*\(',text), 'call-only adapter useUltimate returned'
+    assert not re.search(r'\bfunction\s+playerAttack\s*\(',text), 'call-only adapter playerAttack returned'
+    assert not re.search(r'\bfunction\s+usePotion\s*\(',text), 'call-only adapter usePotion returned'
+    assert not re.search(r'\bfunction\s+usePotionOutsideCombat\s*\(',text), 'call-only adapter usePotionOutsideCombat returned'
+    assert not re.search(r'\bfunction\s+gearPowerScore\s*\(',text), 'call-only adapter gearPowerScore returned'
+    assert not re.search(r'\bfunction\s+itemSellValue\s*\(',text), 'call-only adapter itemSellValue returned'
+    assert not re.search(r'\bfunction\s+formatGearComparison\s*\(',text), 'call-only adapter formatGearComparison returned'
+    assert not re.search(r'\bfunction\s+updateBossSpecialIndicator\s*\(',text), 'call-only adapter updateBossSpecialIndicator returned'
+    assert not re.search(r'\bfunction\s+getUpgradeChoices\s*\(',text), 'call-only adapter getUpgradeChoices returned'
+    assert not re.search(r'\bfunction\s+powerupDisplayDesc\s*\(',text), 'call-only adapter powerupDisplayDesc returned'
+    assert not re.search(r'\bfunction\s+renderEndGear\s*\(',text), 'call-only adapter renderEndGear returned'
+    assert len(re.findall(r'\b(?:async\s+)?function\s+animateUltimate\s*\(',text))<=1, 'Ultimate animation patch ladder returned'
 
 if __name__=="__main__":
     raise SystemExit(main())
