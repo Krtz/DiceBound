@@ -20,16 +20,24 @@ HISTORY_PHRASES = (
     "predecessor",
     "superseded",
     "migration",
-    "legacy bootstrap",
+    "migrated",
+    "legacy",
+    "retired",
     "old wrapper",
     "outer wrapper",
     "former wrapper",
-    "formerly",
+    "wrapper chain",
+    "wrapper ordering",
+    "bootstrap window",
+    "stable adapters",
     "temporary adapter",
     "temporarily as",
     "before ownership moves",
     "before ownership move",
     "before dicebound",
+    "regression",
+    "characterization surface",
+    "test-only characterization",
 )
 
 
@@ -40,8 +48,6 @@ def is_historical_comment(raw: str) -> bool:
     if any(phrase in body for phrase in HISTORY_PHRASES):
         return True
     if "module:" in body:
-        return True
-    if "regression snapshot" in body or "characterization surface" in body:
         return True
     if "released 0.6." in body and ("freeze" in body or "freezes" in body or "before" in body):
         return True
