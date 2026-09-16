@@ -77,6 +77,27 @@ if new_compare not in combat_oracle:
     combat_oracle_path.write_text(combat_oracle, encoding='utf-8')
 subprocess.run(['git','add','tools/test_combat_oracle.js'],check=True)
 
+# Combat View characterizes view-model behavior, but its runtime fixture must
+# speak the same focused presentation API as production after the ownership move.
+combat_view_path = pathlib.Path('tools/test_combat_view_oracle.js')
+combat_view = combat_view_path.read_text(encoding='utf-8')
+old_view_bridge = '''    getGagInfo: () => ({}),
+    isClassActive: id => active.has(id),
+'''
+new_view_bridge = '''    getGagInfo: () => ({}),
+    enemyBattleArtById: () => null,
+    enemyPortraitById: () => null,
+    enemyModeAura: mode => ({ id: mode || "normal", className: "" }),
+    guardianBattleArt: () => null,
+    isClassActive: id => active.has(id),
+'''
+if new_view_bridge not in combat_view:
+    if old_view_bridge not in combat_view:
+        raise RuntimeError('Combat View oracle presentation bridge is not in the expected baseline shape')
+    combat_view = combat_view.replace(old_view_bridge, new_view_bridge, 1)
+    combat_view_path.write_text(combat_view, encoding='utf-8')
+subprocess.run(['git','add','tools/test_combat_view_oracle.js'],check=True)
+
 # Temporary replay shim; removed before the 0.6.7.0 PR.
 def update_combat_presentation() -> int:
     text = wave.COMBAT_PRESENTATION.read_text(encoding='utf-8')
