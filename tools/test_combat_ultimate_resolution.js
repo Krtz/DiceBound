@@ -7,6 +7,7 @@ const ownerPath = path.join(__dirname, '..', 'runtime', 'js', 'combat', 'ultimat
 const source = fs.readFileSync(ownerPath, 'utf8');
 assert(source.includes('DiceboundCombatUltimateResolution'), 'Ultimate owner global missing');
 assert(source.includes('getCombatBusy'), 'Ultimate owner must consume authoritative combatBusy state, not player state');
+assert(!source.includes('frogEchoCap') && !source.includes('setFastEchoCap'), 'retired Frog-specific Echo timing must stay out of Ultimate ownership');
 
 const sandbox = { window: {}, console, Object, Math, Promise, Set, Map };
 vm.createContext(sandbox);
@@ -22,7 +23,6 @@ function makeHarness(options = {}) {
   const trace = [];
   let combatBusy = !!options.combatBusy;
   let currentIndex = 0;
-  let fastEchoCap = options.fastEchoCap || 0;
   const enemies = options.enemies || [makeEnemy()];
   const player = Object.assign({
     classId: options.classId || 'ranger', attack: 100, defense: 20, maxHp: 200, hp: 200, gold: 0, level: 10,
@@ -91,8 +91,6 @@ function makeHarness(options = {}) {
     getPets: () => pets, getGagInfo: () => ({
       'Big Shoes': 'big', 'Rubber Chicken': 'chicken', 'Exploding Pie': 'pie', 'Safety Net': 'net', 'Standing Ovation': 'ovation'
     }),
-    getFastEchoCap: () => fastEchoCap, setFastEchoCap: value => { fastEchoCap = value; trace.push(['fastCap', value]); },
-    frogEchoCap: echo => echo >= 50 ? 8 : echo >= 10 ? 20 : echo >= 5 ? 34 : echo >= 2 ? 58 : echo >= 1 ? 85 : 0,
     dragoonActive: () => options.dragoonActive != null ? !!options.dragoonActive : player.classId === 'dragoon',
     dragoonLandingReady: () => !!player.dragoonLandingReady,
     dragoonLanding: async () => { trace.push(['dragoonLanding']); return 'landing'; },
@@ -104,7 +102,7 @@ function makeHarness(options = {}) {
     },
   };
   owner.configure(rt);
-  return { player, enemies, trace, rt, effects, get busy() { return combatBusy; }, get fastEchoCap() { return fastEchoCap; } };
+  return { player, enemies, trace, rt, effects, get busy() { return combatBusy; } };
 }
 
 async function run() {
@@ -216,11 +214,11 @@ async function run() {
     assert(h.trace.findIndex(x => x[0] === 'petTurn') > h.trace.map(x => x[0]).lastIndexOf('animateClass'));
   }
 
-  // Frog owns both speed-cap lifetime and Croak poison-hit lifetime around the lower generic loop.
+  // Wave 10 retired Frog-specific speed-cap ownership; Croak poison-hit lifetime still surrounds the lower generic loop.
   {
-    const h = makeHarness({ classId: 'frog', fastEchoCap: 77, player: { doubleStrike: 1 }, randValues: Array(10).fill(0), pickIndexes: Array(10).fill(0) });
+    const h = makeHarness({ classId: 'frog', player: { doubleStrike: 1 }, randValues: Array(10).fill(0), pickIndexes: Array(10).fill(0) });
     await owner.start();
-    assert.strictEqual(h.fastEchoCap, 77); const caps = h.trace.filter(x => x[0] === 'fastCap').map(x => x[1]); assert.deepStrictEqual(caps, [85, 77]);
+    assert.deepStrictEqual(h.trace.filter(x => x[0] === 'fastCap'), [], 'Frog Ultimate must not resurrect retired class-specific Echo timing');
     const packets = h.trace.filter(x => x[0] === 'damageEnemy'); assert(packets.length > 0 && packets.every(x => x[4] > 0), 'Croak hit lifetime must surround damage calls'); assert.strictEqual(h.player._v25CroakHitsRemaining, 0);
     const frogDelays = h.trace.filter(x => x[0] === 'delay').map(x => x[1]); assert.deepStrictEqual(frogDelays, [...Array(10).fill(200),850], 'Frog charged Ultimate preserves ten 200ms per-hit pauses');
   }
@@ -248,7 +246,7 @@ async function run() {
     const result = await owner.start(); assert.strictEqual(result, 'landing'); assert.deepStrictEqual(h.trace.filter(x => ['dragoonLanding','chaos','crit'].includes(x[0])).map(x => x[0]), ['dragoonLanding']);
   }
 
-  console.log('Combat Ultimate-resolution owner PASS: generic, D20, Bloodmage, Marks, companions, Alchemist, Clown/Turtle/Ninja quirks, Ouroboros, Frog, Unstable, Slime Rouge recursion and Dragoon ordering are deterministic');
+  console.log('Combat Ultimate-resolution owner PASS: generic, D20, Bloodmage, Marks, companions, Alchemist, Clown/Turtle/Ninja quirks, Ouroboros, Frog Croak lifetime, Unstable, Slime Rouge recursion and Dragoon ordering are deterministic');
 }
 
 run().catch(error => { console.error(error); process.exit(1); });
