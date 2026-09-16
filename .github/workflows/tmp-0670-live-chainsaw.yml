@@ -10,6 +10,8 @@ on:
       - tools/bulk_0670_cleanup.py
       - tools/canonical_0670_wave2.py
       - tools/static_style_extract_0670.py
+      - tools/artifact_owner_0670.py
+      - tools/comment_cleanup_0670.py
   workflow_dispatch:
 
 permissions:
@@ -60,6 +62,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/static_style_extract_0670.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/artifact_owner_0670.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/comment_cleanup_0670.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_whitespace_cleanup.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/live_chainsaw_update_guards.py
@@ -109,7 +115,7 @@ jobs:
           git diff --cached --stat
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { throw 'Live chainsaw produced no source changes.' }
-          git commit -m "refactor: extract static runtime patch styles"
+          git commit -m "refactor: move Artifact factories and prune monolith history"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git push origin HEAD:refactor/0.6.7.0-monolith-chainsaw
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
