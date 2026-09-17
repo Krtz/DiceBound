@@ -43,7 +43,7 @@ assert.equal(power.describe(fakeCatalog[0]),"services:Generic");
 assert.deepEqual(Array.from(power.ownerIds(fakeCatalog[1])),["ranger"]);
 
 const events=[];
-let gate=false,randomCalls=0;
+let gate=false,randomCalls=0,randomValue=.25;
 const state={
   player:{classId:"ranger",level:10,position:0,hp:50,maxHp:50,attack:5,defense:2,luck:0,gold:0,goldBonus:0,crit:0,doubleStrike:0,bossDamage:0,lifeSteal:0,elementProcBonus:0,elementDamageBonus:0,levelChoiceBonus:0,upgradeCounts:{},runBuffs:[],potions:0,ultimateCharge:0},
   meta:{petCookies:0},
@@ -54,8 +54,10 @@ power.configure({
   slimeIdentityActive:()=>state.player.classId==="slime",
   slimePowerCompatible:up=>up.id==="fighter",
   slimeRougePowerCompatible:up=>up.id!=="fighter",
-  filterPowerupPoolForLuck:pool=>pool,
-  getBoardLevel:()=>1,currentTileCount:()=>10,random:()=>{randomCalls++;return .25;},rand:(a,b)=>a,pick:list=>list[0],clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),
+  filterPowerupPoolForLuck:(pool,luck)=>luck>=2?(pool.filter(up=>!["poor","common"].includes(up.rarity)).length?pool.filter(up=>!["poor","common"].includes(up.rarity)):pool):pool,
+  lowTierSuppression:luck=>Math.max(0,Math.min(1,((Number(luck)||0)-1))),
+  lowTierWeightMultiplier:(rarity,luck)=>["poor","common"].includes(rarity)?1-Math.max(0,Math.min(1,((Number(luck)||0)-1))):1,
+  getBoardLevel:()=>1,currentTileCount:()=>10,random:()=>{randomCalls++;return randomValue;},rand:(a,b)=>a,pick:list=>list[0],clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),
   classIdentityActive:id=>id==="d20"&&state.player.classId==="d20",
   hasLegendaryEffect:()=>false,saveMeta:()=>events.push("save"),addLog:text=>events.push(["log",text]),showToast:text=>events.push(["toast",text]),
   checkDynamicClassUnlocks:()=>events.push("unlock-check"),recordRunBuff:(...args)=>{state.player.runBuffs.push(args);events.push("buff");},recordPowerupTaken:()=>events.push("taken"),syncOuroborosEconomy:()=>events.push("ouro-sync"),
@@ -79,6 +81,15 @@ assert.equal(randomCalls,1,"weighted selection must consume exactly one configur
 randomCalls=0;
 assert.equal(power.choices(()=>true,3).length,3);
 assert.equal(randomCalls,3,"three weighted choices must consume exactly three RNG draws");
+
+state.player.luck=2;randomValue=.999;randomCalls=0;
+const highLuckPick=power.weighted([fakeCatalog[0],fakeCatalog[1]]);
+assert.equal(highLuckPick.id,"ranger","200 Luck must exclude Common from ordinary weighted Powerup choices");
+assert.equal(randomCalls,1,"Luck suppression must not add an RNG draw to weighted Powerup selection");
+randomCalls=0;
+assert.equal(power.rollMinibossRarity(),"uncommon","200 Luck must remove the miniboss Common tail even at the top of the same rarity roll");
+assert.equal(randomCalls,1,"miniboss Luck suppression must reuse the existing rarity roll");
+state.player.luck=0;randomValue=.25;
 
 const beforeAttack=state.player.attack;
 events.length=0;
