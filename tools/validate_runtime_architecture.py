@@ -193,6 +193,26 @@ def main() -> int:
     for required_player_init in ["function initialize(classId)", "Slime Rouge", "setRunTalentSnapshot", "syncMana", "resetDragoonState"]:
         if required_player_init not in player_init_source:
             errors.append("player initialization owner is missing required ordered responsibility: " + required_player_init)
+    run_dice_module = by_id.get("run-dice")
+    run_dice_source = sources.get("run-dice", "")
+    if not run_dice_module:
+        errors.append("Canonical road-dice owner run-dice is missing from the runtime manifest")
+    else:
+        if run_dice_module.get("path") != "js/run/dice.js" or "DiceboundRunDice" not in (run_dice_module.get("provides") or []):
+            errors.append("run-dice must own js/run/dice.js and provide DiceboundRunDice")
+        if "run-facade" not in (run_dice_module.get("requires") or []) or position.get("run-dice", -1) >= position.get(str(monolith_id), -1):
+            errors.append("run-dice must require run-facade and load before the composition monolith")
+    for required_run_dice_owner in ["function rollOneCore(", "function rollTwoCore(", "function chooseDieResult(", "function handleRoadKeydown("]:
+        if required_run_dice_owner not in run_dice_source:
+            errors.append("run-dice is missing canonical road-dice responsibility: " + required_run_dice_owner)
+    if monolith_source:
+        for retired_road_dice_layer in ["function rollDice(", "function chooseDieResult(", "pendingDiceChoiceResolve", "const diceFaces =", 'addEventListener("click",rollDice)', "{rollDice,applyUpgrade"]:
+            if retired_road_dice_layer in monolith_source:
+                errors.append("retired road-dice implementation remains in dicebound.js: " + retired_road_dice_layer)
+        for required_run_dice_route in ["dbRunDice.bindPrimaryButton()", "dbRunDice.handleRoadKeydown(e)", "move:(...args)=>dbRun.move(...args)"]:
+            if required_run_dice_route not in monolith_source:
+                errors.append("dicebound.js is missing Run Dice composition route: " + required_run_dice_route)
+
     if monolith_source:
         expected_reset_adapter = "function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}"
         if expected_reset_adapter not in monolith_source:
@@ -655,7 +675,7 @@ def main() -> int:
         for expected_board_movement_adapter in [
             "dbRun.configure({movement:{",
             "board:dbRun.boardState",
-            "await dbRun.move(",
+            "move:(...args)=>dbRun.move(...args)",
         ]:
             if expected_board_movement_adapter not in monolith_source:
                 errors.append("dicebound.js must use the board-movement composition owner")
