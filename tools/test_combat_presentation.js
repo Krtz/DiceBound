@@ -68,8 +68,19 @@ function fakeStyle() {
   };
 }
 
+function fakeClassList() {
+  const values = new Set();
+  return {
+    add(...names) { names.forEach(name => values.add(name)); },
+    remove(...names) { names.forEach(name => values.delete(name)); },
+    toggle(name, force) { if (force === undefined ? !values.has(name) : force) values.add(name); else values.delete(name); },
+    contains(name) { return values.has(name); }
+  };
+}
 const documentNodes = new Map();
-const combatOverlay = { dataset: {}, style: fakeStyle(), classList: { add(){}, remove(){}, toggle(){} } };
+const combatOverlay = { dataset: {}, style: fakeStyle(), classList: fakeClassList() };
+const combatPlayerIcon = { classList: fakeClassList(), offsetWidth: 42 };
+const combatEnemyIcon = { classList: fakeClassList(), offsetWidth: 42 };
 const fakeDocument = {
   head: {
     children: [],
@@ -84,7 +95,7 @@ function runtime() {
   return {
     document: fakeDocument,
     getState: () => state,
-    find: id => id === 'combatOverlay' ? combatOverlay : null,
+    find: id => id === 'combatOverlay' ? combatOverlay : id === 'combatPlayerIcon' ? combatPlayerIcon : id === 'enemyIcon' ? combatEnemyIcon : null,
     getClasses: () => classes,
     getElements: () => elements,
     getPets: () => pets,
@@ -177,6 +188,16 @@ legendary = new Set(); active = new Set(['dragoon']); state.player.classId = 'dr
 out = model(); assert.strictEqual(out.attack.text, '🐉 Land'); assert.strictEqual(out.guard.disabled, true); assert.strictEqual(out.potion.disabled, true); assert.strictEqual(out.ultimate.disabled, true);
 
 assert(owner.statusDotsHTML(2, 3, 'fire').includes('Fire affinity'));
+
+assert.strictEqual(owner.dodge('player'), true);
+assert.strictEqual(combatPlayerIcon.classList.contains('db-dodge-backflip'), true);
+assert.strictEqual(owner.dodge('player'), true, 'rapid repeated Dodge must retrigger cleanly');
+assert.strictEqual(combatPlayerIcon.classList.contains('db-dodge-backflip'), true);
+assert.strictEqual(owner.dodge('enemy'), true, 'the animation API is generic to a combat unit, not Wolf-specific');
+assert.strictEqual(combatEnemyIcon.classList.contains('db-dodge-backflip'), true);
+owner.clearDodgePresentation();
+assert.strictEqual(combatPlayerIcon.classList.contains('db-dodge-backflip'), false);
+assert.strictEqual(combatEnemyIcon.classList.contains('db-dodge-backflip'), false);
 
 state.boardLevel = 1; state.nightmareMode = false; state.hellMode = false;
 let background = owner.applyCombatBackground();

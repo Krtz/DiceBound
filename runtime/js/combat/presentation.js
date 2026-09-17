@@ -3,6 +3,7 @@
 
   let runtime = null;
   let dragoonLandingTimer = 0;
+  const dodgeTimers = new Map();
 
   function requireRuntime() {
     if (!runtime) throw new Error("DiceboundCombatPresentation must be configured before use.");
@@ -336,6 +337,45 @@
     box.classList.remove("hidden"); box.classList.toggle("imminent", remaining <= 2); box.textContent = `⚠️ ${lead.specialName || "Guardian special"} in ${remaining} turn${remaining === 1 ? "" : "s"}`;
   }
 
+  function combatUnitElement(unit = "player") {
+    const rt = requireRuntime();
+    if (unit && typeof unit === "object" && unit.classList) return unit;
+    if (unit === "player") return rt.find("combatPlayerIcon");
+    if (unit === "enemy" || unit === "target") return rt.find("enemyIcon");
+    return typeof unit === "string" ? rt.find(unit) : null;
+  }
+
+  function dodge(unit = "player") {
+    const icon = combatUnitElement(unit);
+    if (!icon?.classList) return false;
+    const prior = dodgeTimers.get(icon);
+    if (prior != null) clearTimeout(prior);
+    icon.classList.remove("db-dodge-backflip");
+    void icon.offsetWidth;
+    icon.classList.add("db-dodge-backflip");
+    const timer = setTimeout(() => {
+      icon.classList.remove("db-dodge-backflip");
+      dodgeTimers.delete(icon);
+    }, 420);
+    dodgeTimers.set(icon, timer);
+    return true;
+  }
+
+  function clearDodgePresentation(unit = null) {
+    const rt = requireRuntime();
+    const targets = unit == null ? [...dodgeTimers.keys()] : [combatUnitElement(unit)].filter(Boolean);
+    for (const icon of targets) {
+      const timer = dodgeTimers.get(icon);
+      if (timer != null) clearTimeout(timer);
+      dodgeTimers.delete(icon);
+      icon.classList?.remove("db-dodge-backflip");
+    }
+    if (unit == null) {
+      rt.find("combatPlayerIcon")?.classList?.remove("db-dodge-backflip");
+      rt.find("enemyIcon")?.classList?.remove("db-dodge-backflip");
+    }
+  }
+
   function syncDragoonPresentation() {
     const rt = requireRuntime(), player = rt.getState().player || {}, icon = rt.find("combatPlayerIcon"), airborne = rt.dragoonActive() && ((player.dragoonAirborneResponses || 0) > 0 || !!player.dragoonLandingReady);
     if (icon) { if (airborne) icon.classList.remove("db-dragoon-landing"); icon.classList.toggle("db-dragoon-airborne", airborne); }
@@ -394,6 +434,8 @@
     renderBossSpecialIndicator,
     statusDotsHTML,
     syncEnergyShieldBars,
+    dodge,
+    clearDodgePresentation,
     syncDragoonPresentation,
     dragoonLandPresentation,
     ensureDragoonJumpButton,

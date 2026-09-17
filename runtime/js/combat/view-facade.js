@@ -65,6 +65,8 @@
     renderBossSpecialIndicator: (...args) => requirePresentation().renderBossSpecialIndicator(...args),
     statusDotsHTML: (...args) => requirePresentation().statusDotsHTML(...args),
     syncEnergyShieldBars: (...args) => optionalPresentation("syncEnergyShieldBars", args),
+    dodge: (...args) => requirePresentation().dodge(...args),
+    clearDodgePresentation: (...args) => optionalPresentation("clearDodgePresentation", args),
     syncDragoonPresentation: (...args) => optionalPresentation("syncDragoonPresentation", args),
     dragoonLandPresentation: (...args) => optionalPresentation("dragoonLandPresentation", args),
     ensureDragoonJumpButton: (...args) => optionalPresentation("ensureDragoonJumpButton", args),
@@ -85,7 +87,7 @@
     playProjectileProc: (...args) => requireVfx().playProjectileProc(...args),
     clearTransient: (...args) => {
       const result = vfx ? vfx.clearTransient(...args) : undefined;
-      if (presentation) presentation.clearDragoonPresentation();
+      if (presentation) { presentation.clearDodgePresentation(); presentation.clearDragoonPresentation(); }
       return result;
     },
   });

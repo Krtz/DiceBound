@@ -16,7 +16,7 @@
       "setCombatText","updateCombatUI","addCombatHistory","renderEnemyParty","triggerElementEffect","defenseDamageReduction",
       "effectiveDodgeChance","enemyElementProc","damageEnemy","healPlayer","mythicalSetCount","guardianSpecialMultiplier",
       "hasMythicPiece","hasDevilsHorns","hasHeadphones","hasLegendaryEffect","checkDynamicClassUnlocks","saveMeta","playHitSfx",
-      "recordDamageTaken","wolfEchoChance","successfulDodgePresentation","dragoonActive"
+      "recordDamageTaken","wolfEchoChance","dodge","dragoonActive"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat turn-resolution runtime missing ${name}().`);
     if (!Number.isFinite(Number(nextRuntime.guardianSpecialInterval)) || Number(nextRuntime.guardianSpecialInterval) < 1) throw new Error("Combat turn-resolution runtime requires guardianSpecialInterval.");
@@ -26,6 +26,11 @@
 
   function getPlayer() { return requireRuntime().getPlayer(); }
   function livingEnemies() { return requireRuntime().livingEnemies(); }
+
+  function successfulDodge(messages, message) {
+    requireRuntime().dodge("player");
+    messages.push(message);
+  }
 
   function applyPlayerDamage(raw) {
     const rt = requireRuntime(), player = rt.getPlayer();
@@ -68,7 +73,7 @@
       }
       if (rt.random() < rt.effectiveDodgeChance()) {
         dodged += 1;
-        messages.push(`${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${i + 1}` : pattern.name} is dodged.`);
+        successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${i + 1}` : pattern.name} is dodged.`);
         continue;
       }
       if (player.combatShield > 0) {
@@ -170,7 +175,7 @@
       messages.push(`🌈 Impossible Road 7-piece restores ${heal} HP and grants 1 barrier.`);
     }
     if (messages.length) { rt.setCombatText(messages.join(" ")); rt.updateCombatUI(); await rt.delay(640); }
-    rt.checkDynamicClassUnlocks(); rt.saveMeta(); rt.playHitSfx();
+    rt.checkDynamicClassUnlocks(); rt.saveMeta(); if (roundState.hit) rt.playHitSfx();
     if (!livingEnemies().length) return rt.winCombat();
     if (player.hp <= 0) return rt.handlePlayerDeath();
     rt.setCombatBusy(false); rt.updateCombatUI(); rt.setCombatText("Choose your next action.", false);
@@ -234,7 +239,7 @@
     const notes = [];
     for (const wolf of livingEnemies().filter(enemy => /\bwolf\b/i.test(String(enemy?.name || "")) && !enemy.guardian)) {
       if (rt.random() >= chance) continue;
-      if (rt.random() < rt.effectiveDodgeChance()) { rt.successfulDodgePresentation(); notes.push(`🐺 ${wolf.name}'s Echo Strike is dodged.`); continue; }
+      if (rt.random() < rt.effectiveDodgeChance()) { successfulDodge(notes, `🐺 ${wolf.name}'s Echo Strike is dodged.`); continue; }
       if (player.combatShield > 0) { player.combatShield -= 1; notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`); continue; }
       const base = Math.max(1, wolf.attack + rt.rand(-1, 1)), raw = Math.max(1, Math.round(base * (1 - rt.defenseDamageReduction()) - player.flatReduction)), hit = applyPlayerDamage(raw);
       // Historical behavior records the wolf Echo once in applyPlayerDamage and once here. Preserve it during extraction.

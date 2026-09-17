@@ -22,6 +22,8 @@ const presentationApi = Object.freeze({
   renderBossSpecialIndicator: (...args) => { calls.push(["presentation.renderBossSpecialIndicator", ...args]); return "boss"; },
   statusDotsHTML: (...args) => { calls.push(["presentation.statusDotsHTML", ...args]); return "dots"; },
   syncEnergyShieldBars: (...args) => { calls.push(["presentation.syncEnergyShieldBars", ...args]); return "shield"; },
+  dodge: (...args) => { calls.push(["presentation.dodge", ...args]); return true; },
+  clearDodgePresentation: (...args) => { calls.push(["presentation.clearDodgePresentation", ...args]); return "dodge-clear"; },
   syncDragoonPresentation: (...args) => { calls.push(["presentation.syncDragoonPresentation", ...args]); return "dragoon-sync"; },
   dragoonLandPresentation: (...args) => { calls.push(["presentation.dragoonLandPresentation", ...args]); return "dragoon-land"; },
   ensureDragoonJumpButton: (...args) => { calls.push(["presentation.ensureDragoonJumpButton", ...args]); return "jump"; },
@@ -94,12 +96,14 @@ assert.equal(view.renderEnemyParty(), "party");
 assert.equal(view.renderBossSpecialIndicator(), "boss");
 assert.equal(view.statusDotsHTML(2, 3, "fire"), "dots");
 assert.equal(view.syncEnergyShieldBars(), "shield");
+assert.equal(view.dodge("player"), true);
+assert.deepEqual(calls.at(-1), ["presentation.dodge", "player"]);
 assert.equal(view.syncDragoonPresentation(), "dragoon-sync");
 assert.equal(view.dragoonLandPresentation(), "dragoon-land");
 assert.equal(view.ensureDragoonJumpButton(), "jump");
 const clearStart = calls.length;
 assert.equal(view.clearTransient("transition"), 7);
-assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearDragoonPresentation"], "transition cleanup must retain VFX-then-Dragoon presentation order");
+assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearDodgePresentation", "presentation.clearDragoonPresentation"], "transition cleanup must clear VFX, Dodge and Dragoon presentation state");
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 assert.match(monolith, /const dbCombatView=window\.DiceboundCombatView;/, "monolith must bind the Combat View facade");
@@ -114,6 +118,8 @@ assert.doesNotMatch(monolith, /window\.DiceboundCombatPresentation/, "monolith m
 assert.doesNotMatch(monolith, /window\.DiceboundCombatVfx/, "monolith must not bind the focused VFX owner directly");
 assert.doesNotMatch(monolith, /\bdbCombatPresentation\b/, "peer-public Presentation variable must not survive in the monolith");
 assert.doesNotMatch(monolith, /\bdbCombatVfx\b/, "peer-public VFX variable must not survive in the monolith");
+assert.doesNotMatch(monolith, /dbFriendSuccessfulDodgePresentation/, "generic Dodge presentation must not be owned by the monolith");
+assert.match(monolith, /dodge:unit=>dbCombatView\.dodge\(unit\)/, "Turn composition must route generic Dodge through Combat View");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "runtime", "js", "module-manifest.json"), "utf8"));
 const viewModule = manifest.modules.find(item => item.id === "combat-view-facade");

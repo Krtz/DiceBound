@@ -68,7 +68,7 @@ function makeHarness(options={}){
     playHitSfx:()=>{calls.push(["hit-sfx"]);},
     recordDamageTaken:amount=>{damageTaken+=amount;calls.push(["damage-taken",amount]);},
     wolfEchoChance:()=>options.wolfEchoChance||0,
-    successfulDodgePresentation:()=>{calls.push(["dodge-presentation"]);},
+    dodge:unit=>{calls.push(["dodge",unit]);return true;},
     dragoonActive:()=>!!options.dragoon
   };
   turns.configure(runtime);
@@ -99,7 +99,33 @@ function makeHarness(options={}){
     assert.equal(h.player.hp,90,"ordinary enemy turn must preserve incoming damage");
     assert.equal(h.damageTaken(),10);
     assert.equal(h.turn(),1);
+    assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,1,"a landed hit keeps hit presentation");
     assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
+  }
+  {
+    const h=makeHarness({dodgeChance:1,randomValues:[0]});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.hp,100,"ordinary successful Dodge must prevent damage");
+    assert.deepEqual(h.calls.filter(call=>call[0]==="dodge"),[["dodge","player"]]);
+    assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,0,"pure Dodge must not also play a hit SFX");
+    assert.equal(h.calls.filter(call=>call[0]==="damage-taken").length,0);
+  }
+  {
+    const hydra={name:"Nullstar Hydra",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0};
+    const h=makeHarness({dodgeChance:1,randomValues:[0,0,0],enemies:[hydra]});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.hp,100);
+    assert.equal(h.calls.filter(call=>call[0]==="dodge").length,3,"each independently dodged multi-hit strike retriggers generic Dodge");
+    assert.equal(h.calls.filter(call=>call[0]==="rand").length,0,"dodged hits consume no damage-variance RNG");
+  }
+  {
+    const h=makeHarness({dodgeChance:1,randomValues:[0,0],enemies:[
+      {name:"First Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0},
+      {name:"Second Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0}
+    ]});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.hp,100);
+    assert.equal(h.calls.filter(call=>call[0]==="dodge").length,2,"every dodging enemy attack in a pack uses the same generic route");
   }
   {
     const h=makeHarness({enemies:[
@@ -154,6 +180,14 @@ function makeHarness(options={}){
     assert.deepEqual(h.calls.filter(call=>call[0]==="random").map(call=>call[1]),[.5,.5],"Wolf Echo must preserve chance-then-dodge RNG order");
   }
   {
+    const wolf={name:"Road Wolf",hp:100,maxHp:100,attack:5,defense:0,skipTurns:1,lifeSteal:0};
+    const h=makeHarness({enemies:[wolf],wolfEchoChance:1,dodgeChance:1,randomValues:[.5,0]});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.hp,100,"dodged Wolf Echo must deal no damage");
+    assert.deepEqual(h.calls.filter(call=>call[0]==="dodge"),[["dodge","player"]],"Wolf Echo uses the generic Dodge route");
+    assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,0);
+  }
+  {
     const h=makeHarness({player:{hp:5,maxHp:100,db0511BurnStacks:10}});
     const result=await turns.resolveEnemyResponse(false);
     assert.equal(result,"death");
@@ -190,3 +224,7 @@ for(const retired of [
 ])assert.ok(!monolith.includes(retired),`retired combat turn ownership remains in monolith: ${retired}`);
 assert.equal((monolith.match(/async function enemyTurn\(/g)||[]).length,0,"call-only enemyTurn adapter must stay retired");
 assert.equal((monolith.match(/async function resolveEnemyResponse\(/g)||[]).length,1,"resolveEnemyResponse is a real first-class interception seam and must remain singular");
+assert.doesNotMatch(source,/successfulDodgePresentation/,"path-specific Dodge presentation capability must stay retired");
+assert.match(source,/function successfulDodge\(messages, message\)/,"Turn Resolution must retain one semantic successful-Dodge route");
+assert.doesNotMatch(monolith,/dbFriendSuccessfulDodgePresentation/,"Dodge presentation must not return to the monolith");
+assert.match(monolith,/dodge:unit=>dbCombatView\.dodge\(unit\)/,"Turn composition must route generic Dodge through Combat View");
