@@ -38,6 +38,7 @@ jobs:
           python tools/validate_version_identity.py
           if (git grep -n "dbFriendSuccessfulDodgePresentation" -- runtime/js) { throw "retired monolith Dodge helper still exists" }
           if (git grep -n "successfulDodgePresentation" -- runtime/js) { throw "path-specific Dodge presentation capability still exists" }
+          exit 0
 
       - name: Remove temporary materializer and commit validated tree
         shell: pwsh
