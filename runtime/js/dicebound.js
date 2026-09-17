@@ -775,6 +775,7 @@
     const [icon,label]=dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady});
     el.className=dbBoardPresentation.tileClassName(tile,{current:index===player.position});
     el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;
+    dbMerchant?.bindRoadTileInteraction?.(el,tile,index);
   }
   function refreshBoardHighlights(){
     tileEls.forEach((el,i)=>dbBoardPresentation.applyTileState(el,tiles[i],{current:i===player.position}));
@@ -1063,7 +1064,7 @@ function returnToRoad(...args){
 
       let dbTileMetaFinalReady=false;
     function buildBoard(){
-    const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady}),el=document.createElement("div");    el.className=dbBoardPresentation.tileClassName(tile,{current:index===player.position});el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;if(tile.type==="merchant"){const face=el.querySelector(".tile-icon");face.title="Click every merchant face on this board for a secret.";face.addEventListener("click",ev=>{ev.stopPropagation();merchantFaceClicks.add(index);face.classList.add("merchant-primed");showToast(`Merchant faces: ${merchantFaceClicks.size}/${merchantFaceTotal}`);if(merchantFaceClicks.size>=merchantFaceTotal&&!merchantBossDefeatedThisBoard){merchantBossPrimed=true;addLog("Every merchant portrait smiles at once. <b>The next merchant is waiting for a fight.</b>");showToast("🧔 Secret merchant boss primed!");}});}board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
+    const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady}),el=document.createElement("div");    el.className=dbBoardPresentation.tileClassName(tile,{current:index===player.position});el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;dbMerchant?.bindRoadTileInteraction?.(el,tile,index);board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
   }
   function updateHUD(){
     const cls=CLASSES[player.classId];$("heroAvatar").textContent=cls.icon;$("heroName").textContent=cls.name;$("pawn").textContent=cls.icon;$("combatPlayerIcon").textContent=cls.icon;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=dbPets.activeDefinition().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
@@ -2976,13 +2977,23 @@ dbReturnToRoadTraceReady=true;
     },
     ui:{
       $:id=>$(id),getPlayer:()=>player,
-      formatGearComparison:(item,current)=>dbItems.formatComparison(item,current),gearPowerScore:item=>dbItems.score(item),
+      formatGearComparison:(item,current)=>dbItems.formatComparison(item,current),gearNameMarkup:item=>window.DiceboundEquipmentHeirlooms.rarityNameMarkup(item),gearPowerScore:item=>dbItems.score(item),
       confirmWeakerGear:(gear,current)=>diceboundConfirm(`${gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}),
       chargeOffer:(item,price)=>{player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);},
       refundOffer:price=>{player.gold+=price;},applyOffer:item=>item.buy?.(),
       recordRunBuff:item=>recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant'),formatBonuses:item=>formatBonuses(item),
       rarityInfoFor:rarity=>rarityInfo[rarity],showToast:(...args)=>showToast(...args),updateHud:()=>updateHUD(),
       openLegendaryChoice:(source,done)=>db0410OpenSovereignChoice(source,done),schedule:(fn,ms)=>setTimeout(fn,ms)
+    },
+    secret:{
+      isFaceActivated:index=>merchantFaceClicks.has(index),
+      activateFace:index=>{
+        const before=merchantFaceClicks.size;merchantFaceClicks.add(index);const count=merchantFaceClicks.size;
+        const primedNow=count>=merchantFaceTotal&&!merchantBossDefeatedThisBoard&&!merchantBossPrimed;
+        if(primedNow)merchantBossPrimed=true;
+        return {count,total:merchantFaceTotal,added:count>before,primedNow};
+      },
+      toast:(...args)=>showToast(...args),log:text=>addLog(text)
     }
   });
 

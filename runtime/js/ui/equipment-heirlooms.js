@@ -42,7 +42,11 @@
     if(!entry?.image)return '';
     return `<img class=\"db-equipment-art ${klass}\" src=\"${escapeHtml(entry.image)}\" alt=\"${escapeHtml(entry.alt||item?.name||'Equipment')}\" draggable=\"false\">`;
   }
-  function itemNameMarkup(item,klass=''){const art=artMarkup(item,klass),name=`<span class="db-rarity-name db-rarity-${escapeHtml(String(item?.rarity||'common').toLowerCase())}">${escapeHtml(item?.name||'Equipment')}</span>`;return art?`${art}${name}`:`${escapeHtml(item?.icon||'')} ${name}`;}
+  function rarityNameMarkup(item){
+    const rarityId=escapeHtml(String(item?.rarity||"common").toLowerCase());
+    return `<span class="db-rarity-name db-rarity-${rarityId}">${escapeHtml(item?.name||"Equipment")}</span>`;
+  }
+  function itemNameMarkup(item,klass=''){const art=artMarkup(item,klass),name=rarityNameMarkup(item);return art?`${art}${name}`:`${escapeHtml(item?.icon||'')} ${name}`;}
   function artifactSetHtml(model=setModel()){
     const count=Math.max(0,Number(model.count)||0),tiers=Array.isArray(model.tiers)?model.tiers:[];
     return `<strong>🌈 Impossible Road set · Artifact</strong><br><span style=\"color:var(--muted)\">${count}/7 pieces active.</span><div class=\"set-tier-grid\">${tiers.map(tier=>`<div class=\"set-tier${count>=Number(tier.pieces)?' active':''}\"><b>${escapeHtml(tier.pieces)}-piece bonus</b><span>${escapeHtml(tier.text)}</span></div>`).join('')}</div>`;
@@ -161,7 +165,7 @@
 
   function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();return api;}
   function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage');return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0});}
-  const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,inspect,owner:OWNER});
+  const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,inspect,owner:OWNER});
   window.DiceboundEquipmentHeirlooms=api;
   window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect});
 })(window);
