@@ -53,12 +53,30 @@ let state = {
     rangerMarkMax: 5, energyShield: 0
   },
   currentEnemy: { name: 'Wolf', hp: 70, maxHp: 100, attack: 12, defense: 4, weakness: 'fire', affinity: 'ice', dodge: .15, rangerMarks: 4 },
-  currentEnemies: [], currentEnemyIndex: 0, currentEncounterLead: null, currentEncounterTurn: 0, combatBusy: false
+  currentEnemies: [], currentEnemyIndex: 0, currentEncounterLead: null, currentEncounterTurn: 0, combatBusy: false,
+  boardLevel: 1, nightmareMode: false, hellMode: false
 };
 state.currentEnemies = [state.currentEnemy];
 
+function fakeStyle() {
+  const props = Object.create(null);
+  return {
+    setProperty(name, value) { props[name] = String(value); },
+    removeProperty(name) { delete props[name]; },
+    getPropertyValue(name) { return props[name] || ''; },
+    _props: props
+  };
+}
+
+const documentNodes = new Map();
+const combatOverlay = { dataset: {}, style: fakeStyle(), classList: { add(){}, remove(){}, toggle(){} } };
 const fakeDocument = {
-  createElement() { return { classList: { add(){}, remove(){}, toggle(){} }, style: {}, dataset: {}, addEventListener(){}, appendChild(){}, insertBefore(){}, parentElement: null }; },
+  head: {
+    children: [],
+    appendChild(node) { this.children.push(node); if (node.id) documentNodes.set(node.id, node); return node; }
+  },
+  createElement() { return { classList: { add(){}, remove(){}, toggle(){} }, style: fakeStyle(), dataset: {}, addEventListener(){}, appendChild(){}, insertBefore(){}, parentElement: null, textContent: '', id: '' }; },
+  getElementById(id) { return documentNodes.get(id) || null; },
   querySelector() { return null; }
 };
 
@@ -66,7 +84,7 @@ function runtime() {
   return {
     document: fakeDocument,
     getState: () => state,
-    find: () => null,
+    find: id => id === 'combatOverlay' ? combatOverlay : null,
     getClasses: () => classes,
     getElements: () => elements,
     getPets: () => pets,
@@ -76,6 +94,7 @@ function runtime() {
     enemyPortraitById: () => null,
     enemyModeAura: mode => ({ id: mode, className: `mode-${mode}` }),
     guardianBattleArt: () => null,
+    resolveCombatBackground: (board, mode) => mode === 'hell' ? null : ({ image: `assets/combat/backgrounds/board-${board}-${mode}.png`, focus: '50% 50%' }),
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
     classIdentityId: () => state.player.classId,
@@ -158,5 +177,27 @@ legendary = new Set(); active = new Set(['dragoon']); state.player.classId = 'dr
 out = model(); assert.strictEqual(out.attack.text, '🐉 Land'); assert.strictEqual(out.guard.disabled, true); assert.strictEqual(out.potion.disabled, true); assert.strictEqual(out.ultimate.disabled, true);
 
 assert(owner.statusDotsHTML(2, 3, 'fire').includes('Fire affinity'));
+
+state.boardLevel = 1; state.nightmareMode = false; state.hellMode = false;
+let background = owner.applyCombatBackground();
+assert.strictEqual(background.image, 'assets/combat/backgrounds/board-1-normal.png');
+assert.strictEqual(combatOverlay.dataset.combatBackground, 'board-1-normal');
+assert.strictEqual(combatOverlay.style.getPropertyValue('--db-combat-background-image'), 'url("assets/combat/backgrounds/board-1-normal.png")');
+const backgroundStyle = fakeDocument.getElementById('dicebound-combat-background-style');
+assert(backgroundStyle, 'combat background presentation style was not installed');
+assert(backgroundStyle.textContent.includes('background-size:cover'), 'combat background must cover the overlay');
+assert(backgroundStyle.textContent.includes('rgba(19,31,54,.55)'), 'combat modal translucency contract was lost');
+
+state.nightmareMode = true;
+background = owner.applyCombatBackground();
+assert.strictEqual(background.image, 'assets/combat/backgrounds/board-1-nightmare.png');
+assert.strictEqual(combatOverlay.dataset.combatBackground, 'board-1-nightmare');
+
+state.nightmareMode = false; state.hellMode = true;
+background = owner.applyCombatBackground();
+assert.strictEqual(background, null, 'Hell must keep its explicit no-authored-background contract');
+assert.strictEqual(combatOverlay.dataset.combatBackground, undefined, 'Hell must clear stale Normal/Nightmare background identity');
+assert.strictEqual(combatOverlay.style.getPropertyValue('--db-combat-background-image'), '', 'Hell must clear stale background image');
+
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
-console.log('Combat presentation owner PASS: final class controls, stable-ID art ports, statuses, thresholds and zero-RNG view models are deterministic');
+console.log('Combat presentation owner PASS: final class controls, stable-ID art ports, battle backgrounds, statuses, thresholds and zero-RNG view models are deterministic');
