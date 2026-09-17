@@ -10,9 +10,10 @@ facade=(root/'runtime/js/events/merchant-facade.js').read_text(encoding='utf-8')
 index=(root/'runtime/index.html').read_text(encoding='utf-8')
 manifest=json.loads((root/'runtime/js/module-manifest.json').read_text(encoding='utf-8'))
 
-assert len(re.findall(r'\bfunction\s+renderMerchant\s*\(',mono))==1, 'monolith must retain exactly one thin renderMerchant adapter'
-assert not re.search(r'\brenderMerchant\s*=\s*function\b',mono), 'historical renderMerchant reassignment stack must be retired'
-assert re.search(r'function\s+renderMerchant\s*\(\)\s*\{[^{}]*dbMerchant\.render\(\)',mono,re.S), 'renderMerchant adapter must delegate to DiceboundMerchant'
+assert not re.search(r'\bfunction\s+renderMerchant\s*\(',mono), 'retired renderMerchant adapter must stay absent from monolith'
+assert not re.search(r'\brenderMerchant\s*=\s*function\b',mono), 'historical renderMerchant reassignment stack must stay retired'
+assert not re.search(r'\brenderMerchant\s*\(',mono), 'ordinary monolith must not call a retired renderMerchant compatibility seam'
+assert 'openMerchant:()=>dbMerchant.open()' in mono, 'ordinary Merchant opens must route directly through DiceboundMerchant'
 assert 'dicebound.js requires DiceboundMerchant before loading.' in mono, 'monolith must require the Merchant facade'
 assert 'DiceboundMerchantUi' not in mono, 'ordinary monolith must not coordinate Merchant UI directly'
 assert 'uiOwner.createController' in facade and 'window.DiceboundMerchant=api' in facade, 'Merchant facade must own UI composition'
@@ -27,4 +28,4 @@ assert entry['requires']==['merchant-transactions'], 'Merchant UI dependency top
 facade_entry=next((m for m in manifest['modules'] if m['id']=='merchant-facade'),None)
 assert facade_entry and facade_entry['requires']==['merchant-transactions','merchant-stock','ui-merchant']
 assert manifest['loadOrder'].index('ui-merchant') < manifest['loadOrder'].index('merchant-facade') < manifest['loadOrder'].index('dicebound-monolith'), 'Merchant UI must remain internal behind the facade'
-print('Merchant UI extraction boundary PASS')
+print('Merchant UI extraction boundary PASS: presentation stays internal behind DiceboundMerchant and retired renderMerchant adapters remain absent')
