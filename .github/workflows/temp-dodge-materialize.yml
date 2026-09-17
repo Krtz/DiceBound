@@ -12,373 +12,24 @@ permissions:
 
 jobs:
   materialize:
-    runs-on: ubuntu-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Canonicalize generic Dodge ownership
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
+      - name: Apply generic Dodge ownership cleanup
+        shell: pwsh
+        run: python tools/temp_dodge_materialize.py
 
-          root = Path('.')
-
-          def replace_once(path, old, new, label):
-              text = path.read_text(encoding='utf-8')
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
-              path.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          # Combat Presentation owns one generic unit Dodge animation lifecycle.
-          presentation = root / 'runtime/js/combat/presentation.js'
-          replace_once(
-              presentation,
-              '  let runtime = null;\n  let dragoonLandingTimer = 0;\n',
-              '  let runtime = null;\n  let dragoonLandingTimer = 0;\n  const dodgeTimers = new Map();\n',
-              'presentation dodge timer registry'
-          )
-          replace_once(
-              presentation,
-              '  function syncDragoonPresentation() {\n',
-              '''  function combatUnitElement(unit = "player") {
-    const rt = requireRuntime();
-    if (unit && typeof unit === "object" && unit.classList) return unit;
-    if (unit === "player") return rt.find("combatPlayerIcon");
-    if (unit === "enemy" || unit === "target") return rt.find("enemyIcon");
-    return typeof unit === "string" ? rt.find(unit) : null;
-  }
-
-  function dodge(unit = "player") {
-    const icon = combatUnitElement(unit);
-    if (!icon?.classList) return false;
-    const prior = dodgeTimers.get(icon);
-    if (prior != null) clearTimeout(prior);
-    icon.classList.remove("db-dodge-backflip");
-    void icon.offsetWidth;
-    icon.classList.add("db-dodge-backflip");
-    const timer = setTimeout(() => {
-      icon.classList.remove("db-dodge-backflip");
-      dodgeTimers.delete(icon);
-    }, 420);
-    dodgeTimers.set(icon, timer);
-    return true;
-  }
-
-  function clearDodgePresentation(unit = null) {
-    const rt = requireRuntime();
-    const targets = unit == null
-      ? [...dodgeTimers.keys()]
-      : [combatUnitElement(unit)].filter(Boolean);
-    for (const icon of targets) {
-      const timer = dodgeTimers.get(icon);
-      if (timer != null) clearTimeout(timer);
-      dodgeTimers.delete(icon);
-      icon.classList?.remove("db-dodge-backflip");
-    }
-    if (unit == null) {
-      rt.find("combatPlayerIcon")?.classList?.remove("db-dodge-backflip");
-      rt.find("enemyIcon")?.classList?.remove("db-dodge-backflip");
-    }
-  }
-
-  function syncDragoonPresentation() {
-''',
-              'presentation generic dodge functions'
-          )
-          replace_once(
-              presentation,
-              '    syncEnergyShieldBars,\n    syncDragoonPresentation,\n',
-              '    syncEnergyShieldBars,\n    dodge,\n    clearDodgePresentation,\n    syncDragoonPresentation,\n',
-              'presentation dodge API'
-          )
-
-          # Combat View exposes the generic presentation and clears it on transitions.
-          view = root / 'runtime/js/combat/view-facade.js'
-          replace_once(
-              view,
-              '    syncEnergyShieldBars: (...args) => optionalPresentation("syncEnergyShieldBars", args),\n    syncDragoonPresentation: (...args) => optionalPresentation("syncDragoonPresentation", args),\n',
-              '    syncEnergyShieldBars: (...args) => optionalPresentation("syncEnergyShieldBars", args),\n    dodge: (...args) => requirePresentation().dodge(...args),\n    clearDodgePresentation: (...args) => optionalPresentation("clearDodgePresentation", args),\n    syncDragoonPresentation: (...args) => optionalPresentation("syncDragoonPresentation", args),\n',
-              'Combat View dodge facade'
-          )
-          replace_once(
-              view,
-              '      if (presentation) presentation.clearDragoonPresentation();\n',
-              '      if (presentation) { presentation.clearDodgePresentation(); presentation.clearDragoonPresentation(); }\n',
-              'Combat View transient dodge cleanup'
-          )
-
-          # Combat Turn Resolution owns one semantic successful-Dodge route for all incoming attacks.
-          turns = root / 'runtime/js/combat/turn-resolution.js'
-          replace_once(
-              turns,
-              '      "recordDamageTaken","wolfEchoChance","successfulDodgePresentation","dragoonActive"\n',
-              '      "recordDamageTaken","wolfEchoChance","dodge","dragoonActive"\n',
-              'turn runtime generic dodge capability'
-          )
-          replace_once(
-              turns,
-              '  function getPlayer() { return requireRuntime().getPlayer(); }\n  function livingEnemies() { return requireRuntime().livingEnemies(); }\n\n',
-              '''  function getPlayer() { return requireRuntime().getPlayer(); }
-  function livingEnemies() { return requireRuntime().livingEnemies(); }
-
-  function successfulDodge(messages, message) {
-    const rt = requireRuntime();
-    rt.dodge("player");
-    messages.push(message);
-    return true;
-  }
-
-''',
-              'turn generic successful dodge helper'
-          )
-          replace_once(
-              turns,
-              '      if (rt.random() < rt.effectiveDodgeChance()) {\n        dodged += 1;\n        messages.push(`${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${i + 1}` : pattern.name} is dodged.`);\n        continue;\n      }\n',
-              '      if (rt.random() < rt.effectiveDodgeChance()) {\n        dodged += 1;\n        successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${i + 1}` : pattern.name} is dodged.`);\n        continue;\n      }\n',
-              'ordinary incoming dodge route'
-          )
-          replace_once(
-              turns,
-              '    rt.checkDynamicClassUnlocks(); rt.saveMeta(); rt.playHitSfx();\n',
-              '    rt.checkDynamicClassUnlocks(); rt.saveMeta(); if (roundState.hit) rt.playHitSfx();\n',
-              'pure dodge hit-sfx suppression'
-          )
-          replace_once(
-              turns,
-              '      if (rt.random() < rt.effectiveDodgeChance()) { rt.successfulDodgePresentation(); notes.push(`🐺 ${wolf.name}\'s Echo Strike is dodged.`); continue; }\n',
-              '      if (rt.random() < rt.effectiveDodgeChance()) { successfulDodge(notes, `🐺 ${wolf.name}\'s Echo Strike is dodged.`); continue; }\n',
-              'Wolf Echo generic dodge route'
-          )
-
-          # Composition passes the Combat View generic Dodge capability; monolith presentation helper retires.
-          monolith = root / 'runtime/js/dicebound.js'
-          replace_once(
-              monolith,
-              '''  function dbFriendSuccessfulDodgePresentation(){
-    const icon=$(\'combatPlayerIcon\');if(!icon)return false;
-    icon.classList.remove(\'db-dodge-backflip\');void icon.offsetWidth;icon.classList.add(\'db-dodge-backflip\');
-    setTimeout(()=>icon.classList.remove(\'db-dodge-backflip\'),420);return true;
-  }
-''',
-              '',
-              'retire monolith dodge presentation helper'
-          )
-          replace_once(
-              monolith,
-              '    successfulDodgePresentation:()=>dbFriendSuccessfulDodgePresentation(),\n',
-              '    dodge:unit=>dbCombatView.dodge(unit),\n',
-              'compose generic dodge through Combat View'
-          )
-
-          # Make the authored motion visibly land back, then slide home.
-          css = root / 'runtime/css/dicebound.css'
-          replace_once(
-              css,
-              '.fighter-icon.db-dodge-backflip{animation:dbDodgeBackflip .38s cubic-bezier(.25,.85,.32,1)}@keyframes dbDodgeBackflip{0%{transform:translateX(0) rotate(0) scale(1)}42%{transform:translateX(-28px) translateY(-14px) rotate(-155deg) scale(.97)}74%{transform:translateX(-34px) translateY(0) rotate(-310deg) scale(1)}100%{transform:translateX(0) rotate(-360deg) scale(1)}}',
-              '.fighter-icon.db-dodge-backflip{animation:dbDodgeBackflip .40s cubic-bezier(.25,.85,.32,1)}@keyframes dbDodgeBackflip{0%{transform:translateX(0) translateY(0) rotate(0) scale(1)}38%{transform:translateX(-30px) translateY(-16px) rotate(-170deg) scale(.97)}62%{transform:translateX(-38px) translateY(0) rotate(-330deg) scale(1)}74%{transform:translateX(-38px) translateY(0) rotate(-360deg) scale(1)}100%{transform:translateX(0) translateY(0) rotate(-360deg) scale(1)}}',
-              'dodge backflip-and-slide keyframes'
-          )
-
-          # Turn-resolution oracle: generic route, pure-Dodge presentation and representative matrix.
-          turn_test = root / 'tools/test_combat_turn_resolution.js'
-          replace_once(
-              turn_test,
-              '    successfulDodgePresentation:()=>{calls.push(["dodge-presentation"]);},\n',
-              '    dodge:unit=>{calls.push(["dodge",unit]);return true;},\n',
-              'turn test generic dodge capability'
-          )
-          replace_once(
-              turn_test,
-              '''  {
-    const h=makeHarness();
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,90,"ordinary enemy turn must preserve incoming damage");
-    assert.equal(h.damageTaken(),10);
-    assert.equal(h.turn(),1);
-    assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
-  }
-''',
-              '''  {
-    const h=makeHarness();
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,90,"ordinary enemy turn must preserve incoming damage");
-    assert.equal(h.damageTaken(),10);
-    assert.equal(h.turn(),1);
-    assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,1,"a landed incoming hit keeps the hit SFX");
-    assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
-  }
-  {
-    const h=makeHarness({dodgeChance:1,randomValues:[0]});
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,100,"ordinary successful Dodge must prevent damage");
-    assert.deepEqual(h.calls.filter(call=>call[0]==="dodge"),[["dodge","player"]],"ordinary Dodge must use the one generic player-Dodge presentation route");
-    assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,0,"a pure Dodge must not also play hit presentation");
-    assert.equal(h.calls.filter(call=>call[0]==="damage-taken").length,0,"a pure Dodge must not record damage");
-  }
-  {
-    const hydra={name:"Nullstar Hydra",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0};
-    const h=makeHarness({dodgeChance:1,randomValues:[0,0,0],enemies:[hydra]});
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,100);
-    assert.equal(h.calls.filter(call=>call[0]==="dodge").length,3,"each independently dodged multi-hit strike must retrigger the generic Dodge presentation exactly once");
-    assert.equal(h.calls.filter(call=>call[0]==="rand").length,0,"dodged multi-hits must not consume damage-variance RNG");
-  }
-  {
-    const h=makeHarness({dodgeChance:1,randomValues:[0,0],enemies:[
-      {name:"First Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0},
-      {name:"Second Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0}
-    ]});
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,100);
-    assert.equal(h.calls.filter(call=>call[0]==="dodge").length,2,"each enemy in a pack must use the same generic Dodge presentation route");
-  }
-''',
-              'turn tests ordinary/multihit/multienemy dodge matrix'
-          )
-          replace_once(
-              turn_test,
-              '''  {
-    const wolf={name:"Road Wolf",hp:100,maxHp:100,attack:5,defense:0,skipTurns:1,lifeSteal:0};
-    const h=makeHarness({enemies:[wolf],wolfEchoChance:1,randomValues:[.5,.5]});
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,95,"Wolf Echo must still resolve after the ordinary turn");
-    assert.equal(h.damageTaken(),10,"historical Wolf Echo damageTaken double-recording is intentionally preserved by extraction");
-    assert.deepEqual(h.calls.filter(call=>call[0]==="random").map(call=>call[1]),[.5,.5],"Wolf Echo must preserve chance-then-dodge RNG order");
-  }
-''',
-              '''  {
-    const wolf={name:"Road Wolf",hp:100,maxHp:100,attack:5,defense:0,skipTurns:1,lifeSteal:0};
-    const h=makeHarness({enemies:[wolf],wolfEchoChance:1,randomValues:[.5,.5]});
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,95,"Wolf Echo must still resolve after the ordinary turn");
-    assert.equal(h.damageTaken(),10,"historical Wolf Echo damageTaken double-recording is intentionally preserved by extraction");
-    assert.deepEqual(h.calls.filter(call=>call[0]==="random").map(call=>call[1]),[.5,.5],"Wolf Echo must preserve chance-then-dodge RNG order");
-  }
-  {
-    const wolf={name:"Road Wolf",hp:100,maxHp:100,attack:5,defense:0,skipTurns:1,lifeSteal:0};
-    const h=makeHarness({enemies:[wolf],wolfEchoChance:1,dodgeChance:1,randomValues:[.5,0]});
-    await turns.enemyTurn(false,0);
-    assert.equal(h.player.hp,100,"dodged Wolf Echo must deal no damage");
-    assert.deepEqual(h.calls.filter(call=>call[0]==="dodge"),[["dodge","player"]],"Wolf Echo Dodge must use the same generic Dodge route as ordinary incoming attacks");
-    assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,0,"dodged Wolf Echo must not create hit presentation");
-  }
-''',
-              'turn test Wolf generic dodge route'
-          )
-          replace_once(
-              turn_test,
-              'assert.equal((monolith.match(/async function resolveEnemyResponse\\(/g)||[]).length,1,"resolveEnemyResponse is a real first-class interception seam and must remain singular");\n',
-              '''assert.equal((monolith.match(/async function resolveEnemyResponse\\(/g)||[]).length,1,"resolveEnemyResponse is a real first-class interception seam and must remain singular");
-assert.doesNotMatch(source,/successfulDodgePresentation/,"path-specific Dodge presentation capability must stay retired");
-assert.match(source,/function successfulDodge\\(messages, message\\)/,"turn resolution must keep one generic semantic successful-Dodge route");
-assert.doesNotMatch(monolith,/dbFriendSuccessfulDodgePresentation/,"Dodge presentation ownership must not return to the monolith");
-assert.match(monolith,/dodge:unit=>dbCombatView\\.dodge\\(unit\\)/,"turn composition must route Dodge presentation through Combat View");
-''',
-              'turn anti-return dodge ownership guards'
-          )
-
-          # Presentation oracle gets an actual retrigger/cleanup test for generic units.
-          presentation_test = root / 'tools/test_combat_presentation.js'
-          replace_once(
-              presentation_test,
-              '''const documentNodes = new Map();
-const combatOverlay = { dataset: {}, style: fakeStyle(), classList: { add(){}, remove(){}, toggle(){} } };
-''',
-              '''function fakeClassList() {
-  const values = new Set();
-  return {
-    add(...names) { names.forEach(name => values.add(name)); },
-    remove(...names) { names.forEach(name => values.delete(name)); },
-    toggle(name, force) { if (force === undefined ? !values.has(name) : force) values.add(name); else values.delete(name); },
-    contains(name) { return values.has(name); },
-    size: () => values.size
-  };
-}
-const documentNodes = new Map();
-const combatOverlay = { dataset: {}, style: fakeStyle(), classList: fakeClassList() };
-const combatPlayerIcon = { classList: fakeClassList(), offsetWidth: 42 };
-const combatEnemyIcon = { classList: fakeClassList(), offsetWidth: 42 };
-''',
-              'presentation test combat unit fixtures'
-          )
-          replace_once(
-              presentation_test,
-              '    find: id => id === \'combatOverlay\' ? combatOverlay : null,\n',
-              '    find: id => id === \'combatOverlay\' ? combatOverlay : id === \'combatPlayerIcon\' ? combatPlayerIcon : id === \'enemyIcon\' ? combatEnemyIcon : null,\n',
-              'presentation test unit resolver'
-          )
-          replace_once(
-              presentation_test,
-              'assert(owner.statusDotsHTML(2, 3, \'fire\').includes(\'Fire affinity\'));\n\n',
-              '''assert(owner.statusDotsHTML(2, 3, 'fire').includes('Fire affinity'));
-
-assert.strictEqual(owner.dodge('player'), true, 'generic player Dodge presentation should resolve the combat player unit');
-assert.strictEqual(combatPlayerIcon.classList.contains('db-dodge-backflip'), true);
-assert.strictEqual(owner.dodge('player'), true, 'repeated Dodge must retrigger instead of being ignored while the class is already present');
-assert.strictEqual(combatPlayerIcon.classList.contains('db-dodge-backflip'), true);
-assert.strictEqual(owner.dodge('enemy'), true, 'generic Dodge presentation should also accept the enemy unit slot');
-assert.strictEqual(combatEnemyIcon.classList.contains('db-dodge-backflip'), true);
-owner.clearDodgePresentation();
-assert.strictEqual(combatPlayerIcon.classList.contains('db-dodge-backflip'), false, 'Dodge cleanup must remove stale player transforms');
-assert.strictEqual(combatEnemyIcon.classList.contains('db-dodge-backflip'), false, 'Dodge cleanup must remove stale enemy transforms');
-
-''',
-              'presentation generic dodge behavior tests'
-          )
-          replace_once(
-              presentation_test,
-              "console.log('Combat presentation owner PASS: final class controls, stable-ID art ports, battle backgrounds, statuses, thresholds and zero-RNG view models are deterministic');\n",
-              "console.log('Combat presentation owner PASS: class controls, battle backgrounds, generic Dodge retrigger/cleanup, statuses and zero-RNG view models are deterministic');\n",
-              'presentation test PASS label'
-          )
-
-          # Public Combat View facade forwards Dodge and cleans it during transitions.
-          view_test = root / 'tools/test_combat_view_facade.js'
-          replace_once(
-              view_test,
-              '  syncEnergyShieldBars: (...args) => { calls.push(["presentation.syncEnergyShieldBars", ...args]); return "shield"; },\n  syncDragoonPresentation: (...args) => { calls.push(["presentation.syncDragoonPresentation", ...args]); return "dragoon-sync"; },\n',
-              '  syncEnergyShieldBars: (...args) => { calls.push(["presentation.syncEnergyShieldBars", ...args]); return "shield"; },\n  dodge: (...args) => { calls.push(["presentation.dodge", ...args]); return true; },\n  clearDodgePresentation: (...args) => { calls.push(["presentation.clearDodgePresentation", ...args]); return "dodge-clear"; },\n  syncDragoonPresentation: (...args) => { calls.push(["presentation.syncDragoonPresentation", ...args]); return "dragoon-sync"; },\n',
-              'Combat View test dodge API fixture'
-          )
-          replace_once(
-              view_test,
-              'assert.equal(view.syncEnergyShieldBars(), "shield");\nassert.equal(view.syncDragoonPresentation(), "dragoon-sync");\n',
-              'assert.equal(view.syncEnergyShieldBars(), "shield");\nassert.equal(view.dodge("player"), true);\nassert.deepEqual(calls.at(-1), ["presentation.dodge", "player"]);\nassert.equal(view.syncDragoonPresentation(), "dragoon-sync");\n',
-              'Combat View facade generic dodge forwarding test'
-          )
-          replace_once(
-              view_test,
-              'assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearDragoonPresentation"], "transition cleanup must retain VFX-then-Dragoon presentation order");\n',
-              'assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearDodgePresentation", "presentation.clearDragoonPresentation"], "transition cleanup must clear VFX, Dodge and Dragoon presentation state");\n',
-              'Combat View transient cleanup test'
-          )
-          replace_once(
-              view_test,
-              'assert.doesNotMatch(monolith, /\\bdbCombatVfx\\b/, "peer-public VFX variable must not survive in the monolith");\n',
-              'assert.doesNotMatch(monolith, /\\bdbCombatVfx\\b/, "peer-public VFX variable must not survive in the monolith");\nassert.doesNotMatch(monolith, /dbFriendSuccessfulDodgePresentation/, "generic Dodge presentation must not be owned by the monolith");\nassert.match(monolith, /dodge:unit=>dbCombatView\\.dodge\\(unit\\)/, "turn composition must route generic Dodge through Combat View");\n',
-              'Combat View monolith anti-return guard'
-          )
-
-          # Release notes.
-          notes = root / 'runtime/release-notes/0.6.7.5.md'
-          notes.write_text('''# Beta 0.6.7.5 — Generic Dodge\n\n- Makes Dodge one generic incoming-combat outcome instead of path-specific presentation logic.\n- Routes ordinary hits, multi-hit attacks, enemy packs and Wolf Echo through the same Combat View Dodge presentation.\n- Moves the backflip/land/slide lifecycle out of `dicebound.js` and into canonical Combat Presentation, with retrigger-safe cleanup.\n- Prevents pure successful-Dodge turns from also playing hit SFX.\n- Adds deterministic coverage for the #331 regression and the automatable #162 verification matrix.\n''', encoding='utf-8')
-
-          # The materializer must not survive in the final tree.
-          (root / '.github/workflows/temp-dodge-materialize.yml').unlink()
-          PY
-
-      - name: Stamp Beta 0.6.7.5 and refresh deterministic runtime metadata
-        shell: bash
+      - name: Stamp Beta 0.6.7.5
+        shell: pwsh
         run: |
           python tools/set_project_version.py --version 0.6.7.5 --channel Beta
           python tools/refresh_runtime_manifest.py --version 0.6.7.5 --channel Beta --development-state Unreleased
 
-      - name: Focused Dodge and architecture validation
-        shell: bash
+      - name: Focused validation
+        shell: pwsh
         run: |
           node tools/test_combat_turn_resolution.js
           node tools/test_combat_presentation.js
@@ -386,26 +37,21 @@ assert.strictEqual(combatEnemyIcon.classList.contains('db-dodge-backflip'), fals
           node tools/test_combat_facade.js
           python tools/validate_runtime_architecture.py
           python tools/validate_version_identity.py
-          if git grep -n 'dbFriendSuccessfulDodgePresentation' -- runtime/js; then
-            echo 'retired monolith Dodge helper still exists' >&2
-            exit 1
-          fi
-          if git grep -n 'successfulDodgePresentation' -- runtime/js; then
-            echo 'path-specific Dodge presentation capability still exists' >&2
-            exit 1
-          fi
+          if (git grep -n "dbFriendSuccessfulDodgePresentation" -- runtime/js) { throw "retired monolith Dodge helper still exists" }
+          if (git grep -n "successfulDodgePresentation" -- runtime/js) { throw "path-specific Dodge presentation capability still exists" }
 
-      - name: Commit exact validated tree
-        shell: bash
+      - name: Remove temporary materializer and commit validated tree
+        shell: pwsh
         run: |
-          git config user.name 'dicebound-materializer[bot]'
-          git config user.email '323488390+dicebound-materializer[bot]@users.noreply.github.com'
+          Remove-Item .github/workflows/temp-dodge-materialize.yml
+          Remove-Item tools/temp_dodge_materialize.py
+          git config user.name "dicebound-materializer[bot]"
+          git config user.email "323488390+dicebound-materializer[bot]@users.noreply.github.com"
           git add -A
-          git commit -m 'fix: canonicalize generic dodge presentation'
-          echo "MATERIALIZED_COMMIT=$(git rev-parse HEAD)"
+          git commit -m "fix: canonicalize generic dodge presentation"
+          Write-Host "MATERIALIZED_COMMIT=$(git rev-parse HEAD)"
           git status --short
 
-      - name: Push validated tree
-        shell: bash
-        run: |
-          git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Push exact validated tree
+        shell: pwsh
+        run: git push origin "HEAD:$env:GITHUB_REF_NAME"
