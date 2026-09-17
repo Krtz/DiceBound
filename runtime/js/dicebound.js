@@ -2143,8 +2143,8 @@ function returnToRoad(...args){
   }
       refreshDebugButtons();
 
-  // Double Dice UI and roll sequencing live in runtime/js/run/dice.js.
-  setTimeout(()=>{v22EnsureDebugUnlockButtons();dbRunDice.ensureButton();v22UpdateCamp();},0);
+  // Debug/Camp refresh remains here; road-dice controls are initialized once by DiceboundRunDice composition above.
+  setTimeout(()=>{v22EnsureDebugUnlockButtons();v22UpdateCamp();},0);
 
 })();
 
