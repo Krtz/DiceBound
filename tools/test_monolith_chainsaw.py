@@ -62,9 +62,21 @@ def main()->int:
     for name in STALE_DOUBLE_DICE_ALIASES:
         assert f"function {name}(" not in code and f"async function {name}(" not in code, f"historical Double Dice owner {name} returned"
     dice_text=DICE.read_text(encoding="utf-8")
-    for marker in ['const OWNER="run/dice"','function ensureButton(','async function roll(','window.DiceboundRunDice=api']:
+    for marker in [
+        'const OWNER="run/dice"',
+        'function ensureButton(',
+        'function bindPrimaryButton(',
+        'async function rollOneCore(',
+        'async function rollTwoCore(',
+        'function rollOne()',
+        'function rollTwo()',
+        'window.DiceboundRunDice=api'
+    ]:
         assert marker in dice_text, f"run/dice owner missing {marker}"
-    assert "dbRunDice.configure({" in text and "dbRunDice.ensureButton();" in text, "monolith no longer configures the authoritative run/dice owner"
+    assert text.count("dbRunDice.configure({")==1, "Run Dice must have one composition boundary in dicebound.js"
+    assert "dbRunDice.bindPrimaryButton();dbRunDice.ensureButton();" in text, "monolith no longer initializes canonical Run Dice controls"
+    assert 'await call("move",' in dice_text, "Run Dice no longer hands completed rolls to injected Board movement"
+    assert "await dbRun.move(" not in text, "road-dice gameplay moved directly back into the monolith"
 
     for name in STALE_ARTIFACT_FACTORY_NAMES:
         assert not re.search(rf"\b{re.escape(name)}\b",code), f"Artifact predecessor {name} returned to monolith"
@@ -89,7 +101,7 @@ def main()->int:
     for marker in ['const OWNER="board/presentation"','function tileMeta(','function enemyArtForId(','window.DiceboundBoardPresentation=api']:
         assert marker in board_text, f"board/presentation owner missing {marker}"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent, Board presentation canonical")
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element, Road Dice and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent, Board presentation canonical")
     return 0
 
 
