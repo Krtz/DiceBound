@@ -143,15 +143,15 @@ consumables_retired = [
 ]
 for symbol in consumables_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Consumables owner returned: {symbol}"
-assert mono.count('async function usePotion(') == 1, 'usePotion must have exactly one thin compatibility adapter'
-assert mono.count('function usePotionOutsideCombat(') == 1, 'usePotionOutsideCombat must have exactly one thin compatibility adapter'
+assert mono.count('async function usePotion(') == 0, 'retired usePotion compatibility adapter returned'
+assert mono.count('function usePotionOutsideCombat(') == 0, 'retired usePotionOutsideCombat compatibility adapter returned'
 assert mono.count('async function identityPotionAction(') == 1, 'identityPotionAction must have exactly one thin compatibility adapter'
 assert not re.search(r'(?m)^\s*usePotion\s*=\s*async function', mono), 'usePotion reassignment chain must not return'
 assert not re.search(r'(?m)^\s*usePotionOutsideCombat\s*=\s*function', mono), 'road Potion reassignment chain must not return'
 assert not re.search(r'(?m)^\s*identityPotionAction\s*=\s*async function', mono), 'identity Potion reassignment chain must not return'
 assert "dbConsumablesResolution=dbConsumablesOwner.configure({" in mono, 'Consumables owner is not configured by the composition root'
-assert "dbConsumablesResolution.usePotion.apply(this,args)" in mono, 'combat Potion thin adapter is missing'
-assert "dbConsumablesResolution.usePotionOutsideCombat.apply(this,args)" in mono, 'road Potion thin adapter is missing'
+assert 'dbConsumablesResolution.usePotion()' in mono, 'combat Potion callers no longer route through the Consumables owner'
+assert 'dbConsumablesResolution.usePotionOutsideCombat()' in mono, 'road Potion callers no longer route through the Consumables owner'
 assert "dbConsumablesResolution.identityPotionAction.apply(this,args)" in mono, 'identity Potion thin adapter is missing'
 
 
