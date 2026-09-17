@@ -37,7 +37,7 @@
   }
   function shouldChooseRoll(){
     const meta=call("getMeta"),player=call("getPlayer");
-    return !!meta.debugAlwaysChooseRolls||(player.diceChoiceChance>0&&call("random")()<player.diceChoiceChance);
+    return !!meta.debugAlwaysChooseRolls||(player.diceChoiceChance>0&&call("random")<player.diceChoiceChance);
   }
   async function roll(){
     const meta=call("getMeta"),player=call("getPlayer");
@@ -52,11 +52,11 @@
 
       // The animation is presentation only. Fate can legitimately wait on one
       // or two player choices, so never leave the die shaking while that modal
-      // interaction is pending. This was the 0.6.7.2 perpetual-roll symptom.
+      // interaction is pending. This was the visible symptom of #371.
       die.classList.remove("rolling");
 
       if(shouldChooseRoll()){[first,second]=await chooseDice(2,meta.debugAlwaysChooseRolls?"Debug fate":"Fate");chosen=true;call("showToast","\u{1F3B2}\u{1F3B2} Fate chosen: "+first+"+"+second+"="+(first+second));}
-      let bonus=0;if(!chosen&&call("random")()<call("clamp",player.extraStepChance,0,.75))bonus=1;
+      let bonus=0;if(!chosen&&call("random")<call("clamp",player.extraStepChance,0,.75))bonus=1;
       die.textContent=faces[first-1]+" + "+faces[second-1];call("incrementRolls");
       if(call("hasMythicPiece","boots")&&(first>=5||second>=5)){
         const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));
