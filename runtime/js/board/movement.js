@@ -27,6 +27,8 @@
   function advanceStep(){
     const state=road(),from=state.player.position;
     state.player.position++;
+    const traversedTile=state.tiles[state.player.position];
+    if(traversedTile&&traversedTile.type!=="merchant")traversedTile.traversed=true;
     const tilesMovedThisRun=runtime.incrementTilesMoved?.();
     return runtime.emit?.('board:step',{domain:'board',type:'step',from,to:state.player.position,tilesMovedThisRun});
   }

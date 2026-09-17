@@ -30,7 +30,7 @@ function createRun(label,gold){
   const input={
     summary:{className:"Ranger",board:2,tile:14,level:7,gold,difficulty:"Nightmare"},
     meta:{level:7,points:2,settings:{masterVolume:.4}},
-    run:{player:{classId:"ranger",position:13,gold,equipment:{weapon:{id:"bow"}},upgradeCounts:{fortune_gold:2}},tiles:[{type:"start",cleared:true},{type:"empty",cleared:true}],boardLevel:2},
+    run:{player:{classId:"ranger",position:13,gold,equipment:{weapon:{id:"bow"}},upgradeCounts:{fortune_gold:2}},tiles:[{type:"start",cleared:true},{type:"empty",cleared:true,traversed:true}],boardLevel:2},
   };
   vm.runInContext(`window.__testInput=JSON.parse(${JSON.stringify(JSON.stringify(input))})`,context);
   return vm.runInContext("window.DiceboundRunCheckpoint.create(window.__testInput)",context);
@@ -41,6 +41,7 @@ const first=createRun("first",123),rngAtFirst=JSON.parse(JSON.stringify(first.rn
 checkpoints.store(first);
 assert.equal(checkpoints.has(),true);assert.equal(checkpoints.diagnostics().valid,true);
 assert.equal(checkpoints.load().checkpoint.run.player.gold,123);
+assert.equal(checkpoints.load().checkpoint.run.tiles[1].traversed,true,"Board traversal history must survive active-run checkpoint reload");
 
 const expected=[rng.random(),rng.random(),rng.random()];
 rng.restore(rngAtFirst);

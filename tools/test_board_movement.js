@@ -45,6 +45,7 @@ function makeRuntime(road,{loadedSixes=false,modifier=value=>value}={}){
 
 (async()=>{
   const devilTiles=Array.from({length:12},()=>({type:"empty",cleared:false}));
+  devilTiles[3]={type:"merchant",cleared:false};
   devilTiles[5]={type:"devilboss",cleared:false};
   const devilRoad={player:{position:1,fastTravelBonus:2,loadedSix:true,loadedSixBonusXp:30,loadedSixUltimate:30,loadedSixGold:25,ultimateCharge:80,gold:0},tiles:devilTiles,boardLevel:2,hellMode:true,devilPrimed:true,minibossTile:10};
   const devil=makeRuntime(devilRoad,{loadedSixes:true,modifier:value=>value+7});
@@ -52,6 +53,8 @@ function makeRuntime(road,{loadedSixes=false,modifier=value=>value}={}){
   await movement.move(6,6,false,false);
   assert.equal(devilRoad.player.position,5,"Loaded Sixes must resolve before the Pale Devil interception");
   assert.equal(devil.tilesMoved(),4,"only the intercepted movement distance may advance the run counter");
+  assert.deepEqual(devilTiles.map((tile,index)=>tile.traversed?index:null).filter(index=>index!==null),[2,4,5],"every actually traversed non-Merchant tile must be recorded, including the landing tile");
+  assert.equal(devilTiles[3].traversed,undefined,"Merchant tiles must never receive traversal footprints");
   assert.equal(devilRoad.player.ultimateCharge,100,"Loaded Road Ultimate gain must retain its existing clamp");
   assert.equal(devilRoad.player.gold,32,"Loaded Road gold must still use the authoritative Gold modifier once");
   assert.deepEqual(devil.calls.filter(call=>call[0]==="xp").map(call=>call[1]),[30,15],"Loaded Road XP then normal travel XP ordering must be exact");
@@ -83,6 +86,9 @@ for(const adapter of [
 assert.ok(monolith.includes("move:(...args)=>dbRun.move(...args)"),"dicebound.js must inject DiceboundRun.move into the canonical Run Dice owner");
 assert.ok(roadDice.includes('await call("move",'),"run/dice.js must hand completed road rolls to the injected board-movement capability");
 assert.ok(!monolith.includes("await dbRun.move("),"road-dice gameplay must not move directly from dicebound.js");
+assert.equal((monolith.match(/dbBoardPresentation\.tileClassName\(/g)||[]).length,2,"board construction and focused refresh must share Board Presentation tile-class ownership");
+assert.ok(monolith.includes("dbBoardPresentation.applyTileState("),"board highlight refresh must delegate traversed/current/cleared state to Board Presentation");
+assert.ok(!monolith.includes('el.className=`tile ${tile.type}'),"raw tile-class construction must not return to dicebound.js");
 for(const retired of [
   "const BoardState=Object.freeze({",
   "const BoardUI=Object.freeze({",
