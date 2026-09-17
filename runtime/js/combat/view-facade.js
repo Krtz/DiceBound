@@ -15,8 +15,14 @@
   let vfx = null;
 
   function configurePresentation(runtime) {
-    presentation = presentationOwner.configure(runtime);
-    if (!presentation || typeof presentation.update !== "function") {
+    const presentationRuntime = {
+      ...runtime,
+      resolveCombatBackground: typeof runtime?.resolveCombatBackground === "function"
+        ? runtime.resolveCombatBackground
+        : (board, mode) => window.DiceboundAssets?.resolveCombatBackground?.(board, mode) || null
+    };
+    presentation = presentationOwner.configure(presentationRuntime);
+    if (!presentation || typeof presentation.update !== "function" || typeof presentation.applyCombatBackground !== "function") {
       throw new Error("Combat View presentation owner did not return its configured API.");
     }
     return api;
@@ -53,6 +59,7 @@
     isPresentationConfigured: () => !!presentation,
     isVfxConfigured: () => !!vfx,
 
+    applyCombatBackground: (...args) => requirePresentation().applyCombatBackground(...args),
     update: (...args) => requirePresentation().update(...args),
     renderEnemyParty: (...args) => requirePresentation().renderEnemyParty(...args),
     renderBossSpecialIndicator: (...args) => requirePresentation().renderBossSpecialIndicator(...args),

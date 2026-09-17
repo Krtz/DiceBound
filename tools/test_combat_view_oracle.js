@@ -109,6 +109,7 @@ function collectPresentation() {
     enemyPortraitById: () => null,
     enemyModeAura: mode => ({ id: mode || "normal", className: "" }),
     guardianBattleArt: () => null,
+    resolveCombatBackground: () => null,
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
     classIdentityId: () => state.player.classId,

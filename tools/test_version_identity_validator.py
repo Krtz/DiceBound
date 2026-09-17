@@ -85,6 +85,10 @@ with tempfile.TemporaryDirectory(prefix="dicebound-version-validator-") as temp:
     baseline = make_fixture(temp_root, "baseline")
     require_pass(baseline)
 
+    legacy_fallback = make_fixture(temp_root, "legacy-release-note-fallback")
+    (legacy_fallback / f"runtime/release-notes/{VERSION}.md").unlink()
+    require_fail(legacy_fallback, "runtime patch notes do not mention")
+
     central = make_fixture(temp_root, "central-version-drift")
     identity_path = central / "runtime/js/version.js"
     identity_path.write_text(identity_path.read_text(encoding="utf-8").replace(f'const VERSION="{VERSION}";', 'const VERSION="0.0.0.0";', 1), encoding="utf-8")
@@ -156,4 +160,4 @@ with tempfile.TemporaryDirectory(prefix="dicebound-version-validator-") as temp:
     latest_path.write_text(json.dumps(latest, indent=2) + "\n", encoding="utf-8")
     require_fail(distribution, "distribution bytes", "--release-metadata", "release-metadata.json", "--distribution", "distribution/latest.json")
 
-print("Version identity validator mutation suite PASS: four-component central/runtime/native/module/release/distribution drift all fail closed")
+print("Version identity validator mutation suite PASS: canonical release notes, legacy fallback, four-component central/runtime/native/module/release/distribution drift all fail closed")

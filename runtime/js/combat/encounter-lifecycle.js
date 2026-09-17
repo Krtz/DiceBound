@@ -8,6 +8,14 @@
     return runtime;
   }
 
+  function requirePresentation() {
+    const presentation = window.DiceboundCombatPresentation;
+    if (!presentation || typeof presentation.applyCombatBackground !== "function") {
+      throw new Error("DiceboundCombatEncounterLifecycle requires DiceboundCombatPresentation.applyCombatBackground().");
+    }
+    return presentation;
+  }
+
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat encounter-lifecycle runtime is required.");
     const required = [
@@ -16,7 +24,7 @@
       "setEncounterState","getEncounterState","setEncounterSelection","mythicalSetCount","hasMythicPiece","startUltimate",
       "setCombatTitle","getCombatTitle","setCombatSubtitle","clearCombatHistory","setCombatText","showCombatOverlay","addLog",
       "renderEnemyParty","updateCombatUI","pick","clamp","identityFlash","addCombatHistory","updateBossSpecialIndicator",
-      "clearStoneBattle","restoreEnemyElementDebuffs","clearBattleLegendaryTemps","traceCoreStart","applyCombatBackground",
+      "clearStoneBattle","restoreEnemyElementDebuffs","clearBattleLegendaryTemps","traceCoreStart",
       "syncBattleLog","clearCombatPresentation","refreshActivePetArt"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat encounter-lifecycle runtime missing ${name}().`);
@@ -256,7 +264,7 @@
     const result = rt.traceCoreStart(kind, () => coreThroughV25(kind));
     applyDifficultyEntry();
     resetPostStartElementCounters();
-    rt.applyCombatBackground();
+    requirePresentation().applyCombatBackground();
     rt.syncBattleLog();
     rt.refreshActivePetArt();
     return result;

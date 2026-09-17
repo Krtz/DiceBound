@@ -238,12 +238,13 @@ def main() -> int:
         errors.append(f"changelog could not be read: {exc}")
 
     patch_notes_path = runtime / "PATCH_NOTES.md"
-    try:
-        patch_notes = patch_notes_path.read_text(encoding="utf-8")
-        if display_version not in patch_notes and f"{channel} {version}" not in patch_notes:
-            errors.append(f"runtime patch notes do not mention {channel} {version}")
-    except OSError as exc:
-        errors.append(f"runtime patch notes could not be read: {exc}")
+    if not canonical_notes_identify_release:
+        try:
+            patch_notes = patch_notes_path.read_text(encoding="utf-8")
+            if display_version not in patch_notes and f"{channel} {version}" not in patch_notes:
+                errors.append(f"runtime patch notes do not mention {channel} {version}")
+        except OSError as exc:
+            errors.append(f"runtime patch notes could not be read: {exc}")
     checks.append("release-identity" if args.release_spec else "release-documentation")
 
     release_metadata: dict = {}
