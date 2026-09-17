@@ -205,11 +205,11 @@ d20_retired = [
 ]
 for symbol in d20_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired D20 chaos owner returned: {symbol}"
-assert mono.count('async function rollD20Chaos(action){') == 1, 'rollD20Chaos must have exactly one thin compatibility adapter'
+assert mono.count('async function rollD20Chaos(action){') == 0, 'retired rollD20Chaos compatibility adapter returned'
 assert not re.search(r'(?m)^\s*rollD20Chaos\s*=\s*async function', mono), 'rollD20Chaos reassignment tower must not return'
 assert 'let dbCombatD20ChaosResolution=null;' in mono, 'D20 resolution composition handle is missing'
 assert 'dbCombatD20ChaosResolution=dbCombatD20ChaosOwner.configure({' in mono, 'D20 chaos owner is not configured by the composition root'
-assert 'return dbCombat.chaos(action);' in mono, 'Combat facade D20 chaos adapter is missing'
+assert 'dbCombat.chaos(' in mono, 'D20 callers no longer route through the Combat facade'
 assert 'dbCombatD20ChaosResolution.initializePlayerState();' in mono, 'D20 state initialization bridge is missing'
 
 for direct_peer_call in [
