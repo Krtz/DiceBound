@@ -3937,11 +3937,6 @@ dbReturnToRoadTraceReady=true;
     run:db06411RunMemoryStressCycles
   });
 
-  function dbFriendSuccessfulDodgePresentation(){
-    const icon=$('combatPlayerIcon');if(!icon)return false;
-    icon.classList.remove('db-dodge-backflip');void icon.offsetWidth;icon.classList.add('db-dodge-backflip');
-    setTimeout(()=>icon.classList.remove('db-dodge-backflip'),420);return true;
-  }
 
   dbCombatView.prepareProjectileEffects?.();
   function dbFriendClearCombatPresentation(){
@@ -4519,7 +4514,7 @@ dbReturnToRoadTraceReady=true;
     playHitSfx:()=>sfx.hit(),
     recordDamageTaken:amount=>{meta.damageTaken=(meta.damageTaken||0)+amount;},
     wolfEchoChance:()=>db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode()),
-    successfulDodgePresentation:()=>dbFriendSuccessfulDodgePresentation(),
+    dodge:unit=>dbCombatView.dodge(unit),
     dragoonActive:()=>dbFriendDragoonActive(),
     responseModifier:()=>dbClasses.invokerResponseModifier()
   });
