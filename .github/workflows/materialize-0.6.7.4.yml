@@ -39,44 +39,34 @@ jobs:
                   raise SystemExit(f'{label}: expected exactly one match in {path}, found {count}')
               p.write_text(text.replace(old,new,1),encoding='utf-8')
 
-          # Board Movement is the authoritative traversal-history writer. Every real
-          # movement step records the tile that was actually crossed/landed on;
-          # Merchant tiles are deliberately presentation-history-free.
           replace_once(Path('runtime/js/board/movement.js'),
               '''    state.player.position++;\n    const tilesMovedThisRun=runtime.incrementTilesMoved?.();''',
               '''    state.player.position++;\n    const traversedTile=state.tiles[state.player.position];\n    if(traversedTile&&traversedTile.type!=="merchant")traversedTile.traversed=true;\n    const tilesMovedThisRun=runtime.incrementTilesMoved?.();''',
               'movement traversal record')
 
-          # Board Presentation owns the semantic DOM-class mapping. It deliberately
-          # refuses to render a footprint on Merchant even if corrupt/stale state says
-          # traversed=true.
           replace_once(Path('runtime/js/board/presentation.js'),
               '''  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForId,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});''',
               '''  function isTraversed(tile){return !!tile?.traversed&&tile?.type!=="merchant";}\n  function tileClassName(tile,{current=false}={}){\n    const classes=["tile",tile?.type||"empty"];\n    if(tile?.cleared)classes.push("cleared");\n    if(isTraversed(tile))classes.push("traversed");\n    if(current)classes.push("current");\n    return classes.join(" ");\n  }\n  function applyTileState(el,tile,{current=false}={}){\n    if(!el?.classList)return el;\n    el.classList.toggle("current",!!current);\n    el.classList.toggle("cleared",!!tile?.cleared);\n    el.classList.toggle("traversed",isTraversed(tile));\n    return el;\n  }\n\n  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForId,isTraversed,tileClassName,applyTileState,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});''',
               'presentation semantic tile state')
 
-          # Drain the remaining duplicated tile-class rules from the composition root.
           replace_once(Path('runtime/js/dicebound.js'),
               '''  el.className=`tile ${tile.type}${tile.cleared?" cleared":""}${index===player.position?" current":""}`;''',
               '''  el.className=dbBoardPresentation.tileClassName(tile,{current:index===player.position});''',
               'refreshTile class ownership')
           replace_once(Path('runtime/js/dicebound.js'),
-              '''function refreshBoardHighlights(){\n  tileEls.forEach((el,i)=>{el.classList.toggle("current",i===player.position);el.classList.toggle("cleared",tiles[i].cleared);});\n}''',
-              '''function refreshBoardHighlights(){\n  tileEls.forEach((el,i)=>dbBoardPresentation.applyTileState(el,tiles[i],{current:i===player.position}));\n}''',
+              '''  function refreshBoardHighlights(){\n    tileEls.forEach((el,i)=>{el.classList.toggle("current",i===player.position);el.classList.toggle("cleared",tiles[i].cleared);});\n  }''',
+              '''  function refreshBoardHighlights(){\n    tileEls.forEach((el,i)=>dbBoardPresentation.applyTileState(el,tiles[i],{current:i===player.position}));\n  }''',
               'refreshBoardHighlights class ownership')
           replace_once(Path('runtime/js/dicebound.js'),
               '''    el.className=`tile ${tile.type}`;''',
               '''    el.className=dbBoardPresentation.tileClassName(tile,{current:index===player.position});''',
               'buildBoard class ownership')
 
-          # Full-tile, non-emoji footprint trail. The repeated sole/toe shapes cover
-          # the traversed tile while staying behind its semantic content.
           replace_once(Path('runtime/css/dicebound.css'),
               '''  .tile.cleared{filter:saturate(.55);opacity:.78}''',
               '''  .tile.cleared{filter:saturate(.55);opacity:.78}\n  .tile.traversed::before{\n    content:"";position:absolute;inset:3px;border-radius:8px;pointer-events:none;z-index:0;opacity:.52;\n    background:\n      radial-gradient(ellipse 11% 18% at 18% 20%,rgba(245,200,91,.48) 0 72%,transparent 76%),\n      radial-gradient(circle at 14% 8%,rgba(245,200,91,.38) 0 3%,transparent 3.5%),\n      radial-gradient(circle at 19% 7%,rgba(245,200,91,.34) 0 2.6%,transparent 3.1%),\n      radial-gradient(ellipse 11% 18% at 42% 43%,rgba(245,200,91,.42) 0 72%,transparent 76%),\n      radial-gradient(circle at 38% 31%,rgba(245,200,91,.34) 0 3%,transparent 3.5%),\n      radial-gradient(circle at 43% 30%,rgba(245,200,91,.30) 0 2.6%,transparent 3.1%),\n      radial-gradient(ellipse 11% 18% at 65% 67%,rgba(245,200,91,.38) 0 72%,transparent 76%),\n      radial-gradient(circle at 61% 55%,rgba(245,200,91,.30) 0 3%,transparent 3.5%),\n      radial-gradient(circle at 66% 54%,rgba(245,200,91,.27) 0 2.6%,transparent 3.1%),\n      radial-gradient(ellipse 11% 18% at 84% 86%,rgba(245,200,91,.34) 0 72%,transparent 76%),\n      radial-gradient(circle at 80% 74%,rgba(245,200,91,.27) 0 3%,transparent 3.5%),\n      radial-gradient(circle at 85% 73%,rgba(245,200,91,.24) 0 2.6%,transparent 3.1%);\n  }\n  .tile.merchant.traversed::before{display:none}''',
               'full-tile traversal footprint CSS')
 
-          # Movement regression: cross a Merchant while travelling four spaces.
           replace_once(Path('tools/test_board_movement.js'),
               '''  devilTiles[5]={type:"devilboss",cleared:false};''',
               '''  devilTiles[3]={type:"merchant",cleared:false};\n  devilTiles[5]={type:"devilboss",cleared:false};''',
@@ -90,8 +80,6 @@ jobs:
               '''assert.ok(!monolith.includes("await dbRun.move("),"road-dice gameplay must not move directly from dicebound.js");\nassert.equal((monolith.match(/dbBoardPresentation\\.tileClassName\\(/g)||[]).length,2,"board construction and focused refresh must share Board Presentation tile-class ownership");\nassert.ok(monolith.includes("dbBoardPresentation.applyTileState("),"board highlight refresh must delegate traversed/current/cleared state to Board Presentation");\nassert.ok(!monolith.includes('el.className=`tile ${tile.type}'),"raw tile-class construction must not return to dicebound.js");''',
               'movement anti-return presentation ownership')
 
-          # Presentation regression: persisted traversal is semantic, Merchant is an
-          # explicit exception, and class application is deterministic.
           replace_once(Path('tools/test_board_presentation_oracle.js'),
               '''assert.ok(presentation?.configure&&presentation?.tileMeta,"Board presentation owner must expose configure() and tileMeta().");''',
               '''assert.ok(presentation?.configure&&presentation?.tileMeta&&presentation?.tileClassName&&presentation?.applyTileState,"Board presentation owner must expose metadata and semantic tile-state presentation.");''',
@@ -101,8 +89,6 @@ jobs:
               '''assert.equal(presentation.tileMeta({type:"mystery"},{ready:true}),undefined);\n\nassert.equal(presentation.tileClassName({type:"empty",cleared:true,traversed:true},{current:true}),"tile empty cleared traversed current");\nassert.equal(presentation.tileClassName({type:"merchant",cleared:true,traversed:true}),"tile merchant cleared","Merchant must never render a traversal footprint even from stale/corrupt state");\nassert.equal(presentation.isTraversed({type:"empty",traversed:true}),true);\nassert.equal(presentation.isTraversed({type:"merchant",traversed:true}),false);\nconst semanticClasses=new Map();\nconst semanticEl={classList:{toggle:(name,enabled)=>semanticClasses.set(name,!!enabled)}};\npresentation.applyTileState(semanticEl,{type:"empty",cleared:false,traversed:true},{current:false});\nassert.deepEqual(Object.fromEntries(semanticClasses),{current:false,cleared:false,traversed:true});''',
               'presentation traversal assertions')
 
-          # Checkpoint state already clones whole tile records; freeze traversal history
-          # explicitly so resume/reload cannot silently lose it.
           replace_once(Path('tools/test_run_checkpoint.js'),
               '''tiles:[{type:"start",cleared:true},{type:"empty",cleared:true}],boardLevel:2''',
               '''tiles:[{type:"start",cleared:true},{type:"empty",cleared:true,traversed:true}],boardLevel:2''',
