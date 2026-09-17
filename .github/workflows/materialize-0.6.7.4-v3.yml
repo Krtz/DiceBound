@@ -50,11 +50,44 @@ jobs:
           node tools/test_run_checkpoint.js
           python tools/test_canonical_tile_meta.py
           python tools/validate_runtime_architecture.py
-      - name: Commit exact materialized patch
+      - name: Publish exact validated commit object
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add runtime tools wrapper-source
           git commit -m 'Beta 0.6.7.4: add traversal footprints'
-          git push origin HEAD:feature/0.6.7.4-board-traversal-footprints
+          python - <<'PY'
+          import base64, json, os, subprocess, urllib.request
+
+          repo=os.environ['GITHUB_REPOSITORY']
+          token=os.environ['GITHUB_TOKEN']
+          parent=os.environ['GITHUB_SHA']
+          api='https://api.github.com/repos/'+repo
+
+          def post(path,payload):
+              req=urllib.request.Request(api+path,data=json.dumps(payload).encode(),method='POST',headers={
+                  'Authorization':'Bearer '+token,
+                  'Accept':'application/vnd.github+json',
+                  'X-GitHub-Api-Version':'2022-11-28',
+                  'Content-Type':'application/json',
+              })
+              with urllib.request.urlopen(req) as r:
+                  return json.loads(r.read().decode())
+
+          changed=subprocess.check_output(['git','diff','--name-only',parent,'HEAD'],text=True).splitlines()
+          entries=[]
+          for path in changed:
+              raw=subprocess.check_output(['git','show',f'HEAD:{path}'])
+              blob=post('/git/blobs',{'content':base64.b64encode(raw).decode(),'encoding':'base64'})
+              mode=subprocess.check_output(['git','ls-tree','HEAD',path],text=True).split()[0]
+              entries.append({'path':path,'mode':mode,'type':'blob','sha':blob['sha']})
+          base_tree=subprocess.check_output(['git','rev-parse',parent+'^{tree}'],text=True).strip()
+          tree=post('/git/trees',{'base_tree':base_tree,'tree':entries})
+          commit=post('/git/commits',{'message':'Beta 0.6.7.4: add traversal footprints','tree':tree['sha'],'parents':[parent]})
+          print('MATERIALIZED_SERVER_COMMIT='+commit['sha'])
+          print('MATERIALIZED_SERVER_TREE='+tree['sha'])
+          print('MATERIALIZED_CHANGED_FILES='+str(len(changed)))
+          PY
