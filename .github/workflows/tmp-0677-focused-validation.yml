@@ -1,11 +1,12 @@
-name: Temporary 0.6.7.7 focused validation
+name: Temporary 0.6.7.7 full source validation
 on:
   push:
     branches:
       - feature/0.6.7.7-luck-combat-feel
 jobs:
-  focused:
+  full-source:
     runs-on: windows-2022
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,21 +22,27 @@ jobs:
             node --check $_.FullName
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-      - name: Luck rarity slice
+      - name: Complete JavaScript suite
         shell: pwsh
         run: |
-          node tools/test_static_registries.js
-          node tools/test_luck_rarity_policy.js
-          node tools/test_loot_module.js
-          node tools/test_powerups_facade.js
-      - name: Combat presentation slice
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object {
+            Write-Host "=== $($_.Name) ==="
+            node $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Complete Python suite
         shell: pwsh
         run: |
-          node tools/test_combat_presentation.js
-          node tools/test_combat_view_facade.js
-          node tools/test_combat_turn_resolution.js
-          node tools/test_combat_strike_resolution.js
-      - name: Architecture
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object {
+            Write-Host "=== $($_.Name) ==="
+            python $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Architecture and assets
         shell: pwsh
         run: |
           python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
