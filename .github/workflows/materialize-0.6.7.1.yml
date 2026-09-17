@@ -1,0 +1,35 @@
+name: Materialize 0.6.7.1 runtime metadata
+
+on:
+  push:
+    branches:
+      - fix/0.6.7.1-combat-backgrounds
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/0.6.7.1-combat-backgrounds
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Materialize authoritative runtime metadata and remove helper
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.7.1 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.7.1 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add runtime/build-info.json runtime/build-manifest.json
+          git rm .github/workflows/materialize-0.6.7.1.yml
+          git commit -m 'build: materialize Beta 0.6.7.1 runtime metadata'
+          git push origin HEAD:fix/0.6.7.1-combat-backgrounds
