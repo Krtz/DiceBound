@@ -1,0 +1,41 @@
+name: Temporary 0.6.7.7 focused validation
+on:
+  push:
+    branches:
+      - feature/0.6.7.7-luck-combat-feel
+jobs:
+  focused:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object {
+            node --check $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - name: Luck rarity slice
+        shell: pwsh
+        run: |
+          node tools/test_static_registries.js
+          node tools/test_luck_rarity_policy.js
+          node tools/test_loot_module.js
+          node tools/test_powerups_facade.js
+      - name: Combat presentation slice
+        shell: pwsh
+        run: |
+          node tools/test_combat_presentation.js
+          node tools/test_combat_view_facade.js
+          node tools/test_combat_turn_resolution.js
+          node tools/test_combat_strike_resolution.js
+      - name: Architecture
+        shell: pwsh
+        run: |
+          python tools/validate_runtime_architecture.py
