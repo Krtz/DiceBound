@@ -162,7 +162,7 @@
   if(!DB_EFFECTIVE_STATS)throw new Error("DiceboundEffectiveStats must load before dicebound.js");
   const DB_POWERUP_SERVICES=dbRuntime.createPowerupServices({
     run:{getPlayer:()=>player},
-    economy:{goldReward:amount=>modifiedGold(amount),isNightmare:()=>nightmareMode},
+    economy:{goldReward:amount=>modifiedGold(amount),goldBaseFor:(source,level,multiplier)=>window.DiceboundEventRewards.goldBaseFor(source,level,multiplier),isNightmare:()=>nightmareMode},
     combat:{heal:amount=>dbCombat.heal(amount)},
     rules:{clamp:(value,min,max)=>clamp(value,min,max)},
     content:{elementIds:DIBO_ELEMENTS},

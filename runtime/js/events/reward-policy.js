@@ -12,18 +12,6 @@
 
   // Beta 0.6.4.3/0.6.4.4 browser presentation adapters. Gameplay ownership
   // stays in the extracted domain modules / compatibility runtime.
-  function bridgeHeavyPurse(){
-    if(Object.prototype.hasOwnProperty.call(window,"DiceboundPowerupRegistry"))return;
-    Object.defineProperty(window,"DiceboundPowerupRegistry",{configurable:true,enumerable:true,get(){return undefined;},set(value){
-      const base=value,wrapped=Object.freeze({...base,createRegistry(services){
-        const list=base.createRegistry(services),purse=list.find(x=>x?.id==="purse");
-        if(purse){const player=services.run.player,pay=services.economy.goldReward,raw=()=>goldBaseFor("heavyPurse",player.level);Object.defineProperty(purse,"desc",{configurable:true,enumerable:true,get(){return `Gain ${pay(raw())} gold now. Scales with Adventurer Level and Gold modifiers.`;}});purse.apply=()=>{player.gold+=pay(raw());};}
-        return list;
-      }});
-      Object.defineProperty(window,"DiceboundPowerupRegistry",{configurable:true,enumerable:true,writable:true,value:wrapped});
-    }});
-  }
-
   function installBrowserPolish(){
     if(document.getElementById("db0643-hotfix-style"))return;
     const style=document.createElement("style");style.id="db0643-hotfix-style";style.textContent=`
@@ -60,5 +48,5 @@
     const observer=new MutationObserver(enhance);observer.observe(document.body,{childList:true,subtree:true});enhance();window.DiceboundLunchHotfixTest=Object.freeze({parse,statDelta,enhance,compareLoot,heavyPurseBase:level=>goldBaseFor("heavyPurse",level)});
   }
 
-  bridgeHeavyPurse();if(typeof document!=="undefined")setTimeout(installBrowserPolish,0);
+  if(typeof document!=="undefined")setTimeout(installBrowserPolish,0);
 })();

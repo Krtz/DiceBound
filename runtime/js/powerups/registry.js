@@ -6,6 +6,7 @@
     for (const [value, label] of [
       [services.run?.player, "run.player"],
       [services.economy?.goldReward, "economy.goldReward"],
+      [services.economy?.goldBaseFor, "economy.goldBaseFor"],
       [services.economy?.isNightmare, "economy.isNightmare"],
       [services.combat?.heal, "combat.heal"],
       [services.rules?.clamp, "rules.clamp"],
@@ -25,6 +26,7 @@
     const services = requireServices(runtimeServices);
     const player = services.run.player;
     const modifiedGold = services.economy.goldReward;
+    const goldBaseFor = services.economy.goldBaseFor;
     const healPlayer = services.combat.heal;
     const clamp = services.rules.clamp;
     const DIBO_ELEMENTS = services.content.elementIds;
@@ -82,8 +84,8 @@
       "rarity": "poor",
       "icon": "🪙",
       "name": "Heavy Purse",
-      get desc(){const total=modifiedGold(100),bonus=Math.round((player.goldBonus||0)*100);return `Gain ${total} gold now (100 base${bonus?`, ${bonus}% Gold bonus`:''}${services.economy.isNightmare()?', Nightmare reward reduction included':''}).`;},
-      "apply": function(){player.gold+=modifiedGold(100);},
+      get desc(){const base=goldBaseFor("heavyPurse",player.level),total=modifiedGold(base),bonus=Math.round((player.goldBonus||0)*100);return `Gain ${total} gold now (${base} base at Adventurer Level ${Math.max(1,Math.floor(Number(player.level)||1))}${bonus?`, ${bonus}% Gold bonus`:''}${services.economy.isNightmare()?', Nightmare reward reduction included':''}).`;},
+      "apply": function(){player.gold+=modifiedGold(goldBaseFor("heavyPurse",player.level));},
       "tags": [
         "wealth"
       ],

@@ -32,6 +32,7 @@
     if (!ports || typeof ports !== "object") throw new TypeError("powerup service ports are required");
     const getPlayer = requireFunction(ports.run?.getPlayer, "run.getPlayer");
     const goldReward = requireFunction(ports.economy?.goldReward, "economy.goldReward");
+    const goldBaseFor = requireFunction(ports.economy?.goldBaseFor, "economy.goldBaseFor");
     const isNightmare = requireFunction(ports.economy?.isNightmare, "economy.isNightmare");
     const heal = requireFunction(ports.combat?.heal, "combat.heal");
     const clamp = requireFunction(ports.rules?.clamp, "rules.clamp");
@@ -43,7 +44,7 @@
     return Object.freeze({
       apiVersion: 1,
       run: Object.freeze({ player: createLivePlayerPort(getPlayer) }),
-      economy: Object.freeze({ goldReward, isNightmare }),
+      economy: Object.freeze({ goldReward, goldBaseFor, isNightmare }),
       combat: Object.freeze({ heal }),
       rules: Object.freeze({ clamp }),
       content: Object.freeze({ elementIds }),
