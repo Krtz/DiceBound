@@ -1,0 +1,19 @@
+name: TEMP 0.6.7.3 Run Dice validation
+
+on:
+  push:
+    branches:
+      - fix/0.6.7.3-double-dice-roll-lock
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Run Dice owner
+        run: |
+          node --check runtime/js/run/dice.js
+          node tools/test_run_dice.js
