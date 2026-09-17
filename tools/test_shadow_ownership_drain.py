@@ -86,10 +86,10 @@ ultimate_retired = [
 ]
 for symbol in ultimate_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Ultimate-resolution owner returned: {symbol}"
-assert mono.count('async function useUltimate(') == 1, 'useUltimate must have exactly one thin compatibility adapter'
+assert mono.count('async function useUltimate(') == 0, 'retired useUltimate compatibility adapter returned'
 assert not re.search(r'(?m)^\s*useUltimate\s*=', mono), 'useUltimate reassignment chain must not return'
 assert "dbCombatUltimateResolution=dbCombatUltimateOwner.configure({" in mono, 'combat Ultimate-resolution owner is not configured by the composition root'
-assert "return dbCombat.ultimate(...args);" in mono, 'Combat facade Ultimate adapter is missing'
+assert 'dbCombat.ultimate(' in mono, 'Ultimate callers no longer route through the Combat facade'
 
 
 guard_retired = [
@@ -235,9 +235,10 @@ print('Monolith spring-clean guard PASS')
 merchant_mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
 merchant_owner=(root/'runtime/js/ui/merchant.js').read_text(encoding='utf-8')
 merchant_facade=(root/'runtime/js/events/merchant-facade.js').read_text(encoding='utf-8')
-assert len(re.findall(r'\bfunction\s+renderMerchant\s*\(',merchant_mono))==1, 'Merchant rendering must retain exactly one compatibility adapter'
+assert not re.search(r'\bfunction\s+renderMerchant\s*\(',merchant_mono), 'retired Merchant render compatibility adapter returned'
 assert not re.search(r'\brenderMerchant\s*=\s*function\b',merchant_mono), 'Merchant renderer replacement stack returned to monolith'
-assert 'dbMerchant.render()' in merchant_mono, 'Merchant compatibility adapter no longer delegates to DiceboundMerchant'
+assert not re.search(r'(?<![\w$])renderMerchant\s*\(',merchant_mono), 'Merchant render callers must stay behind DiceboundMerchant'
+assert 'openMerchant:()=>dbMerchant.open()' in merchant_mono, 'Merchant tile handoff no longer routes directly through DiceboundMerchant'
 assert not re.search(r'window\.DiceboundMerchant(?:Ui|Stock|Transaction)(?!Test)', merchant_mono), 'ordinary monolith must not coordinate Merchant peers directly'
 assert 'DiceboundMerchantUi' in merchant_owner and 'createController' in merchant_owner, 'Merchant UI owner missing'
 assert 'window.DiceboundMerchant=api' in merchant_facade and 'stockOwner.createController' in merchant_facade and 'uiOwner.createController' in merchant_facade, 'Merchant facade ownership missing'
