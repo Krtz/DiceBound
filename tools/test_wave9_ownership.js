@@ -74,7 +74,7 @@ function testThroneOfVenom(){
   const services={
     apiVersion:1,
     run:{player},
-    economy:{goldReward:n=>n,isNightmare:()=>false},
+    economy:{goldReward:n=>n,goldBaseFor:(source,level,multiplier)=>Math.round((50+20*Math.max(1,Number(level)||1))*(multiplier??(source==="heavyPurse"?.7:1))),isNightmare:()=>false},
     combat:{heal:n=>n},
     rules:{clamp:(v,min,max)=>Math.max(min,Math.min(max,v))},
     signatures:{applyCurrent:()=>{},describeCurrent:()=>""},

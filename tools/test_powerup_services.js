@@ -11,6 +11,7 @@ const read = (relative) => fs.readFileSync(path.join(runtime, relative), "utf8")
 const window = {};
 const context = vm.createContext({ window, console, Proxy, Reflect, Object, Array, Math, TypeError });
 window.window = window;
+vm.runInContext(read("events/reward-policy.js"), context, { filename: "events/reward-policy.js" });
 vm.runInContext(read("core/runtime-services.js"), context, { filename: "core/runtime-services.js" });
 vm.runInContext(read("powerups/registry.js"), context, { filename: "powerups/registry.js" });
 
@@ -18,6 +19,7 @@ assert.ok(Object.isFrozen(window.DiceboundRuntimeServices));
 assert.ok(Object.isFrozen(window.DiceboundPowerupRegistry));
 
 const freshPlayer = () => ({
+  level: 1,
   attack: 10,
   defense: 5,
   maxHp: 100,
@@ -37,6 +39,7 @@ const services = window.DiceboundRuntimeServices.createPowerupServices({
   run: { getPlayer: () => activePlayer },
   economy: {
     goldReward: (amount) => Math.round(amount * (1 + activePlayer.goldBonus)),
+    goldBaseFor: (source, level, multiplier) => window.DiceboundEventRewards.goldBaseFor(source, level, multiplier),
     isNightmare: () => nightmare,
   },
   combat: { heal: (amount) => { healed += amount; activePlayer.hp = Math.min(activePlayer.maxHp, activePlayer.hp + amount); return amount; } },
@@ -70,15 +73,16 @@ assert.equal(activePlayer.attack, 11, "live player port did not follow reset/rep
 assert.equal(firstPlayer.attack, 11, "stale player object was mutated after replacement");
 
 const purse = registry.find((powerup) => powerup.id === "purse");
-assert.match(purse.desc, /Gain 150 gold now/);
+assert.match(purse.desc, /Gain 74 gold now \(49 base at Adventurer Level 1, 50% Gold bonus\)/);
 nightmare = true;
 assert.match(purse.desc, /Nightmare reward reduction included/);
 purse.apply();
-assert.equal(activePlayer.gold, 150);
+assert.equal(activePlayer.gold, 74);
+activePlayer.level = 10;
 activePlayer.goldBonus = 0.8;
-assert.match(purse.desc, /Gain 180 gold now/, "description did not recompute the modified reward");
+assert.match(purse.desc, /Gain 315 gold now \(175 base at Adventurer Level 10, 80% Gold bonus/);
 purse.apply();
-assert.equal(activePlayer.gold, 330, "mechanic did not consume the same modified reward shown by the description");
+assert.equal(activePlayer.gold, 389, "mechanic did not consume the same level-scaled modified reward shown by the description");
 
 const mending = registry.find((powerup) => powerup.id === "mending");
 mending.apply();
@@ -124,7 +128,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "e02166a4df15aa1d0a7ff1ff564ce5996d9cef5a870ec508dedd7b1e3f829a8e";
+const expectedDigest = "f0905e25117c8d11112e18204d177b64e5ab7f0a22bf73580cf079d287779fe8";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {
@@ -134,5 +138,6 @@ for (const invalid of [{}, { apiVersion: 1 }]) {
 const moduleSource = read("powerups/registry.js");
 assert.doesNotMatch(moduleSource, /window\.DiceboundPerfectedSignature/);
 assert.doesNotMatch(moduleSource, /\bnightmareMode\b/);
+assert.doesNotMatch(moduleSource, /modifiedGold\(100\)/, "Heavy Purse must not regress to the flat 100-gold implementation");
 
 console.log(`Powerup service extraction PASS: 208 exact entries, live reset-safe state, six explicit capabilities, digest ${digest}`);
