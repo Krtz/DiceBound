@@ -38,6 +38,9 @@ async function clickChoice(h,value){await tick();const b=h.nodes.diceChoiceGrid.
   for(const pattern of [/function\s+rollDice\s*\(/,/function\s+chooseDieResult\s*\(/,/pendingDiceChoiceResolve/,/const\s+diceFaces\s*=/,/addEventListener\(\"click\",rollDice\)/,/\{rollDice,applyUpgrade/])assert.doesNotMatch(MONOLITH,pattern,`road-dice implementation returned to dicebound.js: ${pattern}`);
   assert.match(MONOLITH,/dbRunDice\.bindPrimaryButton\(\)/,"composition must bind the canonical primary dice owner");
   assert.match(MONOLITH,/dbRunDice\.handleRoadKeydown\(e\)/,"keyboard road rolling must delegate to the canonical dice owner");
+  const configuredAt=MONOLITH.indexOf("dbRunDice.configure({"),firstBootstrapHud=MONOLITH.indexOf('dbRun.generateBoard();buildBoard();window.DiceboundClassChooser.render();renderEquipment();updateHUD();updateMetaUI();');
+  assert.ok(configuredAt>=0&&firstBootstrapHud>=0&&configuredAt<firstBootstrapHud,"Run Dice must be configured before the first bootstrap HUD refresh");
+  assert.equal((MONOLITH.match(/dbRunDice\.configure\(\{/g)||[]).length,1,"Run Dice must have exactly one composition/configuration boundary");
   assert.equal((MONOLITH.match(/dbRunDice\.ensureButton\(\)/g)||[]).length,1,"road-dice button initialization must have one canonical composition call");
   console.log("Run Dice owner PASS: canonical 1d6 + 2d6, Fate, Long Stride, Titanstep, tracing and failure recovery");
 })().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
