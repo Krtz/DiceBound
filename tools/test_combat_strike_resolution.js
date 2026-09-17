@@ -30,7 +30,7 @@ function makeHarness(options={}){
   const enemies=options.enemies||[{name:"Dummy",hp:100,maxHp:100,defense:0,dodge:0,affinity:null,poisonStacks:0,rangerMarks:0,weakness:"fire"}];
   const active=id=>player.classId===id;
   const randomValues=[...(options.randomValues||[])];
-  let randomIndex=0,fastCap=options.fastCap||0,v26Fast=!!options.v26Fast;
+  let randomIndex=0;
   const random=()=>{
     const value=randomValues.length?randomValues.shift():(options.randomDefault??.99);
     randomIndex++;calls.push(["random",value]);return value;
@@ -67,7 +67,7 @@ function makeHarness(options={}){
       let raw=amount;if(player._ninjaExecution){raw*=1.65;ignoreDefense=true;}
       const dealt=Math.min(enemy.hp,Math.max(0,Math.round(raw)));enemy.hp-=dealt;calls.push(["damage",enemy.name,dealt,!!ignoreDefense,!!player._ninjaExecution]);return dealt;
     },
-    animateClassAttack:async mode=>{calls.push(["animate",mode]);},
+    animateClassAttack:async (mode,attackOptions={})=>{calls.push(["animate",mode,attackOptions.echoIndex||0]);},
     playElementAnimation:(key,target)=>{calls.push(["element-animation",key,target?.name]);},
     addCombatHistory:text=>{calls.push(["history",text]);},
     updateCombatUI:()=>{calls.push(["ui"]);},
@@ -80,7 +80,7 @@ function makeHarness(options={}){
     presentationTargetSnapshot:()=>({selected:options.presentationTarget||"Dummy"}),
     emitStrike:result=>{events.push({...result,presentationTarget:{...result.presentationTarget}});calls.push(["emit",result.targetName,result.dealt]);},
     renderStrike:result=>{calls.push(["render",result.targetName,result.dealt]);},
-    delay:async ms=>{calls.push(["delay",ms,"cap",fastCap,"v26",v26Fast]);},
+    delay:async ms=>{calls.push(["delay",ms]);},
     chargeUltimate:amount=>{player.ultimateCharge=Math.min(100,player.ultimateCharge+amount);calls.push(["charge",amount]);},
     hasDevilsHorns:()=>!!options.devilsHorns,
     hasLegendaryEffect:id=>legendary.has(id),
@@ -94,14 +94,10 @@ function makeHarness(options={}){
       }else if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}
     },
     syncOuroborosEconomy:()=>{calls.push(["ouro-sync-economy",player.attack,player.doubleStrike]);if(typeof options.syncOuroborosEconomy==="function")options.syncOuroborosEconomy(player);},
-    getFastEchoCap:()=>fastCap,
-    setFastEchoCap:value=>{fastCap=value;calls.push(["fast-cap",value]);},
-    getV26FastEcho:()=>v26Fast,
-    setV26FastEcho:value=>{v26Fast=!!value;calls.push(["v26-fast",!!value]);},
     getElementKeys:()=>["fire","ice","electric","nature","light","void","donut","tech","metal","coffee"]
   };
   strikes.configure(runtime);
-  return {player,enemies,calls,events,living,randomIndex:()=>randomIndex,fastCap:()=>fastCap,v26Fast:()=>v26Fast,runtime};
+  return {player,enemies,calls,events,living,randomIndex:()=>randomIndex,runtime};
 }
 
 (async()=>{
@@ -120,6 +116,8 @@ function makeHarness(options={}){
     assert.equal(result.critTiers,0,"Echo canCrit:false must still suppress Crit tiers");
     assert.equal(result.dealt,14,"historical wrapper argument loss must retain criticalEchoBonus damage scaling on non-critical Echoes");
     assert.equal(h.randomIndex(),2);
+    assert.deepEqual(h.calls.filter(c=>c[0]==="animate"),[["animate","echo",1]],"Echo ordinal must be forwarded to canonical presentation");
+    assert.deepEqual(h.calls.filter(c=>c[0]==="delay"),[],"successful Echoes must not add the old global-cap settle delay");
   }
   {
     const target={name:"Quarry",hp:500,maxHp:500,defense:0,dodge:0,affinity:null,poisonStacks:0,rangerMarks:2,weakness:"fire"};
@@ -197,15 +195,12 @@ function makeHarness(options={}){
     assert.equal(h.player.hp,60);
   }
   {
-    const h=makeHarness({classId:"ouroboros",player:{attack:20,doubleStrike:12},fastCap:7,randomValues:[.9,.3]});
+    const h=makeHarness({classId:"ouroboros",player:{attack:20,doubleStrike:12},randomValues:[.9,.3]});
     await strikes.performStrike(h.enemies[0]);
-    assert.equal(h.fastCap(),7,"Ouroboros fast-Echo cap must restore after the strike");
-    assert.equal(h.v26Fast(),false,"retired V26 fast-Echo flag must remain untouched");
     assert.equal(h.player.attack,10,"V26 Ouroboros strike wrapper must retain its historical attack reset");
     assert.equal(h.player.doubleStrike,13,"Ouroboros attack currency conversion must preserve the existing 10% Echo conversion");
-    assert.deepEqual(h.calls.filter(c=>c[0]==="fast-cap").map(c=>c[1]),[20,7],"Wave 10 universal Echo timing must cap 12x Echo at 20ms and then restore the previous cap");
-    assert.deepEqual(h.calls.filter(c=>c[0]==="v26-fast").map(c=>c[1]),[],"retired V26 fast-Echo flag must not be toggled");
-    const coreDelay=h.calls.find(c=>c[0]==="delay"&&c[1]===460);assert.equal(coreDelay[3],20);assert.equal(coreDelay[5],false);
+    assert.deepEqual(h.calls.filter(c=>c[0]==="delay").map(c=>c[1]),[460],"high stored Echo must no longer globally accelerate the ordinary/base strike cadence");
+    assert.deepEqual(h.calls.filter(c=>c[0]==="animate"),[["animate","normal",0]]);
   }
   {
     const h=makeHarness({classId:"sorcerer",player:{classBurst:1},legendary:["twin_surge"],randomValues:[.9,.3,.1]});
@@ -236,7 +231,7 @@ function makeHarness(options={}){
     assert.ok(h.calls.some(c=>c[0]==="reconcile"&&c[2]==="strike"));
   }
 
-  console.log("Combat strike-resolution owner PASS: base/Echo damage, Crit tiers, Marks, Counter/Shell, Smoke, Poison, Dodge, Horns, Ouroboros, universal Echo timing, lifesteal and Legendary ordering are deterministic");
+  console.log("Combat strike-resolution owner PASS: base/Echo damage, Crit tiers, Marks, Counter/Shell, Smoke, Poison, Dodge, Horns, Ouroboros, explicit Echo presentation handoff, lifesteal and Legendary ordering are deterministic");
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
@@ -262,3 +257,5 @@ assert.equal((monolith.match(/(?:async\s+)?function strikeBaseDamage\(/g)||[]).l
 assert.equal((monolith.match(/async function performStrike\(/g)||[]).length,0,"call-only performStrike adapter must stay retired");
 assert.doesNotMatch(monolith,/^\s*strikeBaseDamage\s*=\s*function/m,"strikeBaseDamage reassignment ladder must be gone");
 assert.doesNotMatch(monolith,/^\s*performStrike\s*=\s*async function/m,"performStrike reassignment ladder must be gone");
+assert.doesNotMatch(source,/getFastEchoCap|setFastEchoCap|echoDelayCap|speedAdjustedStrike/,"retired global Echo speed-cap ownership must stay gone from strike resolution");
+assert.doesNotMatch(monolith,/__DB_FAST_ECHO_CAP__|getFastEchoCap|setFastEchoCap/,"global Echo timing must not return to composition");
