@@ -98,12 +98,12 @@ guard_retired = [
 ]
 for symbol in guard_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Guard-resolution owner returned: {symbol}"
-assert mono.count('async function guardAction(') == 1, 'guardAction must have exactly one thin compatibility adapter'
+assert mono.count('async function guardAction(') == 0, 'retired guardAction compatibility adapter returned'
 assert mono.count('async function identityGuardAction(') == 1, 'identityGuardAction must have exactly one thin traced compatibility adapter'
 assert not re.search(r'(?m)^  guardAction\s*=', mono), 'top-level guardAction reassignment chain must not return'
 assert not re.search(r'(?m)^  identityGuardAction\s*=', mono), 'identityGuardAction reassignment chain must not return'
 assert "dbCombatGuardResolution=dbCombatGuardOwner.configure({" in mono, 'combat Guard-resolution owner is not configured by the composition root'
-assert "return dbCombat.guard(...args);" in mono, 'Combat facade Guard adapter is missing'
+assert 'dbCombat.guard(' in mono, 'Guard callers no longer route directly through the Combat facade'
 assert "dbCombat.identityGuard" in mono, 'Combat facade identity Guard adapter is missing'
 
 
