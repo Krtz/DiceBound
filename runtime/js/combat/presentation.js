@@ -12,7 +12,7 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat presentation runtime is required.");
     const required = [
-      "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt",
+      "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect",
       "activeTrainerPetId","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","clamp"
@@ -21,6 +21,40 @@
     if (!nextRuntime.document || typeof nextRuntime.document.createElement !== "function") throw new Error("Combat presentation runtime missing document.");
     runtime = nextRuntime;
     return api;
+  }
+
+  function ensureCombatBackgroundStyle() {
+    const rt = requireRuntime(), doc = rt.document;
+    const existing = typeof doc.getElementById === "function" ? doc.getElementById("dicebound-combat-background-style") : null;
+    if (existing) return existing;
+    const style = doc.createElement("style");
+    style.id = "dicebound-combat-background-style";
+    style.textContent = `
+      #combatOverlay[data-combat-background]{isolation:isolate;overflow:hidden;background:#07101c!important}
+      #combatOverlay[data-combat-background]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--db-combat-background-image);background-size:cover;background-position:center;transform:scale(1.01)}
+      #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.22),rgba(4,9,19,.48))}
+      #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.55),rgba(7,14,28,.72))!important}
+    `;
+    doc.head?.appendChild(style);
+    return style;
+  }
+
+  function applyCombatBackground() {
+    const rt = requireRuntime(), state = rt.getState();
+    const board = Math.min(6, Math.max(1, Math.floor(Number(state.boardLevel) || 1)));
+    const mode = state.hellMode ? "hell" : state.nightmareMode ? "nightmare" : "normal";
+    const entry = rt.resolveCombatBackground(board, mode) || null;
+    const overlay = rt.find("combatOverlay");
+    ensureCombatBackgroundStyle();
+    if (!overlay) return entry;
+    if (entry?.image) {
+      overlay.dataset.combatBackground = `board-${board}-${mode}`;
+      overlay.style.setProperty("--db-combat-background-image", `url("${entry.image}")`);
+    } else {
+      delete overlay.dataset.combatBackground;
+      overlay.style.removeProperty("--db-combat-background-image");
+    }
+    return entry;
   }
 
   function statusDotsHTML(barriers = 0, poison = 0, affinity = null) {
@@ -354,6 +388,7 @@
   const api = Object.freeze({
     owner: "combat/presentation",
     configure,
+    applyCombatBackground,
     update,
     renderEnemyParty,
     renderBossSpecialIndicator,
