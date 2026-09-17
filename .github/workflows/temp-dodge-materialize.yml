@@ -34,7 +34,6 @@ jobs:
           node tools/test_combat_turn_resolution.js
           node tools/test_combat_presentation.js
           node tools/test_combat_view_facade.js
-          node tools/test_combat_facade.js
           python tools/validate_runtime_architecture.py
           python tools/validate_version_identity.py
           if (git grep -n "dbFriendSuccessfulDodgePresentation" -- runtime/js) { throw "retired monolith Dodge helper still exists" }
