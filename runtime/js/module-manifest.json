@@ -1175,7 +1175,7 @@
     {
       "id": "run-dice",
       "path": "js/run/dice.js",
-      "domain": "run/double-dice-control-and-roll-sequencing",
+      "domain": "run/road-dice-control-choice-and-roll-sequencing",
       "status": "extracted",
       "requires": [
         "run-facade"

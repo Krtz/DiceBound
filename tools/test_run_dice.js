@@ -6,6 +6,7 @@ const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
 const SOURCE=fs.readFileSync(path.join(__dirname,"..","runtime","js","run","dice.js"),"utf8");
+const MONOLITH=fs.readFileSync(path.join(__dirname,"..","runtime","js","dicebound.js"),"utf8");
 
 function tick(){return new Promise(resolve=>setImmediate(resolve));}
 function classList(){const set=new Set();return {add:(...v)=>v.forEach(x=>set.add(x)),remove:(...v)=>v.forEach(x=>set.delete(x)),contains:x=>set.has(x)};}
@@ -33,5 +34,8 @@ async function clickChoice(h,value){await tick();const b=h.nodes.diceChoiceGrid.
   {const h=harness({player:{hp:50,maxHp:100,ultimateCharge:95},randValues:[5,2],randomValues:[.99],mythicBoots:true});await h.api.rollTwo();assert.equal(h.player.hp,55);assert.equal(h.player.ultimateCharge,100);assert.ok(h.calls.toasts.includes("🥾 Titanstep!"));}
   {const h=harness({randValues:[2,2],randomValues:[.99]});h.api.configure({delay:async()=>{throw new Error("animation failed");}});await assert.rejects(h.api.rollTwo(),/animation failed/);assert.equal(h.nodes.dice.classList.contains("rolling"),false);assert.equal(h.locked(),false);assert.equal(h.calls.moves.length,0);}
   assert.doesNotMatch(SOURCE,/call\("random"\)\(\)/,"injected RNG result must never be invoked as a function");
+  for(const pattern of [/function\s+rollDice\s*\(/,/function\s+chooseDieResult\s*\(/,/pendingDiceChoiceResolve/,/const\s+diceFaces\s*=/,/addEventListener\(\"click\",rollDice\)/,/\{rollDice,applyUpgrade/])assert.doesNotMatch(MONOLITH,pattern,`road-dice implementation returned to dicebound.js: ${pattern}`);
+  assert.match(MONOLITH,/dbRunDice\.bindPrimaryButton\(\)/,"composition must bind the canonical primary dice owner");
+  assert.match(MONOLITH,/dbRunDice\.handleRoadKeydown\(e\)/,"keyboard road rolling must delegate to the canonical dice owner");
   console.log("Run Dice owner PASS: canonical 1d6 + 2d6, Fate, Long Stride, Titanstep, tracing and failure recovery");
 })().catch(error=>{console.error(error.stack||error);process.exitCode=1;});

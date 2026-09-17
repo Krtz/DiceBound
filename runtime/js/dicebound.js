@@ -281,7 +281,6 @@
   const DiceboundContentRegistry={version:3,classes:CLASSES,classUnlocks:CLASS_UNLOCK_REGISTRY,classTagVocabulary:window.DiceboundClasses.tagVocabulary,powerups:upgrades,powerupGates:POWERUP_GATE_REGISTRY,equipment:EQUIPMENT_REGISTRY,pets:PETS,enemies:{normal:enemyPool,special:ENEMY_REGISTRY},talents,achievements:ACHIEVEMENT_REGISTRY,boards:BOARD_REGISTRY,rarities:rarityInfo,classTags:CLASS_TAGS,classPassives:CLASS_PASSIVES,classMechanics:CLASS_MECHANICS_REGISTRY,mechanicTagVocabulary:MECHANIC_TAG_VOCABULARY,powerupMechanics:POWERUP_MECHANICS_REGISTRY,ultimateSupportMechanics:ULTIMATE_SUPPORT_MECHANICS,elementIds:ELEMENT_ID_VOCABULARY};
   window.DiceboundContent=DiceboundContentRegistry;
 
-  const diceFaces = ["⚀","⚁","⚂","⚃","⚄","⚅"];
   const $ = (id) => document.getElementById(id);
   const delay = (ms) => new Promise(resolve => { const cap=Number(window.__DB_FAST_ECHO_CAP__||0); setTimeout(resolve,cap>0?Math.min(ms,cap):ms); });
   const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
@@ -315,7 +314,6 @@
   let boardLevel = 1;
   let tileEls = [];
   let tiles = [];
-  let pendingDiceChoiceResolve = null;
   let nightmareMode = false;
 
   const DB_CORE_META=dbRuntime.createMetaService({classIds:Object.keys(CLASSES),petIds:Object.keys(PETS),elementIds:ELEMENT_KEYS,petUnlockRequirement:PET_UNLOCK_REQUIREMENT});
@@ -805,9 +803,6 @@
   function showToast(text,duration=1900,isUnlock=false){const value=String(text??''),procToast=Object.values(ELEMENTS).some(e=>value.startsWith(`${e.icon} ${e.spell}`))||/^☢️\s*-?\d+\s*DEF/.test(value);if(procToast)return;toastQueue.push({text,duration,isUnlock});if(!toastActive)showNextToast();}
   function showNextToast(){const t=$("toast"),entry=toastQueue.shift();if(!entry){toastActive=false;t.classList.remove("show","unlock-toast");return;}toastActive=true;t.textContent=entry.text;t.classList.toggle("unlock-toast",!!entry.isUnlock);t.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>{t.classList.remove("show");setTimeout(showNextToast,170);},entry.duration);}
 
-  function chooseDieResult(){
-    return new Promise(resolve=>{pendingDiceChoiceResolve=resolve;const grid=$("diceChoiceGrid");grid.innerHTML="";diceFaces.forEach((face,i)=>{const b=document.createElement("button");b.textContent=face;b.addEventListener("click",()=>{pendingDiceChoiceResolve=null;$("diceChoiceOverlay").classList.add("hidden");resolve(i+1);});grid.appendChild(b);});$("diceChoiceOverlay").classList.remove("hidden");});
-  }
   let dbReturnToRoadTraceReady=false,dbReturnToRoadSafetyReady=false,dbReturnToRoadStoneReady=false,dbReturnToRoadFriendReady=false;
 function returnToRoad(...args){
   if(dbReturnToRoadFriendReady){dbClasses.invokerResetCombat();dbFriendClearCombatPresentation();}
@@ -1072,10 +1067,7 @@ function returnToRoad(...args){
   }
   function updateHUD(){
     const cls=CLASSES[player.classId];$("heroAvatar").textContent=cls.icon;$("heroName").textContent=cls.name;$("pawn").textContent=cls.icon;$("combatPlayerIcon").textContent=cls.icon;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=dbPets.activeDefinition().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
-    const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;$("rollBtn").disabled=rollLocked||!gameStarted;$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;dbProgression.checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
-  }
-  async function rollDice(){
-    if(rollLocked||!gameStarted)return;ensureAudio();if(meta.debugAlwaysChooseRolls){rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<8;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(45+i*5);}const value=await chooseDieResult();die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;ensureAlphaMeta().rolls++;addLog(`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`);await dbRun.move(value,value,false,true);return;}if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();rollLocked=true;updateHUD();const die=$("dice");die.classList.add("rolling");for(let i=0;i<11;i++){die.textContent=pick(diceFaces);sfx.roll();await delay(55+i*6);}let value=rand(1,6),chosen=false;if(player.diceChoiceChance>0&&random()<player.diceChoiceChance){value=await chooseDieResult();chosen=true;showToast(`🎲 Fate chosen: ${value}`);}let bonus=0;if(!chosen&&random()<clamp(player.extraStepChance,0,.75))bonus=1;die.textContent=diceFaces[value-1];die.classList.remove("rolling");rolls++;let titanstep="";if(hasMythicPiece("boots")&&value>=5){const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));player.hp+=healed;player.ultimateCharge=clamp(player.ultimateCharge+10,0,100);titanstep=` Titanstep restores <b>${healed} HP</b> and grants <b>10 ultimate</b>.`;showToast("🥾 Titanstep!");}addLog(`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);await dbRun.move(value+bonus,value,bonus>0,chosen);
+    const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;window.DiceboundRunDice?.refreshControls?.();$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;dbProgression.checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
   }
   function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}
   function damageEnemy(enemy,amount,ignoreDefense=false){
@@ -1306,7 +1298,7 @@ function returnToRoad(...args){
 
   saveMeta();
 
-  $("startBtn").addEventListener("click",startNewGame);$("nightmareToggle").addEventListener("click",()=>{if(!meta.nightmareUnlocked)return;nightmareMode=!nightmareMode;window.DiceboundClassChooser.render();});$("rollBtn").addEventListener("click",rollDice);$("outsidePotionBtn").addEventListener("click",()=>dbConsumablesResolution.usePotionOutsideCombat());$("attackBtn").addEventListener("click",()=>dbCombat.attack());$("guardBtn").addEventListener("click",()=>dbCombat.guard());$("potionBtn").addEventListener("click",()=>dbConsumablesResolution.usePotion());$("ultimateBtn").addEventListener("click",()=>dbCombat.ultimate());
+  $("startBtn").addEventListener("click",startNewGame);$("nightmareToggle").addEventListener("click",()=>{if(!meta.nightmareUnlocked)return;nightmareMode=!nightmareMode;window.DiceboundClassChooser.render();});$("outsidePotionBtn").addEventListener("click",()=>dbConsumablesResolution.usePotionOutsideCombat());$("attackBtn").addEventListener("click",()=>dbCombat.attack());$("guardBtn").addEventListener("click",()=>dbCombat.guard());$("potionBtn").addEventListener("click",()=>dbConsumablesResolution.usePotion());$("ultimateBtn").addEventListener("click",()=>dbCombat.ultimate());
   $("equipLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const current=player.equipment[pendingLootItem.slot];if(current&&dbItems.score(pendingLootItem)<dbItems.score(current)&&!dbRuntime.platform.confirm(`${pendingLootItem.name} appears weaker overall than ${current.name}. Replace it anyway?`))return;dbItems.equip(pendingLootItem);closeLoot();});
   $("sellLootBtn").addEventListener("click",()=>{if(!pendingLootItem)return;const value=dbItems.sellValue(pendingLootItem);player.gold+=value;sfx.coin();addLog(`Sold <b>${pendingLootItem.name}</b> for ${value} gold.`);showToast(`+${value} gold`);updateHUD();closeLoot();});
 
@@ -1320,7 +1312,7 @@ function returnToRoad(...args){
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
 
   window.addEventListener("resize",()=>placePawn(false));
-  window.addEventListener("keydown",e=>{if((e.key===" "||e.key==="Enter")&&!rollLocked&&gameStarted&&!currentEnemy){e.preventDefault();rollDice();}});
+  window.addEventListener("keydown",e=>dbRunDice.handleRoadKeydown(e));
 
   dbRun.generateBoard();buildBoard();window.DiceboundClassChooser.render();renderEquipment();updateHUD();updateMetaUI();
 
@@ -1858,15 +1850,14 @@ function returnToRoad(...args){
   if(!dbRunDice?.configure)throw new Error("DiceBound requires the run/dice owner before dicebound.js");
   dbRunDice.configure({
     getDocument:()=>document,find:selector=>$(selector),getMeta:()=>meta,getPlayer:()=>player,
-    isRollLocked:()=>!!rollLocked,setRollLocked:value=>{rollLocked=!!value;},
-    isGameStarted:()=>!!gameStarted,ensureAudio:()=>ensureAudio(),updateHud:()=>updateHUD(),
-    diceFaces:()=>diceFaces,pick:list=>pick(list),rollSound:()=>sfx.roll(),delay:ms=>delay(ms),
-    rand:(min,max)=>rand(min,max),random:()=>random(),chooseDieResult:()=>chooseDieResult(),
+    isRollLocked:()=>!!rollLocked,setRollLocked:value=>{rollLocked=!!value;},isGameStarted:()=>!!gameStarted,hasCurrentEnemy:()=>!!currentEnemy,
+    ensureAudio:()=>ensureAudio(),resumeAudio:()=>{if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();},updateHud:()=>updateHUD(),
+    pick:list=>pick(list),rollSound:()=>sfx.roll(),delay:ms=>delay(ms),rand:(min,max)=>rand(min,max),random:()=>random(),
     clamp:(value,min,max)=>clamp(value,min,max),incrementRolls:()=>{rolls++;ensureAlphaMeta().rolls++;},
     hasMythicPiece:id=>hasMythicPiece(id),showToast:(...args)=>showToast(...args),addLog:html=>addLog(html),
-    move:(...args)=>dbRun.move(...args)
+    traceCommand:(name,fn)=>v25TraceCommand(name,fn,name==="rollDice"||name==="rollTwoDice"?"events":"detailed"),move:(...args)=>dbRun.move(...args)
   });
-  dbRunDice.ensureButton();
+  dbRunDice.bindPrimaryButton();dbRunDice.ensureButton();
   window.DiceboundCamp.configureShell({refreshDoubleDiceControls:()=>dbRunDice.refreshControls()});
 
   // ---- Board 6 -------------------------------------------------------------
@@ -2404,11 +2395,11 @@ function returnToRoad(...args){
     v25Log(level,'command',`${name}()`,{args:args.map(x=>typeof x==='object'?'[object]':x),before:v25State()});let result;try{result=fn.apply(thisArg,args);}catch(e){v25Log('errors','command',`${name} threw`,{error:String(e),state:v25State()});throw e;}if(result&&typeof result.then==='function')return result.then(v=>{v25Log('all','command',`${name}() complete`,v25State());return v;},e=>{v25Log('errors','command',`${name} rejected`,{error:String(e),state:v25State()});throw e;});v25Log('all','command',`${name}() complete`,v25State());return result;
   }
   function v25WrapCommand(name,level='detailed'){
-  const fn=({rollDice,applyUpgrade:(...args)=>dbPowerups.apply(...args),equipItem:(...args)=>dbItems.equip(...args)})[name];if(typeof fn!=='function')return;
+  const fn=({applyUpgrade:(...args)=>dbPowerups.apply(...args),equipItem:(...args)=>dbItems.equip(...args)})[name];if(typeof fn!=='function')return;
   const wrapped=function(...args){return v25TraceCommand(name,fn,level,args,this);};
-  if(name==='rollDice')rollDice=wrapped;else if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
+  if(name==='applyUpgrade')applyUpgrade=wrapped;else if(name==='equipItem')equipItem=wrapped;
 }
-['rollDice','applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,n==='rollDice'?'events':'detailed'));
+['applyUpgrade','equipItem'].forEach(n=>v25WrapCommand(n,'detailed'));
 dbReturnToRoadTraceReady=true;
 
   /* Final UI sync / tests -------------------------------------------------- */
@@ -3433,7 +3424,7 @@ dbReturnToRoadTraceReady=true;
       tiles=dbRunClone(run.tiles);boardLevel=Number(run.boardLevel)||1;selectedClassId=String(run.selectedClassId||player.classId||'ranger');nightmareMode=!!run.nightmareMode;hellMode=!!run.hellMode;
       rolls=Math.max(0,Number(run.rolls)||0);tilesMovedThisRun=Math.max(0,Number(run.tilesMovedThisRun)||0);runTalentSnapshot=dbRunClone(run.runTalentSnapshot);statsLastHp=run.statsLastHp??null;statsLastGold=run.statsLastGold??null;
       merchantFaceClicks=new Set(run.merchant?.faceClicks||[]);merchantFaceTotal=Math.max(0,Number(run.merchant?.faceTotal)||0);merchantBossPrimed=!!run.merchant?.bossPrimed;merchantBossDefeatedThisBoard=!!run.merchant?.bossDefeatedThisBoard;merchantBossBattle=false;
-      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;pendingDiceChoiceResolve=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
+      currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEncounterTurn=0;currentEnemyTile=null;currentMerchantItems=[];currentMerchantNotice='';pendingLevelUps=0;pendingLootItem=null;pendingLootCallback=null;dbRoadEvents.resetTransient();combatBusy=false;runFinalized=false;v16CombatKind=null;v19CompletingSixth=false;
       window.DiceboundRng.restore(checkpoint.rng);dbRunOwnedSeed=checkpoint.rng.seed;
       gameStarted=true;rollLocked=false;dbRunCloseOverlays();applyRunTheme();buildBoard();
       if($('log'))$('log').innerHTML=String(run.logHtml||'');
