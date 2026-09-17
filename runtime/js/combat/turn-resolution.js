@@ -148,14 +148,15 @@
       else if (special && enemy === lead) {
         const partialDR = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0)) * .55;
         if (enemy.bloodmageBoss || enemy.devilBoss) {
-          const pulses = enemy.devilBoss ? 3 : 2, totalMult = enemy.devilBoss ? .72 : .98; let total = 0;
+          const pulses = enemy.devilBoss ? 3 : 2, totalMult = enemy.devilBoss ? .72 : .98, specialPattern={id:"guardian-special",name:enemy.specialName||"Guardian special",hits:Array(pulses).fill(1)}; let total = 0;
           for (let i = 0; i < pulses; i += 1) {
-            if (rt.hasHeadphones() && roundState.hit) { messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName} pulse ${i + 1}.`); continue; }
+            if (rt.hasHeadphones() && roundState.hit) { await presentEnemyAttack(enemy,specialPattern,i+1,"cancelled",true); messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName} pulse ${i + 1}.`); continue; }
             const base = Math.max(1, enemy.attack * totalMult), rawBase = Math.max(1, Math.round(base * (1 - partialDR) - player.flatReduction * .35));
             let raw = guarded ? Math.max(0, Math.floor(rawBase * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9)))) : rawBase;
             if (rt.mythicalSetCount() >= 4) raw = Math.floor(raw * rt.guardianSpecialMultiplier());
             raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
             const hit = applyPlayerDamage(raw); if (hit.total > 0) roundState.hit = true; total += hit.total;
+            await presentEnemyAttack(enemy,specialPattern,i+1,guarded?"guarded":"hit",true);
             messages.push(`⚠️ ${enemy.specialName} pulse ${i + 1}/${pulses} pierces barriers for ${hit.total}${hit.shield ? ` (${hit.shield} Energy Shield)` : ""}.`);
             if (player.hp <= 0) break;
           }
@@ -163,14 +164,17 @@
             const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.floor(total * (enemy.devilBoss ? .12 : .22))));
             enemy.hp += heal; if (heal) messages.push(`${enemy.name} restores ${heal} HP.`);
           }
-        } else if (rt.hasHeadphones() && roundState.hit) messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName || "Guardian special"}.`);
-        else {
+        } else if (rt.hasHeadphones() && roundState.hit) {
+          await presentEnemyAttack(enemy,{id:"guardian-special",name:enemy.specialName||"Guardian special",hits:[1]},1,"cancelled",true);
+          messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName || "Guardian special"}.`);
+        } else {
           const base = Math.max(1, enemy.attack * (enemy.merchantBoss ? 2.6 : 2.25));
           let raw = Math.max(1, Math.round(base * (1 - partialDR) - player.flatReduction * .5));
           if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9))));
           if (rt.mythicalSetCount() >= 4) raw = Math.floor(raw * rt.guardianSpecialMultiplier());
           raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
           const hit = applyPlayerDamage(raw); if (hit.total > 0) roundState.hit = true;
+          await presentEnemyAttack(enemy,{id:"guardian-special",name:enemy.specialName||"Guardian special",hits:[1]},1,guarded?"guarded":"hit",true);
           messages.push(`⚠️ ${enemy.specialName || "Guardian special"} partially pierces Defense and ignores barriers${guarded ? ", but Guard reduces it further" : ""}, dealing ${hit.total}${hit.shield ? ` (${hit.shield} Energy Shield)` : ""}.`);
           if (enemy.merchantBoss) {
             const stolen = Math.min(player.gold, Math.ceil(player.gold * .20)); player.gold -= stolen; enemy.enemyBarrier = (enemy.enemyBarrier || 0) + 2;
@@ -263,11 +267,13 @@
     const notes = [];
     for (const wolf of livingEnemies().filter(enemy => /\bwolf\b/i.test(String(enemy?.name || "")) && !enemy.guardian)) {
       if (rt.random() >= chance) continue;
-      if (rt.random() < rt.effectiveDodgeChance()) { successfulDodge(notes, `🐺 ${wolf.name}'s Echo Strike is dodged.`); continue; }
-      if (player.combatShield > 0) { player.combatShield -= 1; notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`); continue; }
+      const echoPattern={id:"wolf-echo",name:"Echo Strike",hits:[1]};
+      if (rt.random() < rt.effectiveDodgeChance()) { const attackPresentation=presentEnemyAttack(wolf,echoPattern,1,"dodged");successfulDodge(notes, `🐺 ${wolf.name}'s Echo Strike is dodged.`);await attackPresentation;continue; }
+      if (player.combatShield > 0) { player.combatShield -= 1;await presentEnemyAttack(wolf,echoPattern,1,"blocked");notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`); continue; }
       const base = Math.max(1, wolf.attack + rt.rand(-1, 1)), raw = Math.max(1, Math.round(base * (1 - rt.defenseDamageReduction()) - player.flatReduction)), hit = applyPlayerDamage(raw);
       // Historical behavior records the wolf Echo once in applyPlayerDamage and once here. Preserve it during extraction.
       rt.recordDamageTaken(hit.total);
+      await presentEnemyAttack(wolf,echoPattern,1,"hit");
       notes.push(`🐺 ${wolf.name}'s Echo Strike hits for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
       if (player.thorns > 0 && hit.total > 0) { const returned = rt.damageEnemy(wolf, player.thorns, true); notes.push(`Spikes return ${returned}.`); }
       if (player.hp <= 0) break;
