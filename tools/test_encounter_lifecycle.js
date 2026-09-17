@@ -1,11 +1,16 @@
 const assert = require('assert');
 global.window = global;
+let backgroundEvents = null;
+global.DiceboundCombatPresentation = {
+  applyCombatBackground: () => backgroundEvents?.push('post:background')
+};
 require('../runtime/js/combat/encounter-lifecycle.js');
 const owner = global.DiceboundCombatEncounterLifecycle;
 assert(owner && owner.owner === 'combat/encounter-lifecycle');
 
 function fixture(opts={}) {
   const events=[];
+  backgroundEvents = events;
   const player=Object.assign({
     classId: opts.classId || 'ranger', firstHitBlocks:0, combatShield:0, ultimateCharge:0, gold:0,
     summonerAutoSpirit:false, summonerSpirits:['old'], db0511BurnStacks:9, db0511PoisonStacks:8, db0511PoisonPower:7,
@@ -41,7 +46,7 @@ function fixture(opts={}) {
     identityFlash:()=>events.push('identity'),addCombatHistory:text=>events.push(`history:${text}`),updateBossSpecialIndicator:()=>events.push('boss-indicator'),
     clearStoneBattle:()=>events.push('pre:stone'),restoreEnemyElementDebuffs:()=>events.push('pre:elements'),clearBattleLegendaryTemps:()=>events.push('pre:legendary'),
     traceCoreStart:(kind,work)=>{events.push('trace:before');const out=work();events.push('trace:after');return out;},
-    applyCombatBackground:()=>events.push('post:background'),syncBattleLog:()=>events.push('post:battlelog'),clearCombatPresentation:()=>events.push('pre:presentation'),refreshActivePetArt:()=>events.push('post:petart')
+    syncBattleLog:()=>events.push('post:battlelog'),clearCombatPresentation:()=>events.push('pre:presentation'),refreshActivePetArt:()=>events.push('post:petart')
   };
   owner.configure(rt);
   return {rt,player,meta,tile,events,start:k=>owner.start(k),state:()=>state,title:()=>title,subtitle:()=>subtitle,kind:()=>combatKind,merchant:()=>merchantBossBattle,scaleCount:()=>scaleCount};
@@ -51,6 +56,7 @@ function fixture(opts={}) {
   const f=fixture(); f.start('normal');
   assert.strictEqual(f.kind(),'normal'); assert.strictEqual(f.state().current.name,'Wolf'); assert.strictEqual(f.player.combatActionCount,0);
   assert.strictEqual(f.player.db0511BurnStacks,0); assert.strictEqual(f.player.db0511PoisonStacks,0); assert.strictEqual(f.player.db0511PoisonPower,0);
+  assert.strictEqual(typeof f.rt.applyCombatBackground,'undefined','encounter lifecycle must not accept the retired root background callback');
   assert.deepStrictEqual(f.events.slice(0,5),['pre:presentation','pre:legendary','pre:elements','pre:stone','trace:before']);
   assert.deepStrictEqual(f.events.slice(-3),['post:background','post:battlelog','post:petart']);
 }
