@@ -42,20 +42,42 @@
   async function roll(){
     const meta=call("getMeta"),player=call("getPlayer");
     if(call("isRollLocked")||!call("isGameStarted")||!meta.doubleDiceUnlocked)return;
-    call("ensureAudio");call("setRollLocked",true);call("updateHud");
-    const die=$("dice"),faces=call("diceFaces");die.classList.add("rolling","double-mode");
-    for(let index=0;index<10;index++){die.textContent=call("pick",faces)+" + "+call("pick",faces);call("rollSound");await call("delay",45+index*5);}
-    let first=call("rand",1,6),second=call("rand",1,6),chosen=false;
-    if(shouldChooseRoll()){[first,second]=await chooseDice(2,meta.debugAlwaysChooseRolls?"Debug fate":"Fate");chosen=true;call("showToast","\u{1F3B2}\u{1F3B2} Fate chosen: "+first+"+"+second+"="+(first+second));}
-    let bonus=0;if(!chosen&&call("random")()<call("clamp",player.extraStepChance,0,.75))bonus=1;
-    die.textContent=faces[first-1]+" + "+faces[second-1];die.classList.remove("rolling");call("incrementRolls");
-    if(call("hasMythicPiece","boots")&&(first>=5||second>=5)){
-      const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));
-      player.hp+=healed;player.ultimateCharge=call("clamp",player.ultimateCharge+10,0,100);call("showToast","\u{1F97E} Titanstep!");
+    const die=$("dice"),faces=call("diceFaces");
+    let movementStarted=false;
+    call("ensureAudio");call("setRollLocked",true);
+    try{
+      call("updateHud");die.classList.add("rolling","double-mode");
+      for(let index=0;index<10;index++){die.textContent=call("pick",faces)+" + "+call("pick",faces);call("rollSound");await call("delay",45+index*5);}
+      let first=call("rand",1,6),second=call("rand",1,6),chosen=false;
+
+      // The animation is presentation only. Fate can legitimately wait on one
+      // or two player choices, so never leave the die shaking while that modal
+      // interaction is pending. This was the 0.6.7.2 perpetual-roll symptom.
+      die.classList.remove("rolling");
+
+      if(shouldChooseRoll()){[first,second]=await chooseDice(2,meta.debugAlwaysChooseRolls?"Debug fate":"Fate");chosen=true;call("showToast","\u{1F3B2}\u{1F3B2} Fate chosen: "+first+"+"+second+"="+(first+second));}
+      let bonus=0;if(!chosen&&call("random")()<call("clamp",player.extraStepChance,0,.75))bonus=1;
+      die.textContent=faces[first-1]+" + "+faces[second-1];call("incrementRolls");
+      if(call("hasMythicPiece","boots")&&(first>=5||second>=5)){
+        const healed=Math.min(player.maxHp-player.hp,Math.max(1,Math.ceil(player.maxHp*.05)));
+        player.hp+=healed;player.ultimateCharge=call("clamp",player.ultimateCharge+10,0,100);call("showToast","\u{1F97E} Titanstep!");
+      }
+      const total=first+second;
+      call("addLog",(chosen?"Fate bends. You choose":"Double Dice rolls")+" <b>"+first+" + "+second+" = "+total+"</b>"+(bonus?" and Long Stride adds <b>+1</b>":"")+".");
+      movementStarted=true;
+      await call("move",total+bonus,total,bonus>0,chosen);
+    }catch(error){
+      // Movement owns the road lock after handoff. Before that boundary, an
+      // interrupted animation/chooser must not permanently brick travel.
+      if(!movementStarted){
+        call("setRollLocked",false);
+        try{call("updateHud");}catch(_){}
+        try{call("showToast","\u26A0\uFE0F Double Dice roll interrupted. Try again.");}catch(_){}
+      }
+      throw error;
+    }finally{
+      die?.classList?.remove("rolling");
     }
-    const total=first+second;
-    call("addLog",(chosen?"Fate bends. You choose":"Double Dice rolls")+" <b>"+first+" + "+second+" = "+total+"</b>"+(bonus?" and Long Stride adds <b>+1</b>":"")+".");
-    await call("move",total+bonus,total,bonus>0,chosen);
   }
   const api=Object.freeze({apiVersion:1,owner:OWNER,configure,ensureButton,refreshControls,roll,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1})});
   window.DiceboundRunDice=api;
