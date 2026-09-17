@@ -75,11 +75,14 @@ function makeRuntime(road,{loadedSixes=false,modifier=value=>value}={}){
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
+const roadDice=fs.readFileSync(path.join(root,"runtime/js/run/dice.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
   "dbRun.configure({movement:{",
-  "board:dbRun.boardState",
-  "await dbRun.move("
+  "board:dbRun.boardState"
 ])assert.ok(monolith.includes(adapter),`missing board-movement facade composition: ${adapter}`);
+assert.ok(monolith.includes("move:(...args)=>dbRun.move(...args)"),"dicebound.js must inject DiceboundRun.move into the canonical Run Dice owner");
+assert.ok(roadDice.includes('await call("move",'),"run/dice.js must hand completed road rolls to the injected board-movement capability");
+assert.ok(!monolith.includes("await dbRun.move("),"road-dice gameplay must not move directly from dicebound.js");
 for(const retired of [
   "const BoardState=Object.freeze({",
   "const BoardUI=Object.freeze({",
