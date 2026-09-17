@@ -75,6 +75,53 @@ once(old,new)
 
 p.write_text(text,encoding='utf-8')
 
+# Run Dice is now the complete road-dice owner, not a Double-Dice-only adapter.
+manifest=Path('runtime/js/module-manifest.json')
+manifest_text=manifest.read_text(encoding='utf-8')
+old_domain='"domain": "run/double-dice-control-and-roll-sequencing"'
+new_domain='"domain": "run/road-dice-control-choice-and-roll-sequencing"'
+if manifest_text.count(old_domain)!=1:
+    raise SystemExit('run-dice manifest domain anchor missing')
+manifest.write_text(manifest_text.replace(old_domain,new_domain,1),encoding='utf-8')
+
+# Update the architecture contract: board movement is now injected into the
+# canonical dice owner rather than invoked directly by monolith rollDice().
+validator=Path('tools/validate_runtime_architecture.py')
+validator_text=validator.read_text(encoding='utf-8')
+old_route='            "await dbRun.move(",\n'
+new_route='            "move:(...args)=>dbRun.move(...args)",\n'
+if validator_text.count(old_route)!=1:
+    raise SystemExit('board-movement validator route anchor missing')
+validator_text=validator_text.replace(old_route,new_route,1)
+anchor='''    if monolith_source:
+        expected_reset_adapter = "function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}"'''
+insert='''    run_dice_module = by_id.get("run-dice")
+    run_dice_source = sources.get("run-dice", "")
+    if not run_dice_module:
+        errors.append("Canonical road-dice owner run-dice is missing from the runtime manifest")
+    else:
+        if run_dice_module.get("path") != "js/run/dice.js" or "DiceboundRunDice" not in (run_dice_module.get("provides") or []):
+            errors.append("run-dice must own js/run/dice.js and provide DiceboundRunDice")
+        if "run-facade" not in (run_dice_module.get("requires") or []) or position.get("run-dice", -1) >= position.get(str(monolith_id), -1):
+            errors.append("run-dice must require run-facade and load before the composition monolith")
+    for required_run_dice_owner in ["function rollOneCore(", "function rollTwoCore(", "function chooseDieResult(", "function handleRoadKeydown("]:
+        if required_run_dice_owner not in run_dice_source:
+            errors.append("run-dice is missing canonical road-dice responsibility: " + required_run_dice_owner)
+    if monolith_source:
+        for retired_road_dice_layer in ["function rollDice(", "function chooseDieResult(", "pendingDiceChoiceResolve", "const diceFaces =", 'addEventListener("click",rollDice)', "{rollDice,applyUpgrade"]:
+            if retired_road_dice_layer in monolith_source:
+                errors.append("retired road-dice implementation remains in dicebound.js: " + retired_road_dice_layer)
+        for required_run_dice_route in ["dbRunDice.bindPrimaryButton()", "dbRunDice.handleRoadKeydown(e)", "move:(...args)=>dbRun.move(...args)"]:
+            if required_run_dice_route not in monolith_source:
+                errors.append("dicebound.js is missing Run Dice composition route: " + required_run_dice_route)
+
+    if monolith_source:
+        expected_reset_adapter = "function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}"'''
+if anchor not in validator_text:
+    raise SystemExit('architecture insertion anchor missing')
+validator.write_text(validator_text.replace(anchor,insert,1),encoding='utf-8')
+
+# Permanent owner behavior + anti-return coverage.
 t=Path('tools/test_run_dice.js')
 src=t.read_text(encoding='utf-8')
 needle='const SOURCE=fs.readFileSync(path.join(__dirname,"..","runtime","js","run","dice.js"),"utf8");'
