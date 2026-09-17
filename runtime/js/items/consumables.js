@@ -29,15 +29,13 @@
   function currentEnemy() { return requireRuntime().getCurrentEnemy(); }
   function livingEnemies() { return requireRuntime().livingEnemies(); }
 
-  // V16 is the published Potion formula used by combat, road drinking and the
-  // Alchemist Volatile Flask compatibility seam.
+  // Shared Potion formula used by combat, road drinking and Alchemist Volatile Flask.
   function potionHealValue(mult = 1) {
     const p = player();
     return Math.max(1, Math.round((10 + p.maxHp * .10) * (1 + p.potionPower) * mult));
   }
 
-  // Career tracking remains a consumable-side effect: one increment per Potion
-  // actually consumed. Unlock-rule implementation itself stays outside this owner.
+  // Career tracking increments exactly once for every Potion actually consumed.
   function recordPotionUse() {
     const rt = requireRuntime(), stats = rt.ensureAlphaMeta();
     stats.potionsUsed = (stats.potionsUsed || 0) + 1;
@@ -46,8 +44,7 @@
     if (!rt.isGameStarted()) rt.renderClassChooser();
   }
 
-  // Mature V16 combat transaction, including Double Dose. D20 generation,
-  // elemental effects, generic healing, Victory and enemy response are injected.
+  // Combat Potion transaction, including Double Dose.
   async function combatPotionCore() {
     const rt = requireRuntime(), p = player();
     if (rt.getCombatBusy() || !currentEnemy() || p.potions <= 0 || p.hp >= p.maxHp) return;
@@ -107,24 +104,15 @@
   // V24's repair wrapper remains deliberately represented even though the V16
   // core now records correctly; it guarantees no duplicate increment while still
   // repairing a future/compatibility path that consumes without recording.
-  function v24RoadAccountingLayer(...args) {
-    const rt = requireRuntime(), p = player();
-    const beforePotions = p.potions, beforeUses = rt.ensureAlphaMeta().potionsUsed || 0;
-    const result = roadPotionCore(...args);
-    if (p.potions < beforePotions && (rt.ensureAlphaMeta().potionsUsed || 0) === beforeUses) recordPotionUse();
-    return result;
-  }
-
   function tracedCombatPotion(args, thisArg) {
     return requireRuntime().traceCommand("usePotion", () => combatPotionCore(...args), "detailed", args, thisArg);
   }
 
   function tracedRoadPotion(args, thisArg) {
-    return requireRuntime().traceCommand("usePotionOutsideCombat", () => v24RoadAccountingLayer(...args), "detailed", args, thisArg);
+    return requireRuntime().traceCommand("usePotionOutsideCombat", () => roadPotionCore(...args), "detailed", args, thisArg);
   }
 
-  // Friends Patch Dragoon is the outermost combat-Potion layer. A pending
-  // Landing bypasses the Potion transaction and its command trace entirely.
+  // A pending Dragoon Landing bypasses the Potion transaction and its command trace.
   async function usePotion(...args) {
     const rt = requireRuntime(), p = player();
     if (rt.dragoonActive() && rt.dragoonLandingReady()) return rt.dragoonLanding();
@@ -136,8 +124,7 @@
     return tracedRoadPotion(args, this);
   }
 
-  // Final V16 identity dispatch: choosing Potion breaks Monk combo and Turtle
-  // guard-chain before the normal Potion/Dragoon transaction is attempted.
+  // Choosing Potion breaks Monk combo and Turtle guard-chain before the transaction.
   async function identityPotionAction(...args) {
     const rt = requireRuntime(), p = player();
     if (rt.isClassActive("monk")) p.monkCombo = 0;
@@ -153,7 +140,7 @@
     usePotion,
     usePotionOutsideCombat,
     identityPotionAction,
-    _test: Object.freeze({ combatPotionCore, roadPotionCore, v24RoadAccountingLayer, tracedCombatPotion, tracedRoadPotion })
+    _test: Object.freeze({ combatPotionCore, roadPotionCore, tracedCombatPotion, tracedRoadPotion })
   });
 
   window.DiceboundConsumables = api;

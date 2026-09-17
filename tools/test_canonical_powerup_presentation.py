@@ -4,6 +4,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = (ROOT / "runtime/js/dicebound.js").read_text(encoding="utf-8")
 FACADE = (ROOT / "runtime/js/powerups/facade.js").read_text(encoding="utf-8")
+PRESENTATION = (ROOT / "runtime/js/powerups/presentation.js").read_text(encoding="utf-8")
 
 for token in [
     "openLevelUpV16Base", "showPowerupChoiceV16Base", "openLevelUpV26Base",
@@ -13,19 +14,46 @@ for token in [
     if token in SOURCE:
         raise SystemExit(f"historical Powerup presentation token returned: {token}")
 
+for retired in [
+    "const PERFECTED_SIGNATURES=", "function perfectedSignatureForCurrentClass(",
+    "function applyPerfectedSignatureSafe(", "function showAllEligiblePowerupSelection(",
+]:
+    if retired in SOURCE:
+        raise SystemExit(f"monolith Perfected Signature/full-picker ownership returned: {retired}")
+
+for required in [
+    'const OWNER="powerups/presentation"', "const PERFECTED_SIGNATURES=",
+    "function perfectedSignatureForCurrentClass(", "function applyPerfectedSignatureSafe(",
+    "function showAllEligiblePowerupSelection(", "window.DiceboundPerfectedSignature=",
+    "window.DiceboundPowerupPresentation=api",
+]:
+    if required not in PRESENTATION:
+        raise SystemExit(f"Powerup presentation owner missing {required!r}")
+
+for route in [
+    "dbPowerups.openAllEligible('Debug · Full Eligible Powerup List',()=>{})",
+    "dbPowerupPresentation.openAllEligible('Powerups Oracle',()=>{})",
+    "renderAllEligible:(source,onComplete,filter)=>dbPowerupPresentation.openAllEligible(source,onComplete,filter)",
+]:
+    if route not in SOURCE:
+        raise SystemExit(f"Powerup presentation route missing {route!r}")
+
 for retired in ["openLevelUp", "showPowerupChoice", "showLegendaryChoice"]:
     if f"function {retired}(" in SOURCE:
         raise SystemExit(f"monolith {retired} declaration returned")
     if re.search(rf"(?<![.\w$]){re.escape(retired)}\s*=\s*function\b", SOURCE):
         raise SystemExit(f"monolith {retired} replacement returned")
 
-for canonical in ["powerupDisplayDesc", "choiceHTML", "attachPowerupReroll", "renderLevelUpChoices", "renderPowerupChoiceOverlay", "renderLegendaryChoice"]:
+for canonical in ["choiceHTML", "attachPowerupReroll", "renderLevelUpChoices", "renderPowerupChoiceOverlay", "renderLegendaryChoice"]:
     count = SOURCE.count(f"function {canonical}(")
     if count != 1:
         raise SystemExit(f"expected one canonical {canonical}, found {count}")
 
+if "function powerupDisplayDesc(" in SOURCE:
+    raise SystemExit("retired powerupDisplayDesc pass-through returned")
+
 required_source = [
-    "function powerupDisplayDesc(up){return dbPowerups.describe(up);}",
+    "${dbPowerups.describe(up)}</span><span class=\"choice-tags\">",
     "if(pendingLevelUps>0)dbPowerups.openLevelUp(onComplete);",
     "attachPowerupReroll(grid,()=>dbPowerups.openLevelUp(onComplete));",
     "attachPowerupReroll(grid,()=>dbPowerups.openChoice(source,onComplete,filter,subtitle));",

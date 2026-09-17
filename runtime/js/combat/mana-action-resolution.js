@@ -3,6 +3,15 @@
 
   const OWNER = "combat/mana-action-resolution";
   let runtime = null;
+  const SPELLS = {
+    sorcerer:{builder:"Channel Bolt",builderIcon:"🔮",spell:"Arcane Lance",spellIcon:"✦",cost:35,gain:28,desc:"Channel Bolt deals slightly reduced normal attack damage and builds Mana. Arcane Lance spends 35 Mana for a heavy spell, converts half of your Echo Strike chance into bonus Lance damage, applies Lifesteal, and guarantees a random core-element eruption."},
+    vampire:{builder:"Night Siphon",builderIcon:"🦇",spell:"Grave Lance",spellIcon:"🌑",cost:35,gain:26,desc:"Night Siphon builds Mana while attacking. Grave Lance spends 35 Mana for heavy damage and drains 30% of the direct damage as HP."},
+    rouge:{builder:"Crimson Stroke",builderIcon:"🖌️",spell:"Scarlet Hex",spellIcon:"🌹",cost:35,gain:27,desc:"Crimson Stroke paints Mana into existence. Scarlet Hex spends 35 Mana for a high-crit occult strike and splashes crimson damage into the pack."},
+    merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana and converts part of your current gold into occult damage."},
+    invoker:{builder:"Arcane Current",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Arcane Current generates Mana and a Green orb. Elemental Lance spends 50 Mana for a Red orb. Guard forms Blue; three orbs unlock Invoke."},
+    summoner:{builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."}
+  };
+
 
   function requireRuntime() {
     if (!runtime) throw new Error("DiceboundCombatManaActionResolution must be configured before use.");
@@ -12,7 +21,7 @@
   function configure(next) {
     const required = [
       "getPlayer", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy",
-      "spellFor", "classIdentityId", "isClassActive", "clamp", "playerAttack", "invokerActive",
+      "classIdentityId", "isClassActive", "clamp", "playerAttack", "invokerActive",
       "invokerGeneratorManaMultiplier", "invokerElementalLance", "identityFlash", "updateCombatUI",
       "animateClassAttack", "rand", "pick", "rollTieredProc", "coreElementIds", "triggerElementEffect",
       "damageEnemy", "healPlayer", "getSetDamageBonus", "getEncounterLead", "chargeUltimate", "setCombatText",
@@ -27,6 +36,13 @@
   const player = () => requireRuntime().getPlayer();
   const currentEnemy = () => requireRuntime().getCurrentEnemy();
   const livingEnemies = () => requireRuntime().livingEnemies();
+  function spells() { return SPELLS; }
+  function spellFor(id) { return SPELLS[id] || null; }
+  function isManaClass(id) { return !!SPELLS[id]; }
+  function identityNote(id) {
+    const spell = spellFor(id);
+    return spell ? `Mana class — ${spell.builder} builds Mana; ${spell.spell} spends it.` : null;
+  }
 
   function manaGain(amount) {
     const rt = requireRuntime(), p = player();
@@ -36,13 +52,11 @@
     return p.mana - before;
   }
 
-  // The original generator transaction. Bonus wrappers below deliberately keep
-  // their historical nesting so temporary shared-config mutation is restored on
-  // every async exit, while Mana still lands before the underlying Basic Attack.
+  // Generator transaction: Mana lands before the underlying Basic Attack.
   async function baseChannelAttack() {
     const rt = requireRuntime(), p = player();
     if (rt.getCombatBusy() || !currentEnemy()) return;
-    const cfg = rt.spellFor(rt.classIdentityId());
+    const cfg = spellFor(rt.classIdentityId());
     if (!cfg) return rt.playerAttack();
     const invoker = rt.isClassActive("invoker") && rt.invokerActive();
     const gained = manaGain(cfg.gain * (invoker ? rt.invokerGeneratorManaMultiplier() : 1));
@@ -63,7 +77,7 @@
   async function summonerChannelLayer(...args) {
     const rt = requireRuntime(), p = player();
     if (!rt.isClassActive("summoner") || !(p.summonerManaBonus || 0)) return baseChannelAttack(...args);
-    const cfg = rt.spellFor("summoner"), old = cfg.gain;
+    const cfg = spellFor("summoner"), old = cfg.gain;
     cfg.gain = old + (p.summonerManaBonus || 0);
     try {
       return await baseChannelAttack(...args);
@@ -73,7 +87,7 @@
   }
 
   async function occultChannelAttack(...args) {
-    const rt = requireRuntime(), p = player(), cfg = rt.spellFor(rt.classIdentityId()), bonus = p.manaBuilderBonus || 0;
+    const rt = requireRuntime(), p = player(), cfg = spellFor(rt.classIdentityId()), bonus = p.manaBuilderBonus || 0;
     if (!cfg || !bonus) return summonerChannelLayer(...args);
     const old = cfg.gain;
     cfg.gain += bonus;
@@ -90,7 +104,7 @@
   async function baseSpellAttack() {
     const rt = requireRuntime(), p = player();
     if (rt.getCombatBusy() || !currentEnemy()) return;
-    const cfg = rt.spellFor(rt.classIdentityId());
+    const cfg = spellFor(rt.classIdentityId());
     if (!cfg || p.mana < cfg.cost) return;
     rt.setCombatBusy(true);
     p.guardCooldown = 0;
@@ -157,7 +171,7 @@
   async function summonerConjure() {
     const rt = requireRuntime(), p = player();
     if (rt.getCombatBusy() || !currentEnemy() || !rt.isClassActive("summoner")) return;
-    const cfg = rt.spellFor("summoner");
+    const cfg = spellFor("summoner");
     if (p.mana < cfg.cost) return;
     rt.setCombatBusy(true);
     const beforeMana = p.mana;
@@ -198,9 +212,7 @@
     return baseSpellAttack(...args);
   }
 
-  // V17 Mana Overflow historically wraps Summoner dispatch and the generic
-  // spender. Final Conjure also carries its own earlier compatibility grant;
-  // preserving both calls is intentional behavior preservation for this slice.
+  // Mana Overflow grants Ultimate after any qualifying Mana spend.
   async function manaOverflowSpellLayer(...args) {
     const rt = requireRuntime(), p = player(), before = p.mana || 0;
     const result = await summonerDispatchSpellLayer(...args);
@@ -211,14 +223,12 @@
     return result;
   }
 
-  // Beta 1.10's direct Rouge replacement sits outside Mana Overflow. Preserve
-  // its direct classId test: borrowed Rouge identity continues through the older
-  // generic path, while the real Rouge gets doubled Lifesteal and no V17 wrapper.
+  // Real Rouge uses doubled Lifesteal; borrowed Rouge identity uses the generic spender.
   async function rougeFinalSpellLayer(...args) {
     const rt = requireRuntime(), p = player();
     if (p.classId !== "rouge") return manaOverflowSpellLayer(...args);
     if (rt.getCombatBusy() || !currentEnemy()) return;
-    const cfg = rt.spellFor(p.classId);
+    const cfg = spellFor(p.classId);
     if (!cfg || p.mana < cfg.cost) return;
     rt.setCombatBusy(true);
     p.guardCooldown = 0;
@@ -253,8 +263,7 @@
     await rt.resolveEnemyResponse(false);
   }
 
-  // Career tracking is the historical outermost spender layer. The Invoker
-  // owner records its own delegated Elemental Lance, preventing double counting.
+  // Record one career spend after a successful non-Invoker Mana spender action.
   async function occultSpellAttack(...args) {
     const rt = requireRuntime(), p = player();
     const beforeMana = Number(p.mana) || 0, beforeActions = Number(p.combatActionCount) || 0;
@@ -272,6 +281,10 @@
     owner: OWNER,
     configure,
     manaGain,
+    spells,
+    spellFor,
+    isManaClass,
+    identityNote,
     occultChannelAttack,
     occultSpellAttack,
     summonerConjure,

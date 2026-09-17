@@ -16,6 +16,7 @@
     "runtime-services",
     "memory-diagnostics",
     "runtime-facade",
+    "combat-element-content",
     "combat-effective-stats",
     "combat-healing-resolution",
     "combat-element-resolution",
@@ -55,8 +56,10 @@
     "run-lifecycle",
     "run-completion",
     "run-facade",
+    "run-dice",
     "combat-enemies",
     "combat-guardians",
+    "board-presentation",
     "item-rarities",
     "item-equipment",
     "item-consumables",
@@ -78,6 +81,7 @@
     "powerup-registry",
     "powerup-borrowing",
     "powerup-facade",
+    "powerup-presentation",
     "ui-camp",
     "ui-camp-shell-policy",
     "ui-options",
@@ -254,6 +258,16 @@
       ],
       "provides": [
         "DiceboundRuntime"
+      ]
+    },
+    {
+      "id": "combat-element-content",
+      "path": "js/combat/element-content.js",
+      "domain": "combat/element-content-metadata",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundElementContent"
       ]
     },
     {
@@ -711,6 +725,19 @@
       ]
     },
     {
+      "id": "board-presentation",
+      "path": "js/board/presentation.js",
+      "domain": "board/tile-and-road-presentation",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "combat-guardians"
+      ],
+      "provides": [
+        "DiceboundBoardPresentation"
+      ]
+    },
+    {
       "id": "item-rarities",
       "path": "js/items/rarities.js",
       "domain": "items/rarities",
@@ -976,6 +1003,19 @@
       ]
     },
     {
+      "id": "powerup-presentation",
+      "path": "js/powerups/presentation.js",
+      "domain": "powerups/perfected-signature-and-full-eligible-chooser-presentation",
+      "status": "extracted",
+      "requires": [
+        "powerup-facade"
+      ],
+      "provides": [
+        "DiceboundPowerupPresentation",
+        "DiceboundPerfectedSignature"
+      ]
+    },
+    {
       "id": "ui-camp",
       "path": "js/ui/camp.js",
       "domain": "ui/camp-presentation-authoritative-stage-mobile-layout-art-hit-target-and-progression-object-dom-lifecycle",
@@ -1133,6 +1173,18 @@
       ]
     },
     {
+      "id": "run-dice",
+      "path": "js/run/dice.js",
+      "domain": "run/double-dice-control-and-roll-sequencing",
+      "status": "extracted",
+      "requires": [
+        "run-facade"
+      ],
+      "provides": [
+        "DiceboundRunDice"
+      ]
+    },
+    {
       "id": "dicebound-monolith",
       "path": "js/dicebound.js",
       "domain": "compatibility-monolith",
@@ -1141,6 +1193,7 @@
         "assets",
         "rng",
         "runtime-facade",
+        "combat-element-content",
         "combat-effective-stats",
         "combat-d20-chaos-resolution",
         "combat-strike-policy",
@@ -1157,6 +1210,7 @@
         "classes-registry",
         "pets-registry",
         "run-facade",
+        "run-dice",
         "combat-enemies",
         "combat-guardians",
         "item-rarities",
@@ -1172,6 +1226,8 @@
         "progression-class-unlock-rules",
         "progression-class-unlock-feedback",
         "powerup-borrowing",
+        "powerup-facade",
+        "powerup-presentation",
         "ui-camp",
         "ui-options",
         "ui-equipment-heirlooms",

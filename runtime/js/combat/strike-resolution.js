@@ -16,7 +16,7 @@
       "playElementAnimation","addCombatHistory","updateCombatUI","setCombatText","playHolySfx","triggerStrikeElements",
       "triggerElementEffect","identityFlash","reconcileDefeatedTarget","presentationTargetSnapshot","emitStrike","renderStrike",
       "delay","chargeUltimate","hasDevilsHorns","hasLegendaryEffect","syncOuroborosAttack","syncOuroborosEconomy",
-      "getFastEchoCap","setFastEchoCap","getV26FastEcho","setV26FastEcho","getElementKeys"
+      "getFastEchoCap","setFastEchoCap","getElementKeys"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat strike-resolution runtime missing ${name}().`);
     runtime = nextRuntime;
@@ -245,19 +245,15 @@
     } finally { p.poisonOnHitChance = chance; }
   }
 
-  async function v26FastEchoStrike(target, opts = {}) {
-    const rt = requireRuntime(), p = player(), turbo = rt.isClassActive("ouroboros") && (p.doubleStrike || 0) > 10;
-    if (turbo) rt.setV26FastEcho(true);
-    try { return await v25PoisonStrike(target, opts); }
-    finally { if (turbo) rt.setV26FastEcho(false); }
+  function echoDelayCap(echoChance) {
+    const echo=Math.max(0,Number(echoChance)||0);
+    return echo>=50?8:echo>=10?20:echo>=5?34:echo>=2?58:echo>=1?85:0;
   }
 
-  async function v27DodgeAndSpeedStrike(target, opts = {}) {
-    const rt = requireRuntime(), p = player(), oldCap = rt.getFastEchoCap() || 0, echo = p.doubleStrike || 0;
-    if (rt.isClassActive("ouroboros")) {
-      rt.setFastEchoCap(echo >= 50 ? 10 : echo >= 10 ? 32 : 0);
-      rt.syncOuroborosEconomy();
-    }
+  async function speedAdjustedStrike(target, opts = {}) {
+    const rt = requireRuntime(), p = player(), oldCap = rt.getFastEchoCap() || 0;
+    rt.setFastEchoCap(echoDelayCap(p.doubleStrike));
+    if (rt.isClassActive("ouroboros")) rt.syncOuroborosEconomy();
     try {
       if (target?.hp > 0 && (target.dodge || 0) > 0 && rt.random() < target.dodge) {
         await rt.animateClassAttack(opts.echo ? "echo" : "normal");
@@ -265,16 +261,16 @@
         rt.setCombatText(`${target.name} dodges ${opts.echo ? `Echo ${opts.index || ""}` : "the attack"}.`);
         rt.addCombatHistory(`🌫️ ${target.name} dodges (${Math.round(target.dodge * 100)}% enemy Dodge).`);
         rt.updateCombatUI();
-        await rt.delay(rt.isClassActive("ouroboros") ? 35 : 220);
+        await rt.delay(220);
         return { dealt: 0, crit: 0, elementDamage: 0, dodged: true };
       }
-      return await v26FastEchoStrike(target, opts);
+      return await v25PoisonStrike(target, opts);
     } finally { rt.setFastEchoCap(oldCap); }
   }
 
   async function v28NinjaSmokeStrike(target, opts = {}) {
     const rt = requireRuntime(), p = player(), ninja = rt.isClassActive("ninja"), before = ninja ? (p.ninjaSmoke || 0) : 0, need = ninja ? (p.ninjaSmokeNeed || 3) : 0, execution = ninja && !opts.echo && before >= need;
-    const result = await v27DodgeAndSpeedStrike(target, opts);
+    const result = await speedAdjustedStrike(target, opts);
     if (ninja && result?.crit) {
       const start = execution ? 0 : before, wanted = Math.min(need, start + Math.max(1, Math.floor(result.crit)));
       if ((p.ninjaSmoke || 0) < wanted) p.ninjaSmoke = wanted;
@@ -334,7 +330,8 @@
     owner: "combat/strike-resolution",
     configure,
     strikeBaseDamage,
-    performStrike
+    performStrike,
+    echoDelayCap
   });
 
   window.DiceboundCombatStrikeResolution = api;

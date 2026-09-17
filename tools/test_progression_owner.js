@@ -11,17 +11,53 @@ const entry=manifest.modules.find(module=>module.id==="progression-lifecycle");
 assert.ok(entry,"progression-lifecycle manifest owner is missing");
 assert.deepEqual(entry.provides,["DiceboundProgression"]);
 assert.match(lifecycle,/owner:OWNER,apiVersion:1/);
+
+// These used to be one-line compatibility adapters in dicebound.js.  The
+// composition root now calls DiceboundProgression directly where a caller
+// exists; unused adapters are simply gone.
+const retiredForwarders=[
+  "achievementGateUnlocked","allocatedTalentPoints","checkDynamicClassUnlocks",
+  "commitClassUnlock","finalizeRun","gameplayTalentRank","isClassUnlocked",
+  "purchaseTalentNode","repairTalentPrerequisites","unlockClass"
+];
+for(const name of retiredForwarders){
+  assert.ok(!new RegExp(`\\bfunction\\s+${name}\\s*\\(`).test(monolith),`retired Progression forwarding adapter returned: ${name}`);
+}
+for(const direct of [
+  "dbProgression.achievementGateUnlocked(",
+  "dbProgression.allocatedTalentPoints(",
+  "dbProgression.checkDynamicClassUnlocks(",
+  "dbProgression.finalizeRun(",
+  "dbProgression.gameplayTalentRank(",
+  "dbProgression.isClassUnlocked(",
+  "dbProgression.purchaseTalent(",
+  "dbProgression.repairTalentPrerequisites(",
+  "dbProgression.unlockClass("
+])assert.ok(monolith.includes(direct),`composition no longer routes directly through Progression owner: ${direct}`);
+
+// commitClassUnlock's old composition adapter had no callers at all.  The
+// capability remains owned by Progression, but a dead root-level alias must not
+// be recreated just to make an architecture test happy.
+assert.ok(lifecycle.includes("commitClassUnlock"),"Progression commitClassUnlock capability missing");
+
+// These two remain first-class seams because the released runtime passes them
+// around as values/hooks.  They may be thin, but deleting them would erase an
+// intentional interception surface rather than a redundant call-only wrapper.
+for(const seam of [
+  "function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}",
+  "function talentAvailable(t){return dbProgression.talentAvailable(t);}"
+])assert.ok(monolith.includes(seam),`required Progression hook/value seam missing: ${seam}`);
+
+// Small composition helpers that own UI interaction rather than call-only
+// forwarding remain legitimate.  Their semantic work must still terminate in
+// DiceboundProgression.
 for(const adapter of [
   "const talentRank=id=>dbProgression.talentRank(id);",
-  "function gameplayTalentRank(id){return dbProgression.gameplayTalentRank(id);}",
-  "function grantLegacyXp(amount){return dbProgression.grantLegacyXp(amount);}",
-  "function finalizeRun(){return dbProgression.finalizeRun();}",
-  "function allocatedTalentPoints(){return dbProgression.allocatedTalentPoints();}",
-  "function talentAvailable(t){return dbProgression.talentAvailable(t);}",
-  "function purchaseTalentNode(id){return dbProgression.purchaseTalent(id);}",
+  "purchase:id=>dbProgression.purchaseTalent(id),",
   "async function prestigeTree(){",
   "return dbProgression.completePrestige(total);"
-])assert.ok(monolith.includes(adapter),`missing thin Progression adapter: ${adapter}`);
+])assert.ok(monolith.includes(adapter),`missing Progression composition helper: ${adapter}`);
+
 for(const shadow of [
   "const talentRank=id=>Math.max(0,Number(meta.purchased[id])||0);",
   "function gameplayTalentRank(id){const source=runTalentSnapshot||meta.purchased||{};",
@@ -51,14 +87,18 @@ for(const shadow of [
   "function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES",
   "if(id===\"bloodmage\"){meta.bloodmageUnlocked=true"
 ])assert.ok(!monolith.includes(shadow),`retired Progression semantic shadow remains: ${shadow}`);
-for(const owned of ["prestigeInspect","prestigePurchase","prestigeRefundAll","prestigeFormatStats","achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked","heroMasteryEntries","achievementCount","isClassUnlocked","commitClassUnlock","unlockClass","checkDynamicClassUnlocks"])assert.ok(lifecycle.includes(owned),`Progression owner capability missing: ${owned}`);
+
+for(const owned of [
+  "prestigeInspect","prestigePurchase","prestigeRefundAll","prestigeFormatStats",
+  "achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked",
+  "heroMasteryEntries","achievementCount","isClassUnlocked","commitClassUnlock","unlockClass",
+  "checkDynamicClassUnlocks","repairTalentPrerequisites","gameplayTalentRank","allocatedTalentPoints"
+])assert.ok(lifecycle.includes(owned),`Progression owner capability missing: ${owned}`);
+
 assert.ok(monolith.includes("function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}"),"Prestige summary must route through DiceboundProgression");
 assert.ok(monolith.includes("const result=dbProgression.prestigePurchase(id);"),"Prestige Moon purchases must route through DiceboundProgression");
 assert.ok(monolith.includes("const result=dbProgression.prestigeRefundAll();"),"Prestige Moon refunds must route through DiceboundProgression");
 for(const shadow of ["DB_PRESTIGE.purchase(meta.prestige,id,random)","DB_PRESTIGE.refundAll(meta.prestige)","DB_PRESTIGE.inspect(meta.prestige)"])assert.ok(!monolith.includes(shadow),`ordinary Prestige Moon shadow remains: ${shadow}`);
-assert.ok(monolith.includes("function achievementGateUnlocked(gate){return dbProgression.achievementGateUnlocked(gate);}"),"ordinary powerup gates must route through DiceboundProgression");
 assert.ok(monolith.includes("isDone:achievement=>dbProgression.achievementDone(achievement)"),"Achievements UI must consume Progression completion policy");
-assert.ok(monolith.includes("function isClassUnlocked(id){return dbProgression.isClassUnlocked(id);}"),"ordinary class eligibility must route through DiceboundProgression");
-assert.ok(monolith.includes("function unlockClass(id){return dbProgression.unlockClass(id);}"),"ordinary class unlock commits must route through DiceboundProgression");
-assert.ok(monolith.includes("function checkDynamicClassUnlocks(){return dbProgression.checkDynamicClassUnlocks();}"),"dynamic class scans must route through DiceboundProgression");
-console.log("Progression owner PASS: Talent/Legacy/Prestige Moon/reset/Achievement/class-unlock orchestration routes through DiceboundProgression.");
+
+console.log("Progression owner PASS: call-only compatibility adapters are retired; intentional hooks/UI helpers and all Progression semantics route through DiceboundProgression.");

@@ -27,12 +27,12 @@ assert.deepEqual(window.db06314IntrinsicParts({ equipmentId: fakeIdentity.id }),
 });
 assert.equal(window.db06314IntrinsicParts({ equipmentId: "unknown" }), null);
 assert.match(monolith, /db06314IntrinsicParts\(item\)/, "live equipment formatter no longer consumes the compatibility bridge");
-assert.match(monolith, /function formatGearComparison\(item,current\)\{return dbItems\.formatComparison\(item,current\);\}/, "live equipment comparison is not routed through DiceboundItems");
+assert.match(monolith, /formatGearComparison:\(item,current\)=>dbItems\.formatComparison\(item,current\)/, "Merchant equipment comparison is not routed directly through DiceboundItems");
+assert.doesNotMatch(monolith, /function formatGearComparison\(item,current\)/, "retired Merchant comparison pass-through adapter returned to the monolith");
 
-// Merchant integration regression: renderMerchant() establishes the visit for
-// currentMerchantItems before the outer openMerchant() wrapper returns. The
-// wrapper must adopt that exact visit rather than replacing it with a second
-// transaction whose state is disconnected from the visible buttons.
+// Merchant integration regression: the renderer-created visit for a stock array
+// must be adopted by the outer Merchant facade open rather than replaced with a
+// second transaction whose state is disconnected from the visible buttons.
 const renderedStock = [{ id: "heal" }, { id: "gear" }];
 const renderedVisit = transactions.createVisit(renderedStock);
 const renderedHealKey = transactions.offerKey(renderedStock[0], 0);
@@ -85,7 +85,8 @@ assert.doesNotMatch(monolith, /window\.DiceboundMerchantTransaction(?!Test)/, "o
 assert.match(merchantFacade, /const transaction=window\.DiceboundMerchantTransaction/, "Merchant facade must internalize the transaction owner");
 assert.match(merchantUi, /tx\.beginChoice/, "Sovereign choice is not transaction-guarded by the Merchant UI owner");
 assert.match(merchantFacade, /transaction\.beginVisit\(null,getItems\(\)\)/, "Merchant facade re-entry is not transaction-guarded");
-assert.match(monolith, /function renderMerchant\(\)\{[\s\S]*?dbMerchant\.render\(\)/, "compatibility renderer is not a thin Merchant facade adapter");
+assert.match(monolith, /openMerchant:\(\)=>dbMerchant\.open\(\)/, "ordinary Merchant opening must route directly through the Merchant facade");
+assert.doesNotMatch(monolith, /function\s+renderMerchant\s*\(/, "retired Merchant render pass-through adapter returned to the monolith");
 assert.doesNotMatch(monolith, /renderMerchant\s*=\s*function/, "historical Merchant renderer replacement ownership returned to the monolith");
 assert.match(merchantUi, /tx\.reservePurchase/, "Merchant UI owner must reserve offers through the transaction owner");
 assert.match(merchantUi, /tx\.settleChoice/, "Merchant UI owner must settle Legendary choices through the transaction owner");

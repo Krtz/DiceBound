@@ -32,9 +32,9 @@ assert.ok(module.provides.includes("DiceboundItemGeneration"));
 assert.ok(index.includes('<script src="js/items/generation.js"></script>'),"runtime index must load generation owner");
 assert.ok(manifest.loadOrder.indexOf("item-generation")<manifest.loadOrder.indexOf("items-facade"),"generation owner must load before Items facade");
 
-// Historical implementation ownership must be gone. A single compatibility
-// function named generateEquipment may remain so legacy internal callers route
-// through the public Items boundary.
+// Historical implementation ownership and the call-only root generator adapters
+// must stay gone. Ordinary monolith callers invoke DiceboundItems directly while
+// composition wires that public facade to the focused generation controller.
 for(const forbidden of [
   "const generateEquipmentV13=generateEquipment",
   "const generateEquipmentV24OrdinaryBase=generateEquipment",
@@ -45,8 +45,11 @@ for(const forbidden of [
   "function db060AttachLegendaryEffect(",
   "generateEquipment=function(forceRarity=null,forcedSlot=null)"
 ])assert.equal(monolith.includes(forbidden),false,`generator shadow ownership remains in monolith: ${forbidden}`);
-assert.ok(monolith.includes("return dbItems.generateEquipment(forceRarity,forcedSlot);"),"legacy generator alias must route through DiceboundItems");
+assert.doesNotMatch(monolith,/\bfunction\s+generateEquipment\s*\(/,"call-only generateEquipment adapter must stay retired");
+assert.doesNotMatch(monolith,/\bfunction\s+generateLegendary\s*\(/,"call-only generateLegendary adapter must stay retired");
+assert.ok(monolith.includes("dbItems.generateEquipment("),"ordinary generator callers must route directly through DiceboundItems");
+assert.ok(monolith.includes("dbItems.generateLegendary("),"Legendary callers must route directly through DiceboundItems");
 assert.ok(monolith.includes("dbItemGenerationOwner.createController({"),"composition must bind focused generation owner");
-assert.ok(monolith.includes("return dbItems.generateLegendary(forcedSlot,preferUndiscovered);"),"legacy Legendary alias must route through DiceboundItems");
+assert.ok(monolith.includes("generateLegendary:(slot=null,preferUndiscovered=false)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateLegendary(slot,preferUndiscovered);}"),"Items facade Legendary port must delegate to the focused generation controller");
 
-console.log("Items generation owner boundary PASS: historical generator ladder retired behind DiceboundItems.");
+console.log("Items generation owner boundary PASS: historical generator ladder and call-only adapters retired behind DiceboundItems.");

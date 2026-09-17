@@ -56,7 +56,7 @@ for (const enemy of enemies) {
   assert.ok(Number.isFinite(enemy.defenseBias), `${enemy.name} has invalid defenseBias`);
   assert.equal(typeof enemy.weakness, "string");
 }
-snapshot(enemies, 1192, "c8b4d77ba486a475c3ecc4341d01822a20336f39b54709d33b892ed7b81d7de9", "ordinary enemy registry");
+snapshot(enemies, 1339, "29b20e839e0979787c907877152a8860e9fdfef71d888ee593585f01e420fa63", "ordinary enemy registry");
 
 const specialEnemies = enemiesApi.createSpecialRegistry();
 assert.equal(Object.keys(specialEnemies).length, 15);

@@ -78,10 +78,11 @@ assert.deepEqual(deterministicCounts, {
 const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js");
 const monolith = fs.readFileSync(monolithPath, "utf8");
 assert.doesNotMatch(monolith, /function\s+db060WeightedPick\b/, "legacy weighted picker is still live");
-assert.match(monolith, /window\.DiceboundArtifacts\.pick\(random\)/);
-const factoryBlock = monolith.match(/const DB060_ARTIFACT_FACTORIES=Object\.freeze\(\{([\s\S]*?)\n\s*\}\);/);
-assert.ok(factoryBlock, "Artifact factory adapter is missing");
-const factorySlots = [...factoryBlock[1].matchAll(/^\s*([a-z]+):\(\)=>/gm)].map((match) => match[1]);
-assert.deepEqual(factorySlots.sort(), expectedEntries.map((entry) => entry.slot).sort());
+assert.match(monolith, /const\s+dbArtifacts=window\.DiceboundArtifacts;/, "composition must bind the canonical Artifact owner once");
+assert.match(monolith, /dbArtifacts\.configure\(\{/, "composition must configure the canonical Artifact owner");
+assert.match(monolith, /const\s+DB060_ARTIFACT_TABLE=dbArtifacts\.entries;/, "Artifact loot table must come from the canonical owner");
+assert.match(monolith, /dbArtifacts\.pick\(random\)/, "Artifact slot rolls must route through the canonical owner");
+assert.match(monolith, /dbArtifacts\.create\(entry\.slot\)/, "Artifact creation must route through the canonical owner");
+assert.doesNotMatch(monolith, /DB060_ARTIFACT_FACTORIES/, "retired monolith Artifact factory table returned");
 
-console.log("Artifact weights validated: exact table, unique weapon minimum, boundaries, one-draw selection and deterministic distribution pass");
+console.log("Artifact weights validated: exact table, unique weapon minimum, boundaries, one-draw selection, deterministic distribution and canonical owner routing pass");

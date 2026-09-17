@@ -12,8 +12,8 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat presentation runtime is required.");
     const required = [
-      "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo",
-      "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait","enemyPortraitHTML",
+      "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt",
+      "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect",
       "activeTrainerPetId","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","clamp"
     ];
@@ -241,12 +241,44 @@
     row.innerHTML = ids.map(id => `<span class="summoner-spirit-token" title="${pets[id]?.name || id}">${pets[id]?.icon || "🐾"}</span>`).join("");
   }
 
+  const PROCEDURAL_ENEMY_SHAPES=Object.freeze({
+    goblin:`<path d="M10 30l13-8 3-13 10 10 13-10 1 14 13 7-12 4q4 21-15 24Q17 56 21 34z" fill="#758b42" stroke="#aec76c" stroke-width="2"/><circle cx="29" cy="34" r="3" fill="#ffe26c"/><circle cx="44" cy="33" r="3" fill="#ffe26c"/><path d="M31 47l10-3" stroke="#2c311c" stroke-width="3"/>`,
+    skeleton:`<circle cx="36" cy="30" r="18" fill="#d4cfbd" stroke="#f2eddc" stroke-width="2"/><circle cx="29" cy="28" r="5" fill="#19191c"/><circle cx="44" cy="28" r="5" fill="#19191c"/><path d="M36 34l-3 6h6z" fill="#19191c"/><path d="M25 47h22M28 51h16" stroke="#6a665e" stroke-width="3"/>`,
+    orc:`<path d="M13 58q0-25 12-35L21 8l13 10 12-9 4 15q12 9 8 34z" fill="#587644" stroke="#9ab977" stroke-width="2"/><circle cx="29" cy="32" r="3" fill="#ffd56a"/><circle cx="45" cy="32" r="3" fill="#ffd56a"/><path d="M26 46l6-6 4 8 5-8 7 6" fill="#e9dfbe"/>`,
+    cultist:`<path d="M10 60q4-34 26-50 22 16 26 50z" fill="#39213f" stroke="#815589" stroke-width="2"/><path d="M19 28Q24 11 36 11t17 17l-8-4H27z" fill="#211329"/><circle cx="29" cy="33" r="2.5" fill="#ed65db"/><circle cx="44" cy="33" r="2.5" fill="#ed65db"/><path d="M36 42l5 8-5 5-5-5z" fill="#a9489d"/>`,
+    lich:`<path d="M11 59q3-30 25-42 22 12 25 42z" fill="#2b2848" stroke="#716fa0" stroke-width="2"/><path d="M20 21l5-11 11 7 9-9 7 13-5 7H24z" fill="#7c6aac"/><circle cx="29" cy="33" r="3" fill="#8cf5ff"/><circle cx="44" cy="33" r="3" fill="#8cf5ff"/><path d="M53 14v39M48 18l5-8 5 8" stroke="#b8dfff" stroke-width="3"/>`
+  });
+  const REQUIRED_ENEMY_ART_IDS=new Set(["slime","wolf","wraith","devil","bandit","troll"]);
+  function portraitHash(value){let h=2166136261;for(const ch of String(value||"")){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return Math.abs(h>>>0);}
+  function escapePortraitLabel(value){return String(value||"Enemy").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function proceduralEnemyPortrait(enemy,board){
+    const id=String(enemy?.id||""),shape=PROCEDURAL_ENEMY_SHAPES[id];
+    if(!shape)return "";
+    const palettes=[null,["#15271c","#4a724b","#9bc26c"],["#15172e","#51448b","#8eb5ff"],["#1b0d25","#6d275f","#dd6dad"],["#160f21","#755b31","#e3c36c"],["#0b1720","#356c78","#80e1dd"],["#0b1720","#356c78","#80e1dd"]];
+    const [bg1,bg2]=palettes[Math.min(6,Math.max(1,Math.floor(Number(board)||1)))],gid=`enemy_${portraitHash(enemy?.name||id)}`,label=escapePortraitLabel(enemy?.name||id);
+    return `<svg class="enemy-art-frame" viewBox="0 0 72 72" role="img" aria-label="${label}"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg1}"/><stop offset="1" stop-color="${bg2}"/></linearGradient></defs><rect x="2" y="2" width="68" height="68" rx="17" fill="#060a10"/><rect x="4" y="4" width="64" height="64" rx="15" fill="url(#${gid})"/><g transform="translate(0 2)">${shape}</g></svg>`;
+  }
+  function enemyPortraitHTML(enemy){
+    const rt=requireRuntime(),state=rt.getState(),id=String(enemy?.id||""),board=Math.min(6,Math.max(1,Math.floor(Number(state.boardLevel)||1))),mode=state.hellMode?"hell":state.nightmareMode?"nightmare":"normal",label=escapePortraitLabel(enemy?.name||id||"Enemy");
+    if(id){
+      const tiered=rt.enemyBattleArtById(id,board);
+      if(tiered){const aura=rt.enemyModeAura(mode);return `<span class="db0636-tiered-enemy-art ${aura.className}" data-enemy-battle-art="${tiered.key}" data-enemy-battle-board="${tiered.board}" data-enemy-battle-mode="${aura.id}"><img class="enemy-art-frame enemy-art-image db0636-tiered-enemy-image" src="${tiered.src}" alt="${escapePortraitLabel(tiered.alt)} · Board ${tiered.board}" draggable="false"></span>`;}
+      const guardianSrc=rt.guardianBattleArt(id);
+      if(guardianSrc)return `<img class="enemy-art-frame enemy-art-image db060-guardian-art" src="${guardianSrc}" alt="${label}" draggable="false">`;
+      const portrait=rt.enemyPortraitById(id);
+      if(portrait)return `<img class="enemy-art-frame enemy-art-image" src="${portrait.src}" alt="${escapePortraitLabel(portrait.alt||enemy?.name||id)}" draggable="false">`;
+      const procedural=proceduralEnemyPortrait(enemy,board);if(procedural)return procedural;
+      if(REQUIRED_ENEMY_ART_IDS.has(id)||enemy?.guardian||enemy?.boss)throw new Error(`Missing required combat art for enemy ${id}`);
+    }
+    return `<span class="enemy-art-fallback" role="img" aria-label="${label}">${enemy?.icon||"👹"}</span>`;
+  }
+
   function renderEnemyParty() {
     const rt = requireRuntime(), state = rt.getState(), find = rt.find, doc = rt.document, elements = rt.getElements();
     const strip = find("enemyParty"), stage = find("enemyIcon"); if (!strip || !stage) return;
     const enemies = state.currentEnemies || [], index = state.currentEnemyIndex || 0;
     strip.innerHTML = ""; stage.className = "fighter-icon enemy-stage-icons";
-    stage.innerHTML = enemies.map((e, i) => `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" data-enemy-index="${i}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${rt.enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0)}</span></span>`).join("");
+    stage.innerHTML = enemies.map((e, i) => `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" data-enemy-index="${i}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0)}</span></span>`).join("");
     enemies.forEach((e, i) => { const b = doc.createElement("button"); b.className = `enemy-chip${i === index && e.hp > 0 ? " active" : ""}${e.hp <= 0 ? " dead" : ""}`; b.disabled = e.hp <= 0; b.title = `${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.defense || 0} DEF`; b.innerHTML = `<strong class="target-number">${i + 1}</strong>`; b.addEventListener("click", () => rt.selectEnemy(i)); strip.appendChild(b); });
     stage.classList.toggle("db0636-tiered-enemy-stage", !!stage.querySelector?.(".db0636-tiered-enemy-art"));
   }

@@ -156,9 +156,18 @@ if(process.argv.includes('--capture')){
   assert(fs.existsSync(ownerPath),'enemy scaling owner missing');assert(fs.existsSync(fixturePath),'frozen 0.6.6.19 scaling fixture missing');
   const fixture=JSON.parse(fs.readFileSync(fixturePath,'utf8'));assert.strictEqual(fixture.caseCount,cases.length,'matrix case count drifted');
   const owner=loadOwner();
+  const presentationOwnedIcons=new Set(['bandit-art','troll-art']);
   for(const entry of fixture.cases){
     const actual=runOwner(entry.input,owner);
-    assert.deepStrictEqual(actual,entry.result,`enemy scaling drift: ${entry.id}`);
+    const expected=clone(entry.result);
+    if(presentationOwnedIcons.has(entry.id)){
+      expected.output.icon=entry.input.base.icon;
+      assert.strictEqual(actual.output.icon,entry.input.base.icon,`enemy scaling must preserve semantic icon: ${entry.id}`);
+    }
+    assert.deepStrictEqual(actual,expected,`enemy scaling drift: ${entry.id}`);
   }
-  console.log(`Enemy scaling resolution PASS: ${fixture.caseCount} frozen 0.6.6.19 cases, exact outputs + RNG consumption`);
+  const ownerSource=fs.readFileSync(ownerPath,'utf8');
+  for(const retiredArtDependency of ['beta045EnemyArtForName','db046EnemyArtForName','db047UiArt'])
+    assert(!ownerSource.includes(retiredArtDependency),`enemy scaling must not own presentation art: ${retiredArtDependency}`);
+  console.log(`Enemy scaling resolution PASS: ${fixture.caseCount} frozen 0.6.6.19 scaling cases, exact stats/RNG with presentation art separated`);
 }

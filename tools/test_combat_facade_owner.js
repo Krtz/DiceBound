@@ -42,20 +42,49 @@ assert.strictEqual(combat.scaleEnemy({}),'scaling.scale');
 assert.strictEqual(calls.length,10,'Combat facade forwarding smoke did not exercise expected methods');
 
 const monolith=fs.readFileSync(path.join(root,'runtime','js','dicebound.js'),'utf8');
+assert(monolith.includes('const dbCombatOwner=window.DiceboundCombat;'),'Combat public facade owner binding missing');
+assert(monolith.includes('dbCombat=dbCombatOwner.configure({'),'Combat public facade composition binding missing');
+
+// These remain genuine first-class seams because the released runtime passes
+// or replaces them as values/hooks. Attack, Guard and Ultimate callers now use
+// the public Combat facade directly and must not regain call-only wrappers.
 for(const snippet of [
-  'const dbCombatOwner=window.DiceboundCombat;',
-  'dbCombat=dbCombatOwner.configure({',
-  'async function playerAttack(...args){return dbCombat.attack(...args);}',
-  'async function guardAction(...args){return dbCombat.guard(...args);}',
   'function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}',
-  'async function winCombat(...args){return dbCombat.win(...args);}',
   'async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}',
-  'function triggerElementEffect(...args){return dbCombat.element(...args);}',
-  'function healPlayer(...args){return dbCombat.heal(...args);}',
-  'async function useUltimate(...args){return dbCombat.ultimate(...args);}',
-  'async function occultSpellAttack(...args){return dbCombat.spell(...args);}',
   'if(dbCombat)return dbCombat.petDamage();'
-])assert(monolith.includes(snippet),`Missing Combat facade route: ${snippet}`);
+])assert(monolith.includes(snippet),`Missing intentional Combat seam/composition route: ${snippet}`);
+
+// Call-only compatibility functions are not architecture. Their callers now
+// invoke DiceboundCombat directly; rebuilding these wrappers would recreate the
+// historical layer this release is removing.
+const retiredForwarders=[
+  'playerAttack','guardAction','useUltimate',
+  'activeTrainerPetId','affinityElementMultiplier','clearBloodOverhealTemp',
+  'currentWeaponElement','elementHit','elementHitAll','enemyElementProc','enemyTurn',
+  'healPlayer','manaGain','maybePetElementProc','occultChannelAttack',
+  'occultSpellAttack','performStrike','petElementFor','recordHealing',
+  'strikeBaseDamage','summonerConjure','trainerPetDamage','trainerStrike',
+  'triggerElementEffect','triggerWeaponElement','winCombat'
+];
+for(const name of retiredForwarders){
+  assert(!new RegExp(`\\b(?:async\\s+)?function\\s+${name}\\s*\\(`).test(monolith),`retired Combat forwarding adapter returned: ${name}`);
+}
+
+// Guard representative direct routes that actually have ordinary monolith
+// callers after the chainsaw pass. A facade method need not have a monolith
+// caller merely because focused owners can consume it.
+for(const direct of [
+  'dbCombat.attack(',
+  'dbCombat.guard(',
+  'dbCombat.ultimate(',
+  'dbCombat.win(',
+  'dbCombat.element(',
+  'dbCombat.heal(',
+  'dbCombat.spell(',
+  'dbCombat.manaGain(',
+  'dbCombat.strike('
+])assert(monolith.includes(direct),`ordinary Combat callers no longer route directly through facade: ${direct}`);
+
 for(const retired of [
   'return dbCombatAttackResolution.playerAttack(...args);',
   'return dbCombatGuardResolution.guardAction(...args);',
@@ -74,4 +103,4 @@ const manifest=JSON.parse(fs.readFileSync(path.join(root,'runtime','js','module-
 const entry=manifest.modules.find(module=>module.id==='combat-facade');
 assert(entry&&entry.provides.includes('DiceboundCombat'),'Combat facade missing from module manifest');
 assert(!entry.requires.includes('combat-presentation')&&!entry.requires.includes('combat-vfx'),'Combat Engine facade must keep View/VFX out of its dependency boundary');
-console.log('Combat public facade ownership contract: PASS');
+console.log('Combat public facade ownership contract: PASS — call-only adapters retired; intentional hooks preserved.');

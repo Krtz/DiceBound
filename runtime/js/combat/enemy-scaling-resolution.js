@@ -14,9 +14,6 @@
     const db317Board=deps.getBoard;
     const db064EnemyPolicy=deps.enemyPolicy;
     const ELEMENT_KEYS=[...(deps.elementKeys||[])];
-    const beta045EnemyArtForName=deps.beta045EnemyArtForName||(()=>null);
-    const db046EnemyArtForName=deps.db046EnemyArtForName||(()=>null);
-    const db047UiArt=deps.db047UiArt||(()=>null);
 
     if(typeof getState!=="function")throw new Error("Enemy scaling requires getState().");
     if(typeof currentTileCount!=="function")throw new Error("Enemy scaling requires currentTileCount().");
@@ -62,13 +59,13 @@
       if(boardLevel===6){enemy.hp=Math.round(enemy.hp*1.85);enemy.maxHp=enemy.hp;enemy.attack=Math.round(enemy.attack*1.58);enemy.defense=Math.round((enemy.defense||0)*1.25+10);enemy.xp=Math.round((enemy.xp||1)*1.35);enemy.gold=Math.round((enemy.gold||1)*1.18);}
 
       // Beta 0.4.5 --------------------------------------------------------
-      {const tune={1:[1.00,1.00,0],2:[1.02,1.01,0],3:[1.05,1.04,1],4:[0.99,1.00,0],5:[1.20,1.14,2],6:[1.08,1.06,1]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*tune[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*tune[1]));enemy.defense=Math.max(0,(enemy.defense||0)+tune[2]);if(enemy.name==='Cultist')enemy.lifeSteal=hellMode?.20:nightmareMode?.10:.01;const art=beta045EnemyArtForName(enemy.name);if(art)enemy.icon=art;}
+      {const tune={1:[1.00,1.00,0],2:[1.02,1.01,0],3:[1.05,1.04,1],4:[0.99,1.00,0],5:[1.20,1.14,2],6:[1.08,1.06,1]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*tune[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*tune[1]));enemy.defense=Math.max(0,(enemy.defense||0)+tune[2]);if(enemy.name==='Cultist')enemy.lifeSteal=hellMode?.20:nightmareMode?.10:.01;}
 
       // Beta 0.4.6 --------------------------------------------------------
-      {const tune={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.07,1.05,1],4:[1.10,1.08,2],5:[1.30,1.20,4],6:[1.12,1.10,2]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*tune[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*tune[1]));enemy.defense=Math.max(0,(enemy.defense||0)+tune[2]);const art=db046EnemyArtForName(enemy.name);if(art)enemy.icon=art;}
+      {const tune={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.07,1.05,1],4:[1.10,1.08,2],5:[1.30,1.20,4],6:[1.12,1.10,2]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*tune[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*tune[1]));enemy.defense=Math.max(0,(enemy.defense||0)+tune[2]);}
 
       // Beta 0.4.7 --------------------------------------------------------
-      {const perBoard={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.08,1.06,1],4:[1.15,1.10,2],5:[1.38,1.24,5],6:[1.55,1.33,7]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*perBoard[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*perBoard[1]));enemy.defense=Math.max(0,(enemy.defense||0)+perBoard[2]);const name=(enemy.name||'').toLowerCase();if(name.includes('bandit'))enemy.icon=db047UiArt('bandit',enemy.name,'db-art-portrait')||enemy.icon;if(name.includes('troll'))enemy.icon=db047UiArt('troll',enemy.name,'db-art-portrait')||enemy.icon;}
+      {const perBoard={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.08,1.06,1],4:[1.15,1.10,2],5:[1.38,1.24,5],6:[1.55,1.33,7]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*perBoard[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*perBoard[1]));enemy.defense=Math.max(0,(enemy.defense||0)+perBoard[2]);}
 
       // Beta 0.6.4 ordinary Devil policy ---------------------------------
       if(isStandardDevil(enemy)){enemy.innateElement='fire';enemy.elementProcChance=db064EnemyPolicy.standardDevilFlameChance(boardLevel,combatMode(hellMode,nightmareMode));}

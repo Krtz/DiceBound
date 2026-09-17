@@ -171,22 +171,22 @@ function makeHarness(options={}){
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
-for(const adapter of [
+for(const route of [
   "let dbCombatTurns=null;",
-  "return dbCombat.enemyTurn(...args);",
   "return dbCombat.enemyResponse(...args);",
   "const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;",
   "dbCombatTurns=dbCombatTurnOwner.configure({",
   "turns:dbCombatTurns"
-])assert.ok(monolith.includes(adapter),`missing combat turn-resolution composition/facade route: ${adapter}`);
+])assert.ok(monolith.includes(route),`missing combat turn-resolution composition/facade route: ${route}`);
 for(const retiredAdapter of [
   "return dbCombatTurns.enemyTurn(...args);",
-  "return dbCombatTurns.resolveEnemyResponse(...args);"
-])assert.ok(!monolith.includes(retiredAdapter),`direct peer-public turn adapter returned: ${retiredAdapter}`);
+  "return dbCombatTurns.resolveEnemyResponse(...args);",
+  "return dbCombat.enemyTurn(...args);"
+])assert.ok(!monolith.includes(retiredAdapter),`call-only turn adapter returned: ${retiredAdapter}`);
 for(const retired of [
   "v24ApplyDamage","v24ResolveNormalHits","v24AttackPattern","beta03TickEnemyBurns","db0511TickPlayerElementStatuses","db064ResolveWolfEchoes",
   "enemyTurnV11","enemyTurnV25DevilBase","db0511EnemyTurnBase","db060EnemyTurnBase","db064EnemyTurnBase","dbFriendEnemyTurnBase",
   "resolveEnemyResponseV15","resolveEnemyResponseV19Base","resolveEnemyResponseV24Base","resolveEnemyResponseBeta045Base","db046ResolveEnemyBase","db047ResolveEnemyBase","db0511ResolveEnemyResponseBase"
 ])assert.ok(!monolith.includes(retired),`retired combat turn ownership remains in monolith: ${retired}`);
-assert.equal((monolith.match(/async function enemyTurn\(/g)||[]).length,1,"monolith should retain exactly one thin enemyTurn adapter");
-assert.equal((monolith.match(/async function resolveEnemyResponse\(/g)||[]).length,1,"monolith should retain exactly one thin resolveEnemyResponse adapter");
+assert.equal((monolith.match(/async function enemyTurn\(/g)||[]).length,0,"call-only enemyTurn adapter must stay retired");
+assert.equal((monolith.match(/async function resolveEnemyResponse\(/g)||[]).length,1,"resolveEnemyResponse is a real first-class interception seam and must remain singular");

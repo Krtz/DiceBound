@@ -45,10 +45,10 @@ classes.syncOuroborosEconomy();assert.equal(player.goldAttackScale,0);assert.ok(
 player={classId:"ranger",attack:37,doubleStrike:1.2,gold:400,goldAttackScale:.0025};assert.equal(classes.syncOuroborosEconomy(),false);assert.equal(player.goldAttackScale,.0025);assert.equal(player.attack,37);
 
 const mono=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
-assert.match(mono,/effectiveDodgeChance=function\(\)\{return dbClasses\.legacyMonkDodge\(effectiveDodgeChanceV12\(\)\);\}/);
-assert.match(mono,/effectiveDodgeChance=function\(\)\{return dbClasses\.identityDodgeAdjustments\(effectiveDodgeChanceV13\(\)\);\}/);
-assert.match(mono,/dbClasses\.berserkerDamage\(amount\)/);
-assert.match(mono,/dbClasses\.ninjaExecutionDamage\(amount,ignoreDefense\)/);
+assert.match(mono,/function effectiveDodgeChance\(\)\{const raw=rawDodgeChance\(\),base=raw\/\(1\+raw\);return dbClasses\.identityDodgeAdjustments\(dbClasses\.legacyMonkDodge\(base\)\);\}/);
+assert.doesNotMatch(mono,/effectiveDodgeChanceV12/);
+assert.doesNotMatch(mono,/effectiveDodgeChanceV13/);
+assert.match(mono,/const adjusted=dbClasses\.ninjaExecutionDamage\(amount,ignoreDefense\);amount=dbClasses\.berserkerDamage\(adjusted\.amount\);ignoreDefense=adjusted\.ignoreDefense/);
 assert.match(mono,/function v18SyncOuroborosAttack\(\)\{return dbClasses\.syncOuroborosAttack\(\);\}/);
 assert.match(mono,/function v27SyncOuroborosEconomy\(\)\{return dbClasses\.syncOuroborosEconomy\(\);\}/);
 assert.doesNotMatch(mono,/classIdentityActive\("monk"\)\?1-\(1-base\)\*\(1-base\):base/);

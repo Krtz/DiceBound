@@ -25,6 +25,16 @@ def current_notes(patch_notes: str) -> str:
     return "\n".join(lines[1:]).strip() or "Current validated DiceBound development checkpoint."
 
 
+def release_notes(root: Path, version: str) -> str:
+    """Prefer a version-owned release note, falling back to the legacy PATCH_NOTES section."""
+    versioned = root / "runtime" / "release-notes" / f"{version}.md"
+    if versioned.is_file():
+        notes = versioned.read_text(encoding="utf-8").strip()
+        if notes:
+            return notes
+    return current_notes((root / "runtime" / "PATCH_NOTES.md").read_text(encoding="utf-8"))
+
+
 def derive(version: str, channel: str, save_schema: int, notes: str) -> tuple[dict, str]:
     version = require_supported_version(version)
     tag = release_tag(channel, version)
@@ -59,7 +69,7 @@ def main() -> int:
     channel = str(args.channel or project["channel"]).strip()
     if not channel:
         raise SystemExit("release channel must not be empty")
-    notes = current_notes((root / "runtime/PATCH_NOTES.md").read_text(encoding="utf-8"))
+    notes = release_notes(root, version)
     spec, rendered_notes = derive(version, channel, int(project["saveSchemaVersion"]), notes)
 
     output_dir = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir

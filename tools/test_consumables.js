@@ -139,12 +139,8 @@ async function run(){
     assert.strictEqual(h.stats.potionsUsed,0);
   }
 
-  // V24 repair layer must not double-count the normal V16 core.
-  {
-    const h=harness({currentEnemy:null,player:{potions:2,hp:50,maxHp:100}});
-    owner._test.v24RoadAccountingLayer();
-    assert.strictEqual(h.stats.potionsUsed,1);
-  }
+  // The V24 repair hook is retired: canonical road ownership already guarantees exactly-once accounting above.
+  assert.strictEqual(owner._test.v24RoadAccountingLayer, undefined, 'retired V24 road-accounting compatibility hook returned');
 
   // Dragoon Landing bypasses both Potion consumption and normal command tracing.
   {

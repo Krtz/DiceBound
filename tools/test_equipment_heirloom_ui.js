@@ -111,9 +111,10 @@ assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderer
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
   "function renderEquipment(){\n    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();\n  }",
-  "function renderEndGear(){\n    return dbEquipmentUi.renderEndGear();\n  }",
   "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}"
 ])assert.ok(monolith.includes(adapter),`missing thin equipment/Heirloom UI adapter: ${adapter}`);
+assert.ok(monolith.includes("dbEquipmentUi.renderEndGear();"),"end-run gear rendering must route directly through the Equipment/Heirloom UI owner");
+assert.ok(!/function\s+renderEndGear\s*\(/.test(monolith),"retired renderEndGear call-only adapter returned to the monolith");
 for(const retired of ["renderEquipment=function","renderEndGear=function","openLoot=function","renderEquipmentV110Base","renderEquipmentV23Base","renderEquipmentV24Base","v24RenderHeirloomStorage","v25RenderEndStorageManager","db06314RenderEquipmentBase","db06314OpenLootBase","dicebound-06314-equipment-identity-style"])assert.ok(!monolith.includes(retired),`retired equipment/Heirloom UI layer remains: ${retired}`);
 
-console.log("Equipment/Heirloom UI owner PASS: semantic art, bounded card thumbnails, loot, Camp storage, end-run storage and monolith drain guards");
+console.log("Equipment/Heirloom UI owner PASS: semantic art, bounded card thumbnails, loot, Camp storage, end-run storage and direct owner routing");

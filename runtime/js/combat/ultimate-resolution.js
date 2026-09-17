@@ -16,7 +16,7 @@
       "damageEnemy","damageAll","healPlayer","triggerStrikeElements","petDamage","trainerPetDamage","syncOuroborosAttack",
       "rollD20Chaos","updateCombatUI","animateUltimate","animateClassAttack","setCombatText","addCombatHistory","identityFlash",
       "playCritSfx","playHolySfx","delay","getCombatActionDelay","winCombat","resolveEnemyResponse","petTurn","applyMythicPantsPulse","applyMythicRingPulse",
-      "potionHealValue","getPets","getGagInfo","slimeRougeUltimate","getFastEchoCap","setFastEchoCap","frogEchoCap",
+      "potionHealValue","getPets","getGagInfo","slimeRougeUltimate",
       "dragoonActive","dragoonLandingReady","dragoonLanding","tickDragoonCooldown"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat Ultimate-resolution runtime missing ${name}().`);
@@ -205,29 +205,18 @@
     finally { p._v25CroakHitsRemaining = 0; }
   }
 
-  async function v27OuroborosSpeed() {
-    const rt = requireRuntime(), p = player();
-    if (p.classId !== "ouroboros") return v25FrogPoisonLifetime();
-    const oldCap = rt.getFastEchoCap() || 0, echo = p.doubleStrike || 0; rt.setFastEchoCap(echo >= 50 ? 8 : echo >= 10 ? 28 : 90);
-    try { return await v25FrogPoisonLifetime(); }
-    finally { rt.setFastEchoCap(oldCap); }
-  }
-
-  async function v28FrogSpeedAndSlimeRouge() {
+  async function currentClassUltimate() {
     const rt = requireRuntime(), p = player();
     if (p.classId === "slimerouge") return rt.slimeRougeUltimate();
-    if (p.classId !== "frog") return v27OuroborosSpeed();
-    const oldCap = rt.getFastEchoCap() || 0, cap = rt.frogEchoCap(p.doubleStrike || 0); if (cap) rt.setFastEchoCap(cap);
-    try { return await v27OuroborosSpeed(); }
-    finally { rt.setFastEchoCap(oldCap); }
+    return v25FrogPoisonLifetime();
   }
 
   async function unstableUltimate() {
     const rt = requireRuntime(), p = player();
-    if (!rt.hasLegendaryEffect("unstable_ultimate")) return v28FrogSpeedAndSlimeRouge();
+    if (!rt.hasLegendaryEffect("unstable_ultimate")) return currentClassUltimate();
     if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 70) return;
     const oldBonus = p.classUltimateBonus || 0; p.ultimateCharge = 100; p.classUltimateBonus = oldBonus - .25;
-    try { return await v28FrogSpeedAndSlimeRouge(); }
+    try { return await currentClassUltimate(); }
     finally { p.classUltimateBonus = oldBonus; p.ultimateCharge = Math.max(0, p.ultimateCharge); }
   }
 
@@ -258,7 +247,7 @@
     owner: "combat/ultimate-resolution",
     configure,
     start,
-    _test: Object.freeze({ genericUltimate, v11BloodmageUltimate, v13RangerUltimate, v15CompanionUltimate, v16IdentityUltimate, v17NinjaUltimate, v18OuroborosUltimate, v25FrogPoisonLifetime, v27OuroborosSpeed, v28FrogSpeedAndSlimeRouge, unstableUltimate, dragonDive, friendsUltimate })
+    _test: Object.freeze({ genericUltimate, v11BloodmageUltimate, v13RangerUltimate, v15CompanionUltimate, v16IdentityUltimate, v17NinjaUltimate, v18OuroborosUltimate, v25FrogPoisonLifetime, currentClassUltimate, unstableUltimate, dragonDive, friendsUltimate })
   });
 
   window.DiceboundCombatUltimateResolution = api;

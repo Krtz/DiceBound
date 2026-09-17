@@ -3,6 +3,7 @@
 
   const ENEMY_DATA=[
     {
+      "id": "slime",
       "name": "Slime",
       "icon": "🟢",
       "hp": 9,
@@ -13,6 +14,7 @@
       "weakness": "electric"
     },
     {
+      "id": "goblin",
       "name": "Goblin",
       "icon": "👺",
       "hp": 12,
@@ -23,6 +25,7 @@
       "weakness": "donut"
     },
     {
+      "id": "skeleton",
       "name": "Skeleton",
       "icon": "💀",
       "hp": 15,
@@ -33,6 +36,7 @@
       "weakness": "light"
     },
     {
+      "id": "wolf",
       "name": "Wolf",
       "icon": "🐺",
       "hp": 17,
@@ -43,6 +47,7 @@
       "weakness": "fire"
     },
     {
+      "id": "bandit",
       "name": "Bandit",
       "icon": "🥷",
       "hp": 20,
@@ -53,6 +58,7 @@
       "weakness": "tech"
     },
     {
+      "id": "orc",
       "name": "Orc",
       "icon": "👹",
       "hp": 23,
@@ -63,6 +69,7 @@
       "weakness": "ice"
     },
     {
+      "id": "cultist",
       "name": "Cultist",
       "icon": "🧛",
       "hp": 26,
@@ -74,6 +81,7 @@
       "lifeSteal": 0.01
     },
     {
+      "id": "wraith",
       "name": "Wraith",
       "icon": "👻",
       "hp": 29,
@@ -84,6 +92,7 @@
       "weakness": "nature"
     },
     {
+      "id": "troll",
       "name": "Troll",
       "icon": "🧌",
       "hp": 34,
@@ -94,6 +103,7 @@
       "weakness": "void"
     },
     {
+      "id": "devil",
       "name": "Devil",
       "icon": "😈",
       "hp": 38,
@@ -104,6 +114,7 @@
       "weakness": "radiation"
     },
     {
+      "id": "lich",
       "name": "Lich",
       "icon": "🧙‍♀️",
       "hp": 43,

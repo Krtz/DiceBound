@@ -1,15 +1,57 @@
 from pathlib import Path
 import re
 
-ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / "runtime/js/dicebound.js").read_text(encoding="utf-8")
+from audit_monolith_shadow_ownership import mask_non_code
 
-if len(re.findall(r"\bfunction\s+tileMeta\s*\(", SOURCE)) != 1:
-    raise SystemExit("tileMeta must have exactly one canonical declaration")
-if re.search(r"\btileMeta\s*=\s*function\b", SOURCE):
+ROOT = Path(__file__).resolve().parents[1]
+MONOLITH = (ROOT / "runtime/js/dicebound.js").read_text(encoding="utf-8")
+PRESENTATION = (ROOT / "runtime/js/board/presentation.js").read_text(encoding="utf-8")
+MONOLITH_CODE = mask_non_code(MONOLITH)
+PRESENTATION_CODE = mask_non_code(PRESENTATION)
+
+# tileMeta is no longer a monolith-owned function. Wave 10 extracted the released
+# presentation behavior into DiceboundBoardPresentation; the composition layer
+# should only configure and call that owner.
+if re.search(r"\bfunction\s+tileMeta\s*\(", MONOLITH_CODE):
+    raise SystemExit("historical monolith-owned tileMeta returned")
+if re.search(r"\btileMeta\s*=\s*function\b", MONOLITH_CODE):
     raise SystemExit("historical tileMeta function replacement returned")
-if re.search(r"\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*tileMeta\s*;", SOURCE):
+if re.search(r"\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*tileMeta\s*;", MONOLITH_CODE):
     raise SystemExit("historical tileMeta predecessor capture returned")
+
+if len(re.findall(r"\bfunction\s+tileMeta\s*\(", PRESENTATION_CODE)) != 1:
+    raise SystemExit("Board Presentation must own exactly one canonical tileMeta declaration")
+
+for fragment in (
+    'const dbBoardPresentation=window.DiceboundBoardPresentation;',
+    'if(!dbBoardPresentation?.configure||!dbBoardPresentation?.tileMeta)',
+    'dbBoardPresentation.configure({getBoardLevel:()=>boardLevel});',
+    'let dbTileMetaFinalReady=false;',
+    'dbTileMetaFinalReady=true;',
+):
+    if fragment not in MONOLITH:
+        raise SystemExit("composition is missing canonical Board Presentation routing: " + fragment)
+
+if MONOLITH.count("dbBoardPresentation.tileMeta(") != 2:
+    raise SystemExit("composition must route both board build and tile refresh directly through Board Presentation")
+
+for fragment in (
+    'const OWNER="board/presentation";',
+    'const assets=window.DiceboundAssets;',
+    'const guardians=window.DiceboundGuardians;',
+    'function tileMeta(tile,{ready=true}={})',
+    'guardians.resolveById(tile.enemyBase.id)?.art?.boardMarker',
+    'guardians.resolveFinal(runtime.getBoardLevel())',
+    '`${name} pack · ${count} enemies`',
+    'uiArt("coins","Treasure","db-art-tile")',
+    'uiArt("gambler","Gambler","db-art-tile")',
+    'if(tile?.type==="devilboss")return ["👿🌙","???"]',
+    'start:["🏠","Start"]',
+    'const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForId',
+    'window.DiceboundBoardPresentation=api;',
+):
+    if fragment not in PRESENTATION:
+        raise SystemExit("canonical Board Presentation tileMeta owner is missing released behavior/routing: " + fragment)
 
 retired = {
     "tileMetaV24Base",
@@ -19,67 +61,13 @@ retired = {
     "db047TileMetaBase",
     "db049TileMetaBase",
     "db060TileMetaBase",
+    "db060GuardianArt",
+    "db060GuardianTileArt",
 }
 for alias in sorted(retired):
-    if re.search(rf"\b{re.escape(alias)}\b", SOURCE):
-        raise SystemExit(f"retired tileMeta alias returned: {alias}")
+    if re.search(rf"\b{re.escape(alias)}\b", MONOLITH_CODE) or re.search(rf"\b{re.escape(alias)}\b", PRESENTATION_CODE):
+        raise SystemExit(f"retired tileMeta/guardian alias returned as executable code: {alias}")
 
-for fragment in (
-    "let dbTileMetaFinalReady=false;",
-    "dbTileMetaFinalReady=true;",
-    "db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name)",
-    "DB317_GUARDIANS.resolveFinal(boardLevel)",
-    "db049EnemyTileIcon(tile)",
-    "db047UiArt('bandit'",
-    "db047UiArt('troll'",
-    "db046EnemyArtForName(tile.enemyBase.name)",
-    "beta045EnemyArtForName(tile.enemyBase.name)",
-    "beta043Art('coins','Treasure','db-art-tile')",
-    "beta043Art('gambler','Gambler','db-art-tile')",
-    "tile?.type==='devilboss'",
-    'start:["🏠","Start"]',
-):
-    if fragment not in SOURCE:
-        raise SystemExit("canonical tileMeta is missing released behavior: " + fragment)
-
-start = SOURCE.find("function tileMeta(")
-end = SOURCE.find("function buildBoard(", start)
-if start < 0 or end < 0:
-    raise SystemExit("could not isolate canonical tileMeta region")
-body = SOURCE[start:end]
-
-# Final runtime precedence is the old wrapper chain walked newest-to-oldest:
-# guardian art -> current enemy art -> 0.4.7 fallback -> 0.4.6 -> 0.4.5 ->
-# 0.4.3 event art -> v24 secret tile -> base metadata.
-order = [
-    "db060GuardianTileArt(tile.enemyBase.id,tile.enemyBase.name)",
-    "db049EnemyTileIcon(tile)",
-    "db047UiArt('bandit'",
-    "db046EnemyArtForName(tile.enemyBase.name)",
-    "beta045EnemyArtForName(tile.enemyBase.name)",
-    "beta043Art('coins','Treasure','db-art-tile')",
-    "tile?.type==='devilboss'",
-    'if(tile.type==="enemy"&&tile.enemyBase)',
-]
-positions = []
-for fragment in order:
-    index = body.find(fragment)
-    if index < 0:
-        raise SystemExit("tileMeta precedence anchor missing: " + fragment)
-    positions.append(index)
-if positions != sorted(positions):
-    raise SystemExit("canonical tileMeta final precedence changed")
-
-# Preserve the two distinct pack-label generations that are observably different:
-# 0.4.9 current enemy packs say "pack · N enemies"; 0.4.7 fallback says "· N enemies".
-for fragment in (
-    "`${name} pack · ${count} enemies`",
-    "`${enemyName} · ${n} enemies`",
-    "Mini Boss · 1 enemy",
-    "Final Boss · 1 enemy",
-    "['👿🌙','???']",
-):
-    if fragment not in body:
-        raise SystemExit("canonical tileMeta lost released label semantics: " + fragment)
-
-print("Canonical tileMeta PASS: eight generations collapsed to one with final precedence and labels guarded")
+# Detailed bootstrap/final labels, guardian art, enemy packs, event art and
+# zero-gameplay-RNG semantics are frozen by test_board_presentation_oracle.js.
+print("Canonical tileMeta PASS: released tile presentation is owned by Board Presentation; composition routes directly to it and retired monolith chains remain absent")

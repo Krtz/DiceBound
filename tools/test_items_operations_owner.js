@@ -84,13 +84,21 @@ for(const forbidden of [
   "equipItem=function",
   "formatGearComparison=function"
 ])assert.equal(monolith.includes(forbidden),false,`operations shadow ownership remains in monolith: ${forbidden}`);
-assert.ok(monolith.includes("function gearPowerScore(item){return dbItems.score(item);}"));
-assert.ok(monolith.includes("function itemSellValue(item){return dbItems.sellValue(item);}"));
-assert.ok(monolith.includes("function equipItem(item,silent=false){return dbItems.equip(item,silent);}"));
-assert.ok(monolith.includes("function formatGearComparison(item,current){return dbItems.formatComparison(item,current);}"));
+
+// Score, sale value and comparison are ordinary read-only operations and now route
+// directly through DiceboundItems. Their call-only monolith adapters must stay gone.
+assert.doesNotMatch(monolith,/\bfunction\s+gearPowerScore\s*\(/,"retired gearPowerScore adapter returned");
+assert.doesNotMatch(monolith,/\bfunction\s+itemSellValue\s*\(/,"retired itemSellValue adapter returned");
+assert.doesNotMatch(monolith,/\bfunction\s+formatGearComparison\s*\(/,"retired formatGearComparison adapter returned");
+assert.ok(monolith.includes("dbItems.score("),"score callers must route directly through DiceboundItems");
+assert.ok(monolith.includes("dbItems.sellValue("),"sell-value callers must route directly through DiceboundItems");
+assert.ok(monolith.includes("dbItems.formatComparison("),"comparison callers must route directly through DiceboundItems");
+
+// Equip still forms a small semantic seam used by final composition paths.
+assert.ok(monolith.includes("function equipItem(item,silent=false){return dbItems.equip(item,silent);}"),"equipItem semantic seam must remain routed through DiceboundItems");
 assert.ok(monolith.includes("dbItemOperationsOwner.createController({"),"composition must bind focused operations owner");
 
 for(const forbidden of ["document.","querySelector","getElementById"]){
   assert.equal(source.includes(forbidden),false,`Items operations owner contains direct DOM access: ${forbidden}`);
 }
-console.log("Items operations owner boundary PASS: score/value/comparison/equip wrapper ladders retired behind DiceboundItems.");
+console.log("Items operations owner boundary PASS: score/value/comparison adapters retired, equip seam preserved behind DiceboundItems.");

@@ -61,8 +61,9 @@ assert.doesNotMatch(source,/petCollectionGrid|campPetPanel|MutationObserver/,'ne
 
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');
 const stylesheet=fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),'utf8');
-assert.match(monolith,/function renderPetCollection\(\)\{return window\.DiceboundPetChooser\?\.render\?\.\(\)\|\|null;\}/,'monolith must retain only a thin Pet chooser lifecycle adapter');
+assert.match(monolith,/renderPetCollection:\(\)=>window\.DiceboundPetChooser\.render\(\)/,'Pet lifecycle must receive the canonical chooser render port directly');
+assert.doesNotMatch(monolith,/function\s+renderPetCollection\s*\(/,'retired Pet chooser call-only lifecycle adapter returned to the monolith');
 for(const retired of ['renderPetCollection=function','renderPetCollectionV','campPetPanel','dbBeta021RenderCampPets','db059DecoratePetCollection','db059Observer','petCollectionClose'])assert(!monolith.includes(retired),`retired Pet chooser chain remains in dicebound.js: ${retired}`);
 for(const retiredStyle of ['.pet-collection-grid{','.camp-pet-choice-beta021{','.camp-pet-feed-beta021{'])assert(!stylesheet.includes(retiredStyle),`retired Pet chooser style remains in shared CSS: ${retiredStyle}`);
 
-console.log('Pet chooser UI owner PASS: state contract, switching restrictions and monolith drain guards');
+console.log('Pet chooser UI owner PASS: state contract, switching restrictions and direct lifecycle routing');

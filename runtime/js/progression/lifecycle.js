@@ -57,9 +57,11 @@
   function finalizeRun(){
     if(call('isRunFinalized'))return call('getLastLegacyAward');
     call('setRunFinalized',true);
-    const player=call('getPlayer'),travelAward=Math.max(0,Math.round(call('getTilesMovedThisRun')*(1+player.legacyXpBonus))),goldAward=Math.max(0,Math.floor(player.gold/10)),award=(travelAward+goldAward)*(call('isNightmare')?5:1),state=meta();
+    const player=call('getPlayer'),tilesMoved=call('getTilesMovedThisRun'),travelAward=Math.max(0,Math.round(tilesMoved*(1+player.legacyXpBonus))),goldAward=Math.max(0,Math.floor(player.gold/10)),award=(travelAward+goldAward)*(call('isNightmare')?5:1),state=meta(),stats=call('ensureAlphaMeta');
     call('setLastGoldLegacyAward',goldAward);call('setLastLegacyAward',award);
-    state.runs++;state.bestTiles=Math.max(state.bestTiles,call('getTilesMovedThisRun'));grantLegacyXp(award);call('saveMeta');call('updateMetaUI');return award;
+    state.runs++;state.bestTiles=Math.max(state.bestTiles,tilesMoved);
+    stats.runsFinished++;stats.rolls+=call('getRolls');stats.tilesTraveled+=tilesMoved;stats.highestRunLevel=Math.max(stats.highestRunLevel,player.level);stats.classMaxLevel[player.classId]=Math.max(stats.classMaxLevel[player.classId]||1,player.level);stats.highestGold=Math.max(stats.highestGold,player.gold);
+    grantLegacyXp(award);call('saveMeta');call('updateMetaUI');return award;
   }
 
   function prestigeOffer(total=allocatedTalentPoints()+(meta().points||0)){return Math.max(0,Math.floor(Math.max(0,Number(total)||0)/9));}
@@ -148,8 +150,8 @@
       if(type==='class')base=` · unlocks ${classRegistry[id]?.name||id}`;
       else if(type==='powerup')base=` · unlocks ${upgrades().find(upgrade=>upgrade.id===id)?.name||id}`;
     }
-    const ids=call('getAchievementGateRewards')?.[a.id]||[];
-    const names=ids.map(id=>upgrades().find(upgrade=>upgrade.id===id)?.name).filter(Boolean).filter(name=>!base.includes(name));
+    const names=upgrades().filter(upgrade=>String(upgrade.achievementGate||'')===`achievement:${a.id}`)
+      .map(upgrade=>upgrade.name).filter(Boolean).filter(name=>!base.includes(name));
     if(!names.length)return base;
     return `${base}${base?' · also':' ·'} unlocks ${names.join(', ')}`;
   }

@@ -5,6 +5,7 @@ ROOT=Path(__file__).resolve().parents[1]
 mono=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')
 index=(ROOT/'runtime/index.html').read_text(encoding='utf-8')
 camp=(ROOT/'runtime/js/ui/camp.js').read_text(encoding='utf-8')
+view=(ROOT/'runtime/js/combat/view-facade.js').read_text(encoding='utf-8')
 
 retired_functions=[
     'refreshEffectiveGoldDisplays','applyRandomLegendary','closeTalentTree','applyRunThemeV13',
@@ -85,12 +86,15 @@ for retired_legendary_marker in [
     if retired_legendary_marker in mono:
         raise SystemExit(f'retired Legendary chooser generation returned: {retired_legendary_marker}')
 
-# Status marker markup belongs to Combat View. The monolith may retain its
-# compatibility adapter, never a later renderer that shadows that owner.
-if mono.count('function statusDotsHTML(') != 1:
-    raise SystemExit('status markers must retain one Combat View compatibility adapter')
-if re.search(r'(?m)^\s*statusDotsHTML\s*=',mono):
-    raise SystemExit('status marker renderer reassignment chain returned')
+# Status marker markup is owned by Combat View. Beta 0.6.7.0 removes the
+# call-only composition-root adapter; all surviving consumers route directly
+# through dbCombatView, while the public facade retains the canonical method.
+if re.search(r'\bfunction\s+statusDotsHTML\s*\(',mono) or re.search(r'(?m)^\s*statusDotsHTML\s*=',mono):
+    raise SystemExit('retired status marker compatibility adapter returned to the monolith')
+if 'statusDotsHTML: (...args) => requirePresentation().statusDotsHTML(...args)' not in view:
+    raise SystemExit('Combat View status marker capability missing')
+if 'dbCombatView.statusDotsHTML(' not in mono:
+    raise SystemExit('status marker callers no longer route through Combat View')
 for retired_status_marker in ['poison-count-compact', 'v17-poison-count']:
     if retired_status_marker in mono:
         raise SystemExit(f'retired status marker presentation returned: {retired_status_marker}')

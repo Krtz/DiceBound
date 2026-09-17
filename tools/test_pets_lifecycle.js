@@ -104,7 +104,8 @@ assert.match(monolith,/const dbPets=window\.DiceboundPets;/,'monolith must consu
 assert.match(monolith,/const dbPetLifecycleOwner=window\.DiceboundPetLifecycle;/,'monolith must configure focused Pet lifecycle owner');
 assert.match(monolith,/shuffledPetIds:\(\)=>dbPets\.shuffledPetIds\(\)/,'Player Initialization must collaborate through Pet facade');
 assert.match(monolith,/syncActivePetBonus:force=>dbPets\.syncActiveBonus\(force\)/,'Player Initialization must route active Pet sync through facade');
-assert.match(monolith,/renderPetCollection:\(\)=>renderPetCollection\(\),refreshActivePetArt:\(\)=>db059RefreshActivePetArt\?\.\(\)/,'Pet lifecycle composition must provide final feed presentation callbacks');
+assert.match(monolith,/renderPetCollection:\(\)=>window\.DiceboundPetChooser\.render\(\),refreshActivePetArt:\(\)=>db059RefreshActivePetArt\?\.\(\)/,'Pet lifecycle composition must provide final feed presentation callbacks directly through the Pet chooser owner');
+assert.doesNotMatch(monolith,/function\s+renderPetCollection\s*\(/,'retired Pet chooser lifecycle adapter must stay retired');
 assert.doesNotMatch(monolith,/feedActivePet=function\(count=1\)/,'late feed implementation reassignments must be retired');
 assert.doesNotMatch(monolith,/dbFriendFeedActivePetBase/,'Friends feed compatibility wrapper must be retired');
 assert.doesNotMatch(monolith,/function v17PetBondLevel\(/,'dead V1.7 Pet bond aliases must be retired');

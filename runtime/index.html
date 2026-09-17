@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.6.39</title>
+<title>Dicebound: Beta v0.6.7.0</title>
 <link rel="stylesheet" href="css/dicebound.css">
+<link rel="stylesheet" href="css/extracted-monolith.css">
 <style id="db-boot-gate">
   html.db-booting body{background:#050912}
   html.db-booting .app,
@@ -19,8 +20,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.6.39</h1>
-        <p>Beta v0.6.6.39 · Composition sediment cleanup.</p>
+        <h1>Dicebound: Beta v0.6.7.0</h1>
+        <p>Beta v0.6.7.0 · Composition sediment cleanup.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -407,6 +408,7 @@
 <script src="js/core/runtime-services.js"></script>
 <script src="js/core/memory-diagnostics.js"></script>
 <script src="js/core/facade.js"></script>
+<script src="js/combat/element-content.js"></script>
 <script src="js/combat/effective-stats.js"></script>
 <script src="js/combat/healing-resolution.js"></script>
 <script src="js/combat/element-resolution.js"></script>
@@ -445,9 +447,11 @@
   <script src="js/run/player-initialization.js"></script>
   <script src="js/run/lifecycle.js"></script>
   <script src="js/run/completion.js"></script>
-  <script src="js/run/facade.js"></script>
+<script src="js/run/facade.js"></script>
+<script src="js/run/dice.js"></script>
   <script src="js/combat/enemies.js"></script>
   <script src="js/combat/guardians.js"></script>
+  <script src="js/board/presentation.js"></script>
   <script src="js/items/rarities.js"></script>
 <script src="js/items/equipment.js"></script>
 <script src="js/items/consumables.js"></script>
@@ -469,6 +473,7 @@
 <script src="js/powerups/registry.js"></script>
 <script src="js/powerups/borrowing.js"></script>
 <script src="js/powerups/facade.js"></script>
+<script src="js/powerups/presentation.js"></script>
 <script src="js/ui/camp.js"></script>
 <script src="js/ui/camp-shell.js"></script>
 <script src="js/ui/options.js"></script>

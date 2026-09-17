@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 
-// Beta 0.6.6.27 Pet subsystem characterization/oracle harness.
-// Capture mode freezes released Pet lifecycle behavior before ownership moves.
+// Beta 0.6.6.27 Pets characterization/oracle harness.
+// This intentionally exercises the released runtime's final Pet lifecycle and
+// chooser behavior before DiceboundPets ownership moves. Capture mode prints the fixture.
 
 const assert=require("node:assert/strict");
 const childProcess=require("node:child_process");
@@ -26,15 +27,17 @@ async function connect(url){const origin=new URL(url).origin,end=Date.now()+1500
 
 function assertCoverage(actual){
   assert.equal(actual.baselineVersion,"0.6.6.27");
-  const names=new Set(actual.cases.map(c=>c.name));
-  for(const name of [
-    "neutral-baseline","bond-level-1","bond-level-6","bond-level-11","bond-cap-36",
-    "feed-single","feed-multi-level","feed-cookie-bonus",
-    "unlock-below-threshold","unlock-at-threshold",
-    "switch-camp","switch-run-nonpet-denied","switch-run-petclass-allowed",
-    "bonus-fire-swap","bonus-donut-swap","bonus-neutral-remove",
-    "chooser-viewmodel","trainer-roster"
-  ])assert.ok(names.has(name),`missing Pet oracle case ${name}`);
+  const formula=actual.cases.filter(c=>c.kind==="formula");
+  for(const level of [1,6,11,36])assert.ok(formula.some(c=>c.level===level),`missing pet formula level ${level}`);
+  assert.ok(actual.cases.some(c=>c.kind==="feed"&&c.name==="feed-multi-level"),"missing multi-level feed case");
+  assert.ok(actual.cases.some(c=>c.name==="unlock-below-threshold"),"missing below-threshold unlock case");
+  assert.ok(actual.cases.some(c=>c.name==="unlock-at-threshold"),"missing threshold unlock case");
+  assert.ok(actual.cases.some(c=>c.name==="switch-run-nonpet-denied"),"missing normal-class run switch restriction");
+  assert.ok(actual.cases.some(c=>c.name==="switch-run-petclass-allowed"),"missing pet-tag run switch allowance");
+  assert.ok(actual.cases.some(c=>c.name==="bonus-fire-swap"),"missing Fire active-stat bonus case");
+  assert.ok(actual.cases.some(c=>c.name==="bonus-donut-swap"),"missing Donut active-stat bonus case");
+  assert.ok(actual.cases.some(c=>c.kind==="view"),"missing Pet chooser view-model case");
+  assert.ok(actual.cases.some(c=>c.kind==="trainer"),"missing Trainer shuffle case");
 }
 
 async function main(){
@@ -77,7 +80,7 @@ async function main(){
       {const before=restore('bonus-neutral-remove',{classId:'ranger',activePet:'fire',runActive:true});pet.setPetLevel('fire',6);pet.syncBonus(true);const beforeStats=pet.playerStats();pet.forceActivePet('neutral');pet.syncBonus();const afterStats=pet.playerStats();finish({name:'bonus-neutral-remove',kind:'bonus',beforeStats,afterStats,state:snap()},before);}
 
       {const before=restore('chooser-viewmodel',{classId:'ranger',activePet:'fire',runActive:false});pet.setPetLevel('fire',6);const model=window.DiceboundPetChooser.viewModel();finish({name:'chooser-viewmodel',kind:'view',active:model.activePet?.id||null,cookies:model.cookies,runActive:model.runActive,fire:model.pets.find(p=>p.id==='fire')||null,neutral:model.pets.find(p=>p.id==='neutral')||null},before);}
-      {const before=restore('trainer-roster',{classId:'trainer',activePet:'neutral',runActive:true});const roster=pet.shuffledPetIds();finish({name:'trainer-roster',kind:'trainer',roster},before);}
+      {const before=restore('trainer-roster',{classId:'pokemontrainer',activePet:'neutral',runActive:true});const roster=pet.shuffledPetIds();finish({name:'trainer-roster',kind:'trainer',roster},before);}
 
       return {baselineVersion:'0.6.6.27',runtimeVersion:window.DiceboundVersion?.version||null,cases:outputs};
     })()`);

@@ -121,7 +121,8 @@ const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js")
 const monolith = fs.readFileSync(monolithPath, "utf8");
 assert.doesNotMatch(monolith, /const\s+DB317_CLASSES_RAW\s*=\s*\{/, "class data is still owned by the monolith");
 assert.match(monolith, /window\.DiceboundClasses\?\.createRegistry\(\)/);
-assert.match(monolith, /const CLASSES=db317Readonly\(DB317_CLASSES_RAW\)/);
+assert.match(monolith, /const CLASSES=DB317_CLASSES_RAW;/, "composition must consume the canonical Classes registry directly");
+assert.doesNotMatch(monolith, /db317Readonly\(DB317_CLASSES_RAW\)/, "retired registry compatibility wrapper returned");
 assert.match(monolith, /DiceboundClasses must load before dicebound\.js/);
 assert.doesNotMatch(monolith, /const\s+DB317_CLASS_PASSIVES_RAW\s*=\s*\{/);
 assert.doesNotMatch(monolith, /const\s+CLASS_TAG_VOCABULARY\s*=\s*\[/);
