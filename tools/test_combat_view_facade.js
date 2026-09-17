@@ -16,6 +16,7 @@ assert(!/window\.DiceboundCombat\s*[;,]/.test(facadeSource), "Combat View facade
 
 const calls = [];
 const presentationApi = Object.freeze({
+  applyCombatBackground: (...args) => { calls.push(["presentation.applyCombatBackground", ...args]); return "background"; },
   update: (...args) => { calls.push(["presentation.update", ...args]); return "updated"; },
   renderEnemyParty: (...args) => { calls.push(["presentation.renderEnemyParty", ...args]); return "party"; },
   renderBossSpecialIndicator: (...args) => { calls.push(["presentation.renderBossSpecialIndicator", ...args]); return "boss"; },
@@ -64,6 +65,7 @@ assert.equal(view.owner, "combat/view-facade");
 assert.equal(view.apiVersion, 1);
 assert.equal(view.isPresentationConfigured(), false);
 assert.equal(view.isVfxConfigured(), false);
+assert.throws(() => view.applyCombatBackground(), /presentation must be configured/);
 assert.throws(() => view.update(), /presentation must be configured/);
 assert.throws(() => view.playDonutRain({}), /VFX must be configured/);
 assert.equal(view.syncDragoonPresentation(), undefined, "startup-safe presentation helper must remain a no-op before configuration");
@@ -78,10 +80,15 @@ assert.equal(view.playProjectileProc("fire", { origin: "player" }), true);
 assert.equal(view.clearTransient("pre-presentation"), 7);
 assert(!calls.some(call => call[0] === "presentation.clearDragoonPresentation"), "VFX-only startup cleanup must not require presentation configuration");
 
-const presentationRuntime = { document: {} };
+const resolveCombatBackground = (board, mode) => ({ board, mode });
+const presentationRuntime = { document: {}, resolveCombatBackground };
 assert.equal(view.configurePresentation(presentationRuntime), view);
-assert.equal(configuredPresentationRuntime, presentationRuntime);
+assert.notEqual(configuredPresentationRuntime, presentationRuntime, "facade must compose a dedicated Presentation runtime object");
+assert.equal(configuredPresentationRuntime.document, presentationRuntime.document);
+assert.equal(configuredPresentationRuntime.resolveCombatBackground, resolveCombatBackground, "facade must preserve an explicitly supplied background resolver");
 assert.equal(view.isPresentationConfigured(), true);
+assert.equal(view.applyCombatBackground("frame"), "background");
+assert.deepEqual(calls.at(-1), ["presentation.applyCombatBackground", "frame"]);
 assert.equal(view.update("frame"), "updated");
 assert.equal(view.renderEnemyParty(), "party");
 assert.equal(view.renderBossSpecialIndicator(), "boss");
@@ -125,4 +132,4 @@ const index = fs.readFileSync(path.join(root, "runtime", "index.html"), "utf8");
 assert(index.indexOf('js/combat/vfx.js') < index.indexOf('js/combat/view-facade.js'));
 assert(index.indexOf('js/combat/view-facade.js') < index.indexOf('js/dicebound.js'));
 
-console.log("Combat View facade ownership contract: PASS — call-only enemy-party adapter retired; HUD seam preserved");
+console.log("Combat View facade ownership contract: PASS — battle-background, presentation and VFX routing stay behind the public facade");
