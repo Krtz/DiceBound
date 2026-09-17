@@ -70,6 +70,22 @@
     }[tile?.type];
   }
 
-  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForId,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});
+  function isTraversed(tile){return !!tile?.traversed&&tile?.type!=="merchant";}
+  function tileClassName(tile,{current=false}={}){
+    const classes=["tile",tile?.type||"empty"];
+    if(tile?.cleared)classes.push("cleared");
+    if(isTraversed(tile))classes.push("traversed");
+    if(current)classes.push("current");
+    return classes.join(" ");
+  }
+  function applyTileState(el,tile,{current=false}={}){
+    if(!el?.classList)return el;
+    el.classList.toggle("current",!!current);
+    el.classList.toggle("cleared",!!tile?.cleared);
+    el.classList.toggle("traversed",isTraversed(tile));
+    return el;
+  }
+
+  const api=Object.freeze({owner:OWNER,apiVersion:1,configure,tileMeta,enemyArtForId,isTraversed,tileClassName,applyTileState,inspect:()=>Object.freeze({owner:OWNER,apiVersion:1}),test:Object.freeze({uiArt,guardianTileArt,enemyTileIcon})});
   window.DiceboundBoardPresentation=api;
 })();

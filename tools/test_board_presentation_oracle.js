@@ -41,7 +41,7 @@ const context={
 vm.createContext(context);
 vm.runInContext(source,context,{filename:"runtime/js/board/presentation.js"});
 const presentation=context.window.DiceboundBoardPresentation;
-assert.ok(presentation?.configure&&presentation?.tileMeta,"Board presentation owner must expose configure() and tileMeta().");
+assert.ok(presentation?.configure&&presentation?.tileMeta&&presentation?.tileClassName&&presentation?.applyTileState,"Board presentation owner must expose metadata and semantic tile-state presentation.");
 presentation.configure({getBoardLevel:()=>boardLevel});
 
 const meta=(tile,ready=true)=>Array.from(presentation.tileMeta(tile,{ready}));
@@ -87,6 +87,15 @@ assert.deepEqual(meta({type:"gambler"}),[
 ]);
 assert.deepEqual(meta({type:"devilboss"}),["👿🌙","???"]);
 assert.equal(presentation.tileMeta({type:"mystery"},{ready:true}),undefined);
+
+assert.equal(presentation.tileClassName({type:"empty",cleared:true,traversed:true},{current:true}),"tile empty cleared traversed current");
+assert.equal(presentation.tileClassName({type:"merchant",cleared:true,traversed:true}),"tile merchant cleared","Merchant must never render a traversal footprint even from stale/corrupt state");
+assert.equal(presentation.isTraversed({type:"empty",traversed:true}),true);
+assert.equal(presentation.isTraversed({type:"merchant",traversed:true}),false);
+const semanticClasses=new Map();
+const semanticEl={classList:{toggle:(name,enabled)=>semanticClasses.set(name,!!enabled)}};
+presentation.applyTileState(semanticEl,{type:"empty",cleared:false,traversed:true},{current:false});
+assert.deepEqual(Object.fromEntries(semanticClasses),{current:false,cleared:false,traversed:true});
 
 assert.equal(presentation.test.uiArt("bandit",'Bandit "Prime"',"db-art-portrait"),'<img class="db-art-icon db-art-portrait" src="assets/enemies/normal/battle/bandit.png" alt="Bandit &quot;Prime&quot;">');
 assert.equal(presentation.inspect().owner,"board/presentation");
