@@ -114,14 +114,14 @@ pet_retired = [
 ]
 for symbol in pet_retired:
     assert not re.search(rf'(?<![\w$]){re.escape(symbol)}(?![\w$])', mono), f"retired Pet-resolution owner returned: {symbol}"
-assert mono.count('async function petTurn(') == 1, 'petTurn must have exactly one thin compatibility adapter'
+assert mono.count('async function petTurn(') == 0, 'retired petTurn compatibility adapter returned'
 assert mono.count('function petDamage(') == 1, 'petDamage must have exactly one thin compatibility adapter'
 assert mono.count('function trainerPetDamage(') == 0, 'retired trainerPetDamage compatibility adapter returned'
 assert not re.search(r'(?m)^  petTurn\s*=', mono), 'top-level petTurn reassignment chain must not return'
 assert not re.search(r'(?m)^  petDamage\s*=', mono), 'top-level petDamage reassignment chain must not return'
 assert not re.search(r'(?m)^  trainerPetDamage\s*=', mono), 'top-level trainerPetDamage reassignment chain must not return'
 assert "dbCombatPetTurnResolution=dbCombatPetTurnOwner.configure({" in mono, 'combat Pet turn-resolution owner is not configured by the composition root'
-assert "return dbCombat.petTurn(...args);" in mono, 'Combat facade Pet turn adapter is missing'
+assert 'dbCombat.petTurn(' in mono, 'Pet turn callers no longer route through the Combat facade'
 assert "if(dbCombat)return dbCombat.petDamage();" in mono, 'Combat facade Pet damage adapter/fallback is missing'
 assert 'trainerPetDamage:id=>dbCombat.trainerPetDamage(id)' in mono, 'Combat owner configuration no longer routes trainer Pet damage through the facade'
 
