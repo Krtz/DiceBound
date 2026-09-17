@@ -60,8 +60,6 @@
       die.textContent=count===2?call("pick",DICE_FACES)+" + "+call("pick",DICE_FACES):call("pick",DICE_FACES);
       call("rollSound");await call("delay",startDelay+index*stepDelay);
     }
-    // Animation is presentation only. Never keep shaking during a legitimate
-    // Fate-choice wait; this also makes failure cleanup deterministic.
     die.classList.remove("rolling");return die;
   }
   function applyTitanstep(values){
@@ -89,7 +87,7 @@
         if(!chosen&&call("random")<call("clamp",player.extraStepChance,0,.75))bonus=1;
       }
       die.textContent=DICE_FACES[value-1];call("incrementRolls");
-      const titanstep=applyTitanstep([value]);
+      const titanstep=meta.debugAlwaysChooseRolls?"":applyTitanstep([value]);
       call("addLog",meta.debugAlwaysChooseRolls?`Debug fate chooses <b>${value}</b>. Long Stride does not alter chosen fate.`:`${chosen?"Fate bends. You choose":"You rolled"} <b>${value}</b>${bonus?" and Long Stride adds <b>+1</b>":""}.${titanstep}`);
       handedOff=true;await call("move",value+bonus,value,bonus>0,chosen);
     }catch(error){if(!handedOff)recoverBeforeMovement(die);throw error;}finally{die?.classList.remove("rolling");}
@@ -100,8 +98,6 @@
     let handedOff=false,die=null;
     try{
       beginRoll(false);die=await animate(2,10,45,5);
-      // Preserve released ordering: both raw dice are rolled before Fate is
-      // checked, including debug-always-choose mode.
       let first=call("rand",1,6),second=call("rand",1,6),chosen=false;
       if(shouldChooseRoll(meta,player)){[first,second]=await chooseDice(2,meta.debugAlwaysChooseRolls?"Debug fate":"Fate");chosen=true;call("showToast","🎲🎲 Fate chosen: "+first+"+"+second+"="+(first+second));}
       let bonus=0;if(!chosen&&call("random")<call("clamp",player.extraStepChance,0,.75))bonus=1;
