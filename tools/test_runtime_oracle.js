@@ -103,7 +103,7 @@ pass("core-event-bus",()=>{
 pass("runtime-services-live-player",()=>{
   const window={},context=vm.createContext({window,console});run(context,path.join("core","runtime-services.js"));
   let player={gold:10,hp:20,heal(n){this.hp+=n;return this.hp;}};
-  const services=window.DiceboundRuntimeServices.createPowerupServices({run:{getPlayer:()=>player},economy:{goldReward:n=>n*2,isNightmare:()=>false},combat:{heal:n=>n},rules:{clamp:(n,a,b)=>Math.max(a,Math.min(b,n))},content:{elementIds:["fire","ice"]},signatures:{applyCurrent:()=>"ok",describeCurrent:()=>"sig"}});
+  const services=window.DiceboundRuntimeServices.createPowerupServices({run:{getPlayer:()=>player},economy:{goldReward:n=>n*2,goldBaseFor:(source,level,multiplier)=>Math.round((50+20*Math.max(1,Number(level)||1))*(multiplier??(source==="heavyPurse"?0.7:1))),isNightmare:()=>false},combat:{heal:n=>n},rules:{clamp:(n,a,b)=>Math.max(a,Math.min(b,n))},content:{elementIds:["fire","ice"]},signatures:{applyCurrent:()=>"ok",describeCurrent:()=>"sig"}});
   assert.equal(services.run.player.gold,10);services.run.player.gold=15;assert.equal(player.gold,15);assert.equal(services.run.player.heal(5),25);player={gold:3,hp:7};assert.equal(services.run.player.gold,3);assert.equal(JSON.stringify(services.content.elementIds),JSON.stringify(["fire","ice"]));assert.ok(Object.isFrozen(services));
 });
 
