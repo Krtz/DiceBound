@@ -4,6 +4,14 @@
   let runtime = null;
   let dragoonLandingTimer = 0;
   const dodgeTimers = new Map();
+  const enemyAttackTokens = new Map();
+
+  const ECHO_PRESENTATION = Object.freeze({ firstMs: 180, stepMs: 3, floorMs: 60 });
+  const GENERIC_ENEMY_ATTACK = Object.freeze({ id: "generic-lunge", className: "db-enemy-attack-lunge", durationMs: 160 });
+  // Bespoke attack art/animation definitions can be added here by semantic
+  // attacker + attack IDs. An empty registry is deliberate: 0.6.7.7 ships the
+  // stable lookup/fallback pipeline first, without inventing one-off name hacks.
+  const ENEMY_ATTACK_PRESENTATIONS = Object.freeze({});
 
   function requireRuntime() {
     if (!runtime) throw new Error("DiceboundCombatPresentation must be configured before use.");
@@ -16,7 +24,7 @@
       "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect",
-      "activeTrainerPetId","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","clamp"
+      "activeTrainerPetId","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","clamp","delay"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat presentation runtime missing ${name}().`);
     if (!nextRuntime.document || typeof nextRuntime.document.createElement !== "function") throw new Error("Combat presentation runtime missing document.");
@@ -337,6 +345,80 @@
     box.classList.remove("hidden"); box.classList.toggle("imminent", remaining <= 2); box.textContent = `⚠️ ${lead.specialName || "Guardian special"} in ${remaining} turn${remaining === 1 ? "" : "s"}`;
   }
 
+  function playerAttackTiming(mode="normal",classId="",echoIndex=1){
+    if(mode==="echo"){
+      const ordinal=Math.max(1,Math.floor(Number(echoIndex)||1));
+      const total=Math.max(ECHO_PRESENTATION.floorMs,ECHO_PRESENTATION.firstMs-(ordinal-1)*ECHO_PRESENTATION.stepMs);
+      const impact=Math.max(20,Math.round(total*.35));
+      return Object.freeze({mode:"echo",totalMs:total,windupMs:total-impact,impactMs:impact,echoIndex:ordinal});
+    }
+    const windups={fighter:360,ranger:460,sorcerer:460,monk:420,clown:500,rouge:450,berserker:500};
+    const windup=mode==="crit"?520:(windups[classId]||460);
+    return Object.freeze({mode,totalMs:windup+130,windupMs:windup,impactMs:130,echoIndex:0});
+  }
+
+  async function playerAttack(mode="normal",options={}){
+    const rt=requireRuntime(),state=rt.getState(),player=state.player||{},classes=rt.getClasses(),cls=classes[player.classId]||{};
+    const icon=rt.find("combatPlayerIcon"),stage=rt.find("enemyIcon"),fx=rt.find("attackFx");
+    if(!icon?.classList||!stage?.classList||!fx?.classList)return false;
+    const enemy=stage.querySelector?.(`.stage-enemy[data-enemy-index="${state.currentEnemyIndex||0}"]`)||stage;
+    const timing=playerAttackTiming(mode,player.classId,options.echoIndex);
+    icon.classList.remove("attack-lunge");fx.className="attack-fx";void fx.offsetWidth;icon.classList.add("attack-lunge");
+    fx.textContent=mode==="crit"?"💥✦":mode==="echo"?`↯ ${cls.attackIcon||"⚔️"}`:(cls.fxIcon||cls.attackIcon||"⚔️");
+    fx.classList.add(mode==="crit"?"crit-attack":mode==="echo"?"echo-attack":player.classId||"fighter");
+    try{
+      await rt.delay(timing.windupMs);
+      enemy.classList?.add("enemy-hit");
+      await rt.delay(timing.impactMs);
+    }finally{
+      enemy.classList?.remove("enemy-hit");
+      icon.classList.remove("attack-lunge");
+    }
+    return timing;
+  }
+
+  function resolveEnemyAttackPresentation(fact={}){
+    const attackerId=String(fact.attackerId||fact.enemy?.id||"*"),attackId=String(fact.attackId||"basic-attack");
+    return ENEMY_ATTACK_PRESENTATIONS[`${attackerId}:${attackId}`]||GENERIC_ENEMY_ATTACK;
+  }
+  function enemyAttackElement(fact={}){
+    const rt=requireRuntime(),state=rt.getState(),stage=rt.find("enemyIcon");
+    if(!stage)return null;
+    let index=Number.isInteger(fact.enemyIndex)?fact.enemyIndex:-1;
+    if(index<0&&fact.enemy&&Array.isArray(state.currentEnemies))index=state.currentEnemies.indexOf(fact.enemy);
+    if(index<0)index=Math.max(0,Number(state.currentEnemyIndex)||0);
+    const unit=stage.querySelector?.(`.stage-enemy[data-enemy-index="${index}"]`);
+    return unit?.querySelector?.(".stage-sprite")||unit||stage;
+  }
+  async function enemyAttack(fact={}){
+    const rt=requireRuntime(),sprite=enemyAttackElement(fact);
+    if(!sprite?.classList)return false;
+    const spec=resolveEnemyAttackPresentation(fact),token=Symbol("enemy-attack");
+    enemyAttackTokens.set(sprite,token);
+    sprite.classList.remove(spec.className);void sprite.offsetWidth;sprite.classList.add(spec.className);
+    if(sprite.dataset){
+      sprite.dataset.dbAttackId=String(fact.attackId||"basic-attack");
+      sprite.dataset.dbAttackOutcome=String(fact.outcome||"attempt");
+    }
+    try{await rt.delay(spec.durationMs);}
+    finally{
+      if(enemyAttackTokens.get(sprite)===token){
+        sprite.classList.remove(spec.className);enemyAttackTokens.delete(sprite);
+        if(sprite.dataset){delete sprite.dataset.dbAttackId;delete sprite.dataset.dbAttackOutcome;}
+      }
+    }
+    return Object.freeze({...fact,presentationId:spec.id,durationMs:spec.durationMs});
+  }
+  function clearEnemyAttackPresentation(){
+    for(const sprite of enemyAttackTokens.keys()){
+      enemyAttackTokens.delete(sprite);
+      sprite.classList?.remove(GENERIC_ENEMY_ATTACK.className);
+      if(sprite.dataset){delete sprite.dataset.dbAttackId;delete sprite.dataset.dbAttackOutcome;}
+    }
+    const stage=requireRuntime().find("enemyIcon");
+    stage?.querySelectorAll?.(".db-enemy-attack-lunge")?.forEach?.(sprite=>sprite.classList.remove("db-enemy-attack-lunge"));
+  }
+
   function combatUnitElement(unit = "player") {
     const rt = requireRuntime();
     if (unit && typeof unit === "object" && unit.classList) return unit;
@@ -434,13 +516,16 @@
     renderBossSpecialIndicator,
     statusDotsHTML,
     syncEnergyShieldBars,
+    playerAttack,
+    enemyAttack,
+    clearEnemyAttackPresentation,
     dodge,
     clearDodgePresentation,
     syncDragoonPresentation,
     dragoonLandPresentation,
     ensureDragoonJumpButton,
     clearDragoonPresentation,
-    _test: Object.freeze({ buildViewModel })
+    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation })
   });
   window.DiceboundCombatPresentation = api;
 })();
