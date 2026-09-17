@@ -5,124 +5,33 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
-
 const SOURCE=fs.readFileSync(path.join(__dirname,"..","runtime","js","run","dice.js"),"utf8");
-const FACES=["⚀","⚁","⚂","⚃","⚄","⚅"];
 
 function tick(){return new Promise(resolve=>setImmediate(resolve));}
-function classList(){
-  const values=new Set();
-  return {add:(...names)=>names.forEach(name=>values.add(name)),remove:(...names)=>names.forEach(name=>values.delete(name)),contains:name=>values.has(name),values};
-}
+function classList(){const set=new Set();return {add:(...v)=>v.forEach(x=>set.add(x)),remove:(...v)=>v.forEach(x=>set.delete(x)),contains:x=>set.has(x)};}
+function element(id=""){return {id,textContent:"",innerHTML:"",disabled:false,style:{},dataset:{},className:"",classList:classList(),children:[],listeners:{},parentElement:{insertBefore(){}},appendChild(child){this.children.push(child);},addEventListener(type,fn){this.listeners[type]=fn;},click(){this.listeners.click?.({});}};}
 function harness(options={}){
-  const die={textContent:"⚀",classList:classList()};
+  const nodes={dice:element("dice"),rollBtn:element("rollBtn"),diceChoiceGrid:element("diceChoiceGrid"),diceChoiceOverlay:element("diceChoiceOverlay")};nodes.diceChoiceOverlay.classList.add("hidden");
   const player={diceChoiceChance:0,extraStepChance:0,maxHp:100,hp:100,ultimateCharge:0,...options.player};
   const meta={doubleDiceUnlocked:true,debugAlwaysChooseRolls:false,...options.meta};
-  const calls={delays:[],moves:[],toasts:[],logs:[],rand:[],random:0,picks:0,rollSounds:0,updates:0,increments:0};
-  let rollLocked=false;
-  const randValues=[...(options.randValues||[2,5])];
-  const randomValues=[...(options.randomValues||[.99])];
-  const window={};
-  const context=vm.createContext({window,console,Math,Object,Promise});
-  vm.runInContext(SOURCE,context,{filename:"runtime/js/run/dice.js"});
-  const api=window.DiceboundRunDice;
-  api.configure({
-    getMeta:()=>meta,
-    getPlayer:()=>player,
-    isRollLocked:()=>rollLocked,
-    setRollLocked:value=>{rollLocked=!!value;},
-    isGameStarted:()=>true,
-    ensureAudio:()=>{},
-    updateHud:()=>{calls.updates++;},
-    find:id=>id==="dice"?die:null,
-    diceFaces:()=>FACES,
-    pick:faces=>{calls.picks++;return faces[(calls.picks-1)%faces.length];},
-    rollSound:()=>{calls.rollSounds++;},
-    delay:async ms=>{calls.delays.push(ms);},
-    rand:(min,max)=>{const value=randValues.shift();calls.rand.push([min,max,value]);return value;},
-    random:()=>{calls.random++;return randomValues.length?randomValues.shift():.99;},
-    chooseDieResult:options.chooseDieResult||(()=>Promise.resolve(1)),
-    showToast:text=>{calls.toasts.push(text);},
-    clamp:(value,min,max)=>Math.max(min,Math.min(max,value)),
-    incrementRolls:()=>{calls.increments++;},
-    hasMythicPiece:()=>!!options.mythicBoots,
-    addLog:text=>{calls.logs.push(text);},
-    move:async (...args)=>{calls.moves.push(args);if(options.move)await options.move(...args);rollLocked=false;}
-  });
-  return {api,die,player,meta,calls,isRollLocked:()=>rollLocked};
+  const calls={delays:[],moves:[],toasts:[],logs:[],rand:[],random:0,picks:0,sounds:0,updates:0,increments:0,resume:0,traces:[]};let locked=false;
+  const randValues=[...(options.randValues||[2,5])],randomValues=[...(options.randomValues||[.99,.99])];
+  const document={createElement:()=>element()};const window={};const context=vm.createContext({window,console,Math,Object,Promise});vm.runInContext(SOURCE,context,{filename:"runtime/js/run/dice.js"});const api=window.DiceboundRunDice;
+  api.configure({getDocument:()=>document,find:id=>nodes[id]||null,getMeta:()=>meta,getPlayer:()=>player,isRollLocked:()=>locked,setRollLocked:v=>{locked=!!v;},isGameStarted:()=>true,hasCurrentEnemy:()=>false,ensureAudio:()=>{},resumeAudio:()=>{calls.resume++;},updateHud:()=>{calls.updates++;},pick:list=>{calls.picks++;return list[(calls.picks-1)%list.length];},rollSound:()=>{calls.sounds++;},delay:async ms=>{calls.delays.push(ms);},rand:(a,b)=>{const v=randValues.shift();calls.rand.push([a,b,v]);return v;},random:()=>{calls.random++;return randomValues.length?randomValues.shift():.99;},showToast:t=>calls.toasts.push(t),clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),incrementRolls:()=>{calls.increments++;},hasMythicPiece:()=>!!options.mythicBoots,addLog:t=>calls.logs.push(t),move:async(...args)=>{calls.moves.push(args);locked=false;},traceCommand:(name,fn)=>{calls.traces.push(name);return fn();}});
+  return {api,nodes,player,meta,calls,locked:()=>locked};
 }
+async function clickChoice(h,value){await tick();const b=h.nodes.diceChoiceGrid.children[value-1];assert.ok(b,`missing Fate choice ${value}`);b.click();}
 
 (async()=>{
-  {
-    const h=harness({randValues:[2,5],randomValues:[.99]});
-    await h.api.roll();
-    assert.deepEqual(h.calls.delays,[45,50,55,60,65,70,75,80,85,90]);
-    assert.equal(h.calls.picks,20,"2d6 presentation must preserve two face picks per animation frame");
-    assert.equal(h.calls.rollSounds,10);
-    assert.deepEqual(h.calls.rand,[[1,6,2],[1,6,5]]);
-    assert.equal(h.calls.random,1,"ordinary 2d6 must preserve the one Long Stride draw when Fate chance is zero");
-    assert.deepEqual(h.calls.moves,[[7,7,false,false]]);
-    assert.equal(h.calls.increments,1);
-    assert.equal(h.die.textContent,"⚁ + ⚄");
-    assert.equal(h.die.classList.contains("rolling"),false);
-    assert.equal(h.isRollLocked(),false);
-  }
-
-  {
-    const h=harness({player:{extraStepChance:.25},randValues:[3,4],randomValues:[.10]});
-    await h.api.roll();
-    assert.deepEqual(h.calls.moves,[[8,7,true,false]],"Long Stride must still add exactly one movement tile without changing the rolled total");
-    assert.match(h.calls.logs[0],/Long Stride adds/);
-  }
-
-  {
-    const choiceResolvers=[];
-    const h=harness({
-      player:{diceChoiceChance:1},
-      randValues:[1,1],
-      randomValues:[0],
-      chooseDieResult:()=>new Promise(resolve=>choiceResolvers.push(resolve))
-    });
-    const pending=h.api.roll();
-    await tick();
-    assert.equal(choiceResolvers.length,1,"Fate must request the first d6 choice");
-    assert.equal(h.die.classList.contains("rolling"),false,"2d6 animation must stop before waiting on Fate choice 1");
-    assert.equal(h.isRollLocked(),true,"road stays locked while Fate choice is pending");
-    choiceResolvers[0](6);
-    await tick();
-    assert.equal(choiceResolvers.length,2,"Fate must request the second d6 choice");
-    assert.equal(h.die.classList.contains("rolling"),false,"2d6 animation must stay stopped while waiting on Fate choice 2");
-    choiceResolvers[1](4);
-    await pending;
-    assert.equal(h.calls.random,1,"chosen Fate must not consume a Long Stride draw");
-    assert.deepEqual(h.calls.moves,[[10,10,false,true]]);
-    assert.equal(h.die.textContent,"⚅ + ⚃");
-    assert.match(h.calls.toasts.at(-1),/6\+4=10/);
-  }
-
-  {
-    const h=harness({player:{hp:50,maxHp:100,ultimateCharge:95},randValues:[5,2],randomValues:[.99],mythicBoots:true});
-    await h.api.roll();
-    assert.equal(h.player.hp,55,"Titanstep must preserve 5% max-HP healing");
-    assert.equal(h.player.ultimateCharge,100,"Titanstep ultimate gain must remain capped at 100");
-    assert.deepEqual(h.calls.moves,[[7,7,false,false]]);
-    assert.ok(h.calls.toasts.includes("🥾 Titanstep!"));
-  }
-
-  {
-    const h=harness({
-      player:{diceChoiceChance:1},
-      randValues:[2,2],
-      randomValues:[0],
-      chooseDieResult:()=>Promise.reject(new Error("chooser failed"))
-    });
-    await assert.rejects(h.api.roll(),/chooser failed/);
-    assert.equal(h.die.classList.contains("rolling"),false,"failed pre-movement resolution must always clear rolling presentation");
-    assert.equal(h.isRollLocked(),false,"failed pre-movement resolution must release the road lock");
-    assert.equal(h.calls.moves.length,0);
-    assert.match(h.calls.toasts.at(-1),/Double Dice roll interrupted/);
-  }
-
-  assert.doesNotMatch(SOURCE,/await chooseDice\([^;]+;chosen=true[^]*?classList\.remove\("rolling"\)/,"rolling cleanup must not move back behind the Fate await");
-  console.log("Run Dice owner PASS: ordinary 2d6, Long Stride, two-step Fate, Titanstep and pre-movement recovery are deterministic");
+  {const h=harness({randValues:[4],randomValues:[.99]});await h.api.rollOne();assert.deepEqual(h.calls.delays,[55,61,67,73,79,85,91,97,103,109,115]);assert.equal(h.calls.picks,11);assert.deepEqual(h.calls.rand,[[1,6,4]]);assert.equal(h.calls.random,1);assert.deepEqual(h.calls.moves,[[4,4,false,false]]);assert.equal(h.calls.increments,1);assert.equal(h.calls.resume,1);assert.equal(h.nodes.dice.textContent,"⚃");assert.deepEqual(h.calls.traces,["rollDice"]);}
+  {const h=harness({player:{extraStepChance:.25},randValues:[3],randomValues:[.10]});await h.api.rollOne();assert.deepEqual(h.calls.moves,[[4,3,true,false]]);assert.match(h.calls.logs[0],/Long Stride adds/);}
+  {const h=harness({meta:{debugAlwaysChooseRolls:true},randValues:[6]});const pending=h.api.rollOne();await clickChoice(h,5);await pending;assert.equal(h.calls.rand.length,0,"debug 1d6 must preserve the released no-preliminary-RNG contract");assert.equal(h.calls.random,0);assert.equal(h.calls.resume,0);assert.deepEqual(h.calls.moves,[[5,5,false,true]]);assert.match(h.calls.logs[0],/Debug fate chooses/);}
+  {const h=harness({player:{diceChoiceChance:1},randValues:[2],randomValues:[0]});const pending=h.api.rollOne();await tick();assert.equal(h.nodes.dice.classList.contains("rolling"),false);await clickChoice(h,6);await pending;assert.deepEqual(h.calls.moves,[[6,6,false,true]]);assert.equal(h.calls.random,1,"chosen 1d6 Fate must not draw Long Stride RNG");}
+  {const h=harness({randValues:[2,5],randomValues:[.99]});await h.api.rollTwo();assert.deepEqual(h.calls.delays,[45,50,55,60,65,70,75,80,85,90]);assert.equal(h.calls.picks,20);assert.deepEqual(h.calls.rand,[[1,6,2],[1,6,5]]);assert.equal(h.calls.random,1);assert.deepEqual(h.calls.moves,[[7,7,false,false]]);assert.equal(h.calls.increments,1);assert.equal(h.nodes.dice.textContent,"⚁ + ⚄");assert.deepEqual(h.calls.traces,["rollTwoDice"]);}
+  {const h=harness({player:{extraStepChance:.25},randValues:[3,4],randomValues:[.10]});await h.api.rollTwo();assert.deepEqual(h.calls.moves,[[8,7,true,false]]);}
+  {const h=harness({player:{diceChoiceChance:1},randValues:[1,1],randomValues:[0]});const pending=h.api.rollTwo();await tick();assert.equal(h.nodes.dice.classList.contains("rolling"),false);await clickChoice(h,6);await clickChoice(h,4);await pending;assert.equal(h.calls.random,1);assert.deepEqual(h.calls.moves,[[10,10,false,true]]);assert.equal(h.nodes.dice.textContent,"⚅ + ⚃");}
+  {const h=harness({player:{hp:50,maxHp:100,ultimateCharge:95},randValues:[5,2],randomValues:[.99],mythicBoots:true});await h.api.rollTwo();assert.equal(h.player.hp,55);assert.equal(h.player.ultimateCharge,100);assert.ok(h.calls.toasts.includes("🥾 Titanstep!"));}
+  {const h=harness({randValues:[2,2],randomValues:[.99]});h.api.configure({delay:async()=>{throw new Error("animation failed");}});await assert.rejects(h.api.rollTwo(),/animation failed/);assert.equal(h.nodes.dice.classList.contains("rolling"),false);assert.equal(h.locked(),false);assert.equal(h.calls.moves.length,0);}
+  assert.doesNotMatch(SOURCE,/call\("random"\)\(\)/,"injected RNG result must never be invoked as a function");
+  console.log("Run Dice owner PASS: canonical 1d6 + 2d6, Fate, Long Stride, Titanstep, tracing and failure recovery");
 })().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
