@@ -29,6 +29,7 @@ def make_fixture(parent: Path, name: str) -> Path:
         "runtime/build-info.json",
         "runtime/build-manifest.json",
         "runtime/PATCH_NOTES.md",
+        f"runtime/release-notes/{VERSION}.md",
         "wrapper-source/config/project.json",
         "wrapper-source/wrappers/webview2/native-go/main.go",
         "CHANGELOG.md",
