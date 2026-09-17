@@ -36,7 +36,7 @@ for fragment in [
     "function makeGear(){return requireStock().makeGear();}",
     "function buildStock(){return requireStock().buildStock();}",
     "function open()",
-    "const api=Object.freeze({configure,catalog,price,makeGear,buildStock,render,open,inspect,testing,owner:OWNER});",
+    "const api=Object.freeze({configure,catalog,price,makeGear,buildStock,render,open,bindRoadTileInteraction,inspect,testing,owner:OWNER});",
     "window.DiceboundMerchant=api",
 ]:
     assert fragment in facade, f"Merchant facade ownership/routing missing: {fragment}"

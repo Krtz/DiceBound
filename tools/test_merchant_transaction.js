@@ -11,11 +11,17 @@ global.window = {
   }
 };
 require("../runtime/js/events/merchant-transaction.js");
+require("../runtime/js/ui/equipment-heirlooms.js");
 const transactions = window.DiceboundMerchantTransaction;
 const source = fs.readFileSync(require.resolve("../runtime/js/events/merchant-transaction.js"), "utf8");
 const monolith = fs.readFileSync("runtime/js/dicebound.js", "utf8");
 const merchantUi = fs.readFileSync("runtime/js/ui/merchant.js", "utf8");
 const merchantFacade = fs.readFileSync("runtime/js/events/merchant-facade.js", "utf8");
+const rarityMarkup=window.DiceboundEquipmentHeirlooms.rarityNameMarkup({name:'<img src=x onerror=1>Arc',rarity:'epic'});
+assert.match(rarityMarkup,/db-rarity-epic/);
+assert.doesNotMatch(rarityMarkup,/<img/,"canonical rarity-name presentation must escape equipment names");
+assert.match(rarityMarkup,/&lt;img/,"escaped equipment name should remain visible text");
+for(const rarity of ["poor","common","uncommon","rare","epic","legendary","artifact","mythical","omega"]){const markup=window.DiceboundEquipmentHeirlooms.rarityNameMarkup({name:`${rarity} blade`,rarity});assert.match(markup,new RegExp(`db-rarity-${rarity}`),`canonical Merchant/equipment rarity class missing for ${rarity}`);}
 
 // Intrinsic-bonus presentation still uses the historical compatibility helper,
 // while overall gear comparison now belongs to the public DiceboundItems boundary.
@@ -90,5 +96,9 @@ assert.doesNotMatch(monolith, /function\s+renderMerchant\s*\(/, "retired Merchan
 assert.doesNotMatch(monolith, /renderMerchant\s*=\s*function/, "historical Merchant renderer replacement ownership returned to the monolith");
 assert.match(merchantUi, /tx\.reservePurchase/, "Merchant UI owner must reserve offers through the transaction owner");
 assert.match(merchantUi, /tx\.settleChoice/, "Merchant UI owner must settle Legendary choices through the transaction owner");
+assert.match(merchantUi, /services\.gearNameMarkup\(item\.gear\)/, "Merchant gear names must use canonical equipment rarity presentation");
+assert.match(merchantFacade, /function bindRoadTileInteraction\(/, "Merchant facade must own the road-face interaction lifecycle");
+assert.match(monolith, /dbMerchant\?\.bindRoadTileInteraction\?\.\(el,tile,index\)/, "board render/refresh must route Merchant face binding through the Merchant facade");
+assert.doesNotMatch(monolith, /merchantFaceClicks\.add\(index\);face\.classList/, "inline Merchant secret click implementation returned to dicebound.js");
 
 console.log("merchant transaction tests passed");
