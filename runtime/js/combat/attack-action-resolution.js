@@ -28,8 +28,9 @@
 
   // Original Basic Attack transaction. Individual strike math remains owned by
   // combat/strike-resolution; this layer only owns action-level orchestration.
-  async function baseAttackAction() {
+  async function baseAttackAction(options = {}) {
     const rt = requireRuntime(), p = player();
+    options = options && typeof options === "object" ? options : {};
     if (rt.getCombatBusy() || !currentEnemy()) return;
     rt.setCombatBusy(true);
     p.guardCooldown = 0;
@@ -37,7 +38,8 @@
     rt.updateCombatUI();
     const firstTarget = currentEnemy();
     const actionBonus = typeof rt.actionBonuses === "function" ? rt.actionBonuses() : null;
-    const echoes = rt.rollTieredProc(p.doubleStrike + (actionBonus?.echo || 0)) + (chaos.extraEcho || 0);
+    const echoChance = options.suppressEcho ? 0 : p.doubleStrike + (actionBonus?.echo || 0);
+    const echoes = rt.rollTieredProc(echoChance) + (options.suppressEcho ? 0 : (chaos.extraEcho || 0));
     let totalCrit = 0;
     const base = await rt.performStrike(firstTarget, { echo: false, chaos });
     totalCrit += base.crit;
@@ -52,7 +54,7 @@
     if (pants) rt.setCombatText(pants);
     // A class action's post-state is committed after every strike/Echo but
     // before the ordinary enemy response.
-    if (typeof rt.afterPlayerAction === "function") rt.afterPlayerAction("attack");
+    if (typeof rt.afterPlayerAction === "function") rt.afterPlayerAction(options.postActionKind || "attack");
     rt.updateCombatUI();
     if (!livingEnemies().length) return rt.winCombat();
     const enemies = rt.getCurrentEnemies();
