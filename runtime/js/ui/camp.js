@@ -65,8 +65,8 @@
     campOptionsBtn:Object.freeze({x:.085,y:.105,w:110}),
     campTalentBtn:Object.freeze({x:.555,y:.125,w:165}),
     campMoonBtn:Object.freeze({x:.83,y:.115,w:165}),
-    campNightmareBtn:Object.freeze({x:.89,y:.28,w:120}),
-    campHellBtn:Object.freeze({x:.80,y:.28,w:118}),
+    campNightmareBtn:Object.freeze({x:.89,y:.38,w:120}),
+    campHellBtn:Object.freeze({x:.30,y:.28,w:118}),
     campClassBtn:Object.freeze({x:.39,y:.65,w:235}),
     campInfoBtn:Object.freeze({x:.26,y:.78,w:145}),
     campBonfire:Object.freeze({x:.50,y:.72,w:170}),
@@ -492,7 +492,7 @@
       const node=id==='campBonfire'?scene.querySelector('.camp-bonfire'):find(id);let spec=stageSpec(id,layout);
       if(!node||!spec)continue;
       const hellVolcano=id==='campHellBtn'&&node.classList.contains('hell-volcano-active');
-      if(hellVolcano)spec={...spec,x:.72,y:.33,w:460,h:174};
+      if(hellVolcano)spec={...spec,x:.22,y:.33,w:460,h:174};
       for(const [property,value] of Object.entries({position:'absolute',left:`${(spec.x*100).toFixed(3)}%`,top:`${(spec.y*100).toFixed(3)}%`,right:'auto',bottom:'auto',transform:'translate(-50%,-50%)',translate:'none'}))important(node,property,value);
       if(id==='campGoBtn'){
         const width=Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08)),height=Math.round(clamp((spec.h||spec.w)*frame.scale,(spec.h||spec.w)*.72,(spec.h||spec.w)*1.08));
