@@ -58,28 +58,41 @@
   }
 
   function weighted(pool){
-    const p=player();
-    const luckFiltered=maybe("filterPowerupPoolForLuck",pool,p.luck);
-    const source=Array.isArray(luckFiltered)&&luckFiltered.length?luckFiltered:pool;
+    const p=player(),source=Array.isArray(pool)?pool:[];
     const order={poor:0,common:1,uncommon:2,rare:3,epic:4,legendary:5,artifact:6,mythical:7,omega:8};
+    const progression=Object.keys(order).sort((left,right)=>order[left]-order[right]);
     const info=rarityInfo();
     const depth=(call("getBoardLevel")-1)+p.position/Math.max(1,call("currentTileCount")-1);
-    const rawLuck=Math.max(0,p.luck||0),luck=1-Math.exp(-rawLuck*.68);
+    const rawLuck=Math.max(0,p.luck||0);
     const weightedPool=source.map(up=>{
       const tier=order[up.rarity]??0,base=Math.max(0,info[up.rarity]?.weight||0);
       let weight=base;
-      if(tier<=1){
-        const policyMultiplier=maybe("lowTierWeightMultiplier",up.rarity,rawLuck);
-        weight*=Math.max(.30,1-luck*.20-depth*.018)*(Number.isFinite(Number(policyMultiplier))?Math.max(0,Number(policyMultiplier)):1);
-      }else weight*=1+(tier-1)*(luck*.20+depth*.018);
+      if(tier<=1)weight*=Math.max(.30,1-depth*.018);
+      else weight*=1+(tier-1)*(depth*.018);
       if(up.rarity==="legendary")weight+=Math.min(.018,p.level*.00035)+depth*.0016;
       return {up,weight};
     });
+    const bucketTotals=new Map();
+    for(const entry of weightedPool)bucketTotals.set(entry.up.rarity,(bucketTotals.get(entry.up.rarity)||0)+entry.weight);
+    const baseRows=progression.filter(id=>bucketTotals.has(id)).map(id=>[id,bucketTotals.get(id)]);
+    const shiftedRows=maybe("cascadeLuckRows",baseRows,rawLuck,progression);
+    if(Array.isArray(shiftedRows)&&shiftedRows.length){
+      const shifted=new Map(shiftedRows.map(row=>[row[0],Math.max(0,Number(row[1])||0)]));
+      for(const entry of weightedPool){
+        const baseTotal=bucketTotals.get(entry.up.rarity)||0,target=shifted.get(entry.up.rarity)||0;
+        entry.weight=baseTotal>0?entry.weight*(target/baseTotal):0;
+      }
+    }
     const total=weightedPool.reduce((sum,entry)=>sum+entry.weight,0);
     if(total<=0)return source[0];
-    let roll=call("random")*total;
-    for(const entry of weightedPool){roll-=entry.weight;if(roll<=0)return entry.up;}
-    return weightedPool[weightedPool.length-1]?.up;
+    let roll=call("random")*total,fallback=source[0];
+    for(const entry of weightedPool){
+      if(entry.weight<=0)continue;
+      fallback=entry.up;
+      roll-=entry.weight;
+      if(roll<=0)return entry.up;
+    }
+    return fallback;
   }
   function choices(filter=()=>true,count=3){
     const pool=eligible(filter),out=[];
@@ -139,18 +152,34 @@
   }
   function minibossBaseTable(level=call("getBoardLevel")){return level<=1?{legendary:.08,epic:.32,rare:.76,uncommon:.95}:level===2?{legendary:.14,epic:.58,rare:.86,uncommon:.97}:{legendary:.22,epic:.58,rare:.86,uncommon:.97};}
   function minibossOddsText(level=call("getBoardLevel")){return level<=1?"8% Legendary · 24% Epic · 44% Rare · 19% Uncommon · 5% Common":level===2?"14% Legendary · 44% Epic · 28% Rare · 11% Uncommon · 3% Common":"22% Legendary · 36% Epic · 28% Rare · 11% Uncommon · 3% Common";}
+  function minibossRarityRows(level=call("getBoardLevel")){
+    const table=minibossBaseTable(level),bonus=(call("isNightmare")?.04:0)+(call("isHell")?.05:0);
+    const legendary=Math.min(1,table.legendary+bonus),epic=Math.max(legendary,Math.min(1,table.epic+bonus)),rare=Math.max(epic,table.rare),uncommon=Math.max(rare,table.uncommon);
+    const rows=[
+      ["legendary",legendary],
+      ["epic",Math.max(0,epic-legendary)],
+      ["rare",Math.max(0,rare-epic)],
+      ["uncommon",Math.max(0,uncommon-rare)],
+      ["common",Math.max(0,1-uncommon)]
+    ];
+    const shifted=maybe("cascadeLuckRows",rows,Math.max(0,player().luck||0),["common","uncommon","rare","epic","legendary"]);
+    return Array.isArray(shifted)&&shifted.length?shifted:rows;
+  }
   function rollMinibossRarity(){
-    const p=player(),rawLuck=Math.max(0,p.luck||0),luck=Math.min(.12,rawLuck*.025),bonus=(call("isNightmare")?.04:0)+(call("isHell")?.05:0),roll=call("random"),table=minibossBaseTable();
-    const suppression=Math.max(0,Math.min(1,Number(maybe("lowTierSuppression",rawLuck))||0));
-    if(roll<table.legendary+luck+bonus)return "legendary";
-    if(roll<table.epic+luck+bonus)return "epic";
-    if(roll<table.rare+luck*.5)return "rare";
-    if(roll<table.uncommon+(1-table.uncommon)*suppression)return "uncommon";
-    return "common";
+    const rows=minibossRarityRows(),total=rows.reduce((sum,row)=>sum+Math.max(0,Number(row?.[1])||0),0);
+    let roll=call("random")*total,fallback="common";
+    for(const row of rows){
+      const weight=Math.max(0,Number(row?.[1])||0);
+      if(weight<=0)continue;
+      fallback=row[0];
+      roll-=weight;
+      if(roll<=0)return row[0];
+    }
+    return fallback;
   }
   function minibossChoices(){
-    const p=player(),count=Math.max(3,3+(p.levelChoiceBonus||0)),out=[],used=new Set();
-    const minimumRarity=(Number(maybe("lowTierSuppression",p.luck))||0)>=1?"uncommon":null;
+    const p=player(),count=Math.max(3,3+(p.levelChoiceBonus||0)),out=[],used=new Set(),rows=minibossRarityRows();
+    const minimumRarity=["common","uncommon","rare","epic","legendary"].find(id=>(rows.find(row=>row[0]===id)?.[1]||0)>1e-12)||null;
     for(let i=0;i<count;i++){
       const wanted=rollMinibossRarity(),found=fallbackRarityPool(wanted,minimumRarity);let pool=found.pool.filter(up=>!used.has(up.id));
       if(!pool.length)pool=found.pool;if(!pool.length)break;
@@ -173,7 +202,7 @@
   const api=Object.freeze({
     apiVersion:1,owner:OWNER,configure,createRegistry,entries,describe,ownerIds,ownershipAllowed,
     eligible,weighted,choices,levelChoices,apply,applyRandomHighRarity,legendaryChoices,
-    fallbackRarityPool,minibossBaseTable,minibossOddsText,rollMinibossRarity,minibossChoices,
+    fallbackRarityPool,minibossBaseTable,minibossOddsText,minibossRarityRows,rollMinibossRarity,minibossChoices,
     openLevelUp,openChoice,openLegendary,openAllEligible,perfectedSignature,inspect
   });
   window.DiceboundPowerups=api;
