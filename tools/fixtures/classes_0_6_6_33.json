@@ -265,7 +265,7 @@
             },
             "passive": {
               "name": "Painted Hexcraft",
-              "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+              "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage and drains doubled Lifesteal from the full Hex."
             },
             "ultimate": {
               "name": "Crimson Deluge",
@@ -974,7 +974,7 @@
         "passives": {
           "invoker": {
             "name": "Orb Invocation",
-            "desc": "Defend forms Blue, Mana generation forms Green, and Mana spending forms Red. Three active orbs empower you and define Invoke."
+            "desc": "Quas, Wex and Exort Strikes form Blue, Green and Red; Guard can also form Blue and Elemental Lance forms Red. Three active orbs empower you and define Invoke."
           },
           "ranger": {
             "name": "Marked Quarry",
@@ -998,7 +998,7 @@
           },
           "rouge": {
             "name": "Painted Hexcraft",
-            "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+            "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage and drains doubled Lifesteal from the full Hex."
           },
           "berserker": {
             "name": "Blood Rage",
