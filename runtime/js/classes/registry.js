@@ -140,7 +140,7 @@
         "classBurst": 0.14,
         "lifeSteal": 0
       },
-      "scaleNotes": "Attack, Echo Strike and Dodge work together: more Echo means more hits and ultimate charge opportunities, while sustain lets Monk survive long enough to exploit them. Hundred Fists scales mostly from Attack.",
+      "scaleNotes": "Attack, Echo Strike and Dodge work together: every real base hit and Echo Strike advances Flowing Combo after the action, so Echo directly accelerates the class engine. Hundred Fists scales mostly from Attack.",
       "tags": [
         "melee",
         "combo",
@@ -148,7 +148,7 @@
       ],
       "passive": {
         "name": "Flowing Combo",
-        "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+        "desc": "Every real basic hit and Echo Strike advances Combo after the action, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
       }
     },
     "clown": {
@@ -426,7 +426,7 @@
       "ultimate": {
         "name": "Crimson Eclipse",
         "icon": "🌑",
-        "desc": "Drain the entire pack for heavy damage and heal for 50% of damage dealt."
+        "desc": "Drain the entire pack with damage that scales from Lifesteal and Echo; healing also scales from current Lifesteal."
       },
       "base": {
         "maxHp": 41,
@@ -440,7 +440,7 @@
         "classBurst": 0.16,
         "lifeSteal": 0.18
       },
-      "scaleNotes": "Lifesteal is now both offense and sustain: Grave Lance gains damage from current Lifesteal, converts 80% of Echo chance into bonus damage, uses 120% of normal Poison chance, can Crit and rolls normal elements. Its direct plus elemental damage heals at doubled Lifesteal.",
+      "scaleNotes": "Lifesteal is now both offense and sustain: Grave Lance gains damage from current Lifesteal, converts 80% of Echo chance into bonus damage, uses 120% of normal Poison chance, can Crit and rolls normal elements. Crimson Eclipse also converts Lifesteal and Echo into pack damage, while its drain rises with current Lifesteal.",
       "tags": [
         "vampiric",
         "occult",
@@ -1007,7 +1007,7 @@
     },
     "monk": {
       "name": "Flowing Combo",
-      "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+      "desc": "Every real basic hit and Echo Strike advances Combo after the action, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
     },
     "clown": {
       "name": "Opening Gag",
