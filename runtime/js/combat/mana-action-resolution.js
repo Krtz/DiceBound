@@ -6,9 +6,9 @@
   const SPELLS = {
     sorcerer:{builder:"Channel Bolt",builderIcon:"🔮",spell:"Arcane Lance",spellIcon:"✦",cost:35,gain:28,desc:"Channel Bolt deals slightly reduced normal attack damage and builds Mana. Arcane Lance spends 35 Mana for a heavy spell, converts half of your Echo Strike chance into bonus Lance damage, applies Lifesteal, and guarantees a random core-element eruption."},
     vampire:{builder:"Night Siphon",builderIcon:"🦇",spell:"Grave Lance",spellIcon:"🌑",cost:35,gain:26,desc:"Night Siphon builds Mana while attacking. Grave Lance spends 35 Mana for heavy damage and drains 30% of the direct damage as HP."},
-    rouge:{builder:"Crimson Stroke",builderIcon:"🖌️",spell:"Scarlet Hex",spellIcon:"🌹",cost:35,gain:27,desc:"Crimson Stroke paints Mana into existence. Scarlet Hex spends 35 Mana for a high-crit occult strike and splashes crimson damage into the pack."},
+    rouge:{builder:"Crimson Stroke",builderIcon:"🖌️",spell:"Scarlet Hex",spellIcon:"🌹",cost:35,gain:27,desc:"Crimson Stroke paints Mana into existence. Scarlet Hex spends 35 Mana for a high-crit occult strike, converts half of Echo Strike chance into bonus spell damage, splashes the pack, and real Rouge drains doubled Lifesteal from the full Hex."},
     merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana and converts part of your current gold into occult damage."},
-    invoker:{builder:"Arcane Current",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Arcane Current generates Mana and a Green orb. Elemental Lance spends 50 Mana for a Red orb. Guard forms Blue; three orbs unlock Invoke."},
+    invoker:{builder:"Wex Strike",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Quas, Wex and Exort Strikes create Blue, Green and Red orbs. Wex also generates Mana. Elemental Lance spends 50 Mana for a stronger Red attack and converts half of current Echo chance into bonus spell damage."},
     summoner:{builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."}
   };
 
@@ -129,8 +129,8 @@
     } else if (rt.isClassActive("vampire")) {
       damage = Math.round(p.attack * 1.95 + rt.rand(3, 7));
     } else if (rt.isClassActive("rouge")) {
-      const tiers = rt.rollTieredProc(p.crit + .35);
-      damage = Math.round((p.attack * 1.85 + rt.rand(3, 8)) * (1 + tiers));
+      const tiers = rt.rollTieredProc(p.crit + .35), echoScale = 1 + Math.max(0, Number(p.doubleStrike) || 0) * .50;
+      damage = Math.round((p.attack * 1.85 + rt.rand(3, 8)) * (1 + tiers) * echoScale);
       if (livingEnemies().length > 1) {
         const splash = Math.max(1, Math.round(damage * .28));
         livingEnemies().filter(enemy => enemy !== target).forEach(enemy => rt.damageEnemy(enemy, splash));
@@ -236,21 +236,22 @@
     p.combatActionCount++;
     const target = currentEnemy();
     await rt.animateClassAttack("crit");
-    let extra = "";
-    const tiers = rt.rollTieredProc(p.crit + .35);
-    let damage = Math.round((p.attack * 1.85 + rt.rand(3, 8)) * (1 + tiers));
+    let extra = "", splashTotal = 0;
+    const tiers = rt.rollTieredProc(p.crit + .35), echoScale = 1 + Math.max(0, Number(p.doubleStrike) || 0) * .50;
+    let damage = Math.round((p.attack * 1.85 + rt.rand(3, 8)) * (1 + tiers) * echoScale);
     if (livingEnemies().length > 1) {
       const splash = Math.max(1, Math.round(damage * .28));
-      livingEnemies().filter(enemy => enemy !== target).forEach(enemy => rt.damageEnemy(enemy, splash));
+      livingEnemies().filter(enemy => enemy !== target).forEach(enemy => { splashTotal += rt.damageEnemy(enemy, splash); });
       extra = ` Scarlet paint splashes the rest of the pack for ${splash} each.`;
     }
     damage = Math.round(damage * (1 + p.damageBonus + rt.getSetDamageBonus()));
     if (rt.getEncounterLead()?.boss) damage = Math.round(damage * (1 + p.bossDamage));
     const dealt = rt.damageEnemy(target, damage);
-    const heal = Math.max(1, Math.floor(dealt * Math.max(0, p.lifeSteal) * 2));
+    const drainPool = dealt + splashTotal, effectiveLifesteal = Math.max(0, Number(p.lifeSteal) || 0);
+    const heal = effectiveLifesteal > 0 && drainPool > 0 ? Math.max(1, Math.floor(drainPool * effectiveLifesteal * 2)) : 0;
     if (heal > 0) {
       const restored = rt.healPlayer(heal);
-      extra += ` Scarlet Hex drinks back ${restored} HP.`;
+      extra += ` Scarlet Hex drinks back ${restored} HP from ${drainPool} total Hex damage.`;
     }
     rt.chargeUltimate(Math.max(8, Math.round(p.ultimateAttackGain * .65)));
     rt.setCombatText(`${cfg.spellIcon} ${cfg.spell} spends ${cfg.cost} Mana and deals ${dealt} damage.${extra}`);
