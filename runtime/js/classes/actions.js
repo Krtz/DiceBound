@@ -87,7 +87,7 @@
           player.attack+=attackSteal;player.defense+=defenseSteal;
           player._rogueStolenAttack=(player._rogueStolenAttack||0)+attackSteal;
           player._rogueStolenDefense=(player._rogueStolenDefense||0)+defenseSteal;
-          text+=` Grand Larceny steals ${attackSteal} ATK and ${defenseSteal} DEF for this battle.`;
+          text+=` Stat Heist steals ${attackSteal} ATK and ${defenseSteal} DEF for this battle.`;
         }
       }
       rt.identityFlash("🪙 Steal succeeded");rt.sfxCoin();
