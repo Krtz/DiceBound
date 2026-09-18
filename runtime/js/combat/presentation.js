@@ -100,7 +100,6 @@
 
     const attack = {
       text: "⚔️ Attack",
-      className: "combat-btn primary action-tooltip",
       disabled: combatBusy,
       tip: `Attack the selected enemy. Echo ${Math.round((player.doubleStrike || 0) * 100)}%, Crit ${Math.round((player.crit || 0) * 100)}%; every strike rolls crit, Poison and elements separately.`
     };
@@ -533,7 +532,7 @@
       find("enemyStatusDots").innerHTML = statusDotsHTML(enemy.enemyBarrier || 0, enemy.poisonStacks || 0, enemy.affinity);
       if ((enemy.burnStacks || 0) > 0) find("enemyStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="Burn ${enemy.burnStacks}/10: takes ${enemy.burnStacks}% max HP damage each turn">🔥×${enemy.burnStacks}</span>`);
     }
-    [["attackBtn", model.attack], ["guardBtn", model.guard], ["potionBtn", model.potion], ["ultimateBtn", model.ultimate]].forEach(([id, spec]) => { const b = find(id); if (!b) return; b.disabled = !!spec.disabled; if (spec.text != null) b.textContent = spec.text; if (spec.className) b.className = spec.className; b.dataset.tip = spec.tip || ""; });
+    [["attackBtn", model.attack], ["guardBtn", model.guard], ["potionBtn", model.potion], ["ultimateBtn", model.ultimate]].forEach(([id, spec]) => { const b = find(id); if (!b) return; b.disabled = !!spec.disabled; if (spec.text != null) b.textContent = spec.text; if (id === "attackBtn") b.className = spec.className || "combat-btn primary action-tooltip"; else if (spec.className) b.className = spec.className; b.dataset.tip = spec.tip || ""; });
     const special = find("specialAttackBtn"); if (special) { special.hidden = !!model.special.hidden; special.className = model.special.className; special.textContent = model.special.text; special.dataset.tip = model.special.tip; special.disabled = !!model.special.disabled; special.classList.toggle("ready", !!model.special.ready); }
     const invokerButtons = ensureInvokerAttackButtons();
     [["quas", invokerButtons.quas], ["exort", invokerButtons.exort]].forEach(([key, button]) => { if (!button) return; const spec = model.invokerAttacks[key]; button.hidden = !model.invokerAttacks.active; button.disabled = !model.invokerAttacks.active || !!spec.disabled; button.textContent = spec.text; button.dataset.tip = spec.tip; });
