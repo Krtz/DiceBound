@@ -23,7 +23,7 @@ assert.strictEqual(typeof camp.applyStageLayout,'function','Camp must own one fi
 assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable by late patch code');
 assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
-assert.deepStrictEqual({...camp.stageAnchors.campNightmareBtn},{x:.89,y:.48,w:120},'Nightmare must sit another 10 percentage points lower on the authored Camp stage');
+assert.deepStrictEqual({...camp.stageAnchors.campNightmareBtn},{x:.89,y:.53,w:120},'Nightmare must sit another 5 percentage points lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campHellBtn},{x:.30,y:.28,w:118},'Hell must sit 50 percentage points farther left on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.65,w:235},'Class Choice must sit another 10% lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
