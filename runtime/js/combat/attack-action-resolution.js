@@ -41,12 +41,12 @@
     const echoChance = p.doubleStrike + (actionBonus?.echo || 0);
     const echoes = options.suppressEcho ? 0 : rt.rollTieredProc(echoChance) + (chaos.extraEcho || 0);
     let totalCrit = 0;
-    const base = await rt.performStrike(firstTarget, { echo: false, chaos });
+    const base = await rt.performStrike(firstTarget, { echo: false, chaos, actionDamageMultiplier: options.damageMultiplier || 1 });
     totalCrit += base.crit;
     for (let i = 1; i <= echoes && livingEnemies().length; i++) {
       const selected = currentEnemy();
       const target = firstTarget.hp > 0 ? firstTarget : (selected?.hp > 0 ? selected : livingEnemies()[0]);
-      const result = await rt.performStrike(target, { echo: true, index: i, chaos, canCrit: false });
+      const result = await rt.performStrike(target, { echo: true, index: i, chaos, canCrit: false, actionDamageMultiplier: options.damageMultiplier || 1 });
       totalCrit += result.crit;
     }
     rt.chargeUltimate(p.ultimateAttackGain + p.critUltimateGain * totalCrit);
