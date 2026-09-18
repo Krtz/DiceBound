@@ -2153,8 +2153,8 @@
       "rarity": "uncommon",
       "icon": "🐾",
       "name": "Pack Discipline",
-      "desc": "Pet attacks deal +6 damage and gain +20% double-attack chance.",
-      apply(){player.petDamageBonus+=6;player.petDoubleChance+=.20;},
+      "desc": "Pet attacks deal +6 damage, gain +20% double-attack chance and convert an additional 10% of your Attack into pet damage.",
+      apply(){player.petDamageBonus+=6;player.petDoubleChance+=.20;player.beastmasterAttackPetScale=(player.beastmasterAttackPetScale||0)+.10;},
       "tags": [
         "pet",
         "ranged",
@@ -2190,6 +2190,23 @@
       "name": "Profitable Backstab",
       "desc": "Gain +14% Crit and attacks add 0.2% of current gold as effective Attack.",
       apply(){player.crit+=.14;player.goldAttackScale=Math.max(player.goldAttackScale||0,.002);},
+      "tags": [
+        "melee",
+        "dodgy",
+        "wealth",
+        "damage"
+      ],
+      "v24Tiered": true
+    },
+    {
+      "id": "rogue_grand_larceny",
+      "classId": "rogue",
+      "rarity": "rare",
+      "unique": true,
+      "icon": "🗡️📊",
+      "name": "Grand Larceny",
+      "desc": "Successful Steal also steals 10% of the target's current ATK and DEF for this battle.",
+      apply(){player.rogueStealStatFraction=Math.max(player.rogueStealStatFraction||0,.10);},
       "tags": [
         "melee",
         "dodgy",
@@ -2277,12 +2294,12 @@
       "rarity": "common",
       "icon": "🔷",
       "name": "Deeper Circle",
-      "desc": "Conjured spirits deal +3 damage and Spirit Bolt generates +6 Mana.",
+      "desc": "Conjured spirits deal +3 damage, Spirit Bolt generates +6 Mana and your companion circle converts an additional 10% of your Attack into pet damage.",
       "tags": [
         "pet",
         "mana"
       ],
-      apply(){player.petDamageBonus+=3;player.summonerManaBonus=(player.summonerManaBonus||0)+6;},
+      apply(){player.petDamageBonus+=3;player.summonerManaBonus=(player.summonerManaBonus||0)+6;player.summonerAttackPetScale=(player.summonerAttackPetScale||0)+.10;},
       "v24Tiered": true
     },
     {
