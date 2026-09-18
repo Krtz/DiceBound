@@ -112,8 +112,19 @@ async function main(){
     assert.equal(fixture.baselineVersion,"0.6.6.30","Combat fixture must remain the released 0.6.6.30 baseline");
     const expected=structuredClone(fixture.cases);
     const encounter=expected.find(c=>c.name==="encounter-start");
-    assert.equal(encounter?.state?.enemies?.[0]?.name,"Ascended Cultist","Combat identity extension must target the frozen Cultist encounter");
-    encounter.state.enemies[0].id="cultist";
+    assert.equal(encounter?.state?.enemies?.[0]?.name,"Ascended Cultist","Combat roster extension must start from the frozen Cultist encounter");
+    // Beta 0.6.7.11 deliberately gives every Road the Board 1 ordinary-family
+    // selection window. Preserve the historical fixture, then transform only
+    // the one encounter whose semantic family is intentionally different.
+    encounter.state.currentEnemyName="Ascended Slime";
+    encounter.state.enemies[0]={
+      id:"slime",name:"Ascended Slime",icon:"🟢",hp:28,attack:6,defenseBias:-0.8,
+      xp:14,gold:11,weakness:"electric",maxHp:28,defense:2,boss:false,guardian:false,
+      miniBoss:false,finalBoss:false,merchantBoss:false,skipTurns:0,poisonStacks:0,
+      affinity:"metal",elementProcChance:0.12525252525252525
+    };
+    encounter.state.text="Ascended Slime block the road. Choose your action.";
+    encounter.state.history=encounter.state.text;
     assert.deepEqual(actual.cases,expected);
     console.log(`Combat oracle PASS: ${actual.cases.length} exact released-output/state/event/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
