@@ -46,11 +46,13 @@
     let totalCrit = 0;
     const base = await rt.performStrike(firstTarget, { echo: false, chaos, actionDamageMultiplier: options.damageMultiplier || 1 });
     totalCrit += base.crit;
+    if (typeof options.onResolvedStrike === "function") options.onResolvedStrike({ echo: false, result: base, target: firstTarget });
     for (let i = 1; i <= echoes && livingEnemies().length; i++) {
       const selected = currentEnemy();
       const target = firstTarget.hp > 0 ? firstTarget : (selected?.hp > 0 ? selected : livingEnemies()[0]);
       const result = await rt.performStrike(target, { echo: true, index: i, chaos, canCrit: false, actionDamageMultiplier: options.damageMultiplier || 1 });
       totalCrit += result.crit;
+      if (typeof options.onResolvedStrike === "function") options.onResolvedStrike({ echo: true, index: i, result, target });
     }
     rt.chargeUltimate(p.ultimateAttackGain + p.critUltimateGain * totalCrit);
     const pants = rt.applyMythicPantsPulse();
@@ -71,15 +73,22 @@
     const rt = requireRuntime(), p = player();
     if (rt.isClassActive("monk")) {
       const combo = p.monkCombo || 0, echoBonus = combo * .035, damageBonus = combo * .045;
+      const options = args[0] && typeof args[0] === "object" ? { ...args[0] } : {};
+      const downstream = options.onResolvedStrike;
+      let qualifyingStrikes = 0;
+      options.onResolvedStrike = packet => {
+        qualifyingStrikes++;
+        if (typeof downstream === "function") downstream(packet);
+      };
       p.doubleStrike += echoBonus;
       p.damageBonus += damageBonus;
       try {
-        await baseAttackAction(...args);
+        await baseAttackAction(options);
       } finally {
         p.doubleStrike -= echoBonus;
         p.damageBonus -= damageBonus;
       }
-      if (p.hp > 0 && currentEnemy()) p.monkCombo = Math.min(5, combo + 1);
+      if (p.hp > 0) p.monkCombo = Math.min(p.monkComboMax || 5, combo + qualifyingStrikes);
       rt.updateCombatUI();
       return;
     }
@@ -99,7 +108,7 @@
   // the V13 class layer, including the high-combo Monk overwrite after return.
   async function v16IdentityAttackAction(...args) {
     const rt = requireRuntime(), p = player();
-    const cls = rt.classIdentityId(), comboBefore = p.monkCombo || 0;
+    const cls = rt.classIdentityId();
     const chicken = cls === "clown" && p.clownGimmick === "Rubber Chicken";
     if (chicken) p.doubleStrike += .20;
     if (cls === "alchemist" && !rt.getCombatBusy() && currentEnemy()) {
@@ -112,9 +121,7 @@
       }
     }
     try {
-      const result = await v13ClassAttackAction(...args);
-      if (cls === "monk" && (p.monkComboMax || 5) > 5) p.monkCombo = Math.min(p.monkComboMax, comboBefore + 1);
-      return result;
+      return await v13ClassAttackAction(...args);
     } finally {
       if (chicken) p.doubleStrike -= .20;
       rt.updateCombatUI();
