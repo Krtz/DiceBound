@@ -58,7 +58,8 @@ function fixture(opts={}) {
   assert.strictEqual(f.kind(),'normal'); assert.strictEqual(f.state().current.name,'Wolf'); assert.strictEqual(f.player.combatActionCount,0);
   assert.strictEqual(f.player.db0511BurnStacks,0); assert.strictEqual(f.player.db0511PoisonStacks,0); assert.strictEqual(f.player.db0511PoisonPower,0);
   assert.strictEqual(typeof f.rt.applyCombatBackground,'undefined','encounter lifecycle must not accept the retired root background callback');
-  assert.deepStrictEqual(f.events.slice(0,6),['pre:presentation','pre:legendary','pre:elements','pre:stone','trace:before','pre:rogue-stats']);
+  assert.deepStrictEqual(f.events.slice(0,5),['pre:presentation','pre:legendary','pre:elements','pre:stone','trace:before']);
+  assert(f.events.indexOf('trace:before') < f.events.indexOf('pre:rogue-stats') && f.events.indexOf('pre:rogue-stats') < f.events.indexOf('trace:after'),'Rogue stolen-stat cleanup must stay inside traced encounter setup');
   assert.deepStrictEqual(f.events.slice(-3),['post:background','post:battlelog','post:petart']);
 }
 {
