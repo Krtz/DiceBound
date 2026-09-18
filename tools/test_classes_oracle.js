@@ -17,7 +17,7 @@ const RUNTIME=path.join(ROOT,"runtime");
 const FIXTURE_PATH=path.join(__dirname,"fixtures","classes_0_6_6_33.json");
 const EDGE=process.env.DICEBOUND_EDGE||"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const DEBUG_PORT=Number(process.env.DICEBOUND_CLASSES_DEBUG_PORT||19434);
-const CAPTURE=true; // TEMP 0.6.7.9 fixture recapture; restore env gate after capture.
+const CAPTURE=process.env.DICEBOUND_CAPTURE_CLASSES==="1";
 const MIME={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".webp":"image/webp",".wav":"audio/wav"};
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
