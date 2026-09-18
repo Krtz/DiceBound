@@ -31,7 +31,8 @@ const classes = {
   paladin: { id: 'paladin', name: 'Paladin', icon: '⚔️', ultimate: { icon: '✨', name: 'Oath', desc: 'Grace.' } },
   berserker: { id: 'berserker', name: 'Berserker', icon: '🪓', ultimate: { icon: '💢', name: 'Rage', desc: 'Rage.' } },
   slimerouge: { id: 'slimerouge', name: 'Slime Rouge', icon: '🔴', ultimate: { icon: '🎭', name: 'Borrow', desc: 'Borrowed.' } },
-  dragoon: { id: 'dragoon', name: 'Dragoon', icon: '🐉', ultimate: { icon: '🐲', name: 'Dragon Dive', desc: 'Dive.' } }
+  dragoon: { id: 'dragoon', name: 'Dragoon', icon: '🐉', ultimate: { icon: '🐲', name: 'Dragon Dive', desc: 'Dive.' } },
+  invoker: { id: 'invoker', name: 'Invoker', icon: '🔵🟢🔴', ultimate: { icon: '🔵🟢🔴', name: 'Invoke', desc: 'Invoke.' } }
 };
 const pets = {
   fire: { icon: '🔥', name: 'Ember' },
@@ -39,7 +40,8 @@ const pets = {
   nature: { icon: '🌿', name: 'Sprout' }
 };
 const occult = {
-  summoner: { builderIcon: '✨', builder: 'Spirit Bolt', spellIcon: '🐾', spell: 'Conjure', cost: 35, gain: 18, desc: 'Build a spirit circle.' }
+  summoner: { builderIcon: '✨', builder: 'Spirit Bolt', spellIcon: '🐾', spell: 'Conjure', cost: 35, gain: 18, desc: 'Build a spirit circle.' },
+  invoker: { builderIcon: '🟢', builder: 'Wex Strike', spellIcon: '🔴', spell: 'Elemental Lance', cost: 50, gain: 25, desc: 'Three orb strikes build formulas; Lance converts Echo into damage.' }
 };
 
 let rngCalls = 0;
@@ -131,6 +133,7 @@ function runtime() {
     dragoonActive: () => active.has('dragoon'),
     dragoonJumpCooldown: () => 4,
     onDragoonJump() {},
+    performClassAction() {},
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
     delay: async ms => { presentationDelays.push(ms); },
     random: () => { rngCalls++; return .5; },
@@ -178,6 +181,17 @@ assert(out.special.tip.includes('immediately makes your active companion'));
 assert.strictEqual(out.resource.name, 'Mana / Spirit Circle');
 assert(out.resource.note.includes('🔥 Ember'));
 assert(out.guard.tip.includes('channels up to'));
+
+active = new Set(['invoker']); mechanics = new Set(['mana']); state.player.classId = 'invoker'; state.player.mana = 75; state.player.maxMana = 100; state.player.doubleStrike = .80;
+out = model();
+assert.strictEqual(out.attack.text, '🟢 Wex Strike');
+assert.strictEqual(out.attack.className.includes('invoker-wex'), true);
+assert.strictEqual(out.invokerAttacks.active, true);
+assert.strictEqual(out.invokerAttacks.quas.text, '🔵 Quas Strike');
+assert.strictEqual(out.invokerAttacks.exort.text, '🔴 Exort Strike');
+assert.strictEqual(out.special.text, '🔴 Elemental Lance (50)');
+assert(out.special.tip.includes('Half of current Echo chance'));
+assert.strictEqual(out.resource.name, 'Mana / Orb Formula');
 
 active = new Set(['pokemontrainer']); mechanics = new Set(); state.player.classId = 'pokemontrainer'; state.player.trainerRoster = ['fire','ice','nature']; state.player.trainerActiveIndex = 1;
 out = model();
