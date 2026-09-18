@@ -207,18 +207,21 @@ async function test(name, fn) {
     assert.strictEqual(h.counters.career, 1);
   });
 
-  await test('Real Rouge final Scarlet Hex preserves direct-class layer outside Mana Overflow', async () => {
+  await test('Real Rouge Scarlet Hex converts Echo and drains doubled Lifesteal from the full Hex', async () => {
     const foes = [{ name: 'A', hp: 10000, maxHp: 10000 }, { name: 'B', hp: 10000, maxHp: 10000 }];
     const h = makeHarness({ classId: 'rouge', identity: 'rouge', mana: 100, enemies: foes });
     h.p.lifeSteal = .25;
+    h.p.doubleStrike = 1;
     h.p.manaSpendUltimate = 8;
     await owner.occultSpellAttack();
     assert.strictEqual(h.p.mana, 65);
     assert.strictEqual(h.p.ultimateCharge, 8, 'historical Rouge replacement bypasses V17 Mana Overflow');
     assert.strictEqual(h.counters.career, 1);
-    assert(foes[1].hp < foes[1].maxHp, 'Scarlet splash must hit the pack');
-    assert(h.events.indexOf('tier:0.6') < h.events.indexOf('rand:3-8'));
-    assert(h.events.some(event => event.startsWith('heal:')));
+    assert.strictEqual(10000 - foes[0].hp, 65, '100% Echo should add 50% Scarlet Hex spell damage');
+    assert.strictEqual(10000 - foes[1].hp, 18, 'Scarlet splash should scale from the Echo-boosted primary formula');
+    assert(h.events.indexOf('tier:0.35') < h.events.indexOf('rand:3-8'));
+    assert(h.events.includes('heal:41'), '25% Lifesteal doubled across 83 total Hex damage should request 41 healing');
+    assert(h.events.some(event => event.includes('83 total Hex damage')));
   });
 
   await test('Borrowed Rouge identity keeps generic older path and Mana Overflow', async () => {
