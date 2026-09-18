@@ -12,7 +12,7 @@
       "random","rand","clamp","modifiedGold","getUpgradeChoices","pick","applyUpgrade","showToast",
       "rollD20Chaos","animateClassAttack","getSetDamageBonus","applyMythicRingPulse","selectFirstLivingEnemy",
       "hasEffect","addCombatHistory","potionHealValue","recordPotionUse","chargeUltimate","pickElementKey","triggerElementEffect",
-      "rollTieredProc","triggerStrikeElements","playElementAnimation","gameplayTalentRank","syncDragoonPresentation","dragoonLandPresentation"
+      "rollTieredProc","triggerStrikeElements","playElementAnimation","gameplayTalentRank","dragoonActive","syncDragoonPresentation","dragoonLandPresentation"
     ]){
       if(typeof next?.[name]!=="function")throw new Error(`Classes action mechanics requires ${name}().`);
     }
@@ -192,7 +192,7 @@
   function dragoonCooldown(){return Math.max(2,6-runtime().gameplayTalentRank("dragoon_aerial_discipline"));}
   function dragoonTickCooldown(){
     const player=runtime().getPlayer();
-    if(runtime().isClassActive("dragoon")&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;
+    if(runtime().dragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;
     return player.dragoonJumpCooldown||0;
   }
   function dragoonResetState(){
@@ -202,7 +202,7 @@
   }
   async function dragoonLanding(){
     const rt=runtime(),player=rt.getPlayer(),enemy=rt.getCurrentEnemy();
-    if(!rt.isClassActive("dragoon")||rt.getCombatBusy()||!enemy||!player.dragoonLandingReady)return false;
+    if(!rt.dragoonActive()||rt.getCombatBusy()||!enemy||!player.dragoonLandingReady)return false;
     rt.setCombatBusy(true);player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;rt.dragoonLandPresentation();
     const target=enemy.hp>0?enemy:rt.livingEnemies()[0];if(!target){rt.setCombatBusy(false);return false;}
     const critTiers=rt.rollTieredProc(positive(player.crit)),base=Math.max(1,Math.round((player.attack+rt.rand(2,6))*2.45)),damage=Math.round(base*(1+critTiers)*(rt.getEncounterLead()?.boss?1+player.bossDamage:1)),dealt=rt.damageEnemy(target,damage);
@@ -213,7 +213,7 @@
   }
   async function dragoonJump(){
     const rt=runtime(),player=rt.getPlayer();
-    if(!rt.isClassActive("dragoon")||rt.getCombatBusy()||!rt.getCurrentEnemy()||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
+    if(!rt.dragoonActive()||rt.getCombatBusy()||!rt.getCurrentEnemy()||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
     rt.setCombatBusy(true);player.guardCooldown=0;player.dragoonJumpCooldown=dragoonCooldown();player.dragoonAirborneResponses=1;rt.syncDragoonPresentation();
     rt.setCombatText("🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.");rt.updateCombatUI();await rt.delay(260);await rt.resolveEnemyResponse(false);
     if(player.hp>0&&rt.livingEnemies().length){player.dragoonLandingReady=true;rt.updateCombatUI();rt.setCombatText("🐉 Airborne window complete — use your next action to land.");}
