@@ -181,8 +181,15 @@ async function run() {
     assert.strictEqual(h.player.monkCombo, 4);
   }
 
-  // V16's high-combo Monk overwrite remains outside the V13 layer and can rise
-  // beyond the historical 5-stack cap.
+  // Every actually resolved Monk Echo Strike advances Flowing Combo as its own strike event.
+  {
+    const h = makeHarness({ classId: 'monk', tierValues: [2], player: { monkCombo: 1, monkComboMax: 8, doubleStrike: 1 } });
+    await owner.playerAttack();
+    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 3, 'base + two real Echo strikes must resolve');
+    assert.strictEqual(h.player.monkCombo, 4, 'Flowing Combo must advance once per resolved base/Echo strike');
+  }
+
+  // Monk Combo can still rise beyond the historical 5-stack cap when its configured maximum is higher.
   {
     const h = makeHarness({ classId: 'monk', tierValues: [0], player: { monkCombo: 5, monkComboMax: 8 } });
     await owner.playerAttack();
