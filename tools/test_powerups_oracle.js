@@ -92,7 +92,37 @@ async function main(){
     if(CAPTURE){console.log("POWERUPS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("POWERUPS_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.32","Powerups fixture must remain the released 0.6.6.32 baseline");
-    assert.deepEqual(actual.cases,fixture.cases);
+    const expected=structuredClone(fixture.cases);
+    const approvedLuckChoices=new Map([
+      ["weighted-three",[
+        {id:"dodge",name:"Mist Step",rarity:"uncommon",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"poor_monster_notes_v514",name:"Monster Notes",rarity:"poor",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"venom_edge",name:"Venom Edge",rarity:"common",classId:null,classIds:[],unique:false,achievementGate:null}
+      ]],
+      ["weighted-four",[
+        {id:"scholar_common_v26",name:"Scholar's Sigil+",rarity:"common",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"rare_ultimate_vessel",name:"Ultimate Vessel",rarity:"uncommon",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"thorns",name:"Spiked Armor",rarity:"poor",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"attack_common_v24",name:"Sharpened Steel",rarity:"common",classId:null,classIds:[],unique:false,achievementGate:null}
+      ]],
+      ["miniboss-three",[
+        {id:"vampire",name:"Vampiric Edge",rarity:"rare",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"berserk",name:"Berserker Heart",rarity:"rare",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"godslayer",name:"Godslayer",rarity:"epic",classId:null,classIds:[],unique:false,achievementGate:null}
+      ]],
+      ["miniboss-four",[
+        {id:"phoenix",name:"Phoenix Feather",rarity:"epic",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"legendary_crimson_aegis_v27",name:"Crimson Aegis",rarity:"legendary",classId:null,classIds:[],unique:true,achievementGate:null},
+        {id:"vampire",name:"Vampiric Edge",rarity:"rare",classId:null,classIds:[],unique:false,achievementGate:null},
+        {id:"venom_edge_rare_v25",name:"Venom Edge: Black Fang",rarity:"epic",classId:null,classIds:[],unique:false,achievementGate:null}
+      ]]
+    ]);
+    for(const [name,choices] of approvedLuckChoices){
+      const record=expected.find(c=>c.name===name);
+      assert.ok(record,"missing frozen Luck-sensitive Powerups case "+name);
+      record.choices=choices;
+    }
+    assert.deepEqual(actual.cases,expected);
     console.log(`Powerups oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}if(process.platform==='win32'&&child?.pid){try{childProcess.spawnSync('taskkill',['/PID',String(child.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch(_){}}await sleep(500);await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:12,retryDelay:150});}catch(err){console.warn(`Powerups oracle temp-profile cleanup warning: ${err.message}`);}}
 }

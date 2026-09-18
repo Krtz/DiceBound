@@ -72,6 +72,29 @@ function scenario({boardLevel,seed=1,hellMode=false,devilPrimed=false,withSnapsh
   return {calls,random,result,digest:digest(result.tiles)};
 }
 
+function enemyFamilyProbe(boardLevel,index,seed=0xB04D){
+  const random=rng(seed),pool=Array.from({length:20},(_,at)=>({name:`Enemy ${at}`,icon:`E${at}`,hp:10+at,attack:3+at,defenseBias:0,weakness:"fire"}));
+  generation.configure({
+    getState:()=>({boardLevel}),
+    getEnemyPool:()=>pool,
+    random:random.random,rand:random.rand,pick:random.pick,
+    elementKeys:()=>["fire","ice","nature","light"]
+  });
+  const enemy=generation.enemyForPosition(index),match=/Enemy (\d+)/.exec(enemy.name);
+  assert.ok(match,`could not recover semantic family from ${enemy.name}`);
+  return {family:Number(match[1]),draws:random.draws()};
+}
+for(const index of [6,20,48,63]){
+  const boardOne=enemyFamilyProbe(1,index,0xB04D+index);
+  for(let level=2;level<=6;level++){
+    const probe=enemyFamilyProbe(level,index,0xB04D+index);
+    assert.equal(probe.family,boardOne.family,`Board ${level} position ${index} must use the same ordinary-family selection window as Board 1`);
+  }
+}
+assert.doesNotMatch(source,/level===4\?pool\.length-3|level===3\?Math\.floor\(pool\.length\*\.76\)|level===2\?Math\.floor\(pool\.length\*\.55\)/,"Board-specific ordinary-family floors must stay retired while the Board 1 diversity policy is active");
+assert.match(source,/resetBoardSixPack\(tile,index\)/,"Board 6 must use the shared position-based family progression");
+assert.doesNotMatch(source,/resetBoardSixPack\(tile,index,|function\s+resetBoardSixPack\(tile,index,offset\)/,"retired Board 6 family-offset plumbing must stay removed");
+
 // The compatibility monolith historically builds one Board 1 preview before
 // the later generation patch chain exists. Seed 1 deliberately places Mystic
 // only after the miniboss in the base generator, so this proves the preview is

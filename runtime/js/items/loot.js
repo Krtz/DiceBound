@@ -2,7 +2,7 @@
   "use strict";
 
   const RARITIES=window.DiceboundRarities;
-  if(!RARITIES?.suppressLowTierRows)throw new Error("DiceboundLoot requires DiceboundRarities Luck policy.");
+  if(!RARITIES?.cascadeLuckRows)throw new Error("DiceboundLoot requires DiceboundRarities Luck policy.");
 
   const freezeRows = (tables) => Object.freeze(Object.fromEntries(
     Object.entries(tables).map(([board, rows]) => [
@@ -87,7 +87,9 @@
     let roll = Number(randomFn()) * rows.reduce((sum, row) => sum + row[1], 0);
     let rarity = rows[rows.length - 1][0];
     for (const row of rows) {
-      roll -= row[1];
+      const weight=Math.max(0,Number(row?.[1])||0);
+      if(weight<=0)continue;
+      roll -= weight;
       if (roll <= 0) {
         rarity = row[0];
         break;
@@ -104,7 +106,7 @@
   function guardianRarity({ defeated, board, nightmare = false, hell = false, luck = 0, randomFn = Math.random } = {}) {
     const table = defeated?.miniBoss ? MINI_GEAR_TABLES : BOSS_GEAR_TABLES;
     const baseRows = table[board] || BOSS_GEAR_TABLES[6];
-    const rows = RARITIES.suppressLowTierRows(baseRows, luck);
+    const rows = RARITIES.cascadeLuckRows(baseRows, luck, GEAR_LADDER);
     let rarity = weightedRarity(rows, randomFn);
     if (nightmare && Number(randomFn()) < 0.25) rarity = promoteRarity(rarity);
     if (hell && Number(randomFn()) < 0.25) rarity = promoteRarity(rarity);

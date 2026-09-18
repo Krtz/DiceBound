@@ -174,16 +174,22 @@ for (let board = 1; board <= 6; board += 1) {
   }
 }
 
-for (const [luck,expected] of [[1,"common"],[1.25,"uncommon"],[1.5,"uncommon"],[1.75,"uncommon"],[2,"uncommon"],[10,"uncommon"]]) {
-  const rng=sequence([.5]);
-  const rarity=loot.guardianRarity({defeated:{miniBoss:true},board:1,luck,randomFn:rng.random});
-  assert.equal(rarity,expected,`Board 1 miniboss high-roll rarity must follow shared Luck suppression at ${luck*100} displayed Luck`);
-  assert.equal(rng.calls(),1,"Luck-adjusted guardian rarity must not add RNG draws");
+{
+  const rng=sequence([0]);
+  const rarity=loot.guardianRarity({defeated:{miniBoss:true},board:1,luck:.01,randomFn:rng.random});
+  assert.equal(rarity,"common","1 displayed Luck must only shave 0.5 percentage points from the lowest guardian tier");
+  assert.equal(rng.calls(),1,"Luck-adjusted guardian rarity must remain one RNG draw");
+}
+{
+  const low=sequence([0]),high=sequence([.999999]);
+  assert.equal(loot.guardianRarity({defeated:{miniBoss:true},board:1,luck:1.10,randomFn:low.random}),"uncommon","110 Luck must exhaust the Board 1 miniboss Common bucket");
+  assert.equal(loot.guardianRarity({defeated:{miniBoss:true},board:1,luck:1.10,randomFn:high.random}),"rare","removed Common mass must be redistributed across higher guardian tiers");
+  assert.equal(low.calls(),1);assert.equal(high.calls(),1);
 }
 {
   const rng=sequence([0,.1]);
-  const drop=plain(loot.ordinaryGuardianDrop({defeated:{miniBoss:true},board:1,luck:2,randomFn:rng.random}));
-  assert.equal(drop.rarity,"uncommon","200 Luck guardian drops must not bypass the canonical Uncommon floor");
+  const drop=plain(loot.ordinaryGuardianDrop({defeated:{miniBoss:true},board:1,luck:1.10,randomFn:rng.random}));
+  assert.equal(drop.rarity,"uncommon","Luck waterfall must not reintroduce an exhausted guardian tier through the drop wrapper");
   assert.equal(rng.calls(),2,"miniboss drop chance + rarity must preserve the two-draw contract");
 }
 
