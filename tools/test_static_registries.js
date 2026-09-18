@@ -92,6 +92,7 @@ rarityInfo.common.weight = -1;
 assert.equal(raritiesApi.createInfoRegistry().common.weight, 25);
 assert.equal(raritiesApi.luckPolicy.displayedPerInternal,100);
 assert.equal(raritiesApi.luckPolicy.shiftPerDisplayedPoint,.005);
+for(const retired of ["lowTierSuppression","lowTierWeightMultiplier","luckFloor","promoteOrdinaryRarityForLuck","filterPowerupPoolForLuck","suppressLowTierRows"])assert.equal(raritiesApi[retired],undefined,`retired Luck compatibility helper leaked: ${retired}`);
 assert.equal(raritiesApi.luckShiftBudget(.01),.005,"1 displayed Luck must shift 0.5 percentage points");
 assert.equal(raritiesApi.luckShiftBudget(1.10),.55,"110 displayed Luck must carry 55 percentage points of shift budget");
 const shiftedRows=Array.from(raritiesApi.cascadeLuckRows([["poor",55],["common",30.5],["uncommon",10.7],["rare",3.2],["epic",.6]],1.10,raritiesApi.ordinaryLootProgression),row=>Array.from(row));
@@ -123,6 +124,7 @@ assert.match(monolith, /dbPets\.createRegistry\?\.\(\)/,'composition monolith mu
 assert.match(monolith, /window\.DiceboundEnemies\?\.createNormalRegistry\(\)/);
 assert.match(monolith, /window\.DiceboundEnemies\?\.createSpecialRegistry\?\.\(\)/);
 assert.match(monolith, /window\.DiceboundRarities\?\.createInfoRegistry\(\)/);
+assert.doesNotMatch(monolith,/cascadeLuckRows\?\./,"composition root must require the canonical Luck waterfall rather than silently bypassing it");
 assert.doesNotMatch(monolith, /const\s+DB317_SPECIAL_ENEMIES_RAW\s*=\s*\{/);
 
 console.log("Static registries preserved: pets, ordinary/special enemies, rarities, isolated clones and canonical class tags pass");
