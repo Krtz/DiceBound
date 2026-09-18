@@ -6,7 +6,7 @@
   const VERSION="0.6.7.6";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Battle backgrounds restored.";
+  const RELEASE_SUMMARY="Luckier loot, enemy attacks & Echo pacing.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
