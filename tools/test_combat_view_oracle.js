@@ -125,6 +125,7 @@ function collectPresentation() {
     dragoonActive: () => active.has("dragoon"),
     dragoonJumpCooldown: () => 4,
     onDragoonJump() {},
+    performClassAction() {},
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
     delay: async () => {},
     random: () => { rngCalls += 1; return 0.5; },
