@@ -214,7 +214,7 @@
         "classBurst": 0.18,
         "lifeSteal": 0.05
       },
-      "scaleNotes": "Rouge—the colour—likes Attack, Crit and Lifesteal. Its crimson bursts become safer as Lifesteal rises, and Crimson Deluge rewards a damage-heavy build that can immediately drink back lost HP.",
+      "scaleNotes": "Rouge—the colour—likes Attack, Crit, Echo and Lifesteal. Scarlet Hex converts half of Echo chance into spell damage and real Rouge drains doubled Lifesteal from its full primary-plus-splash damage package, so the Mana spender stays rewarding as those stats scale.",
       "tags": [
         "weird",
         "artful",
@@ -223,7 +223,7 @@
       ],
       "passive": {
         "name": "Painted Hexcraft",
-        "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+        "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage and drains doubled Lifesteal from the full Hex."
       }
     },
     "berserker": {
@@ -947,7 +947,7 @@
       "attackIcon": "✨",
       "fxIcon": "🔵🟢🔴",
       "unlock": "Cast 100 Mana-spender spells across your career.",
-      "desc": "A grand occultist who turns Defend, Mana generation and Mana spending into a three-orb formula. Invoke combines the current three orbs into one of ten battle spells.",
+      "desc": "A grand occultist with three offensive orb strikes: Quas forms Blue, Wex forms Green and generates Mana, and Exort forms Red. Guard can still form Blue, Elemental Lance spends Mana for a stronger Red attack, and Invoke combines the current three orbs into one of ten battle spells.",
       "stats": "32 HP · 6 ATK · 25/100 MANA · THREE ORBS",
       "ultimate": {"name":"Invoke","icon":"🔵🟢🔴","desc":"At 100 Ultimate, invoke the spell determined by your current three-orb formula."},
       "base": {"maxHp":32,"attack":6,"defense":0,"crit":0.08,"dodge":0.02,"luck":0.05,"doubleStrike":0.05,"guardPower":0.50,"classBurst":0,"lifeSteal":0},
@@ -992,7 +992,7 @@
   };
 
   const CLASS_PASSIVE_DATA={
-    "invoker": {"name":"Orb Invocation","desc":"Defend forms Blue, Mana generation forms Green, and Mana spending forms Red. Three active orbs empower you and define Invoke."},
+    "invoker": {"name":"Orb Invocation","desc":"Quas, Wex and Exort Strikes form Blue, Green and Red; Guard can also form Blue and Elemental Lance forms Red. Three active orbs empower you and define Invoke."},
     "ranger": {
       "name": "Marked Quarry",
       "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
