@@ -17,7 +17,7 @@ const RUNTIME=path.join(ROOT,"runtime");
 const FIXTURE_PATH=path.join(__dirname,"fixtures","combat_0_6_6_30.json");
 const EDGE=process.env.DICEBOUND_EDGE||"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const DEBUG_PORT=Number(process.env.DICEBOUND_COMBAT_DEBUG_PORT||19430);
-const CAPTURE=process.env.DICEBOUND_CAPTURE_COMBAT==="1";
+const CAPTURE=true; // TEMP 0.6.7.9 Combat oracle recapture; restore env gate after capture.
 const MIME={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".webp":"image/webp",".wav":"audio/wav"};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
@@ -107,7 +107,7 @@ async function main(){
     })()`);
 
     assertCoverage(actual);
-    if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Combat fixture captured: ${actual.cases.length} cases -> ${FIXTURE_PATH}`);return;}
+    if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log("COMBAT_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("COMBAT_FIXTURE_END");console.log(`Combat fixture captured: ${actual.cases.length} cases -> ${FIXTURE_PATH}`);return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.30","Combat fixture must remain the released 0.6.6.30 baseline");
     const expected=structuredClone(fixture.cases);
