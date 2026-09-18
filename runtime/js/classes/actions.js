@@ -11,7 +11,8 @@
       "sfxHoly","sfxCoin","sfxHit","sfxCrit","delay","livingEnemies","winCombat","resolveEnemyResponse","isClassActive",
       "random","rand","clamp","modifiedGold","getUpgradeChoices","pick","applyUpgrade","showToast",
       "rollD20Chaos","animateClassAttack","getSetDamageBonus","applyMythicRingPulse","selectFirstLivingEnemy",
-      "hasEffect","addCombatHistory","potionHealValue","recordPotionUse","chargeUltimate","pickElementKey","triggerElementEffect"
+      "hasEffect","addCombatHistory","potionHealValue","recordPotionUse","chargeUltimate","pickElementKey","triggerElementEffect",
+      "rollTieredProc","triggerStrikeElements","playElementAnimation","gameplayTalentRank","syncDragoonPresentation","dragoonLandPresentation"
     ]){
       if(typeof next?.[name]!=="function")throw new Error(`Classes action mechanics requires ${name}().`);
     }
@@ -19,6 +20,31 @@
     return api;
   }
   function runtime(){if(!deps)throw new Error("Classes action mechanics must be configured before use.");return deps;}
+
+  function positive(value){return Math.max(0,Number(value)||0);}
+  function critMultiplier(chance=runtime().getPlayer()?.crit){return 1+runtime().rollTieredProc(positive(chance));}
+  function applyPoisonProc(target,chance,source){
+    const rt=runtime();
+    if(!target||target.hp<=0)return 0;
+    const stacks=rt.rollTieredProc(positive(chance));
+    if(stacks<=0)return 0;
+    target.poisonStacks=(target.poisonStacks||0)+stacks;
+    rt.playElementAnimation("nature",target,false);
+    rt.addCombatHistory(`☠️ ${source} applies ${stacks} Poison stack${stacks===1?"":"s"} (${Math.round(positive(chance)*100)}% effective Poison chance).`);
+    rt.updateCombatUI();
+    return stacks;
+  }
+  function normalElementProc(target){
+    if(!target||target.hp<=0)return {totalDamage:0,message:""};
+    return runtime().triggerStrikeElements(target)||{totalDamage:0,message:""};
+  }
+  function clearRogueStolenStats(){
+    const player=runtime().getPlayer(),attack=positive(player._rogueStolenAttack),defense=positive(player._rogueStolenDefense);
+    if(attack)player.attack=Math.max(0,player.attack-attack);
+    if(defense)player.defense-=defense;
+    player._rogueStolenAttack=0;player._rogueStolenDefense=0;
+    return {attack,defense};
+  }
 
   async function bloodmageBloodletting(){
     const rt=runtime(),player=rt.getPlayer();
@@ -51,6 +77,19 @@
         if(stolen){rt.applyUpgrade(stolen,"Rogue Steal");text+=` <b>Jackpot:</b> you also steal the powerup ${stolen.name}!`;rt.showToast(`🗡️ Stolen powerup: ${stolen.name}`);}
       }
       if(rt.random()<.18){player.potions++;text+=" You also somehow steal a potion.";}
+      const statFraction=positive(player.rogueStealStatFraction);
+      if(statFraction>0){
+        const attackAvailable=Math.max(0,(enemy.attack||0)-1),defenseAvailable=Math.max(0,enemy.defense||0);
+        const attackSteal=Math.min(attackAvailable,attackAvailable>0?Math.max(1,Math.round((enemy.attack||0)*statFraction)):0);
+        const defenseSteal=Math.min(defenseAvailable,defenseAvailable>0?Math.max(1,Math.round(defenseAvailable*statFraction)):0);
+        if(attackSteal||defenseSteal){
+          enemy.attack-=attackSteal;enemy.defense-=defenseSteal;
+          player.attack+=attackSteal;player.defense+=defenseSteal;
+          player._rogueStolenAttack=(player._rogueStolenAttack||0)+attackSteal;
+          player._rogueStolenDefense=(player._rogueStolenDefense||0)+defenseSteal;
+          text+=` Grand Larceny steals ${attackSteal} ATK and ${defenseSteal} DEF for this battle.`;
+        }
+      }
       rt.identityFlash("🪙 Steal succeeded");rt.sfxCoin();
     }else{
       text=`🗡️ ${enemy.name} catches your hand. You steal absolutely nothing.`;rt.identityFlash("🚫 Caught!");
@@ -66,8 +105,9 @@
     player.combatActionCount++;
     const heal=rt.healPlayer(Math.ceil(player.maxHp*.22));
     player.combatShield+=1;
-    const dmg=Math.round(player.attack*1.15+player.maxHp*.08),dealt=rt.damageAll(dmg,.75);
-    rt.setCombatText(`☀️ Consecration spends 100 Faith, heals ${heal} HP, raises a Barrier and deals ${dealt} Light-touched damage across the pack.`);
+    const critTiers=rt.rollTieredProc(positive(player.crit));
+    const dmg=Math.round((player.attack*1.15+player.maxHp*.08)*(1+critTiers)),dealt=rt.damageAll(dmg,.75);
+    rt.setCombatText(`☀️ Consecration spends 100 Faith, heals ${heal} HP, raises a Barrier and deals ${dealt} Light-touched damage across the pack${critTiers?` with ${critTiers} critical tier${critTiers===1?"":"s"}`:""}.`);
     rt.identityFlash("☀️ CONSECRATION");
     rt.sfxHoly();
     rt.updateCombatUI();
@@ -101,13 +141,16 @@
     rt.setCombatBusy(true);player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;
     const costMult=player.bloodmageExsanguinateCostMult||1,damageMult=player.bloodmageExsanguinateDamageMult||1;
     const paid=Math.max(1,Math.ceil(player.maxHp*.12*costMult));player.hp=Math.max(1,player.hp-paid);
-    const chaos=await rt.rollD20Chaos("attack");rt.updateCombatUI();await rt.animateClassAttack("crit");
-    let damage=Math.round((player.attack*2.45+paid*1.9)*(chaos.mult||1)*(1+player.damageBonus+rt.getSetDamageBonus())*damageMult);
+    const chaos=await rt.rollD20Chaos("attack"),critTiers=rt.rollTieredProc(positive(player.crit)),echoScale=1+positive(player.doubleStrike)*.50;
+    rt.updateCombatUI();await rt.animateClassAttack(critTiers?"crit":"normal");
+    let damage=Math.round((player.attack*2.45+paid*1.9)*echoScale*(1+critTiers)*(chaos.mult||1)*(1+player.damageBonus+rt.getSetDamageBonus())*damageMult);
     if(rt.getEncounterLead()?.boss)damage=Math.round(damage*(1+player.bossDamage));
     const primary=rt.getCurrentEnemy(),first=rt.damageEnemy(primary,damage),second=rt.livingEnemies().find(candidate=>candidate!==primary);let splash=0;
     if(second)splash=rt.damageEnemy(second,Math.round(damage*.65));
-    const ring=rt.applyMythicRingPulse(),total=first+splash;
-    rt.setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${first} to ${primary.name}${second?` and ${splash} to ${second.name}`:""} (${total} total).${ring?` ${ring}`:""}`);
+    const element=normalElementProc(primary);
+    applyPoisonProc(primary,positive(player.doubleStrike)*.50*positive(player.poisonOnHitChance),"Exsanguinate");
+    const ring=rt.applyMythicRingPulse(),total=first+splash+(element.totalDamage||0);
+    rt.setCombatText(`🩸 Exsanguinate spends ${paid} HP to deal ${first} to ${primary.name}${second?` and ${splash} to ${second.name}`:""}${critTiers?` with ${critTiers} critical tier${critTiers===1?"":"s"}`:""} (${total} total).${element.message?` ${element.message}`:""}${ring?` ${ring}`:""}`);
     rt.sfxHit();rt.updateCombatUI();await rt.delay(820);
     if(!rt.livingEnemies().length)return rt.winCombat();
     rt.selectFirstLivingEnemy();await rt.resolveEnemyResponse(false);
@@ -131,21 +174,55 @@
     rt.setCombatBusy(true);player.guardCooldown=0;
     const free=rt.random()<rt.clamp(player.alchemistFreeFlask||0,0,.8);
     if(!free){player.potions--;rt.recordPotionUse();}
-    const healing=rt.potionHealValue(),raw=Math.round((healing*1.35+player.attack*.9)*(1+(player.alchemistFlaskBonus||0))),dealt=rt.damageAll(raw,.72);
+    const targets=[...rt.livingEnemies()],healing=rt.potionHealValue(),critTiers=rt.rollTieredProc(positive(player.crit));
+    const raw=Math.round((healing*1.50+player.attack)*(1+(player.alchemistFlaskBonus||0))*(1+critTiers)),dealt=rt.damageAll(raw,.72);
     let extra=free?" Panacea Engine preserves the potion.":"";
+    const poisonChance=positive(player.poisonOnHitChance)*2.50;
+    targets.filter(target=>target.hp>0).forEach(target=>applyPoisonProc(target,poisonChance,"Volatile Flask"));
     if(rt.random()<rt.clamp(player.alchemistElementChance||0,0,.75)){
       const key=rt.pickElementKey(),target=rt.getCurrentEnemy()?.hp>0?rt.getCurrentEnemy():rt.livingEnemies()[0],result=rt.triggerElementEffect(key,target,{forced:true,source:"Volatile Flask"});
       if(result)extra+=` ${result.message}`;
     }
     player.combatActionCount++;rt.chargeUltimate(Math.round(player.ultimateAttackGain*.75));rt.sfxCrit();
-    rt.setCombatText(`🧪 Volatile Flask consumes restorative potency as violence for ${dealt} total damage.${extra}`);rt.updateCombatUI();await rt.delay(720);
+    rt.setCombatText(`🧪 Volatile Flask converts 150% Potion Healing + 100% Attack into ${dealt} total damage${critTiers?` with ${critTiers} critical tier${critTiers===1?"":"s"}`:""}.${extra}`);rt.updateCombatUI();await rt.delay(720);
     if(!rt.livingEnemies().length)return rt.winCombat();
     await rt.resolveEnemyResponse(false);
   }
 
+  function dragoonCooldown(){return Math.max(2,6-runtime().gameplayTalentRank("dragoon_aerial_discipline"));}
+  function dragoonTickCooldown(){
+    const player=runtime().getPlayer();
+    if(runtime().isClassActive("dragoon")&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;
+    return player.dragoonJumpCooldown||0;
+  }
+  function dragoonResetState(){
+    const rt=runtime(),player=rt.getPlayer();
+    Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});
+    rt.syncDragoonPresentation();
+  }
+  async function dragoonLanding(){
+    const rt=runtime(),player=rt.getPlayer(),enemy=rt.getCurrentEnemy();
+    if(!rt.isClassActive("dragoon")||rt.getCombatBusy()||!enemy||!player.dragoonLandingReady)return false;
+    rt.setCombatBusy(true);player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;rt.dragoonLandPresentation();
+    const target=enemy.hp>0?enemy:rt.livingEnemies()[0];if(!target){rt.setCombatBusy(false);return false;}
+    const critTiers=rt.rollTieredProc(positive(player.crit)),base=Math.max(1,Math.round((player.attack+rt.rand(2,6))*2.45)),damage=Math.round(base*(1+critTiers)*(rt.getEncounterLead()?.boss?1+player.bossDamage:1)),dealt=rt.damageEnemy(target,damage);
+    player.combatAttackCount++;rt.chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*critTiers);await rt.animateClassAttack(critTiers?"crit":"normal");
+    const proc=normalElementProc(target);applyPoisonProc(target,positive(player.poisonOnHitChance),"Dragoon Landing");
+    rt.setCombatText(`🐉 Dragoon lands for ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?"":"s"}`:""}.${proc.message?` ${proc.message}`:""}`);rt.updateCombatUI();await rt.delay(480);
+    if(!rt.livingEnemies().length)return rt.winCombat();rt.selectFirstLivingEnemy();await rt.resolveEnemyResponse(false);return true;
+  }
+  async function dragoonJump(){
+    const rt=runtime(),player=rt.getPlayer();
+    if(!rt.isClassActive("dragoon")||rt.getCombatBusy()||!rt.getCurrentEnemy()||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
+    rt.setCombatBusy(true);player.guardCooldown=0;player.dragoonJumpCooldown=dragoonCooldown();player.dragoonAirborneResponses=1;rt.syncDragoonPresentation();
+    rt.setCombatText("🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.");rt.updateCombatUI();await rt.delay(260);await rt.resolveEnemyResponse(false);
+    if(player.hp>0&&rt.livingEnemies().length){player.dragoonLandingReady=true;rt.updateCombatUI();rt.setCombatText("🐉 Airborne window complete — use your next action to land.");}
+    return true;
+  }
+
   const api=Object.freeze({
-    owner:OWNER,apiVersion:2,configure,bloodmageBloodletting,roguePowerStealChance,rogueSteal,clericConsecration,cycleBeastStance,
-    bloodmageReplenish,bloodmageExsanguinate,alchemistVolatileFlask
+    owner:OWNER,apiVersion:3,configure,bloodmageBloodletting,roguePowerStealChance,rogueSteal,clearRogueStolenStats,clericConsecration,cycleBeastStance,
+    bloodmageReplenish,bloodmageExsanguinate,alchemistVolatileFlask,dragoonCooldown,dragoonTickCooldown,dragoonResetState,dragoonLanding,dragoonJump
   });
   const facade=window.DiceboundClasses;
   if(!facade?._installActions)throw new Error("classes/actions.js requires DiceboundClasses facade before loading.");
