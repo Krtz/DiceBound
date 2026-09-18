@@ -26,7 +26,6 @@
     return fn;
   }
   function call(name,...args){return requireCapability(name)(...args);}
-  function maybe(name,...args){const fn=runtime[name];return typeof fn==="function"?fn(...args):undefined;}
   function configure(nextRuntime={}){runtime=Object.freeze({...runtime,...nextRuntime});return api;}
 
   function createRegistry(services){
@@ -75,7 +74,7 @@
     const bucketTotals=new Map();
     for(const entry of weightedPool)bucketTotals.set(entry.up.rarity,(bucketTotals.get(entry.up.rarity)||0)+entry.weight);
     const baseRows=progression.filter(id=>bucketTotals.has(id)).map(id=>[id,bucketTotals.get(id)]);
-    const shiftedRows=maybe("cascadeLuckRows",baseRows,rawLuck,progression);
+    const shiftedRows=call("cascadeLuckRows",baseRows,rawLuck,progression);
     if(Array.isArray(shiftedRows)&&shiftedRows.length){
       const shifted=new Map(shiftedRows.map(row=>[row[0],Math.max(0,Number(row[1])||0)]));
       for(const entry of weightedPool){
@@ -162,8 +161,7 @@
       ["uncommon",Math.max(0,uncommon-rare)],
       ["common",Math.max(0,1-uncommon)]
     ];
-    const shifted=maybe("cascadeLuckRows",rows,Math.max(0,player().luck||0),["common","uncommon","rare","epic","legendary"]);
-    return Array.isArray(shifted)&&shifted.length?shifted:rows;
+    return call("cascadeLuckRows",rows,Math.max(0,player().luck||0),["common","uncommon","rare","epic","legendary"]);
   }
   function rollMinibossRarity(){
     const rows=minibossRarityRows(),total=rows.reduce((sum,row)=>sum+Math.max(0,Number(row?.[1])||0),0);
