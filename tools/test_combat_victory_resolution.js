@@ -95,6 +95,7 @@ function makeHarness(options={}) {
     updateMetaUi: () => push('metaUi'),
     restoreEnemyElementDebuffs: () => push('restoreEnemyDebuffs'),
     clearLegendaryBattleTemps: () => push('clearLegendaryTemps'),
+    clearRogueStolenStats: () => push('clearRogueStats'),
     getClassUnlockFacts: () => meta.classUnlockFacts || {},
     recordCombatFacts: (facts, payload) => { push('recordCombatFacts', payload.board, payload.classId, payload.mode); return Object.assign({}, facts, { lastCombat: payload }); }
   };
@@ -132,7 +133,8 @@ async function run() {
     assert(order.indexOf('restoreRadiation') < order.indexOf('traceComplete'), 'V16 cleanup must remain inside command trace');
     assert(order.indexOf('traceComplete') < order.indexOf('clearStone'), 'v2.6 Stone cleanup must remain outside command trace');
     assert(order.indexOf('clearStone') < order.indexOf('restoreEnemyDebuffs'));
-    assert(order.indexOf('restoreEnemyDebuffs') < order.indexOf('clearLegendaryTemps'));
+    assert(order.indexOf('restoreEnemyDebuffs') < order.indexOf('clearRogueStats'));
+    assert(order.indexOf('clearRogueStats') < order.indexOf('clearLegendaryTemps'));
     assert(order.indexOf('recordCombatFacts') < order.indexOf('traceStart'), 'class unlock facts must record before the historical victory stack');
   }
 
