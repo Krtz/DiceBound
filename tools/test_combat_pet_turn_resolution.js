@@ -159,6 +159,30 @@ async function run() {
     assert.strictEqual(h.player.hp, 54, 'Beastmaster support heal drifted');
   }
 
+  // Summoner and Beastmaster convert player Attack into pet damage without changing Trainer identity.
+  {
+    const h = makeHarness({ classId: 'beastmaster', activeClasses: ['beastmaster'], activePet: 'fire', player: { attack: 20, beastStance: 'aggressive' } });
+    assert.strictEqual(owner.classAttackPetScale(), .10);
+    assert.strictEqual(owner.classAttackPetBonus(), 2);
+    assert.strictEqual(owner.petDamage(), 8, 'Beastmaster baseline 10% Attack conversion drifted');
+    h.player.beastmasterAttackPetScale = .10;
+    assert.strictEqual(owner.classAttackPetScale(), .20);
+    assert.strictEqual(owner.petDamage(), 11, 'Pack Discipline +10% Attack conversion drifted');
+  }
+  {
+    const h = makeHarness({ classId: 'summoner', activeClasses: ['summoner'], activePet: 'fire', player: { attack: 20 } });
+    assert.strictEqual(owner.classAttackPetScale(), .10);
+    assert.strictEqual(owner.petDamage(), 6, 'Summoner baseline active-pet Attack conversion drifted');
+    assert.strictEqual(owner.trainerPetDamage('fire'), 6, 'Summoner spirit Attack conversion drifted');
+    h.player.summonerAttackPetScale = .10;
+    assert.strictEqual(owner.classAttackPetScale(), .20);
+    assert.strictEqual(owner.trainerPetDamage('fire'), 8, 'Deeper Circle +10% Attack conversion drifted');
+  }
+  {
+    makeHarness({ classId: 'pokemontrainer', activeClasses: ['pokemontrainer'], activePet: 'fire', player: { attack: 100 } });
+    assert.strictEqual(owner.classAttackPetScale(), 0, 'Pokémon Trainer must not inherit Summoner/Beastmaster Attack conversion');
+  }
+
   // Pokémon Trainer replaces the ordinary active-Pet turn and rolls assist chance before assist-pet pick.
   {
     const h = makeHarness({
