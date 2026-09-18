@@ -2204,7 +2204,7 @@
       "rarity": "rare",
       "unique": true,
       "icon": "🗡️📊",
-      "name": "Grand Larceny",
+      "name": "Stat Heist",
       "desc": "Successful Steal also steals 10% of the target's current ATK and DEF for this battle.",
       apply(){player.rogueStealStatFraction=Math.max(player.rogueStealStatFraction||0,.10);},
       "tags": [
