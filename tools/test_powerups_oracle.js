@@ -29,7 +29,7 @@ function assertCoverage(actual){
   assert.equal(actual.baselineVersion,"0.6.6.32");
   const names=new Set(actual.cases.map(c=>c.name));
   for(const name of ["catalog","ranger-eligibility","slime-borrowing","slime-rouge-compatibility","achievement-gate","unique-exclusion","weighted-three","weighted-four","apply-normal","apply-unique","apply-d20","random-high-rarity","legendary-choices","legendary-repeatable-pool","fallback-rarity","miniboss-three","miniboss-four","level-ui-three","level-ui-four","all-eligible-ui","perfected-signature"])assert.ok(names.has(name),`missing Powerups oracle case ${name}`);
-  assert.equal(actual.cases.find(c=>c.name==="catalog")?.count,208,"canonical released Powerup count drifted before migration");
+  assert.equal(actual.cases.find(c=>c.name==="catalog")?.count,209,"canonical Powerup count drifted after approved 0.6.7.9 Stat Heist addition");
   assert.equal(actual.cases.find(c=>c.name==="weighted-three")?.rngCalls,3,"three weighted choices must consume exactly three RNG draws");
   assert.equal(actual.cases.find(c=>c.name==="weighted-four")?.rngCalls,4,"four weighted choices must consume exactly four RNG draws");
   assert.equal(actual.cases.find(c=>c.name==="apply-normal")?.rngCalls,0,"ordinary non-D20 Powerup application must not consume RNG");
