@@ -54,9 +54,19 @@ power.configure({
   slimeIdentityActive:()=>state.player.classId==="slime",
   slimePowerCompatible:up=>up.id==="fighter",
   slimeRougePowerCompatible:up=>up.id!=="fighter",
-  filterPowerupPoolForLuck:(pool,luck)=>luck>=2?(pool.filter(up=>!["poor","common"].includes(up.rarity)).length?pool.filter(up=>!["poor","common"].includes(up.rarity)):pool):pool,
-  lowTierSuppression:luck=>Math.max(0,Math.min(1,((Number(luck)||0)-1))),
-  lowTierWeightMultiplier:(rarity,luck)=>["poor","common"].includes(rarity)?1-Math.max(0,Math.min(1,((Number(luck)||0)-1))):1,
+  cascadeLuckRows:(rows,luck,progression)=>{
+    const out=rows.map(row=>[row[0],Math.max(0,Number(row[1])||0)]),total=out.reduce((sum,row)=>sum+row[1],0);
+    let budget=Math.max(0,Number(luck)||0)*100*.005*total;
+    const index=new Map(out.map((row,i)=>[row[0],i])),ordered=progression.filter(id=>index.has(id));
+    for(let tier=0;tier<ordered.length-1&&budget>1e-12;tier++){
+      const at=index.get(ordered[tier]),available=out[at][1];if(available<=1e-12)continue;
+      const higher=ordered.slice(tier+1).map(id=>index.get(id)),drained=Math.min(available,budget),higherTotal=higher.reduce((sum,i)=>sum+out[i][1],0);
+      out[at][1]=Math.max(0,available-drained);
+      if(higherTotal>1e-12)for(const i of higher)out[i][1]+=drained*(out[i][1]/higherTotal);else out[higher[0]][1]+=drained;
+      budget-=drained;
+    }
+    return out;
+  },
   getBoardLevel:()=>1,currentTileCount:()=>10,random:()=>{randomCalls++;return randomValue;},rand:(a,b)=>a,pick:list=>list[0],clamp:(v,min,max)=>Math.max(min,Math.min(max,v)),
   classIdentityActive:id=>id==="d20"&&state.player.classId==="d20",
   hasLegendaryEffect:()=>false,saveMeta:()=>events.push("save"),addLog:text=>events.push(["log",text]),showToast:text=>events.push(["toast",text]),
@@ -84,11 +94,12 @@ assert.equal(randomCalls,3,"three weighted choices must consume exactly three RN
 
 state.player.luck=2;randomValue=.999;randomCalls=0;
 const highLuckPick=power.weighted([fakeCatalog[0],fakeCatalog[1]]);
-assert.equal(highLuckPick.id,"ranger","200 Luck must exclude Common from ordinary weighted Powerup choices");
-assert.equal(randomCalls,1,"Luck suppression must not add an RNG draw to weighted Powerup selection");
-randomCalls=0;
-assert.equal(power.rollMinibossRarity(),"uncommon","200 Luck must remove the miniboss Common tail even at the top of the same rarity roll");
-assert.equal(randomCalls,1,"miniboss Luck suppression must reuse the existing rarity roll");
+assert.equal(highLuckPick.id,"ranger","Luck waterfall must eventually exhaust the lowest available Powerup tier");
+assert.equal(randomCalls,1,"Luck waterfall must not add an RNG draw to weighted Powerup selection");
+state.player.luck=1.10;randomCalls=0;
+assert.equal(power.rollMinibossRarity(),"rare","110 Luck must exhaust Common and Uncommon in the Board 1 miniboss Powerup table before the same rarity roll resolves");
+assert.equal(randomCalls,1,"miniboss Luck waterfall must reuse the existing rarity roll");
+assert.ok(power.minibossRarityRows().every(row=>!["common","uncommon"].includes(row[0])||row[1]===0),"miniboss rarity rows must expose the same exhausted low tiers used by fallback policy");
 state.player.luck=0;randomValue=.25;
 
 const beforeAttack=state.player.attack;
