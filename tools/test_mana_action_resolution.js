@@ -191,6 +191,7 @@ async function test(name, fn) {
   await test('Vampire Grave Lance drains and resolves one qualifying spender', async () => {
     const h = makeHarness({ classId: 'vampire', mana: 100 });
     h.p.hp = 20;
+    h.p.lifeSteal = .28;
     h.p.manaSpendUltimate = 8;
     await owner.occultSpellAttack();
     assert.strictEqual(h.p.mana, 65);
