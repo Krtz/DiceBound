@@ -38,8 +38,8 @@
     rt.updateCombatUI();
     const firstTarget = currentEnemy();
     const actionBonus = typeof rt.actionBonuses === "function" ? rt.actionBonuses() : null;
-    const echoChance = options.suppressEcho ? 0 : p.doubleStrike + (actionBonus?.echo || 0);
-    const echoes = rt.rollTieredProc(echoChance) + (options.suppressEcho ? 0 : (chaos.extraEcho || 0));
+    const echoChance = p.doubleStrike + (actionBonus?.echo || 0);
+    const echoes = options.suppressEcho ? 0 : rt.rollTieredProc(echoChance) + (chaos.extraEcho || 0);
     let totalCrit = 0;
     const base = await rt.performStrike(firstTarget, { echo: false, chaos });
     totalCrit += base.crit;
