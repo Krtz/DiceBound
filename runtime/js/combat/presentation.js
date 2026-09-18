@@ -173,7 +173,7 @@
     } else if (rt.isClassActive("rogue")) {
       special.hidden = false; hasSpecial = true; special.className += " steal";
       special.text = player.rogueStealUsed ? "🗡️ Steal (used)" : "🗡️ Steal";
-      special.tip = `Attempt once per battle. Success scales with Luck and steals gold, can steal a potion, and at high Luck can even steal a random powerup (chance starts above 50 Luck and caps at 35%).${player.rogueStealStatFraction ? " Grand Larceny also steals 10% of the target's ATK/DEF for this battle." : ""}`;
+      special.tip = `Attempt once per battle. Success scales with Luck and steals gold, can steal a potion, and at high Luck can even steal a random powerup (chance starts above 50 Luck and caps at 35%).${player.rogueStealStatFraction ? " Stat Heist also steals 10% of the target's ATK/DEF for this battle." : ""}`;
       special.disabled = combatBusy || !!player.rogueStealUsed;
     } else if (rt.isClassActive("cleric")) {
       special.hidden = false; hasSpecial = true; special.className += " faith";
