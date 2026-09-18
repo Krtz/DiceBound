@@ -686,7 +686,7 @@
       "attackIcon": "🗡️",
       "fxIcon": "🗡️💨",
       "unlock": "Hold 5,000 gold at one time and defeat the Board 3 miniboss",
-      "desc": "A fast opportunist built around Dodge, gold and one Steal attempt per battle. Grand Larceny can upgrade successful Steals to borrow 10% of a target's ATK and DEF for that battle.",
+      "desc": "A fast opportunist built around Dodge, gold and one Steal attempt per battle. Stat Heist can upgrade successful Steals to borrow 10% of a target's ATK and DEF for that battle.",
       "stats": "34 HP · 8 ATK · 22% CRIT · 14% DODGE",
       "scaleNotes": "Raw Attack and Crit scale its burst fastest. Gold is also tactical fuel: some Rogue powers and its ultimate turn a rich purse into momentum.",
       "ultimate": {
@@ -1067,7 +1067,7 @@
     },
     "rogue": {
       "name": "Sticky Fingers",
-      "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. High Luck can steal a powerup, and Grand Larceny can steal battle-only ATK/DEF. Starts with +25% gold gain and +5% Dodge."
+      "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. High Luck can steal a powerup, and Stat Heist can steal battle-only ATK/DEF. Starts with +25% gold gain and +5% Dodge."
     },
     "bloodmage": {
       "name": "Blood Is Mana",
