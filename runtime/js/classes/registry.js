@@ -1238,7 +1238,7 @@
   function call(name,...args){return requireRuntime(name)(...args);}
 
   const api=Object.freeze({
-    owner:"classes/facade",apiVersion:2,
+    owner:"classes/facade",apiVersion:3,
     ids:CLASS_IDS,
     tagVocabulary:Object.freeze([...CLASS_TAG_VOCABULARY]),
     createRegistry,
@@ -1255,11 +1255,17 @@
     bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
     roguePowerStealChance:luck=>callAction("roguePowerStealChance",luck),
     rogueSteal:()=>callAction("rogueSteal"),
+    clearRogueStolenStats:()=>callAction("clearRogueStolenStats"),
     clericConsecration:()=>callAction("clericConsecration"),
     cycleBeastStance:()=>callAction("cycleBeastStance"),
     bloodmageReplenish:()=>callAction("bloodmageReplenish"),
     bloodmageExsanguinate:()=>callAction("bloodmageExsanguinate"),
     alchemistVolatileFlask:()=>callAction("alchemistVolatileFlask"),
+    dragoonCooldown:()=>callAction("dragoonCooldown"),
+    dragoonTickCooldown:()=>callAction("dragoonTickCooldown"),
+    dragoonResetState:()=>callAction("dragoonResetState"),
+    dragoonLanding:()=>callAction("dragoonLanding"),
+    dragoonJump:()=>callAction("dragoonJump"),
     legacyMonkDodge:base=>callHook("legacyMonkDodge",base),
     identityDodgeAdjustments:base=>callHook("identityDodgeAdjustments",base),
     berserkerDamage:amount=>callHook("berserkerDamage",amount),
