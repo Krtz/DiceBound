@@ -90,7 +90,7 @@
     finally { p.goldAttackScale = goldScale; p.attack = 10; }
   }
 
-  function strikeBaseDamage(echo = false, chaos = null) {
+  function strikeBaseDamage(echo = false, chaos = null, { actionDamageMultiplier = 1 } = {}) {
     const rt = requireRuntime(), p = player(), result = v26OuroborosStrikeBaseDamage(echo, chaos);
     if (rt.hasLegendaryEffect("twin_surge") && rt.isClassActive("sorcerer") && String(result.burst || "").includes("Arcane Surge")) {
       result.damage = Math.max(1, Math.round(result.damage * .70));
@@ -98,6 +98,8 @@
       result.db060TwinSurge = true;
     }
     if (rt.hasLegendaryEffect("vampires_bargain") && (p.lifeSteal || 0) > 1) result.damage = Math.max(1, Math.round(result.damage * (1 + ((p.lifeSteal || 0) - 1))));
+    const profile = Math.max(0, Number(actionDamageMultiplier) || 1);
+    if (profile !== 1) result.damage = Math.max(1, Math.round(result.damage * profile));
     if (rt.hasLegendaryEffect("hoarders_arsenal")) result.damage += Math.floor(Math.max(0, p.gold || 0) / 500);
     return result;
   }
@@ -113,8 +115,8 @@
     const mode = critTiers ? "crit" : echo ? "echo" : "normal";
     await rt.animateClassAttack(mode,{echoIndex:index});
     // Historical wrappers discard canCrit before base-damage calculation.
-    const base = strikeBaseDamage(echo, chaos);
-    let damage = Math.max(1, Math.round(base.damage * Math.max(0, Number(opts.actionDamageMultiplier) || 1)));
+    const base = strikeBaseDamage(echo, chaos, { actionDamageMultiplier: opts.actionDamageMultiplier });
+    let damage = base.damage;
     if (rt.getEncounterLead()?.boss) damage = Math.round(damage * (1 + p.bossDamage));
     if (resolvedTarget.affinity && p.elementalEnemyDamage) damage = Math.round(damage * (1 + p.elementalEnemyDamage));
     if (critTiers) damage *= 1 + critTiers;
