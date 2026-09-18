@@ -1,0 +1,58 @@
+name: TEMP materialize Beta 0.6.7.11
+
+on:
+  push:
+    branches:
+      - feature/0.6.7.11-luck-diversity-nightmare
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Stamp and materialize 0.6.7.11
+        run: |
+          python tools/set_project_version.py --version 0.6.7.11 --channel Beta
+          python tools/refresh_runtime_manifest.py --version 0.6.7.11 --channel Beta --development-state Unreleased
+          python tools/prepare_release.py --output-dir wrapper-source/release/generated
+          python tools/validate_version_identity.py --version 0.6.7.11 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+
+      - name: Focused deterministic validation
+        run: |
+          node tools/test_luck_rarity_policy.js
+          node tools/test_loot_module.js
+          node tools/test_powerups_facade.js
+          node tools/test_static_registries.js
+          node tools/test_board_generation.js
+          node tools/test_camp_ui.js
+          python tools/validate_runtime_architecture.py
+          python tools/validate_asset_architecture.py
+          python tools/validate_launcher_assets.py
+
+      - name: Commit materialized identity and remove temporary workflow
+        run: |
+          rm .github/workflows/tmp-06711-materialize.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git commit -m "Materialize Beta 0.6.7.11 runtime identity"
+          git push origin HEAD:feature/0.6.7.11-luck-diversity-nightmare
