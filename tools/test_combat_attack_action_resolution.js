@@ -110,19 +110,27 @@ async function run() {
     assert(h.trace.filter(x => x[0] === 'strike').slice(1).every(x => x[4] === false), 'Echoes must remain non-critical at action dispatch');
   }
 
-  // Profiled class attacks can intentionally suppress Echo RNG/chains and
-  // commit a distinct post-action semantic without bypassing the basic strike pipeline.
+  // Profiled class attacks scale the full tiered Echo chance instead of using
+  // a binary Echo/no-Echo switch. This keeps >100% Echo meaningful.
   {
     const h = makeHarness({
-      chaos: { extraEcho: 3 }, tierValues: [2],
+      chaos: { extraEcho: 0 }, tierValues: [2],
       player: { doubleStrike: 2 },
       actionBonuses: { echo: .75 }
     });
-    await owner.playerAttack({ suppressEcho: true, postActionKind: 'orb:blue', damageMultiplier: .85 });
-    assert.strictEqual(h.trace.filter(x => x[0] === 'tier').length, 0, 'suppressed-Echo attack must not consume Echo RNG');
-    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 1, 'suppressed-Echo attack must resolve exactly one strike');
-    assert.strictEqual(h.trace.find(x => x[0] === 'strike')[5], .85, 'profiled attack potency must travel with the strike packet');
+    await owner.playerAttack({ echoMultiplier: .70, postActionKind: 'orb:blue', damageMultiplier: .85 });
+    const tier = h.trace.find(x => x[0] === 'tier');
+    assert.ok(Math.abs(tier[1] - 1.925) < 1e-12, '70% profile must multiply the complete 275% Echo chance');
+    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 3, 'two returned Echo tiers must produce two Echo strikes');
+    assert(h.trace.filter(x => x[0] === 'strike').every(x => x[5] === .85), 'profiled attack potency must travel with every strike packet');
     assert.deepStrictEqual(h.trace.find(x => x[0] === 'afterAction'), ['afterAction', 'orb:blue']);
+  }
+  {
+    const h = makeHarness({ chaos: { extraEcho: 0 }, tierValues: [1], player: { doubleStrike: 1.25 } });
+    await owner.playerAttack({ echoMultiplier: 1.20, postActionKind: 'orb:green', damageMultiplier: .85 });
+    const tier = h.trace.find(x => x[0] === 'tier');
+    assert.ok(Math.abs(tier[1] - 1.5) < 1e-12, '120% profile must amplify the full tiered Echo chance');
+    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 2);
   }
 
   // Busy rejection stays inside the base transaction: no D20/Echo RNG is consumed.
