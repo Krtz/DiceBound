@@ -22,7 +22,7 @@ vm.runInContext(fs.readFileSync(hooksPath,"utf8"),context,{filename:hooksPath});
 
 const classes=context.window.DiceboundClasses;
 assert.ok(classes,"DiceboundClasses facade missing");
-assert.equal(classes.apiVersion,2,"registry compatibility apiVersion drifted");
+assert.equal(classes.apiVersion,3,"registry compatibility apiVersion drifted");
 assert.equal(classes.owner,"classes/facade");
 assert.equal(context.window.DiceboundClassRuntime,undefined,"focused Classes runtime leaked as a peer public global");
 assert.equal(context.window.DiceboundClassActions,undefined,"focused Classes action mechanics leaked as a peer public global");
@@ -57,13 +57,17 @@ classes.clearSlimeRougeRuntime();
 
 const actionTrace=[];
 const actionCallbacks={};
-for(const name of ["basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"]){
+for(const name of ["basicAttack","manaAttack","bloodmageAttack","invokerQuasAttack","invokerWexAttack","invokerExortAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"]){
   actionCallbacks[name]=()=>{actionTrace.push(name);return name;};
 }
 classes.configureActions(actionCallbacks);
 function routed(classId,kind){player={classId};actionTrace.length=0;const result=classes.performAction(kind);return {result,trace:[...actionTrace]};}
 assert.deepEqual(routed("ranger","attack"),{result:"basicAttack",trace:["basicAttack"]});
 assert.deepEqual(routed("sorcerer","attack"),{result:"manaAttack",trace:["manaAttack"]});
+assert.deepEqual(routed("invoker","attack"),{result:"invokerWexAttack",trace:["invokerWexAttack"]});
+assert.deepEqual(routed("invoker","invoker-quas"),{result:"invokerQuasAttack",trace:["invokerQuasAttack"]});
+assert.deepEqual(routed("invoker","invoker-wex"),{result:"invokerWexAttack",trace:["invokerWexAttack"]});
+assert.deepEqual(routed("invoker","invoker-exort"),{result:"invokerExortAttack",trace:["invokerExortAttack"]});
 assert.deepEqual(routed("bloodmage","attack"),{result:"bloodmageAttack",trace:["bloodmageAttack"]});
 assert.deepEqual(routed("ranger","guard"),{result:"guard",trace:["guard"]});
 assert.deepEqual(routed("bloodmage","guard"),{result:"bloodmageGuard",trace:["bloodmageGuard"]});
@@ -105,6 +109,9 @@ assert.doesNotMatch(monolith,/async function bloodmageBloodletting\(/,'Bloodmage
 assert.doesNotMatch(monolith,/async function clericConsecration\(/,'Cleric Consecration still lives in monolith');
 assert.doesNotMatch(monolith,/function cycleBeastStance\(/,'Beastmaster stance mechanics still live in monolith');
 assert.match(monolith,/bloodmageAttack:\(\)=>dbClasses\.bloodmageBloodletting\(\)/);
+assert.match(monolith,/invokerQuasAttack:\(\)=>dbClasses\.invokerQuasStrike\(\)/);
+assert.match(monolith,/invokerWexAttack:\(\)=>dbClasses\.invokerWexStrike\(\)/);
+assert.match(monolith,/invokerExortAttack:\(\)=>dbClasses\.invokerExortStrike\(\)/);
 assert.match(monolith,/clericSpecial:\(\)=>dbClasses\.clericConsecration\(\)/);
 assert.match(monolith,/beastmasterSpecial:\(\)=>dbClasses\.cycleBeastStance\(\)/);
 assert.match(monolith,/bloodmageGuard:\(\)=>dbClasses\.bloodmageReplenish\(\)/);
@@ -118,6 +125,12 @@ assert.doesNotMatch(monolith,/bloodmageExsanguinate=async function|async functio
 assert.doesNotMatch(monolith,/db060BloodmageBase/,'Blood Price base-capture shadow still lives in monolith');
 assert.doesNotMatch(monolith,/alchemistVolatileFlaskV16/,'Alchemist Volatile Flask still lives in monolith');
 assert.doesNotMatch(monolith,/beta021RoguePowerStealChance/,'Rogue power-steal helper still lives in monolith');
+
+assert.match(monolith,/function dbFriendDragoonLanding\(\)\{return dbClasses\.dragoonLanding\(\);\}/,'Dragoon landing compatibility seam must delegate directly to Classes');
+assert.match(monolith,/async function dbFriendDragoonJump\(\)\{return dbClasses\.dragoonJump\(\);\}/,'Dragoon Jump compatibility seam must delegate directly to Classes');
+assert.match(monolith,/function dbFriendTickDragoonCooldown\(\)\{return dbClasses\.dragoonTickCooldown\(\);\}/,'Dragoon cooldown compatibility seam must delegate directly to Classes');
+assert.doesNotMatch(monolith,/player\.dragoonAirborneResponses\s*=\s*1/,'Dragoon airborne gameplay body returned to dicebound.js');
+assert.doesNotMatch(monolith,/player\.dragoonLandingReady\s*=\s*true/,'Dragoon landing state mutation returned to dicebound.js');
 
 const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
 const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime"),actionsModule=manifest.modules.find(entry=>entry.id==="classes-actions"),hooksModule=manifest.modules.find(entry=>entry.id==="classes-hooks");

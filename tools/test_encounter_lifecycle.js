@@ -46,7 +46,8 @@ function fixture(opts={}) {
     identityFlash:()=>events.push('identity'),addCombatHistory:text=>events.push(`history:${text}`),updateBossSpecialIndicator:()=>events.push('boss-indicator'),
     clearStoneBattle:()=>events.push('pre:stone'),restoreEnemyElementDebuffs:()=>events.push('pre:elements'),clearBattleLegendaryTemps:()=>events.push('pre:legendary'),
     traceCoreStart:(kind,work)=>{events.push('trace:before');const out=work();events.push('trace:after');return out;},
-    syncBattleLog:()=>events.push('post:battlelog'),clearCombatPresentation:()=>events.push('pre:presentation'),refreshActivePetArt:()=>events.push('post:petart')
+    syncBattleLog:()=>events.push('post:battlelog'),clearCombatPresentation:()=>events.push('pre:presentation'),refreshActivePetArt:()=>events.push('post:petart'),
+    clearRogueStolenStats:()=>events.push('pre:rogue-stats')
   };
   owner.configure(rt);
   return {rt,player,meta,tile,events,start:k=>owner.start(k),state:()=>state,title:()=>title,subtitle:()=>subtitle,kind:()=>combatKind,merchant:()=>merchantBossBattle,scaleCount:()=>scaleCount};
@@ -58,6 +59,7 @@ function fixture(opts={}) {
   assert.strictEqual(f.player.db0511BurnStacks,0); assert.strictEqual(f.player.db0511PoisonStacks,0); assert.strictEqual(f.player.db0511PoisonPower,0);
   assert.strictEqual(typeof f.rt.applyCombatBackground,'undefined','encounter lifecycle must not accept the retired root background callback');
   assert.deepStrictEqual(f.events.slice(0,5),['pre:presentation','pre:legendary','pre:elements','pre:stone','trace:before']);
+  assert(f.events.indexOf('trace:before') < f.events.indexOf('pre:rogue-stats') && f.events.indexOf('pre:rogue-stats') < f.events.indexOf('trace:after'),'Rogue stolen-stat cleanup must stay inside traced encounter setup');
   assert.deepStrictEqual(f.events.slice(-3),['post:background','post:battlelog','post:petart']);
 }
 {

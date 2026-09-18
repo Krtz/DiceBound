@@ -28,8 +28,9 @@
 
   // Original Basic Attack transaction. Individual strike math remains owned by
   // combat/strike-resolution; this layer only owns action-level orchestration.
-  async function baseAttackAction() {
+  async function baseAttackAction(options = {}) {
     const rt = requireRuntime(), p = player();
+    options = options && typeof options === "object" ? options : {};
     if (rt.getCombatBusy() || !currentEnemy()) return;
     rt.setCombatBusy(true);
     p.guardCooldown = 0;
@@ -37,22 +38,28 @@
     rt.updateCombatUI();
     const firstTarget = currentEnemy();
     const actionBonus = typeof rt.actionBonuses === "function" ? rt.actionBonuses() : null;
-    const echoes = rt.rollTieredProc(p.doubleStrike + (actionBonus?.echo || 0)) + (chaos.extraEcho || 0);
+    const baseEchoChance = Math.max(0, p.doubleStrike + (actionBonus?.echo || 0));
+    const echoMultiplier = options.echoMultiplier == null
+      ? (options.suppressEcho ? 0 : 1)
+      : Math.max(0, Number(options.echoMultiplier) || 0);
+    const echoes = echoMultiplier <= 0 ? 0 : rt.rollTieredProc(baseEchoChance * echoMultiplier) + (chaos.extraEcho || 0);
     let totalCrit = 0;
-    const base = await rt.performStrike(firstTarget, { echo: false, chaos });
+    const base = await rt.performStrike(firstTarget, { echo: false, chaos, actionDamageMultiplier: options.damageMultiplier || 1 });
     totalCrit += base.crit;
+    if (typeof options.onResolvedStrike === "function") options.onResolvedStrike({ echo: false, result: base, target: firstTarget });
     for (let i = 1; i <= echoes && livingEnemies().length; i++) {
       const selected = currentEnemy();
       const target = firstTarget.hp > 0 ? firstTarget : (selected?.hp > 0 ? selected : livingEnemies()[0]);
-      const result = await rt.performStrike(target, { echo: true, index: i, chaos, canCrit: false });
+      const result = await rt.performStrike(target, { echo: true, index: i, chaos, canCrit: false, actionDamageMultiplier: options.damageMultiplier || 1 });
       totalCrit += result.crit;
+      if (typeof options.onResolvedStrike === "function") options.onResolvedStrike({ echo: true, index: i, result, target });
     }
     rt.chargeUltimate(p.ultimateAttackGain + p.critUltimateGain * totalCrit);
     const pants = rt.applyMythicPantsPulse();
     if (pants) rt.setCombatText(pants);
     // A class action's post-state is committed after every strike/Echo but
     // before the ordinary enemy response.
-    if (typeof rt.afterPlayerAction === "function") rt.afterPlayerAction("attack");
+    if (typeof rt.afterPlayerAction === "function") rt.afterPlayerAction(options.postActionKind || "attack");
     rt.updateCombatUI();
     if (!livingEnemies().length) return rt.winCombat();
     const enemies = rt.getCurrentEnemies();
@@ -66,15 +73,22 @@
     const rt = requireRuntime(), p = player();
     if (rt.isClassActive("monk")) {
       const combo = p.monkCombo || 0, echoBonus = combo * .035, damageBonus = combo * .045;
+      const options = args[0] && typeof args[0] === "object" ? { ...args[0] } : {};
+      const downstream = options.onResolvedStrike;
+      let qualifyingStrikes = 0;
+      options.onResolvedStrike = packet => {
+        qualifyingStrikes++;
+        if (typeof downstream === "function") downstream(packet);
+      };
       p.doubleStrike += echoBonus;
       p.damageBonus += damageBonus;
       try {
-        await baseAttackAction(...args);
+        await baseAttackAction(options);
       } finally {
         p.doubleStrike -= echoBonus;
         p.damageBonus -= damageBonus;
       }
-      if (p.hp > 0 && currentEnemy()) p.monkCombo = Math.min(5, combo + 1);
+      if (p.hp > 0) p.monkCombo = Math.min(p.monkComboMax || 5, combo + qualifyingStrikes);
       rt.updateCombatUI();
       return;
     }
@@ -94,7 +108,7 @@
   // the V13 class layer, including the high-combo Monk overwrite after return.
   async function v16IdentityAttackAction(...args) {
     const rt = requireRuntime(), p = player();
-    const cls = rt.classIdentityId(), comboBefore = p.monkCombo || 0;
+    const cls = rt.classIdentityId();
     const chicken = cls === "clown" && p.clownGimmick === "Rubber Chicken";
     if (chicken) p.doubleStrike += .20;
     if (cls === "alchemist" && !rt.getCombatBusy() && currentEnemy()) {
@@ -107,9 +121,7 @@
       }
     }
     try {
-      const result = await v13ClassAttackAction(...args);
-      if (cls === "monk" && (p.monkComboMax || 5) > 5) p.monkCombo = Math.min(p.monkComboMax, comboBefore + 1);
-      return result;
+      return await v13ClassAttackAction(...args);
     } finally {
       if (chicken) p.doubleStrike -= .20;
       rt.updateCombatUI();

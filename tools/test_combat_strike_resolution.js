@@ -225,6 +225,16 @@ function makeHarness(options={}){
     assert.equal(h.player._db060IronEchoDefense,1);
   }
   {
+    const h=makeHarness({player:{gold:500},legendary:["hoarders_arsenal"],randomValues:[.9,.3]});
+    const result=await strikes.performStrike(h.enemies[0],{actionDamageMultiplier:.85});
+    assert.equal(result.dealt,10,"Quas/Wex-style 85% strike profile must scale the strike body but preserve the Hoarder flat bonus");
+  }
+  {
+    const h=makeHarness({randomValues:[.9,.3]});
+    const result=await strikes.performStrike(h.enemies[0],{actionDamageMultiplier:1.20});
+    assert.equal(result.dealt,12,"Exort-style 120% strike profile must apply in canonical strike resolution");
+  }
+  {
     const h=makeHarness({player:{gold:499},legendary:["hoarders_arsenal"],randomValues:[.9,.3]});
     const result=await strikes.performStrike(h.enemies[0]);
     assert.equal(result.dealt,10,"Hoarder's Arsenal must add nothing below 500 gold");

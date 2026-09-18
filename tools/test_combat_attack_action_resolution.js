@@ -55,7 +55,7 @@ function makeHarness(options = {}) {
     updateCombatUI: () => traceCall('ui'),
     rollTieredProc: chance => { const value = tierValues.length ? tierValues.shift() : 0; traceCall('tier', chance, value); return value; },
     performStrike: async (target, meta) => {
-      traceCall('strike', target?.name || null, !!meta?.echo, meta?.index || 0, meta?.canCrit);
+      traceCall('strike', target?.name || null, !!meta?.echo, meta?.index || 0, meta?.canCrit, meta?.actionDamageMultiplier || 1);
       if (options.performStrike) return options.performStrike({ target, meta, player, trace, enemies, getCurrentEnemy: () => currentEnemy, setCurrentEnemy: value => { currentEnemy = value; } });
       const configured = strikeResults.length ? strikeResults.shift() : null;
       const damage = configured?.damage == null ? 10 : configured.damage;
@@ -73,6 +73,8 @@ function makeHarness(options = {}) {
     hasLegendaryEffect: id => effects.has(id),
     showToast: text => traceCall('toast', text),
     addCombatHistory: text => traceCall('history', text),
+    actionBonuses: () => options.actionBonuses || null,
+    afterPlayerAction: kind => traceCall('afterAction', kind),
     dragoonActive: () => options.dragoonActive != null ? !!options.dragoonActive : player.classId === 'dragoon',
     dragoonLandingReady: () => !!player.dragoonLandingReady,
     dragoonLanding: async () => { traceCall('dragoonLanding'); return 'landing'; },
@@ -106,6 +108,29 @@ async function run() {
       ['busy','chaos','ui','tier','strike','strike','strike','charge','pants','text','ui','select','response','ui']
     );
     assert(h.trace.filter(x => x[0] === 'strike').slice(1).every(x => x[4] === false), 'Echoes must remain non-critical at action dispatch');
+  }
+
+  // Profiled class attacks scale the full tiered Echo chance instead of using
+  // a binary Echo/no-Echo switch. This keeps >100% Echo meaningful.
+  {
+    const h = makeHarness({
+      chaos: { extraEcho: 0 }, tierValues: [2],
+      player: { doubleStrike: 2 },
+      actionBonuses: { echo: .75 }
+    });
+    await owner.playerAttack({ echoMultiplier: .70, postActionKind: 'orb:blue', damageMultiplier: .85 });
+    const tier = h.trace.find(x => x[0] === 'tier');
+    assert.ok(Math.abs(tier[1] - 1.925) < 1e-12, '70% profile must multiply the complete 275% Echo chance');
+    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 3, 'two returned Echo tiers must produce two Echo strikes');
+    assert(h.trace.filter(x => x[0] === 'strike').every(x => x[5] === .85), 'profiled attack potency must travel with every strike packet');
+    assert.deepStrictEqual(h.trace.find(x => x[0] === 'afterAction'), ['afterAction', 'orb:blue']);
+  }
+  {
+    const h = makeHarness({ chaos: { extraEcho: 0 }, tierValues: [1], player: { doubleStrike: 1.25 } });
+    await owner.playerAttack({ echoMultiplier: 1.20, postActionKind: 'orb:green', damageMultiplier: .85 });
+    const tier = h.trace.find(x => x[0] === 'tier');
+    assert.ok(Math.abs(tier[1] - 1.5) < 1e-12, '120% profile must amplify the full tiered Echo chance');
+    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 2);
   }
 
   // Busy rejection stays inside the base transaction: no D20/Echo RNG is consumed.
@@ -156,8 +181,15 @@ async function run() {
     assert.strictEqual(h.player.monkCombo, 4);
   }
 
-  // V16's high-combo Monk overwrite remains outside the V13 layer and can rise
-  // beyond the historical 5-stack cap.
+  // Every actually resolved Monk Echo Strike advances Flowing Combo as its own strike event.
+  {
+    const h = makeHarness({ classId: 'monk', tierValues: [2], player: { monkCombo: 1, monkComboMax: 8, doubleStrike: 1 } });
+    await owner.playerAttack();
+    assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 3, 'base + two real Echo strikes must resolve');
+    assert.strictEqual(h.player.monkCombo, 4, 'Flowing Combo must advance once per resolved base/Echo strike');
+  }
+
+  // Monk Combo can still rise beyond the historical 5-stack cap when its configured maximum is higher.
   {
     const h = makeHarness({ classId: 'monk', tierValues: [0], player: { monkCombo: 5, monkComboMax: 8 } });
     await owner.playerAttack();

@@ -13,7 +13,7 @@ vm.runInContext(source, context, { filename: sourcePath });
 
 const classes = context.window.DiceboundClasses;
 assert.ok(classes, "class registry did not publish window.DiceboundClasses");
-assert.equal(classes.apiVersion, 2);
+assert.equal(classes.apiVersion, 3);
 assert.ok(Object.isFrozen(classes), "public class registry API is mutable");
 assert.ok(Object.isFrozen(classes.ids), "public class id list is mutable");
 assert.ok(Object.isFrozen(classes.tagVocabulary), "public class tag vocabulary is mutable");
@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 27515, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 28731, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "3edb393f5be5ee23e3692fd8f0e6235b493416fd3d0a870187129a9ed53410c7",
+  "32a7a9c00c0f6399ef3cb60345f23ff66aca03bee49e06bdf23b9ab30d9bb95e",
   "canonical class registry data drifted",
 );
 
@@ -94,7 +94,7 @@ assert.equal(Object.hasOwn(unlocks.pokemontrainer.requirements[1],"difficulty"),
 assert.deepEqual(Array.from(mechanics.ranger), ["marks", "crit", "evasion", "ranged"]);
 assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
-snapshot(passives, 4003, "a30c68d063cf474784f6c7102ea73cc16d90779ae9830a3dee99781b105e7567", "class passive registry");
+snapshot(passives, 4315, "a723c189055e0f31a6154be1716e2c671d420e77fb765a2955d339d3bd15f4ee", "class passive registry");
 snapshot(Array.from(classes.tagVocabulary), 324, "69c32f490683a7bb3e2f3858af62440b3784c1eeeffa853ba1929076b588f945", "class tag vocabulary");
 snapshot(unlocks, 2038, "1dc560d02a97edd6292042a1e036d818c700ae035acdcb8dacb66a14dfd92658", "class unlock registry");
 snapshot(mechanics, 1386, "46eac9f42a39e5441a3b1131f15aada424f69abb988be1e66f8230eb478eef35", "class mechanics registry");

@@ -62,13 +62,21 @@ assert.ok(Object.isFrozen(services.economy));
 assert.deepEqual(Array.from(services.content.elementIds), ["fire", "ice", "electric", "nature", "light", "void"]);
 
 const registry = window.DiceboundPowerupRegistry.createRegistry(services);
-assert.equal(registry.length, 208);
-assert.equal(new Set(registry.map((powerup) => powerup.id)).size, 208);
+assert.equal(registry.length, 209);
+assert.equal(new Set(registry.map((powerup) => powerup.id)).size, 209);
 assert.deepEqual(
   JSON.parse(JSON.stringify(registry.filter((powerup) => powerup.classId === "invoker").map((powerup) => [powerup.id, powerup.rarity]))),
   [["invoker_orb_theory", "common"], ["invoker_quas_mastery", "uncommon"], ["invoker_wex_mastery", "uncommon"], ["invoker_exort_mastery", "uncommon"], ["invoker_mnemonic_recursion", "rare"], ["invoker_perfect_formula", "rare"], ["invoker_double_invocation", "epic"], ["invoker_cataclysm", "legendary"]],
 );
 assert.equal(registry.find((powerup) => powerup.id === "invoker_cataclysm").achievementGate, "achievement:invoker-tenfold-memory");
+const statHeist = registry.find((powerup) => powerup.id === "rogue_grand_larceny");
+assert.ok(statHeist && statHeist.name === "Stat Heist");
+assert.equal(statHeist.rarity, "rare");
+assert.equal(statHeist.unique, true);
+const packDiscipline = registry.find((powerup) => powerup.id === "beastmaster_pack");
+const deeperCircle = registry.find((powerup) => powerup.id === "summoner_deeper_circle");
+assert.match(packDiscipline.desc, /additional 10% of your Attack/);
+assert.match(deeperCircle.desc, /additional 10% of your Attack/);
 
 const attack = registry.find((powerup) => powerup.id === "attack");
 attack.apply();
@@ -148,7 +156,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "507b8484cba85f2398b8bbe7c392bb1386a83bc41355cd8a2c112493ab585a17";
+const expectedDigest = "728b05b1bb9dd9025ce064cc2d4b1e85b9f2a436ba663a669e09167bb31e6598";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {
@@ -161,4 +169,4 @@ assert.doesNotMatch(moduleSource, /\bnightmareMode\b/);
 assert.doesNotMatch(moduleSource, /\bCLASSES\b/, "Powerup registry must not reach through to composition-local class data");
 assert.doesNotMatch(moduleSource, /modifiedGold\(100\)/, "Heavy Purse must not regress to the flat 100-gold implementation");
 
-console.log(`Powerup service extraction PASS: 208 exact entries, live reset-safe state, class-tag-safe Throne of Venom, digest ${digest}`);
+console.log(`Powerup service extraction PASS: 209 exact entries, live reset-safe state, class-tag-safe Throne of Venom, digest ${digest}`);

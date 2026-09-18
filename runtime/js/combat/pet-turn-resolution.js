@@ -26,14 +26,21 @@
   function activePetDef(){const m=meta(),registry=pets();return registry[m.activePet]||registry.neutral;}
   function activePetState(){const m=meta();return m.pets?.[m.activePet]||m.pets?.neutral;}
   function petBondDamageExtra(id){return id&&id!=="neutral"?2+Math.floor((rt().petBondLevel(id)-1)/10):0;}
+  function classAttackPetScale(){
+    const r=rt(),p=player();
+    if(r.isClassActive("beastmaster"))return .10+Math.max(0,Number(p.beastmasterAttackPetScale)||0);
+    if(r.isClassActive("summoner"))return .10+Math.max(0,Number(p.summonerAttackPetScale)||0);
+    return 0;
+  }
+  function classAttackPetBonus(){return Math.max(0,Math.round((Number(player().attack)||0)*classAttackPetScale()));}
 
-  // Final live petDamage stack: base -> Beastmaster aggressive -> v1.6 +2 ->
+  // Final live petDamage stack: base -> class Attack conversion -> Beastmaster aggressive -> v1.6 +2 ->
   // v1.7 replaces that flat +2 with the bond-scaled extra. Rounding of the
   // aggressive 1.5x happens before the elemental-Pet extra and is intentional.
   function petDamage(){
     const r=rt(),p=player(),m=meta();
     const talentBonus=r.isGameStarted()?p.petDamageBonus:r.talentRank("companion_damage")+r.talentRank("companion_ascendant")*2;
-    let damage=1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus;
+    let damage=1+Math.ceil((activePetState()?.level||1)*.8)+talentBonus+classAttackPetBonus();
     if(r.isClassActive("beastmaster")&&p.beastStance==="aggressive")damage=Math.round(damage*1.5);
     const id=m.activePet||"neutral";
     if(id!=="neutral")damage+=petBondDamageExtra(id);
@@ -44,7 +51,7 @@
   // then the same elemental-Pet bond extra that replaced v1.6's flat +2.
   function trainerPetDamage(id){
     const r=rt(),p=player(),m=meta(),level=Math.max(1,m.pets?.[id]?.level||1);
-    return Math.max(1,1+Math.ceil(level*.82)+p.petDamageBonus+(id&&id!=="neutral"?petBondDamageExtra(id):0));
+    return Math.max(1,1+Math.ceil(level*.82)+p.petDamageBonus+classAttackPetBonus()+(id&&id!=="neutral"?petBondDamageExtra(id):0));
   }
 
   function petElementFor(id){const r=rt(),def=pets()[id]||pets().neutral;return def.id==="neutral"?r.pick(r.getDiboElements()):def.element;}
@@ -152,6 +159,6 @@
     return result;
   }
 
-  const api=Object.freeze({owner:"combat/pet-turn-resolution",apiVersion:1,configure,petDamage,trainerPetDamage,petElementFor,activeTrainerPetId,trainerStrike,maybePetElementProc,petTurn});
+  const api=Object.freeze({owner:"combat/pet-turn-resolution",apiVersion:2,configure,petDamage,trainerPetDamage,classAttackPetScale,classAttackPetBonus,petElementFor,activeTrainerPetId,trainerStrike,maybePetElementProc,petTurn});
   window.DiceboundCombatPetTurnResolution=api;
 })();

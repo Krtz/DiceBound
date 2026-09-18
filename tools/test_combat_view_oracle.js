@@ -26,7 +26,7 @@ function plain(value) {
 }
 
 function summarizeModel(model) {
-  return plain({
+  const summary = {
     attack: model.attack,
     guard: model.guard,
     potion: model.potion,
@@ -35,7 +35,9 @@ function summarizeModel(model) {
     hasSpecial: model.hasSpecial,
     resource: model.resource,
     enemyHpText: model.enemyHpText,
-  });
+  };
+  if (model.invokerAttacks?.active) summary.invokerAttacks = model.invokerAttacks;
+  return plain(summary);
 }
 
 function collectPresentation() {
@@ -61,6 +63,7 @@ function collectPresentation() {
     ["berserker", "Berserker", "🪓", "💢", "Rage"],
     ["slimerouge", "Slime Rouge", "🔴", "🎭", "Borrow"],
     ["dragoon", "Dragoon", "🐉", "🐲", "Dragon Dive"],
+    ["invoker", "Invoker", "🔮", "🌀", "Grand Invocation"],
     ["cleric", "Cleric", "☀️", "✨", "Divine Intervention"],
     ["alchemist", "Alchemist", "🧪", "⚗️", "Grand Elixir"],
   ]) classes[id] = { id, name, icon, ultimate: { icon: ultIcon, name: ultName, desc: `${name} ultimate.` } };
@@ -72,6 +75,7 @@ function collectPresentation() {
   };
   const occult = {
     summoner: { builderIcon: "✨", builder: "Spirit Bolt", spellIcon: "🐾", spell: "Conjure", cost: 35, gain: 18, desc: "Build a spirit circle." },
+    invoker: { builderIcon: "🟢", builder: "Wex Strike", spellIcon: "🔴", spell: "Elemental Lance", cost: 50, gain: 25, desc: "Three orb attacks build Invoke formulas." },
   };
 
   let rngCalls = 0;
@@ -125,6 +129,7 @@ function collectPresentation() {
     dragoonActive: () => active.has("dragoon"),
     dragoonJumpCooldown: () => 4,
     onDragoonJump() {},
+    performClassAction() {},
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
     delay: async () => {},
     random: () => { rngCalls += 1; return 0.5; },
@@ -165,6 +170,10 @@ function collectPresentation() {
   cases.trainer = model("trainer", () => {
     active = new Set(["pokemontrainer"]); mechanics = new Set(); state.player.classId = "pokemontrainer";
     state.player.trainerRoster = ["fire", "ice", "nature"]; state.player.trainerActiveIndex = 1;
+  });
+  cases.invoker = model("invoker", () => {
+    active = new Set(["invoker"]); mechanics = new Set(["mana"]); state.player.classId = "invoker";
+    state.player.mana = 75; state.player.maxMana = 100; state.player.guardManaGain = 6;
   });
   cases.clericReady = model("clericReady", () => {
     active = new Set(["cleric"]); mechanics = new Set(); state.player.classId = "cleric"; state.player.clericFaith = 100;

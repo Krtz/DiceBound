@@ -1,6 +1,6 @@
 {
   "baselineVersion": "0.6.6.30",
-  "runtimeVersion": "0.6.6.30",
+  "runtimeVersion": "0.6.7.9",
   "cases": [
     {
       "name": "encounter-start",
@@ -60,6 +60,7 @@
         },
         "enemies": [
           {
+            "id": "cultist",
             "name": "Ascended Cultist",
             "icon": "🧛",
             "hp": 77,
@@ -704,7 +705,7 @@
             "id": "combat-oracle-0",
             "name": "Mana Dummy",
             "icon": "🎯",
-            "hp": 1117,
+            "hp": 1031,
             "maxHp": 1200,
             "attack": 1,
             "defense": 1,
@@ -739,13 +740,13 @@
           }
         },
         "text": "Choose your next action.",
-        "history": "✦ Arcane Lance spends 35 Mana and deals 60 damage. ⚡ Thunderbolt deals 22 elemental damage.DiBo attacks for 1 Nature damage after rolling 🌿.Mana Dummy's Attack hits for 1.",
+        "history": "✦ Arcane Lance spends 35 Mana and deals 60 damage. 🕳️ Black Hole deals 108 elemental damage.DiBo attacks for 1 Void damage after rolling 🕳️.Mana Dummy's Attack hits for 1.",
         "overlayHidden": false,
         "lootVisible": false,
         "pendingLevelUps": 0
       },
-      "rngCalls": 8,
-      "rngState": 2293942519
+      "rngCalls": 9,
+      "rngState": 4125508332
     },
     {
       "name": "mana-denied",

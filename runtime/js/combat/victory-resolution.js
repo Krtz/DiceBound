@@ -19,7 +19,7 @@
       "completeFinalRoad", "returnToRoad", "renderClassChoices", "setMerchantBossFlags", "restoreRadiationDefense",
       "traceCommand", "logDebug", "debugState", "setCombatBusy", "isCombatOverlayHidden", "setRollLocked",
       "clearStoneBattle", "grantLegacyXp", "updateMetaUi", "restoreEnemyElementDebuffs", "clearLegendaryBattleTemps",
-      "getClassUnlockFacts", "recordCombatFacts"
+      "getClassUnlockFacts", "recordCombatFacts", "clearRogueStolenStats"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat victory runtime missing ${name}().`);
     runtime = nextRuntime;
@@ -320,6 +320,7 @@
   async function legendaryCleanupLayer(...args) {
     const rt = requireRuntime();
     const result = await enemyElementCleanupLayer(...args);
+    rt.clearRogueStolenStats();
     rt.clearLegendaryBattleTemps();
     return result;
   }

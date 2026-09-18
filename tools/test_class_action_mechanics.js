@@ -29,7 +29,10 @@ classes.configureActionMechanics({
   rollD20Chaos:async kind=>{push("chaos",kind);return {mult:1};},animateClassAttack:async mode=>push("animate",mode),getSetDamageBonus:()=>0,applyMythicRingPulse:()=>ringText,
   selectFirstLivingEnemy:()=>{enemy=firstLiving()[0]||null;push("select",enemy?.name||"none");},hasEffect:id=>effects.has(id),addCombatHistory:text=>push("history",text),
   potionHealValue:()=>30,recordPotionUse:()=>{potionUses++;push("potionUse");},chargeUltimate:amount=>{player.ultimateCharge=Math.max(0,Math.min(100,(player.ultimateCharge||0)+amount));push("charge",amount);},
-  pickElementKey:()=>{nextRandom();return "fire";},triggerElementEffect:(key,target,options)=>{push("element",`${key}/${target?.name}/${options?.source}`);return {message:"Fire erupts."};}
+  pickElementKey:()=>{nextRandom();return "fire";},triggerElementEffect:(key,target,options)=>{push("element",`${key}/${target?.name}/${options?.source}`);return {message:"Fire erupts.",totalDamage:0};},
+  rollTieredProc:chance=>{push("tier",chance);return 0;},triggerStrikeElements:target=>{push("strikeElements",target?.name||"none");return {message:"",totalDamage:0};},
+  playElementAnimation:(key,target)=>push("elementAnim",`${key}/${target?.name||"none"}`),gameplayTalentRank:()=>0,dragoonActive:()=>player.classId==="dragoon",
+  syncDragoonPresentation:()=>push("dragoonSync"),dragoonLandPresentation:()=>push("dragoonLand")
 });
 
 (async()=>{
@@ -37,19 +40,21 @@ classes.configureActionMechanics({
   assert.equal(player.lifeSteal,.10,"Bloodletting did not restore Lifesteal");
   assert.deepEqual(events,["flash:🩸 Bloodletting restores fuel","attackLS:0.22","ui"]);
 
-  player={classId:"cleric",maxHp:100,hp:40,attack:20,clericFaith:100,combatShield:0,combatActionCount:0};enemy={name:"Dummy",hp:100,maxHp:100};enemies=[enemy];busy=false;events=[];damageAllResult=47;
+  player={classId:"cleric",maxHp:100,hp:40,attack:20,crit:.06,clericFaith:100,combatShield:0,combatActionCount:0};enemy={name:"Dummy",hp:100,maxHp:100};enemies=[enemy];busy=false;events=[];damageAllResult=47;
   await classes.clericConsecration();
   assert.equal(player.clericFaith,0);assert.equal(player.hp,62);assert.equal(player.combatShield,1);assert.equal(player.combatActionCount,1);
-  assert.deepEqual(events,["busy:true","heal:22","damageAll:31/0.75","text:☀️ Consecration spends 100 Faith, heals 22 HP, raises a Barrier and deals 47 Light-touched damage across the pack.","flash:☀️ CONSECRATION","holy","ui","delay:760","response:false"]);
+  assert.deepEqual(events,["busy:true","heal:22","tier:0.06","damageAll:31/0.75","text:☀️ Consecration spends 100 Faith, heals 22 HP, raises a Barrier and deals 47 Light-touched damage across the pack.","flash:☀️ CONSECRATION","holy","ui","delay:760","response:false"]);
 
   player={classId:"beastmaster",beastStance:"aggressive"};busy=false;events=[];
   classes.cycleBeastStance();classes.cycleBeastStance();classes.cycleBeastStance();
   assert.equal(player.beastStance,"aggressive");assert.deepEqual(events,["flash:🐾 Defensive stance","ui","flash:🐾 Support stance","ui","flash:🐾 Aggressive stance","ui"]);
 
-  player={classId:"rogue",luck:1,gold:0,potions:1,rogueStealUsed:false,combatActionCount:0};enemy={name:"Pocket Dummy",hp:1000,maxHp:1000};enemies=[enemy];busy=false;events=[];applied=[];boardLevel=2;randomQueue=[.1,.5,.2,.4,.1];
+  player={classId:"rogue",luck:1,gold:0,potions:1,attack:20,defense:4,rogueStealStatFraction:.10,rogueStealUsed:false,combatActionCount:0};enemy={name:"Pocket Dummy",hp:1000,maxHp:1000,attack:30,defense:10};enemies=[enemy];busy=false;events=[];applied=[];boardLevel=2;randomQueue=[.1,.5,.2,.4,.1];
   assert.equal(classes.roguePowerStealChance(1),.35);
   await classes.rogueSteal();
-  assert.equal(player.rogueStealUsed,true);assert.equal(player.combatActionCount,1);assert.equal(player.gold,28);assert.equal(player.potions,2);assert.deepEqual(applied,["stolen"]);assert.equal(player._beta021LastStealPower.chance,.35);assert.equal(player._beta021LastStealPower.roll,.2);assert.equal(randomQueue.length,0,"Rogue RNG draw count drifted");
+  assert.equal(player.rogueStealUsed,true);assert.equal(player.combatActionCount,1);assert.equal(player.gold,28);assert.equal(player.potions,2);assert.deepEqual(applied,["stolen"]);assert.equal(player._beta021LastStealPower.chance,.35);assert.equal(player._beta021LastStealPower.roll,.2);
+  assert.equal(player.attack,23);assert.equal(player.defense,5);assert.equal(enemy.attack,27);assert.equal(enemy.defense,9);assert.equal(player._rogueStolenAttack,3);assert.equal(player._rogueStolenDefense,1);
+  assert.equal(randomQueue.length,0,"Stat Heist must not add RNG draws to Rogue Steal");
   assert.ok(events.includes("response:false"));assert.ok(events.includes("coin"));
 
   player={classId:"bloodmage",maxHp:100,hp:40,ultimateCharge:0,combatActionCount:0,equipment:{}};enemy={name:"Blood Dummy",hp:600,maxHp:1000};enemies=[enemy];busy=false;events=[];ringText="";
@@ -59,7 +64,7 @@ classes.configureActionMechanics({
   player={classId:"bloodmage",maxHp:100,hp:100,attack:20,damageBonus:0,bossDamage:0,bloodmageExsanguinateCostMult:1,bloodmageExsanguinateDamageMult:1,combatAttackCount:0,combatActionCount:0,equipment:{}};
   enemies=[{name:"A",hp:5000,maxHp:5000},{name:"B",hp:5000,maxHp:5000}];enemy=enemies[0];encounterLead={boss:false};busy=false;events=[];effects.clear();ringText="";
   await classes.bloodmageExsanguinate();
-  assert.equal(player.hp,88);assert.equal(5000-enemies[0].hp,72);assert.equal(5000-enemies[1].hp,47);assert.equal(player.combatAttackCount,1);assert.equal(player.combatActionCount,1);assert.ok(events.includes("response:false"));
+  assert.equal(player.hp,88);assert.equal(5000-enemies[0].hp,72);assert.equal(5000-enemies[1].hp,47);assert.ok(events.includes("strikeElements:A"));assert.equal(player.combatAttackCount,1);assert.equal(player.combatActionCount,1);assert.ok(events.includes("response:false"));
 
   player={classId:"bloodmage",maxHp:100,hp:100,attack:20,damageBonus:0,bossDamage:0,bloodmageExsanguinateCostMult:1,bloodmageExsanguinateDamageMult:1,combatAttackCount:0,combatActionCount:0,equipment:{}};
   enemies=[{name:"A",hp:5000,maxHp:5000},{name:"B",hp:5000,maxHp:5000}];enemy=enemies[0];busy=false;events=[];effects=new Set(["blood_price"]);
@@ -70,7 +75,12 @@ classes.configureActionMechanics({
   enemy={name:"Flask Dummy",hp:5000,maxHp:5000};enemies=[enemy,{name:"Flask Dummy B",hp:5000,maxHp:5000}];busy=false;events=[];randomQueue=[.5,.5];potionUses=0;damageAllResult=54;effects.clear();
   await classes.alchemistVolatileFlask();
   assert.equal(player.potions,2);assert.equal(potionUses,1);assert.equal(player.guardCooldown,0);assert.equal(player.combatActionCount,1);assert.equal(player.ultimateCharge,9);assert.equal(randomQueue.length,0,"Alchemist RNG draw count drifted");
-  assert.ok(events.includes("damageAll:54/0.72"));assert.ok(events.includes("response:false"));
+  assert.ok(events.includes("damageAll:60/0.72"));assert.ok(events.includes("response:false"));
 
-  console.log("Classes bespoke action-mechanics owner PASS: Rogue, Bloodmage, Alchemist, Bloodletting, Consecration and Beastmaster preserve deterministic sequencing");
+  player={classId:"rogue",attack:20,defense:4,rogueStealStatFraction:.10};enemy={name:"Stat Dummy",attack:30,defense:10};enemies=[enemy];
+  {const cleared=classes.clearRogueStolenStats();assert.equal(cleared.attack,0);assert.equal(cleared.defense,0);}
+  player._rogueStolenAttack=3;player._rogueStolenDefense=1;player.attack=23;player.defense=5;
+  {const cleared=classes.clearRogueStolenStats();assert.equal(cleared.attack,3);assert.equal(cleared.defense,1);}assert.equal(player.attack,20);assert.equal(player.defense,4);
+
+  console.log("Classes bespoke action-mechanics owner PASS: Rogue, Bloodmage, Alchemist, Bloodletting, Consecration, Beastmaster and Rogue cleanup preserve deterministic sequencing");
 })().catch(error=>{console.error(error);process.exitCode=1;});

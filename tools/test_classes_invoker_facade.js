@@ -9,14 +9,16 @@ vm.runInContext(fs.readFileSync(path.join(root,"runtime/js/classes/registry.js")
 vm.runInContext(fs.readFileSync(path.join(root,"runtime/js/classes/invoker.js"),"utf8"),context);
 const classes=context.window.DiceboundClasses;
 assert.ok(classes);assert.equal(context.window.DiceboundInvoker,undefined);
-assert.equal(typeof classes.configureInvoker,"function");assert.equal(typeof classes.invokerAfterPlayerAction,"function");assert.equal(typeof classes.invokerUltimate,"function");
+assert.equal(typeof classes.configureInvoker,"function");assert.equal(typeof classes.invokerAfterPlayerAction,"function");assert.equal(typeof classes.invokerUltimate,"function");assert.equal(typeof classes.invokerGeneratorManaMultiplier,"function");assert.equal(typeof classes.invokerQuasStrike,"function");assert.equal(typeof classes.invokerWexStrike,"function");assert.equal(typeof classes.invokerExortStrike,"function");
 const manifest=JSON.parse(fs.readFileSync(path.join(root,"runtime/js/module-manifest.json"),"utf8"));
 const entry=manifest.modules.find(item=>item.id==="classes-invoker");
 assert.ok(entry);assert.deepEqual(entry.provides,[]);assert.ok(entry.requires.includes("classes-registry"));
 const mono=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
 assert.doesNotMatch(mono,/\bdbInvoker\b/);assert.doesNotMatch(mono,/window\.DiceboundInvoker/);
 assert.match(mono,/dbClasses\.configureInvoker\(\{/);
-for(const call of ["invokerResetCombat","invokerAfterPlayerAction","invokerActionBonuses","invokerGeneratorManaMultiplier","invokerElementalLance","invokerOutgoingMultiplier","invokerAfterPlayerHit","invokerUltimate","invokerBeginCombat","invokerResponseModifier"])assert.ok(mono.includes(`dbClasses.${call}`),`missing Classes Invoker route ${call}`);
+for(const call of ["invokerResetCombat","invokerAfterPlayerAction","invokerActionBonuses","invokerQuasStrike","invokerWexStrike","invokerExortStrike","invokerElementalLance","invokerOutgoingMultiplier","invokerAfterPlayerHit","invokerUltimate","invokerBeginCombat","invokerResponseModifier"])assert.ok(mono.includes(`dbClasses.${call}`),`missing Classes Invoker route ${call}`);
+assert.doesNotMatch(mono,/invokerGeneratorManaMultiplier:\(\)=>dbClasses\.invokerGeneratorManaMultiplier\(\)/,"retired generic Invoker builder composition route returned");
 const owner=fs.readFileSync(path.join(root,"runtime/js/classes/invoker.js"),"utf8");
+assert.match(owner,/function generatorManaMultiplier\(\)/,"Invoker owner must retain internal Wex Mana scaling");
 assert.match(owner,/facade\._installInvoker\(api\)/);assert.doesNotMatch(owner,/window\.DiceboundInvoker\s*=/);
 console.log("Classes Invoker facade PASS: focused Invoker behavior is internal and every ordinary caller routes through DiceboundClasses");

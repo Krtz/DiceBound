@@ -108,7 +108,7 @@
           "hidden": false,
           "className": "combat-btn special action-tooltip",
           "text": "🩸 Exsanguinate",
-          "tip": "Spend 12% max HP without killing yourself to deal a brutal blood-fuelled attack.",
+          "tip": "Spend 12% max HP without killing yourself. Exsanguinate converts 50% of Echo chance into damage, can Crit, rolls normal elements, and applies Poison at (50% Echo) × Poison chance.",
           "disabled": false,
           "ready": false
         },
@@ -203,6 +203,60 @@
         },
         "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
       },
+      "invoker": {
+        "attack": {
+          "text": "🟢 Wex Strike",
+          "disabled": false,
+          "tip": "85% normal strike damage with 120% of your current Echo chance plus normal Crit/Poison/element/Lifesteal behavior; generates up to 25 base Mana and forms a Green orb.",
+          "className": "combat-btn primary action-tooltip invoker-wex"
+        },
+        "guard": {
+          "text": "🛡️ Guard",
+          "disabled": false,
+          "tip": "Reduce ordinary attacks by 50% and gain 20 ultimate. Guardian specials ignore Dodge and barriers, but Guard reduces them. Guard also channels up to 6 Mana."
+        },
+        "potion": {
+          "text": null,
+          "disabled": false,
+          "tip": "Potions currently restore about 23 HP. Potion Healing bonus: +10%. Base healing is 10 + 10% of max HP."
+        },
+        "ultimate": {
+          "text": "🌀 Grand Invocation",
+          "disabled": false,
+          "tip": "Invoker ultimate."
+        },
+        "special": {
+          "hidden": false,
+          "className": "combat-btn special action-tooltip",
+          "text": "🔴 Elemental Lance (50)",
+          "tip": "Three orb attacks build Invoke formulas. It can Crit, roll normal elements, apply Poison at Echo × Poison chance, and Lifesteal from direct plus elemental damage.",
+          "disabled": false,
+          "ready": false
+        },
+        "hasSpecial": true,
+        "resource": {
+          "type": "mana",
+          "name": "Mana / Orb Formula",
+          "value": 75,
+          "max": 100,
+          "note": "Three orb attacks build Invoke formulas.",
+          "textMode": false
+        },
+        "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE",
+        "invokerAttacks": {
+          "active": true,
+          "quas": {
+            "text": "🔵 Quas Strike",
+            "tip": "85% normal strike damage, uses 70% of your current Echo chance, and forms a Blue orb. Crit, Poison, elements and Lifesteal remain normal.",
+            "disabled": false
+          },
+          "exort": {
+            "text": "🔴 Exort Strike",
+            "tip": "120% normal strike damage, uses 70% of your current Echo chance, and forms a Red orb. Crit, Poison, elements and Lifesteal remain normal.",
+            "disabled": false
+          }
+        }
+      },
       "clericReady": {
         "attack": {
           "text": "⚔️ Attack",
@@ -228,7 +282,7 @@
           "hidden": false,
           "className": "combat-btn special action-tooltip faith",
           "text": "☀️ Consecration",
-          "tip": "At 100 Faith: heal, raise a Barrier and damage the enemy pack. Healing builds Faith.",
+          "tip": "At 100 Faith: heal, raise a Barrier and deal a pack-wide holy attack that can Crit. Healing builds Faith.",
           "disabled": false,
           "ready": true
         },
@@ -268,7 +322,7 @@
           "hidden": false,
           "className": "combat-btn special action-tooltip alchemist-special",
           "text": "🧪 Volatile Flask (3)",
-          "tip": "Consume 1 potion to damage the enemy pack. Damage scales with the same Potion Healing bonuses that increase your 23 HP drink.",
+          "tip": "Consume 1 potion to damage the enemy pack for 150% Potion Healing + 100% Attack. The Flask can Crit and uses 250% of your current Poison chance on each surviving target. Current potion heal: 23 HP.",
           "disabled": false,
           "ready": false
         },

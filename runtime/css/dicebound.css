@@ -393,6 +393,9 @@
   .combat-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
   .combat-btn{padding:12px 10px;border-radius:12px;background:#2c3b60;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
   .combat-btn.primary{background:linear-gradient(180deg,#e87178,#bd3f4b)}
+  .combat-btn.invoker-quas{background:linear-gradient(180deg,#6ba8ff,#397eea)}
+  .combat-btn.invoker-wex{background:linear-gradient(180deg,#66d49b,#32ad6e)}
+  .combat-btn.invoker-exort{background:linear-gradient(180deg,#ef7a70,#d24d45)}
   .combat-btn.guard{background:linear-gradient(180deg,#6b91c8,#3d5e91)}
   .combat-btn.potion{background:linear-gradient(180deg,#6bcda0,#34835d)}
   .combat-btn.ultimate{background:linear-gradient(180deg,#c476ff,#6f3bb0);box-shadow:0 0 18px rgba(181,140,255,.18),inset 0 0 0 1px rgba(255,255,255,.12)}

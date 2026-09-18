@@ -103,7 +103,7 @@
 
   function configureActions(next={}){
     for(const name of [
-      "basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate",
+      "basicAttack","manaAttack","bloodmageAttack","invokerQuasAttack","invokerWexAttack","invokerExortAttack","guard","bloodmageGuard","potion","ultimate",
       "manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"
     ]){
       if(typeof next?.[name]!=="function")throw new Error(`Classes action routing requires ${name}().`);
@@ -116,9 +116,13 @@
     const action=actions();
     if(kind==="attack"){
       if(active("bloodmage"))return action.bloodmageAttack();
+      if(active("invoker"))return action.invokerWexAttack();
       if(hasMechanic("mana"))return action.manaAttack();
       return action.basicAttack();
     }
+    if(kind==="invoker-quas"){if(active("invoker"))return action.invokerQuasAttack();return undefined;}
+    if(kind==="invoker-wex"){if(active("invoker"))return action.invokerWexAttack();return undefined;}
+    if(kind==="invoker-exort"){if(active("invoker"))return action.invokerExortAttack();return undefined;}
     if(kind==="guard")return active("bloodmage")?action.bloodmageGuard():action.guard();
     if(kind==="potion")return action.potion();
     if(kind==="ultimate")return action.ultimate();

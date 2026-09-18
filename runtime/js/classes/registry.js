@@ -46,7 +46,7 @@
       "attackIcon": "✨",
       "fxIcon": "✦",
       "unlock": "Defeat the Board 1 miniboss",
-      "desc": "An occult spellcaster with a real Mana cycle. Channel Bolt builds Mana; Arcane Lance spends it, converts half of your Echo Strike chance into bonus spell damage, and benefits from Lifesteal. Sorcerer's Signature Burst is Arcane Surge: when it procs, that basic or Echo strike deals 50% more damage.",
+      "desc": "An occult spellcaster with a real Mana cycle. Channel Bolt builds Mana; Arcane Lance spends it on a Crit-capable spell that converts half of Echo chance into bonus damage, applies Echo-weighted Poison, Lifesteal, and guarantees a random core-element eruption. Sorcerer's Signature Burst is Arcane Surge: when it procs, that basic or Echo strike deals 50% more damage.",
       "stats": "31 HP · 7 ATK · 25/100 MANA · 5 LUCK",
       "ultimate": {
         "name": "Starfall",
@@ -65,7 +65,7 @@
         "classBurst": 0.2,
         "lifeSteal": 0
       },
-      "scaleNotes": "Attack powers both Channel Bolt and Arcane Lance. Arcane Lance converts half of your Echo Strike chance into bonus spell damage and applies Lifesteal to the spell plus its forced elemental eruption. Mana generation determines spell frequency; Crit, elemental power and Luck improve the payoff. Arcane Surge is the Sorcerer signature burst: each basic or Echo strike has your Signature Burst chance to deal 50% more strike damage.",
+      "scaleNotes": "Attack powers both Channel Bolt and Arcane Lance. Arcane Lance can Crit, converts half of Echo chance into bonus spell damage, applies Poison at Echo × Poison chance, and Lifesteals from the spell plus its forced elemental eruption. Prismatic Echo can repeat that eruption. Mana generation determines spell frequency; Crit, Echo, Poison and elemental power all improve the payoff.",
       "tags": [
         "ranged",
         "occult",
@@ -74,7 +74,7 @@
       ],
       "passive": {
         "name": "Arcane Reservoir",
-        "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal. Arcane Surge is a Signature Burst: each basic or Echo strike has your Signature Burst chance to deal 50% more damage."
+        "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, can Crit, converts half of Echo chance into bonus damage, applies Echo-weighted Poison and Lifesteals from its forced elemental eruption."
       }
     },
     "fighter": {
@@ -140,7 +140,7 @@
         "classBurst": 0.14,
         "lifeSteal": 0
       },
-      "scaleNotes": "Attack, Echo Strike and Dodge work together: more Echo means more hits and ultimate charge opportunities, while sustain lets Monk survive long enough to exploit them. Hundred Fists scales mostly from Attack.",
+      "scaleNotes": "Attack, Echo Strike and Dodge work together: every real base hit and Echo Strike advances Flowing Combo after the action, so Echo directly accelerates the class engine. Hundred Fists scales mostly from Attack.",
       "tags": [
         "melee",
         "combo",
@@ -148,7 +148,7 @@
       ],
       "passive": {
         "name": "Flowing Combo",
-        "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+        "desc": "Every real basic hit and Echo Strike advances Combo after the action, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
       }
     },
     "clown": {
@@ -214,7 +214,7 @@
         "classBurst": 0.18,
         "lifeSteal": 0.05
       },
-      "scaleNotes": "Rouge—the colour—likes Attack, Crit and Lifesteal. Its crimson bursts become safer as Lifesteal rises, and Crimson Deluge rewards a damage-heavy build that can immediately drink back lost HP.",
+      "scaleNotes": "Rouge—the colour—likes Attack, Crit, Echo, Poison and Lifesteal. Scarlet Hex converts half of Echo chance into spell damage, applies Poison at Echo × Poison chance, and real Rouge drains doubled Lifesteal from its full primary-plus-splash damage package.",
       "tags": [
         "weird",
         "artful",
@@ -223,7 +223,7 @@
       ],
       "passive": {
         "name": "Painted Hexcraft",
-        "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+        "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage, applies Echo-weighted Poison and drains doubled Lifesteal from the full Hex."
       }
     },
     "berserker": {
@@ -421,12 +421,12 @@
       "attackIcon": "🦇",
       "fxIcon": "🩸🦇",
       "unlock": "Exceed 100% Lifesteal and defeat the Board 3 final boss",
-      "desc": "A lifestealing occult duelist. Night Siphon builds Mana; Grave Lance spends it and drinks the damage back as health.",
+      "desc": "A lifestealing occult duelist. Night Siphon builds Mana; Grave Lance spends it on a Crit-capable strike that scales from Lifesteal and Echo, rolls normal elements and Poison, then drinks the damage back at doubled Lifesteal.",
       "stats": "41 HP · 7 ATK · 25/100 MANA · 28% LIFESTEAL",
       "ultimate": {
         "name": "Crimson Eclipse",
         "icon": "🌑",
-        "desc": "Drain the entire pack for heavy damage and heal for 50% of damage dealt."
+        "desc": "Drain the entire pack with damage that scales from Lifesteal and Echo; healing also scales from current Lifesteal."
       },
       "base": {
         "maxHp": 41,
@@ -440,7 +440,7 @@
         "classBurst": 0.16,
         "lifeSteal": 0.18
       },
-      "scaleNotes": "Lifesteal is the signature multiplier because every damage increase also becomes healing. Attack, Crit and Echo therefore double as sustain stats. Blood Moon can turn excess healing into temporary battle HP.",
+      "scaleNotes": "Lifesteal is now both offense and sustain: Grave Lance gains damage from current Lifesteal, converts 80% of Echo chance into bonus damage, uses 120% of normal Poison chance, can Crit and rolls normal elements. Crimson Eclipse also converts Lifesteal and Echo into pack damage, while its drain rises with current Lifesteal.",
       "tags": [
         "vampiric",
         "occult",
@@ -449,7 +449,7 @@
       ],
       "passive": {
         "name": "Night Hunger",
-        "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
+        "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance scales from Lifesteal and Echo, can Crit, rolls normal elements and Poison, and drains doubled Lifesteal."
       }
     },
     "ninja": {
@@ -556,7 +556,7 @@
         "classBurst": 0.22,
         "lifeSteal": 0.08
       },
-      "scaleNotes": "Gold is a combat stat. Several attacks and weapons convert the purse directly into damage, while Luck and gold bonuses accelerate the economy that powers the class.",
+      "scaleNotes": "Gold is a combat stat. Foreclosure Hex adds 5% of current gold with no cap, then multiplies that damage by current Crit and Echo instead of rolling Crit. It also keeps normal Poison and elemental proc chances, so wealth builds still benefit from combat stats.",
       "tags": [
         "wealth",
         "occult",
@@ -565,7 +565,7 @@
       ],
       "passive": {
         "name": "Occult Accounting",
-        "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
+        "desc": "Selling unused gear pays 200% normal value. Ledger Tap builds Mana; Foreclosure Hex spends it, adds uncapped gold scaling, multiplies with Crit/Echo, and keeps normal Poison/element procs."
       }
     },
     "cleric": {
@@ -686,7 +686,7 @@
       "attackIcon": "🗡️",
       "fxIcon": "🗡️💨",
       "unlock": "Hold 5,000 gold at one time and defeat the Board 3 miniboss",
-      "desc": "A fast opportunist built around Dodge, gold and one Steal attempt per battle. The Rogue wins by making every pocket somebody else's problem.",
+      "desc": "A fast opportunist built around Dodge, gold and one Steal attempt per battle. Stat Heist can upgrade successful Steals to borrow 10% of a target's ATK and DEF for that battle.",
       "stats": "34 HP · 8 ATK · 22% CRIT · 14% DODGE",
       "scaleNotes": "Raw Attack and Crit scale its burst fastest. Gold is also tactical fuel: some Rogue powers and its ultimate turn a rich purse into momentum.",
       "ultimate": {
@@ -713,7 +713,7 @@
       ],
       "passive": {
         "name": "Sticky Fingers",
-        "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
+        "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can snatch a random powerup; Grand Larceny can also steal battle-only ATK/DEF. Starts with +25% gold gain and +5% Dodge."
       }
     },
     "bloodmage": {
@@ -724,9 +724,9 @@
       "attackIcon": "🩸",
       "fxIcon": "🩸💥",
       "unlock": "Secret: defeat the Bloodmage hidden inside a Bloodwell",
-      "desc": "A forbidden occult caster that replaces Mana with HP. Bloodletting restores fuel, Exsanguinate spends life for damage, and Replenish heals both combatants.",
+      "desc": "A forbidden occult caster that replaces Mana with HP. Bloodletting restores fuel, Exsanguinate spends life on a Crit-capable attack that converts half of Echo chance into damage and can proc Poison/elements, and Replenish heals both combatants.",
       "stats": "39 HP · 9 ATK · 1 DEF · LIFE-FUELLED",
-      "scaleNotes": "Attack scales burst damage, while max HP determines how much blood you can safely spend. Healing and lifesteal extend the amount of damage the class can buy with its own veins.",
+      "scaleNotes": "Attack and max HP scale Exsanguinate's blood-fuel base; Crit multiplies it, half of Echo chance becomes deterministic bonus damage, and Poison uses (50% Echo) × Poison chance. Normal elemental procs still fire from the landing hit.",
       "ultimate": {
         "name": "Sanguine Cataclysm",
         "icon": "🩸☄️",
@@ -752,7 +752,7 @@
       ],
       "passive": {
         "name": "Blood Is Mana",
-        "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
+        "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for Crit/Echo/Poison/element-scaled damage; Replenish heals both sides."
       }
     },
     "summoner": {
@@ -762,7 +762,7 @@
       "attackIcon": "✨",
       "fxIcon": "🔹🐾",
       "unlock": "Raise any 3 companions to level 10",
-      "desc": "A Mana-based pet caster. Spirit Bolt builds Mana; Conjure Familiar spends it to call temporary elemental spirits that join companion attacks for the rest of the battle.",
+      "desc": "A Mana-based pet caster. Spirit Bolt builds Mana; Conjure Familiar spends it to call temporary elemental spirits that join companion attacks. The companion circle converts 10% of Summoner Attack into pet damage before class powerups.",
       "stats": "36 HP · 6 ATK · 35/120 MANA · SUMMONS",
       "ultimate": {
         "name": "Grand Convergence",
@@ -790,7 +790,7 @@
       ],
       "passive": {
         "name": "Spirit Circle",
-        "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
+        "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. The companion circle converts 10% of player Attack into pet damage, and Summoned spirits attack after the normal companion."
       }
     },
     "pokemontrainer": {
@@ -839,7 +839,7 @@
       "attackIcon": "🧪",
       "fxIcon": "🧪💥",
       "unlock": "Use 15 potions across all runs",
-      "desc": "A potion engineer who brews replacements during combat and can drink potions for healing or throw them as volatile weapons. Starts with +50% Potion Healing and gains another +5% Potion Healing every level. Offensive flask damage scales directly with Potion Healing bonuses.",
+      "desc": "A potion engineer who brews replacements during combat and can drink potions for healing or throw them as volatile weapons. Volatile Flask deals 150% Potion Healing + 100% Attack, can Crit, and uses 250% of current Poison chance.",
       "stats": "39 HP · 6 ATK · 1 DEF · +50% POTION HEALING · +5%/LEVEL",
       "ultimate": {
         "name": "Grand Distillation",
@@ -866,7 +866,7 @@
       ],
       "passive": {
         "name": "Combat Distillery",
-        "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+        "desc": "Every third basic attack brews a potion. Volatile Flask converts 150% Potion Healing + 100% Attack into pack damage, can Crit and uses 250% Poison chance."
       }
     },
     "ouroboros": {
@@ -915,7 +915,7 @@
       "unlock": "Defeat the Board 4 miniboss once",
       "desc": "A lance fighter who uses Jump to become Airborne through one enemy response, then spends the following action on a powerful landing strike.",
       "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT · JUMP",
-      "scaleNotes": "Attack drives both ordinary strikes and the landing hit. Crit and elemental effects use their normal combat policies on a landing, while Aerial Discipline shortens Jump's six-turn cooldown.",
+      "scaleNotes": "Attack drives both ordinary strikes and the landing hit. Landing rolls normal Crit, Poison and elemental effects, while Aerial Discipline shortens Jump's six-turn cooldown.",
       "ultimate": {
         "name": "Dragon Dive",
         "icon": "🐉💥",
@@ -947,7 +947,7 @@
       "attackIcon": "✨",
       "fxIcon": "🔵🟢🔴",
       "unlock": "Cast 100 Mana-spender spells across your career.",
-      "desc": "A grand occultist who turns Defend, Mana generation and Mana spending into a three-orb formula. Invoke combines the current three orbs into one of ten battle spells.",
+      "desc": "A grand occultist with three offensive orb strikes: Quas uses 70% Echo and forms Blue, Wex uses 120% Echo and generates Mana/Green, and Exort uses 70% Echo and forms Red. Elemental Lance spends Mana for a Crit/Poison/element/Lifesteal-scaled Red attack, and Invoke combines the current three orbs into one of ten battle spells.",
       "stats": "32 HP · 6 ATK · 25/100 MANA · THREE ORBS",
       "ultimate": {"name":"Invoke","icon":"🔵🟢🔴","desc":"At 100 Ultimate, invoke the spell determined by your current three-orb formula."},
       "base": {"maxHp":32,"attack":6,"defense":0,"crit":0.08,"dodge":0.02,"luck":0.05,"doubleStrike":0.05,"guardPower":0.50,"classBurst":0,"lifeSteal":0},
@@ -992,14 +992,14 @@
   };
 
   const CLASS_PASSIVE_DATA={
-    "invoker": {"name":"Orb Invocation","desc":"Defend forms Blue, Mana generation forms Green, and Mana spending forms Red. Three active orbs empower you and define Invoke."},
+    "invoker": {"name":"Orb Invocation","desc":"Quas and Exort use 70% Echo chance; Wex uses 120%. They form Blue/Green/Red, Guard can still form Blue, and Elemental Lance forms Red. Three active orbs empower you and define Invoke."},
     "ranger": {
       "name": "Marked Quarry",
       "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
     },
     "sorcerer": {
       "name": "Arcane Reservoir",
-      "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal."
+      "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance can Crit, converts half of Echo chance into bonus damage, applies Echo-weighted Poison and Lifesteals from its forced elemental eruption."
     },
     "fighter": {
       "name": "Counterstance",
@@ -1007,7 +1007,7 @@
     },
     "monk": {
       "name": "Flowing Combo",
-      "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+      "desc": "Every real basic hit and Echo Strike advances Combo after the action, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
     },
     "clown": {
       "name": "Opening Gag",
@@ -1015,7 +1015,7 @@
     },
     "rouge": {
       "name": "Painted Hexcraft",
-      "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on violent battle-art magic."
+      "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit magic with Echo damage, Echo-weighted Poison and doubled Lifesteal."
     },
     "berserker": {
       "name": "Blood Rage",
@@ -1039,7 +1039,7 @@
     },
     "vampire": {
       "name": "Night Hunger",
-      "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
+      "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance scales from Lifesteal/Echo, rolls Crit/Poison/elements and drains doubled Lifesteal."
     },
     "ninja": {
       "name": "Smoke Counter",
@@ -1051,7 +1051,7 @@
     },
     "merchant": {
       "name": "Occult Accounting",
-      "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
+      "desc": "Selling unused gear pays 200% normal value. Foreclosure Hex adds uncapped gold scaling, deterministic Crit/Echo multipliers and normal Poison/element procs."
     },
     "cleric": {
       "name": "Faith",
@@ -1067,15 +1067,15 @@
     },
     "rogue": {
       "name": "Sticky Fingers",
-      "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
+      "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. High Luck can steal a powerup, and Stat Heist can steal battle-only ATK/DEF. Starts with +25% gold gain and +5% Dodge."
     },
     "bloodmage": {
       "name": "Blood Is Mana",
-      "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
+      "desc": "Uses HP where other occult classes use Mana. Exsanguinate spends life on Crit/Echo/Poison/element-scaled damage; Replenish heals both sides."
     },
     "summoner": {
       "name": "Spirit Circle",
-      "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
+      "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoner converts 10% of Attack into pet damage before upgrades."
     },
     "pokemontrainer": {
       "name": "Six-Creature Draft",
@@ -1083,7 +1083,7 @@
     },
     "alchemist": {
       "name": "Combat Distillery",
-      "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+      "desc": "Every third basic attack brews a potion. Volatile Flask uses 150% Potion Healing + 100% Attack, can Crit and uses 250% Poison chance."
     },
     "dragoon": {
       "name": "Aerial Discipline",
@@ -1238,7 +1238,7 @@
   function call(name,...args){return requireRuntime(name)(...args);}
 
   const api=Object.freeze({
-    owner:"classes/facade",apiVersion:2,
+    owner:"classes/facade",apiVersion:3,
     ids:CLASS_IDS,
     tagVocabulary:Object.freeze([...CLASS_TAG_VOCABULARY]),
     createRegistry,
@@ -1255,11 +1255,17 @@
     bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
     roguePowerStealChance:luck=>callAction("roguePowerStealChance",luck),
     rogueSteal:()=>callAction("rogueSteal"),
+    clearRogueStolenStats:()=>callAction("clearRogueStolenStats"),
     clericConsecration:()=>callAction("clericConsecration"),
     cycleBeastStance:()=>callAction("cycleBeastStance"),
     bloodmageReplenish:()=>callAction("bloodmageReplenish"),
     bloodmageExsanguinate:()=>callAction("bloodmageExsanguinate"),
     alchemistVolatileFlask:()=>callAction("alchemistVolatileFlask"),
+    dragoonCooldown:()=>callAction("dragoonCooldown"),
+    dragoonTickCooldown:()=>callAction("dragoonTickCooldown"),
+    dragoonResetState:()=>callAction("dragoonResetState"),
+    dragoonLanding:()=>callAction("dragoonLanding"),
+    dragoonJump:()=>callAction("dragoonJump"),
     legacyMonkDodge:base=>callHook("legacyMonkDodge",base),
     identityDodgeAdjustments:base=>callHook("identityDodgeAdjustments",base),
     berserkerDamage:amount=>callHook("berserkerDamage",amount),
@@ -1276,6 +1282,9 @@
     invokerAfterPlayerAction:kind=>invokerRuntime?.afterPlayerAction?.(kind),
     invokerAfterPlayerHit:(target,options)=>invokerRuntime?.afterPlayerHit?.(target,options),
     invokerResponseModifier:()=>invokerRuntime?.responseModifier?.()||null,
+    invokerQuasStrike:()=>callInvoker("quasStrike"),
+    invokerWexStrike:()=>callInvoker("wexStrike"),
+    invokerExortStrike:()=>callInvoker("exortStrike"),
     invokerElementalLance:()=>callInvoker("elementalLance"),
     invokerUltimate:()=>callInvoker("invokeUltimate"),
     invokerBeginCombat:()=>invokerRuntime?.beginCombat?.(),
