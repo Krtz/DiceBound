@@ -38,6 +38,7 @@
     const clamp = requireFunction(ports.rules?.clamp, "rules.clamp");
     const applyCurrentSignature = requireFunction(ports.signatures?.applyCurrent, "signatures.applyCurrent");
     const describeCurrentSignature = requireFunction(ports.signatures?.describeCurrent, "signatures.describeCurrent");
+    const classHasTag = requireFunction(ports.content?.classHasTag, "content.classHasTag");
     const elementIds = Object.freeze([...(ports.content?.elementIds || [])]);
     if (!elementIds.length) throw new TypeError("content.elementIds must contain the runtime element IDs");
 
@@ -47,7 +48,7 @@
       economy: Object.freeze({ goldReward, goldBaseFor, isNightmare }),
       combat: Object.freeze({ heal }),
       rules: Object.freeze({ clamp }),
-      content: Object.freeze({ elementIds }),
+      content: Object.freeze({ elementIds, classHasTag }),
       signatures: Object.freeze({
         applyCurrent: applyCurrentSignature,
         describeCurrent: describeCurrentSignature,
