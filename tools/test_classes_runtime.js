@@ -126,6 +126,12 @@ assert.doesNotMatch(monolith,/db060BloodmageBase/,'Blood Price base-capture shad
 assert.doesNotMatch(monolith,/alchemistVolatileFlaskV16/,'Alchemist Volatile Flask still lives in monolith');
 assert.doesNotMatch(monolith,/beta021RoguePowerStealChance/,'Rogue power-steal helper still lives in monolith');
 
+assert.match(monolith,/function dbFriendDragoonLanding\(\)\{return dbClasses\.dragoonLanding\(\);\}/,'Dragoon landing compatibility seam must delegate directly to Classes');
+assert.match(monolith,/async function dbFriendDragoonJump\(\)\{return dbClasses\.dragoonJump\(\);\}/,'Dragoon Jump compatibility seam must delegate directly to Classes');
+assert.match(monolith,/function dbFriendTickDragoonCooldown\(\)\{return dbClasses\.dragoonTickCooldown\(\);\}/,'Dragoon cooldown compatibility seam must delegate directly to Classes');
+assert.doesNotMatch(monolith,/player\.dragoonAirborneResponses\s*=\s*1/,'Dragoon airborne gameplay body returned to dicebound.js');
+assert.doesNotMatch(monolith,/player\.dragoonLandingReady\s*=\s*true/,'Dragoon landing state mutation returned to dicebound.js');
+
 const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));
 const runtimeModule=manifest.modules.find(entry=>entry.id==="classes-runtime"),actionsModule=manifest.modules.find(entry=>entry.id==="classes-actions"),hooksModule=manifest.modules.find(entry=>entry.id==="classes-hooks");
 assert.ok(runtimeModule,"classes-runtime manifest owner missing");assert.equal(runtimeModule.path,"js/classes/runtime.js");assert.deepEqual(runtimeModule.requires,["classes-registry"]);assert.deepEqual(runtimeModule.provides,[],"focused Classes runtime should not publish a peer public facade");
