@@ -108,25 +108,6 @@
     return out;
   }
 
-  // Compatibility helpers remain callable for older focused consumers, but the
-  // canonical selection paths use cascadeLuckRows directly.
-  function lowTierSuppression(luck){return clamp01(luckShiftBudget(luck)/.55);}
-  function lowTierWeightMultiplier(rarity,luck){return String(rarity||"").toLowerCase()==="poor"?1-lowTierSuppression(luck):1;}
-  function luckFloor(luck){
-    const rows=ordinaryGearRows({luck});
-    for(const id of ORDINARY_LOOT_PROGRESSION){
-      const row=rows.find(entry=>entry[0]===id);
-      if((row?.[1]||0)>1e-12)return id;
-    }
-    return ORDINARY_LOOT_PROGRESSION.at(-1);
-  }
-  function promoteOrdinaryRarityForLuck(rarity,luck){
-    const index=ORDINARY_LOOT_PROGRESSION.indexOf(String(rarity||"").toLowerCase()),floor=ORDINARY_LOOT_PROGRESSION.indexOf(luckFloor(luck));
-    return index<0?rarity:ORDINARY_LOOT_PROGRESSION[Math.max(index,floor)];
-  }
-  function filterPowerupPoolForLuck(pool){return Array.isArray(pool)?pool:[];}
-  function suppressLowTierRows(rows,luck){return cascadeLuckRows(rows,luck,RARITY_LADDER);}
-
   function ordinaryGearRows({bonus=0,depth=0,luck=0,nightmare=false,hell=false}={}){
     const rawLuck=Math.max(0,Number(luck)||0);
     const boost=(Number(bonus)||0)+(Number(depth)||0)*.055+(nightmare?.035:0)+(hell?.035:0);
@@ -173,12 +154,6 @@
     isPowerupRarityAtLeast,
     luckShiftBudget,
     cascadeLuckRows,
-    lowTierSuppression,
-    lowTierWeightMultiplier,
-    luckFloor,
-    promoteOrdinaryRarityForLuck,
-    filterPowerupPoolForLuck,
-    suppressLowTierRows,
     ordinaryGearRows,
     weightedRarityFromRows,
     rollOrdinaryGearRarity
