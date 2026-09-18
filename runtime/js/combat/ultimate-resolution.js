@@ -62,7 +62,7 @@
       text = `Croak Cascade converts ${Math.round(p.doubleStrike * 100)}% Echo into ${jumps} jumps for ${dealt} total damage.`; damage = 0;
     } else if (p.classId === "d20") { damage = Math.round(p.attack * (2.1 + chaos.roll * .12)) + rt.rand(1, chaos.roll || 1); aoe = chaos.roll >= 15; text = "Natural Twenty warps probability for {DAMAGE}.";
     } else if (p.classId === "slime") { damage = Math.round(p.attack * 2.7) + rt.rand(3, 8); text = "Ooze Everything washes over the pack for {DAMAGE}.";
-    } else if (p.classId === "vampire") { damage = Math.round(p.attack * 3.15) + rt.rand(4, 9); text = "Crimson Eclipse drains the pack for {DAMAGE}.";
+    } else if (p.classId === "vampire") { const ls = Math.max(0, Number(p.lifeSteal) || 0), echo = Math.max(0, Number(p.doubleStrike) || 0); damage = Math.round((p.attack * 3.15 + rt.rand(4, 9)) * (1 + ls * .75 + echo * .35)); text = "Crimson Eclipse converts Lifesteal and Echo into pack damage for {DAMAGE}.";
     } else if (p.classId === "ninja") {
       let dealt = 0;
       for (let i = 0; i < 5 && livingEnemies().length; i++) { const t = currentEnemy()?.hp > 0 ? currentEnemy() : livingEnemies()[0], crit = rt.rollTieredProc(p.crit) + 1, d = Math.round(p.attack * .85 * (1 + crit)); dealt += rt.damageEnemy(t, d); await rt.animateClassAttack("crit"); await rt.delay(rt.getCombatActionDelay()); }
@@ -81,7 +81,7 @@
     if (twoTarget) [currentEnemy(), ...livingEnemies().filter(e => e !== currentEnemy())].slice(0, 2).forEach((e, i) => dealt += rt.damageEnemy(e, damage * (i ? .85 : 1)));
     else if (!["frog", "ninja"].includes(p.classId)) dealt = aoe ? rt.damageAll(damage, .78) : rt.damageEnemy(currentEnemy(), damage);
     const proc = livingEnemies().length ? rt.triggerStrikeElements(currentEnemy(), chaos) : { totalDamage: 0, message: "" };
-    const drain = p.lifeSteal + (p.classId === "sorcerer" ? .20 : 0) + (p.classId === "rouge" ? .25 : 0) + (p.classId === "vampire" ? .50 : 0);
+    const drain = p.classId === "vampire" ? Math.min(2.5, .35 + Math.max(0, Number(p.lifeSteal) || 0) * 1.5) : p.lifeSteal + (p.classId === "sorcerer" ? .20 : 0) + (p.classId === "rouge" ? .25 : 0);
     const healAmount = drain > 0 && (dealt + proc.totalDamage) > 0 ? Math.max(1, Math.floor((dealt + proc.totalDamage) * drain)) : 0;
     const healed = rt.healPlayer(healAmount);
     const pants = rt.applyMythicPantsPulse();
