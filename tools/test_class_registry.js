@@ -13,7 +13,7 @@ vm.runInContext(source, context, { filename: sourcePath });
 
 const classes = context.window.DiceboundClasses;
 assert.ok(classes, "class registry did not publish window.DiceboundClasses");
-assert.equal(classes.apiVersion, 2);
+assert.equal(classes.apiVersion, 3);
 assert.ok(Object.isFrozen(classes), "public class registry API is mutable");
 assert.ok(Object.isFrozen(classes.ids), "public class id list is mutable");
 assert.ok(Object.isFrozen(classes.tagVocabulary), "public class tag vocabulary is mutable");
