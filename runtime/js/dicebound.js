@@ -185,7 +185,7 @@
   if(!DB317_ENEMY_POOL_RAW)throw new Error("DiceboundEnemies must load before dicebound.js");
   const enemyPool=DB317_ENEMY_POOL_RAW;
   const DB_RARITIES=window.DiceboundRarities;
-  if(!DB_RARITIES?.isPowerupRarityAtLeast)throw new Error("DiceboundRarities must provide powerup rarity policy before dicebound.js");
+  if(!DB_RARITIES?.isPowerupRarityAtLeast||!DB_RARITIES?.cascadeLuckRows||!DB_RARITIES?.rollOrdinaryGearRarity)throw new Error("DiceboundRarities must provide rarity and Luck policy before dicebound.js");
   const DB317_RARITY_INFO_RAW=window.DiceboundRarities?.createInfoRegistry();
   if(!DB317_RARITY_INFO_RAW)throw new Error("DiceboundRarities must load before dicebound.js");
   const rarityInfo=DB317_RARITY_INFO_RAW;
@@ -1134,7 +1134,7 @@ function returnToRoad(...args){
     slimeIdentityActive:()=>classIdentityActive("slime"),
     slimePowerCompatible:u=>{const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&dbProgression.isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));return dbPowerups.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps);},
     slimeRougePowerCompatible:u=>v318SlimeRougePowerCompatible(u),
-    cascadeLuckRows:(rows,luck,progression)=>DB_RARITIES.cascadeLuckRows?.(rows,luck,progression),
+    cascadeLuckRows:(rows,luck,progression)=>DB_RARITIES.cascadeLuckRows(rows,luck,progression),
     getBoardLevel:()=>boardLevel,currentTileCount:()=>currentTileCount(),random:()=>random(),rand:(min,max)=>rand(min,max),pick:list=>pick(list),clamp:(value,min,max)=>clamp(value,min,max),
     classIdentityActive:id=>classIdentityActive(id),hasLegendaryEffect:id=>db060HasEffect(id),saveMeta:()=>saveMeta(),addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{ensureAlphaMeta().powerupsTaken++;saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
