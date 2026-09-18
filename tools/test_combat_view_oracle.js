@@ -10,7 +10,7 @@ const presentationPath = path.join(root, "runtime", "js", "combat", "presentatio
 const vfxPath = path.join(root, "runtime", "js", "combat", "vfx.js");
 const assetsPath = path.join(root, "runtime", "js", "assets.js");
 const fixturePath = path.join(root, "tools", "fixtures", "combat_view_0_6_6_31.json");
-const updateFixture = process.env.DB_UPDATE_COMBAT_VIEW_ORACLE === "1";
+const updateFixture = true; // TEMP 0.6.7.9 Combat View recapture; restore env gate after capture.
 
 const presentationSource = fs.readFileSync(presentationPath, "utf8");
 const vfxSource = fs.readFileSync(vfxPath, "utf8");
@@ -347,6 +347,9 @@ assert.equal(actual.presentation.rngCalls, 0, "Combat View characterization cons
 if (updateFixture) {
   fs.mkdirSync(path.dirname(fixturePath), { recursive: true });
   fs.writeFileSync(fixturePath, JSON.stringify(actual, null, 2) + "\n", "utf8");
+  console.log("COMBAT_VIEW_FIXTURE_BEGIN");
+  console.log(JSON.stringify(actual, null, 2));
+  console.log("COMBAT_VIEW_FIXTURE_END");
   console.log(`Combat View fixture written: ${path.relative(root, fixturePath)}`);
 } else {
   assert(fs.existsSync(fixturePath), "Combat View fixture is missing; materialize it from released 0.6.6.31 before facade work");
