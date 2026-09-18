@@ -1532,6 +1532,9 @@ function returnToRoad(...args){
     basicAttack:()=>dbCombat.attack(),
     manaAttack:()=>dbCombat.channel(),
     bloodmageAttack:()=>dbClasses.bloodmageBloodletting(),
+    invokerQuasAttack:()=>dbClasses.invokerQuasStrike(),
+    invokerWexAttack:()=>dbClasses.invokerWexStrike(),
+    invokerExortAttack:()=>dbClasses.invokerExortStrike(),
     guard:()=>identityGuardAction(),
     bloodmageGuard:()=>dbClasses.bloodmageReplenish(),
     potion:()=>identityPotionAction(),
@@ -4421,6 +4424,7 @@ dbReturnToRoadTraceReady=true;
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
     onDragoonJump:()=>dbFriendDragoonJump(),
+    performClassAction:kind=>dbClasses.performAction(kind),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms)
   });
@@ -4531,7 +4535,8 @@ dbReturnToRoadTraceReady=true;
     addEnemyBurn:(enemy,stacks)=>dbCombatElementResolution.addEnemyBurn(enemy,stacks),updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),addCombatHistory:text=>addCombatHistory(text),identityFlash:text=>identityFlash(text),
     delay:ms=>delay(ms),winCombat:()=>dbCombat.win(),resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
     clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
-    recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document
+    recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document,
+    playerAttack:options=>dbCombat.attack(options),manaGain:amount=>dbCombat.manaGain(amount)
   });
 
   dbInfoGuide=window.DiceboundInfoGuide;
