@@ -42,6 +42,10 @@ const effectController=owner.createController({
   ordinaryApi:{generateOrdinaryItem:()=>({id:"effect-test",slot:"weapon",rarity:"legendary",bonuses:{}})}
 });
 assert.equal(effectController.hasEffect("hoarders_arsenal"),false);
+assert.match(effectController.effectDescription({legendaryEffectId:"hoarders_arsenal"}),/current 0 gold, it grants \+0 damage/);
+effectPlayer.gold=1250;
+assert.match(effectController.effectDescription({legendaryEffectId:"hoarders_arsenal"}),/current 1250 gold, it grants \+2 damage/,"Hoarder's Arsenal presentation must expose the same live floor(gold\/500) bonus as combat");
+assert.equal(effectController.effectDescription({legendaryEffectId:"reverse_engineering"}),owner.effectById.reverse_engineering.desc,"other Legendary descriptions must remain canonical and static");
 effectPlayer.equipment.weapon={id:"hoarder-test",slot:"weapon",legendaryEffectId:"hoarders_arsenal"};
 assert.equal(effectController.hasEffect("hoarders_arsenal"),true,"equipped Hoarder's Arsenal must aggregate by stable effect ID");
 effectPlayer=JSON.parse(JSON.stringify(effectPlayer));
@@ -74,6 +78,7 @@ assert.doesNotMatch(monolith,/\bfunction\s+generateLegendary\s*\(/,"call-only ge
 assert.ok(monolith.includes("dbItems.generateEquipment("),"ordinary generator callers must route directly through DiceboundItems");
 assert.ok(monolith.includes("dbItems.generateLegendary("),"Legendary callers must route directly through DiceboundItems");
 assert.ok(monolith.includes("dbItemGenerationOwner.createController({"),"composition must bind focused generation owner");
+assert.ok(monolith.includes("dbItemGeneration.effectDescription(item)"),"Legendary equipment presentation must consume the Items owner's live effect description");
 assert.ok(monolith.includes("generateLegendary:(slot=null,preferUndiscovered=false)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateLegendary(slot,preferUndiscovered);}"),"Items facade Legendary port must delegate to the focused generation controller");
 
 console.log("Items generation owner boundary PASS: historical generator ladder and call-only adapters retired behind DiceboundItems.");
