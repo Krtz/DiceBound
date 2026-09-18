@@ -165,7 +165,7 @@
     economy:{goldReward:amount=>modifiedGold(amount),goldBaseFor:(source,level,multiplier)=>window.DiceboundEventRewards.goldBaseFor(source,level,multiplier),isNightmare:()=>nightmareMode},
     combat:{heal:amount=>dbCombat.heal(amount)},
     rules:{clamp:(value,min,max)=>clamp(value,min,max)},
-    content:{elementIds:DIBO_ELEMENTS},
+    content:{elementIds:DIBO_ELEMENTS,classHasTag:(classId,tag)=>(CLASSES[classId]?.tags||[]).includes(tag)},
     signatures:{
       applyCurrent:()=>{
         const service=window.DiceboundPerfectedSignature;
