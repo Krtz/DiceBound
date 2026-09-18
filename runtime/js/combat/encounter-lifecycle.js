@@ -25,7 +25,7 @@
       "setCombatTitle","getCombatTitle","setCombatSubtitle","clearCombatHistory","setCombatText","showCombatOverlay","addLog",
       "renderEnemyParty","updateCombatUI","pick","clamp","identityFlash","addCombatHistory","updateBossSpecialIndicator",
       "clearStoneBattle","restoreEnemyElementDebuffs","clearBattleLegendaryTemps","traceCoreStart",
-      "syncBattleLog","clearCombatPresentation","refreshActivePetArt"
+      "syncBattleLog","clearCombatPresentation","refreshActivePetArt","clearRogueStolenStats"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat encounter-lifecycle runtime missing ${name}().`);
     runtime = nextRuntime;
@@ -93,6 +93,7 @@
 
   function applyClassEntry() {
     const rt = requireRuntime(), player = rt.getPlayer();
+    rt.clearRogueStolenStats();
     player.rogueStealUsed = false;
     player.monkCombo = 0;
     player.fighterCounterReady = false;
