@@ -3252,7 +3252,7 @@ dbReturnToRoadTraceReady=true;
 
   // Generated Legendary effects count as real item value in comparisons.
   const db060FormatBonusesBase=formatBonuses;
-  formatBonuses=function(item){const base=db060FormatBonusesBase(item);if(!item?.legendaryEffectId)return base;const e=DB060_EFFECT_BY_ID[item.legendaryEffectId];return `${base} · LEGENDARY EFFECT: ${e?.name||item.legendaryEffectName} — ${e?.desc||item.legendaryEffectDesc||''}`;};
+  formatBonuses=function(item){const base=db060FormatBonusesBase(item);if(!item?.legendaryEffectId)return base;const e=DB060_EFFECT_BY_ID[item.legendaryEffectId],desc=dbItemGeneration.effectDescription(item);return `${base} · LEGENDARY EFFECT: ${e?.name||item.legendaryEffectName} — ${desc||item.legendaryEffectDesc||''}`;};
 
   // CURRENT NAMED LEGENDARIES -> MYTHICAL ----------------------------------
   const db060NamedMythicals=new Set(["Axel's Coffee Mug",'Kratz Headphones',"The Jean Jacket Lost at Kelly's"]);
