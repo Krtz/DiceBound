@@ -4,9 +4,9 @@
   const OWNER = "classes/invoker";
   const ORB = Object.freeze({ BLUE: "blue", GREEN: "green", RED: "red" });
   const ATTACK = Object.freeze({
-    quas: Object.freeze({ orb: ORB.BLUE, name: "Quas Strike", damage: .85, suppressEcho: true, mana: 0 }),
-    wex: Object.freeze({ orb: ORB.GREEN, name: "Wex Strike", damage: .85, suppressEcho: false, mana: 25 }),
-    exort: Object.freeze({ orb: ORB.RED, name: "Exort Strike", damage: 1.20, suppressEcho: true, mana: 0 })
+    quas: Object.freeze({ orb: ORB.BLUE, name: "Quas Strike", damage: .85, echoMultiplier: .70, mana: 0 }),
+    wex: Object.freeze({ orb: ORB.GREEN, name: "Wex Strike", damage: .85, echoMultiplier: 1.20, mana: 25 }),
+    exort: Object.freeze({ orb: ORB.RED, name: "Exort Strike", damage: 1.20, echoMultiplier: .70, mana: 0 })
   });
   const RECIPE = Object.freeze({
     bbb: { name: "Cold Snap", tip: "110% single-target damage; the next 3 player strikes add 30% Attack and the last freezes." },
@@ -24,7 +24,7 @@
 
   function requireRuntime() { if (!runtime) throw new Error("DiceboundInvoker must be configured before use."); return runtime; }
   function configure(next) {
-    const required = ["getPlayer", "getMeta", "isClassActive", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy", "damageEnemy", "damageAll", "healPlayer", "addEnemyBurn", "updateCombatUI", "setCombatText", "addCombatHistory", "identityFlash", "delay", "winCombat", "resolveEnemyResponse", "selectEnemy", "animateUltimate", "animateClassAttack", "clamp", "getEncounterLead", "getSetDamageBonus", "getEncounterTurn", "setEncounterTurn", "recordManaSpenderCast", "saveMeta", "checkDynamicClassUnlocks", "document", "playerAttack", "manaGain"];
+    const required = ["getPlayer", "getMeta", "isClassActive", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy", "damageEnemy", "damageAll", "healPlayer", "addEnemyBurn", "updateCombatUI", "setCombatText", "addCombatHistory", "identityFlash", "delay", "winCombat", "resolveEnemyResponse", "selectEnemy", "animateUltimate", "animateClassAttack", "clamp", "getEncounterLead", "getSetDamageBonus", "getEncounterTurn", "setEncounterTurn", "recordManaSpenderCast", "saveMeta", "checkDynamicClassUnlocks", "document", "playerAttack", "manaGain", "rollTieredProc", "triggerStrikeElements", "playElementAnimation"];
     for (const key of required) if (typeof next?.[key] !== "function") throw new Error(`Invoker runtime missing ${key}().`);
     runtime = next; return api;
   }
@@ -104,17 +104,33 @@
       const baseGain = spec.mana + Math.max(0, Number(p.manaBuilderBonus) || 0);
       rt.manaGain(baseGain * generatorManaMultiplier());
     }
-    return rt.playerAttack({ suppressEcho: spec.suppressEcho, postActionKind: `orb:${spec.orb}`, damageMultiplier: spec.damage });
+    return rt.playerAttack({ echoMultiplier: spec.echoMultiplier, postActionKind: `orb:${spec.orb}`, damageMultiplier: spec.damage });
   }
   const quasStrike = () => orbAttack("quas");
   const wexStrike = () => orbAttack("wex");
   const exortStrike = () => orbAttack("exort");
   async function elementalLance() {
-    const rt = requireRuntime(), p = player(); if (!active() || rt.getCombatBusy() || !rt.getCurrentEnemy() || p.mana < 50) return false;
+    const rt = requireRuntime(), p = player();
+    if (!active() || rt.getCombatBusy() || !rt.getCurrentEnemy() || p.mana < 50) return false;
     rt.setCombatBusy(true); p.guardCooldown = 0; p.mana -= 50; p.combatActionCount = (p.combatActionCount || 0) + 1;
-    await rt.animateClassAttack("crit"); const target = rt.getCurrentEnemy(), echoChance = Math.max(0, Number(p.doubleStrike) || 0) + Math.max(0, Number(actionBonuses().echo) || 0), hit = scale(p.attack * 1.80 * (1 + echoChance * .50)), dealt = rt.damageEnemy(target, hit.amount, false);
+    const target = rt.getCurrentEnemy(), echoChance = Math.max(0, Number(p.doubleStrike) || 0) + Math.max(0, Number(actionBonuses().echo) || 0);
+    const critTiers = rt.rollTieredProc(Math.max(0, Number(p.crit) || 0));
+    await rt.animateClassAttack(critTiers ? "crit" : "normal");
+    const hit = scale(p.attack * 1.80 * (1 + echoChance * .50) * (1 + critTiers)), dealt = rt.damageEnemy(target, hit.amount, false);
+    const element = target.hp > 0 ? (rt.triggerStrikeElements(target) || { totalDamage: 0, message: "" }) : { totalDamage: 0, message: "" };
+    const poisonChance = echoChance * Math.max(0, Number(p.poisonOnHitChance) || 0), poisonStacks = target.hp > 0 ? rt.rollTieredProc(poisonChance) : 0;
+    if (poisonStacks > 0) {
+      target.poisonStacks = (target.poisonStacks || 0) + poisonStacks;
+      rt.playElementAnimation("nature", target, false);
+      rt.addCombatHistory(`☠️ Elemental Lance applies ${poisonStacks} Poison stack${poisonStacks === 1 ? "" : "s"} (${Math.round(poisonChance * 100)}% effective Poison chance).`);
+    }
+    const drainDamage = dealt + Math.max(0, Number(element.totalDamage) || 0);
+    const healed = p.lifeSteal > 0 && drainDamage > 0 ? rt.healPlayer(Math.max(1, Math.floor(drainDamage * p.lifeSteal))) : 0;
     rt.recordManaSpenderCast(); rt.saveMeta(); rt.checkDynamicClassUnlocks(); afterPlayerAction("spender");
-    rt.setCombatText(`🔴 Elemental Lance spends 50 Mana and deals ${dealt} damage.`); rt.updateCombatUI(); await rt.delay(720);
+    let extra = element.message ? ` ${element.message}` : "";
+    if (healed) extra += ` Lifesteal restores ${healed} HP.`;
+    rt.setCombatText(`🔴 Elemental Lance spends 50 Mana and deals ${dealt} damage${critTiers ? ` with ${critTiers} critical tier${critTiers === 1 ? "" : "s"}` : ""}.${extra}`);
+    rt.updateCombatUI(); await rt.delay(720);
     if (!rt.livingEnemies().length) return rt.winCombat(); rt.selectEnemy(rt.getCurrentEnemies().indexOf(rt.livingEnemies()[0])); return rt.resolveEnemyResponse(false);
   }
   async function invokeUltimate() {
