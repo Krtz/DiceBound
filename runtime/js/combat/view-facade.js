@@ -65,6 +65,9 @@
     renderBossSpecialIndicator: (...args) => requirePresentation().renderBossSpecialIndicator(...args),
     statusDotsHTML: (...args) => requirePresentation().statusDotsHTML(...args),
     syncEnergyShieldBars: (...args) => optionalPresentation("syncEnergyShieldBars", args),
+    playerAttack: (...args) => requirePresentation().playerAttack(...args),
+    enemyAttack: (...args) => requirePresentation().enemyAttack(...args),
+    clearEnemyAttackPresentation: (...args) => optionalPresentation("clearEnemyAttackPresentation", args),
     dodge: (...args) => requirePresentation().dodge(...args),
     clearDodgePresentation: (...args) => optionalPresentation("clearDodgePresentation", args),
     syncDragoonPresentation: (...args) => optionalPresentation("syncDragoonPresentation", args),
@@ -87,7 +90,7 @@
     playProjectileProc: (...args) => requireVfx().playProjectileProc(...args),
     clearTransient: (...args) => {
       const result = vfx ? vfx.clearTransient(...args) : undefined;
-      if (presentation) { presentation.clearDodgePresentation(); presentation.clearDragoonPresentation(); }
+      if (presentation) { presentation.clearEnemyAttackPresentation(); presentation.clearDodgePresentation(); presentation.clearDragoonPresentation(); }
       return result;
     },
   });

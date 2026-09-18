@@ -5,9 +5,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
+const rarityPath = path.join(__dirname, "..", "runtime", "js", "items", "rarities.js");
 const sourcePath = path.join(__dirname, "..", "runtime", "js", "items", "loot.js");
 const source = fs.readFileSync(sourcePath, "utf8");
 const context = vm.createContext({ window: {} });
+vm.runInContext(fs.readFileSync(rarityPath, "utf8"), context, { filename: rarityPath });
 vm.runInContext(source, context, { filename: sourcePath });
 
 const loot = context.window.DiceboundLoot;
@@ -172,6 +174,19 @@ for (let board = 1; board <= 6; board += 1) {
   }
 }
 
+for (const [luck,expected] of [[1,"common"],[1.25,"uncommon"],[1.5,"uncommon"],[1.75,"uncommon"],[2,"uncommon"],[10,"uncommon"]]) {
+  const rng=sequence([.5]);
+  const rarity=loot.guardianRarity({defeated:{miniBoss:true},board:1,luck,randomFn:rng.random});
+  assert.equal(rarity,expected,`Board 1 miniboss high-roll rarity must follow shared Luck suppression at ${luck*100} displayed Luck`);
+  assert.equal(rng.calls(),1,"Luck-adjusted guardian rarity must not add RNG draws");
+}
+{
+  const rng=sequence([0,.1]);
+  const drop=plain(loot.ordinaryGuardianDrop({defeated:{miniBoss:true},board:1,luck:2,randomFn:rng.random}));
+  assert.equal(drop.rarity,"uncommon","200 Luck guardian drops must not bypass the canonical Uncommon floor");
+  assert.equal(rng.calls(),2,"miniboss drop chance + rarity must preserve the two-draw contract");
+}
+
 for (let board = 1; board <= 6; board += 1) {
   for (const defeated of [{ miniBoss: true }, { finalBoss: true }, { boss: true }, {}]) {
     for (const mode of modes) {
@@ -199,4 +214,4 @@ assert.match(monolith, /window\.DiceboundLoot/);
 assert.match(monolith, /DB060_LOOT\.artifactChance/);
 assert.match(monolith, /DB060_LOOT\.secretSignatureRate/);
 
-console.log("Loot policy behavior preserved: exact tables, boundaries, promotions, RNG order and monolith ownership removal pass");
+console.log("Loot policy behavior preserved: exact tables, Luck suppression, boundaries, promotions, RNG order and monolith ownership removal pass");

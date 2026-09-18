@@ -126,6 +126,7 @@ function collectPresentation() {
     dragoonJumpCooldown: () => 4,
     onDragoonJump() {},
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
+    delay: async () => {},
     random: () => { rngCalls += 1; return 0.5; },
     rand: () => { rngCalls += 1; return 1; },
     pick: values => { rngCalls += 1; return values[0]; },

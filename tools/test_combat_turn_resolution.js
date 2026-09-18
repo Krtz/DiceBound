@@ -68,6 +68,7 @@ function makeHarness(options={}){
     playHitSfx:()=>{calls.push(["hit-sfx"]);},
     recordDamageTaken:amount=>{damageTaken+=amount;calls.push(["damage-taken",amount]);},
     wolfEchoChance:()=>options.wolfEchoChance||0,
+    presentEnemyAttack:async fact=>{calls.push(["attack-presentation",JSON.parse(JSON.stringify(fact))]);return fact;},
     dodge:unit=>{calls.push(["dodge",unit]);return true;},
     dragoonActive:()=>!!options.dragoon
   };
@@ -100,6 +101,8 @@ function makeHarness(options={}){
     assert.equal(h.damageTaken(),10);
     assert.equal(h.turn(),1);
     assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,1,"a landed hit keeps hit presentation");
+    const attacks=h.calls.filter(call=>call[0]==="attack-presentation").map(call=>call[1]);
+    assert.equal(attacks.length,1);assert.equal(attacks[0].attackId,"basic-attack");assert.equal(attacks[0].enemyIndex,0);assert.equal(attacks[0].outcome,"hit");
     assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
   }
   {
@@ -109,6 +112,7 @@ function makeHarness(options={}){
     assert.deepEqual(h.calls.filter(call=>call[0]==="dodge"),[["dodge","player"]]);
     assert.equal(h.calls.filter(call=>call[0]==="hit-sfx").length,0,"pure Dodge must not also play a hit SFX");
     assert.equal(h.calls.filter(call=>call[0]==="damage-taken").length,0);
+    assert.equal(h.calls.filter(call=>call[0]==="attack-presentation")[0][1].outcome,"dodged","the attack attempt must still present when the player dodges");
   }
   {
     const hydra={name:"Nullstar Hydra",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0};
@@ -117,6 +121,10 @@ function makeHarness(options={}){
     assert.equal(h.player.hp,100);
     assert.equal(h.calls.filter(call=>call[0]==="dodge").length,3,"each independently dodged multi-hit strike retriggers generic Dodge");
     assert.equal(h.calls.filter(call=>call[0]==="rand").length,0,"dodged hits consume no damage-variance RNG");
+    const hydraAttacks=h.calls.filter(call=>call[0]==="attack-presentation").map(call=>call[1]);
+    assert.equal(hydraAttacks.length,3,"multi-hit enemies must animate every resolved strike");
+    assert.deepEqual(hydraAttacks.map(fact=>fact.hitIndex),[1,2,3]);
+    assert.ok(hydraAttacks.every(fact=>fact.attackId==="hydra-heads"&&fact.hitCount===3&&fact.outcome==="dodged"));
   }
   {
     const h=makeHarness({dodgeChance:1,randomValues:[0,0],enemies:[
@@ -126,6 +134,7 @@ function makeHarness(options={}){
     await turns.enemyTurn(false,0);
     assert.equal(h.player.hp,100);
     assert.equal(h.calls.filter(call=>call[0]==="dodge").length,2,"every dodging enemy attack in a pack uses the same generic route");
+    assert.deepEqual(h.calls.filter(call=>call[0]==="attack-presentation").map(call=>call[1].enemyIndex),[0,1],"pack presentation must identify the actual attacking unit");
   }
   {
     const h=makeHarness({enemies:[
@@ -151,6 +160,8 @@ function makeHarness(options={}){
     const h=makeHarness({turn:4,enemies:[guardian],lead:guardian});
     await turns.enemyTurn(false,0);
     assert.equal(h.turn(),5);
+    const guardianAttack=h.calls.find(call=>call[0]==="attack-presentation")?.[1];
+    assert.equal(guardianAttack?.attackId,"guardian-special");assert.equal(guardianAttack?.special,true);
     assert.equal(h.player.hp,77,"Guardian special must retain the 2.25x special base before mitigation");
     assert.ok(h.calls.some(call=>call[0]==="text"&&/Regression Special/.test(call[1])));
   }
@@ -178,6 +189,7 @@ function makeHarness(options={}){
     assert.equal(h.player.hp,95,"Wolf Echo must still resolve after the ordinary turn");
     assert.equal(h.damageTaken(),10,"historical Wolf Echo damageTaken double-recording is intentionally preserved by extraction");
     assert.deepEqual(h.calls.filter(call=>call[0]==="random").map(call=>call[1]),[.5,.5],"Wolf Echo must preserve chance-then-dodge RNG order");
+    assert.equal(h.calls.find(call=>call[0]==="attack-presentation"&&call[1].attackId==="wolf-echo")?.[1].outcome,"hit","Wolf Echo must use the same semantic attack presentation route");
   }
   {
     const wolf={name:"Road Wolf",hp:100,maxHp:100,attack:5,defense:0,skipTurns:1,lifeSteal:0};
@@ -197,11 +209,11 @@ function makeHarness(options={}){
   {
     const h=makeHarness({turn:2,player:{combatShield:0}});
     const pattern=turns.enemyAttackPattern({name:"The Pale Devil",devilBoss:true});
-    assert.equal(pattern.name,"Ember Waltz");
+    assert.equal(pattern.id,"ember-waltz");assert.equal(pattern.name,"Ember Waltz");
     assert.deepEqual(Array.from(pattern.hits),[.58,.58]);
   }
 
-  console.log("Combat turn-resolution owner PASS: response ordering, Haste, Guard/Defense, specials, control repeat, Wolf Echo, statuses and Dragoon are deterministic");
+  console.log("Combat turn-resolution owner PASS: response ordering, Haste, Guard/Defense, semantic attack presentation, specials, control repeat, Wolf Echo, statuses and Dragoon are deterministic");
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
@@ -228,3 +240,5 @@ assert.doesNotMatch(source,/successfulDodgePresentation/,"path-specific Dodge pr
 assert.match(source,/function successfulDodge\(messages, message\)/,"Turn Resolution must retain one semantic successful-Dodge route");
 assert.doesNotMatch(monolith,/dbFriendSuccessfulDodgePresentation/,"Dodge presentation must not return to the monolith");
 assert.match(monolith,/dodge:unit=>dbCombatView\.dodge\(unit\)/,"Turn composition must route generic Dodge through Combat View");
+assert.match(monolith,/presentEnemyAttack:fact=>dbCombatView\.enemyAttack\(fact\)/,"Turn composition must route semantic enemy attacks through Combat View");
+assert.doesNotMatch(source,/Math\.random|setTimeout/,"enemy attack semantics must remain deterministic and presentation-agnostic");

@@ -22,6 +22,9 @@ const presentationApi = Object.freeze({
   renderBossSpecialIndicator: (...args) => { calls.push(["presentation.renderBossSpecialIndicator", ...args]); return "boss"; },
   statusDotsHTML: (...args) => { calls.push(["presentation.statusDotsHTML", ...args]); return "dots"; },
   syncEnergyShieldBars: (...args) => { calls.push(["presentation.syncEnergyShieldBars", ...args]); return "shield"; },
+  playerAttack: (...args) => { calls.push(["presentation.playerAttack", ...args]); return "player-attack"; },
+  enemyAttack: (...args) => { calls.push(["presentation.enemyAttack", ...args]); return "enemy-attack"; },
+  clearEnemyAttackPresentation: (...args) => { calls.push(["presentation.clearEnemyAttackPresentation", ...args]); return "attack-clear"; },
   dodge: (...args) => { calls.push(["presentation.dodge", ...args]); return true; },
   clearDodgePresentation: (...args) => { calls.push(["presentation.clearDodgePresentation", ...args]); return "dodge-clear"; },
   syncDragoonPresentation: (...args) => { calls.push(["presentation.syncDragoonPresentation", ...args]); return "dragoon-sync"; },
@@ -96,6 +99,10 @@ assert.equal(view.renderEnemyParty(), "party");
 assert.equal(view.renderBossSpecialIndicator(), "boss");
 assert.equal(view.statusDotsHTML(2, 3, "fire"), "dots");
 assert.equal(view.syncEnergyShieldBars(), "shield");
+assert.equal(view.playerAttack("echo",{echoIndex:3}),"player-attack");
+assert.deepEqual(calls.at(-1),["presentation.playerAttack","echo",{echoIndex:3}]);
+assert.equal(view.enemyAttack({attackerId:"wolf",attackId:"wolf-echo"}),"enemy-attack");
+assert.deepEqual(calls.at(-1),["presentation.enemyAttack",{attackerId:"wolf",attackId:"wolf-echo"}]);
 assert.equal(view.dodge("player"), true);
 assert.deepEqual(calls.at(-1), ["presentation.dodge", "player"]);
 assert.equal(view.syncDragoonPresentation(), "dragoon-sync");
@@ -103,7 +110,7 @@ assert.equal(view.dragoonLandPresentation(), "dragoon-land");
 assert.equal(view.ensureDragoonJumpButton(), "jump");
 const clearStart = calls.length;
 assert.equal(view.clearTransient("transition"), 7);
-assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearDodgePresentation", "presentation.clearDragoonPresentation"], "transition cleanup must clear VFX, Dodge and Dragoon presentation state");
+assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearEnemyAttackPresentation", "presentation.clearDodgePresentation", "presentation.clearDragoonPresentation"], "transition cleanup must clear VFX, attack, Dodge and Dragoon presentation state");
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 assert.match(monolith, /const dbCombatView=window\.DiceboundCombatView;/, "monolith must bind the Combat View facade");
@@ -120,6 +127,9 @@ assert.doesNotMatch(monolith, /\bdbCombatPresentation\b/, "peer-public Presentat
 assert.doesNotMatch(monolith, /\bdbCombatVfx\b/, "peer-public VFX variable must not survive in the monolith");
 assert.doesNotMatch(monolith, /dbFriendSuccessfulDodgePresentation/, "generic Dodge presentation must not be owned by the monolith");
 assert.match(monolith, /dodge:unit=>dbCombatView\.dodge\(unit\)/, "Turn composition must route generic Dodge through Combat View");
+assert.match(monolith, /function animateClassAttack\(mode="normal",options=\{\}\)\{return dbCombatView\.playerAttack\(mode,options\);\}/, "player attack motion must be owned by Combat View rather than the monolith");
+assert.match(monolith, /presentEnemyAttack:fact=>dbCombatView\.enemyAttack\(fact\)/, "enemy attack semantics must route through Combat View");
+assert.doesNotMatch(monolith, /__DB_FAST_ECHO_CAP__/, "global Echo delay cap must stay retired");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "runtime", "js", "module-manifest.json"), "utf8"));
 const viewModule = manifest.modules.find(item => item.id === "combat-view-facade");
@@ -138,4 +148,4 @@ const index = fs.readFileSync(path.join(root, "runtime", "index.html"), "utf8");
 assert(index.indexOf('js/combat/vfx.js') < index.indexOf('js/combat/view-facade.js'));
 assert(index.indexOf('js/combat/view-facade.js') < index.indexOf('js/dicebound.js'));
 
-console.log("Combat View facade ownership contract: PASS — battle-background, presentation and VFX routing stay behind the public facade");
+console.log("Combat View facade ownership contract: PASS — battle-background, player/enemy attack presentation and VFX routing stay behind the public facade");

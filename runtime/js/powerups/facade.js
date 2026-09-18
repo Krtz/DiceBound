@@ -68,8 +68,10 @@
     const weightedPool=source.map(up=>{
       const tier=order[up.rarity]??0,base=Math.max(0,info[up.rarity]?.weight||0);
       let weight=base;
-      if(tier<=1)weight*=Math.max(.30,1-luck*.20-depth*.018);
-      else weight*=1+(tier-1)*(luck*.20+depth*.018);
+      if(tier<=1){
+        const policyMultiplier=maybe("lowTierWeightMultiplier",up.rarity,rawLuck);
+        weight*=Math.max(.30,1-luck*.20-depth*.018)*(Number.isFinite(Number(policyMultiplier))?Math.max(0,Number(policyMultiplier)):1);
+      }else weight*=1+(tier-1)*(luck*.20+depth*.018);
       if(up.rarity==="legendary")weight+=Math.min(.018,p.level*.00035)+depth*.0016;
       return {up,weight};
     });
@@ -127,26 +129,30 @@
     while(pool.length&&out.length<3){const index=call("rand",0,pool.length-1);out.push(pool.splice(index,1)[0]);}
     return out;
   }
-  function fallbackRarityPool(wanted){
+  function fallbackRarityPool(wanted,minimumRarity=null){
     const order=["legendary","epic","rare","uncommon","common","poor"],start=Math.max(0,order.indexOf(wanted));
-    for(let i=start;i<order.length;i++){const pool=eligible(up=>up.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}
+    const floorIndex=minimumRarity==null?order.length-1:order.indexOf(minimumRarity);
+    const lowest=floorIndex>=0?floorIndex:order.length-1;
+    for(let i=start;i<=lowest;i++){const pool=eligible(up=>up.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}
     for(let i=start-1;i>=0;i--){const pool=eligible(up=>up.rarity===order[i]);if(pool.length)return {rarity:order[i],pool};}
     return {rarity:null,pool:[]};
   }
   function minibossBaseTable(level=call("getBoardLevel")){return level<=1?{legendary:.08,epic:.32,rare:.76,uncommon:.95}:level===2?{legendary:.14,epic:.58,rare:.86,uncommon:.97}:{legendary:.22,epic:.58,rare:.86,uncommon:.97};}
   function minibossOddsText(level=call("getBoardLevel")){return level<=1?"8% Legendary · 24% Epic · 44% Rare · 19% Uncommon · 5% Common":level===2?"14% Legendary · 44% Epic · 28% Rare · 11% Uncommon · 3% Common":"22% Legendary · 36% Epic · 28% Rare · 11% Uncommon · 3% Common";}
   function rollMinibossRarity(){
-    const p=player(),luck=Math.min(.12,Math.max(0,p.luck||0)*.025),bonus=(call("isNightmare")?.04:0)+(call("isHell")?.05:0),roll=call("random"),table=minibossBaseTable();
+    const p=player(),rawLuck=Math.max(0,p.luck||0),luck=Math.min(.12,rawLuck*.025),bonus=(call("isNightmare")?.04:0)+(call("isHell")?.05:0),roll=call("random"),table=minibossBaseTable();
+    const suppression=Math.max(0,Math.min(1,Number(maybe("lowTierSuppression",rawLuck))||0));
     if(roll<table.legendary+luck+bonus)return "legendary";
     if(roll<table.epic+luck+bonus)return "epic";
     if(roll<table.rare+luck*.5)return "rare";
-    if(roll<table.uncommon)return "uncommon";
+    if(roll<table.uncommon+(1-table.uncommon)*suppression)return "uncommon";
     return "common";
   }
   function minibossChoices(){
-    const count=Math.max(3,3+(player().levelChoiceBonus||0)),out=[],used=new Set();
+    const p=player(),count=Math.max(3,3+(p.levelChoiceBonus||0)),out=[],used=new Set();
+    const minimumRarity=(Number(maybe("lowTierSuppression",p.luck))||0)>=1?"uncommon":null;
     for(let i=0;i<count;i++){
-      const wanted=rollMinibossRarity(),found=fallbackRarityPool(wanted);let pool=found.pool.filter(up=>!used.has(up.id));
+      const wanted=rollMinibossRarity(),found=fallbackRarityPool(wanted,minimumRarity);let pool=found.pool.filter(up=>!used.has(up.id));
       if(!pool.length)pool=found.pool;if(!pool.length)break;
       const up=call("pick",pool);used.add(up.id);out.push(up);
     }

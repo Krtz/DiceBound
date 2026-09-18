@@ -282,7 +282,7 @@
   window.DiceboundContent=DiceboundContentRegistry;
 
   const $ = (id) => document.getElementById(id);
-  const delay = (ms) => new Promise(resolve => { const cap=Number(window.__DB_FAST_ECHO_CAP__||0); setTimeout(resolve,cap>0?Math.min(ms,cap):ms); });
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve,ms));
   const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
 
   const random = () => window.DiceboundRng?.random?.() ?? Math.random();
@@ -824,10 +824,7 @@ function returnToRoad(...args){
     const definition=CLASSES[classId];
     return DB_EFFECTIVE_STATS.describeUltimate(classId,definition,player,{setDamageBonus:v19SetDamageBonus(),rageActive:classId==="berserker"&&classIdentityActive("berserker")});
   }
-  async function animateClassAttack(mode="normal"){
-    const cls=CLASSES[player.classId],icon=$("combatPlayerIcon"),stage=$("enemyIcon"),enemy=stage.querySelector(`.stage-enemy[data-enemy-index="${currentEnemyIndex}"]`)||stage,fx=$("attackFx");icon.classList.remove("attack-lunge");fx.className="attack-fx";void fx.offsetWidth;icon.classList.add("attack-lunge");fx.textContent=mode==="crit"?"💥✦":mode==="echo"?`↯ ${cls.attackIcon}`:(cls.fxIcon||cls.attackIcon);fx.classList.add(mode==="crit"?"crit-attack":mode==="echo"?"echo-attack":player.classId);
-    await delay(mode==="crit"?520:mode==="echo"?350:({fighter:360,ranger:460,sorcerer:460,monk:420,clown:500,rouge:450,berserker:500}[player.classId]||460));enemy.classList.add("enemy-hit");await delay(130);enemy.classList.remove("enemy-hit");icon.classList.remove("attack-lunge");
-  }
+  function animateClassAttack(mode="normal",options={}){return dbCombatView.playerAttack(mode,options);}
   function chargeUltimate(amount){player.ultimateCharge=clamp(player.ultimateCharge+amount,0,100);updateCombatUI();}
 
   async function animateUltimate(){
@@ -1138,6 +1135,8 @@ function returnToRoad(...args){
     slimePowerCompatible:u=>{const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&dbProgression.isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));return dbPowerups.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps);},
     slimeRougePowerCompatible:u=>v318SlimeRougePowerCompatible(u),
     filterPowerupPoolForLuck:(pool,luck)=>DB_RARITIES.filterPowerupPoolForLuck?.(pool,luck),
+    lowTierSuppression:luck=>DB_RARITIES.lowTierSuppression(luck),
+    lowTierWeightMultiplier:(rarity,luck)=>DB_RARITIES.lowTierWeightMultiplier(rarity,luck),
     getBoardLevel:()=>boardLevel,currentTileCount:()=>currentTileCount(),random:()=>random(),rand:(min,max)=>rand(min,max),pick:list=>pick(list),clamp:(value,min,max)=>clamp(value,min,max),
     classIdentityActive:id=>classIdentityActive(id),hasLegendaryEffect:id=>db060HasEffect(id),saveMeta:()=>saveMeta(),addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{ensureAlphaMeta().powerupsTaken++;saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
@@ -2189,12 +2188,8 @@ function returnToRoad(...args){
   Object.assign(V14_RARITY_AFFIX_TIER,{poor:1,common:2,uncommon:3,rare:4,epic:5});
   elementChanceForRarity=function(rarity){return {poor:.14,common:.24,uncommon:.36,rare:.50,epic:.67,legendary:.90,artifact:1,mythical:1,omega:1}[rarity]||0;};
   rollGearRarity=function(bonus=0){
-    const p=random(),depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1),rawLuck=Math.max(0,player.luck||0),luck=1-Math.exp(-rawLuck*.55),boost=bonus+depth*.055+luck*.44+(nightmareMode?.035:0)+(hellMode?.035:0);
-    if(p<.006+boost*.055)return 'epic';
-    if(p<.038+boost*.14)return 'rare';
-    if(p<.145+boost*.31)return 'uncommon';
-    let rarity;if(p<.45+boost*.58)rarity='common';else rarity='poor';
-    return DB_RARITIES.promoteOrdinaryRarityForLuck?.(rarity,player.luck)||rarity;
+    const depth=(boardLevel-1)+player.position/Math.max(1,currentTileCount()-1);
+    return DB_RARITIES.rollOrdinaryGearRarity({roll:random(),bonus,depth,luck:player.luck,nightmare:nightmareMode,hell:hellMode});
   };
 
   // Board merchants understand the shifted ordinary rarity ladder. They can
@@ -3273,7 +3268,7 @@ dbReturnToRoadTraceReady=true;
   // Guardian ordinary item tables. Miniboss ordinary gear is no longer a
   // 100% automatic reward on Normal: 85% Normal, 92% Nightmare, 100% Hell.
   function db060GuardianOrdinary(defeated,done){
-    const drop=DB060_LOOT.ordinaryGuardianDrop({defeated,board:boardLevel,nightmare:nightmareMode,hell:hellMode,randomFn:random});
+    const drop=DB060_LOOT.ordinaryGuardianDrop({defeated,board:boardLevel,nightmare:nightmareMode,hell:hellMode,luck:player.luck,randomFn:random});
     if(!drop)return done();
     // Secret bosses keep one ordinary loot roll in addition to their signature item.
     return openLoot(drop.rarity?dbItems.generateEquipment(drop.rarity):dbItems.generateEquipment(),done);
@@ -4329,7 +4324,7 @@ dbReturnToRoadTraceReady=true;
     resolveCriticalTiers:(roller,options)=>window.DiceboundStrikePolicy.resolveCriticalTiers(roller,options),
     rangerMarkTotal:(before,options)=>window.DiceboundStrikePolicy.rangerMarkTotal(before,options),
     setDamageBonus:()=>v19SetDamageBonus(),petDamage:()=>petDamage(),healPlayer:amount=>dbCombat.heal(amount),
-    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),animateClassAttack:mode=>animateClassAttack(mode),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),animateClassAttack:(mode,options)=>animateClassAttack(mode,options),
     playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy),addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),setCombatText:text=>setCombatText(text),playHolySfx:()=>sfx.holy(),
     triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options),
@@ -4337,8 +4332,7 @@ dbReturnToRoadTraceReady=true;
     presentationTargetSnapshot:()=>db0648PresentationTargetSnapshot(),emitStrike:result=>DiceboundStateEvents.emit('combat:strike',result),
     renderStrike:result=>CombatUI.renderStrike(result),delay:ms=>delay(ms),chargeUltimate:amount=>chargeUltimate(amount),
     hasDevilsHorns:()=>v24HasHorns(),hasLegendaryEffect:id=>db060HasEffect(id),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
-    syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
-    setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},getElementKeys:()=>ELEMENT_KEYS,
+    syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getElementKeys:()=>ELEMENT_KEYS,
     outgoingDamageMultiplier:()=>dbClasses.invokerOutgoingMultiplier(),
     afterPlayerHit:(target,options)=>dbClasses.invokerAfterPlayerHit(target,options)
   });
@@ -4392,8 +4386,6 @@ dbReturnToRoadTraceReady=true;
     getPets:()=>PETS,
     getGagInfo:()=>GAG_INFO,
     slimeRougeUltimate:()=>v318UseSlimeRougeUltimate(),
-    getFastEchoCap:()=>window.__DB_FAST_ECHO_CAP__||0,
-    setFastEchoCap:value=>{window.__DB_FAST_ECHO_CAP__=value;},
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonLandingReady:()=>!!player.dragoonLandingReady,
     dragoonLanding:()=>dbFriendDragoonLanding(),
@@ -4429,7 +4421,8 @@ dbReturnToRoadTraceReady=true;
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
     onDragoonJump:()=>dbFriendDragoonJump(),
-    clamp:(value,min,max)=>clamp(value,min,max)
+    clamp:(value,min,max)=>clamp(value,min,max),
+    delay:ms=>delay(ms)
   });
 
   const dbCombatEncounterOwner=window.DiceboundCombatEncounterLifecycle;
@@ -4525,6 +4518,7 @@ dbReturnToRoadTraceReady=true;
     playHitSfx:()=>sfx.hit(),
     recordDamageTaken:amount=>{meta.damageTaken=(meta.damageTaken||0)+amount;},
     wolfEchoChance:()=>db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode()),
+    presentEnemyAttack:fact=>dbCombatView.enemyAttack(fact),
     dodge:unit=>dbCombatView.dodge(unit),
     dragoonActive:()=>dbFriendDragoonActive(),
     responseModifier:()=>dbClasses.invokerResponseModifier()

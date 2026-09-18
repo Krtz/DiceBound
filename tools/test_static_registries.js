@@ -22,7 +22,7 @@ const enemiesApi = context.window.DiceboundEnemies;
 const raritiesApi = context.window.DiceboundRarities;
 for (const [name, api] of [["pets", petsApi], ["enemies", enemiesApi], ["rarities", raritiesApi]]) {
   assert.ok(api, `${name} module did not publish its API`);
-  const expectedVersion=name === "enemies" || name === "pets" ? 2 : 1;
+  const expectedVersion=name === "enemies" || name === "pets" || name === "rarities" ? 2 : 1;
   assert.equal(api.apiVersion, expectedVersion);
   assert.ok(Object.isFrozen(api), `${name} API is mutable`);
 }
@@ -95,6 +95,22 @@ assert.equal(raritiesApi.luckFloor(2), "uncommon", "200 Luck must receive the Un
 assert.equal(raritiesApi.promoteOrdinaryRarityForLuck("poor", 2), "uncommon", "200 Luck must remove Poor ordinary item outcomes");
 assert.equal(raritiesApi.promoteOrdinaryRarityForLuck("common", 2), "uncommon", "200 Luck must remove Common ordinary item outcomes");
 assert.deepEqual(Array.from(raritiesApi.filterPowerupPoolForLuck([{rarity:"poor"},{rarity:"common"},{rarity:"uncommon"},{rarity:"rare"}], 2)).map(entry=>entry.rarity), ["uncommon","rare"], "200 Luck must exclude Poor and Common powerup offers without consuming extra RNG");
+assert.equal(raritiesApi.lowTierSuppression(1),0,"100 Luck is the start of low-tier suppression");
+assert.equal(raritiesApi.lowTierSuppression(1.25),.25,"125 Luck must suppress one quarter of Poor/Common probability");
+assert.equal(raritiesApi.lowTierSuppression(1.5),.5,"150 Luck must suppress half of Poor/Common probability");
+assert.equal(raritiesApi.lowTierSuppression(1.75),.75,"175 Luck must suppress three quarters of Poor/Common probability");
+assert.equal(raritiesApi.lowTierSuppression(2),1,"200 Luck must fully suppress Poor/Common probability");
+assert.equal(raritiesApi.lowTierSuppression(99),1,"very high Luck must remain capped at full suppression");
+assert.equal(raritiesApi.lowTierWeightMultiplier("poor",1.5),.5);
+assert.equal(raritiesApi.lowTierWeightMultiplier("common",1.5),.5);
+assert.equal(raritiesApi.lowTierWeightMultiplier("uncommon",1.5),1);
+const shiftedRows=Array.from(raritiesApi.suppressLowTierRows([["common",55],["uncommon",35],["rare",10]],1.5),row=>Array.from(row));
+assert.deepEqual(shiftedRows,[["common",27.5],["uncommon",62.5],["rare",10]],"shared policy must transfer suppressed low-tier weight upward without adding a roll");
+const fullRows=Array.from(raritiesApi.ordinaryGearRows({luck:2}),row=>Array.from(row));
+assert.equal(fullRows.find(row=>row[0]==="poor")[1],0);
+assert.equal(fullRows.find(row=>row[0]==="common")[1],0);
+assert.equal(raritiesApi.rollOrdinaryGearRarity({roll:.999999,luck:2}),"uncommon","200 Luck ordinary gear can never fall below Uncommon");
+assert.ok(["poor","common"].includes(raritiesApi.rollOrdinaryGearRarity({roll:.999999,luck:1})),"100 Luck must preserve the released low-tier possibility before suppression ramps");
 
 const classes = context.window.DiceboundClasses.createRegistry();
 const derivedTags = Object.fromEntries(Object.entries(classes).map(([id, value]) => [id, value.tags]));

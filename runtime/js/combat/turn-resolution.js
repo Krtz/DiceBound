@@ -16,7 +16,7 @@
       "setCombatText","updateCombatUI","addCombatHistory","renderEnemyParty","triggerElementEffect","defenseDamageReduction",
       "effectiveDodgeChance","enemyElementProc","damageEnemy","healPlayer","mythicalSetCount","guardianSpecialMultiplier",
       "hasMythicPiece","hasDevilsHorns","hasHeadphones","hasLegendaryEffect","checkDynamicClassUnlocks","saveMeta","playHitSfx",
-      "recordDamageTaken","wolfEchoChance","dodge","dragoonActive"
+      "recordDamageTaken","wolfEchoChance","presentEnemyAttack","dodge","dragoonActive"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat turn-resolution runtime missing ${name}().`);
     if (!Number.isFinite(Number(nextRuntime.guardianSpecialInterval)) || Number(nextRuntime.guardianSpecialInterval) < 1) throw new Error("Combat turn-resolution runtime requires guardianSpecialInterval.");
@@ -46,39 +46,62 @@
   function enemyAttackPattern(enemy) {
     const rt = requireRuntime(), player = rt.getPlayer(), turn = rt.getEncounterTurn() || 1, name = enemy?.name || "";
     if (enemy?.devilBoss) {
-      if ((player.combatShield || 0) > 0) return { name: "Pitchfork Rake", hits: [.46, .46, .46], burn: 1 };
+      if ((player.combatShield || 0) > 0) return { id: "pitchfork-rake", name: "Pitchfork Rake", hits: [.46, .46, .46], burn: 1 };
       const phase = turn % 4;
-      if (phase === 0) return { name: "Pale Moon Verdict", hits: [1.48], burn: 2 };
-      if (phase === 1) return { name: "False Step", hits: [.34, 1.08], burn: 1 };
-      if (phase === 2) return { name: "Ember Waltz", hits: [.58, .58], burn: 1 };
-      return { name: "Ashen Kiss", hits: [.92], burn: 2, drain: .20 };
+      if (phase === 0) return { id: "pale-moon-verdict", name: "Pale Moon Verdict", hits: [1.48], burn: 2 };
+      if (phase === 1) return { id: "false-step", name: "False Step", hits: [.34, 1.08], burn: 1 };
+      if (phase === 2) return { id: "ember-waltz", name: "Ember Waltz", hits: [.58, .58], burn: 1 };
+      return { id: "ashen-kiss", name: "Ashen Kiss", hits: [.92], burn: 2, drain: .20 };
     }
-    if (enemy?.bloodmageBoss) return turn % 2 ? { name: "Blood Needles", hits: [.62, .62] } : { name: "Sanguine Drain", hits: [1.05], drain: .30 };
-    if (name.includes("Nullstar Hydra")) return turn % 2 ? { name: "Hydra Heads", hits: [.46, .46, .46] } : { name: "Null Bite", hits: [1.12] };
-    if (name.includes("Crown-Eater")) return turn % 2 ? { name: "Royal Talons", hits: [.64, .64] } : { name: "Crown Bite", hits: [1.12] };
-    if (name.includes("Ring Tyrant")) return turn % 2 ? { name: "Looping Fangs", hits: [.68, .68] } : { name: "Tyrant Bite", hits: [1.14] };
-    if (name.includes("Abyssal Custodian")) return turn % 2 ? { name: "Twin Seal Bash", hits: [.68, .68] } : { name: "Custodian Crush", hits: [1.12] };
-    if (name.includes("Last Equation")) return turn % 2 ? { name: "Division Sequence", hits: [.50, .50, .50] } : { name: "Proof Strike", hits: [1.22] };
-    if (name.includes("Astral Devourer") && turn % 3 === 0) return { name: "Devouring Claws", hits: [.64, .64] };
-    return { name: "Attack", hits: [1] };
+    if (enemy?.bloodmageBoss) return turn % 2 ? { id: "blood-needles", name: "Blood Needles", hits: [.62, .62] } : { id: "sanguine-drain", name: "Sanguine Drain", hits: [1.05], drain: .30 };
+    if (name.includes("Nullstar Hydra")) return turn % 2 ? { id: "hydra-heads", name: "Hydra Heads", hits: [.46, .46, .46] } : { id: "null-bite", name: "Null Bite", hits: [1.12] };
+    if (name.includes("Crown-Eater")) return turn % 2 ? { id: "royal-talons", name: "Royal Talons", hits: [.64, .64] } : { id: "crown-bite", name: "Crown Bite", hits: [1.12] };
+    if (name.includes("Ring Tyrant")) return turn % 2 ? { id: "looping-fangs", name: "Looping Fangs", hits: [.68, .68] } : { id: "tyrant-bite", name: "Tyrant Bite", hits: [1.14] };
+    if (name.includes("Abyssal Custodian")) return turn % 2 ? { id: "twin-seal-bash", name: "Twin Seal Bash", hits: [.68, .68] } : { id: "custodian-crush", name: "Custodian Crush", hits: [1.12] };
+    if (name.includes("Last Equation")) return turn % 2 ? { id: "division-sequence", name: "Division Sequence", hits: [.50, .50, .50] } : { id: "proof-strike", name: "Proof Strike", hits: [1.22] };
+    if (name.includes("Astral Devourer") && turn % 3 === 0) return { id: "devouring-claws", name: "Devouring Claws", hits: [.64, .64] };
+    return { id: "basic-attack", name: "Attack", hits: [1] };
+  }
+
+  function enemyAttackFact(enemy, pattern, hitIndex = 1, outcome = "attempt", special = false) {
+    const rt=requireRuntime(),enemies=rt.getCurrentEnemies()||[],index=enemies.indexOf(enemy),hitCount=Math.max(1,pattern?.hits?.length||1);
+    return Object.freeze({
+      attackerId:enemy?.id||null,
+      enemyIndex:index>=0?index:0,
+      attackId:String(pattern?.id||"basic-attack"),
+      attackName:String(pattern?.name||"Attack"),
+      target:"player",
+      hitIndex:Math.max(1,Number(hitIndex)||1),
+      hitCount,
+      outcome:String(outcome||"attempt"),
+      special:!!special
+    });
+  }
+  function presentEnemyAttack(enemy, pattern, hitIndex, outcome, special=false) {
+    return requireRuntime().presentEnemyAttack(enemyAttackFact(enemy,pattern,hitIndex,outcome,special));
   }
 
   async function resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState = { hit: false }, responseModifier = {}) {
     const rt = requireRuntime(), player = rt.getPlayer(), pattern = enemyAttackPattern(enemy), dr = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0));
     let totalHpDamage = 0, totalDamage = 0, landedAny = false, blocked = 0, dodged = 0;
     for (let i = 0; i < pattern.hits.length; i += 1) {
+      const hitIndex=i+1;
       if (rt.hasHeadphones() && roundState.hit) {
-        messages.push(`🎧 Kratz Headphones drown out ${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${i + 1}` : ""}.`);
+        await presentEnemyAttack(enemy,pattern,hitIndex,"cancelled");
+        messages.push(`🎧 Kratz Headphones drown out ${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}` : ""}.`);
         continue;
       }
       if (rt.random() < rt.effectiveDodgeChance()) {
         dodged += 1;
-        successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${i + 1}` : pattern.name} is dodged.`);
+        const attackPresentation=presentEnemyAttack(enemy,pattern,hitIndex,"dodged");
+        successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name} is dodged.`);
+        await attackPresentation;
         continue;
       }
       if (player.combatShield > 0) {
         player.combatShield -= 1; blocked += 1;
-        messages.push(`Barrier blocks ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${i + 1}` : pattern.name}.`);
+        await presentEnemyAttack(enemy,pattern,hitIndex,"blocked");
+        messages.push(`Barrier blocks ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name}.`);
         continue;
       }
       const base = Math.max(1, (enemy.attack + rt.rand(-1, 1)) * pattern.hits[i]);
@@ -88,7 +111,8 @@
       const hit = applyPlayerDamage(raw);
       if (hit.total > 0) roundState.hit = true;
       totalDamage += hit.total; totalHpDamage += hit.hp; landedAny = landedAny || hit.total > 0;
-      messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${i + 1}/${pattern.hits.length}` : ""} ${guarded ? "hits your guard" : "hits"} for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
+      await presentEnemyAttack(enemy,pattern,hitIndex,guarded?"guarded":"hit");
+      messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}/${pattern.hits.length}` : ""} ${guarded ? "hits your guard" : "hits"} for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
       if (player.thorns > 0 && hit.total > 0) {
         const returned = rt.damageEnemy(enemy, player.thorns, true); messages.push(`Spikes return ${returned}.`);
       }
@@ -124,14 +148,15 @@
       else if (special && enemy === lead) {
         const partialDR = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0)) * .55;
         if (enemy.bloodmageBoss || enemy.devilBoss) {
-          const pulses = enemy.devilBoss ? 3 : 2, totalMult = enemy.devilBoss ? .72 : .98; let total = 0;
+          const pulses = enemy.devilBoss ? 3 : 2, totalMult = enemy.devilBoss ? .72 : .98, specialPattern={id:"guardian-special",name:enemy.specialName||"Guardian special",hits:Array(pulses).fill(1)}; let total = 0;
           for (let i = 0; i < pulses; i += 1) {
-            if (rt.hasHeadphones() && roundState.hit) { messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName} pulse ${i + 1}.`); continue; }
+            if (rt.hasHeadphones() && roundState.hit) { await presentEnemyAttack(enemy,specialPattern,i+1,"cancelled",true); messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName} pulse ${i + 1}.`); continue; }
             const base = Math.max(1, enemy.attack * totalMult), rawBase = Math.max(1, Math.round(base * (1 - partialDR) - player.flatReduction * .35));
             let raw = guarded ? Math.max(0, Math.floor(rawBase * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9)))) : rawBase;
             if (rt.mythicalSetCount() >= 4) raw = Math.floor(raw * rt.guardianSpecialMultiplier());
             raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
             const hit = applyPlayerDamage(raw); if (hit.total > 0) roundState.hit = true; total += hit.total;
+            await presentEnemyAttack(enemy,specialPattern,i+1,guarded?"guarded":"hit",true);
             messages.push(`⚠️ ${enemy.specialName} pulse ${i + 1}/${pulses} pierces barriers for ${hit.total}${hit.shield ? ` (${hit.shield} Energy Shield)` : ""}.`);
             if (player.hp <= 0) break;
           }
@@ -139,14 +164,17 @@
             const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.floor(total * (enemy.devilBoss ? .12 : .22))));
             enemy.hp += heal; if (heal) messages.push(`${enemy.name} restores ${heal} HP.`);
           }
-        } else if (rt.hasHeadphones() && roundState.hit) messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName || "Guardian special"}.`);
-        else {
+        } else if (rt.hasHeadphones() && roundState.hit) {
+          await presentEnemyAttack(enemy,{id:"guardian-special",name:enemy.specialName||"Guardian special",hits:[1]},1,"cancelled",true);
+          messages.push(`🎧 Kratz Headphones drown out ${enemy.specialName || "Guardian special"}.`);
+        } else {
           const base = Math.max(1, enemy.attack * (enemy.merchantBoss ? 2.6 : 2.25));
           let raw = Math.max(1, Math.round(base * (1 - partialDR) - player.flatReduction * .5));
           if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9))));
           if (rt.mythicalSetCount() >= 4) raw = Math.floor(raw * rt.guardianSpecialMultiplier());
           raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
           const hit = applyPlayerDamage(raw); if (hit.total > 0) roundState.hit = true;
+          await presentEnemyAttack(enemy,{id:"guardian-special",name:enemy.specialName||"Guardian special",hits:[1]},1,guarded?"guarded":"hit",true);
           messages.push(`⚠️ ${enemy.specialName || "Guardian special"} partially pierces Defense and ignores barriers${guarded ? ", but Guard reduces it further" : ""}, dealing ${hit.total}${hit.shield ? ` (${hit.shield} Energy Shield)` : ""}.`);
           if (enemy.merchantBoss) {
             const stolen = Math.min(player.gold, Math.ceil(player.gold * .20)); player.gold -= stolen; enemy.enemyBarrier = (enemy.enemyBarrier || 0) + 2;
@@ -239,11 +267,13 @@
     const notes = [];
     for (const wolf of livingEnemies().filter(enemy => /\bwolf\b/i.test(String(enemy?.name || "")) && !enemy.guardian)) {
       if (rt.random() >= chance) continue;
-      if (rt.random() < rt.effectiveDodgeChance()) { successfulDodge(notes, `🐺 ${wolf.name}'s Echo Strike is dodged.`); continue; }
-      if (player.combatShield > 0) { player.combatShield -= 1; notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`); continue; }
+      const echoPattern={id:"wolf-echo",name:"Echo Strike",hits:[1]};
+      if (rt.random() < rt.effectiveDodgeChance()) { const attackPresentation=presentEnemyAttack(wolf,echoPattern,1,"dodged");successfulDodge(notes, `🐺 ${wolf.name}'s Echo Strike is dodged.`);await attackPresentation;continue; }
+      if (player.combatShield > 0) { player.combatShield -= 1;await presentEnemyAttack(wolf,echoPattern,1,"blocked");notes.push(`🐺 Barrier blocks ${wolf.name}'s Echo Strike.`); continue; }
       const base = Math.max(1, wolf.attack + rt.rand(-1, 1)), raw = Math.max(1, Math.round(base * (1 - rt.defenseDamageReduction()) - player.flatReduction)), hit = applyPlayerDamage(raw);
       // Historical behavior records the wolf Echo once in applyPlayerDamage and once here. Preserve it during extraction.
       rt.recordDamageTaken(hit.total);
+      await presentEnemyAttack(wolf,echoPattern,1,"hit");
       notes.push(`🐺 ${wolf.name}'s Echo Strike hits for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
       if (player.thorns > 0 && hit.total > 0) { const returned = rt.damageEnemy(wolf, player.thorns, true); notes.push(`Spikes return ${returned}.`); }
       if (player.hp <= 0) break;

@@ -43,6 +43,7 @@ const occult = {
 };
 
 let rngCalls = 0;
+const presentationDelays=[];
 let active = new Set(['ranger']);
 let mechanics = new Set();
 let legendary = new Set();
@@ -80,7 +81,17 @@ function fakeClassList() {
 const documentNodes = new Map();
 const combatOverlay = { dataset: {}, style: fakeStyle(), classList: fakeClassList() };
 const combatPlayerIcon = { classList: fakeClassList(), offsetWidth: 42 };
-const combatEnemyIcon = { classList: fakeClassList(), offsetWidth: 42 };
+const attackFx = { classList: fakeClassList(), className: "attack-fx", offsetWidth: 42, textContent: "" };
+const enemySprites = [0,1].map(()=>({ classList: fakeClassList(), dataset: {}, offsetWidth: 42 }));
+const enemyUnits = enemySprites.map(sprite=>({ classList: fakeClassList(), dataset: {}, querySelector: selector=>selector===".stage-sprite"?sprite:null }));
+const combatEnemyIcon = {
+  classList: fakeClassList(), offsetWidth: 42,
+  querySelector(selector) {
+    const match=String(selector).match(/data-enemy-index="(\d+)"/);
+    return match?enemyUnits[Number(match[1])]||null:null;
+  },
+  querySelectorAll(selector) { return selector===".db-enemy-attack-lunge"?enemySprites.filter(sprite=>sprite.classList.contains("db-enemy-attack-lunge")):[]; }
+};
 const fakeDocument = {
   head: {
     children: [],
@@ -95,7 +106,7 @@ function runtime() {
   return {
     document: fakeDocument,
     getState: () => state,
-    find: id => id === 'combatOverlay' ? combatOverlay : id === 'combatPlayerIcon' ? combatPlayerIcon : id === 'enemyIcon' ? combatEnemyIcon : null,
+    find: id => id === 'combatOverlay' ? combatOverlay : id === 'combatPlayerIcon' ? combatPlayerIcon : id === 'enemyIcon' ? combatEnemyIcon : id === 'attackFx' ? attackFx : null,
     getClasses: () => classes,
     getElements: () => elements,
     getPets: () => pets,
@@ -121,6 +132,7 @@ function runtime() {
     dragoonJumpCooldown: () => 4,
     onDragoonJump() {},
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
+    delay: async ms => { presentationDelays.push(ms); },
     random: () => { rngCalls++; return .5; },
     rand: () => { rngCalls++; return 1; },
     pick: values => { rngCalls++; return values[0]; },
@@ -129,6 +141,7 @@ function runtime() {
 }
 owner.configure(runtime());
 
+(async()=>{
 function model() {
   const beforePlayer = JSON.stringify(state.player), beforeEnemy = JSON.stringify(state.currentEnemy), beforeRng = rngCalls;
   const out = owner._test.buildViewModel();
@@ -220,5 +233,39 @@ assert.strictEqual(background, null, 'Hell must keep its explicit no-authored-ba
 assert.strictEqual(combatOverlay.dataset.combatBackground, undefined, 'Hell must clear stale Normal/Nightmare background identity');
 assert.strictEqual(combatOverlay.style.getPropertyValue('--db-combat-background-image'), '', 'Hell must clear stale background image');
 
+const echo1=owner._test.playerAttackTiming('echo','ranger',1),echo2=owner._test.playerAttackTiming('echo','ranger',2),echo10=owner._test.playerAttackTiming('echo','ranger',10),echo100=owner._test.playerAttackTiming('echo','ranger',100);
+assert.strictEqual(echo1.totalMs,180,'first Echo must remain snappy but readable');
+assert.strictEqual(echo2.totalMs,177,'each additional Echo should accelerate by only 3ms');
+assert.strictEqual(echo10.totalMs,153);
+assert.strictEqual(echo100.totalMs,60,'high Echo must respect the explicit readability floor');
+assert.strictEqual(owner._test.playerAttackTiming('normal','ranger',0).totalMs,590,'ordinary Ranger cadence must preserve released timing');
+assert.strictEqual(owner._test.playerAttackTiming('crit','ranger',0).totalMs,650,'Crit cadence must preserve released timing');
+presentationDelays.length=0;
+state.player.classId='ranger';state.currentEnemyIndex=0;
+await owner.playerAttack('echo',{echoIndex:1});
+assert.strictEqual(presentationDelays.reduce((a,b)=>a+b,0),180,'Echo pacing must be owned by presentation rather than a global delay clamp');
+
+presentationDelays.length=0;
+const semantic=owner._test.resolveEnemyAttackPresentation({attackerId:'wolf',attackId:'wolf-echo'});
+assert.strictEqual(semantic.id,'generic-lunge','unregistered semantic attacks must use the generic fallback');
+const inFlight=owner.enemyAttack({attackerId:'wolf',enemyIndex:1,attackId:'wolf-echo',attackName:'Echo Strike',target:'player',hitIndex:1,hitCount:1,outcome:'dodged'});
+assert.strictEqual(enemySprites[1].classList.contains('db-enemy-attack-lunge'),true,'the actual attacking pack unit must animate');
+assert.strictEqual(enemySprites[0].classList.contains('db-enemy-attack-lunge'),false,'attack presentation must not animate the selected/wrong pack unit');
+assert.strictEqual(enemySprites[1].dataset.dbAttackId,'wolf-echo');
+const attackResult=await inFlight;
+assert.strictEqual(attackResult.presentationId,'generic-lunge');
+assert.strictEqual(attackResult.durationMs,160);
+assert.strictEqual(enemySprites[1].classList.contains('db-enemy-attack-lunge'),false,'enemy attack animation must clean itself');
+assert.deepStrictEqual(presentationDelays,[160]);
+
+const cancelled=owner.enemyAttack({attackerId:'goblin',enemyIndex:0,attackId:'basic-attack',outcome:'blocked'});
+owner.clearEnemyAttackPresentation();
+assert.strictEqual(enemySprites[0].classList.contains('db-enemy-attack-lunge'),false,'combat-boundary cleanup must cancel attack presentation');
+await cancelled;
+
+const css=fs.readFileSync(path.join(root,'runtime','css','dicebound.css'),'utf8');
+assert(css.includes('dbEnemyAttackLunge'),'generic enemy attack CSS animation must remain installed');
+
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
-console.log('Combat presentation owner PASS: final class controls, stable-ID art ports, battle backgrounds, statuses, thresholds and zero-RNG view models are deterministic');
+console.log('Combat presentation owner PASS: final class controls, semantic player/enemy attack animation, Echo pacing, battle backgrounds, statuses and zero-RNG view models are deterministic');
+})().catch(error=>{console.error(error);process.exitCode=1;});

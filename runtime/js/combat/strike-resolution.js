@@ -16,7 +16,7 @@
       "playElementAnimation","addCombatHistory","updateCombatUI","setCombatText","playHolySfx","triggerStrikeElements",
       "triggerElementEffect","identityFlash","reconcileDefeatedTarget","presentationTargetSnapshot","emitStrike","renderStrike",
       "delay","chargeUltimate","hasDevilsHorns","hasLegendaryEffect","syncOuroborosAttack","syncOuroborosEconomy",
-      "getFastEchoCap","setFastEchoCap","getElementKeys"
+      "getElementKeys"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat strike-resolution runtime missing ${name}().`);
     runtime = nextRuntime;
@@ -111,7 +111,7 @@
 
     const critTiers = rt.resolveCriticalTiers(rt.rollTieredProc, { canCrit, critChance: p.crit, bonusCrit: chaos?.bonusCrit });
     const mode = critTiers ? "crit" : echo ? "echo" : "normal";
-    await rt.animateClassAttack(mode);
+    await rt.animateClassAttack(mode,{echoIndex:index});
     // Historical wrappers discard canCrit before base-damage calculation.
     const base = strikeBaseDamage(echo, chaos);
     let damage = base.damage;
@@ -145,7 +145,7 @@
     };
     rt.emitStrike(result);
     rt.renderStrike(result);
-    await rt.delay(460);
+    if(!echo)await rt.delay(460);
     return result;
   }
 
@@ -245,32 +245,24 @@
     } finally { p.poisonOnHitChance = chance; }
   }
 
-  function echoDelayCap(echoChance) {
-    const echo=Math.max(0,Number(echoChance)||0);
-    return echo>=50?8:echo>=10?20:echo>=5?34:echo>=2?58:echo>=1?85:0;
-  }
-
-  async function speedAdjustedStrike(target, opts = {}) {
-    const rt = requireRuntime(), p = player(), oldCap = rt.getFastEchoCap() || 0;
-    rt.setFastEchoCap(echoDelayCap(p.doubleStrike));
+  async function dodgeAwareStrike(target, opts = {}) {
+    const rt = requireRuntime(), p = player();
     if (rt.isClassActive("ouroboros")) rt.syncOuroborosEconomy();
-    try {
-      if (target?.hp > 0 && (target.dodge || 0) > 0 && rt.random() < target.dodge) {
-        await rt.animateClassAttack(opts.echo ? "echo" : "normal");
-        p.combatAttackCount++;
-        rt.setCombatText(`${target.name} dodges ${opts.echo ? `Echo ${opts.index || ""}` : "the attack"}.`);
-        rt.addCombatHistory(`🌫️ ${target.name} dodges (${Math.round(target.dodge * 100)}% enemy Dodge).`);
-        rt.updateCombatUI();
-        await rt.delay(220);
-        return { dealt: 0, crit: 0, elementDamage: 0, dodged: true };
-      }
-      return await v25PoisonStrike(target, opts);
-    } finally { rt.setFastEchoCap(oldCap); }
+    if (target?.hp > 0 && (target.dodge || 0) > 0 && rt.random() < target.dodge) {
+      await rt.animateClassAttack(opts.echo ? "echo" : "normal",{echoIndex:opts.index||1});
+      p.combatAttackCount++;
+      rt.setCombatText(`${target.name} dodges ${opts.echo ? `Echo ${opts.index || ""}` : "the attack"}.`);
+      rt.addCombatHistory(`🌫️ ${target.name} dodges (${Math.round(target.dodge * 100)}% enemy Dodge).`);
+      rt.updateCombatUI();
+      if(!opts.echo)await rt.delay(220);
+      return { dealt: 0, crit: 0, elementDamage: 0, dodged: true };
+    }
+    return v25PoisonStrike(target, opts);
   }
 
   async function v28NinjaSmokeStrike(target, opts = {}) {
     const rt = requireRuntime(), p = player(), ninja = rt.isClassActive("ninja"), before = ninja ? (p.ninjaSmoke || 0) : 0, need = ninja ? (p.ninjaSmokeNeed || 3) : 0, execution = ninja && !opts.echo && before >= need;
-    const result = await speedAdjustedStrike(target, opts);
+    const result = await dodgeAwareStrike(target, opts);
     if (ninja && result?.crit) {
       const start = execution ? 0 : before, wanted = Math.min(need, start + Math.max(1, Math.floor(result.crit)));
       if ((p.ninjaSmoke || 0) < wanted) p.ninjaSmoke = wanted;
@@ -330,8 +322,7 @@
     owner: "combat/strike-resolution",
     configure,
     strikeBaseDamage,
-    performStrike,
-    echoDelayCap
+    performStrike
   });
 
   window.DiceboundCombatStrikeResolution = api;

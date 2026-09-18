@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  const RARITIES=window.DiceboundRarities;
+  if(!RARITIES?.suppressLowTierRows)throw new Error("DiceboundLoot requires DiceboundRarities Luck policy.");
+
   const freezeRows = (tables) => Object.freeze(Object.fromEntries(
     Object.entries(tables).map(([board, rows]) => [
       board,
@@ -98,23 +101,24 @@
     return index >= 0 ? GEAR_LADDER[Math.min(GEAR_LADDER.length - 1, index + 1)] : rarity;
   }
 
-  function guardianRarity({ defeated, board, nightmare = false, hell = false, randomFn = Math.random } = {}) {
+  function guardianRarity({ defeated, board, nightmare = false, hell = false, luck = 0, randomFn = Math.random } = {}) {
     const table = defeated?.miniBoss ? MINI_GEAR_TABLES : BOSS_GEAR_TABLES;
-    const rows = table[board] || BOSS_GEAR_TABLES[6];
+    const baseRows = table[board] || BOSS_GEAR_TABLES[6];
+    const rows = RARITIES.suppressLowTierRows(baseRows, luck);
     let rarity = weightedRarity(rows, randomFn);
     if (nightmare && Number(randomFn()) < 0.25) rarity = promoteRarity(rarity);
     if (hell && Number(randomFn()) < 0.25) rarity = promoteRarity(rarity);
     return rarity;
   }
 
-  function ordinaryGuardianDrop({ defeated, board, nightmare = false, hell = false, randomFn = Math.random } = {}) {
+  function ordinaryGuardianDrop({ defeated, board, nightmare = false, hell = false, luck = 0, randomFn = Math.random } = {}) {
     if (typeof randomFn !== "function") throw new TypeError("DiceboundLoot requires a random function");
     if (defeated?.miniBoss) {
       if (Number(randomFn()) >= minibossGearChance({ nightmare, hell })) return null;
-      return Object.freeze({ kind: "generated-equipment", rarity: guardianRarity({ defeated, board, nightmare, hell, randomFn }) });
+      return Object.freeze({ kind: "generated-equipment", rarity: guardianRarity({ defeated, board, nightmare, hell, luck, randomFn }) });
     }
     if (defeated?.finalBoss) {
-      return Object.freeze({ kind: "generated-equipment", rarity: guardianRarity({ defeated, board, nightmare, hell, randomFn }) });
+      return Object.freeze({ kind: "generated-equipment", rarity: guardianRarity({ defeated, board, nightmare, hell, luck, randomFn }) });
     }
     if (defeated?.boss) return Object.freeze({ kind: "generated-equipment", rarity: null });
     return null;
