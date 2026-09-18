@@ -57,13 +57,17 @@ classes.clearSlimeRougeRuntime();
 
 const actionTrace=[];
 const actionCallbacks={};
-for(const name of ["basicAttack","manaAttack","bloodmageAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"]){
+for(const name of ["basicAttack","manaAttack","bloodmageAttack","invokerQuasAttack","invokerWexAttack","invokerExortAttack","guard","bloodmageGuard","potion","ultimate","manaSpecial","bloodmageSpecial","rogueSpecial","clericSpecial","beastmasterSpecial","alchemistSpecial"]){
   actionCallbacks[name]=()=>{actionTrace.push(name);return name;};
 }
 classes.configureActions(actionCallbacks);
 function routed(classId,kind){player={classId};actionTrace.length=0;const result=classes.performAction(kind);return {result,trace:[...actionTrace]};}
 assert.deepEqual(routed("ranger","attack"),{result:"basicAttack",trace:["basicAttack"]});
 assert.deepEqual(routed("sorcerer","attack"),{result:"manaAttack",trace:["manaAttack"]});
+assert.deepEqual(routed("invoker","attack"),{result:"invokerWexAttack",trace:["invokerWexAttack"]});
+assert.deepEqual(routed("invoker","invoker-quas"),{result:"invokerQuasAttack",trace:["invokerQuasAttack"]});
+assert.deepEqual(routed("invoker","invoker-wex"),{result:"invokerWexAttack",trace:["invokerWexAttack"]});
+assert.deepEqual(routed("invoker","invoker-exort"),{result:"invokerExortAttack",trace:["invokerExortAttack"]});
 assert.deepEqual(routed("bloodmage","attack"),{result:"bloodmageAttack",trace:["bloodmageAttack"]});
 assert.deepEqual(routed("ranger","guard"),{result:"guard",trace:["guard"]});
 assert.deepEqual(routed("bloodmage","guard"),{result:"bloodmageGuard",trace:["bloodmageGuard"]});
@@ -105,6 +109,9 @@ assert.doesNotMatch(monolith,/async function bloodmageBloodletting\(/,'Bloodmage
 assert.doesNotMatch(monolith,/async function clericConsecration\(/,'Cleric Consecration still lives in monolith');
 assert.doesNotMatch(monolith,/function cycleBeastStance\(/,'Beastmaster stance mechanics still live in monolith');
 assert.match(monolith,/bloodmageAttack:\(\)=>dbClasses\.bloodmageBloodletting\(\)/);
+assert.match(monolith,/invokerQuasAttack:\(\)=>dbClasses\.invokerQuasStrike\(\)/);
+assert.match(monolith,/invokerWexAttack:\(\)=>dbClasses\.invokerWexStrike\(\)/);
+assert.match(monolith,/invokerExortAttack:\(\)=>dbClasses\.invokerExortStrike\(\)/);
 assert.match(monolith,/clericSpecial:\(\)=>dbClasses\.clericConsecration\(\)/);
 assert.match(monolith,/beastmasterSpecial:\(\)=>dbClasses\.cycleBeastStance\(\)/);
 assert.match(monolith,/bloodmageGuard:\(\)=>dbClasses\.bloodmageReplenish\(\)/);
