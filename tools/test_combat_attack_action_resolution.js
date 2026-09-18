@@ -55,7 +55,7 @@ function makeHarness(options = {}) {
     updateCombatUI: () => traceCall('ui'),
     rollTieredProc: chance => { const value = tierValues.length ? tierValues.shift() : 0; traceCall('tier', chance, value); return value; },
     performStrike: async (target, meta) => {
-      traceCall('strike', target?.name || null, !!meta?.echo, meta?.index || 0, meta?.canCrit);
+      traceCall('strike', target?.name || null, !!meta?.echo, meta?.index || 0, meta?.canCrit, meta?.actionDamageMultiplier || 1);
       if (options.performStrike) return options.performStrike({ target, meta, player, trace, enemies, getCurrentEnemy: () => currentEnemy, setCurrentEnemy: value => { currentEnemy = value; } });
       const configured = strikeResults.length ? strikeResults.shift() : null;
       const damage = configured?.damage == null ? 10 : configured.damage;
@@ -118,9 +118,10 @@ async function run() {
       player: { doubleStrike: 2 },
       actionBonuses: { echo: .75 }
     });
-    await owner.playerAttack({ suppressEcho: true, postActionKind: 'orb:blue' });
+    await owner.playerAttack({ suppressEcho: true, postActionKind: 'orb:blue', damageMultiplier: .85 });
     assert.strictEqual(h.trace.filter(x => x[0] === 'tier').length, 0, 'suppressed-Echo attack must not consume Echo RNG');
     assert.strictEqual(h.trace.filter(x => x[0] === 'strike').length, 1, 'suppressed-Echo attack must resolve exactly one strike');
+    assert.strictEqual(h.trace.find(x => x[0] === 'strike')[5], .85, 'profiled attack potency must travel with the strike packet');
     assert.deepStrictEqual(h.trace.find(x => x[0] === 'afterAction'), ['afterAction', 'orb:blue']);
   }
 
