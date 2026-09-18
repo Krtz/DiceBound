@@ -6,7 +6,7 @@
   const VERSION="0.6.7.10";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Nightmare Camp toggle placement polish.";
+  const RELEASE_SUMMARY="Luck rarity waterfall, broader enemy rosters & Camp polish.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
