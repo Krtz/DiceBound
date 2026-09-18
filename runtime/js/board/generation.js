@@ -31,8 +31,11 @@
   }
   function enemyForPosition(index){
     const current=state(),pool=runtime.getEnemyPool?.()||[],level=current.boardLevel;
-    const local=Math.floor(index/7)+1,floor=level===4?pool.length-3:level===3?Math.floor(pool.length*.76):level===2?Math.floor(pool.length*.55):0;
-    const maxIndex=Math.min(pool.length-1,Math.max(floor,local+(level===4?11:level===3?8:level===2?5:0)));
+    // Temporary 0.6.7.11 roster policy: every Board uses the same ordinary
+    // family progression/window as Board 1. Board-specific difficulty still
+    // comes from scaling, pack rules, guardians and authored presentation.
+    const local=Math.floor(index/7)+1,floor=0;
+    const maxIndex=Math.min(pool.length-1,Math.max(floor,local));
     const enemy={...(pool[rand(Math.max(floor,maxIndex-3),maxIndex)]||{})};
     if(level===4)enemy.name=`${pick(['Crowned','Omega','Doomed','Sovereign'])} ${enemy.name}`;
     else if(level===3)enemy.name=`${pick(['Fractured','Impossible','Paradox','Nullborn'])} ${enemy.name}`;
@@ -133,7 +136,7 @@
     const mini=runtime.currentMinibossTile?.()-1,last=runtime.currentTileCount?.()-1;
     tiles[mini]={type:'miniboss',cleared:false,packSize:1,enemyBase:runtime.enemyById?.(board(6).minibossId)};
     tiles[last]={type:'boss',cleared:false,packSize:1};
-    tiles.forEach((tile,index)=>{if(tile.type!=='enemy')return;tile.packSize=index<mini?1:(random()<.66?3:2);resetBoardSixPack(tile,index,12);});
+    tiles.forEach((tile,index)=>{if(tile.type!=='enemy')return;tile.packSize=index<mini?1:(random()<.66?3:2);resetBoardSixPack(tile,index,0);});
   }
   function applyBoardSixSecondPass(tiles){
     const mini=runtime.currentMinibossTile?.()-1,balance=board(6).balance||{};
@@ -141,7 +144,7 @@
       if(tile.type!=='enemy'||index<mini)return;
       const target=random()<(balance.threePackChance||0)?3:2;
       if(tile.packSize===target&&tile.enemyBases?.length===target)return;
-      tile.packSize=target;resetBoardSixPack(tile,index,14);
+      tile.packSize=target;resetBoardSixPack(tile,index,0);
     });
   }
   function applyPaleDevil(tiles,current){
