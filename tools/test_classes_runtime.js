@@ -22,7 +22,7 @@ vm.runInContext(fs.readFileSync(hooksPath,"utf8"),context,{filename:hooksPath});
 
 const classes=context.window.DiceboundClasses;
 assert.ok(classes,"DiceboundClasses facade missing");
-assert.equal(classes.apiVersion,2,"registry compatibility apiVersion drifted");
+assert.equal(classes.apiVersion,3,"registry compatibility apiVersion drifted");
 assert.equal(classes.owner,"classes/facade");
 assert.equal(context.window.DiceboundClassRuntime,undefined,"focused Classes runtime leaked as a peer public global");
 assert.equal(context.window.DiceboundClassActions,undefined,"focused Classes action mechanics leaked as a peer public global");
