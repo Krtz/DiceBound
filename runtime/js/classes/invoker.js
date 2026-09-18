@@ -70,7 +70,7 @@
     render();
   }
   function actionBonuses() { const s = state(false); return Object.freeze({ damage: orbBonuses().damage + (s?.alacrity > 0 ? .30 : 0), echo: orbBonuses().echo + (s?.alacrity > 0 ? .30 : 0), mana: orbBonuses().manaGeneration + (s?.alacrity > 0 ? .25 : 0), guard: orbBonuses().guardPower }); }
-  function outgoingMultiplier() { const p = player(); return (1 + actionBonuses().damage) * (p._invokerAttackDamageMultiplier || 1); }
+  function outgoingMultiplier() { return 1 + actionBonuses().damage; }
   function generatorManaMultiplier() { return 1 + actionBonuses().mana; }
   function spiritStrike() {
     const rt = requireRuntime(), s = state(), p = player(), target = rt.livingEnemies()[0];
@@ -104,14 +104,7 @@
       const baseGain = spec.mana + Math.max(0, Number(p.manaBuilderBonus) || 0);
       rt.manaGain(baseGain * generatorManaMultiplier());
     }
-    const previous = p._invokerAttackDamageMultiplier;
-    p._invokerAttackDamageMultiplier = spec.damage;
-    try {
-      return await rt.playerAttack({ suppressEcho: spec.suppressEcho, postActionKind: `orb:${spec.orb}` });
-    } finally {
-      if (previous == null) delete p._invokerAttackDamageMultiplier;
-      else p._invokerAttackDamageMultiplier = previous;
-    }
+    return rt.playerAttack({ suppressEcho: spec.suppressEcho, postActionKind: `orb:${spec.orb}`, damageMultiplier: spec.damage });
   }
   const quasStrike = () => orbAttack("quas");
   const wexStrike = () => orbAttack("wex");
