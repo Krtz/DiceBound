@@ -5,7 +5,7 @@
     {
       "name": "metadata",
       "result": {
-        "apiVersion": 2,
+        "apiVersion": 3,
         "ids": [
           "ranger",
           "sorcerer",
@@ -76,14 +76,17 @@
           "ranger": {
             "id": "ranger",
             "name": "Ranger",
-            "secret": false,
+            "icon": "🏹",
+            "attackIcon": "🏹",
+            "fxIcon": "➶➶➶",
             "unlock": "Always unlocked",
+            "desc": "The starting hero: a precise hunter with high crit, natural evasion and a devastating four-arrow ultimate.",
             "stats": "37 HP · 6 ATK · 15% CRIT · 8% DODGE",
-            "tags": [
-              "ranged",
-              "precision",
-              "evasive"
-            ],
+            "ultimate": {
+              "name": "Arrow Storm",
+              "icon": "🌧️",
+              "desc": "Four rapid arrows dealing roughly 340% total damage to the entire pack."
+            },
             "base": {
               "maxHp": 37,
               "attack": 6,
@@ -96,28 +99,31 @@
               "classBurst": 0,
               "lifeSteal": 0
             },
+            "scaleNotes": "Attack is the core stat; Crit is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive.",
+            "tags": [
+              "ranged",
+              "precision",
+              "evasive"
+            ],
             "passive": {
               "name": "Marked Quarry",
               "desc": "Basic attacks mark their target up to 3 times. Each mark adds Crit against that target; Arrow Storm consumes all marks for extra damage."
-            },
-            "ultimate": {
-              "name": "Arrow Storm",
-              "icon": "🌧️",
-              "desc": "Four rapid arrows dealing roughly 340% total damage to the entire pack."
             }
           },
           "sorcerer": {
             "id": "sorcerer",
             "name": "Sorcerer",
-            "secret": false,
+            "icon": "🔮",
+            "attackIcon": "✨",
+            "fxIcon": "✦",
             "unlock": "Defeat the Board 1 miniboss",
+            "desc": "An occult spellcaster with a real Mana cycle. Channel Bolt builds Mana; Arcane Lance spends it on a Crit-capable spell that converts half of Echo chance into bonus damage, applies Echo-weighted Poison, Lifesteal, and guarantees a random core-element eruption. Sorcerer's Signature Burst is Arcane Surge: when it procs, that basic or Echo strike deals 50% more damage.",
             "stats": "31 HP · 7 ATK · 25/100 MANA · 5 LUCK",
-            "tags": [
-              "ranged",
-              "occult",
-              "elemental",
-              "mana"
-            ],
+            "ultimate": {
+              "name": "Starfall",
+              "icon": "☄️",
+              "desc": "A 300% meteor that strikes the entire pack and restores 20% of damage dealt."
+            },
             "base": {
               "maxHp": 31,
               "attack": 7,
@@ -130,27 +136,32 @@
               "classBurst": 0.2,
               "lifeSteal": 0
             },
+            "scaleNotes": "Attack powers both Channel Bolt and Arcane Lance. Arcane Lance can Crit, converts half of Echo chance into bonus spell damage, applies Poison at Echo × Poison chance, and Lifesteals from the spell plus its forced elemental eruption. Prismatic Echo can repeat that eruption. Mana generation determines spell frequency; Crit, Echo, Poison and elemental power all improve the payoff.",
+            "tags": [
+              "ranged",
+              "occult",
+              "elemental",
+              "mana"
+            ],
             "passive": {
               "name": "Arcane Reservoir",
-              "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal. Arcane Surge is a Signature Burst: each basic or Echo strike has your Signature Burst chance to deal 50% more damage."
-            },
-            "ultimate": {
-              "name": "Starfall",
-              "icon": "☄️",
-              "desc": "A 300% meteor that strikes the entire pack and restores 20% of damage dealt."
+              "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, can Crit, converts half of Echo chance into bonus damage, applies Echo-weighted Poison and Lifesteals from its forced elemental eruption."
             }
           },
           "fighter": {
             "id": "fighter",
             "name": "Fighter",
-            "secret": false,
+            "icon": "🛡️",
+            "attackIcon": "⚔️",
+            "fxIcon": "⚔️",
             "unlock": "Defeat the Board 1 dragon",
+            "desc": "A durable front-line warrior. Guarding is exceptional and Titan Cleave strikes two enemies while granting a barrier.",
             "stats": "44 HP · 5 ATK · 2 DEF",
-            "tags": [
-              "melee",
-              "armored",
-              "guardian"
-            ],
+            "ultimate": {
+              "name": "Titan Cleave",
+              "icon": "💥",
+              "desc": "A 260% cleave that hits up to two enemies and grants a Battle Barrier."
+            },
             "base": {
               "maxHp": 44,
               "attack": 5,
@@ -163,27 +174,31 @@
               "classBurst": 0,
               "lifeSteal": 0
             },
+            "scaleNotes": "Defense is both survival and, with several Fighter powers, offense. Attack still raises baseline damage, but Guard/barrier uptime and Defense scaling are the class's defining growth path.",
+            "tags": [
+              "melee",
+              "armored",
+              "guardian"
+            ],
             "passive": {
               "name": "Counterstance",
               "desc": "Guarding primes the Fighter's next basic attack for a heavy counterblow."
-            },
-            "ultimate": {
-              "name": "Titan Cleave",
-              "icon": "💥",
-              "desc": "A 260% cleave that hits up to two enemies and grants a Battle Barrier."
             }
           },
           "monk": {
             "id": "monk",
             "name": "Monk",
-            "secret": false,
+            "icon": "🥋",
+            "attackIcon": "🥊",
+            "fxIcon": "👊👊",
             "unlock": "Defeat the Board 2 miniboss",
+            "desc": "A rapid martial artist who mixes Echo Strikes, evasion and self-healing into relentless pressure.",
             "stats": "39 HP · 7 ATK · 6% DODGE · 8% ECHO",
-            "tags": [
-              "melee",
-              "combo",
-              "disciplined"
-            ],
+            "ultimate": {
+              "name": "Hundred Fists",
+              "icon": "👊",
+              "desc": "A storm of blows dealing 325% damage and restoring 10% max HP."
+            },
             "base": {
               "maxHp": 39,
               "attack": 7,
@@ -196,27 +211,31 @@
               "classBurst": 0.14,
               "lifeSteal": 0
             },
+            "scaleNotes": "Attack, Echo Strike and Dodge work together: every real base hit and Echo Strike advances Flowing Combo after the action, so Echo directly accelerates the class engine. Hundred Fists scales mostly from Attack.",
+            "tags": [
+              "melee",
+              "combo",
+              "disciplined"
+            ],
             "passive": {
               "name": "Flowing Combo",
-              "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
-            },
-            "ultimate": {
-              "name": "Hundred Fists",
-              "icon": "👊",
-              "desc": "A storm of blows dealing 325% damage and restoring 10% max HP."
+              "desc": "Every real basic hit and Echo Strike advances Combo after the action, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
             }
           },
           "clown": {
             "id": "clown",
             "name": "Clown",
-            "secret": false,
+            "icon": "🤡",
+            "attackIcon": "🐔",
+            "fxIcon": "🐔",
             "unlock": "Defeat the Board 2 dragon",
+            "desc": "A chaotic trickster powered by Luck, crits and weapons that should not legally count as weapons.",
             "stats": "34 HP · 6 ATK · 12% CRIT · 8 LUCK",
-            "tags": [
-              "weird",
-              "chaotic",
-              "burst"
-            ],
+            "ultimate": {
+              "name": "Final Punchline",
+              "icon": "🎪",
+              "desc": "A wildly variable area catastrophe that always grants a bonus effect."
+            },
             "base": {
               "maxHp": 34,
               "attack": 6,
@@ -229,28 +248,31 @@
               "classBurst": 0.18,
               "lifeSteal": 0
             },
+            "scaleNotes": "Luck, Crit and Echo are the main chaos multipliers. Clown has high variance rather than one clean stat curve; more Luck also improves the road rewards that feed the build.",
+            "tags": [
+              "weird",
+              "chaotic",
+              "burst"
+            ],
             "passive": {
               "name": "Opening Gag",
               "desc": "Every battle begins with a random comedy gimmick: shoes, pies, barriers, applause or chickens."
-            },
-            "ultimate": {
-              "name": "Final Punchline",
-              "icon": "🎪",
-              "desc": "A wildly variable area catastrophe that always grants a bonus effect."
             }
           },
           "rouge": {
             "id": "rouge",
             "name": "Rouge",
-            "secret": false,
+            "icon": "🟥",
+            "attackIcon": "🖌️",
+            "fxIcon": "🩸",
             "unlock": "Reach 10 Prestige points",
+            "desc": "Rouge—the colour, not the thief—is a crimson battle artist whose occult brushwork builds Mana for Scarlet Hex.",
             "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT",
-            "tags": [
-              "weird",
-              "artful",
-              "occult",
-              "mana"
-            ],
+            "ultimate": {
+              "name": "Crimson Deluge",
+              "icon": "🌹",
+              "desc": "A 310% scarlet strike with powerful innate lifesteal."
+            },
             "base": {
               "maxHp": 36,
               "attack": 7,
@@ -263,27 +285,32 @@
               "classBurst": 0.18,
               "lifeSteal": 0.05
             },
+            "scaleNotes": "Rouge—the colour—likes Attack, Crit, Echo, Poison and Lifesteal. Scarlet Hex converts half of Echo chance into spell damage, applies Poison at Echo × Poison chance, and real Rouge drains doubled Lifesteal from its full primary-plus-splash damage package.",
+            "tags": [
+              "weird",
+              "artful",
+              "occult",
+              "mana"
+            ],
             "passive": {
               "name": "Painted Hexcraft",
-              "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage and drains doubled Lifesteal from the full Hex."
-            },
-            "ultimate": {
-              "name": "Crimson Deluge",
-              "icon": "🌹",
-              "desc": "A 310% scarlet strike with powerful innate lifesteal."
+              "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage, applies Echo-weighted Poison and drains doubled Lifesteal from the full Hex."
             }
           },
           "berserker": {
             "id": "berserker",
             "name": "Berserker",
-            "secret": false,
+            "icon": "🪓",
+            "attackIcon": "🪓",
+            "fxIcon": "💢🪓",
             "unlock": "Take 1,000 total damage",
+            "desc": "A battle-scarred engine of rage. Missing HP becomes Rage: every 1% missing HP increases damage by 1%, and Ragequake pulverizes every enemy.",
             "stats": "51 HP · 8 ATK · 5% CRIT · RAGE",
-            "tags": [
-              "melee",
-              "vampiric",
-              "reckless"
-            ],
+            "ultimate": {
+              "name": "Ragequake",
+              "icon": "🌋",
+              "desc": "An area smash dealing 280% damage. Your current Rage multiplies it like all other Berserker damage."
+            },
             "base": {
               "maxHp": 51,
               "attack": 8,
@@ -296,27 +323,31 @@
               "classBurst": 0.22,
               "lifeSteal": 0.03
             },
+            "scaleNotes": "Every 1% missing HP becomes 1% Rage damage. Attack raises the base being multiplied; Max HP widens the dangerous Rage window; Lifesteal helps you hover there without dying.",
+            "tags": [
+              "melee",
+              "vampiric",
+              "reckless"
+            ],
             "passive": {
               "name": "Blood Rage",
               "desc": "Every 1% missing HP grants +1% damage as Rage. The bar fills as your HP falls."
-            },
-            "ultimate": {
-              "name": "Ragequake",
-              "icon": "🌋",
-              "desc": "An area smash dealing 280% damage. Your current Rage multiplies it like all other Berserker damage."
             }
           },
           "turtle": {
             "id": "turtle",
             "name": "Turtle",
-            "secret": false,
+            "icon": "🐢",
+            "attackIcon": "🛡️",
+            "fxIcon": "🐚",
             "unlock": "Reach more than 40 Defense during a run",
+            "desc": "A living fortress with enormous defense. Its shell turns patience into crushing counterpressure.",
             "stats": "55 HP · 4 ATK · 6 DEF",
-            "tags": [
-              "armored",
-              "slow",
-              "guardian"
-            ],
+            "ultimate": {
+              "name": "Shellquake",
+              "icon": "🐚",
+              "desc": "An area shell slam dealing 240% damage and granting two barriers."
+            },
             "base": {
               "maxHp": 55,
               "attack": 4,
@@ -329,28 +360,31 @@
               "classBurst": 0,
               "lifeSteal": 0
             },
+            "scaleNotes": "Defense is the premium stat: it drastically improves survival and can be converted into damage. Turtle scales slowly with raw Attack but explosively once Defense-based powers stack.",
+            "tags": [
+              "armored",
+              "slow",
+              "guardian"
+            ],
             "passive": {
               "name": "Shell Discipline",
               "desc": "Guarding primes a crushing shell counter on the next basic attack. Starts with an extra Barrier and +1 Defense."
-            },
-            "ultimate": {
-              "name": "Shellquake",
-              "icon": "🐚",
-              "desc": "An area shell slam dealing 240% damage and granting two barriers."
             }
           },
           "frog": {
             "id": "frog",
             "name": "Frog",
-            "secret": false,
+            "icon": "🐸",
+            "attackIcon": "👅",
+            "fxIcon": "🐸↯",
             "unlock": "Reach 150% Echo Strike during a run",
+            "desc": "An impossible amphibian built around chained Echo Strikes and increasingly aggressive croaking.",
             "stats": "38 HP · 6 ATK · 30% ECHO · 8% DODGE",
-            "tags": [
-              "weird",
-              "dodgy",
-              "echo",
-              "poison"
-            ],
+            "ultimate": {
+              "name": "Croak Cascade",
+              "icon": "🌊",
+              "desc": "Six jumping strikes that independently target living enemies."
+            },
             "base": {
               "maxHp": 38,
               "attack": 6,
@@ -363,27 +397,33 @@
               "classBurst": 0.16,
               "lifeSteal": 0
             },
+            "scaleNotes": "Echo Strike is the primary engine. Values above 100% create guaranteed extra hits, and Croak Cascade converts high Echo into more jumps. Attack still determines how hard each jump lands.",
+            "tags": [
+              "weird",
+              "dodgy",
+              "echo",
+              "poison"
+            ],
             "passive": {
               "name": "Predatory Bounce",
               "desc": "Echo-heavy attacks become especially vicious against enemies below half HP."
-            },
-            "ultimate": {
-              "name": "Croak Cascade",
-              "icon": "🌊",
-              "desc": "Six jumping strikes that independently target living enemies."
             }
           },
           "d20": {
             "id": "d20",
-            "name": "The Twenty-Sider",
             "secret": true,
+            "name": "The Twenty-Sider",
+            "icon": "🎲",
+            "attackIcon": "🎲",
+            "fxIcon": "20?",
             "unlock": "Raise DiBo to level 30",
+            "desc": "A hidden avatar of probability. Combat actions visibly roll a d20, pause on the result, and can erupt into absurd outcomes.",
             "stats": "40 HP · 6 ATK · CHAOS D20",
-            "tags": [
-              "weird",
-              "chaotic",
-              "lucky"
-            ],
+            "ultimate": {
+              "name": "Natural Twenty",
+              "icon": "🌠",
+              "desc": "Roll the action d20, then release a wildly scaling reality burst."
+            },
             "base": {
               "maxHp": 40,
               "attack": 6,
@@ -396,28 +436,31 @@
               "classBurst": 0,
               "lifeSteal": 0
             },
+            "scaleNotes": "Probability is the mechanic. Attack supplies the floor, while Crit, Echo and Luck make high D20 outcomes increasingly absurd. Exact high-roll interactions remain intentionally undocumented.",
+            "tags": [
+              "weird",
+              "chaotic",
+              "lucky"
+            ],
             "passive": {
               "name": "Probability Leak",
               "desc": "Nearly every combat action rolls a visible d20. The class intentionally pauses so you can witness fate making mistakes."
-            },
-            "ultimate": {
-              "name": "Natural Twenty",
-              "icon": "🌠",
-              "desc": "Roll the action d20, then release a wildly scaling reality burst."
             }
           },
           "slime": {
             "id": "slime",
             "name": "Slime",
-            "secret": false,
+            "icon": "🟢",
+            "attackIcon": "💧",
+            "fxIcon": "SPLAT",
             "unlock": "Unlock 10 classes in total",
+            "desc": "No true class identity and no exclusive specialty: the Slime survives by borrowing non-Ultimate strengths from many other non-secret classes.",
             "stats": "39 HP · 6 ATK · 1 DEF",
-            "tags": [
-              "weird",
-              "sticky",
-              "durable",
-              "poison"
-            ],
+            "ultimate": {
+              "name": "Ooze Everything",
+              "icon": "🫠",
+              "desc": "A 270% wave of slime that strikes the entire enemy pack."
+            },
             "base": {
               "maxHp": 39,
               "attack": 6,
@@ -430,28 +473,32 @@
               "classBurst": 0,
               "lifeSteal": 0
             },
+            "scaleNotes": "Slime has no exclusive scaling rule; its strength is access to the broad shared/class power pool. It can become whatever the run offers—Attack bruiser, Echo machine, elemental build or sustain blob.",
+            "tags": [
+              "weird",
+              "sticky",
+              "durable",
+              "poison"
+            ],
             "passive": {
               "name": "Borrowed Shapes",
               "desc": "Has no privileged mechanic of its own. Instead it can learn many non-Ultimate class powers from other non-secret classes."
-            },
-            "ultimate": {
-              "name": "Ooze Everything",
-              "icon": "🫠",
-              "desc": "A 270% wave of slime that strikes the entire enemy pack."
             }
           },
           "vampire": {
             "id": "vampire",
             "name": "Vampire",
-            "secret": false,
+            "icon": "🧛",
+            "attackIcon": "🦇",
+            "fxIcon": "🩸🦇",
             "unlock": "Exceed 100% Lifesteal and defeat the Board 3 final boss",
+            "desc": "A lifestealing occult duelist. Night Siphon builds Mana; Grave Lance spends it on a Crit-capable strike that scales from Lifesteal and Echo, rolls normal elements and Poison, then drinks the damage back at doubled Lifesteal.",
             "stats": "41 HP · 7 ATK · 25/100 MANA · 28% LIFESTEAL",
-            "tags": [
-              "vampiric",
-              "occult",
-              "sustain",
-              "mana"
-            ],
+            "ultimate": {
+              "name": "Crimson Eclipse",
+              "icon": "🌑",
+              "desc": "Drain the entire pack with damage that scales from Lifesteal and Echo; healing also scales from current Lifesteal."
+            },
             "base": {
               "maxHp": 41,
               "attack": 7,
@@ -464,28 +511,32 @@
               "classBurst": 0.16,
               "lifeSteal": 0.18
             },
+            "scaleNotes": "Lifesteal is now both offense and sustain: Grave Lance gains damage from current Lifesteal, converts 80% of Echo chance into bonus damage, uses 120% of normal Poison chance, can Crit and rolls normal elements. Crimson Eclipse also converts Lifesteal and Echo into pack damage, while its drain rises with current Lifesteal.",
+            "tags": [
+              "vampiric",
+              "occult",
+              "sustain",
+              "mana"
+            ],
             "passive": {
               "name": "Night Hunger",
-              "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
-            },
-            "ultimate": {
-              "name": "Crimson Eclipse",
-              "icon": "🌑",
-              "desc": "Drain the entire pack for heavy damage and heal for 50% of damage dealt."
+              "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance scales from Lifesteal and Echo, can Crit, rolls normal elements and Poison, and drains doubled Lifesteal."
             }
           },
           "ninja": {
             "id": "ninja",
             "name": "Ninja",
-            "secret": false,
+            "icon": "🥷",
+            "attackIcon": "🗡️",
+            "fxIcon": "✦🗡️",
             "unlock": "Reach more than 100% Critical chance during a run",
+            "desc": "A precision assassin built around overflow critical tiers, smoke and rapid single-target execution.",
             "stats": "33 HP · 8 ATK · 28% CRIT · 12% DODGE",
-            "tags": [
-              "melee",
-              "dodgy",
-              "precision",
-              "poison"
-            ],
+            "ultimate": {
+              "name": "Thousand Shadows",
+              "icon": "🌘",
+              "desc": "Five independently critical strikes against the selected enemy, spilling to new targets on defeat."
+            },
             "base": {
               "maxHp": 33,
               "attack": 8,
@@ -498,27 +549,33 @@
               "classBurst": 0.22,
               "lifeSteal": 0
             },
+            "scaleNotes": "Crit is king: overflow above 100% creates additional guaranteed critical tiers. Attack multiplies those tiers, while Echo supplies more chances to exploit them. Dodge compensates for very low base durability.",
+            "tags": [
+              "melee",
+              "dodgy",
+              "precision",
+              "poison"
+            ],
             "passive": {
               "name": "Smoke Counter",
               "desc": "Critical hits build Smoke. At 3 Smoke, the next basic attack becomes a defense-piercing execution strike."
-            },
-            "ultimate": {
-              "name": "Thousand Shadows",
-              "icon": "🌘",
-              "desc": "Five independently critical strikes against the selected enemy, spilling to new targets on defeat."
             }
           },
           "ceo": {
             "id": "ceo",
-            "name": "CEO",
             "secret": true,
+            "name": "CEO",
+            "icon": "👔",
+            "attackIcon": "📈",
+            "fxIcon": "📊💥",
             "unlock": "Secret: reach 300% Boss Damage",
+            "desc": "The hidden executive class converts extreme guardian specialization into hostile quarterly growth.",
             "stats": "46 HP · 9 ATK · 35% BOSS DAMAGE",
-            "tags": [
-              "weird",
-              "wealth",
-              "ranged"
-            ],
+            "ultimate": {
+              "name": "Quarterly Annihilation",
+              "icon": "📉",
+              "desc": "A boardroom-wide attack scaling with Boss Damage and current gold."
+            },
             "base": {
               "maxHp": 46,
               "attack": 9,
@@ -532,28 +589,32 @@
               "lifeSteal": 0.05,
               "bossDamage": 0.35
             },
+            "scaleNotes": "Boss Damage is both an unlock identity and a major multiplier. Gold can become direct combat value through executive powers, so economic growth and guardian specialization feed each other.",
+            "tags": [
+              "weird",
+              "wealth",
+              "ranged"
+            ],
             "passive": {
               "name": "Executive Compensation",
               "desc": "All gold gained is increased by +200%. Secret classes are allowed to be financially irresponsible."
-            },
-            "ultimate": {
-              "name": "Quarterly Annihilation",
-              "icon": "📉",
-              "desc": "A boardroom-wide attack scaling with Boss Damage and current gold."
             }
           },
           "merchant": {
             "id": "merchant",
-            "name": "Merchant",
             "secret": true,
+            "name": "Merchant",
+            "icon": "🧔",
+            "attackIcon": "💰",
+            "fxIcon": "🪙⚖️",
             "unlock": "Defeat the Road Merchant secret boss once",
+            "desc": "A secret trader using gold, resale margins and actual occult accounting. It builds Mana with Ledger Tap and spends it on Foreclosure Hex.",
             "stats": "52 HP · 10 ATK · 25/100 MANA · 20 LUCK · GOLD SCALING",
-            "tags": [
-              "wealth",
-              "occult",
-              "weird",
-              "mana"
-            ],
+            "ultimate": {
+              "name": "Market Monopoly",
+              "icon": "🏦",
+              "desc": "Deals massive pack damage, grants gold and raises two barriers."
+            },
             "base": {
               "maxHp": 52,
               "attack": 10,
@@ -566,27 +627,33 @@
               "classBurst": 0.22,
               "lifeSteal": 0.08
             },
+            "scaleNotes": "Gold is a combat stat. Foreclosure Hex adds 5% of current gold with no cap, then multiplies that damage by current Crit and Echo instead of rolling Crit. It also keeps normal Poison and elemental proc chances, so wealth builds still benefit from combat stats.",
+            "tags": [
+              "wealth",
+              "occult",
+              "weird",
+              "mana"
+            ],
             "passive": {
               "name": "Occult Accounting",
-              "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
-            },
-            "ultimate": {
-              "name": "Market Monopoly",
-              "icon": "🏦",
-              "desc": "Deals massive pack damage, grants gold and raises two barriers."
+              "desc": "Selling unused gear pays 200% normal value. Ledger Tap builds Mana; Foreclosure Hex spends it, adds uncapped gold scaling, multiplies with Crit/Echo, and keeps normal Poison/element procs."
             }
           },
           "cleric": {
             "id": "cleric",
             "name": "Cleric",
-            "secret": false,
+            "icon": "⛪",
+            "attackIcon": "✨",
+            "fxIcon": "✝️✨",
             "unlock": "Heal 1,000 HP across all runs",
+            "desc": "A holy sustain specialist. Blessed attacks can restore HP, Light effects are especially valuable, and Divine Reckoning heals while damaging the whole pack.",
             "stats": "46 HP · 5 ATK · 2 DEF · HOLY SUSTAIN",
-            "tags": [
-              "holy",
-              "sustain",
-              "guardian"
-            ],
+            "scaleNotes": "Attack scales modestly; healing scales mainly from max HP and repeated actions. Defense and sustain make long guardian fights increasingly favorable.",
+            "ultimate": {
+              "name": "Divine Reckoning",
+              "icon": "☀️",
+              "desc": "Holy area damage plus a large self-heal. Overhealing can interact with effects that explicitly allow it."
+            },
             "base": {
               "maxHp": 46,
               "attack": 5,
@@ -599,27 +666,31 @@
               "classBurst": 0.24,
               "lifeSteal": 0
             },
+            "tags": [
+              "holy",
+              "sustain",
+              "guardian"
+            ],
             "passive": {
               "name": "Faith",
               "desc": "Healing builds Faith. At full Faith, the Cleric can cast a free Consecration during combat."
-            },
-            "ultimate": {
-              "name": "Divine Reckoning",
-              "icon": "☀️",
-              "desc": "Holy area damage plus a large self-heal. Overhealing can interact with effects that explicitly allow it."
             }
           },
           "paladin": {
             "id": "paladin",
             "name": "Paladin",
-            "secret": false,
+            "icon": "🛡️✨",
+            "attackIcon": "⚔️",
+            "fxIcon": "⚔️✨",
             "unlock": "Defeat Board 3 with both Fighter and Cleric",
+            "desc": "A holy guardian hybrid. Healing stores Oath Grace; Guard consumes that Grace for stronger mitigation and barriers, while Defense still contributes to offense.",
             "stats": "60 HP · 7 ATK · 5 DEF · DEFENSE/HEALING SCALING",
-            "tags": [
-              "holy",
-              "armored",
-              "guardian"
-            ],
+            "scaleNotes": "Healing and max HP build Oath Grace; Defense makes each empowered Guard more valuable. The class blends Cleric sustain with Fighter-style defensive tempo.",
+            "ultimate": {
+              "name": "Aegis Judgment",
+              "icon": "⚜️",
+              "desc": "Heavy holy area damage scaling with Attack and Defense, heals the Paladin and feeds Oath Grace, then raises barriers."
+            },
             "base": {
               "maxHp": 60,
               "attack": 7,
@@ -632,27 +703,31 @@
               "classBurst": 0.2,
               "lifeSteal": 0.02
             },
+            "tags": [
+              "holy",
+              "armored",
+              "guardian"
+            ],
             "passive": {
               "name": "Oathplate",
               "desc": "Defense contributes 35% of its value to ordinary attack damage. The class remains deliberately stable and dependable."
-            },
-            "ultimate": {
-              "name": "Aegis Judgment",
-              "icon": "⚜️",
-              "desc": "Heavy holy area damage scaling with Attack and Defense, heals the Paladin and feeds Oath Grace, then raises barriers."
             }
           },
           "beastmaster": {
             "id": "beastmaster",
             "name": "Beastmaster",
-            "secret": false,
+            "icon": "🐾",
+            "attackIcon": "🦴",
+            "fxIcon": "🐺➶",
             "unlock": "Unlock every companion",
+            "desc": "A late-unlock companion commander. Its own attacks are reliable, while pet Bond, pet damage and double-pet attacks become a genuinely dangerous second damage engine.",
             "stats": "48 HP · 7 ATK · 1 DEF · STRONG PET SCALING",
-            "tags": [
-              "pet",
-              "ranged",
-              "pack"
-            ],
+            "scaleNotes": "Gains more from companion level and pet bonuses than most classes. Pack Call converts current pet damage directly into burst damage.",
+            "ultimate": {
+              "name": "Call of the Pack",
+              "icon": "🐺",
+              "desc": "Calls a spectral pack for area damage based on Attack plus several times your active companion's damage."
+            },
             "base": {
               "maxHp": 48,
               "attack": 7,
@@ -665,27 +740,31 @@
               "classBurst": 0.2,
               "lifeSteal": 0
             },
+            "tags": [
+              "pet",
+              "ranged",
+              "pack"
+            ],
             "passive": {
               "name": "Pack Orders",
               "desc": "Can switch its companion between Aggressive, Defensive and Support stances during battle."
-            },
-            "ultimate": {
-              "name": "Call of the Pack",
-              "icon": "🐺",
-              "desc": "Calls a spectral pack for area damage based on Attack plus several times your active companion's damage."
             }
           },
           "rogue": {
             "id": "rogue",
             "name": "Rogue",
-            "secret": false,
+            "icon": "🗡️",
+            "attackIcon": "🗡️",
+            "fxIcon": "🗡️💨",
             "unlock": "Hold 5,000 gold at one time and defeat the Board 3 miniboss",
+            "desc": "A fast opportunist built around Dodge, gold and one Steal attempt per battle. Stat Heist can upgrade successful Steals to borrow 10% of a target's ATK and DEF for that battle.",
             "stats": "34 HP · 8 ATK · 22% CRIT · 14% DODGE",
-            "tags": [
-              "melee",
-              "dodgy",
-              "wealth"
-            ],
+            "scaleNotes": "Raw Attack and Crit scale its burst fastest. Gold is also tactical fuel: some Rogue powers and its ultimate turn a rich purse into momentum.",
+            "ultimate": {
+              "name": "Grand Larceny",
+              "icon": "💎",
+              "desc": "A brutal single-target strike that steals gold after the hit."
+            },
             "base": {
               "maxHp": 34,
               "attack": 8,
@@ -698,28 +777,32 @@
               "classBurst": 0.24,
               "lifeSteal": 0.03
             },
+            "tags": [
+              "melee",
+              "dodgy",
+              "wealth"
+            ],
             "passive": {
               "name": "Sticky Fingers",
-              "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
-            },
-            "ultimate": {
-              "name": "Grand Larceny",
-              "icon": "💎",
-              "desc": "A brutal single-target strike that steals gold after the hit."
+              "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can snatch a random powerup; Grand Larceny can also steal battle-only ATK/DEF. Starts with +25% gold gain and +5% Dodge."
             }
           },
           "bloodmage": {
             "id": "bloodmage",
-            "name": "Bloodmage",
             "secret": true,
+            "name": "Bloodmage",
+            "icon": "🩸",
+            "attackIcon": "🩸",
+            "fxIcon": "🩸💥",
             "unlock": "Secret: defeat the Bloodmage hidden inside a Bloodwell",
+            "desc": "A forbidden occult caster that replaces Mana with HP. Bloodletting restores fuel, Exsanguinate spends life on a Crit-capable attack that converts half of Echo chance into damage and can proc Poison/elements, and Replenish heals both combatants.",
             "stats": "39 HP · 9 ATK · 1 DEF · LIFE-FUELLED",
-            "tags": [
-              "occult",
-              "vampiric",
-              "weird",
-              "blood-fuel"
-            ],
+            "scaleNotes": "Attack and max HP scale Exsanguinate's blood-fuel base; Crit multiplies it, half of Echo chance becomes deterministic bonus damage, and Poison uses (50% Echo) × Poison chance. Normal elemental procs still fire from the landing hit.",
+            "ultimate": {
+              "name": "Sanguine Cataclysm",
+              "icon": "🩸☄️",
+              "desc": "Deals heavy damage to every enemy, then restores a portion of the blood spilled."
+            },
             "base": {
               "maxHp": 39,
               "attack": 9,
@@ -732,29 +815,31 @@
               "classBurst": 0.22,
               "lifeSteal": 0.05
             },
+            "tags": [
+              "occult",
+              "vampiric",
+              "weird",
+              "blood-fuel"
+            ],
             "passive": {
               "name": "Blood Is Mana",
-              "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
-            },
-            "ultimate": {
-              "name": "Sanguine Cataclysm",
-              "icon": "🩸☄️",
-              "desc": "Deals heavy damage to every enemy, then restores a portion of the blood spilled."
+              "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for Crit/Echo/Poison/element-scaled damage; Replenish heals both sides."
             }
           },
           "summoner": {
             "id": "summoner",
             "name": "Summoner",
-            "secret": false,
+            "icon": "📖",
+            "attackIcon": "✨",
+            "fxIcon": "🔹🐾",
             "unlock": "Raise any 3 companions to level 10",
+            "desc": "A Mana-based pet caster. Spirit Bolt builds Mana; Conjure Familiar spends it to call temporary elemental spirits that join companion attacks. The companion circle converts 10% of Summoner Attack into pet damage before class powerups.",
             "stats": "36 HP · 6 ATK · 35/120 MANA · SUMMONS",
-            "tags": [
-              "occult",
-              "mana",
-              "pet",
-              "pack",
-              "ranged"
-            ],
+            "ultimate": {
+              "name": "Grand Convergence",
+              "icon": "🌌",
+              "desc": "Calls a temporary full spirit circle and sends every summoned familiar crashing through the enemy pack."
+            },
             "base": {
               "maxHp": 36,
               "attack": 6,
@@ -767,29 +852,33 @@
               "classBurst": 0.18,
               "lifeSteal": 0
             },
+            "tags": [
+              "occult",
+              "mana",
+              "pet",
+              "pack",
+              "ranged"
+            ],
             "passive": {
               "name": "Spirit Circle",
-              "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
-            },
-            "ultimate": {
-              "name": "Grand Convergence",
-              "icon": "🌌",
-              "desc": "Calls a temporary full spirit circle and sends every summoned familiar crashing through the enemy pack."
+              "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. The companion circle converts 10% of player Attack into pet damage, and Summoned spirits attack after the normal companion."
             }
           },
           "pokemontrainer": {
             "id": "pokemontrainer",
-            "name": "Pokémon Trainer",
             "secret": true,
+            "name": "Pokémon Trainer",
+            "icon": "🧢",
+            "attackIcon": "🔴",
+            "fxIcon": "🐾✨",
             "unlock": "Secret: raise every companion to level 10 and clear Board 5 with Beastmaster on any difficulty",
+            "desc": "A secret late-game companion master. Six Dicebound creatures are randomly drafted at the start of every run; switch between them freely and unleash the entire roster together.",
             "stats": "46 HP · 8 ATK · 2 DEF · SIX-CREATURE ROSTER",
-            "tags": [
-              "pet",
-              "pack",
-              "weird",
-              "strong",
-              "lucky"
-            ],
+            "ultimate": {
+              "name": "Six-Pack Stampede",
+              "icon": "🌈🐾",
+              "desc": "Every creature in the six-member roster attacks the entire pack in rapid succession."
+            },
             "base": {
               "maxHp": 46,
               "attack": 8,
@@ -802,28 +891,32 @@
               "classBurst": 0.26,
               "lifeSteal": 0.04
             },
+            "tags": [
+              "pet",
+              "pack",
+              "weird",
+              "strong",
+              "lucky"
+            ],
             "passive": {
               "name": "Six-Creature Draft",
               "desc": "At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."
-            },
-            "ultimate": {
-              "name": "Six-Pack Stampede",
-              "icon": "🌈🐾",
-              "desc": "Every creature in the six-member roster attacks the entire pack in rapid succession."
             }
           },
           "alchemist": {
             "id": "alchemist",
             "name": "Alchemist",
-            "secret": false,
+            "icon": "⚗️",
+            "attackIcon": "🧪",
+            "fxIcon": "🧪💥",
             "unlock": "Use 15 potions across all runs",
+            "desc": "A potion engineer who brews replacements during combat and can drink potions for healing or throw them as volatile weapons. Volatile Flask deals 150% Potion Healing + 100% Attack, can Crit, and uses 250% of current Poison chance.",
             "stats": "39 HP · 6 ATK · 1 DEF · +50% POTION HEALING · +5%/LEVEL",
-            "tags": [
-              "alchemy",
-              "sustain",
-              "ranged",
-              "weird"
-            ],
+            "ultimate": {
+              "name": "Grand Distillation",
+              "icon": "⚗️✨",
+              "desc": "Creates three potions, restores health and detonates an oversized restorative formula across the enemy pack."
+            },
             "base": {
               "maxHp": 39,
               "attack": 6,
@@ -836,30 +929,33 @@
               "classBurst": 0.14,
               "lifeSteal": 0
             },
+            "tags": [
+              "alchemy",
+              "sustain",
+              "ranged",
+              "weird"
+            ],
             "passive": {
               "name": "Combat Distillery",
-              "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
-            },
-            "ultimate": {
-              "name": "Grand Distillation",
-              "icon": "⚗️✨",
-              "desc": "Creates three potions, restores health and detonates an oversized restorative formula across the enemy pack."
+              "desc": "Every third basic attack brews a potion. Volatile Flask converts 150% Potion Healing + 100% Attack into pack damage, can Crit and uses 250% Poison chance."
             }
           },
           "ouroboros": {
             "id": "ouroboros",
-            "name": "Ouroboros",
             "secret": true,
+            "name": "Ouroboros",
+            "icon": "🐍♾️",
+            "attackIcon": "🐍",
+            "fxIcon": "♾️🐍",
             "unlock": "Secret: reach 400% Echo Strike during a run",
+            "desc": "A recursive serpent that refuses normal Attack scaling. Attack is fixed at 10; every point of Attack gained or lost becomes 10% Echo Strike instead. Its best powers turn absurd Echo into poison and elemental recursion.",
             "stats": "48 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT",
-            "tags": [
-              "secret",
-              "weird",
-              "echo",
-              "poison",
-              "elemental",
-              "dodgy"
-            ],
+            "scaleNotes": "Attack cannot move from 10. Attack bonuses convert into Echo Strike at 10% per point; Echo, Poison and elemental effects are the real scaling engines.",
+            "ultimate": {
+              "name": "Infinite Return",
+              "icon": "♾️☠️",
+              "desc": "A chain of serpent strikes whose hit count scales with Echo Strike. Every hit adds Poison and can bounce through the pack."
+            },
             "base": {
               "maxHp": 48,
               "attack": 10,
@@ -872,24 +968,30 @@
               "classBurst": 0.14,
               "lifeSteal": 0.04
             },
-            "ultimate": {
-              "name": "Infinite Return",
-              "icon": "♾️☠️",
-              "desc": "A chain of serpent strikes whose hit count scales with Echo Strike. Every hit adds Poison and can bounce through the pack."
-            }
+            "tags": [
+              "secret",
+              "weird",
+              "echo",
+              "poison",
+              "elemental",
+              "dodgy"
+            ]
           },
           "dragoon": {
             "id": "dragoon",
             "name": "Dragoon",
-            "secret": false,
+            "icon": "🐉",
+            "attackIcon": "🗡️",
+            "fxIcon": "🪂💥",
             "unlock": "Defeat the Board 4 miniboss once",
+            "desc": "A lance fighter who uses Jump to become Airborne through one enemy response, then spends the following action on a powerful landing strike.",
             "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT · JUMP",
-            "tags": [
-              "melee",
-              "precision",
-              "evasive",
-              "burst"
-            ],
+            "scaleNotes": "Attack drives both ordinary strikes and the landing hit. Landing rolls normal Crit, Poison and elemental effects, while Aerial Discipline shortens Jump's six-turn cooldown.",
+            "ultimate": {
+              "name": "Dragon Dive",
+              "icon": "🐉💥",
+              "desc": "A direct, decisive aerial dive against the selected target that uses the normal Ultimate and elemental rules."
+            },
             "base": {
               "maxHp": 56,
               "attack": 11,
@@ -902,25 +1004,27 @@
               "classBurst": 0.12,
               "lifeSteal": 0.02
             },
-            "ultimate": {
-              "name": "Dragon Dive",
-              "icon": "🐉💥",
-              "desc": "A direct, decisive aerial dive against the selected target that uses the normal Ultimate and elemental rules."
-            }
+            "tags": [
+              "melee",
+              "precision",
+              "evasive",
+              "burst"
+            ]
           },
           "invoker": {
             "id": "invoker",
             "name": "Invoker",
-            "secret": false,
+            "icon": "🔵🟢🔴",
+            "attackIcon": "✨",
+            "fxIcon": "🔵🟢🔴",
             "unlock": "Cast 100 Mana-spender spells across your career.",
+            "desc": "A grand occultist with three offensive orb strikes: Quas uses 70% Echo and forms Blue, Wex uses 120% Echo and generates Mana/Green, and Exort uses 70% Echo and forms Red. Elemental Lance spends Mana for a Crit/Poison/element/Lifesteal-scaled Red attack, and Invoke combines the current three orbs into one of ten battle spells.",
             "stats": "32 HP · 6 ATK · 25/100 MANA · THREE ORBS",
-            "tags": [
-              "ranged",
-              "occult",
-              "mana",
-              "elemental",
-              "combo"
-            ],
+            "ultimate": {
+              "name": "Invoke",
+              "icon": "🔵🟢🔴",
+              "desc": "At 100 Ultimate, invoke the spell determined by your current three-orb formula."
+            },
             "base": {
               "maxHp": 32,
               "attack": 6,
@@ -933,25 +1037,30 @@
               "classBurst": 0,
               "lifeSteal": 0
             },
-            "ultimate": {
-              "name": "Invoke",
-              "icon": "🔵🟢🔴",
-              "desc": "At 100 Ultimate, invoke the spell determined by your current three-orb formula."
-            }
+            "tags": [
+              "ranged",
+              "occult",
+              "mana",
+              "elemental",
+              "combo"
+            ]
           },
           "slimerouge": {
             "id": "slimerouge",
-            "name": "Slime Rouge",
             "secret": true,
+            "name": "Slime Rouge",
+            "icon": "🔴",
+            "attackIcon": "🩸",
+            "fxIcon": "🔴💥",
             "unlock": "Secret: clear Board 6 after beginning the run with Random while Slime is already unlocked",
+            "desc": "A late-game red randomizer. Every run it becomes one random unlocked class identity with that class's real mechanics, then independently rolls one random unlocked class ultimate. Compatible class powers are offered only when the run can actually use them.",
             "stats": "44 HP · 7 ATK · 1 DEF · RANDOM IDENTITY · RANDOM ULTIMATE",
-            "tags": [
-              "secret",
-              "weird",
-              "sticky",
-              "poison",
-              "flex"
-            ],
+            "scaleNotes": "Its base body stays generalist, but the selected identity activates real class resources and mechanics such as Marks, Smoke, Mana, Spirits or Combo. Its independently selected ultimate executes the donor class's actual ultimate implementation.",
+            "ultimate": {
+              "name": "Stolen Finale",
+              "icon": "🎭",
+              "desc": "A random unlocked class ultimate is selected independently at the beginning of every run and executes with the donor class's real behavior."
+            },
             "base": {
               "maxHp": 44,
               "attack": 7,
@@ -964,17 +1073,19 @@
               "classBurst": 0.1,
               "lifeSteal": 0.05
             },
-            "ultimate": {
-              "name": "Stolen Finale",
-              "icon": "🎭",
-              "desc": "A random unlocked class ultimate is selected independently at the beginning of every run and executes with the donor class's real behavior."
-            }
+            "tags": [
+              "secret",
+              "weird",
+              "sticky",
+              "poison",
+              "flex"
+            ]
           }
         },
         "passives": {
           "invoker": {
             "name": "Orb Invocation",
-            "desc": "Quas, Wex and Exort Strikes form Blue, Green and Red; Guard can also form Blue and Elemental Lance forms Red. Three active orbs empower you and define Invoke."
+            "desc": "Quas and Exort use 70% Echo chance; Wex uses 120%. They form Blue/Green/Red, Guard can still form Blue, and Elemental Lance forms Red. Three active orbs empower you and define Invoke."
           },
           "ranger": {
             "name": "Marked Quarry",
@@ -982,7 +1093,7 @@
           },
           "sorcerer": {
             "name": "Arcane Reservoir",
-            "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance spends it, converts half of Echo Strike chance into bonus damage, and applies Lifesteal."
+            "desc": "Uses Mana. Channel Bolt builds it; Arcane Lance can Crit, converts half of Echo chance into bonus damage, applies Echo-weighted Poison and Lifesteals from its forced elemental eruption."
           },
           "fighter": {
             "name": "Counterstance",
@@ -990,7 +1101,7 @@
           },
           "monk": {
             "name": "Flowing Combo",
-            "desc": "Consecutive basic attacks build Combo, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
+            "desc": "Every real basic hit and Echo Strike advances Combo after the action, increasing damage, Echo chance and Dodge. Guarding or drinking a potion resets it."
           },
           "clown": {
             "name": "Opening Gag",
@@ -998,7 +1109,7 @@
           },
           "rouge": {
             "name": "Painted Hexcraft",
-            "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit battle-art magic that converts half of Echo chance into bonus damage and drains doubled Lifesteal from the full Hex."
+            "desc": "Uses Mana. Crimson Stroke builds it; Scarlet Hex spends it on high-Crit magic with Echo damage, Echo-weighted Poison and doubled Lifesteal."
           },
           "berserker": {
             "name": "Blood Rage",
@@ -1022,7 +1133,7 @@
           },
           "vampire": {
             "name": "Night Hunger",
-            "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance converts spell damage back into health."
+            "desc": "Uses Mana for occult attacks while retaining extreme Lifesteal. Grave Lance scales from Lifesteal/Echo, rolls Crit/Poison/elements and drains doubled Lifesteal."
           },
           "ninja": {
             "name": "Smoke Counter",
@@ -1034,7 +1145,7 @@
           },
           "merchant": {
             "name": "Occult Accounting",
-            "desc": "Selling unused gear pays 200% normal value. Ledger Tap and Foreclosure Hex also use Mana."
+            "desc": "Selling unused gear pays 200% normal value. Foreclosure Hex adds uncapped gold scaling, deterministic Crit/Echo multipliers and normal Poison/element procs."
           },
           "cleric": {
             "name": "Faith",
@@ -1050,15 +1161,15 @@
           },
           "rogue": {
             "name": "Sticky Fingers",
-            "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. Above 50 Luck, successful Steals can also snatch a random powerup. Starts with +25% gold gain and +5% Dodge."
+            "desc": "Can attempt to Steal once per battle for gold and occasionally a potion. High Luck can steal a powerup, and Stat Heist can steal battle-only ATK/DEF. Starts with +25% gold gain and +5% Dodge."
           },
           "bloodmage": {
             "name": "Blood Is Mana",
-            "desc": "Uses HP where other occult classes use Mana. Bloodletting restores fuel; Exsanguinate spends life for brutal damage; Replenish heals both sides."
+            "desc": "Uses HP where other occult classes use Mana. Exsanguinate spends life on Crit/Echo/Poison/element-scaled damage; Replenish heals both sides."
           },
           "summoner": {
             "name": "Spirit Circle",
-            "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoned spirits attack after your normal companion."
+            "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoner converts 10% of Attack into pet damage before upgrades."
           },
           "pokemontrainer": {
             "name": "Six-Creature Draft",
@@ -1066,7 +1177,7 @@
           },
           "alchemist": {
             "name": "Combat Distillery",
-            "desc": "Every third basic attack brews a potion. Potions can heal normally or be consumed as Volatile Flasks whose damage scales with Potion Healing."
+            "desc": "Every third basic attack brews a potion. Volatile Flask uses 150% Potion Healing + 100% Attack, can Crit and uses 250% Poison chance."
           },
           "dragoon": {
             "name": "Aerial Discipline",
