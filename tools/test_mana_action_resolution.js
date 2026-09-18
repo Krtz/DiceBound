@@ -52,11 +52,11 @@ function makeHarness({ classId = 'sorcerer', identity = classId, mana = 100, max
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
     playerAttack: async () => {
       counters.attack++;
-      events.push(`attack:mana=${p.mana}:channel=${p._occultChanneling}:pending=${p._invokerPendingGenerator}`);
+      events.push(`attack:mana=${p.mana}:channel=${p._occultChanneling}`);
       if (playerAttack) return playerAttack({ p, events, counters, setBusy: value => { busy = !!value; } });
     },
     invokerActive: () => identity === 'invoker',
-    invokerGeneratorManaMultiplier: () => 1.5,
+    invokerWexStrike: async () => { events.push('invoker-wex'); return 'invoker-wex-result'; },
     invokerElementalLance: async () => {
       events.push('invoker-lance');
       p.mana -= 50;
@@ -129,7 +129,6 @@ async function test(name, fn) {
     assert(h.events.some(event => event.startsWith('attack:mana=36:channel=true')));
     assert.strictEqual(h.p._occultChanneling, false);
     assert.strictEqual(h.p._occultChannelMultiplier, 0);
-    assert.strictEqual(h.p._invokerPendingGenerator, false);
   });
 
   await test('Summoner generator preserves nested Summoner + generic gain bonuses', async () => {
@@ -142,13 +141,15 @@ async function test(name, fn) {
     assert.strictEqual(SPELLS.summoner.gain, original);
   });
 
-  await test('Invoker generator multiplies effective gain before Green-orb action hook', async () => {
+  await test('Invoker generator delegates to canonical Wex Strike without old channel state', async () => {
     const h = makeHarness({ classId: 'invoker', mana: 0 });
     h.p.manaBuilderBonus = 5;
-    await owner.occultChannelAttack();
-    assert.strictEqual(h.p.mana, 45);
-    assert(h.events.some(event => event === 'attack:mana=45:channel=true:pending=true'));
-    assert.strictEqual(h.p._invokerPendingGenerator, false);
+    const result = await owner.occultChannelAttack();
+    assert.strictEqual(result, 'invoker-wex-result');
+    assert.strictEqual(h.p.mana, 0, 'Mana owner must not pre-grant Invoker Mana before Wex owner runs');
+    assert.deepStrictEqual(h.events.filter(event => event === 'invoker-wex'), ['invoker-wex']);
+    assert.strictEqual(h.counters.attack, 0, 'retired generic channel/basic-attack path must not run for Invoker');
+    assert.strictEqual(h.p._occultChanneling, undefined);
   });
 
   await test('Generator temporary state and shared gain restore after async failure', async () => {
@@ -160,7 +161,6 @@ async function test(name, fn) {
     assert.strictEqual(SPELLS.summoner.gain, original);
     assert.strictEqual(h.p._occultChanneling, false);
     assert.strictEqual(h.p._occultChannelMultiplier, 0);
-    assert.strictEqual(h.p._invokerPendingGenerator, false);
   });
 
   await test('Insufficient Mana is a no-op and does not record career progress', async () => {
