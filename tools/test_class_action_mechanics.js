@@ -40,7 +40,7 @@ classes.configureActionMechanics({
   assert.equal(player.lifeSteal,.10,"Bloodletting did not restore Lifesteal");
   assert.deepEqual(events,["flash:🩸 Bloodletting restores fuel","attackLS:0.22","ui"]);
 
-  player={classId:"cleric",maxHp:100,hp:40,attack:20,clericFaith:100,combatShield:0,combatActionCount:0};enemy={name:"Dummy",hp:100,maxHp:100};enemies=[enemy];busy=false;events=[];damageAllResult=47;
+  player={classId:"cleric",maxHp:100,hp:40,attack:20,crit:.06,clericFaith:100,combatShield:0,combatActionCount:0};enemy={name:"Dummy",hp:100,maxHp:100};enemies=[enemy];busy=false;events=[];damageAllResult=47;
   await classes.clericConsecration();
   assert.equal(player.clericFaith,0);assert.equal(player.hp,62);assert.equal(player.combatShield,1);assert.equal(player.combatActionCount,1);
   assert.deepEqual(events,["busy:true","heal:22","tier:0.06","damageAll:31/0.75","text:☀️ Consecration spends 100 Faith, heals 22 HP, raises a Barrier and deals 47 Light-touched damage across the pack.","flash:☀️ CONSECRATION","holy","ui","delay:760","response:false"]);
