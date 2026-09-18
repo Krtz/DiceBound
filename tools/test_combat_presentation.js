@@ -190,7 +190,11 @@ assert.strictEqual(out.invokerAttacks.active, true);
 assert.strictEqual(out.invokerAttacks.quas.text, '🔵 Quas Strike');
 assert.strictEqual(out.invokerAttacks.exort.text, '🔴 Exort Strike');
 assert.strictEqual(out.special.text, '🔴 Elemental Lance (50)');
-assert(out.special.tip.includes('Half of current Echo chance'));
+assert(out.attack.tip.includes('120% of your current Echo chance'));
+assert(out.invokerAttacks.quas.tip.includes('70% of your current Echo chance'));
+assert(out.invokerAttacks.exort.tip.includes('70% of your current Echo chance'));
+assert(out.special.tip.includes('can Crit'));
+assert(out.special.tip.includes('Poison'));
 assert.strictEqual(out.resource.name, 'Mana / Orb Formula');
 
 active = new Set(['pokemontrainer']); mechanics = new Set(); state.player.classId = 'pokemontrainer'; state.player.trainerRoster = ['fire','ice','nature']; state.player.trainerActiveIndex = 1;
