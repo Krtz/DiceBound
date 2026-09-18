@@ -12,6 +12,7 @@
       [services.rules?.clamp, "rules.clamp"],
       [services.signatures?.applyCurrent, "signatures.applyCurrent"],
       [services.signatures?.describeCurrent, "signatures.describeCurrent"],
+      [services.content?.classHasTag, "content.classHasTag"],
     ]) {
       const valid = label === "run.player" ? value && typeof value === "object" : typeof value === "function";
       if (!valid) throw new TypeError(`DiceboundPowerupRegistry requires ${label}`);
@@ -30,6 +31,7 @@
     const healPlayer = services.combat.heal;
     const clamp = services.rules.clamp;
     const DIBO_ELEMENTS = services.content.elementIds;
+    const classHasTag = services.content.classHasTag;
     const registry=[
     {
       "id": "hp",
@@ -2788,7 +2790,7 @@
       "icon": "☠️👑",
       "name": "Throne of Venom",
       "desc": "Gain +50% Poison Chance and +10% Lifesteal. Poison-tagged classes gain +40% Poison damage; all other classes gain +20%.",
-      "apply": function(){const poisonClass=(CLASSES[player.classId]?.tags||[]).includes('poison');player.poisonOnHitChance=(player.poisonOnHitChance||0)+.50;player.poisonStackPower=(player.poisonStackPower||.12)+(poisonClass?.40:.20);player.lifeSteal+=.10;}
+      "apply": function(){const poisonClass=classHasTag(player.classId,'poison');player.poisonOnHitChance=(player.poisonOnHitChance||0)+.50;player.poisonStackPower=(player.poisonStackPower||.12)+(poisonClass?.40:.20);player.lifeSteal+=.10;}
     ,
       "achievementGate": "achievement:nature-master"
     },

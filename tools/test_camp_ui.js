@@ -23,6 +23,8 @@ assert.strictEqual(typeof camp.applyStageLayout,'function','Camp must own one fi
 assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable by late patch code');
 assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
+assert.deepStrictEqual({...camp.stageAnchors.campNightmareBtn},{x:.89,y:.38,w:120},'Nightmare must sit 10 percentage points lower on the authored Camp stage');
+assert.deepStrictEqual({...camp.stageAnchors.campHellBtn},{x:.30,y:.28,w:118},'Hell must sit 50 percentage points farther left on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.65,w:235},'Class Choice must sit another 10% lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
 assert.deepStrictEqual({...camp.stageAnchors.campBonfire},{x:.50,y:.72,w:170},'Bonfire must remain grounded in the lower clearing');
@@ -97,7 +99,7 @@ assert.match(assets,/hellOn:\{image:`\$\{paths\.hellToggle\}\/on\.png`,alt:"Acti
 assert.match(source,/function renderHellModeArt\(view\)/,'Camp must own active/inactive Hell artwork presentation');
 assert.match(source,/setObjectArt\('campHellBtn','hellOn','db066-hell-volcano-art','Active Hell volcano with a dancing devil','assets\/camp\/mode-toggles\/hell\/on\.png'\)/,'active Hell must resolve the approved canonical volcano asset rather than an inline or compatibility image');
 assert.match(source,/hell-volcano-active/,'Camp must expose one semantic active-Hell state for layout and hit-target synchronization');
-assert.match(source,/spec=\{\.\.\.spec,x:\.72,y:\.33,w:460,h:174\}/,'active Hell volcano must have a deliberate wide Camp-stage footprint rather than use the small inactive mountain target');
+assert.match(source,/spec=\{\.\.\.spec,x:\.22,y:\.33,w:460,h:174\}/,'active Hell volcano must preserve the requested 50-point left shift while using its deliberate wide Camp-stage footprint');
 assert.match(source,/db066-hell-volcano-art/,'active Hell art needs its Camp-owned semantic presentation class');
 assert.match(source,/campGoBtn:Object\.freeze\(\{x:\.85,y:\.74,w:440,h:250\}\)/,'Start Run must retain its minimum authored scene footprint');
 assert.match(source,/const CAMP_BASE_STYLE=/,'Camp must own its responsive base/grid presentation style');

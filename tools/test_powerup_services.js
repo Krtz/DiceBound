@@ -20,6 +20,7 @@ assert.ok(Object.isFrozen(window.DiceboundPowerupRegistry));
 
 const freshPlayer = () => ({
   level: 1,
+  classId: "ranger",
   attack: 10,
   defense: 5,
   maxHp: 100,
@@ -28,6 +29,9 @@ const freshPlayer = () => ({
   goldBonus: 0.5,
   ultimateCharge: 90,
   ultimateDamageBonus: 0,
+  poisonOnHitChance: 0,
+  poisonStackPower: 0.12,
+  lifeSteal: 0,
   classElementProcs: {},
 });
 let activePlayer = freshPlayer();
@@ -44,7 +48,10 @@ const services = window.DiceboundRuntimeServices.createPowerupServices({
   },
   combat: { heal: (amount) => { healed += amount; activePlayer.hp = Math.min(activePlayer.maxHp, activePlayer.hp + amount); return amount; } },
   rules: { clamp: (value, min, max) => Math.max(min, Math.min(max, value)) },
-  content: { elementIds: ["fire", "ice", "electric", "nature", "light", "void"] },
+  content: {
+    elementIds: ["fire", "ice", "electric", "nature", "light", "void"],
+    classHasTag: (classId, tag) => tag === "poison" && ["frog", "ouroboros", "ninja", "slime", "slimerouge"].includes(classId),
+  },
   signatures: {
     applyCurrent: () => { signatureApplies += 1; return "signature-applied"; },
     describeCurrent: () => signatureDescription,
@@ -99,6 +106,19 @@ assert.ok(elemental, "element-list powerup was not found");
 elemental.apply();
 for (const id of services.content.elementIds) assert.equal(activePlayer.classElementProcs[id], 0.02);
 
+const throne = registry.find((powerup) => powerup.id === "legendary_venom_throne_v27");
+assert.ok(throne, "Throne of Venom registry ID drifted");
+throne.apply();
+assert.equal(activePlayer.poisonOnHitChance, 0.5);
+assert.ok(Math.abs(activePlayer.poisonStackPower - 0.32) < 1e-12, "non-poison classes must receive the intended +20 poison-damage points");
+assert.equal(activePlayer.lifeSteal, 0.1);
+activePlayer = freshPlayer();
+activePlayer.classId = "frog";
+throne.apply();
+assert.equal(activePlayer.poisonOnHitChance, 0.5);
+assert.ok(Math.abs(activePlayer.poisonStackPower - 0.52) < 1e-12, "poison-tagged classes must receive the intended +40 poison-damage points");
+assert.equal(activePlayer.lifeSteal, 0.1);
+
 const signature = registry.find((powerup) => powerup.id === "perfected_signature");
 assert.equal(signature.apply(), "signature-applied");
 assert.equal(signatureApplies, 1);
@@ -128,7 +148,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "f0905e25117c8d11112e18204d177b64e5ab7f0a22bf73580cf079d287779fe8";
+const expectedDigest = "507b8484cba85f2398b8bbe7c392bb1386a83bc41355cd8a2c112493ab585a17";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {
@@ -138,6 +158,7 @@ for (const invalid of [{}, { apiVersion: 1 }]) {
 const moduleSource = read("powerups/registry.js");
 assert.doesNotMatch(moduleSource, /window\.DiceboundPerfectedSignature/);
 assert.doesNotMatch(moduleSource, /\bnightmareMode\b/);
+assert.doesNotMatch(moduleSource, /\bCLASSES\b/, "Powerup registry must not reach through to composition-local class data");
 assert.doesNotMatch(moduleSource, /modifiedGold\(100\)/, "Heavy Purse must not regress to the flat 100-gold implementation");
 
-console.log(`Powerup service extraction PASS: 208 exact entries, live reset-safe state, six explicit capabilities, digest ${digest}`);
+console.log(`Powerup service extraction PASS: 208 exact entries, live reset-safe state, class-tag-safe Throne of Venom, digest ${digest}`);

@@ -225,13 +225,33 @@ function makeHarness(options={}){
     assert.equal(h.player._db060IronEchoDefense,1);
   }
   {
+    const h=makeHarness({player:{gold:499},legendary:["hoarders_arsenal"],randomValues:[.9,.3]});
+    const result=await strikes.performStrike(h.enemies[0]);
+    assert.equal(result.dealt,10,"Hoarder's Arsenal must add nothing below 500 gold");
+  }
+  {
+    const h=makeHarness({player:{gold:500},legendary:["hoarders_arsenal"],randomValues:[.9,.3]});
+    const result=await strikes.performStrike(h.enemies[0]);
+    assert.equal(result.dealt,11,"Hoarder's Arsenal must add +1 basic-strike damage at 500 gold");
+  }
+  {
+    const h=makeHarness({player:{gold:1000},legendary:["hoarders_arsenal"],randomValues:[.9,.3]});
+    const result=await strikes.performStrike(h.enemies[0]);
+    assert.equal(result.dealt,12,"Hoarder's Arsenal must add +2 basic-strike damage at 1000 gold");
+  }
+  {
+    const h=makeHarness({player:{gold:1500},legendary:["hoarders_arsenal"],randomValues:[.9,.3]});
+    const result=await strikes.performStrike(h.enemies[0],{echo:true,index:1,canCrit:false});
+    assert.equal(result.dealt,10,"Hoarder's Arsenal must add the full +3 damage to an Echo strike at 1500 gold");
+  }
+  {
     const h=makeHarness({player:{execute:1},enemies:[{name:"Execute",hp:20,maxHp:100,defense:0,dodge:0,affinity:null,poisonStacks:0,rangerMarks:0,weakness:"fire"}],randomValues:[.9,.3]});
     const result=await strikes.performStrike(h.enemies[0]);
     assert.equal(result.executed,true);assert.equal(result.dealt,20);assert.equal(h.enemies[0].hp,0);
     assert.ok(h.calls.some(c=>c[0]==="reconcile"&&c[2]==="strike"));
   }
 
-  console.log("Combat strike-resolution owner PASS: base/Echo damage, Crit tiers, Marks, Counter/Shell, Smoke, Poison, Dodge, Horns, Ouroboros, explicit Echo presentation handoff, lifesteal and Legendary ordering are deterministic");
+  console.log("Combat strike-resolution owner PASS: base/Echo damage, Crit tiers, Marks, Counter/Shell, Smoke, Poison, Dodge, Horns, Ouroboros, Hoarder's Arsenal gold thresholds, explicit Echo presentation handoff, lifesteal and Legendary ordering are deterministic");
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");

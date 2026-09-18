@@ -69,8 +69,8 @@ function testManaDescriptors(){
 }
 
 function testThroneOfVenom(){
-  const player={classId:"alchemist",poisonOnHitChance:0,poisonStackPower:.12,lifeSteal:0};
-  const ctx=load("runtime/js/powerups/registry.js",{CLASSES:{alchemist:{tags:["poison"]},ranger:{tags:[]}}});
+  const player={classId:"frog",poisonOnHitChance:0,poisonStackPower:.12,lifeSteal:0};
+  const ctx=load("runtime/js/powerups/registry.js");
   const services={
     apiVersion:1,
     run:{player},
@@ -78,7 +78,10 @@ function testThroneOfVenom(){
     combat:{heal:n=>n},
     rules:{clamp:(v,min,max)=>Math.max(min,Math.min(max,v))},
     signatures:{applyCurrent:()=>{},describeCurrent:()=>""},
-    content:{elementIds:["fire","ice","electric","light","void","nature"]}
+    content:{
+      elementIds:["fire","ice","electric","light","void","nature"],
+      classHasTag:(classId,tag)=>tag==="poison"&&["frog","ouroboros","ninja","slime","slimerouge"].includes(classId)
+    }
   };
   const registry=ctx.window.DiceboundPowerupRegistry.createRegistry(services);
   const throne=registry.find(power=>power.id==="legendary_venom_throne_v27");
