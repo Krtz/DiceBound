@@ -92,7 +92,8 @@ for(const index of [6,20,48,63]){
   }
 }
 assert.doesNotMatch(source,/level===4\?pool\.length-3|level===3\?Math\.floor\(pool\.length\*\.76\)|level===2\?Math\.floor\(pool\.length\*\.55\)/,"Board-specific ordinary-family floors must stay retired while the Board 1 diversity policy is active");
-assert.match(source,/resetBoardSixPack\(tile,index,0\)/,"Board 6 must not reintroduce hidden positive family offsets");
+assert.match(source,/resetBoardSixPack\(tile,index\)/,"Board 6 must use the shared position-based family progression");
+assert.doesNotMatch(source,/resetBoardSixPack\(tile,index,|function\s+resetBoardSixPack\(tile,index,offset\)/,"retired Board 6 family-offset plumbing must stay removed");
 
 // The compatibility monolith historically builds one Board 1 preview before
 // the later generation patch chain exists. Seed 1 deliberately places Mystic
