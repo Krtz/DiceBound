@@ -19,11 +19,11 @@ const SPELLS = {
   invoker: { builder: 'Arcane Current', builderIcon: '🟢', spell: 'Elemental Lance', spellIcon: '🔴', cost: 50, gain: 25 }
 };
 
-function makeHarness({ classId = 'sorcerer', identity = classId, mana = 100, maxMana = 100, enemies = null, playerAttack = null, petTurn = null } = {}) {
+function makeHarness({ classId = 'sorcerer', identity = classId, mana = 100, maxMana = 100, enemies = null, playerAttack = null, petTurn = null, tierValues = [] } = {}) {
   const p = {
     classId, mana, maxMana, combatActionCount: 0, guardCooldown: 9,
     attack: 10, damageBonus: 0, bossDamage: 0, doubleStrike: 0, crit: 0,
-    lifeSteal: 0, gold: 0, ultimateAttackGain: 10, ultimateCharge: 0,
+    lifeSteal: 0, poisonOnHitChance: 0, gold: 0, ultimateAttackGain: 10, ultimateCharge: 0,
     manaBuilderBonus: 0, manaSpendUltimate: 0, summonerManaBonus: 0,
     summonerSpirits: [], summonerCap: 3, petDamageBonus: 0, summonerSpiritScale: 1,
     hp: 50, maxHp: 100
@@ -71,9 +71,11 @@ function makeHarness({ classId = 'sorcerer', identity = classId, mana = 100, max
     animateClassAttack: async mode => events.push(`animate:${mode}`),
     rand: (min, max) => { events.push(`rand:${min}-${max}`); return min; },
     pick: values => { events.push(`pick:${values.join(',')}`); return values[0]; },
-    rollTieredProc: chance => { events.push(`tier:${chance}`); return 1; },
+    rollTieredProc: chance => { const value = tierValues.length ? tierValues.shift() : 0; events.push(`tier:${chance}=${value}`); return value; },
     coreElementIds: () => ['fire', 'ice', 'electric', 'nature', 'light', 'void'],
     triggerElementEffect: (key, target, options) => { events.push(`element:${key}:${options.source}`); return { totalDamage: 5, message: 'erupts' }; },
+    triggerStrikeElements: target => { events.push(`strike-elements:${target?.name || 'none'}`); return { totalDamage: 0, message: '' }; },
+    playElementAnimation: (key, target) => events.push(`element-animation:${key}:${target?.name || 'none'}`),
     damageEnemy: (enemy, amount) => { events.push(`damage:${enemy.name}:${amount}`); const dealt = Math.min(enemy.hp, Math.max(0, amount)); enemy.hp -= dealt; return dealt; },
     healPlayer: amount => { events.push(`heal:${amount}`); const before = p.hp; p.hp = Math.min(p.maxHp, p.hp + amount); return p.hp - before; },
     getSetDamageBonus: () => 0,
@@ -203,13 +205,13 @@ async function test(name, fn) {
     await owner.occultSpellAttack();
     assert.strictEqual(h.p.gold, 1000);
     assert.strictEqual(h.p.mana, 60);
-    assert(h.events.some(event => event.includes('notional gold-value')));
+    assert(h.events.some(event => event.includes('uncapped gold-value')));
     assert.strictEqual(h.counters.career, 1);
   });
 
   await test('Real Rouge Scarlet Hex converts Echo and drains doubled Lifesteal from the full Hex', async () => {
     const foes = [{ name: 'A', hp: 10000, maxHp: 10000 }, { name: 'B', hp: 10000, maxHp: 10000 }];
-    const h = makeHarness({ classId: 'rouge', identity: 'rouge', mana: 100, enemies: foes });
+    const h = makeHarness({ classId: 'rouge', identity: 'rouge', mana: 100, enemies: foes, tierValues: [1, 0] });
     h.p.lifeSteal = .25;
     h.p.doubleStrike = 1;
     h.p.manaSpendUltimate = 8;
@@ -219,9 +221,25 @@ async function test(name, fn) {
     assert.strictEqual(h.counters.career, 1);
     assert.strictEqual(10000 - foes[0].hp, 65, '100% Echo should add 50% Scarlet Hex spell damage');
     assert.strictEqual(10000 - foes[1].hp, 18, 'Scarlet splash should scale from the Echo-boosted primary formula');
-    assert(h.events.indexOf('tier:0.35') < h.events.indexOf('rand:3-8'));
+    assert(h.events.indexOf('tier:0.35=1') < h.events.indexOf('rand:3-8'));
     assert(h.events.includes('heal:41'), '25% Lifesteal doubled across 83 total Hex damage should request 41 healing');
     assert(h.events.some(event => event.includes('83 total Hex damage')));
+  });
+
+  await test('Vampire Grave Lance scales with Lifesteal and Echo while keeping Poison/elements', async () => {
+    const h = makeHarness({ classId: 'vampire', mana: 100, tierValues: [1, 1] });
+    h.p.hp = 10; h.p.lifeSteal = .5; h.p.doubleStrike = 1; h.p.poisonOnHitChance = .25;
+    await owner.occultSpellAttack();
+    assert(h.events.some(event => event.startsWith('tier:0=') || event.startsWith('tier:')), 'Crit tier must be resolved');
+    assert(h.events.includes('strike-elements:Dummy'), 'Grave Lance must use normal strike-element resolution');
+    assert.strictEqual(h.foes[0].poisonStacks, 1, '120% Poison path must apply returned tier');
+    assert(h.p.hp > 10, 'doubled Lifesteal must heal from the Lance package');
+  });
+
+  await test('Merchant Foreclosure keeps uncapped gold contribution', async () => {
+    const low = makeHarness({ classId: 'merchant', mana: 100 }); low.p.gold = 1000; await owner.occultSpellAttack();
+    const high = makeHarness({ classId: 'merchant', mana: 100 }); high.p.gold = 10000; await owner.occultSpellAttack();
+    assert((10000 - high.foes[0].hp) > (10000 - low.foes[0].hp), 'Foreclosure damage must keep scaling above the old cap');
   });
 
   await test('Borrowed Rouge identity keeps generic older path and Mana Overflow', async () => {
