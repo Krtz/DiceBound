@@ -1526,7 +1526,14 @@ function returnToRoad(...args){
     recordPotionUse:()=>{if(!dbConsumablesResolution)throw new Error('Consumables owner is not configured.');return dbConsumablesResolution.recordPotionUse();},
     chargeUltimate:amount=>chargeUltimate(amount),
     pickElementKey:()=>pick(ELEMENT_KEYS),
-    triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options)
+    triggerElementEffect:(key,target,options)=>dbCombat.element(key,target,options),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
+    playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy),
+    gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
+    dragoonActive:()=>player?.classId==='dragoon',
+    syncDragoonPresentation:()=>dbCombatView.syncDragoonPresentation(),
+    dragoonLandPresentation:()=>dbCombatView.dragoonLandPresentation()
   });
   dbClasses.configureActions({
     basicAttack:()=>dbCombat.attack(),
@@ -3972,31 +3979,15 @@ dbReturnToRoadTraceReady=true;
     }finally{meta.stats.boardClears=before;nightmareMode=modes.nightmare;hellMode=modes.hell;saveMeta();renderLifetimeStats();}
   }
 
-  /* Dragoon #97 — one semantic airborne window and one forced landing action. */
-  const dbFriendDragoonTalentId='dragoon_aerial_discipline';
+  /* Dragoon #97 — class-action ownership lives in DiceboundClasses. */
   const dbFriendDragoonActive=()=>player?.classId==='dragoon';
-  const dbFriendDragoonCooldown=()=>Math.max(2,6-dbProgression.gameplayTalentRank(dbFriendDragoonTalentId));
+  const dbFriendDragoonCooldown=()=>dbClasses.dragoonCooldown();
   function dbFriendSyncDragoonPresentation(){return dbCombatView.syncDragoonPresentation();}
   function dbFriendDragoonLandPresentation(){return dbCombatView.dragoonLandPresentation();}
-  function dbFriendResetDragoonState(){Object.assign(player,{dragoonJumpCooldown:0,dragoonAirborneResponses:0,dragoonLandingReady:false});dbFriendSyncDragoonPresentation();}
-
-    async function dbFriendDragoonLanding(){
-    if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||!player.dragoonLandingReady)return false;
-    combatBusy=true;player.guardCooldown=0;player.dragoonLandingReady=false;player.dragoonAirborneResponses=0;dbFriendDragoonLandPresentation();
-    const target=currentEnemy?.hp>0?currentEnemy:livingEnemies()[0];if(!target){combatBusy=false;return false;}
-    const critTiers=rollTieredProc(player.crit),base=Math.max(1,Math.round((player.attack+rand(2,6))*2.45)),damage=Math.round(base*(1+critTiers)*(currentEncounterLead?.boss?1+player.bossDamage:1)),dealt=damageEnemy(target,damage);
-    player.combatAttackCount++;chargeUltimate(player.ultimateAttackGain+player.critUltimateGain*critTiers);await animateClassAttack(critTiers?'crit':'normal');
-    const proc=target.hp>0?triggerStrikeElements(target):{message:'',totalDamage:0};
-    setCombatText(`🐉 Dragoon lands for ${dealt}${critTiers?` with ${critTiers} critical tier${critTiers===1?'':'s'}`:''}.${proc?.message?` ${proc.message}`:''}`);updateCombatUI();await delay(480);
-    if(!livingEnemies().length)return dbCombat.win();setCurrentEnemy(currentEnemies.indexOf(livingEnemies()[0]));await resolveEnemyResponse(false);return true;
-  }
-  async function dbFriendDragoonJump(){
-    if(!dbFriendDragoonActive()||combatBusy||!currentEnemy||player.dragoonLandingReady||player.dragoonAirborneResponses>0||player.dragoonJumpCooldown>0)return false;
-    combatBusy=true;player.guardCooldown=0;player.dragoonJumpCooldown=dbFriendDragoonCooldown();player.dragoonAirborneResponses=1;dbFriendSyncDragoonPresentation();
-    setCombatText(`🐉 Jump! Dragoon is Airborne through one enemy response. Landing will use the next player action.`);updateCombatUI();await delay(260);await resolveEnemyResponse(false);
-    if(player.hp>0&&livingEnemies().length){player.dragoonLandingReady=true;updateCombatUI();setCombatText('🐉 Airborne window complete — use your next action to land.');}return true;
-  }
-  function dbFriendTickDragoonCooldown(){if(dbFriendDragoonActive()&&player.dragoonJumpCooldown>0)player.dragoonJumpCooldown-=1;}
+  function dbFriendResetDragoonState(){return dbClasses.dragoonResetState();}
+  async function dbFriendDragoonLanding(){return dbClasses.dragoonLanding();}
+  async function dbFriendDragoonJump(){return dbClasses.dragoonJump();}
+  function dbFriendTickDragoonCooldown(){return dbClasses.dragoonTickCooldown();}
   async function dbFriendDragoonRegressionExercise(){
     const enemy={name:'Airborne Exercise Guardian',icon:'🐲',hp:999,maxHp:999,attack:999,defense:0,weakness:'ice',affinity:null,poisonStacks:0,guardian:true,finalBoss:true,specialName:'Exercise Skybreaker'};
     try{
@@ -4194,7 +4185,8 @@ dbReturnToRoadTraceReady=true;
     restoreEnemyElementDebuffs:()=>db0511RestoreEnemyElementDebuffs(),
     clearLegendaryBattleTemps:()=>db060ClearBattleLegendaryTemps(),
     getClassUnlockFacts:()=>dbClassUnlockFacts(),
-    recordCombatFacts:(facts,payload)=>DB_CLASS_UNLOCK_RULES.recordCombatFacts(facts,payload)
+    recordCombatFacts:(facts,payload)=>DB_CLASS_UNLOCK_RULES.recordCombatFacts(facts,payload),
+    clearRogueStolenStats:()=>dbClasses.clearRogueStolenStats()
   });
 
   const dbCombatAttackOwner=window.DiceboundCombatAttackActionResolution;
@@ -4253,6 +4245,8 @@ dbReturnToRoadTraceReady=true;
     rollTieredProc:chance=>rollTieredProc(chance),
     coreElementIds:()=>DIBO_ELEMENTS,
     triggerElementEffect:(...args)=>dbCombat.element(...args),
+    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
+    playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
     healPlayer:amount=>dbCombat.heal(amount),
     getSetDamageBonus:()=>v19SetDamageBonus(),
@@ -4477,7 +4471,8 @@ dbReturnToRoadTraceReady=true;
     applyCombatBackground:()=>db0635ApplyCombatBackground(),
     syncBattleLog:()=>db064SyncBattleLog(),
     clearCombatPresentation:()=>dbFriendClearCombatPresentation(),
-    refreshActivePetArt:()=>db059RefreshActivePetArt?.()
+    refreshActivePetArt:()=>db059RefreshActivePetArt?.(),
+    clearRogueStolenStats:()=>dbClasses.clearRogueStolenStats()
   });
 
   const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;
@@ -4536,7 +4531,10 @@ dbReturnToRoadTraceReady=true;
     delay:ms=>delay(ms),winCombat:()=>dbCombat.win(),resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),selectEnemy:index=>setCurrentEnemy(index),animateUltimate:()=>animateUltimate(),animateClassAttack:mode=>animateClassAttack(mode),
     clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document,
-    playerAttack:options=>dbCombat.attack(options),manaGain:amount=>dbCombat.manaGain(amount)
+    playerAttack:options=>dbCombat.attack(options),manaGain:amount=>dbCombat.manaGain(amount),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
+    playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy)
   });
 
   dbInfoGuide=window.DiceboundInfoGuide;
