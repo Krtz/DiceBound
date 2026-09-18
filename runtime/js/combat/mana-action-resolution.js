@@ -22,7 +22,7 @@
     const required = [
       "getPlayer", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy",
       "classIdentityId", "isClassActive", "clamp", "playerAttack", "invokerActive",
-      "invokerGeneratorManaMultiplier", "invokerElementalLance", "identityFlash", "updateCombatUI",
+      "invokerWexStrike", "invokerElementalLance", "identityFlash", "updateCombatUI",
       "animateClassAttack", "rand", "pick", "rollTieredProc", "coreElementIds", "triggerElementEffect",
       "damageEnemy", "healPlayer", "getSetDamageBonus", "getEncounterLead", "chargeUltimate", "setCombatText",
       "critSfx", "delay", "winCombat", "setCurrentEnemy", "resolveEnemyResponse", "getPets", "getMeta",
@@ -58,18 +58,16 @@
     if (rt.getCombatBusy() || !currentEnemy()) return;
     const cfg = spellFor(rt.classIdentityId());
     if (!cfg) return rt.playerAttack();
-    const invoker = rt.isClassActive("invoker") && rt.invokerActive();
-    const gained = manaGain(cfg.gain * (invoker ? rt.invokerGeneratorManaMultiplier() : 1));
+    if (rt.isClassActive("invoker") && rt.invokerActive()) return rt.invokerWexStrike();
+    const gained = manaGain(cfg.gain);
     p._occultChanneling = true;
-    p._occultChannelMultiplier = invoker ? .98 : 0;
-    p._invokerPendingGenerator = !!invoker;
+    p._occultChannelMultiplier = 0;
     rt.identityFlash(`${cfg.builderIcon} +${gained} Mana`);
     try {
       await rt.playerAttack();
     } finally {
       p._occultChanneling = false;
       p._occultChannelMultiplier = 0;
-      p._invokerPendingGenerator = false;
     }
     rt.updateCombatUI();
   }
