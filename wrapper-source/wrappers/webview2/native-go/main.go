@@ -40,7 +40,7 @@ var payload []byte
 var packagedWebView2Loader []byte
 
 const (
-    appTitle       = "Dicebound: Beta v0.6.7.9"
+    appTitle       = "Dicebound: Beta v0.6.7.10"
     className      = "DiceboundNativeWebView2Window"
     mutexName      = `Local\Dicebound_Beta_Native_Single_Instance`
     runtimeGUID    = `{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}`
