@@ -131,8 +131,8 @@
     let resource = null;
     const invokerAttacks = {
       active: false,
-      quas: { text: "🔵 Quas Strike", tip: "85% normal strike damage, no Echo chain, forms a Blue orb. Blue strengthens Defense/Guard and Quas Mastery healing.", disabled: combatBusy },
-      exort: { text: "🔴 Exort Strike", tip: "120% normal strike damage, no Echo chain, forms a Red orb. Red increases outgoing damage and helps build Invoke formulas.", disabled: combatBusy }
+      quas: { text: "🔵 Quas Strike", tip: "85% normal strike damage, uses 70% of your current Echo chance, and forms a Blue orb. Crit, Poison, elements and Lifesteal remain normal.", disabled: combatBusy },
+      exort: { text: "🔴 Exort Strike", tip: "120% normal strike damage, uses 70% of your current Echo chance, and forms a Red orb. Crit, Poison, elements and Lifesteal remain normal.", disabled: combatBusy }
     };
 
     const identityId = rt.classIdentityId();
@@ -140,10 +140,10 @@
       const cfg = rt.getOccultSpells()[identityId];
       attack.text = "🟢 Wex Strike";
       attack.className = "combat-btn primary action-tooltip invoker-wex";
-      attack.tip = `85% normal strike damage with full Crit/Echo/Poison/element behavior; generates up to ${cfg?.gain || 25} base Mana and forms a Green orb.`;
+      attack.tip = `85% normal strike damage with 120% of your current Echo chance plus normal Crit/Poison/element/Lifesteal behavior; generates up to ${cfg?.gain || 25} base Mana and forms a Green orb.`;
       special.hidden = false; hasSpecial = true;
       special.text = `🔴 Elemental Lance (${cfg?.cost || 50})`;
-      special.tip = `${cfg?.desc || "Spend Mana for a heavy Red attack."} Half of current Echo chance is converted into bonus Lance damage.`;
+      special.tip = `${cfg?.desc || "Spend Mana for a heavy Red attack."} It can Crit, roll normal elements, apply Poison at Echo × Poison chance, and Lifesteal from direct plus elemental damage.`;
       special.disabled = combatBusy || (player.mana || 0) < (cfg?.cost || 50);
       resource = classResource("mana", "Mana / Orb Formula", player.mana || 0, player.maxMana || 0, cfg?.desc || "Build three orbs to Invoke.");
       invokerAttacks.active = true;
@@ -167,18 +167,18 @@
       guard.tip = "Replenish heals you and the selected enemy, grants 20 Ultimate, and counts as Guard for the incoming enemy response.";
       special.hidden = false; hasSpecial = true;
       special.text = "🩸 Exsanguinate";
-      special.tip = "Spend 12% max HP without killing yourself to deal a brutal blood-fuelled attack.";
+      special.tip = "Spend 12% max HP without killing yourself. Exsanguinate converts 50% of Echo chance into damage, can Crit, rolls normal elements, and applies Poison at (50% Echo) × Poison chance.";
       special.disabled = combatBusy || (player.hp || 0) <= 1;
       resource = classResource("blood", "Blood fuel (HP)", player.hp || 0, player.maxHp || 1, "Bloodmage has no Mana. Your HP bar is your spell resource; Bloodletting restores fuel and Exsanguinate spends it.");
     } else if (rt.isClassActive("rogue")) {
       special.hidden = false; hasSpecial = true; special.className += " steal";
       special.text = player.rogueStealUsed ? "🗡️ Steal (used)" : "🗡️ Steal";
-      special.tip = "Attempt once per battle. Success scales with Luck and steals gold, can steal a potion, and at high Luck can even steal a random powerup (chance starts above 50 Luck and caps at 35%).";
+      special.tip = `Attempt once per battle. Success scales with Luck and steals gold, can steal a potion, and at high Luck can even steal a random powerup (chance starts above 50 Luck and caps at 35%).${player.rogueStealStatFraction ? " Grand Larceny also steals 10% of the target's ATK/DEF for this battle." : ""}`;
       special.disabled = combatBusy || !!player.rogueStealUsed;
     } else if (rt.isClassActive("cleric")) {
       special.hidden = false; hasSpecial = true; special.className += " faith";
       special.text = "☀️ Consecration";
-      special.tip = "At 100 Faith: heal, raise a Barrier and damage the enemy pack. Healing builds Faith.";
+      special.tip = "At 100 Faith: heal, raise a Barrier and deal a pack-wide holy attack that can Crit. Healing builds Faith.";
       special.disabled = combatBusy || (player.clericFaith || 0) < 100;
       special.ready = !special.disabled && (player.clericFaith || 0) >= 100;
       resource = classResource("mana", "Faith", player.clericFaith || 0, 100, "Healing builds Faith. Consecration becomes available at 100.");
@@ -230,7 +230,7 @@
       special.hidden = false; hasSpecial = true;
       special.className = "combat-btn special action-tooltip alchemist-special";
       special.text = `🧪 Volatile Flask (${player.potions || 0})`;
-      special.tip = `Consume 1 potion to damage the enemy pack. Damage scales with the same Potion Healing bonuses that increase your ${rt.potionHealValue()} HP drink.`;
+      special.tip = `Consume 1 potion to damage the enemy pack for 150% Potion Healing + 100% Attack. The Flask can Crit and uses 250% of your current Poison chance on each surviving target. Current potion heal: ${rt.potionHealValue()} HP.`;
       special.disabled = combatBusy || (player.potions || 0) <= 0;
       resource = classResource("mana", "Combat Distillery", player.alchemistBrewCounter || 0, player.alchemistBrewNeed || 3, `Every ${player.alchemistBrewNeed || 3} basic attacks creates a potion. Drink them to heal or throw them with Volatile Flask.`);
     }
