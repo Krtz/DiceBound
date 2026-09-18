@@ -139,6 +139,21 @@ async function run() {
     assert(chaosAt >= 0 && chaosAt < randAt && randAt < aoeAt, 'D20 Ultimate RNG/order drifted');
   }
 
+  // Vampire Crimson Eclipse scales both damage and drain with effective Lifesteal, while Echo boosts damage.
+  {
+    const low = makeHarness({ classId: 'vampire', randValues: [4], player: { hp: 20, lifeSteal: 0, doubleStrike: 0 } });
+    await owner._test.genericUltimate();
+    const lowDamage = low.trace.find(x => x[0] === 'damageAll')[1], lowHeal = low.trace.find(x => x[0] === 'heal')[1];
+
+    const high = makeHarness({ classId: 'vampire', randValues: [4], player: { hp: 20, lifeSteal: .5, doubleStrike: 1 } });
+    await owner._test.genericUltimate();
+    const highDamage = high.trace.find(x => x[0] === 'damageAll')[1], highHeal = high.trace.find(x => x[0] === 'heal')[1];
+
+    assert(highDamage > lowDamage, 'Crimson Eclipse damage must rise with Lifesteal/Echo');
+    assert(highHeal > lowHeal, 'Crimson Eclipse drain request must rise with effective Lifesteal');
+    assert(high.trace.some(x => x[0] === 'text' && x[1].includes('Lifesteal restores')), 'Vampire Ultimate must surface its Lifesteal heal');
+  }
+
   // Bloodmage uses missing HP before the AoE and heals 30% after damage.
   {
     const h = makeHarness({ classId: 'bloodmage', player: { hp: 100, maxHp: 200, attack: 100 } });
