@@ -34,9 +34,9 @@
     // Temporary 0.6.7.11 roster policy: every Board uses the same ordinary
     // family progression/window as Board 1. Board-specific difficulty still
     // comes from scaling, pack rules, guardians and authored presentation.
-    const local=Math.floor(index/7)+1,floor=0;
-    const maxIndex=Math.min(pool.length-1,Math.max(floor,local));
-    const enemy={...(pool[rand(Math.max(floor,maxIndex-3),maxIndex)]||{})};
+    const local=Math.floor(index/7)+1;
+    const maxIndex=Math.min(pool.length-1,local);
+    const enemy={...(pool[rand(Math.max(0,maxIndex-3),maxIndex)]||{})};
     if(level===4)enemy.name=`${pick(['Crowned','Omega','Doomed','Sovereign'])} ${enemy.name}`;
     else if(level===3)enemy.name=`${pick(['Fractured','Impossible','Paradox','Nullborn'])} ${enemy.name}`;
     else if(level===2)enemy.name=`${pick(['Elder','Voidtouched','Ascended','Nightmare'])} ${enemy.name}`;
@@ -125,10 +125,10 @@
     if(index<0)index=Math.min(34,tiles.length-2);
     tiles[index]={type:'empty',cleared:false};
   }
-  function resetBoardSixPack(tile,index,offset){
+  function resetBoardSixPack(tile,index){
     tile.enemyBases=[];
     for(let n=0;n<tile.packSize;n++){
-      const enemy=enemyForPosition(index+n+offset);enemy.name=`${pick(['Abyssal','Final','Worldless','Entropy-Bound'])} ${enemy.name}`;tile.enemyBases.push(enemy);
+      const enemy=enemyForPosition(index+n);enemy.name=`${pick(['Abyssal','Final','Worldless','Entropy-Bound'])} ${enemy.name}`;tile.enemyBases.push(enemy);
     }
     tile.enemyBase=tile.enemyBases[0];
   }
@@ -136,7 +136,7 @@
     const mini=runtime.currentMinibossTile?.()-1,last=runtime.currentTileCount?.()-1;
     tiles[mini]={type:'miniboss',cleared:false,packSize:1,enemyBase:runtime.enemyById?.(board(6).minibossId)};
     tiles[last]={type:'boss',cleared:false,packSize:1};
-    tiles.forEach((tile,index)=>{if(tile.type!=='enemy')return;tile.packSize=index<mini?1:(random()<.66?3:2);resetBoardSixPack(tile,index,0);});
+    tiles.forEach((tile,index)=>{if(tile.type!=='enemy')return;tile.packSize=index<mini?1:(random()<.66?3:2);resetBoardSixPack(tile,index);});
   }
   function applyBoardSixSecondPass(tiles){
     const mini=runtime.currentMinibossTile?.()-1,balance=board(6).balance||{};
@@ -144,7 +144,7 @@
       if(tile.type!=='enemy'||index<mini)return;
       const target=random()<(balance.threePackChance||0)?3:2;
       if(tile.packSize===target&&tile.enemyBases?.length===target)return;
-      tile.packSize=target;resetBoardSixPack(tile,index,0);
+      tile.packSize=target;resetBoardSixPack(tile,index);
     });
   }
   function applyPaleDevil(tiles,current){
