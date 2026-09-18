@@ -49,10 +49,12 @@ classes.configureActionMechanics({
   classes.cycleBeastStance();classes.cycleBeastStance();classes.cycleBeastStance();
   assert.equal(player.beastStance,"aggressive");assert.deepEqual(events,["flash:🐾 Defensive stance","ui","flash:🐾 Support stance","ui","flash:🐾 Aggressive stance","ui"]);
 
-  player={classId:"rogue",luck:1,gold:0,potions:1,rogueStealUsed:false,combatActionCount:0};enemy={name:"Pocket Dummy",hp:1000,maxHp:1000};enemies=[enemy];busy=false;events=[];applied=[];boardLevel=2;randomQueue=[.1,.5,.2,.4,.1];
+  player={classId:"rogue",luck:1,gold:0,potions:1,attack:20,defense:4,rogueStealStatFraction:.10,rogueStealUsed:false,combatActionCount:0};enemy={name:"Pocket Dummy",hp:1000,maxHp:1000,attack:30,defense:10};enemies=[enemy];busy=false;events=[];applied=[];boardLevel=2;randomQueue=[.1,.5,.2,.4,.1];
   assert.equal(classes.roguePowerStealChance(1),.35);
   await classes.rogueSteal();
-  assert.equal(player.rogueStealUsed,true);assert.equal(player.combatActionCount,1);assert.equal(player.gold,28);assert.equal(player.potions,2);assert.deepEqual(applied,["stolen"]);assert.equal(player._beta021LastStealPower.chance,.35);assert.equal(player._beta021LastStealPower.roll,.2);assert.equal(randomQueue.length,0,"Rogue RNG draw count drifted");
+  assert.equal(player.rogueStealUsed,true);assert.equal(player.combatActionCount,1);assert.equal(player.gold,28);assert.equal(player.potions,2);assert.deepEqual(applied,["stolen"]);assert.equal(player._beta021LastStealPower.chance,.35);assert.equal(player._beta021LastStealPower.roll,.2);
+  assert.equal(player.attack,23);assert.equal(player.defense,5);assert.equal(enemy.attack,27);assert.equal(enemy.defense,9);assert.equal(player._rogueStolenAttack,3);assert.equal(player._rogueStolenDefense,1);
+  assert.equal(randomQueue.length,0,"Stat Heist must not add RNG draws to Rogue Steal");
   assert.ok(events.includes("response:false"));assert.ok(events.includes("coin"));
 
   player={classId:"bloodmage",maxHp:100,hp:40,ultimateCharge:0,combatActionCount:0,equipment:{}};enemy={name:"Blood Dummy",hp:600,maxHp:1000};enemies=[enemy];busy=false;events=[];ringText="";
