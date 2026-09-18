@@ -114,7 +114,7 @@
     await rt.animateClassAttack(mode,{echoIndex:index});
     // Historical wrappers discard canCrit before base-damage calculation.
     const base = strikeBaseDamage(echo, chaos);
-    let damage = base.damage;
+    let damage = Math.max(1, Math.round(base.damage * Math.max(0, Number(opts.actionDamageMultiplier) || 1)));
     if (rt.getEncounterLead()?.boss) damage = Math.round(damage * (1 + p.bossDamage));
     if (resolvedTarget.affinity && p.elementalEnemyDamage) damage = Math.round(damage * (1 + p.elementalEnemyDamage));
     if (critTiers) damage *= 1 + critTiers;
