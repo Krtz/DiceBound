@@ -76,9 +76,9 @@ classes.configureActionMechanics({
   assert.ok(events.includes("damageAll:60/0.72"));assert.ok(events.includes("response:false"));
 
   player={classId:"rogue",attack:20,defense:4,rogueStealStatFraction:.10};enemy={name:"Stat Dummy",attack:30,defense:10};enemies=[enemy];
-  assert.deepEqual(classes.clearRogueStolenStats(),{attack:0,defense:0});
+  {const cleared=classes.clearRogueStolenStats();assert.equal(cleared.attack,0);assert.equal(cleared.defense,0);}
   player._rogueStolenAttack=3;player._rogueStolenDefense=1;player.attack=23;player.defense=5;
-  assert.deepEqual(classes.clearRogueStolenStats(),{attack:3,defense:1});assert.equal(player.attack,20);assert.equal(player.defense,4);
+  {const cleared=classes.clearRogueStolenStats();assert.equal(cleared.attack,3);assert.equal(cleared.defense,1);}assert.equal(player.attack,20);assert.equal(player.defense,4);
 
   console.log("Classes bespoke action-mechanics owner PASS: Rogue, Bloodmage, Alchemist, Bloodletting, Consecration, Beastmaster and Rogue cleanup preserve deterministic sequencing");
 })().catch(error=>{console.error(error);process.exitCode=1;});
