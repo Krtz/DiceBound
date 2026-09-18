@@ -92,6 +92,7 @@ async function main(){
     if(CAPTURE){console.log("POWERUPS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("POWERUPS_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.32","Powerups fixture must remain the released 0.6.6.32 baseline");
+    console.log("POWERUPS_06711_LUCK_CASES "+JSON.stringify(actual.cases.filter(c=>["weighted-three","weighted-four","miniboss-three","miniboss-four"].includes(c.name))));
     assert.deepEqual(actual.cases,fixture.cases);
     console.log(`Powerups oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}if(process.platform==='win32'&&child?.pid){try{childProcess.spawnSync('taskkill',['/PID',String(child.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch(_){}}await sleep(500);await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:12,retryDelay:150});}catch(err){console.warn(`Powerups oracle temp-profile cleanup warning: ${err.message}`);}}
