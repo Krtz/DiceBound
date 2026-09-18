@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 27804, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 28731, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "287e85da8546591cd841d852e3526f71069eff4e6e5bf29abee4c2d54fdd2a70",
+  "32a7a9c00c0f6399ef3cb60345f23ff66aca03bee49e06bdf23b9ab30d9bb95e",
   "canonical class registry data drifted",
 );
 
@@ -94,7 +94,7 @@ assert.equal(Object.hasOwn(unlocks.pokemontrainer.requirements[1],"difficulty"),
 assert.deepEqual(Array.from(mechanics.ranger), ["marks", "crit", "evasion", "ranged"]);
 assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
-snapshot(passives, 4036, "dacd31cd4aa2e4088c32c895813c071ba5ce8e530ea045b4468f184011703a5e", "class passive registry");
+snapshot(passives, 4315, "a723c189055e0f31a6154be1716e2c671d420e77fb765a2955d339d3bd15f4ee", "class passive registry");
 snapshot(Array.from(classes.tagVocabulary), 324, "69c32f490683a7bb3e2f3858af62440b3784c1eeeffa853ba1929076b588f945", "class tag vocabulary");
 snapshot(unlocks, 2038, "1dc560d02a97edd6292042a1e036d818c700ae035acdcb8dacb66a14dfd92658", "class unlock registry");
 snapshot(mechanics, 1386, "46eac9f42a39e5441a3b1131f15aada424f69abb988be1e66f8230eb478eef35", "class mechanics registry");
