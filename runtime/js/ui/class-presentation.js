@@ -93,5 +93,5 @@
   }
 
   const api=Object.freeze({owner:OWNER,apiVersion:1,configure,applyPortrait,applyBoardMarker,syncActive,inspect});
-  root.DiceboundClassPresentation=api;
+  window.DiceboundClassPresentation=api;
 })(window);
