@@ -8,15 +8,15 @@ DiceBound is a single-player RPG/board-game hybrid built around dice movement, e
 
 **Want to play/build the game on Windows?** Read [HOW TO INSTALL THE GAME.md](HOW%20TO%20INSTALL%20THE%20GAME.md). It is written for friends/testers who just have the GitHub link and want to build the current game without understanding the development setup.
 
-**Fresh ChatGPT/Codex/project handover?** Start with [issue #84 — DiceBound project handover and new-chat catch-up protocol](https://github.com/Krtz/DiceBound/issues/84), then verify everything against current `main`, recent commits/PRs, and current open issues. GitHub is the source of truth.
+**Fresh ChatGPT/Codex/project handover?** Start with [issue #404 — DiceBound current handover](https://github.com/Krtz/DiceBound/issues/404), then verify everything against current `main`, recent commits/PRs, and current open issues. GitHub is the source of truth. Issue #84 is the archived historical handover.
 
 ## Release baseline and current development
 
-**Current source identity:** see `wrapper-source/config/project.json`; every merged implementation PR advances it to a unique four-component version.
+**Current source identity:** see `wrapper-source/config/project.json`; every runtime-bearing implementation PR advances it to a unique four-component version.
 
-**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-08-26 it points at the verified **Beta 0.6.4.0** prerelease (`beta-0.6.4.0`). Treat the manifest itself as authoritative if this paragraph later ages.
+**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-09-19 it points at the verified **Beta 0.6.7.13** prerelease (`beta-0.6.7.13`). Treat the manifest itself as authoritative if this paragraph later ages.
 
-Every implementation PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. A source PR may advance development beyond the currently published launcher build; `distribution/latest.json` only advances after the exact release artifact has been built, verified and published.
+Every runtime-bearing implementation PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. A source PR may advance development beyond the currently published launcher build; `distribution/latest.json` only advances after the exact release artifact has been built, verified and published.
 
 **Recovered historical release baseline: Beta 0.6 — Gear & Guardian Loot Rebuild**
 
@@ -38,13 +38,16 @@ Current `main` may contain development/documentation work newer than the publish
 
 ```text
 runtime/                 Current authoritative browser/game runtime
+  js/module-manifest.json Authoritative runtime load graph
   assets/                Granular semantic art/audio architecture (see assets/README.md)
 wrapper-source/          Native Windows WebView2 wrapper/build source
 installer/               Lightweight GitHub-backed installer/launcher source
 tools/                   Repository/runtime validation and build helpers
 docs/                    Architecture, development, roadmap and release records
-.github/                  Issue and pull-request templates
+.github/                  Issue and pull-request templates / release workflow
 ```
+
+The current runtime architecture is **12 public subsystem families + one explicit Composition / Bootstrap / Tooling root**. See `docs/ARCHITECTURE.md`, #40 and #209 for the ownership contract.
 
 ### Runtime asset source of truth
 
@@ -65,7 +68,7 @@ runtime/assets/audio/
 
 `runtime/js/assets.js` owns current runtime asset mappings. `runtime/assets/ASSET_INVENTORY.json` records implemented art, placeholder homes and temporary compatibility mirrors. Empty/future categories are deliberately tracked with README files so new art always has an obvious destination.
 
-Because the recovered Beta 0.6 gameplay bundle still contains some historical fallback path literals, a small number of old folders remain as **read-only compatibility mirrors**. They exist solely so every old pointer still resolves; do not add new artwork to them. See `runtime/assets/README.md` and `docs/ASSET_ARCHITECTURE_MIGRATION.md`.
+A small number of historical folders remain as **read-only compatibility mirrors** where old runtime pointers still require them. They exist solely so those pointers resolve; do not add new artwork to them. See `runtime/assets/README.md` and `docs/ASSET_ARCHITECTURE_MIGRATION.md`.
 
 ## Beta 0.6 highlights
 
@@ -78,17 +81,13 @@ Because the recovered Beta 0.6 gameplay bundle still contains some historical fa
 - Fixed Board 6 miniboss reward to 10 pet cookies.
 - Final Price and Philosopher's Stone signature drop chance: 5% Normal / 10% Nightmare / 15% Hell.
 
+Those are historical Beta 0.6 facts, not a promise that every current balance value remains identical.
+
 ## Building
 
 For a friend/tester self-build, use [HOW TO INSTALL THE GAME.md](HOW%20TO%20INSTALL%20THE%20GAME.md).
 
-For a development checkout, first validate the runtime and materialize build metadata:
-
-```text
-python tools/validate_asset_architecture.py
-python tools/refresh_runtime_manifest.py
-python tools/validate_asset_architecture.py
-```
+For a development checkout, validate/materialize the runtime with the repository tooling rather than copying stale hashes forward.
 
 For a local development wrapper, copy `runtime/` to:
 
@@ -102,25 +101,23 @@ Then run:
 python wrapper-source/tools/build_launcher.py
 ```
 
-For a production release, point `WEBVIEW2_LOADER_DLL` at the signed x64 loader from the pinned `Microsoft.Web.WebView2` SDK, set `WEBVIEW2_SDK_VERSION`, and run the root release command with the intended version/channel, for example:
+For a production release, the official GitHub workflow restores the pinned Microsoft WebView2 SDK, verifies the signed x64 `WebView2Loader.dll`, runs the full source/browser/native gate, builds `DiceBound.exe`, publishes the prerelease, and reconciles `distribution/latest.json` through the dedicated manifest-publisher GitHub App.
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Build-DiceBoundRelease.ps1 -Version 0.6.4.0 -Channel Beta -PythonExecutable python -RequireSignedLoader
-```
-
-The root script stamps and validates release identity, stages the exact runtime tree, requires a valid Microsoft-signed loader, builds the native wrapper, and records the resulting SHA-256, byte size, and build ID. Current production/release validation uses the official loader path; future public Authenticode signing is tracked separately in issue #11.
+A manual local production-style build can use the root release command with the intended unique version/channel and an official signed loader, but the public release source of truth is the protected-main workflow described in `docs/RELEASE_PROCESS.md`.
 
 ## Development rules
 
-- `main` is the known-good development baseline; tagged/release records preserve immutable shipped identities.
+- `main` is the known-good **reconciled released baseline**; significant work starts from the manifest-reconciled head, not an older release-source commit.
 - Use short-lived branches / pull requests for non-trivial changes.
-- Give every implementation PR one unused four-component DiceBound version and record it in the PR and issue evidence.
+- Give every runtime-bearing implementation PR one unused four-component DiceBound version and record it in the PR/issue evidence.
+- A bug/feature chooses the coherent responsibility slice: clean touched duplicate/misplaced ownership while fixing the real player-facing issue, but do not launch unrelated broad archaeology.
 - Git commits/tags are source identity; EXEs and release ZIPs are derived artifacts.
 - Do not commit saves, runtime caches, local logs or generated release packages.
-- While DiceBound is in Beta, old saves may be broken deliberately unless a particular change explicitly requires compatibility/migration.
-- Real-player balance evidence takes priority over harness estimates when the two disagree.
-- Every release should preserve patch notes, validation evidence, checksums and enough provenance to rebuild it.
+- Historical Beta saves may be broken deliberately unless a particular change explicitly requires compatibility; current save/checkpoint semantics must still remain coherent.
+- Real-player balance evidence takes priority over harness estimates when the two disagree about feel/pacing.
+- Never weaken deterministic/browser/native/release tests just to make a change green.
 - New art goes into the semantic asset hierarchy, never into a legacy compatibility mirror.
+- A version is not “shipped” until the GitHub Release asset and `distribution/latest.json` are verified and `main` is reconciled.
 
 ## Project docs
 
@@ -134,6 +131,6 @@ The root script stamps and validates release identity, stages the exact runtime 
 - [Beta 0.6 recovery baseline](docs/RECOVERY_BASELINE.md)
 - [Beta 0.6 release record](docs/releases/beta-0.6/README.md)
 - [Changelog](CHANGELOG.md)
-- [Durable AI/new-chat handover — issue #84](https://github.com/Krtz/DiceBound/issues/84)
+- [Current AI/new-chat handover — issue #404](https://github.com/Krtz/DiceBound/issues/404)
 
-GitHub issues are the actionable backlog. Broad future direction lives in the roadmap until it becomes concrete enough to implement or playtest.
+GitHub issues are the actionable backlog. #130 is the live executable queue; broad future direction lives in the roadmap until it becomes concrete enough to implement or playtest.
