@@ -59,7 +59,6 @@
 
     // Historical inner-to-outer post-hooks, kept deliberately explicit so a
     // later change cannot silently reorder UI/state synchronization.
-    invoke('refreshLegacyHeroAvatar');
     invoke('checkDynamicClassUnlocks');
     invoke('refreshClassHudAndRoadLabels');
     invoke('refreshDefenseTooltip');
