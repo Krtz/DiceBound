@@ -75,7 +75,7 @@ for marker in [
     'const OWNER="ui/class-presentation"',
     'function applyPortrait(el,classId,combat=false)',
     'function applyBoardMarker(el,classId)',
-    'root.DiceboundClassPresentation=api'
+    'window.DiceboundClassPresentation=api'
 ]:
     if marker not in class_presentation:
         raise SystemExit(f'focused class portrait owner missing: {marker}')
