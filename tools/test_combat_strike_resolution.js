@@ -24,7 +24,7 @@ function makeHarness(options={}){
     hp:100,maxHp:100,crit:0,doubleStrike:0,criticalEchoBonus:0,echoDamageScale:.70,classBurst:0,firstAttackBonus:0,berserk:0,
     elementalEnemyDamage:0,bossDamage:0,execute:0,poisonOnHitChance:0,lifeSteal:0,packDamageBonus:0,equipment:{},
     combatAttackCount:0,ultimateCharge:0,fighterCounterReady:false,fighterCounterStacks:0,fighterCounterPowerBonus:0,
-    turtleCrushReady:false,turtleGuardChain:0,rangerMarkMax:3,ninjaSmoke:0,ninjaSmokeNeed:3,_ninjaExecution:false,
+    turtleCrushReady:false,turtleGuardChain:0,turtleConsecutiveGuards:0,rangerMarkMax:3,ninjaSmoke:0,ninjaSmokeNeed:3,_ninjaExecution:false,
     _db060EchoChamberActive:false,_db060IronEchoDefense:0
   },options.player||{});
   const enemies=options.enemies||[{name:"Dummy",hp:100,maxHp:100,defense:0,dodge:0,affinity:null,poisonStacks:0,rangerMarks:0,weakness:"fire"}];
@@ -136,10 +136,11 @@ function makeHarness(options={}){
     assert.ok(Math.abs(h.player.damageBonus)<1e-12,"temporary Fighter bonuses must fully restore apart from floating-point dust");
   }
   {
-    const h=makeHarness({classId:"turtle",player:{turtleCrushReady:true,turtleGuardChain:3},randomValues:[.9,.3]});
+    const h=makeHarness({classId:"turtle",player:{turtleCrushReady:true,turtleGuardChain:3,turtleConsecutiveGuards:6},randomValues:[.9,.3]});
     const result=await strikes.performStrike(h.enemies[0]);
     assert.equal(result.dealt,15);
     assert.equal(h.player.turtleGuardChain,0);
+    assert.equal(h.player.turtleConsecutiveGuards,0,"consuming Shell Momentum must reset the consecutive-Guard Barrier cadence");
     assert.equal(h.player.turtleCrushReady,false);
   }
   {
