@@ -19,11 +19,11 @@
     if(typeof currentTileCount!=="function")throw new Error("Enemy scaling requires currentTileCount().");
     if(typeof clamp!=="function"||typeof random!=="function"||typeof pick!=="function")throw new Error("Enemy scaling requires clamp/random/pick callbacks.");
     if(typeof db317Board!=="function")throw new Error("Enemy scaling requires board lookup.");
-    if(!db064EnemyPolicy?.standardDevilFlameChance)throw new Error("Enemy scaling requires enemy policy.");
+    if(!db064EnemyPolicy?.standardDemonFlameChance)throw new Error("Enemy scaling requires enemy policy.");
     if(!ELEMENT_KEYS.length)throw new Error("Enemy scaling requires element ids.");
 
     function combatMode(hellMode,nightmareMode){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
-    function isStandardDevil(enemy){return /\bdevil\b/i.test(String(enemy?.name||''))&&!/\bpale\s+devil\b/i.test(String(enemy?.name||''));}
+    function isStandardDemon(enemy){return String(enemy?.id||"")==="demon";}
 
     function scale(base,kind="normal",packSize=1){
       const state=getState()||{},player=state.player||{},boardLevel=Number(state.boardLevel)||1,nightmareMode=!!state.nightmareMode,hellMode=!!state.hellMode;
@@ -67,12 +67,12 @@
       // Beta 0.4.7 --------------------------------------------------------
       {const perBoard={1:[1.00,1.00,0],2:[1.03,1.02,0],3:[1.08,1.06,1],4:[1.15,1.10,2],5:[1.38,1.24,5],6:[1.55,1.33,7]}[boardLevel]||[1,1,0];enemy.hp=Math.max(1,Math.round(enemy.hp*perBoard[0]));enemy.maxHp=enemy.hp;enemy.attack=Math.max(1,Math.round(enemy.attack*perBoard[1]));enemy.defense=Math.max(0,(enemy.defense||0)+perBoard[2]);}
 
-      // Beta 0.6.4 ordinary Devil policy ---------------------------------
-      if(isStandardDevil(enemy)){enemy.innateElement='fire';enemy.elementProcChance=db064EnemyPolicy.standardDevilFlameChance(boardLevel,combatMode(hellMode,nightmareMode));}
+      // Beta 0.6.4 ordinary Demon policy ---------------------------------
+      if(isStandardDemon(enemy)){enemy.innateElement='fire';enemy.elementProcChance=db064EnemyPolicy.standardDemonFlameChance(boardLevel,combatMode(hellMode,nightmareMode));}
       return enemy;
     }
 
-    return Object.freeze({scale,isStandardDevil});
+    return Object.freeze({scale,isStandardDemon});
   }
 
   window.DiceboundEnemyScalingResolution=Object.freeze({apiVersion:1,configure});
