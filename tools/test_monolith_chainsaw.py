@@ -11,6 +11,7 @@ MONOLITH=ROOT/"runtime/js/dicebound.js"
 ELEMENTS=ROOT/"runtime/js/combat/element-content.js"
 DICE=ROOT/"runtime/js/run/dice.js"
 BOARD_PRESENTATION=ROOT/"runtime/js/board/presentation.js"
+CLASS_PRESENTATION=ROOT/"runtime/js/ui/class-presentation.js"
 KILLED=['achievementGateUnlocked', 'activePetDef', 'activePetState', 'activeTrainerPetId', 'affinityElementMultiplier', 'allocatedTalentPoints', 'applyRandomHighRarity', 'beta03AddBurn', 'beta03MinibossBaseTable', 'checkDynamicClassUnlocks', 'clearBloodOverhealTemp', 'commitClassUnlock', 'currentWeaponElement', 'elementHit', 'elementHitAll', 'enemyElementProc', 'enemyForPosition', 'enemyTurn', 'gameplayTalentRank', 'generateBoard', 'generateEquipment', 'healPlayer', 'isClassUnlocked', 'manaGain', 'maybePetElementProc', 'occultChannelAttack', 'occultSpellAttack', 'performStrike', 'petElementFor', 'recordHealing', 'renderEnemyParty', 'repairTalentPrerequisites', 'shuffledPetIds', 'statusDotsHTML', 'strikeBaseDamage', 'summonerConjure', 'trackElementProgress', 'trainerPetDamage', 'trainerStrike', 'triggerElementEffect', 'triggerWeaponElement', 'unlockClass', 'v14ClassTags', 'winCombat']
 STALE_STARTUP_ALIASES=['db0512GateRewards','db0512RememberReward','db060GuardianArt','db060GuardianTileArt']
 STALE_CLASS_PORTRAIT_ALIASES=['classPortraitV13Base','classPortraitV15Patch','classPortraitV16Base','classPortraitV18Base','classPortraitBeta042Base','db054LegacyPortraitSVG']
@@ -54,10 +55,21 @@ def main()->int:
 
     for name in STALE_CLASS_PORTRAIT_ALIASES:
         assert not re.search(rf"\b{re.escape(name)}\b",text), f"historical class portrait alias {name} returned"
-    assert len(re.findall(r"\bfunction\s+classPortraitSVG\s*\(",text))==1, "classPortraitSVG must remain one canonical implementation"
+    assert not re.search(r"\bfunction\s+classPortraitSVG\s*\(",text), "retired classPortraitSVG monolith renderer returned"
     assert not re.search(r"\bclassPortraitSVG\s*=\s*function\b",text), "classPortraitSVG replacement ladder returned"
     assert "db054LegacyPortraitSVG" not in text, "class portrait legacy fallback returned"
     assert "CLASSES[classId]||CLASSES.ranger" not in text, "class portrait Ranger fallback returned"
+    class_presentation_text=CLASS_PRESENTATION.read_text(encoding="utf-8")
+    for marker in [
+        'const OWNER="ui/class-presentation"',
+        'function applyPortrait(el,classId,combat=false)',
+        'function applyBoardMarker(el,classId)',
+        'function syncActive(classId)',
+        'root.DiceboundClassPresentation=api'
+    ]:
+        assert marker in class_presentation_text, f"class-presentation owner missing {marker}"
+    assert "const dbClassPresentation=window.DiceboundClassPresentation;" in text, "composition no longer consumes class-presentation owner"
+    assert "dbClassPresentation.syncActive(player.classId);" in text, "HUD no longer routes through class-presentation owner"
 
     for name in STALE_DOUBLE_DICE_ALIASES:
         assert f"function {name}(" not in code and f"async function {name}(" not in code, f"historical Double Dice owner {name} returned"
@@ -101,7 +113,7 @@ def main()->int:
     for marker in ['const OWNER="board/presentation"','function tileMeta(','function enemyArtForId(','window.DiceboundBoardPresentation=api']:
         assert marker in board_text, f"board/presentation owner missing {marker}"
 
-    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element, Road Dice and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, class portraits, Double Dice ladders and retired schema migrations absent, Board presentation canonical")
+    print(f"Monolith chainsaw anti-return PASS: 0 DB317 writes, canonical element, Road Dice and Artifact owners, {len(KILLED)} shadow delegates absent, startup aliases, focused class presentation, Double Dice ladders and retired schema migrations absent, Board presentation canonical")
     return 0
 
 
