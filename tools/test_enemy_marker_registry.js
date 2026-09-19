@@ -7,10 +7,10 @@ global.document=undefined;
 require(path.join(__dirname,'..','runtime','js','assets.js'));
 const assets=global.window.DiceboundAssets;
 
-const imported=['slime','goblin','skeleton','orc','cultist','wraith','devil','lich'];
+const imported=['slime','goblin','skeleton','orc','cultist','wraith','demon','lich'];
 const existing=['wolf','bandit','troll'];
-const names={slime:'Slime',goblin:'Goblin',skeleton:'Skeleton',wolf:'Wolf',bandit:'Bandit',orc:'Orc',cultist:'Cultist',wraith:'Wraith',troll:'Troll',devil:'Devil',lich:'Lich'};
-const markerFiles={devil:'demon'};
+const names={slime:'Slime',goblin:'Goblin',skeleton:'Skeleton',wolf:'Wolf',bandit:'Bandit',orc:'Orc',cultist:'Cultist',wraith:'Wraith',troll:'Troll',demon:'Demon',lich:'Lich'};
+const markerFiles={};
 
 for(const id of [...imported,...existing]){
   const marker=assets.resolveEnemyMarker(`${names[id]} pack · 4`);
@@ -23,7 +23,7 @@ for(const id of [...imported,...existing]){
   assert.strictEqual(assets.resolveEnemyMarker(names[id]).src,marker.src);
 }
 
-assert.strictEqual(assets.resolveEnemyMarker('Demon').key,'devil','legacy Demon labels must resolve to the standard Devil marker');
+assert.strictEqual(assets.resolveEnemyMarker('Devil').key,'demon','legacy Devil labels may resolve art but must canonicalize to the ordinary Demon marker');
 
 for(const id of imported)assert.strictEqual(assets.resolveEnemyPortrait(names[id]),null,`${id} marker must not masquerade as battle art`);
 for(const id of existing)assert.strictEqual(assets.resolveEnemyPortrait(names[id]).src,`assets/enemies/normal/battle/${id}.png`);

@@ -15,7 +15,7 @@ function load(rel) {
 
 load("runtime/js/combat/enemies.js");
 const normal = window.DiceboundEnemies.createNormalRegistry();
-assert.deepEqual(normal.map(enemy => enemy.id), ["slime","goblin","skeleton","wolf","bandit","orc","cultist","wraith","troll","devil","lich"]);
+assert.deepEqual(normal.map(enemy => enemy.id), ["slime","goblin","skeleton","wolf","bandit","orc","cultist","wraith","troll","demon","lich"]);
 assert.equal(new Set(normal.map(enemy => enemy.id)).size, normal.length, "ordinary enemy ids must be unique");
 
 load("runtime/js/assets.js");

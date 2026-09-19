@@ -103,8 +103,8 @@
       "weakness": "void"
     },
     {
-      "id": "devil",
-      "name": "Devil",
+      "id": "demon",
+      "name": "Demon",
       "icon": "😈",
       "hp": 38,
       "attack": 13,
