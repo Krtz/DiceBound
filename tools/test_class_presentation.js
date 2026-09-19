@@ -17,7 +17,7 @@ function element(){
   };
 }
 function image(){
-  return {className:'',alt:'',draggable:true,src:'',listeners:{},addEventListener(name,fn){this.listeners[name]=fn;}};
+  return {className:'',alt:'',draggable:true,src:'',dataset:{},listeners:{},addEventListener(name,fn){this.listeners[name]=fn;}};
 }
 const nodes={heroAvatar:element(),combatPlayerIcon:element(),pawn:element()};
 const sandbox={window:{},console};
@@ -46,9 +46,13 @@ assert.equal(nodes.combatPlayerIcon.dataset.classArt,'ranger');
 assert.equal(nodes.pawn.dataset.classArt,'ranger');
 assert.equal(nodes.pawn.attrs['aria-label'],'Ranger board marker');
 
-// A normal HUD/movement refresh must be idempotent and keep semantic art rather than
-// replacing the Road marker with the historical class emoji.
+// A normal HUD/movement refresh must be idempotent and keep the exact semantic
+// image node rather than replacing it with either a new image or the historical emoji.
+const markerBefore=nodes.pawn.children[0],heroBefore=nodes.heroAvatar.children[0],combatBefore=nodes.combatPlayerIcon.children[0];
 owner.syncActive('ranger');
+assert.strictEqual(nodes.pawn.children[0],markerBefore);
+assert.strictEqual(nodes.heroAvatar.children[0],heroBefore);
+assert.strictEqual(nodes.combatPlayerIcon.children[0],combatBefore);
 assert.equal(nodes.pawn.children[0].src,'assets/characters/classes/markers/ranger.png');
 assert.equal(nodes.pawn.textContent,'');
 
