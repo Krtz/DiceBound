@@ -2,7 +2,7 @@
 
 This is the current Git-era validation/publication flow for DiceBound.
 
-For exact current release provenance, use **#84** and `distribution/latest.json`. The workflow source `.github/workflows/dicebound-release.yml` is authoritative if this document ever disagrees with CI.
+For exact current release provenance, use **#404** and `distribution/latest.json`. The workflow source `.github/workflows/dicebound-release.yml` is authoritative if this document ever disagrees with CI.
 
 ## Release model
 
@@ -32,7 +32,7 @@ A release is not considered shipped merely because the PR merged. Publication, a
 
 Before release work:
 
-1. read the active issue(s) and #84/#130;
+1. read the active issue(s) and #404/#130;
 2. branch from **reconciled released `main`**;
 3. characterize released behavior that should remain;
 4. implement and clean the responsibility slice chosen by the bug/feature;
@@ -239,7 +239,7 @@ Before saying a version is shipped, verify live GitHub state:
 - `main` contains the manifest reconciliation commit;
 - no unexpected open PR/release recovery branch remains active.
 
-Only then refresh durable trackers such as #84/#130/#209 and call the release complete.
+Only then refresh durable trackers such as #404/#130/#209 and call the release complete.
 
 ## 14. Close the loop
 

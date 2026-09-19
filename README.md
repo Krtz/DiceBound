@@ -8,13 +8,13 @@ DiceBound is a single-player RPG/board-game hybrid built around dice movement, e
 
 **Want to play/build the game on Windows?** Read [HOW TO INSTALL THE GAME.md](HOW%20TO%20INSTALL%20THE%20GAME.md). It is written for friends/testers who just have the GitHub link and want to build the current game without understanding the development setup.
 
-**Fresh ChatGPT/Codex/project handover?** Start with [issue #84 — DiceBound project handover and new-chat catch-up protocol](https://github.com/Krtz/DiceBound/issues/84), then verify everything against current `main`, recent commits/PRs, and current open issues. GitHub is the source of truth.
+**Fresh ChatGPT/Codex/project handover?** Start with [issue #404 — DiceBound current handover](https://github.com/Krtz/DiceBound/issues/404), then verify everything against current `main`, recent commits/PRs, and current open issues. GitHub is the source of truth. Issue #84 is the archived historical handover.
 
 ## Release baseline and current development
 
 **Current source identity:** see `wrapper-source/config/project.json`; every runtime-bearing implementation PR advances it to a unique four-component version.
 
-**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-09-17 it points at the verified **Beta 0.6.7.6** prerelease (`beta-0.6.7.6`). Treat the manifest itself as authoritative if this paragraph later ages.
+**Current public launcher/distribution:** see `distribution/latest.json`. As of 2026-09-19 it points at the verified **Beta 0.6.7.13** prerelease (`beta-0.6.7.13`). Treat the manifest itself as authoritative if this paragraph later ages.
 
 Every runtime-bearing implementation PR receives one unused `MAJOR.MINOR.PATCH.REVISION` identity. A source PR may advance development beyond the currently published launcher build; `distribution/latest.json` only advances after the exact release artifact has been built, verified and published.
 
@@ -131,6 +131,6 @@ A manual local production-style build can use the root release command with the 
 - [Beta 0.6 recovery baseline](docs/RECOVERY_BASELINE.md)
 - [Beta 0.6 release record](docs/releases/beta-0.6/README.md)
 - [Changelog](CHANGELOG.md)
-- [Durable AI/new-chat handover — issue #84](https://github.com/Krtz/DiceBound/issues/84)
+- [Current AI/new-chat handover — issue #404](https://github.com/Krtz/DiceBound/issues/404)
 
 GitHub issues are the actionable backlog. #130 is the live executable queue; broad future direction lives in the roadmap until it becomes concrete enough to implement or playtest.

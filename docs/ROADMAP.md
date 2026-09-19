@@ -4,7 +4,7 @@ GitHub issues are the actionable backlog. This document groups the **current lar
 
 For exact ordering, current release identity and newest playtest reports, use:
 
-- **#84 — START HERE / durable release checkpoint**
+- **#404 — START HERE / durable release checkpoint**
 - **#130 — current executable queue**
 
 Live `main`, current issue comments and newer playtest evidence always beat this document if they disagree.
@@ -19,53 +19,29 @@ Do not resume broad monolith surgery merely to reduce source size.
 
 ## Near-term correctness
 
-### High Luck rarity policy — #379
-Reconcile the complete Luck -> rarity path across Powerups and generated gear.
+### Enemy identity / ordinary Devil naming — #158
+Promote semantic enemy identity far enough to rename the ordinary `Devil` family to `Demon` and support bounded element-aware naming without parsing generated display strings.
 
-Goals:
-- recover the intended high-Luck suppression from #282;
-- ensure all applicable reward sources use the canonical policy;
-- make 200 Luck effectively eliminate Poor/Common results as designed;
-- freeze and test deterministic boundaries plus seeded distributions;
-- remove any touched duplicated rarity logic instead of patching one reward source.
+Keep the special boss **The Pale Devil** distinct unless a separate design issue changes it.
 
-### Hoarder's Arsenal — #378
-Reproduce the apparently nonfunctional Legendary effect and trace the full semantic path:
+### Touch/mobile first-tap actions — #352
+Combat actions on touch/mobile should execute on the first intentional tap rather than requiring a focus/hover-like first interaction.
 
-`definition -> acquisition/equip -> effect aggregation -> consumer -> persistence/presentation`
+Preserve desktop behavior and do not solve this with a global click/touch hack that bypasses modal/input ownership.
 
-Fix exactly one authoritative application path and prevent both missing and double application.
+### Additional focused work
+- #393 — richer per-Board ordinary-enemy roster/content design; Beta 0.6.7.11's Board-1-style policy is intentionally only a stopgap.
+- #389 — proper Rouge full-body Camp/Class Selection art.
+- #337 — Invoke / Unstable Ultimate correctness.
+- #202 — Sealed Relic should roll Uncommon+.
+- #249 + #76 — player-facing terminology/copy cleanup.
+- #90 — remaining Escape/modal keyboard ownership.
 
-### Existing focused correctness
-
-- #349 — Turtle Barrier on every even consecutive Guard.
-- #351 — class art before the first roll on a fresh run/new Board.
-- #352 — first-tap combat actions on touch/mobile.
-- #337 — Invoke + Unstable Ultimate integration.
-- #332 — Throne of Venom behavior.
-- #202 — Sealed Relic Uncommon+ rule.
-- #90 — finish coherent keyboard/input routing: Escape/modal priority/text-entry safety around the already-shipped Road Dice Space/Enter path.
-
-Real playtest regressions discovered later outrank this list.
+Real playtest regressions discovered later outrank this list and should update #130 when promoted.
 
 ## Combat presentation
 
-### Generic enemy attack presentation — #376
-Build one canonical enemy-attack presentation fallback in Combat View without changing mechanics/RNG.
-
-Longer-term direction:
-- semantic attacker identity;
-- semantic attack ID;
-- actual target and hit index/count;
-- generic fallback first;
-- optional per-monster/per-attack authored animation later.
-
-This should make future boss/monster art incremental rather than requiring special-case DOM code.
-
-### Echo Strike pacing — #377
-Tune Echo presentation so high Echo counts remain readable longer while preserving exact strikes, targets, damage, Crit/proc and RNG semantics.
-
-Keep the timing function explicit and tested rather than layering another late animation patch.
+Beta 0.6.7.7 shipped the generic enemy-attack presentation and Echo pacing work from #376/#377. Future Combat View work should build on those semantic attacker/target paths rather than reintroducing monster-name DOM special cases.
 
 ### Elemental proc VFX — #71
 Continue adding authored Combat View presentation for remaining elements through the existing semantic target/VFX path.
@@ -89,8 +65,8 @@ Inventory current guardian behavior and improve underdeveloped fights one cohere
 
 Prefer recognizable encounter identity, telegraphs and learnable Nightmare/Hell escalation over raw stat inflation.
 
-### Board 4–6 pacing — #12 / #36
-This remains playtest-led, not table-led. The old Board 5/6 Merchant concern is parked until fresh current evidence justifies promotion.
+### Playtest-led balance — #12 / #36
+Board pacing concerns under #12 remain playtest-led rather than table-led. #36 is now specifically the live **Field Potion / ordinary-consumable value** note after the Vampire/Monk items shipped in 0.6.7.9.
 
 Real careers outrank harness predictions when they repeatedly disagree.
 

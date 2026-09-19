@@ -1,6 +1,6 @@
 # DiceBound Development Guide
 
-This guide describes the current day-to-day development contract. For the exact released checkpoint, read **#84**; for executable priority, read **#130**. Live `main` and newer issue/PR evidence always win over stale planning prose.
+This guide describes the current day-to-day development contract. For the exact released checkpoint, read **#404**; for executable priority, read **#130**. Live `main` and newer issue/PR evidence always win over stale planning prose.
 
 ## Branching
 
@@ -13,7 +13,7 @@ This guide describes the current day-to-day development contract. For the exact 
 
 ## Before changing code
 
-1. Read #84 and the relevant issue(s).
+1. Read #404 and the relevant issue(s).
 2. Inspect live `main`, current version/build metadata, open PRs and recent issue comments.
 3. Identify the **coherent responsibility slice** selected by the bug/feature.
 4. Find the current canonical public owner/focused internal owner for that slice.
@@ -197,7 +197,7 @@ For a significant runtime-bearing change:
 10. squash-merge;
 11. require protected-main release publication;
 12. verify the GitHub Release asset, checksum/bytes, `distribution/latest.json`, and the manifest reconciliation commit on `main`;
-13. only then call the version shipped and refresh #84/#130/#209 where needed.
+13. only then call the version shipped and refresh #404/#130/#209 where needed.
 
 A red protected-main run must be investigated at the failed step: GitHub infrastructure can fail after the game/build has already passed. Do not label a release broken until the actual failure is understood and final public/reconciled state is verified.
 

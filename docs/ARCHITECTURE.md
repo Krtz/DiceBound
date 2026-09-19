@@ -2,21 +2,21 @@
 
 This document describes the **current Git-era runtime architecture and maintenance contract**. It is intentionally about ownership and boundaries, not a release-by-release diary.
 
-For the executable queue and exact current release checkpoint, use GitHub issues **#130** and **#84**. Live `main`, release metadata and newer issue/PR evidence always beat stale prose.
+For the executable queue and exact current release checkpoint, use GitHub issues **#130** and **#404**. Live `main`, release metadata and newer issue/PR evidence always beat stale prose.
 
 ## Current verified baseline
 
-As of Beta **0.6.7.6**:
+As of Beta **0.6.7.13**:
 
-- runtime graph: **92 modules = 91 focused/extracted modules + one Composition / Bootstrap / Tooling root**;
+- runtime graph: **93 modules = 92 focused/extracted modules + one Composition / Bootstrap / Tooling root**;
 - public subsystem program: **12 / 12 complete**;
-- `runtime/js/dicebound.js`: **4,882 lines / 384,022 bytes**;
+- `runtime/js/dicebound.js`: **4,832 lines / 376,537 bytes**;
 - repeated named functions: **0**;
 - duplicate top-level function declarations: **0**;
 - `runtime/js/module-manifest.json` is the authoritative runtime load graph;
 - browser/Edge and native WebView2 validation remain release gates.
 
-The exact release provenance lives in #84 and `distribution/latest.json`; do not hard-code old hashes into architecture decisions.
+The exact release provenance lives in #404 and `distribution/latest.json`; do not hard-code old hashes into architecture decisions.
 
 ## Source of truth
 
@@ -94,6 +94,12 @@ Recent examples:
 - 0.6.7.4 footprints -> Board Movement + Board Presentation traversal ownership;
 - 0.6.7.5 Dodge -> generic incoming-combat/Dodge presentation;
 - 0.6.7.6 Merchant revisit/rarity -> Merchant interaction + shared equipment-name presentation boundary.
+- 0.6.7.7 Luck regression + attack/Echo presentation -> canonical Luck/rareness policy + Combat View presentation.
+- 0.6.7.8 Throne of Venom / Hoarder's Arsenal -> Powerups/effect visibility with Camp layout cleanup.
+- 0.6.7.9 class-action scaling -> coherent Classes/Combat action ownership.
+- 0.6.7.11 Luck/enemy-selection policy -> canonical rarity waterfall + temporary ordinary-enemy family policy.
+- 0.6.7.12 class art/achievement/Turtle reports -> Class Presentation + Progression + Guard ownership.
+- 0.6.7.13 Fast Wheel/Slots + Combat layout/tint + Camp difficulty controls -> Options/Road Events + Combat View + Camp ownership.
 
 ## Anti-shadow acceptance rule
 
@@ -215,7 +221,8 @@ The browser build remains a first-class secondary target and GitHub Pages is use
 
 ## Related durable references
 
-- #84 — START HERE / exact released checkpoint
+- #404 — START HERE / exact released checkpoint
+- #84 — archived historical handover
 - #130 — executable player-facing queue
 - #40 — architecture umbrella/contract
 - #209 — live subsystem census
