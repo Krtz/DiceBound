@@ -44,13 +44,13 @@
       "id": "road4",
       "category": "roads",
       "name": "Fourth Road Conqueror",
-      "condition": "board4Clears"
+      "condition": "anyBoardClear:4"
     },
     {
       "id": "road5",
       "category": "roads",
       "name": "Fifth Road Conqueror",
-      "condition": "board5Clears"
+      "condition": "anyBoardClear:5"
     },
     {
       "id": "slime-l5",
@@ -154,7 +154,7 @@
       "id": "double-dice",
       "category": "collection",
       "name": "Two Fists Full of Dice",
-      "condition": "board5Clears"
+      "condition": "anyBoardClear:5"
     },
     {
       "id": "prestige5",
