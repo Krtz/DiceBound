@@ -65,7 +65,7 @@ def main()->int:
         'function applyPortrait(el,classId,combat=false)',
         'function applyBoardMarker(el,classId)',
         'function syncActive(classId)',
-        'root.DiceboundClassPresentation=api'
+        'window.DiceboundClassPresentation=api'
     ]:
         assert marker in class_presentation_text, f"class-presentation owner missing {marker}"
     assert "const dbClassPresentation=window.DiceboundClassPresentation;" in text, "composition no longer consumes class-presentation owner"
