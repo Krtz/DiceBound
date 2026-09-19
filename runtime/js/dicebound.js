@@ -220,7 +220,6 @@
     prestige10:{type:"prestige",minimum:10},
     road2:{type:"classUnlocked",classId:"clown"},
     road3:{type:"flag",field:"nightmareUnlocked"},
-    road4:{type:"counter",field:"board4Clears",minimum:1},
     nature_master:{type:"elementProgress",element:"nature",minimum:500},
     merchant1:{type:"counter",field:"merchantKills",minimum:1},
     ranger_b1:{type:"boardClear",classId:"ranger",board:1},
@@ -229,7 +228,7 @@
     heal1000:{type:"lifetimeStat",stat:"healingDone",minimum:1000},
     gold1500:{type:"lifetimeStat",stat:"highestGold",minimum:4000},
     menagerie:{type:"allPetsUnlocked"},
-    paladin_oath:{type:"boardClears",requirements:[{classId:"fighter",board:3},{classId:"cleric",board:3}]}
+    paladin_oath:{type:"achievements",requirements:["fighter-b3","cleric-b3"]}
   };
   const DB317_CLASS_UNLOCKS_RAW=window.DiceboundClasses?.createUnlockRegistry?.();
   if(!DB317_CLASS_UNLOCKS_RAW)throw new Error("DiceboundClasses unlock registry must load before dicebound.js");
