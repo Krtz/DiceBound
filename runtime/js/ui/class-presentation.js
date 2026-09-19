@@ -41,7 +41,8 @@
   }
   function currentSemanticImage(el,src){
     const child=el?.firstElementChild||el?.children?.[0]||null;
-    return el?.dataset?.classArtSrc===src&&!el?.dataset?.classArtFallback&&child?child:null;
+    const tag=String(child?.tagName||child?.nodeName||"").toUpperCase();
+    return el?.dataset?.classArtSrc===src&&!el?.dataset?.classArtFallback&&tag==="IMG"?child:null;
   }
   function installSemanticImage(el,src,alt,className,onError){
     const existing=currentSemanticImage(el,src);
