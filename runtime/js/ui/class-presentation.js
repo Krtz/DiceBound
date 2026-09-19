@@ -39,6 +39,24 @@
     el.textContent=entry.icon||"🎲";
     el.dataset.classArtFallback="emoji";
   }
+  function currentSemanticImage(el,src){
+    const child=el?.firstElementChild||el?.children?.[0]||null;
+    return el?.dataset?.classArtSrc===src&&!el?.dataset?.classArtFallback&&child?child:null;
+  }
+  function installSemanticImage(el,src,alt,className,onError){
+    const existing=currentSemanticImage(el,src);
+    if(existing){
+      existing.className=className;
+      existing.alt=alt;
+      existing.draggable=false;
+      return existing;
+    }
+    el.innerHTML="";
+    const img=imageElement(src,alt,className,onError);
+    el.dataset.classArtSrc=src;
+    el.appendChild(img);
+    return img;
+  }
   function applyPortrait(el,classId,combat=false){
     if(!el)return null;
     const entry=classEntry(classId),art=artEntry(classId),src=combat?art.battle:art.headshot;
@@ -46,10 +64,7 @@
     el.classList?.add?.(combat?"combat-portrait":"class-portrait","db054-art-frame");
     el.dataset.classArt=entry.id;
     delete el.dataset.classArtFallback;
-    el.innerHTML="";
-    const img=imageElement(src,entry.name,`db054-class-art db054-class-art-${combat?"battle":"headshot"}`,()=>emojiFallback(el,entry));
-    el.appendChild(img);
-    return img;
+    return installSemanticImage(el,src,entry.name,`db054-class-art db054-class-art-${combat?"battle":"headshot"}`,()=>emojiFallback(el,entry));
   }
   function applyBoardMarker(el,classId){
     if(!el)return null;
@@ -57,10 +72,7 @@
     el.setAttribute?.("aria-label",`${entry.name} board marker`);
     el.dataset.classArt=entry.id;
     delete el.dataset.classArtFallback;
-    el.innerHTML="";
-    const img=imageElement(art.marker,`${entry.name} board marker`,"db-class-board-marker",()=>emojiFallback(el,entry));
-    el.appendChild(img);
-    return img;
+    return installSemanticImage(el,art.marker,`${entry.name} board marker`,"db-class-board-marker",()=>emojiFallback(el,entry));
   }
   function syncActive(classId){
     const id=String(classId);
