@@ -92,8 +92,8 @@
   function anyBoardClear(board){
     const target=Math.max(1,Number(board)||0),stats=call('ensureAlphaMeta'),suffix=`:b${target}`;
     if(Object.entries(stats.boardClears||{}).some(([key,count])=>Number(count)>0&&String(key).endsWith(suffix)))return true;
-    // Read-only migration bridge for historical saves. New clears are recorded
-    // exclusively in stats.boardClears by the run/progression composition.
+    // Achievement truth is the canonical stats.boardClears ledger. Historical
+    // feature counters remain readable here for old saves but do not own achievement state.
     return Number(meta()?.[`board${target}Clears`]||0)>0;
   }
 
