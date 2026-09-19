@@ -19,13 +19,13 @@ const RNG_STREAM=[.91,.12,.77,.33,.02,.64,.48,.15,.83,.27,.56,.04,.71,.39,.95,.1
 const CAPTURES=['scaleEnemyV15','scaleEnemyV11','scaleEnemyV14Base','scaleEnemyV16Base','scaleEnemyV17Base','scaleEnemyV17Normalized','scaleEnemyV19Base','scaleEnemyBeta045Base','db046ScaleEnemyBase','db047ScaleEnemyBase','db064ScaleEnemyBase'];
 
 function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
-function devilFlameChance(board,mode='normal'){
+function demonFlameChance(board,mode='normal'){
   const b=Math.min(6,Math.max(1,Math.floor(Number(board)||1)));
   const m=String(mode||'normal').toLowerCase()==='hell'?'hell':String(mode||'normal').toLowerCase()==='nightmare'?'nightmare':'normal';
   const bonus={normal:0,nightmare:.30,hell:.60}[m];
   return Number(Math.min(.90,b*.05+bonus).toFixed(2));
 }
-function isStandardDevil(enemy){return /\bdevil\b/i.test(String(enemy?.name||''))&&!/\bpale\s+devil\b/i.test(String(enemy?.name||''));}
+function isStandardDemon(enemy){return String(enemy?.id||'')==='demon';}
 function clone(value){return JSON.parse(JSON.stringify(value));}
 
 function findClosingBrace(source,open){
@@ -107,7 +107,7 @@ function makeHarness(input){
     currentTileCount:()=>BOARDS[state.boardLevel].tiles,
     clamp,random,pick,
     getBoard:level=>clone(BOARDS[level]),
-    enemyPolicy:{standardDevilFlameChance:devilFlameChance},
+    enemyPolicy:{standardDemonFlameChance:demonFlameChance},
     elementKeys:ELEMENT_KEYS,
     beta045EnemyArtForName:name=>/bandit|troll/i.test(name||'')?`beta045:${name}`:null,
     db046EnemyArtForName:name=>/bandit|troll/i.test(name||'')?`db046:${name}`:null,
@@ -124,7 +124,7 @@ function runLegacy(input,pipeline){
     ELEMENT_KEYS:[...ELEMENT_KEYS],clamp,random:h.random,pick:h.pick,currentTileCount:h.callbacks.currentTileCount,
     db317Board:h.callbacks.getBoard,db064EnemyPolicy:h.callbacks.enemyPolicy,
     beta045EnemyArtForName:h.callbacks.beta045EnemyArtForName,db046EnemyArtForName:h.callbacks.db046EnemyArtForName,db047UiArt:h.callbacks.db047UiArt,
-    db064CombatMode:()=>h.state.hellMode?'hell':h.state.nightmareMode?'nightmare':'normal',db064IsStandardDevil:isStandardDevil
+    db064CombatMode:()=>h.state.hellMode?'hell':h.state.nightmareMode?'nightmare':'normal',db064IsStandardDevil:isStandardDemon
   };
   vm.createContext(context);vm.runInContext(pipeline,context,{filename:'legacy-enemy-scaling-oracle.js'});
   const output=context.scaleEnemy(clone(input.base),input.kind,input.packSize);
@@ -158,7 +158,12 @@ if(process.argv.includes('--capture')){
   const owner=loadOwner();
   const presentationOwnedIcons=new Set(['bandit-art','troll-art']);
   for(const entry of fixture.cases){
-    const actual=runOwner(entry.input,owner);
+    const input=clone(entry.input);
+    // Preserve the frozen 0.6.6.19 numeric/RNG fixture while routing the
+    // historical ordinary-Devil cases through the new semantic Demon id.
+    if(/^standard-devil-/.test(entry.id))input.base.id='demon';
+    const actual=runOwner(input,owner);
+    if(/^standard-devil-/.test(entry.id))delete actual.output.id;
     const expected=clone(entry.result);
     if(presentationOwnedIcons.has(entry.id)){
       expected.output.icon=entry.input.base.icon;
