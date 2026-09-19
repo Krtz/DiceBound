@@ -86,13 +86,16 @@
     node('slotResult').textContent=text;requireFn('addLog')(`<b>Slots:</b> ${text}`);requireFn('updateMetaUI')();
   }
   async function spinSlot(){
-    const btn=node('spinBtn');btn.disabled=true;const reels=[node('reel1'),node('reel2'),node('reel3')];reels.forEach(r=>r.classList.add('spinning'));
+    const fast=!!requireFn('fastWheelSlots')(),btn=node('spinBtn');btn.disabled=true;const reels=[node('reel1'),node('reel2'),node('reel3')];
+    if(!fast)reels.forEach(r=>r.classList.add('spinning'));
+    // The reel-flutter symbols historically consume gameplay RNG. Fast mode
+    // deliberately burns the exact same draws while skipping only DOM/audio delay.
     for(let i=0;i<18;i++){
-      reels.forEach((r,j)=>{if(i<12+j*3)setSlotReelSymbol(r,pick(SLOT_SYMBOLS));});
-      requireFn('tone')(220+i*12,.03,'square',.012);await requireFn('delay')(60+i*5);
+      reels.forEach((r,j)=>{if(i<12+j*3){const symbol=pick(SLOT_SYMBOLS);if(!fast)setSlotReelSymbol(r,symbol);}});
+      if(!fast){requireFn('tone')(220+i*12,.03,'square',.012);await requireFn('delay')(60+i*5);}
     }
     const result=generateSlotResult();
-    for(let i=0;i<3;i++){setSlotReelSymbol(reels[i],result[i]);reels[i].classList.remove('spinning');requireFn('tone')(480+i*110,.08,'triangle',.025);await requireFn('delay')(180);}
+    for(let i=0;i<3;i++){setSlotReelSymbol(reels[i],result[i]);reels[i].classList.remove('spinning');if(!fast){requireFn('tone')(480+i*110,.08,'triangle',.025);await requireFn('delay')(180);}}
     applySlotReward(result);clearTile();btn.style.display='none';node('eventContinueBtn').style.display='block';btn.disabled=false;requireFn('updateHUD')();
   }
 
@@ -111,11 +114,11 @@
     ];
   }
   function syncWheelIcons(){const rewards=wheelRewards();[...node('fortuneWheel').querySelectorAll('span')].forEach((el,i)=>{if(rewards[i])el.textContent=rewards[i].icon;});}
-  function openWheel(){bind();syncWheelIcons();wheelBusy=false;node('wheelOverlay').classList.remove('hidden');node('wheelSpinBtn').style.display='block';node('wheelContinueBtn').style.display='none';node('wheelResult').textContent='The wheel waits for a victim.';requireFn('addLog')('You find the <b>Wheel of Fortune</b>.');}
+  function openWheel(){bind();syncWheelIcons();wheelBusy=false;const wheel=node('fortuneWheel');if(wheel)wheel.style.transition='';node('wheelOverlay').classList.remove('hidden');node('wheelSpinBtn').style.display='block';node('wheelContinueBtn').style.display='none';node('wheelResult').textContent='The wheel waits for a victim.';requireFn('addLog')('You find the <b>Wheel of Fortune</b>.');}
   async function spinWheel(){
-    if(wheelBusy)return;wheelBusy=true;node('wheelSpinBtn').disabled=true;const rewards=wheelRewards(),index=requireFn('rand')(0,rewards.length-1),reward=rewards[index];
-    const current=((wheelRotation%360)+360)%360,target=((360-(index*45+22.5))%360+360)%360,delta=1440+((target-current+360)%360);
-    wheelRotation+=delta;node('fortuneWheel').style.transform=`rotate(${wheelRotation}deg)`;requireFn('sfxRoll')();await requireFn('delay')(2850);
+    if(wheelBusy)return;wheelBusy=true;const fast=!!requireFn('fastWheelSlots')();node('wheelSpinBtn').disabled=true;const rewards=wheelRewards(),index=requireFn('rand')(0,rewards.length-1),reward=rewards[index];
+    const current=((wheelRotation%360)+360)%360,target=((360-(index*45+22.5))%360+360)%360,delta=1440+((target-current+360)%360),wheel=node('fortuneWheel');
+    wheelRotation+=delta;if(wheel){if(fast)wheel.style.transition='none';wheel.style.transform=`rotate(${wheelRotation}deg)`;}requireFn('sfxRoll')();if(!fast)await requireFn('delay')(2850);
     const result=reward.apply();node('wheelResult').textContent=`${reward.icon} ${reward.name}: ${result}`;requireFn('addLog')(`<b>Wheel:</b> ${reward.name} — ${result}`);requireFn('showToast')(reward.name);requireFn('sfxLevel')();
     clearTile();node('wheelSpinBtn').style.display='none';node('wheelContinueBtn').style.display='block';node('wheelSpinBtn').disabled=false;requireFn('updateHUD')();
   }
@@ -191,7 +194,7 @@
   }
   function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};return api;}
   function resetTransient(){currentMysticBuff=null;wheelBusy=false;}
-  function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,hasMysticOffer:!!currentMysticBuff,mysticRarity:currentMysticBuff?.rarity||null});}
+  function inspect(){return Object.freeze({owner:OWNER,bound,wheelBusy,fastWheelSlots:typeof runtime.fastWheelSlots==='function'&&!!runtime.fastWheelSlots(),hasMysticOffer:!!currentMysticBuff,mysticRarity:currentMysticBuff?.rarity||null});}
 
   const api=Object.freeze({configure,openSlot,openWheel,openBlessing,openMystic,openBloodwell,openGambler,spinSlot,spinWheel,applySlotReward,resetTransient,inspect,owner:OWNER});
   window.DiceboundRoadEventLifecycle=api;
