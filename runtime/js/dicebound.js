@@ -3675,7 +3675,6 @@ dbReturnToRoadTraceReady=true;
   const db064EnemyPolicy=window.DiceboundEnemyPolicy;
   if(!db064EnemyPolicy)throw new Error('DiceBound requires the enemy policy domain.');
   function db064CombatMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
-  function db064IsStandardDevil(enemy){return /\bdevil\b/i.test(String(enemy?.name||''))&&!/\bpale\s+devil\b/i.test(String(enemy?.name||''));}
   const dbEnemyScalingOwner=window.DiceboundEnemyScalingResolution;
   if(!dbEnemyScalingOwner)throw new Error('DiceBound requires the enemy scaling-resolution owner.');
   dbEnemyScalingResolution=dbEnemyScalingOwner.configure({
