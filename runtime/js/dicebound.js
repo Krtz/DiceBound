@@ -142,7 +142,7 @@
   const dbClassPresentation=window.DiceboundClassPresentation;
   if(!dbClassPresentation?.configure)throw new Error("DiceboundClassPresentation must load before dicebound.js");
   dbClassPresentation.configure({
-    document,find:$,getClass:id=>CLASSES[id]||null,
+    document,find:id=>document.getElementById(id),getClass:id=>CLASSES[id]||null,
     resolveClassArt:id=>window.DiceboundAssets?.resolveClassArt?.(id)||null
   });
   const DB317_PETS_RAW=dbPets.createRegistry?.();
