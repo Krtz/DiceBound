@@ -20,7 +20,9 @@
     return Object.freeze({
       muted:!!source.muted,
       masterVolume:clamp(source.masterVolume??.7,0,1),
-      soundPack:source.soundPack==='custom'?'custom':'synth'
+      soundPack:source.soundPack==='custom'?'custom':'synth',
+      fastWheelSlots:!!source.fastWheelSlots,
+      fastWheelSlotsUnlocked:!!source.fastWheelSlotsUnlocked
     });
   }
   function nativeSaveSupported(){return !!runtime.nativeSaveSupported?.();}
@@ -65,12 +67,13 @@
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Options');
     if(overlay.dataset.optionsSurface!=='1'){
       overlay.dataset.optionsSurface='1';
-      overlay.innerHTML=`<section class="options-shell"><header class="options-chrome"><div><span class="options-kicker">DiceBound runtime</span><h2>Options</h2></div><button type="button" class="small-btn options-done" id="optionsCloseBtn" data-options-done>Done</button></header><div class="options-content"><p class="options-subtitle">Runtime helpers, audio controls and permanent-progress utilities.</p><div class="options-grid"><section class="options-card"><b>Native save tools</b><span>Open the real save-folder location when you are running the Windows wrapper.</span><button type="button" class="small-btn" id="optionsOpenSaveBtn">Open Save Folder</button></section><section class="options-card"><b>Audio</b><span>Toggle sound effects, choose the active sound pack, and set the global SFX volume.</span><button type="button" class="small-btn" id="optionsSoundBtn">Sound: On</button><div class="options-volume"><div class="options-inline"><strong>Volume</strong><span id="optionsVolumeValue">70%</span></div><input class="options-range" id="optionsVolumeSlider" type="range" min="0" max="100" step="1" value="70"></div><div><strong style="font-size:11px">Sound Pack</strong><select class="options-select" id="optionsSoundPackSelect"><option value="synth">Built-in synth</option><option value="custom">Custom asset pack (auto fallback)</option></select></div></section><section class="options-card"><b>Permanent progress</b><span>Reset legacy progress, unlocks, heirlooms, pets and achievements. This uses the existing confirmation flow.</span><button type="button" class="small-btn danger" id="optionsResetBtn">Reset all progress</button></section></div><div class="options-note" id="optionsRuntimeNote"></div></div></section>`;
+      overlay.innerHTML=`<section class="options-shell"><header class="options-chrome"><div><span class="options-kicker">DiceBound runtime</span><h2>Options</h2></div><button type="button" class="small-btn options-done" id="optionsCloseBtn" data-options-done>Done</button></header><div class="options-content"><p class="options-subtitle">Runtime helpers, audio controls and permanent-progress utilities.</p><div class="options-grid"><section class="options-card"><b>Native save tools</b><span>Open the real save-folder location when you are running the Windows wrapper.</span><button type="button" class="small-btn" id="optionsOpenSaveBtn">Open Save Folder</button></section><section class="options-card"><b>Audio</b><span>Toggle sound effects, choose the active sound pack, and set the global SFX volume.</span><button type="button" class="small-btn" id="optionsSoundBtn">Sound: On</button><div class="options-volume"><div class="options-inline"><strong>Volume</strong><span id="optionsVolumeValue">70%</span></div><input class="options-range" id="optionsVolumeSlider" type="range" min="0" max="100" step="1" value="70"></div><div><strong style="font-size:11px">Sound Pack</strong><select class="options-select" id="optionsSoundPackSelect"><option value="synth">Built-in synth</option><option value="custom">Custom asset pack (auto fallback)</option></select></div></section><section class="options-card" id="optionsFastEventsCard" hidden><b>Fast Wheel &amp; Slots</b><span>After Board 6 has been cleared, skip the Wheel and Slots spin animations without changing their outcomes.</span><button type="button" class="small-btn" id="optionsFastEventsBtn" aria-pressed="false">Fast Wheel &amp; Slots: Off</button></section><section class="options-card"><b>Permanent progress</b><span>Reset legacy progress, unlocks, heirlooms, pets and achievements. This uses the existing confirmation flow.</span><button type="button" class="small-btn danger" id="optionsResetBtn">Reset all progress</button></section></div><div class="options-note" id="optionsRuntimeNote"></div></div></section>`;
       find('optionsOpenSaveBtn')?.addEventListener('click',()=>{const result=runtime.openSaveFolder?.();if(result&&typeof result.then==='function')result.finally(()=>sync());else sync();});
       find('optionsSoundBtn')?.addEventListener('click',()=>{runtime.toggleMuted?.();sync();});
       find('optionsVolumeSlider')?.addEventListener('input',event=>{runtime.setVolume?.(clamp(event.target?.value,0,100)/100);sync();});
       find('optionsVolumeSlider')?.addEventListener('change',()=>runtime.playPreview?.());
       find('optionsSoundPackSelect')?.addEventListener('change',event=>{runtime.setSoundPack?.(event.target?.value==='custom'?'custom':'synth');sync();runtime.playPreview?.();});
+      find('optionsFastEventsBtn')?.addEventListener('click',()=>{const state=settings();if(!state.fastWheelSlotsUnlocked)return;runtime.setFastWheelSlots?.(!state.fastWheelSlots);sync();});
       find('optionsResetBtn')?.addEventListener('click',()=>{runtime.resetProgress?.();close();});
       find('optionsCloseBtn')?.addEventListener('click',close);
       overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
@@ -96,17 +99,19 @@
     const overlay=ensureSurface();
     const state=settings(),supported=nativeSaveSupported();
     const soundButton=find('optionsSoundBtn'),saveButton=find('optionsOpenSaveBtn'),note=find('optionsRuntimeNote');
-    const slider=find('optionsVolumeSlider'),volumeValue=find('optionsVolumeValue'),packSelect=find('optionsSoundPackSelect');
+    const slider=find('optionsVolumeSlider'),volumeValue=find('optionsVolumeValue'),packSelect=find('optionsSoundPackSelect'),fastCard=find('optionsFastEventsCard'),fastButton=find('optionsFastEventsBtn');
     if(soundButton)soundButton.textContent=state.muted?'Sound: Off':'Sound: On';
     if(slider)slider.value=String(Math.round(state.masterVolume*100));
     if(volumeValue)volumeValue.textContent=`${Math.round(state.masterVolume*100)}%`;
     if(packSelect)packSelect.value=state.soundPack;
+    if(fastCard)fastCard.hidden=!state.fastWheelSlotsUnlocked;
+    if(fastButton){fastButton.disabled=!state.fastWheelSlotsUnlocked;fastButton.setAttribute('aria-pressed',String(state.fastWheelSlots));fastButton.textContent=`Fast Wheel & Slots: ${state.fastWheelSlots?'On':'Off'}`;}
     if(saveButton){saveButton.disabled=!supported;saveButton.textContent=supported?'Open Save Folder':'Open Save Folder (native only)';}
     if(note){
       const runtimeText=supported?'Native wrapper detected. Saves live in %LOCALAPPDATA%\\Dicebound\\saves and this screen can open that folder directly.':'Browser build detected. Save-folder opening is available only in the native Windows wrapper; audio and reset controls still work here.';
       note.textContent=`${runtimeText} Custom SFX use the existing supported custom-sound folder and fall back to the built-in synth when an asset is missing.`;
     }
-    return Object.freeze({owner:OWNER,muted:state.muted,volume:state.masterVolume,soundPack:state.soundPack,nativeSaveSupported:supported});
+    return Object.freeze({owner:OWNER,muted:state.muted,volume:state.masterVolume,soundPack:state.soundPack,fastWheelSlots:state.fastWheelSlots,fastWheelSlotsUnlocked:state.fastWheelSlotsUnlocked,nativeSaveSupported:supported});
   }
   function open(){ensureTopAction();const overlay=ensureSurface();sync();if(overlay){overlay.classList.remove('hidden');overlay.setAttribute('aria-hidden','false');}return overlay;}
   function close(){const overlay=find('optionsOverlay');if(overlay){overlay.classList.add('hidden');overlay.setAttribute('aria-hidden','true');}return overlay||null;}
