@@ -81,6 +81,16 @@ async function main(){
         const x=restore(seedName,'wheel');dispatch();click('#wheelSpinBtn');await until(()=>document.getElementById('wheelContinueBtn')?.style.display==='block','wheel '+seedName);snap(seedName,x.before,{result:document.getElementById('wheelResult')?.textContent||''});document.getElementById('wheelOverlay')?.classList.add('hidden');
       }
 
+      // 0.6.7.13 fast presentation must preserve the exact result and RNG stream.
+      const equivalenceSnapshot=(before,result)=>{const after=window.DiceboundRng.snapshot(),cp=window.DiceboundRunResumeTest.snapshot(),p=cp.run.player,tile=cp.run.tiles[p.position];return {result,player:{hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense,gold:p.gold,potions:p.potions,luck:p.luck,crit:p.crit,dodge:p.dodge,lifeSteal:p.lifeSteal,doubleStrike:p.doubleStrike,bossDamage:p.bossDamage},petCookies:cp.meta.petCookies,tile:{type:tile?.type,cleared:!!tile?.cleared},rngCalls:after.calls-before.calls,rngState:after.state};};
+      const runFastEquivalent=async(kind,fast)=>{
+        const type=kind==='slot'?'event':'wheel',seedName='fast-equivalence-'+kind,x=restore(seedName,type,cp=>{cp.meta.settings=cp.meta.settings||{};cp.meta.settings.fastWheelSlots=fast;cp.meta.stats=cp.meta.stats||{};cp.meta.stats.boardClears=cp.meta.stats.boardClears||{};cp.meta.stats.boardClears['ranger:normal:b6']=1;});
+        dispatch();
+        if(kind==='slot'){click('#spinBtn');await until(()=>document.getElementById('eventContinueBtn')?.style.display==='block'&&!document.getElementById('spinBtn')?.disabled,'fast-equivalence slot');const symbols=[1,2,3].map(n=>reel(document.getElementById('reel'+n)));const result={symbols,text:document.getElementById('slotResult')?.textContent||''};document.getElementById('eventOverlay')?.classList.add('hidden');return equivalenceSnapshot(x.before,result);}
+        click('#wheelSpinBtn');await until(()=>document.getElementById('wheelContinueBtn')?.style.display==='block','fast-equivalence wheel');const result=document.getElementById('wheelResult')?.textContent||'';document.getElementById('wheelOverlay')?.classList.add('hidden');return equivalenceSnapshot(x.before,result);
+      };
+      const fastEquivalence={slot:{normal:await runFastEquivalent('slot',false),fast:await runFastEquivalent('slot',true)},wheel:{normal:await runFastEquivalent('wheel',false),fast:await runFastEquivalent('wheel',true)}};
+
       // Treasure seeds capture potion/no-potion and loot/no-loot behavior.
       for(const seedName of ['treasure-a','treasure-b','treasure-c','treasure-d']){
         const x=restore(seedName,'treasure');dispatch();await wait();const lootVisible=!document.getElementById('lootOverlay')?.classList.contains('hidden');const loot=lootVisible?{name:document.querySelector('#lootCard .loot-name')?.textContent||'',rarity:document.querySelector('#lootCard .rarity-badge')?.textContent||'',bonuses:document.querySelector('#lootCard .loot-bonuses')?.textContent?.trim()||''}:null;snap(seedName,x.before,{lootVisible,loot});document.getElementById('lootOverlay')?.classList.add('hidden');
@@ -108,10 +118,12 @@ async function main(){
       }
 
       window.setTimeout=originalSetTimeout;
-      return {version:window.DiceboundVersion?.version||'0.6.6.25',cases:outputs};
+      return {version:window.DiceboundVersion?.version||'0.6.6.25',cases:outputs,fastEquivalence};
     })()`);
 
     assertCoverage(actual);
+    assert.deepEqual(actual.fastEquivalence.slot.fast,actual.fastEquivalence.slot.normal,'Fast Slots must preserve result, player state, tile state and exact RNG state/call count');
+    assert.deepEqual(actual.fastEquivalence.wheel.fast,actual.fastEquivalence.wheel.normal,'Fast Wheel must preserve result, player state, tile state and exact RNG state/call count');
     if(CAPTURE){console.log("ROAD_EVENTS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("ROAD_EVENTS_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.version,"0.6.6.25","Road Events fixture must remain the released 0.6.6.25 baseline");

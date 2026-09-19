@@ -15,12 +15,16 @@ const ui=window.DiceboundOptionsUi;
 assert.ok(ui,"Options UI owner is not public");
 assert.equal(ui.owner,"ui/options");
 
-ui.configure({getSettings:()=>({muted:true,masterVolume:1.5,soundPack:"custom"}),nativeSaveSupported:()=>true});
+ui.configure({getSettings:()=>({muted:true,masterVolume:1.5,soundPack:"custom",fastWheelSlots:true,fastWheelSlotsUnlocked:true}),nativeSaveSupported:()=>true});
 const model=ui.sync();
-assert.deepEqual(JSON.parse(JSON.stringify(model)),{owner:"ui/options",muted:true,volume:1,soundPack:"custom",nativeSaveSupported:true},"Options settings view must normalize a read-only runtime snapshot");
+assert.deepEqual(JSON.parse(JSON.stringify(model)),{owner:"ui/options",muted:true,volume:1,soundPack:"custom",fastWheelSlots:true,fastWheelSlotsUnlocked:true,nativeSaveSupported:true},"Options settings view must normalize a read-only runtime snapshot");
 assert.match(source,/data-options-done/,"Options requires persistent dismissal chrome");
 assert.match(source,/options-chrome\{position:sticky/,"Options Done chrome must stay persistent while content scrolls");
 assert.match(source,/function ensureTopAction\(/,"Options must own the semantic top-action trigger");
+assert.match(source,/id="optionsFastEventsCard" hidden/,"Fast Wheel & Slots must stay hidden before its Board 6 unlock");
+assert.match(source,/Fast Wheel &amp; Slots/,"Options must own the fast-event setting presentation");
+assert.match(source,/runtime\.setFastWheelSlots/,"Options must delegate persistence instead of owning career state");
+
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [

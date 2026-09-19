@@ -238,7 +238,14 @@ assert.strictEqual(combatOverlay.style.getPropertyValue('--db-combat-background-
 const backgroundStyle = fakeDocument.getElementById('dicebound-combat-background-style');
 assert(backgroundStyle, 'combat background presentation style was not installed');
 assert(backgroundStyle.textContent.includes('background-size:cover'), 'combat background must cover the overlay');
-assert(backgroundStyle.textContent.includes('rgba(19,31,54,.55)'), 'combat modal translucency contract was lost');
+assert(backgroundStyle.textContent.includes('rgba(19,31,54,.44)'), 'combat modal tint must be exactly 20% more transparent than the 0.6.7.12 .55 baseline');
+assert(backgroundStyle.textContent.includes('rgba(4,9,19,.176)')&&backgroundStyle.textContent.includes('rgba(4,9,19,.384)'), 'battle-background atmosphere tint must preserve the same 20% transparency reduction');
+owner.ensureCombatStageStyle();
+const stageStyle=fakeDocument.getElementById('dicebound-combat-stage-style');
+assert(stageStyle,'Combat View must own the battle-stage layout');
+assert(stageStyle.textContent.includes('>.bar-label{order:0'), 'health labels must render above combatant models');
+assert(stageStyle.textContent.includes('>.bar{order:1'), 'health bars must render above combatant models');
+assert(stageStyle.textContent.includes('>.fighter-icon{order:3;margin-top:12px'), 'player/enemy models must sit below the health/status stack');
 
 state.nightmareMode = true;
 background = owner.applyCombatBackground();

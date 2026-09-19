@@ -85,6 +85,7 @@
       rand:(a,b)=>rand(a,b),
       pick:values=>pick(values),
       delay:ms=>delay(ms),
+      fastWheelSlots:()=>dbProgression.hasAnyBoardClear(6)&&!!meta.settings?.fastWheelSlots,
       tone:(...args)=>tone(...args),
       sfxRoll:()=>sfx.roll(),
       sfxLevel:()=>sfx.level(),
@@ -2030,7 +2031,11 @@ function returnToRoad(...args){
       toggleNightmare:()=>{if(!meta.nightmareUnlocked){showToast('Nightmare is still locked');return;}nightmareMode=!nightmareMode;if(!nightmareMode)hellMode=false;window.DiceboundClassChooser.render();showToast(`Nightmare ${nightmareMode?'enabled':'disabled'}`);},
       toggleHell:()=>{if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;window.DiceboundClassChooser.render();showToast(`Hell ${hellMode?'enabled':'disabled'}`);},
       resetProgress:async()=>{if(await diceboundConfirm('Reset all Dicebound progress, achievements, pets, heirlooms and unlocks? This cannot be undone.',{title:'Reset ALL Dicebound progress?',confirmLabel:'Reset everything',danger:true})){dbRuntime.save?.reset();dbRuntime.platform?.reload();}}
-    }
+    },
+    canArmHellRitual:()=>!!hellMode&&!!meta.hellUnlocked,
+    primeHellRitual:()=>{meta.devilPrimed=true;saveMeta();return true;},
+    playHellRitualSuccess:()=>sfx.holy(),
+    hellRitualToast:(...args)=>showToast(...args)
   });
 
   // #199 / #209: the Class chooser owns live roster/detail presentation and
@@ -2245,15 +2250,6 @@ function returnToRoad(...args){
   function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE),text:'Storage Slot I purchased'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE),text:'Storage Slot II purchased'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
 
   function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
-  let v24DanceArmed=false,v24DanceLastAngle=null,v24DanceAccum=0,v24DanceDirection=0,v24DanceTimer=null,v24SuppressHellClickUntil=0;
-  function v24ArmDance(){if(!hellMode||!meta.hellUnlocked)return;v24DanceArmed=true;v24DanceLastAngle=null;v24DanceAccum=0;v24DanceDirection=0;const icon=$('campHellBtn')?.querySelector('.camp-icon');icon?.classList.add('devil-ritual-armed');$('campScene')?.classList.add('devil-ritual-tracking');clearTimeout(v24DanceTimer);v24DanceTimer=setTimeout(v24CancelDance,14000);showToast('The devil watches the fire. Circle the bonfire three times with mouse or finger.',2200);}
-  function v24CancelDance(){v24DanceArmed=false;v24DanceLastAngle=null;v24DanceAccum=0;v24DanceDirection=0;$('campHellBtn')?.querySelector('.camp-icon')?.classList.remove('devil-ritual-armed');$('campScene')?.classList.remove('devil-ritual-tracking');}
-  function v24TrackDance(e){if(!v24DanceArmed||!hellMode)return;const fire=document.querySelector('#campScene .camp-bonfire');if(!fire)return v24CancelDance();const r=fire.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,dist=Math.hypot(dx,dy);if(dist<45||dist>330)return;const angle=Math.atan2(dy,dx);if(v24DanceLastAngle==null){v24DanceLastAngle=angle;return;}let d=angle-v24DanceLastAngle;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;v24DanceLastAngle=angle;if(Math.abs(d)>.75)return;const dir=Math.sign(d);if(!dir)return;if(!v24DanceDirection)v24DanceDirection=dir;if(dir!==v24DanceDirection){v24DanceAccum=Math.max(0,v24DanceAccum-Math.abs(d)*2);return;}v24DanceAccum+=Math.abs(d);if(v24DanceAccum>=Math.PI*6){meta.devilPrimed=true;saveMeta();v24CancelDance();sfx.holy();showToast('🌙 Something dances back.',3200,true);}}
-  document.addEventListener('pointermove',v24TrackDance,{passive:true});
-  document.addEventListener('pointercancel',()=>{if(v24DanceArmed)v24CancelDance();},{passive:true});
-  document.addEventListener('pointerdown',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(icon&&hellMode){v24SuppressHellClickUntil=Date.now()+900;e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
-  document.addEventListener('click',e=>{const icon=e.target.closest?.('#campHellBtn .camp-icon');if(!icon||!hellMode)return;if(Date.now()<v24SuppressHellClickUntil){e.preventDefault();e.stopImmediatePropagation();return;}if(e.detail===0){e.preventDefault();e.stopImmediatePropagation();v24ArmDance();}},true);
-
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
@@ -2262,12 +2258,10 @@ function returnToRoad(...args){
 
   function v24RefreshCamp(){
     const overlay=$('startOverlay'),modal=overlay?.querySelector('.start-modal');if(modal){const h=modal.querySelector('h2');if(h)h.textContent='Campsite';const sub=modal.querySelector('.subtitle');if(sub)sub.innerHTML='Between expeditions. Choose who leaves camp, what they carry, and which terrible idea to enable next.';}overlay?.querySelector('.camp-help')?.remove();
-    const hell=$('campHellBtn');if(hell){const icon=hell.querySelector('.camp-icon'),sub=hell.querySelector('.camp-sub');if(icon)icon.textContent=hellMode?'👿':'😈';if(sub&&meta.hellUnlocked)sub.innerHTML=`${hellMode?'HELL ON':'HELL OFF'} <span class="camp-mode-state">${hellMode?'ON':'OFF'}</span>`;hell.setAttribute('aria-pressed',String(!!hellMode));}
     dbEquipmentUi.renderEquipment();
   }
-  DB24.modules.camp={refresh:v24RefreshCamp,armDevil:v24ArmDance};
+  DB24.modules.camp={refresh:v24RefreshCamp};
   window.DiceboundCamp.configureShell({refreshCampV24:()=>v24RefreshCamp()});
-  document.addEventListener('click',e=>{if(e.target.closest?.('#campHellBtn')&&!e.target.closest?.('#campHellBtn .camp-icon'))setTimeout(v24RefreshCamp,0);},true);
 
       DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
@@ -2815,12 +2809,13 @@ dbReturnToRoadTraceReady=true;
   }
   const dbOptionsUi=window.DiceboundOptionsUi?.configure({
     find:$,
-    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth'}),
+    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth',fastWheelSlots:!!meta.settings?.fastWheelSlots,fastWheelSlotsUnlocked:dbProgression.hasAnyBoardClear(6)}),
     nativeSaveSupported:()=>!!dbRuntime.platform?.capabilities?.openSaveFolder,
     openSaveFolder:()=>{const button=$('saveFolderBtn');button?.click();return !!button;},
     toggleMuted:()=>{$('muteBtn')?.click();return muted;},
     setVolume:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.masterVolume=clamp(Number(value),0,1);saveMeta();return meta.settings.masterVolume;},
     setSoundPack:pack=>{meta.settings=meta.settings||defaultSettings();meta.settings.soundPack=pack==='custom'?'custom':'synth';saveMeta();return meta.settings.soundPack;},
+    setFastWheelSlots:value=>{if(!dbProgression.hasAnyBoardClear(6))return false;meta.settings=meta.settings||defaultSettings();meta.settings.fastWheelSlots=!!value;saveMeta();return meta.settings.fastWheelSlots;},
     playPreview:()=>{try{sfx.coin();}catch(_){}},
     resetProgress:()=>window.DiceboundTalentTree?.resetProgress?.()
   });

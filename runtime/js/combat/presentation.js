@@ -41,11 +41,30 @@
     style.textContent = `
       #combatOverlay[data-combat-background]{isolation:isolate;overflow:hidden;background:#07101c!important}
       #combatOverlay[data-combat-background]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--db-combat-background-image);background-size:cover;background-position:center;transform:scale(1.01)}
-      #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.22),rgba(4,9,19,.48))}
-      #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.55),rgba(7,14,28,.72))!important}
+      #combatOverlay[data-combat-background]::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,9,19,.176),rgba(4,9,19,.384))}
+      #combatOverlay[data-combat-background]>.modal{position:relative;z-index:2;background:linear-gradient(180deg,rgba(19,31,54,.44),rgba(7,14,28,.576))!important}
     `;
     doc.head?.appendChild(style);
     return style;
+  }
+
+  function ensureCombatStageStyle() {
+    const rt=requireRuntime(),doc=rt.document;
+    const existing=typeof doc.getElementById==="function"?doc.getElementById("dicebound-combat-stage-style"):null;
+    if(existing)return existing;
+    const style=doc.createElement("style");style.id="dicebound-combat-stage-style";
+    style.textContent=`
+      #combatOverlay .combat-head>.fighter{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start}
+      #combatOverlay .combat-head>.fighter>.bar-label{order:0;margin:0 0 5px}
+      #combatOverlay .combat-head>.fighter>.bar{order:1;margin:0 0 4px}
+      #combatOverlay .combat-head>.fighter>.status-dots{order:2;justify-content:center;margin:2px 1px 0}
+      #combatOverlay .combat-head>.fighter>.fighter-icon{order:3;margin-top:12px;margin-bottom:4px}
+      #combatOverlay .combat-head>.fighter>.fighter-name{order:4}
+      #combatOverlay .combat-head>.fighter>.combat-pet{order:5}
+      #combatOverlay .combat-head>.fighter>.enemy-weakness{order:5}
+      @media(max-width:700px){#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:7px}}
+    `;
+    doc.head?.appendChild(style);return style;
   }
 
   function applyCombatBackground() {
@@ -514,6 +533,7 @@
 
   function update() {
     const rt = requireRuntime(), state = rt.getState(), player = state.player || {}, enemy = state.currentEnemy; if (!enemy) return;
+    ensureCombatStageStyle();
     const find = rt.find, elements = rt.getElements(), model = buildViewModel(), weak = elements[enemy.weakness], aff = elements[enemy.affinity];
     if (find("enemyName")) find("enemyName").textContent = `Target ${(state.currentEnemyIndex || 0) + 1}: ${enemy.name}`;
     if (find("enemyWeakness")) find("enemyWeakness").textContent = `${weak ? `Weakness: ${weak.icon} ${weak.name}` : "Weakness: Unknown"}${aff ? ` · Affinity: ${aff.icon} ${aff.name}` : " · No elemental affinity"}`;
@@ -548,6 +568,7 @@
     owner: "combat/presentation",
     configure,
     applyCombatBackground,
+    ensureCombatStageStyle,
     update,
     renderEnemyParty,
     renderBossSpecialIndicator,

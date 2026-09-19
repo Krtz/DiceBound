@@ -65,8 +65,8 @@
     campOptionsBtn:Object.freeze({x:.085,y:.105,w:110}),
     campTalentBtn:Object.freeze({x:.555,y:.125,w:165}),
     campMoonBtn:Object.freeze({x:.83,y:.115,w:165}),
-    campNightmareBtn:Object.freeze({x:.89,y:.53,w:120}),
-    campHellBtn:Object.freeze({x:.30,y:.28,w:118}),
+    campNightmareBtn:Object.freeze({x:.889,y:.53,w:120}),
+    campHellBtn:Object.freeze({x:.27,y:.33,w:118}),
     campClassBtn:Object.freeze({x:.39,y:.65,w:235}),
     campInfoBtn:Object.freeze({x:.26,y:.78,w:145}),
     campBonfire:Object.freeze({x:.50,y:.72,w:170}),
@@ -159,12 +159,19 @@
     #campScene .camp-spot,#campScene .camp-bonfire{transition:scale .14s ease,filter .14s ease!important;transform-origin:center!important}
     #campScene .camp-spot:not(:disabled):hover,#campScene .camp-spot:not(:disabled):focus-visible,#campScene .camp-bonfire:hover{scale:1.035;filter:brightness(1.09) drop-shadow(0 0 11px rgba(255,218,142,.34)) drop-shadow(0 0 22px rgba(123,190,255,.16))}
     #campScene .camp-spot:not(:disabled):hover .camp-spot-title,#campScene .camp-spot:not(:disabled):focus-visible .camp-spot-title{color:#fff4ce!important;text-shadow:0 0 8px rgba(255,218,142,.45)!important}
+    #startOverlay.camp-fullscreen #campHellBtn{overflow:visible!important}
+    #startOverlay.camp-fullscreen #campHellBtn .camp-hell-ritual-hotspot{position:absolute;left:76%;top:56%;width:18px;height:18px;min-width:0;min-height:0;padding:0;margin:0;border:0;border-radius:50%;background:transparent;box-shadow:none;z-index:8;pointer-events:auto;cursor:pointer;transform:translate(-50%,-50%);scale:1}
+    #startOverlay.camp-fullscreen #campHellBtn .camp-hell-ritual-hotspot[hidden]{display:none!important}
+    #startOverlay.camp-fullscreen #campHellBtn .camp-hell-ritual-hotspot:focus-visible{outline:1px dotted rgba(255,120,90,.55);outline-offset:1px}
+    #campScene.devil-ritual-tracking{touch-action:none;overscroll-behavior:none}
   `;
 
   let runtime={};
   let shell=null;
   let resizeBound=false;
   let refreshFrame=0;
+  let hellRitualBound=false;
+  const hellRitual={armed:false,lastAngle:null,accum:0,direction:0,timer:null};
 
   function doc(){return root.document||null;}
   function find(id){return runtime.find?.(id)||doc()?.getElementById(id)||null;}
@@ -172,6 +179,59 @@
   function asset(key,fallback){return root.DiceboundAssets?.resolveCampObject?.(key)?.image||fallback;}
   function assetAlt(key,fallback){return root.DiceboundAssets?.resolveCampObject?.(key)?.alt||fallback;}
   function important(node,property,value){node?.style?.setProperty?.(property,value,'important');}
+
+  function cancelHellRitual(){
+    hellRitual.armed=false;hellRitual.lastAngle=null;hellRitual.accum=0;hellRitual.direction=0;
+    root.clearTimeout?.(hellRitual.timer);hellRitual.timer=null;
+    find('campScene')?.classList.remove('devil-ritual-tracking');
+    return false;
+  }
+  function armHellRitual(){
+    if(!runtime.canArmHellRitual?.())return false;
+    cancelHellRitual();hellRitual.armed=true;
+    find('campScene')?.classList.add('devil-ritual-tracking');
+    hellRitual.timer=root.setTimeout?.(cancelHellRitual,14000)||null;
+    runtime.hellRitualToast?.('The devil watches the fire. Circle the bonfire three times with mouse or finger.',2200);
+    return true;
+  }
+  function trackHellRitual(event){
+    if(!hellRitual.armed||!runtime.canArmHellRitual?.())return;
+    const fire=doc()?.querySelector?.('#campScene .camp-bonfire');if(!fire)return cancelHellRitual();
+    const rect=fire.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,dx=event.clientX-cx,dy=event.clientY-cy,dist=Math.hypot(dx,dy);
+    if(dist<45||dist>330)return;
+    const angle=Math.atan2(dy,dx);
+    if(hellRitual.lastAngle==null){hellRitual.lastAngle=angle;return;}
+    let delta=angle-hellRitual.lastAngle;while(delta>Math.PI)delta-=Math.PI*2;while(delta<-Math.PI)delta+=Math.PI*2;hellRitual.lastAngle=angle;
+    if(Math.abs(delta)>.75)return;
+    const direction=Math.sign(delta);if(!direction)return;
+    if(!hellRitual.direction)hellRitual.direction=direction;
+    if(direction!==hellRitual.direction){hellRitual.accum=Math.max(0,hellRitual.accum-Math.abs(delta)*2);return;}
+    hellRitual.accum+=Math.abs(delta);
+    if(hellRitual.accum>=Math.PI*6){
+      runtime.primeHellRitual?.();cancelHellRitual();runtime.playHellRitualSuccess?.();runtime.hellRitualToast?.('🌙 Something dances back.',3200,true);
+    }
+  }
+  function bindHellRitualTracking(){
+    if(hellRitualBound||!doc()?.addEventListener)return;
+    hellRitualBound=true;doc().addEventListener('pointermove',trackHellRitual,{passive:true});doc().addEventListener('pointercancel',()=>{if(hellRitual.armed)cancelHellRitual();},{passive:true});
+  }
+  function ensureHellRitualHotspot(enabled){
+    const button=find('campHellBtn');if(!button)return null;
+    let hotspot=button.querySelector('.camp-hell-ritual-hotspot');
+    if(!hotspot){
+      hotspot=doc()?.createElement('span');if(!hotspot)return null;
+      hotspot.className='camp-hell-ritual-hotspot';hotspot.setAttribute('role','button');hotspot.setAttribute('tabindex','0');hotspot.setAttribute('aria-label','Tiny devil');
+      const consume=event=>{event.preventDefault();event.stopPropagation();event.stopImmediatePropagation?.();};
+      hotspot.addEventListener('pointerdown',event=>{consume(event);armHellRitual();});
+      hotspot.addEventListener('click',consume);
+      hotspot.addEventListener('keydown',event=>{if(event.key!=='Enter'&&event.key!==' ')return;consume(event);armHellRitual();});
+      button.appendChild(hotspot);
+    }
+    hotspot.hidden=!enabled;
+    if(!enabled&&hellRitual.armed)cancelHellRitual();
+    return hotspot;
+  }
+  function inspectHellRitual(){return Object.freeze({armed:hellRitual.armed,hotspotVisible:!!find('campHellBtn')?.querySelector('.camp-hell-ritual-hotspot')&&!find('campHellBtn')?.querySelector('.camp-hell-ritual-hotspot')?.hidden});}
   function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
 
   function layoutForViewport(width=root.innerWidth||0,height=root.innerHeight||0){
@@ -335,7 +395,8 @@
   function renderHellModeArt(view){
     const button=find('campHellBtn');if(!button)return;
     const enabled=!!view.hellMode;button.classList.toggle('hell-volcano-active',enabled);
-    if(enabled){setObjectArt('campHellBtn','hellOn','db066-hell-volcano-art','Active Hell volcano with a dancing devil','assets/camp/mode-toggles/hell/on.png');return;}
+    if(enabled){setObjectArt('campHellBtn','hellOn','db066-hell-volcano-art','Active Hell volcano with a dancing devil','assets/camp/mode-toggles/hell/on.png');ensureHellRitualHotspot(true);return;}
+    ensureHellRitualHotspot(false);
     const frame=button.querySelector('.db058-camp-art-frame');
     if(frame){const icon=doc()?.createElement('div');if(icon){icon.className='camp-icon camp-hell-mountain';icon.textContent='⛰️';frame.replaceWith(icon);}}
     const icon=button.querySelector('.camp-icon');if(icon&&!icon.querySelector('img')){icon.classList.add('camp-hell-mountain');icon.textContent='⛰️';}
@@ -492,7 +553,7 @@
       const node=id==='campBonfire'?scene.querySelector('.camp-bonfire'):find(id);let spec=stageSpec(id,layout);
       if(!node||!spec)continue;
       const hellVolcano=id==='campHellBtn'&&node.classList.contains('hell-volcano-active');
-      if(hellVolcano)spec={...spec,x:.22,y:.33,w:460,h:174};
+      if(hellVolcano)spec={...spec,w:460,h:174};
       for(const [property,value] of Object.entries({position:'absolute',left:`${(spec.x*100).toFixed(3)}%`,top:`${(spec.y*100).toFixed(3)}%`,right:'auto',bottom:'auto',transform:'translate(-50%,-50%)',translate:'none'}))important(node,property,value);
       if(id==='campGoBtn'){
         const width=Math.round(clamp(spec.w*frame.scale,spec.w*.68,spec.w*1.08)),height=Math.round(clamp((spec.h||spec.w)*frame.scale,(spec.h||spec.w)*.72,(spec.h||spec.w)*1.08));
@@ -541,7 +602,7 @@
 
   function configure(nextRuntime={}){
     runtime={...runtime,...nextRuntime,actions:{...runtime.actions,...nextRuntime.actions}};
-    installLayoutStyles();
+    installLayoutStyles();bindHellRitualTracking();
     if(!resizeBound&&root.addEventListener){resizeBound=true;root.addEventListener('resize',()=>{scheduleRefresh();scheduleHitTargetSync();scheduleViewportPositionSync();},{passive:true});}
     return api;
   }
@@ -558,7 +619,7 @@
 
   const api=Object.freeze({
     configure,configureShell,enterShell,refreshMetaShell,refreshHudShell,_installShell:installShell,ensure,refresh,refreshArt,renderClassFigure,renderPetFigure,openPanel,closePanels,scrollPanel,ensureCompatStartButton,ensureOptionsButton,
-    layoutForViewport,layouts:CAMP_LAYOUTS,stageAnchors:CAMP_STAGE_ANCHORS,stageFrame,syncHitTargets,scheduleHitTargetSync,applyStageLayout,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,
+    layoutForViewport,layouts:CAMP_LAYOUTS,stageAnchors:CAMP_STAGE_ANCHORS,stageFrame,syncHitTargets,scheduleHitTargetSync,applyStageLayout,applyViewportPositions,clampShortViewportPositions,scheduleViewportPositionSync,inspectHitTargets,inspectHellRitual,
     syncProgressionReveals,progressionRevealObjectIds:()=>CAMP_PROGRESSIVE_OBJECTS.map(entry=>entry.id),
     requiredSemanticIds:()=>[...CAMP_OBJECT_IDS]
   });

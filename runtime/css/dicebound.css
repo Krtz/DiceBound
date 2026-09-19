@@ -816,7 +816,6 @@
   .overlay{overflow:auto;-webkit-overflow-scrolling:touch;align-items:flex-start;padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom))}
   .modal{max-height:none;overflow:visible;margin:auto 0}
   .combat-history,.log{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
-  #campScene.devil-ritual-tracking{touch-action:none;overscroll-behavior:none}
 }
 @media(max-width:700px){
   #combatOverlay .combat-head{gap:6px!important;margin-bottom:10px!important}
