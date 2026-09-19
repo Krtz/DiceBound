@@ -118,7 +118,14 @@ async function main(){
     if(CAPTURE){console.log("PROGRESSION_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("PROGRESSION_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.28","Progression fixture must remain the released 0.6.6.28 baseline");
-    assert.deepEqual(actual.cases,fixture.cases);
+    // 0.6.7.12 deliberately replaces the vague #388 Hero Mastery prerequisite
+    // copy while preserving every other frozen Progression output/state/RNG fact.
+    const expected=structuredClone(fixture.cases);
+    const heroMastery=expected.find(entry=>entry.name==="hero-mastery");
+    const crownshot=heroMastery?.entries?.find(entry=>entry.id==="hero-talent:ranger:ranger_crownshot");
+    assert.ok(crownshot,"frozen Progression fixture lost Ranger Crownshot");
+    crownshot.description="Clear Board 1 as Ranger. Unlocks this hero-specific talent.";
+    assert.deepEqual(actual.cases,expected);
     console.log(`Progression oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
