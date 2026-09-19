@@ -89,6 +89,13 @@
   function upgrades(){return call('getUpgrades');}
   function achievementById(id){return achievementRegistry().find(entry=>entry.id===id)||null;}
   function achievementEntry(input){return typeof input==='string'?achievementById(input):input||null;}
+  function anyBoardClear(board){
+    const target=Math.max(1,Number(board)||0),stats=call('ensureAlphaMeta'),suffix=`:b${target}`;
+    if(Object.entries(stats.boardClears||{}).some(([key,count])=>Number(count)>0&&String(key).endsWith(suffix)))return true;
+    // Achievement truth is the canonical stats.boardClears ledger. Historical
+    // feature counters remain readable here for old saves but do not own achievement state.
+    return Number(meta()?.[`board${target}Clears`]||0)>0;
+  }
 
   function achievementDone(input){
     const a=achievementEntry(input);if(!a)return false;
@@ -97,8 +104,7 @@
     if(kind==='boardClear')return call('hasBoardClear',parts[1],Number(parts[2]));
     if(kind==='classUnlocked')return isClassUnlocked(parts[1]);
     if(kind==='nightmareUnlocked')return !!state.nightmareUnlocked;
-    if(kind==='board4Clears')return (state.board4Clears||0)>0;
-    if(kind==='board5Clears')return (state.board5Clears||0)>0;
+    if(kind==='anyBoardClear')return anyBoardClear(parts[1]);
     if(kind==='classLevel')return (stats.classMaxLevel?.[parts[1]]||0)>=Number(parts[2]||0);
     if(kind==='healingDone')return (stats.healingDone||0)>=Number(parts[1]||0);
     if(kind==='highestGold')return Math.max(stats.highestGold||0,player?.gold||0)>=Number(parts[1]||0);
@@ -123,8 +129,7 @@
     if(kind==='boardClear')return `Clear Board ${p[2]} as ${classRegistry[p[1]]?.name||p[1]}.`;
     if(kind==='classUnlocked')return `Unlock ${classRegistry[p[1]]?.name||p[1]}.`;
     if(kind==='nightmareUnlocked')return 'Unlock Nightmare Mode.';
-    if(kind==='board4Clears')return 'Clear Board 4.';
-    if(kind==='board5Clears')return 'Clear Board 5.';
+    if(kind==='anyBoardClear')return `Clear Board ${Number(p[1])}.`;
     if(kind==='classLevel')return `Reach run level ${p[2]} as ${classRegistry[p[1]]?.name||p[1]}.`;
     if(kind==='healingDone')return `Heal ${Number(p[1]).toLocaleString()} HP across all runs.`;
     if(kind==='highestGold')return `Hold ${Number(p[1]).toLocaleString()} gold at once.`;
@@ -139,7 +144,16 @@
     if(kind==='devilBossKills')return `Defeat the Pale Devil ${p[1]} time${Number(p[1])===1?'':'s'}.`;
     if(kind==='devilHornsFound')return "Find the Devil's Horns Omega hat.";
     if(kind==='potionsUsed')return `Consume ${p[1]} potions across all runs.`;
-    return 'Complete the listed achievement condition.';
+    if(kind==='invoker'){
+      const copy={
+        'first-invoke':'Invoke your first three-orb spell as Invoker.',
+        'ten-recipes':'Invoke all ten three-orb recipes at least once.',
+        'sun-strike-boss':'Defeat a boss with Sun Strike.',
+        'deafening-blast':'Invoke Deafening Blast.'
+      };
+      if(copy[p[1]])return copy[p[1]];
+    }
+    return 'Complete this achievement’s authored condition.';
   }
 
   function achievementRewardText(input){
@@ -156,10 +170,43 @@
     return `${base}${base?' · also':' ·'} unlocks ${names.join(', ')}`;
   }
 
+  function achievementGateConditionText(gate){
+    if(!gate)return '';
+    const text=String(gate),prefixed=text.startsWith('achievement:')?achievementById(text.slice('achievement:'.length)):null,direct=prefixed||achievementById(text);
+    if(direct){
+      if(direct.secret&&!achievementDone(direct))return 'Complete a hidden achievement prerequisite.';
+      return `Requires: ${direct.name}.`;
+    }
+    const classGate=/^class_b([2345]):(.*)$/.exec(text);
+    if(classGate)return `Clear Board ${classGate[1]} as this hero.`;
+    const spec=call('getPowerupGateRegistry')?.[text];
+    if(!spec)return 'Complete this hero’s authored unlock condition.';
+    if(spec.type==='achievements'){
+      const entries=(spec.requirements||[]).map(id=>achievementById(id)).filter(Boolean);
+      if(entries.some(entry=>entry.secret&&!achievementDone(entry)))return 'Complete the hidden prerequisite achievements.';
+      if(entries.length)return `Requires: ${entries.map(entry=>entry.name).join(' · ')}.`;
+    }
+    if(spec.type==='prestige')return `Reach ${Number(spec.minimum||0)} Prestige.`;
+    if(spec.type==='classUnlocked')return `Unlock ${classes()[spec.classId]?.name||spec.classId}.`;
+    if(spec.type==='flag'&&spec.field==='nightmareUnlocked')return 'Unlock Nightmare Mode.';
+    if(spec.type==='elementProgress')return `Accumulate ${Number(spec.minimum||0).toLocaleString()} ${call('getElements')[spec.element]?.name||spec.element} damage/healing.`;
+    if(spec.type==='boardClear')return `Clear Board ${Number(spec.board)} as ${classes()[spec.classId]?.name||spec.classId}.`;
+    if(spec.type==='classLevel')return `Reach run level ${Number(spec.minimum||0)} as ${classes()[spec.classId]?.name||spec.classId}.`;
+    if(spec.type==='lifetimeStat'&&spec.stat==='healingDone')return `Heal ${Number(spec.minimum||0).toLocaleString()} HP across all runs.`;
+    if(spec.type==='lifetimeStat'&&spec.stat==='highestGold')return `Hold ${Number(spec.minimum||0).toLocaleString()} gold at once.`;
+    if(spec.type==='allPetsUnlocked')return 'Unlock every companion.';
+    if(spec.type==='boardClears'){
+      const names=(spec.requirements||[]).map(requirement=>achievementRegistry().find(entry=>entry.condition===`boardClear:${requirement.classId}:${Number(requirement.board)}`)?.name).filter(Boolean);
+      if(names.length)return `Requires: ${names.join(' · ')}.`;
+    }
+    return 'Complete this hero’s authored unlock condition.';
+  }
+
   function achievementGateUnlocked(gate){
     if(!gate)return true;
     const state=meta(),text=String(gate);
     if(text.startsWith('achievement:')){const achievement=achievementById(text.slice('achievement:'.length));return !!achievement&&achievementDone(achievement);}
+    const directAchievement=achievementById(text);if(directAchievement)return achievementDone(directAchievement);
     const classGate=/^class_b([2345]):(.*)$/.exec(text);if(classGate)return call('hasBoardClear',classGate[2],Number(classGate[1]));
     const spec=call('getPowerupGateRegistry')?.[text];
     if(spec){
@@ -172,6 +219,7 @@
       if(spec.type==='classLevel')return (call('ensureAlphaMeta').classMaxLevel?.[spec.classId]||0)>=Number(spec.minimum||0);
       if(spec.type==='lifetimeStat')return (call('ensureAlphaMeta')[spec.stat]||0)>=Number(spec.minimum||0);
       if(spec.type==='allPetsUnlocked')return Object.values(state.pets||{}).every(pet=>pet.unlocked);
+      if(spec.type==='achievements')return (spec.requirements||[]).every(id=>{const achievement=achievementById(id);return !!achievement&&achievementDone(achievement);});
       if(spec.type==='boardClears')return (spec.requirements||[]).every(requirement=>call('hasBoardClear',requirement.classId,Number(requirement.board)));
     }
     return !!state.achievements?.[gate];
@@ -180,8 +228,7 @@
   function heroMasteryEntries(classId){
     return upgrades().filter(upgrade=>(upgrade.classId===classId||(upgrade.classIds||[]).includes(classId))&&!!upgrade.achievementGate)
       .map(upgrade=>{
-        const gate=String(upgrade.achievementGate),match=/^class_b(\d+):/.exec(gate),achievement=gate.startsWith('achievement:')?achievementById(gate.slice('achievement:'.length)):achievementById(gate);
-        const condition=match?`Clear Board ${match[1]} as this hero.`:achievement?achievementConditionText(achievement):'Complete this hero’s listed unlock condition.';
+        const gate=String(upgrade.achievementGate),condition=achievementGateConditionText(gate);
         return {id:`hero-talent:${classId}:${upgrade.id}`,name:`${upgrade.icon||'✨'} ${upgrade.name}`,description:`${condition} Unlocks this hero-specific talent.`,done:achievementGateUnlocked(gate)};
       });
   }
@@ -215,7 +262,7 @@
     owner:OWNER,apiVersion:1,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
-    achievementDone,achievementConditionText,achievementRewardText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
+    achievementDone,achievementConditionText,achievementRewardText,achievementGateConditionText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
     isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks
   });
   window.DiceboundProgression=api;

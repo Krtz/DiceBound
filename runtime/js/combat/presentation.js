@@ -198,7 +198,7 @@
     } else if (rt.isClassActive("fighter")) {
       resource = classResource("combo", "Counterblows", player.fighterCounterStacks || 0, player.fighterCounterMax || 1, "Guard stores one Counterblow. Each stored stack empowers one future basic attack by +55% damage.");
     } else if (rt.isClassActive("turtle")) {
-      resource = classResource("combo", "Shell Momentum", player.turtleGuardChain || 0, player.turtleGuardMax || 5, "Consecutive Guards build Shell Momentum. Later Guards are stronger; stacks 3 and 5 raise a Barrier. Your next basic attack consumes the chain for +18% damage per stack.");
+      resource = classResource("combo", "Shell Momentum", player.turtleGuardChain || 0, player.turtleGuardMax || 5, "Consecutive Guards build Shell Momentum. Every even consecutive Guard raises a Barrier; your next basic attack consumes the chain for +18% damage per Shell Momentum stack.");
     } else if (rt.isClassActive("clown")) {
       resource = textResource("gag", "Opening Gag", player.clownGimmick || "No gag yet", player.clownGimmick ? (rt.getGagInfo()[player.clownGimmick] || player.clownGimmick) : "A random gag appears when combat begins.");
     } else if (rt.isClassActive("ceo")) {

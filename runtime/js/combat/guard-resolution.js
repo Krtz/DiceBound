@@ -113,9 +113,10 @@
     if (rt.isClassActive("turtle")) {
       p.turtleCrushReady = false;
       p.turtleGuardChain = Math.min(p.turtleGuardMax || 5, (p.turtleGuardChain || 0) + 1);
-      if (p.turtleGuardChain === 3 || p.turtleGuardChain === 5) {
+      p.turtleConsecutiveGuards = Math.max(0, Number(p.turtleConsecutiveGuards) || 0) + 1;
+      if (p.turtleConsecutiveGuards % 2 === 0) {
         p.combatShield++;
-        rt.identityFlash(`🐢 Shell wall ×${p.turtleGuardChain} · Barrier`);
+        rt.identityFlash(`🐢 Shell wall · Guard ${p.turtleConsecutiveGuards} · Barrier`);
       }
       const bonus = Math.max(0, (p.turtleGuardChain - 1) * .05), oldPower = p.guardPower;
       p.guardPower = rt.clamp(oldPower + bonus, 0, .90);

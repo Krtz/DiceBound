@@ -188,7 +188,7 @@
     finally { if (temp) p.damageBonus -= temp; }
     if (!echo && rt.isClassActive("fighter") && consumeFighter) { p.fighterCounterStacks = Math.max(0, (p.fighterCounterStacks || 0) - 1); rt.identityFlash(`🛡️ Counterblow · ${p.fighterCounterStacks} stored`); }
     if (!echo && rt.isClassActive("ranger") && target?.hp > 0 && (p.rangerMarkMax || 3) > 3 && beforeMarks >= 3) target.rangerMarks = Math.min(p.rangerMarkMax, beforeMarks + 1);
-    if (!echo && rt.isClassActive("turtle") && consumeTurtle) { rt.identityFlash(`🐢 Shell Momentum ×${p.turtleGuardChain}`); p.turtleGuardChain = 0; }
+    if (!echo && rt.isClassActive("turtle") && consumeTurtle) { rt.identityFlash(`🐢 Shell Momentum ×${p.turtleGuardChain}`); p.turtleGuardChain = 0; p.turtleConsecutiveGuards = 0; }
     return result;
   }
 

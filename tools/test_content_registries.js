@@ -66,7 +66,7 @@ for (const achievement of achievements) {
   assert.equal(typeof achievement.condition, "string");
 }
 assert.ok(achievements.every(entry => entry.hierarchy && typeof entry.hierarchy.group === "string"), "achievement hierarchy metadata is missing");
-snapshot(achievements, 6201, "6e1d7cb86cca459ca4e9425a64ad11863a7334d2eafb63386d9258cf5533628c", "achievement registry");
+snapshot(achievements, 6210, "adb04405c1b38852c60e68ade9df3a83a5fdca2595bdd1cac475b7f1caed65b7", "achievement registry");
 
 boards["6"].balance.threePackChance = -1;
 equipment.special["devils-horns"].rarity = "poor";

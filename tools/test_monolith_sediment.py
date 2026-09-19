@@ -6,6 +6,7 @@ mono=(ROOT/'runtime/js/dicebound.js').read_text(encoding='utf-8')
 index=(ROOT/'runtime/index.html').read_text(encoding='utf-8')
 camp=(ROOT/'runtime/js/ui/camp.js').read_text(encoding='utf-8')
 view=(ROOT/'runtime/js/combat/view-facade.js').read_text(encoding='utf-8')
+class_presentation=(ROOT/'runtime/js/ui/class-presentation.js').read_text(encoding='utf-8')
 
 retired_functions=[
     'refreshEffectiveGoldDisplays','applyRandomLegendary','closeTalentTree','applyRunThemeV13',
@@ -63,14 +64,21 @@ for retired_definition in [
     if retired_definition in mono:
         raise SystemExit(f'retired Item/Artifact policy definition returned: {retired_definition}')
 
-# Class portrait rendering now resolves through the semantic image contract and
-# keeps only its deliberate later fallback chain. The first palette-only SVG
-# generation had no caller once the script reached the current UI owners.
+# Class portrait rendering now lives entirely in the focused semantic-image
+# owner. No monolith implementation/assignment may return.
 for retired_portrait_marker in ['const portraitPalette=', 'id="g_${classId}"']:
     if retired_portrait_marker in mono:
         raise SystemExit(f'retired class portrait generation returned: {retired_portrait_marker}')
-if re.search(r'function\s+applyClassPortrait\s*\(',mono) or mono.count('applyClassPortrait=function') != 1:
-    raise SystemExit('Class portrait application must retain only the semantic-image owner')
+if re.search(r'function\s+applyClassPortrait\s*\(',mono) or 'applyClassPortrait=function' in mono:
+    raise SystemExit('retired monolith class portrait application returned')
+for marker in [
+    'const OWNER="ui/class-presentation"',
+    'function applyPortrait(el,classId,combat=false)',
+    'function applyBoardMarker(el,classId)',
+    'window.DiceboundClassPresentation=api'
+]:
+    if marker not in class_presentation:
+        raise SystemExit(f'focused class portrait owner missing: {marker}')
 
 # The live Legendary chooser is the final shared route. Its two older DOM
 # implementations and Edge-specific fallback token were superseded before any

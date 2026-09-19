@@ -35,7 +35,7 @@ function makeHarness(options = {}) {
     combatShield: 0, doubleStrike: 0,
     monkCombo: 3,
     fighterCounterReady: false, fighterCounterStacks: 0, fighterCounterMax: 2,
-    turtleCrushReady: false, turtleGuardChain: 0, turtleGuardMax: 5,
+    turtleCrushReady: false, turtleGuardChain: 0, turtleGuardMax: 5, turtleConsecutiveGuards: 0,
     guardElementProcBonus: 0,
     guardManaGain: 6, mana: 0, maxMana: 100,
     paladinGrace: 0,
@@ -173,15 +173,25 @@ async function run() {
     assert(!h.trace.some(x => x[0] === 'chaos'), 'dynamic hook must be able to replace direct Guard resolution');
   }
 
-  // Turtle Shell Momentum raises the threshold Barrier, applies temporary Guard Power and restores it.
+  // Turtle Shell Momentum keeps its capped Guard-power scaling, while the
+  // Barrier cadence follows every even consecutive Guard independently of that cap.
   {
-    let seenPower = null;
-    const h = makeHarness({ classId: 'turtle', player: { turtleGuardChain: 2, guardPower: .2, combatShield: 0 }, invokeGuardAction: ({ player }) => { seenPower = player.guardPower; return 'guard'; } });
-    await owner.identityGuardAction();
-    assert.strictEqual(h.player.turtleGuardChain, 3);
-    assert.strictEqual(h.player.combatShield, 1);
-    assert(Math.abs(seenPower - .3) < 1e-12, `temporary Guard Power drifted: ${seenPower}`);
+    const seenPowers = [];
+    const h = makeHarness({
+      classId: 'turtle',
+      player: { turtleGuardChain: 0, turtleGuardMax: 5, turtleConsecutiveGuards: 0, guardPower: .2, combatShield: 0 },
+      invokeGuardAction: ({ player }) => { seenPowers.push(player.guardPower); return 'guard'; }
+    });
+    for (let count = 1; count <= 6; count++) {
+      await owner.identityGuardAction();
+      assert.strictEqual(h.player.turtleConsecutiveGuards, count, `consecutive Guard count drifted at ${count}`);
+      assert.strictEqual(h.player.combatShield, Math.floor(count / 2), `Barrier cadence drifted at Guard ${count}`);
+    }
+    assert.strictEqual(h.player.turtleGuardChain, 5, 'Shell Momentum must retain its released cap');
+    assert(Math.abs(seenPowers[1] - .25) < 1e-12, `second Guard Power drifted: ${seenPowers[1]}`);
+    assert(Math.abs(seenPowers[5] - .40) < 1e-12, `capped Guard Power drifted: ${seenPowers[5]}`);
     assert.strictEqual(h.player.guardPower, .2);
+    assert.strictEqual(h.trace.filter(x => x[0] === 'flash' && /Barrier/.test(x[1])).length, 3, 'only Guards 2/4/6 should raise periodic Barriers');
   }
 
   // Resonant Guard consumes RNG before the dynamic Guard call and prefers weapon -> pet -> random element.
@@ -240,6 +250,9 @@ async function run() {
     assert(h.trace.findIndex(x => x[0] === 'history') < h.trace.findIndex(x => x[0] === 'hook'));
   }
 
+  assert(!source.includes('p.turtleGuardChain === 3 || p.turtleGuardChain === 5'), 'retired 3/5 Turtle Barrier thresholds must not return');
+  const playerInit=fs.readFileSync(path.join(__dirname,'..','runtime','js','run','player-initialization.js'),'utf8');
+  assert(playerInit.includes('delete player.turtleConsecutiveGuards;'),'fresh runs must clear the transient Turtle Guard cadence without changing the frozen player shape');
   console.log('Combat Guard Resolution deterministic contract: PASS');
 }
 

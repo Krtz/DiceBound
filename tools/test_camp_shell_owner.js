@@ -21,7 +21,7 @@ for(const method of ['configureShell','enterShell','refreshMetaShell','refreshHu
 assert.equal(sandbox.DiceboundCampShell,undefined,'focused Camp shell policy must not leak a peer public global');
 
 function configureTrace(trace,ouroboros=true){
-  const names=['clearCheckpoint','clearRunTalentSnapshot','ensureHellToggle','ensureCampScene','refreshCampV110','refreshCampV22','refreshCampV24','refreshRunControls','syncCampProgressionObjects','resetInvokerCombat','healAtCamp','clearCombatPresentation','refreshActivePetArt','refreshCampProgression','scheduleCampHitTargetSync','syncOuroborosEconomy','syncOuroborosAttack','syncBloodmageHpPassive','recordVitals','refreshLegacyHeroAvatar','checkDynamicClassUnlocks','refreshClassHudAndRoadLabels','refreshDefenseTooltip','refreshStatTooltips','refreshDoubleDiceControls','refreshBoard6RoadLabels','refreshFinalGuardianLabel','ensureDoubleDiceButton','refreshShieldBars','refreshPoisonStat','syncGoldGainStat','forceOuroborosAttackLabel','scheduleRunCheckpoint'];
+  const names=['clearCheckpoint','clearRunTalentSnapshot','ensureHellToggle','ensureCampScene','refreshCampV110','refreshCampV22','refreshCampV24','refreshRunControls','syncCampProgressionObjects','resetInvokerCombat','healAtCamp','clearCombatPresentation','refreshActivePetArt','refreshCampProgression','scheduleCampHitTargetSync','syncOuroborosEconomy','syncOuroborosAttack','syncBloodmageHpPassive','recordVitals','checkDynamicClassUnlocks','refreshClassHudAndRoadLabels','refreshDefenseTooltip','refreshStatTooltips','refreshDoubleDiceControls','refreshBoard6RoadLabels','refreshFinalGuardianLabel','ensureDoubleDiceButton','refreshShieldBars','refreshPoisonStat','syncGoldGainStat','forceOuroborosAttackLabel','scheduleRunCheckpoint'];
   const callbacks=Object.fromEntries(names.map(name=>[name,(...args)=>{trace.push(args.length?`${name}:${args.join(',')}`:name);}]))
   callbacks.isOuroboros=()=>ouroboros;
   camp.configureShell(callbacks);
@@ -40,7 +40,7 @@ assert.deepEqual(trace,['base-meta','ensureCampScene','refreshCampV110','refresh
 trace=[];configureTrace(trace,true);
 const hudResult=camp.refreshHudShell(()=>{trace.push('base-hud');return 'hud-result';},null,[]);
 assert.equal(hudResult,'hud-result');
-assert.deepEqual(trace,['syncOuroborosEconomy','syncOuroborosAttack','syncBloodmageHpPassive:false','syncOuroborosAttack','recordVitals','base-hud','refreshLegacyHeroAvatar','checkDynamicClassUnlocks','refreshClassHudAndRoadLabels','refreshDefenseTooltip','checkDynamicClassUnlocks','refreshStatTooltips','refreshDoubleDiceControls','refreshBoard6RoadLabels','refreshFinalGuardianLabel','ensureDoubleDiceButton','refreshShieldBars','refreshPoisonStat','syncGoldGainStat','forceOuroborosAttackLabel','scheduleRunCheckpoint']);
+assert.deepEqual(trace,['syncOuroborosEconomy','syncOuroborosAttack','syncBloodmageHpPassive:false','syncOuroborosAttack','recordVitals','base-hud','checkDynamicClassUnlocks','refreshClassHudAndRoadLabels','refreshDefenseTooltip','checkDynamicClassUnlocks','refreshStatTooltips','refreshDoubleDiceControls','refreshBoard6RoadLabels','refreshFinalGuardianLabel','ensureDoubleDiceButton','refreshShieldBars','refreshPoisonStat','syncGoldGainStat','forceOuroborosAttackLabel','scheduleRunCheckpoint']);
 
 trace=[];configureTrace(trace,false);camp.refreshHudShell(()=>trace.push('base-hud'),null,[]);
 assert.deepEqual(trace.filter(value=>value==='syncOuroborosAttack'),['syncOuroborosAttack'],'non-Ouroboros HUD still preserves the unconditional historical sync but not the conditional pre-sync');
@@ -64,6 +64,8 @@ assert.deepEqual(shellEntry.provides,[],'focused shell policy must stay hidden b
 const campIndex=index.indexOf('js/ui/camp.js'),shellIndex=index.indexOf('js/ui/camp-shell.js'),optionsIndex=index.indexOf('js/ui/options.js'),monolithIndex=index.indexOf('js/dicebound.js');
 assert.ok(campIndex>=0&&campIndex<shellIndex&&shellIndex<optionsIndex&&shellIndex<monolithIndex,'Camp shell policy must install immediately after the Camp facade and before composition');
 assert.doesNotMatch(shellSource,/window\.DiceboundCampShell\s*=/,'focused shell policy must never publish a peer global');
+assert.equal(shellSource.includes("refreshLegacyHeroAvatar"),false,'retired legacy hero repaint hook must stay out of Camp shell policy');
+assert.equal(monolith.includes("refreshLegacyHeroAvatar"),false,'retired legacy hero repaint callback must stay out of composition');
 assert.match(campSource,/_installShell:installShell/,'Camp facade must own the focused shell installer');
 
 console.log('Camp/App-Shell owner PASS: entry, meta and HUD orchestration converge behind DiceboundCamp with exact ordering and no shadow ladder');

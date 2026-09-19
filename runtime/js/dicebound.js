@@ -36,7 +36,7 @@
   let elementChanceForRarity,rollGearRarity,generatePhilosophersStone;
   let v19SetDamageBonus,v19SetProcBonus,v19SetPetDoubleBonus;
   let v19SetElementPower,v19SetStartUltimate,v19SetGuardianSpecialMult;
-  let applyClassPortrait,openCombatLootChain,v17OpenLegendaryChoice;
+  let openCombatLootChain,v17OpenLegendaryChoice;
   dbItems.configure({
     generateEquipment:(rarity=null,slot=null)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateEquipment(rarity,slot);},
     generateLegendary:(slot=null,preferUndiscovered=false)=>{if(!dbItemGeneration)throw new Error('Items generation owner is not configured.');return dbItemGeneration.generateLegendary(slot,preferUndiscovered);},
@@ -139,6 +139,12 @@
         const DB317_CLASSES_RAW=window.DiceboundClasses?.createRegistry();
   if(!DB317_CLASSES_RAW)throw new Error("DiceboundClasses must load before dicebound.js");
   const CLASSES=DB317_CLASSES_RAW;
+  const dbClassPresentation=window.DiceboundClassPresentation;
+  if(!dbClassPresentation?.configure)throw new Error("DiceboundClassPresentation must load before dicebound.js");
+  dbClassPresentation.configure({
+    document,find:id=>document.getElementById(id),getClass:id=>CLASSES[id]||null,
+    resolveClassArt:id=>window.DiceboundAssets?.resolveClassArt?.(id)||null
+  });
   const DB317_PETS_RAW=dbPets.createRegistry?.();
   if(!DB317_PETS_RAW)throw new Error("DiceboundPets must load before dicebound.js");
   const PETS=DB317_PETS_RAW;
@@ -214,7 +220,6 @@
     prestige10:{type:"prestige",minimum:10},
     road2:{type:"classUnlocked",classId:"clown"},
     road3:{type:"flag",field:"nightmareUnlocked"},
-    road4:{type:"counter",field:"board4Clears",minimum:1},
     nature_master:{type:"elementProgress",element:"nature",minimum:500},
     merchant1:{type:"counter",field:"merchantKills",minimum:1},
     ranger_b1:{type:"boardClear",classId:"ranger",board:1},
@@ -223,7 +228,7 @@
     heal1000:{type:"lifetimeStat",stat:"healingDone",minimum:1000},
     gold1500:{type:"lifetimeStat",stat:"highestGold",minimum:4000},
     menagerie:{type:"allPetsUnlocked"},
-    paladin_oath:{type:"boardClears",requirements:[{classId:"fighter",board:3},{classId:"cleric",board:3}]}
+    paladin_oath:{type:"achievements",requirements:["fighter-b3","cleric-b3"]}
   };
   const DB317_CLASS_UNLOCKS_RAW=window.DiceboundClasses?.createUnlockRegistry?.();
   if(!DB317_CLASS_UNLOCKS_RAW)throw new Error("DiceboundClasses unlock registry must load before dicebound.js");
@@ -1064,7 +1069,7 @@ function returnToRoad(...args){
     const board=$("board"),cols=currentCols(),rows=currentRows();board.innerHTML="";board.style.gridTemplateColumns=`repeat(${cols},1fr)`;board.style.gridTemplateRows=`repeat(${rows},1fr)`;tileEls=[];tiles.forEach((tile,index)=>{const rowFromBottom=Math.floor(index/cols),indexInRow=index%cols,col=rowFromBottom%2===0?indexInRow:(cols-1-indexInRow),visualRow=rows-rowFromBottom,[icon,label]=dbBoardPresentation.tileMeta(tile,{ready:dbTileMetaFinalReady}),el=document.createElement("div");    el.className=dbBoardPresentation.tileClassName(tile,{current:index===player.position});el.style.gridColumn=String(col+1);el.style.gridRow=String(visualRow);el.innerHTML=`<span class="tile-number">${index+1}</span><span class="tile-icon">${icon}</span><span class="tile-label">${label}</span>`;dbMerchant?.bindRoadTileInteraction?.(el,tile,index);board.appendChild(el);tileEls[index]=el;});requestAnimationFrame(()=>placePawn(false));
   }
   function updateHUD(){
-    const cls=CLASSES[player.classId];$("heroAvatar").textContent=cls.icon;$("heroName").textContent=cls.name;$("pawn").textContent=cls.icon;$("combatPlayerIcon").textContent=cls.icon;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=dbPets.activeDefinition().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
+    const cls=CLASSES[player.classId];dbClassPresentation.syncActive(player.classId);$("heroName").textContent=cls.name;$("combatPlayerName").textContent=cls.name;$("combatPet").dataset.name=dbPets.activeDefinition().name;$("levelText").textContent=`Level ${player.level}`;$("hpText").textContent=`${Math.round(player.hp)} / ${Math.round(player.maxHp)}`;$("xpText").textContent=`${player.xp} / ${player.xpNext}`;$("attackText").textContent=Math.round(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0));$("defenseText").textContent=player.defense+player.flatReduction;$("goldText").textContent=player.gold;$("potionText").textContent=player.potions;$("critText").textContent=`${Math.round(player.crit*100)}%`;$("dodgeText").textContent=`${Math.round(effectiveDodgeChance()*100)}%`;$("lifeStealText").textContent=`${Math.round(player.lifeSteal*100)}%`;$("luckText").textContent=`${Math.round(player.luck*100)}`;$("echoText").textContent=`${Math.round(player.doubleStrike*100)}%`;$("bossDamageText").textContent=`${Math.round(player.bossDamage*100)}%`;
     const count=currentTileCount(),mini=currentMinibossTile(),finalName=boardLevel===1?"Dragon":boardLevel===2?"Devourer":boardLevel===3?"Nullstar":"Crown Eater";$("floorText").textContent=`Board ${boardLevel} · ${player.position+1} / ${count}`;$("guardianText").textContent=player.position<mini-1?`Miniboss · tile ${mini}`:`${finalName} · tile ${count}`;$("rollHint").textContent=`High rolls grant Fast Travel XP. The halfway guardian intercepts any roll that crosses tile ${mini}.`;const ult=cls.ultimate;$("ultimateName").textContent=ult.name;$("ultimateText").textContent=`${Math.round(player.ultimateCharge)} / 100`;$("ultimateFill").style.width=`${clamp(player.ultimateCharge,0,100)}%`;$("hpFill").style.width=`${clamp(player.hp/player.maxHp*100,0,100)}%`;$("xpFill").style.width=`${clamp(player.xp/player.xpNext*100,0,100)}%`;window.DiceboundRunDice?.refreshControls?.();$("potionBtn").disabled=combatBusy||player.potions<=0||player.hp>=player.maxHp;$("outsidePotionBtn").disabled=!gameStarted||rollLocked||!!currentEnemy||player.potions<=0||player.hp>=player.maxHp;$("runBuffBtn").disabled=!gameStarted;dbProgression.checkDynamicClassUnlocks();updateMetaUI();renderEquipment();refreshBoardHighlights();placePawn(false);
   }
   // ---- Road Dice composition ------------------------------------------------
@@ -1298,8 +1303,7 @@ function returnToRoad(...args){
   const goldenLaw=upgrades.find(u=>u.id==="legendary_golden_law");if(goldenLaw){}
 
   // Ranger gets a real tiny portrait instead of only an emoji.
-  function rangerPortraitSVG(){return `<svg viewBox="0 0 64 64" role="img" aria-label="Ranger portrait"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2e7d4f"/><stop offset="1" stop-color="#123b32"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#10263a"/><path d="M13 48c7-12 12-17 19-17s13 5 19 17v12H13z" fill="url(#rg)"/><path d="M19 29c2-13 8-20 15-20 8 0 13 8 14 21-6-5-22-5-29-1z" fill="#285f3d"/><path d="M24 23c2-5 6-8 10-8 5 0 8 3 10 9l-3 14H27z" fill="#d7a66b"/><path d="M27 30c4 3 10 3 14 0-1 8-4 12-7 12-4 0-6-4-7-12z" fill="#9b5d3d" opacity=".9"/><circle cx="30" cy="27" r="1.6" fill="#1a2730"/><circle cx="39" cy="27" r="1.6" fill="#1a2730"/><path d="M47 12c8 7 7 24 1 36" fill="none" stroke="#bf8a46" stroke-width="3" stroke-linecap="round"/><path d="M47 14l8 3-7 4" fill="#d7dfe8"/><path d="M49 17L19 50" stroke="#d9c3a0" stroke-width="1.5" opacity=".8"/></svg>`;}
-  window.DiceboundCamp.configureShell({recordVitals:()=>recordVitals(),refreshLegacyHeroAvatar:()=>{const avatar=$("heroAvatar");if(player.classId==="ranger"){avatar.classList.add("ranger-portrait");avatar.innerHTML=rangerPortraitSVG();}else{avatar.classList.remove("ranger-portrait");avatar.textContent=CLASSES[player.classId]?.icon||"🎲";}},checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks()});
+  window.DiceboundCamp.configureShell({recordVitals:()=>recordVitals(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks()});
 
   // Snapshot talent ranks when a run begins; purchases made mid-run stay queued.
 
@@ -1352,18 +1356,6 @@ function returnToRoad(...args){
   ensureV11Meta();
   random();
 
-  function classBoardMarkerSrc(classId){const root=(window.DiceboundAssets?.paths?.uiClassMarkers)||"assets/ui/class-markers";return `${root}/${classId}.png`;}
-  function applyClassBoardMarker(el,classId){
-    if(!el)return;
-    const cls=CLASSES[classId];
-    el.setAttribute('aria-label', `${cls.name} board marker`);
-    el.innerHTML='';
-    const img=document.createElement('img');
-    img.alt=`${cls.name} board marker`;
-    img.src=classBoardMarkerSrc(classId);
-    img.addEventListener('error',()=>{el.innerHTML='';el.textContent=cls.icon||'🎲';});
-    el.appendChild(img);
-  }
   function tagChips(tags,kind="power"){return (tags||[]).map(t=>`<span class="tag-chip ${kind}-tag">${t}</span>`).join("");}
 
   function inferUpgradeTags(up){
@@ -1392,7 +1384,7 @@ function returnToRoad(...args){
     const nbox=$("nightmareBox");if(!nbox)return;const box=document.createElement("div");box.className="nightmare-toggle locked hell-toggle";box.id="hellBox";box.innerHTML=`<div><strong>🔥 Hell Mode</strong><span id="hellText">Defeat Nightmare Board 4 to unlock: all enemies gain elemental affinity and become far more dangerous.</span></div><button class="small-btn" id="hellToggle">Locked</button>`;nbox.after(box);box.querySelector("button").addEventListener("click",e=>{e.preventDefault();if(!meta.hellUnlocked)return;hellMode=!hellMode;window.DiceboundClassChooser.render();});ensureHellToggle();
   }
 
-  window.DiceboundCamp.configureShell({refreshClassHudAndRoadLabels:()=>{const cls=CLASSES[player.classId];applyClassPortrait($("heroAvatar"),cls.id,false);applyClassPortrait($("combatPlayerIcon"),cls.id,true);applyClassBoardMarker($("pawn"),cls.id);if(boardLevel===5){$("guardianText").textContent=player.position<currentMinibossTile()-1?`Miniboss · tile ${currentMinibossTile()}`:`Ring Tyrant · tile ${currentTileCount()}`;}if(hellMode&&$("floorText"))$("floorText").textContent=`Board ${boardLevel} · Hell Mode · ${player.position+1} / ${currentTileCount()}`;}});
+  window.DiceboundCamp.configureShell({refreshClassHudAndRoadLabels:()=>{const cls=CLASSES[player.classId];dbClassPresentation.syncActive(cls.id);if(boardLevel===5){$("guardianText").textContent=player.position<currentMinibossTile()-1?`Miniboss · tile ${currentMinibossTile()}`:`Ring Tyrant · tile ${currentTileCount()}`;}if(hellMode&&$("floorText"))$("floorText").textContent=`Board ${boardLevel} · Hell Mode · ${player.position+1} / ${currentTileCount()}`;}});
 
   window.DiceboundCamp.configureShell({ensureHellToggle:()=>ensureHellToggle()});
 
@@ -3133,38 +3125,6 @@ dbReturnToRoadTraceReady=true;
   // Layout geometry changed: immediately let the board claim the reclaimed pixels.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
 
-  const DB054_CLASS_ART_IDS=Object.freeze(Object.keys(CLASSES));
-  function db054ClassArt(classId){
-    const id=String(classId);
-    if(!DB054_CLASS_ART_IDS.includes(id))throw new Error(`Unknown class art id: ${id}`);
-    const assets=window.DiceboundAssets;
-    if(!assets)throw new Error("DiceboundAssets must load before class artwork");
-    const art=assets.resolveClassArt(id);
-    if(!art)throw new Error(`Missing class art asset: ${id}`);
-    return art;
-  }
-  function db054ClassImageHtml(classId,kind='headshot'){
-    const cls=CLASSES[classId];
-    if(!cls)throw new Error(`Unknown class id: ${classId}`);
-    const art=db054ClassArt(cls.id),src=kind==='battle'?art.battle:art.headshot;
-    return `<img class="db054-class-art db054-class-art-${kind}" src="${src}" alt="${cls.name}" draggable="false">`;
-  }
-      function classPortraitSVG(classId){
-    return db054ClassImageHtml(classId,'headshot');
-  }
-  applyClassPortrait=function(el,classId,combat=false){
-    if(!el)return;
-    const cls=CLASSES[classId];
-    if(!cls)throw new Error(`Unknown class id: ${classId}`);
-    const kind=combat?'battle':'headshot';
-    el.classList.remove('ranger-portrait');
-    el.classList.add(combat?'combat-portrait':'class-portrait','db054-art-frame');
-    el.dataset.classArt=cls.id;
-    el.innerHTML=db054ClassImageHtml(cls.id,kind);
-  };
-  // Existing HUD and combat owners already call classPortraitSVG/applyClassPortrait.
-  // Keeping the art swap below those owner boundaries prevents another late-patch ownership fight.
-
   function db059PetArtEntry(petId){
     const id=String(petId||'neutral');
     return window.DiceboundAssets?.resolvePetArt?.(id)||{portrait:`assets/pets/portraits/${id}.png`,alt:PETS[id]?.name||id};
@@ -4401,7 +4361,7 @@ dbReturnToRoadTraceReady=true;
     isClassActive:id=>classIdentityActive(id),
     hasClassMechanic:id=>classHasMechanic(id),
     classIdentityId:()=>classIdentityId(),
-    applyClassPortrait:(...args)=>applyClassPortrait(...args),
+    applyClassPortrait:(...args)=>dbClassPresentation.applyPortrait(...args),
     enemyBattleArtById:(id,level)=>window.DiceboundAssets.resolveEnemyBattleArtById(id,level),
     enemyPortraitById:id=>window.DiceboundAssets.resolveEnemyPortraitById(id),
     enemyModeAura:mode=>window.DiceboundAssets.resolveEnemyModeAura(mode),

@@ -86,6 +86,7 @@
     "ui-camp-shell-policy",
     "ui-options",
     "ui-equipment-heirlooms",
+    "ui-class-presentation",
     "ui-class-chooser",
     "ui-pet-chooser",
     "ui-talent-tree",
@@ -1062,6 +1063,19 @@
       ]
     },
     {
+      "id": "ui-class-presentation",
+      "path": "js/ui/class-presentation.js",
+      "domain": "ui/active-class-hud-combat-and-road-presentation",
+      "status": "extracted",
+      "requires": [
+        "assets",
+        "classes-registry"
+      ],
+      "provides": [
+        "DiceboundClassPresentation"
+      ]
+    },
+    {
       "id": "ui-class-chooser",
       "path": "js/ui/class-chooser.js",
       "domain": "ui/class-chooser-presentation-and-random-selection",
@@ -1231,6 +1245,7 @@
         "ui-camp",
         "ui-options",
         "ui-equipment-heirlooms",
+        "ui-class-presentation",
         "ui-class-chooser",
         "ui-pet-chooser",
         "ui-talent-tree",
