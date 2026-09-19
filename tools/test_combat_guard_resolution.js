@@ -251,6 +251,8 @@ async function run() {
   }
 
   assert(!source.includes('p.turtleGuardChain === 3 || p.turtleGuardChain === 5'), 'retired 3/5 Turtle Barrier thresholds must not return');
+  const playerInit=fs.readFileSync(path.join(root,'runtime/js/run/player-initialization.js'),'utf8');
+  assert(playerInit.includes('delete player.turtleConsecutiveGuards;'),'fresh runs must clear the transient Turtle Guard cadence without changing the frozen player shape');
   console.log('Combat Guard Resolution deterministic contract: PASS');
 }
 
