@@ -17,7 +17,7 @@ function element(){
   };
 }
 function image(){
-  return {className:'',alt:'',draggable:true,src:'',dataset:{},listeners:{},addEventListener(name,fn){this.listeners[name]=fn;}};
+  return {tagName:'IMG',className:'',alt:'',draggable:true,src:'',dataset:{},listeners:{},addEventListener(name,fn){this.listeners[name]=fn;}};
 }
 const nodes={heroAvatar:element(),combatPlayerIcon:element(),pawn:element()};
 const sandbox={window:{},console};
@@ -66,5 +66,9 @@ for(const retired of ['function classBoardMarkerSrc(','function applyClassBoardM
   assert(!monolith.includes(retired),`retired class-art presentation remains in dicebound.js: ${retired}`);
 }
 assert(!monolith.includes('applyClassPortrait=function'),'retired monolith portrait renderer must stay drained');
+assert(!monolith.includes('refreshLegacyHeroAvatar'),'legacy Camp hero repaint hook must stay drained from composition');
+assert(!monolith.includes('function rangerPortraitSVG('),'legacy Ranger SVG portrait renderer must stay drained');
+const campShell=fs.readFileSync(path.join(root,'runtime/js/ui/camp-shell.js'),'utf8');
+assert(!campShell.includes("invoke('refreshLegacyHeroAvatar')"),'Camp shell must not call the retired legacy hero repaint hook');
 
 console.log('Class presentation owner PASS: immediate semantic HUD/Road art and monolith drain contract');
