@@ -37,7 +37,7 @@ if 'function syncActive(classId)' not in PRESENTATION:
     raise SystemExit('active class art synchronization owner missing')
 if 'if(!art)throw new Error(`Missing class art asset: ${classId}`);' not in PRESENTATION:
     raise SystemExit('missing class art must fail closed in the focused owner')
-if 'root.DiceboundClassPresentation=api;' not in PRESENTATION:
+if 'window.DiceboundClassPresentation=api;' not in PRESENTATION:
     raise SystemExit('class presentation owner public facade missing')
 if 'const dbClassPresentation=window.DiceboundClassPresentation;' not in SOURCE:
     raise SystemExit('composition root must consume the focused class presentation owner')
