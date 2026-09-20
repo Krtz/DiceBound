@@ -493,7 +493,7 @@
     isRandomClassMode:()=>window.DiceboundClassChooser?.isRandomMode?.(),
     resolveRandomForRun:()=>window.DiceboundClassChooser?.resolveRandomForRun?.(),
     prepareFreshRun:()=>{
-      v19CompletingSixth=false;meta.doubleDiceUnlocked=!!(meta.doubleDiceUnlocked||(meta.board5Clears||0)>0);
+      v19CompletingSixth=false;runFinalized=false;lastLegacyAward=0;lastGoldLegacyAward=0;meta.doubleDiceUnlocked=!!(meta.doubleDiceUnlocked||(meta.board5Clears||0)>0);
       v16CombatKind=null;
     },
     ensureAudio,
@@ -510,7 +510,7 @@
     log:addLog,
     updateHud:updateHUD,
     schedulePawn:ms=>setTimeout(()=>placePawn(false),ms),
-    recordFreshRunStarted:()=>{dbProgression.recordRunStarted({classId:player.classId,mode:dbCareerRunMode(),petId:meta.activePet||null,version:APP_IDENTITY.version});statsLastHp=player.hp;statsLastGold=player.gold;},
+    recordFreshRunStarted:()=>{dbProgression.recordRunStarted({classId:player.classId,mode:dbCareerRunMode(),petId:meta.activePet||null,version:APP_IDENTITY.version,seed:dbRunOwnedSeed||null});statsLastHp=player.hp;statsLastGold=player.gold;},
     announceRandomClass:chosen=>addLog(`🎲 Random class selected <b>${chosen.icon} ${chosen.name}</b> for this run.`),
     afterClassStart:detail=>dbRunApplyClassStartEffects(detail),
     scheduleCheckpoint:()=>dbRunScheduleCheckpoint()
