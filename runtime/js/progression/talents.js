@@ -373,10 +373,10 @@
       "id": "legacy_heirloom",
       "branch": "Heirlooms",
       "icon": "🧰",
-      "name": "Heirloom Vault",
+      "name": "Heirloom Loadout",
       "cost": 2,
       "maxRank": 4,
-      "desc": "Each rank unlocks one additional permanent heirloom slot, up to five total.",
+      "desc": "Each rank lets one additional heirloom enter a run, up to five total before Prestige.",
       "requires": [
         {
           "id": "roadborn",
@@ -696,21 +696,6 @@
       "requires": [
         {
           "id": "power_attack",
-          "rank": 1
-        }
-      ]
-    },
-    {
-      "id": "legacy_storage",
-      "branch": "Heirlooms",
-      "icon": "🗄️",
-      "name": "Heirloom Storage",
-      "cost": 3,
-      "maxRank": 1,
-      "desc": "Permanently unlock Heirloom Storage at the Campsite. It begins with one storage slot per equipment slot; major milestones add more.",
-      "requires": [
-        {
-          "id": "legacy_xp",
           "rank": 1
         }
       ]
