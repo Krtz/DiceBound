@@ -13,9 +13,10 @@
         "overlayHidden": false,
         "campFullscreen": true,
         "scene": true,
-        "requiredCount": 11,
+        "requiredCount": 12,
         "presentRequired": [
           "campInfoBtn",
+          "campCareerBtn",
           "campOptionsBtn",
           "campNightmareBtn",
           "campHellBtn",
@@ -69,9 +70,10 @@
           "overlayHidden": false,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -104,7 +106,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -126,9 +129,10 @@
           "overlayHidden": false,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -161,7 +165,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -194,9 +199,10 @@
           "overlayHidden": false,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -229,7 +235,8 @@
           "combatHidden": true,
           "victoryHidden": false,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -246,9 +253,10 @@
           "overlayHidden": false,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -281,7 +289,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -301,9 +310,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -336,7 +346,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -356,9 +367,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -391,7 +403,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -411,9 +424,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -446,7 +460,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -466,9 +481,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -501,7 +517,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -521,9 +538,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -556,7 +574,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -573,9 +592,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -608,7 +628,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -628,9 +649,10 @@
           "overlayHidden": true,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -663,7 +685,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": true
-        }
+        },
+        "requiredCount": 12
       }
     },
     {
@@ -688,9 +711,10 @@
           "overlayHidden": false,
           "campFullscreen": true,
           "scene": true,
-          "requiredCount": 11,
+          "requiredCount": 12,
           "presentRequired": [
             "campInfoBtn",
+            "campCareerBtn",
             "campOptionsBtn",
             "campNightmareBtn",
             "campHellBtn",
@@ -723,7 +747,8 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        }
+        },
+        "requiredCount": 12
       }
     }
   ]
