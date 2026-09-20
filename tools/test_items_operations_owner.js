@@ -37,7 +37,7 @@ const api=owner.createController({
   clearGearTransform:()=>events.push("transform:clear"),applyGearTransform:()=>events.push("transform:apply"),
   usesMana:()=>{events.push("mana:uses");return true;},equipmentMana:()=>{events.push("mana:equipment");return 20;},
   syncMana:snapshot=>events.push(`mana:sync:${snapshot.baseMaxMana}:${snapshot.currentMana}`),
-  ensureAlphaMeta:()=>alpha,setStatsLastGold:value=>events.push(`lastGold:${value}`),rarityLabel:rarity=>rarity,
+  recordCareerGoldEarned:amount=>{alpha.goldEarned+=amount;},setStatsLastGold:value=>events.push(`lastGold:${value}`),rarityLabel:rarity=>rarity,
   sfxLevel:()=>events.push("sfx:level"),sfxCoin:()=>events.push("sfx:coin"),
   showToast:text=>events.push(`toast:${text}`),addLog:text=>events.push(`log:${text}`),
   renderEquipment:()=>events.push("render"),updateHUD:()=>events.push("hud")
