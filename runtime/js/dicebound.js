@@ -1139,7 +1139,7 @@ function returnToRoad(...args){
 
   function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
-  function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
+  function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay","careerOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
   function showEnd(victory){dbRunClearCheckpoint();rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
@@ -1783,8 +1783,7 @@ function returnToRoad(...args){
   meta.doubleDiceUnlocked=!!(meta.doubleDiceUnlocked||(meta.board5Clears||0)>0);
   meta.board6Clears=meta.board6Clears||0;
   meta.prestige=meta.prestige||defaultPrestige();
-  meta.stats=meta.stats||{};
-  meta.stats.boardClears=meta.stats.boardClears||{};
+  dbProgression.careerStats();
 
   // CEO is intentionally a later secret now. Existing unlocked saves remain
   // unlocked; only future unlock checks use the new 300% threshold.
@@ -4513,6 +4512,18 @@ dbReturnToRoadTraceReady=true;
     onOpen:()=>{meta.infoSeen=true;saveMeta();}
   });
   DB25.modules.guide={render:()=>dbInfoGuide.render()};
+
+  const dbCareerUi=window.DiceboundCareerUi;
+  if(!dbCareerUi)throw new Error('DiceBound requires the Career UI module before dicebound.js');
+  dbCareerUi.configure({
+    find:$,document:()=>document,
+    getCareerStats:()=>dbProgression.careerStats(),
+    getRunHistory:()=>dbProgression.runHistory(),
+    getClasses:()=>Object.values(CLASSES),
+    getEnemies:()=>[...enemyPool,...Object.values(ENEMY_REGISTRY||{})],
+    getPowerups:()=>upgrades,
+    onOpen:()=>saveMeta()
+  });
 
   /* SEMANTIC OWNER — D20 / Twenty-Sider chaos resolution. */
   const dbCombatD20ChaosOwner=window.DiceboundCombatD20ChaosResolution;
