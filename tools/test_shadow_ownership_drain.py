@@ -169,7 +169,7 @@ assert mono.count('function v26ClearStoneBattle(') == 1, 'Stone cleanup must hav
 assert not re.search(r'(?m)^\s*healPlayer\s*=\s*function', mono), 'healPlayer reassignment chain must not return'
 assert "dbCombatHealingResolution=dbCombatHealingOwner.configure({" in mono, 'Healing owner is not configured by the composition root'
 assert 'dbCombat.heal(' in mono, 'Healing callers no longer route through the Combat facade'
-assert 'dbCombat.recordHealing(' in mono, 'Healing-record callers no longer route through the Combat facade'
+assert 'recordCareerHealing:amount=>dbProgression.recordHealing(amount)' in mono, 'Healing owner no longer reports resolved Career healing through Progression'
 assert 'dbCombat.clearBloodOverhealTemp(' in mono, 'Blood Overheal cleanup no longer routes through the Combat facade'
 assert 'dbCombat.clearStoneBattle(' in mono, 'Stone cleanup no longer routes through the Combat facade'
 
