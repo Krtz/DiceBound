@@ -94,6 +94,7 @@ function makeHarness(options={}){
       }else if(Math.abs(delta)>.0001){player.doubleStrike=Math.max(0,(player.doubleStrike||0)+delta*.10);player.attack=10;}
     },
     syncOuroborosEconomy:()=>{calls.push(["ouro-sync-economy",player.attack,player.doubleStrike]);if(typeof options.syncOuroborosEconomy==="function")options.syncOuroborosEconomy(player);},
+    recordCareerStrike:()=>{},
     getElementKeys:()=>["fire","ice","electric","nature","light","void","donut","tech","metal","coffee"]
   };
   strikes.configure(runtime);
