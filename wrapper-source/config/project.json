@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.7.15",
+  "version": "0.6.7.16",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -77,6 +77,7 @@
     "js/progression/talents.js",
     "js/progression/prestige.js",
     "js/progression/achievements.js",
+    "js/progression/career-history.js",
     "js/progression/lifecycle.js",
     "js/events/reward-policy.js",
     "js/events/treasure.js",
@@ -101,6 +102,7 @@
     "js/ui/prestige-moon.js",
     "js/ui/achievements.js",
     "js/ui/info-guide.js",
+    "js/ui/career.js",
     "js/ui/merchant.js",
     "js/events/merchant-facade.js",
     "js/dicebound.js"
