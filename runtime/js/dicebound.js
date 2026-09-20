@@ -440,11 +440,11 @@
     setCompleting:value=>{v19CompletingSixth=!!value;},
     setRunState:next=>{gameStarted=!!next.gameStarted;rollLocked=!!next.rollLocked;},
     isRunFinalized:()=>runFinalized,
-    finalizeRun:()=>dbProgression.finalizeRun(),
+    finalizeRun:options=>dbProgression.finalizeRun(options),
     getCompletionContext:()=>({mode:hellMode?'Hell':nightmareMode?'Nightmare':'Normal',level:player.level,gold:player.gold,rolls,legacyAward:lastLegacyAward,goldLegacyAward:lastGoldLegacyAward}),
     updateHud:updateHUD,
     presentTerminalEnd:detail=>dbRunPresentFinalEnd(detail),
-    recordFirstCompletion:()=>{ensureAlphaMeta().fullVictories++;meta.board6Clears=(meta.board6Clears||0)+1;saveMeta();},
+    recordFirstCompletion:()=>{meta.board6Clears=(meta.board6Clears||0)+1;saveMeta();},
     afterCompletion:detail=>dbRunApplySixthRoadCompletion(detail)
   }});
 
@@ -510,7 +510,7 @@
     log:addLog,
     updateHud:updateHUD,
     schedulePawn:ms=>setTimeout(()=>placePawn(false),ms),
-    recordFreshRunStarted:()=>{ensureAlphaMeta().runsStarted++;statsLastHp=player.hp;statsLastGold=player.gold;saveMeta();},
+    recordFreshRunStarted:()=>{dbProgression.recordRunStarted({classId:player.classId,mode:dbCareerRunMode(),petId:meta.activePet||null,version:APP_IDENTITY.version});statsLastHp=player.hp;statsLastGold=player.gold;},
     announceRandomClass:chosen=>addLog(`🎲 Random class selected <b>${chosen.icon} ${chosen.name}</b> for this run.`),
     afterClassStart:detail=>dbRunApplyClassStartEffects(detail),
     scheduleCheckpoint:()=>dbRunScheduleCheckpoint()
@@ -629,10 +629,11 @@
     saveMeta:()=>saveMeta(),sfxLevel:()=>sfx.level(),showToast:(...args)=>showToast(...args),renderTalents:()=>window.DiceboundTalentTree.render(),
     isRunFinalized:()=>runFinalized,setRunFinalized:value=>{runFinalized=!!value;},getLastLegacyAward:()=>lastLegacyAward,setLastLegacyAward:value=>{lastLegacyAward=value;},setLastGoldLegacyAward:value=>{lastGoldLegacyAward=value;},
     getTilesMovedThisRun:()=>tilesMovedThisRun,getRolls:()=>rolls,isNightmare:()=>!!nightmareMode,random:()=>random(),updateMetaUI:()=>updateMetaUI(),
+    getRunMode:()=>dbCareerRunMode(),getCareerRunSnapshot:()=>dbCareerRunSnapshot(),
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
     getEquipmentSlotCount:()=>EQUIPMENT_SLOTS.length,syncHeirloomState:()=>dbItems.syncHeirloomState(),
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
-    ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,
+    mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,
     getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
     classUnlockRecordObservedProgress:ctx=>DB_CLASS_UNLOCK_RULES.recordObservedProgress(ctx),classUnlockResolveDynamic:options=>DB_CLASS_UNLOCK_RULES.resolveDynamic(options),
     classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>window.DiceboundClassChooser.render(),addLog:html=>addLog(html),
@@ -862,7 +863,7 @@ function returnToRoad(...args){
   function currentGoldSnapshot(){return DB_EFFECTIVE_STATS.goldSnapshot(player,{nightmare:nightmareMode});}
   function modifiedGold(base){return DB_EFFECTIVE_STATS.scaleGold(base,player,{nightmare:nightmareMode});}
 
-  function grantXp(amount){const result=ProgressionState.grantXp(amount);ProgressionUI.render(result);const s=ensureAlphaMeta();s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);dbProgression.checkDynamicClassUnlocks();saveMeta();return result;}
+  function grantXp(amount){const result=ProgressionState.grantXp(amount);ProgressionUI.render(result);dbProgression.recordVitals({previousHp:player.hp,currentHp:player.hp,previousGold:player.gold,currentGold:player.gold,classId:player.classId,level:player.level});dbProgression.checkDynamicClassUnlocks();saveMeta();return result;}
   function forceLevels(count){const result=ProgressionState.forceLevels(count);ProgressionUI.render(result);return result;}
 
   function recordRunBuff(icon,name,desc,rarity="special",source="Road"){
@@ -1037,15 +1038,34 @@ function returnToRoad(...args){
     let refund=0;const known=new Map(talents.map(t=>[t.id,t]));
     for(const [id,val] of Object.entries(out.purchased)){const rank=Math.max(0,Number(val)||0),t=known.get(id);if(!t){refund+=rank*2;delete out.purchased[id];continue;}if(rank>t.maxRank){refund+=(rank-t.maxRank)*t.cost;out.purchased[id]=t.maxRank;}}
     out.points=(out.points||0)+refund;
-    const statsBase=defaultLifetimeStats(),stats=out.stats||{};
     out.version="Alpha v1";
-    out.stats={...statsBase,...stats,boardClears:{...(stats.boardClears||{})},classMaxLevel:{...(stats.classMaxLevel||{})}};
+    window.DiceboundCareerHistory.ensure(out);
     out.stats.damageTaken=Math.max(Number(out.stats.damageTaken)||0,Number(out.damageTaken)||0);
     out.achievements={...(out.achievements||{})};
     return out;
   }
   try{meta=normalizeCareerMeta(meta);}catch(e){meta=normalizeCareerMeta({});}
   saveMeta();
+  function dbCareerRunMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
+  function dbCareerRunSnapshot(){
+    const equipment=Object.entries(player.equipment||{}).filter(([,item])=>!!item).map(([slot,item])=>({slot,id:item.id||item.templateId||item.legendaryId||'',name:item.name||item.id||slot,rarity:item.rarity||'',element:item.element||null}));
+    const powerups=Object.entries(player.upgradeCounts||{}).filter(([,count])=>Number(count)>0).map(([id,count])=>({id,count:Number(count)||1}));
+    return {
+      version:APP_IDENTITY.version,classId:player.classId||selectedClassId||'ranger',mode:dbCareerRunMode(),
+      boardReached:Math.max(1,Number(boardLevel)||1),position:Math.max(0,(Number(player.position)||0)+1),
+      level:Math.max(1,Number(player.level)||1),gold:Math.max(0,Number(player.gold)||0),petId:meta.activePet||null,
+      prestigeCount:Math.max(0,Number(meta.prestige?.count)||0),legacyLevel:Math.max(1,Number(meta.level)||1),
+      equipment,powerups,
+      finalStats:{
+        maxHp:Math.max(0,Number(player.maxHp)||0),hp:Math.max(0,Number(player.hp)||0),
+        attack:Math.max(0,Number(player.attack+(player.goldAttackScale?player.gold*player.goldAttackScale:0))||0),
+        defense:Math.max(0,Number(player.defense+player.flatReduction)||0),crit:Math.max(0,Number(player.crit)||0),
+        dodge:Math.max(0,Number(effectiveDodgeChance())||0),lifeSteal:Math.max(0,Number(player.lifeSteal)||0),
+        luck:Math.max(0,Number(player.luck)||0),echo:Math.max(0,Number(player.doubleStrike)||0),bossDamage:Math.max(0,Number(player.bossDamage)||0)
+      }
+    };
+  }
+
   dbProgression.repairTalentPrerequisites();
 
       function mythicalSetSummary(){
@@ -1082,7 +1102,7 @@ function returnToRoad(...args){
   function damageEnemy(enemy,amount,ignoreDefense=false){
     const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);amount=dbClasses.berserkerDamage(adjusted.amount);ignoreDefense=adjusted.ignoreDefense;let dealt=0;
     if(enemy&&enemy.hp>0){if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);}else{const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0)));dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;}}
-    if(gameStarted&&dealt>0)ensureAlphaMeta().damageDealt+=dealt;
+    if(gameStarted&&dealt>0)dbProgression.recordDamageDealt(dealt);
     if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
     return dealt;
   }
@@ -1115,13 +1135,13 @@ function returnToRoad(...args){
   function openInfo(){return dbInfoGuide?.open();}
   function renderInfo(){return dbInfoGuide?.render();}
   function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}
-  function renderLifetimeStats(){return dbInfoGuide?.renderStats();}
+  function openCareer(tab='overview'){return dbCareerUi?.open(tab);}
 
   function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
   function startNewGame(){return dbRun.startFreshRun();}
-  function showEnd(victory){dbRunClearCheckpoint();const first=!runFinalized;if(first){const s=ensureAlphaMeta();if(victory)s.fullVictories++;else s.deaths++;}rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun();updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){dbRunClearCheckpoint();rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
     dbPowerups.configure({
     getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
@@ -1131,14 +1151,14 @@ function returnToRoad(...args){
     cascadeLuckRows:(rows,luck,progression)=>DB_RARITIES.cascadeLuckRows(rows,luck,progression),
     getBoardLevel:()=>boardLevel,currentTileCount:()=>currentTileCount(),random:()=>random(),rand:(min,max)=>rand(min,max),pick:list=>pick(list),clamp:(value,min,max)=>clamp(value,min,max),
     classIdentityActive:id=>classIdentityActive(id),hasLegendaryEffect:id=>db060HasEffect(id),saveMeta:()=>saveMeta(),addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),
-    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{ensureAlphaMeta().powerupsTaken++;saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
+    checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{dbProgression.recordPowerupTaken();saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
     isNightmare:()=>!!nightmareMode,isHell:()=>!!hellMode,isGameStarted:()=>!!gameStarted
   });
   function eligibleUpgrades(filter=()=>true){return dbPowerups.eligible(filter);}
 
   function dbClassUnlockFacts(){meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.normalizeFacts(meta.classUnlockFacts||{});return meta.classUnlockFacts;}
   function dbClassUnlockContext(){
-    const stats=ensureAlphaMeta(),facts=dbClassUnlockFacts(),petIds=Object.keys(PETS),petLevels={},petUnlocked={},classIds=Object.keys(CLASSES),classSecret={};
+    const stats=dbProgression.careerStats(),facts=dbClassUnlockFacts(),petIds=Object.keys(PETS),petLevels={},petUnlocked={},classIds=Object.keys(CLASSES),classSecret={};
     petIds.forEach(id=>{petLevels[id]=meta.pets?.[id]?.level||1;petUnlocked[id]=!!meta.pets?.[id]?.unlocked;});
     classIds.forEach(id=>classSecret[id]=!!CLASSES[id]?.secret);
     const currentPlayer=player||{};
@@ -1273,17 +1293,12 @@ function returnToRoad(...args){
 
   const ALPHA_COMBAT_DELAY=200;
   let runTalentSnapshot=null,statsLastHp=null,statsLastGold=null;
-  function defaultLifetimeStats(){return {runsStarted:0,runsFinished:0,fullVictories:0,deaths:0,rolls:0,tilesTraveled:0,damageDealt:0,healingDone:0,goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,minibossesDefeated:0,powerupsTaken:0,potionsUsed:0,highestRunLevel:1,boardClears:{},classMaxLevel:{}};}
-  function ensureAlphaMeta(){
-    const base=defaultLifetimeStats(),raw=meta.stats||{};meta.stats={...base,...raw,boardClears:{...(raw.boardClears||{})},classMaxLevel:{...(raw.classMaxLevel||{})}};meta.stats.damageTaken=Math.max(Number(meta.stats.damageTaken)||0,Number(meta.damageTaken)||0);meta.achievements={...(meta.achievements||{})};return meta.stats;
+  function recordVitals(){
+    if(!gameStarted)return;
+    dbProgression.recordVitals({previousHp:statsLastHp,currentHp:player.hp,previousGold:statsLastGold,currentGold:player.gold,classId:player.classId,level:player.level});
+    statsLastHp=player.hp;statsLastGold=player.gold;
   }
-    function boardClearMode(){return hellMode?'hell':nightmareMode?'nightmare':'normal';}
-  function boardClearKey(classId,board,mode=boardClearMode()){return `${classId}:${mode}:b${board}`;}
-  function hasBoardClear(classId,board){ensureAlphaMeta();return Object.entries(meta.stats.boardClears).some(([key,count])=>Number(count)>0&&(key===boardClearKey(classId,board,'normal')||key===boardClearKey(classId,board,'nightmare')||key===boardClearKey(classId,board,'hell')));}
-  function recordBoardClear(board,classId){const s=ensureAlphaMeta(),key=boardClearKey(classId,board);s.boardClears[key]=(s.boardClears[key]||0)+1;saveMeta();dbProgression.checkDynamicClassUnlocks();}
-        function recordVitals(){if(!gameStarted)return;const s=ensureAlphaMeta();if(statsLastHp!=null&&player.hp>statsLastHp)dbCombat.recordHealing(player.hp-statsLastHp);statsLastHp=player.hp;if(statsLastGold!=null&&player.gold>statsLastGold)s.goldEarned+=player.gold-statsLastGold;statsLastGold=player.gold;s.highestGold=Math.max(s.highestGold,Math.floor(player.gold));s.highestRunLevel=Math.max(s.highestRunLevel,player.level);s.classMaxLevel[player.classId]=Math.max(s.classMaxLevel[player.classId]||1,player.level);}
 
-  ensureAlphaMeta();
 
   // Four new public classes. Rouge remains the colour; Rogue is the thief.
 
@@ -1314,7 +1329,7 @@ function returnToRoad(...args){
   $("feedAllPetBtn").addEventListener("click",()=>dbPets.feed(meta.petCookies));
   $("debugTrigger").addEventListener("click",openDebugMenu);$("debugCloseBtn").addEventListener("click",()=>$("debugOverlay").classList.add("hidden"));$("debugGrid").addEventListener("click",e=>{const btn=e.target.closest("[data-debug]");if(btn)debugAction(btn.dataset.debug);});
   $("merchantContinueBtn").addEventListener("click",()=>{tiles[player.position].cleared=false;refreshTile(player.position);$("merchantOverlay").classList.add("hidden");returnToRoad();});
-  $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=dbProgression.finalizeRun();showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
+  $("restartBtn").addEventListener("click",async()=>{if(!gameStarted||(await diceboundConfirm("Abandon this run? Traveled tiles will be banked as Legacy XP, but you cannot bind a new heirloom.",{title:"Abandon run?",confirmLabel:"Abandon",danger:true}))){if(gameStarted){const earned=dbProgression.finalizeRun({outcome:'abandoned',boardReached:boardLevel});showToast(`Banked ${earned} Legacy XP`);}openStartScreen();}});
   $("endRestartBtn").addEventListener("click",openStartScreen);$("muteBtn").addEventListener("click",()=>setMuted(!muted));
   $("talentBtn").addEventListener("click",()=>window.DiceboundTalentTree.open());
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
@@ -2013,6 +2028,7 @@ function returnToRoad(...args){
       openTalents:()=>window.DiceboundTalentTree.open('startOverlay'),
       openPrestigeMoon:()=>openPrestigeMoon(),
       openInfo:()=>openInfo(),
+      openCareer:()=>openCareer(),
       openAchievements:()=>window.DiceboundAchievementsUi?.open?.(),
       openPets:()=>window.DiceboundPetChooser?.open(),
       startRun:()=>startNewGame(),
@@ -2949,7 +2965,7 @@ dbReturnToRoadTraceReady=true;
       $:id=>$(id),getPlayer:()=>player,
       formatGearComparison:(item,current)=>dbItems.formatComparison(item,current),gearNameMarkup:item=>window.DiceboundEquipmentHeirlooms.rarityNameMarkup(item),gearPowerScore:item=>dbItems.score(item),
       confirmWeakerGear:(gear,current)=>diceboundConfirm(`${gear.name} appears weaker overall than ${current.name}. Buy and replace it anyway?`,{title:'Buy weaker gear?',confirmLabel:'Buy anyway',danger:true}),
-      chargeOffer:(item,price)=>{player.gold-=price;ensureAlphaMeta().goldSpent+=price;statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);},
+      chargeOffer:(item,price)=>{player.gold-=price;dbProgression.recordGoldSpent(price);statsLastGold=player.gold;item.sold=true;sfx.coin();addLog(`Bought <b>${item.name}</b> for ${price} gold.`);},
       refundOffer:price=>{player.gold+=price;},applyOffer:item=>item.buy?.(),
       recordRunBuff:item=>recordRunBuff(item.icon,item.name,item.desc,'merchant','Merchant'),formatBonuses:item=>formatBonuses(item),
       rarityInfoFor:rarity=>rarityInfo[rarity],showToast:(...args)=>showToast(...args),updateHud:()=>updateHUD(),
