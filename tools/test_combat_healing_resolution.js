@@ -33,7 +33,7 @@ function harness(options={}) {
   const rt={
     getPlayer:()=>p,
     getCurrentEnemy:()=>currentEnemy,
-    ensureAlphaMeta:()=>stats,
+    recordCareerHealing:amount=>{stats.healingDone+=amount;},
     setStatsLastHp:value=>{statsLastHp=value;call('statsLastHp',value);},
     saveMeta:()=>call('save'),
     checkDynamicClassUnlocks:()=>call('unlockCheck'),
