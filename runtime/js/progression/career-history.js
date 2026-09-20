@@ -166,6 +166,9 @@
       active={id:`run-${String(sequence).padStart(6,"0")}`,sequence,startedAt:null,version:String(snapshot.version||""),classId:String(snapshot.classId||"ranger"),mode:MODES.has(String(snapshot.mode||"").toLowerCase())?String(snapshot.mode).toLowerCase():"normal",petId:snapshot.petId?String(snapshot.petId):null};
     }
 
+    const existing=career.history.find(entry=>entry.id===active.id);
+    if(existing){career.activeRun=null;return Object.freeze(clone(existing));}
+
     const outcome=["victory","death","abandoned","ended"].includes(snapshot.outcome)?snapshot.outcome:"ended";
     s.runsFinished++;
     if(outcome==="victory")s.fullVictories++;
