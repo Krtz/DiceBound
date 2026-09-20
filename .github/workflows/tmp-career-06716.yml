@@ -1,4 +1,4 @@
-name: Temporary 0.6.7.16 full source materializer
+name: Temporary 0.6.7.16 full source materializer rerun
 
 on:
   push:
