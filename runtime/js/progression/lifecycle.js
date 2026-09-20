@@ -90,6 +90,7 @@
   function hasBoardClear(classId,board){return CAREER.hasBoardClear(meta(),classId,board);}
   function recordDamageDealt(amount){return CAREER.recordDamage(meta(),amount);}
   function recordHealing(amount){return CAREER.recordHealing(meta(),amount);}
+  function recordDamageTaken(amount){return CAREER.recordDamageTaken(meta(),amount);}
   function recordGoldEarned(amount){return CAREER.recordGoldEarned(meta(),amount);}
   function recordGoldSpent(amount){return CAREER.recordGoldSpent(meta(),amount);}
   function recordPotionUse(){return CAREER.recordPotion(meta());}
@@ -312,7 +313,7 @@
     owner:OWNER,apiVersion:1,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
     heirloomLoadoutCapacity,heirloomStorageUnlocked,heirloomStorageCapacity,heirloomStorageMilestones,
-    careerStats,runHistory,careerInspect,recordRunStarted,recordBoardClear,hasBoardClear,recordDamageDealt,recordHealing,recordGoldEarned,recordGoldSpent,recordPotionUse,recordPowerupTaken,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,
+    careerStats,runHistory,careerInspect,recordRunStarted,recordBoardClear,hasBoardClear,recordDamageDealt,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,recordPotionUse,recordPowerupTaken,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
     hasAnyBoardClear:anyBoardClear,achievementDone,achievementConditionText,achievementRewardText,achievementGateConditionText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
     isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks
