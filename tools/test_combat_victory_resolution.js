@@ -48,7 +48,12 @@ function makeHarness(options={}) {
 
   const rt = {
     getState: state,
-    ensureAlphaMeta: () => meta.stats,
+    recordEnemyDefeats: (enemies, context={}) => {
+      meta.stats.enemiesDefeated += enemies.length;
+      if(context.boss) meta.stats.bossesDefeated++;
+      if(context.miniboss) meta.stats.minibossesDefeated++;
+      push('enemyDefeats', enemies.map(item=>item.name), !!context.boss, !!context.miniboss);
+    },
     recordBoardClear: (board, classId) => push('boardClear', board, classId),
     clearBloodOverhealTemp: () => { player.bloodOverhealBonus = 0; push('clearBloodOverheal'); },
     modifiedGold: amount => { push('modifiedGold', amount); return options.modifiedGold ? options.modifiedGold(amount) : amount; },
