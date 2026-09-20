@@ -7,11 +7,13 @@ const vm=require('vm');
 
 const root=path.resolve(__dirname,'..');
 const registrySource=fs.readFileSync(path.join(root,'runtime/js/progression/achievements.js'),'utf8');
+const careerSource=fs.readFileSync(path.join(root,'runtime/js/progression/career-history.js'),'utf8');
 const progressionSource=fs.readFileSync(path.join(root,'runtime/js/progression/lifecycle.js'),'utf8');
 const sandbox={window:{DiceboundPrestige:{award:value=>value}},console,Object,Array,Number,String,Math,Set,Map,JSON,RegExp};
 sandbox.window.window=sandbox.window;
 vm.createContext(sandbox);
 vm.runInContext(registrySource,sandbox,{filename:'achievements.js'});
+vm.runInContext(careerSource,sandbox,{filename:'progression/career-history.js'});
 vm.runInContext(progressionSource,sandbox,{filename:'progression/lifecycle.js'});
 
 const registry=sandbox.window.DiceboundAchievements.createRegistry();
