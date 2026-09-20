@@ -1,4 +1,4 @@
-name: Temporary 0.6.7.16 Career validation #2
+name: Temporary 0.6.7.16 full source materializer
 
 on:
   push:
@@ -9,38 +9,68 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
-  career:
+  validate-materialize:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: feature/0.6.7.16-career-history
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Runtime syntax and retired-owner scan
+      - name: Materialize release identity
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.7.16 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.7.16 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/prepare_release.py --version 0.6.7.16 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.7.16 --channel Beta --release-spec "wrapper-source/release/generated/release-spec.json" --release-notes "wrapper-source/release/generated/release-notes.md"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Full source validation
         shell: pwsh
         run: |
           Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
-          $retired = Select-String -Path runtime/js/dicebound.js -Pattern "function defaultLifetimeStats\(","function ensureAlphaMeta\(","function boardClearKey\(","function recordBoardClear\(" -ErrorAction SilentlyContinue
-          if ($retired) { $retired | Out-Host; exit 1 }
-          $legacyCareerPort = Get-ChildItem runtime/js -Recurse -Filter *.js | Select-String -Pattern "ensureAlphaMeta"
-          if ($legacyCareerPort) { $legacyCareerPort | Out-Host; exit 1 }
-      - name: Focused Career contracts
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.py | ForEach-Object { python $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_launcher_assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go test .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go
+          if ($LASTEXITCODE -eq 0) { go vet .\installer\main_v2.go .\installer\http_policy.go .\installer\main_v2_test.go }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify only generated metadata changed
         shell: pwsh
         run: |
-          $tests = @(
-            "tools/test_career_history.js",
-            "tools/test_progression_owner.js",
-            "tools/test_info_guide_ui.js",
-            "tools/test_camp_ui.js",
-            "tools/test_info_browser.js",
-            "tools/test_info_file_browser.js",
-            "tools/test_career_browser.js"
-          )
-          foreach ($test in $tests) {
-            node $test
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $changed = @(git diff --name-only)
+          $unexpected = @($changed | Where-Object { $_ -notin @("runtime/build-info.json","runtime/build-manifest.json") })
+          if ($unexpected.Count -gt 0) {
+            Write-Host "Unexpected generator drift:"
+            $unexpected | ForEach-Object { Write-Host $_ }
+            exit 1
           }
+          git status --short
+      - name: Transfer exact generated metadata
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $bi = [Convert]::ToBase64String([IO.File]::ReadAllBytes("runtime/build-info.json"))
+          $bm = [Convert]::ToBase64String([IO.File]::ReadAllBytes("runtime/build-manifest.json"))
+          $body = "MATERIALIZED_06716_FULL_BEGIN`nBUILD_INFO_B64=$bi`nBUILD_MANIFEST_B64=$bm`nMATERIALIZED_06716_FULL_END"
+          gh issue comment 8 --body $body
