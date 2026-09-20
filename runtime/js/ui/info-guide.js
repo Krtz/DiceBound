@@ -30,7 +30,6 @@
   function elements(){return runtime.getElements?.()||{};}
   function isClassUnlocked(classId){return runtime.isClassUnlocked?.(classId)!==false;}
   function artifactSet(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
-  function stats(){return runtime.getLifetimeStats?.()||{};}
 
   function installStyles(){
     const documentRef=doc();
@@ -57,11 +56,10 @@
       #infoOverlay .info-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}#infoOverlay .info-class{padding:9px 10px;border-radius:11px;background:rgba(0,0,0,.17);border:1px solid rgba(255,255,255,.055);font-size:10px;line-height:1.5}#infoOverlay .info-class b{font-size:11px}
       #infoOverlay .info-tag-row{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}#infoOverlay .info-tag{padding:2px 5px;border-radius:999px;background:rgba(115,185,255,.14);border:1px solid rgba(115,185,255,.24);font-size:8px;color:#d8eaff}
       #infoOverlay .element-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}#infoOverlay .element-row{padding:10px;border-radius:10px;background:rgba(0,0,0,.17);border:1px solid rgba(255,255,255,.06);font-size:10px;line-height:1.45}
-      #infoOverlay .lifetime-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}#infoOverlay .lifetime-stat{padding:12px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}#infoOverlay .lifetime-stat span{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.08em}#infoOverlay .lifetime-stat strong{display:block;font-size:20px;margin-top:3px}#infoOverlay .lifetime-wide{grid-column:1/-1}#infoOverlay .class-clear-list{font-size:10px;line-height:1.6;color:#dce5f4}
       #infoOverlay .save-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}#infoOverlay .save-textarea{width:100%;height:120px;background:#080d17;color:#eaf0ff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;font:11px ui-monospace,monospace;resize:vertical}
       #infoOverlay .rarity-guide-grid{display:grid;gap:6px;margin:10px 0}#infoOverlay .rarity-guide-row{display:grid;grid-template-columns:14px 92px 1fr;gap:8px;align-items:center;padding:7px 8px;border-radius:9px;background:rgba(255,255,255,.035);font-size:10px;color:var(--muted)}#infoOverlay .rarity-swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.35)}
       #infoOverlay .set-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;margin-top:9px}#infoOverlay .set-tier{padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:9px;color:var(--muted);font-size:10px}#infoOverlay .set-tier b,#infoOverlay .set-tier span{display:block}#infoOverlay .set-tier.active{border-color:rgba(255,172,56,.65);background:rgba(255,156,56,.1);color:#ffe7c0}
-      @media(max-width:700px){#infoOverlay.info-guide-overlay{padding:0;align-items:stretch}#infoOverlay .info-guide-shell{width:100%;max-height:100vh;min-height:100vh;border-radius:0;border-width:0}#infoOverlay .info-guide-chrome{padding:14px 16px}#infoOverlay .info-guide-chrome h2{font-size:22px}#infoOverlay .info-guide-content{padding:14px 16px 28px}#infoOverlay .info-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#infoOverlay .info-class-grid,#infoOverlay .element-guide,#infoOverlay .lifetime-stats{grid-template-columns:1fr}#infoOverlay .lifetime-wide{grid-column:auto}#infoOverlay .save-tools{grid-template-columns:1fr}}
+      @media(max-width:700px){#infoOverlay.info-guide-overlay{padding:0;align-items:stretch}#infoOverlay .info-guide-shell{width:100%;max-height:100vh;min-height:100vh;border-radius:0;border-width:0}#infoOverlay .info-guide-chrome{padding:14px 16px}#infoOverlay .info-guide-chrome h2{font-size:22px}#infoOverlay .info-guide-content{padding:14px 16px 28px}#infoOverlay .info-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#infoOverlay .info-class-grid,#infoOverlay .element-guide{grid-template-columns:1fr}#infoOverlay .lifetime-wide{grid-column:auto}#infoOverlay .save-tools{grid-template-columns:1fr}}
     `;
     documentRef.head?.appendChild(style);
   }
@@ -77,7 +75,7 @@
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',"Roadkeeper's Guide");
     if(overlay.dataset.infoGuideSurface!=='1'){
       overlay.dataset.infoGuideSurface='1';
-      overlay.innerHTML=`<section class="info-guide-shell"><header class="info-guide-chrome"><div><span class="info-guide-kicker">Roadkeeper's Guide</span><h2>Info & progress</h2></div><button type="button" class="small-btn info-guide-done" data-info-done>Done</button></header><div class="info-guide-content"><p class="info-guide-subtitle">Current rules, progression, classes, elements and save tools. Secrets remain deliberately vague until discovered.</p><nav class="info-tabs" id="infoTabs" data-info-tabs aria-label="Guide sections"><button type="button" class="small-btn active" data-info-tab="guide">Guide</button><button type="button" class="small-btn" data-info-tab="stats">Stats</button><button type="button" class="small-btn" data-info-tab="elements">Elements</button><button type="button" class="small-btn" data-info-tab="save">Save</button></nav><section class="info-tab-panel active" data-info-panel="guide"><div id="infoSections" data-info-sections></div></section><section class="info-tab-panel" data-info-panel="stats"><div class="lifetime-stats" id="lifetimeStats" data-lifetime-stats></div></section><section class="info-tab-panel" data-info-panel="elements"><div class="element-guide" id="elementGuide" data-element-guide></div></section><section class="info-tab-panel" data-info-panel="save"><h3>Transfer save</h3><p class="info-guide-subtitle">Export a portable save string or import one into the current profile.</p><textarea class="save-textarea" id="saveTransferText" data-save-transfer placeholder="Exported save data appears here. Paste save data here to import."></textarea><div class="save-tools"><button type="button" class="small-btn" data-save-export>Export save</button><button type="button" class="small-btn" data-save-import>Import save</button></div></section></div></section>`;
+      overlay.innerHTML=`<section class="info-guide-shell"><header class="info-guide-chrome"><div><span class="info-guide-kicker">Roadkeeper's Guide</span><h2>Info</h2></div><button type="button" class="small-btn info-guide-done" data-info-done>Done</button></header><div class="info-guide-content"><p class="info-guide-subtitle">Current rules, progression, classes, elements and save tools. Career Stats and Run History now live in the Campsite Career book. Secrets remain deliberately vague until discovered.</p><nav class="info-tabs" id="infoTabs" data-info-tabs aria-label="Guide sections"><button type="button" class="small-btn active" data-info-tab="guide">Guide</button><button type="button" class="small-btn" data-info-tab="elements">Elements</button><button type="button" class="small-btn" data-info-tab="save">Save</button></nav><section class="info-tab-panel active" data-info-panel="guide"><div id="infoSections" data-info-sections></div></section><section class="info-tab-panel" data-info-panel="elements"><div class="element-guide" id="elementGuide" data-element-guide></div></section><section class="info-tab-panel" data-info-panel="save"><h3>Transfer save</h3><p class="info-guide-subtitle">Export a portable save string or import one into the current profile.</p><textarea class="save-textarea" id="saveTransferText" data-save-transfer placeholder="Exported save data appears here. Paste save data here to import."></textarea><div class="save-tools"><button type="button" class="small-btn" data-save-export>Export save</button><button type="button" class="small-btn" data-save-import>Import save</button></div></section></div></section>`;
       overlay.querySelector('[data-info-done]')?.addEventListener('click',close);
       overlay.querySelector('[data-info-tabs]')?.addEventListener('click',event=>{const button=event.target.closest('[data-info-tab]');if(button)activateTab(button.dataset.infoTab);});
       overlay.querySelector('[data-save-export]')?.addEventListener('click',exportSave);
@@ -122,37 +120,17 @@
     detail('achievements','Achievements & unlocks','<p>Achievements track permanent milestones and show their rewards when revealing that reward does not spoil a secret. Some powerful class powers require clearing later boards with that class.</p>')
   ].join('');}
   function elementsHtml(){return Object.entries(elements()).map(([key,entry])=>`<div class="element-row"><b>${escapeHtml(entry.icon||'')} ${escapeHtml(entry.name||key)} — ${escapeHtml(entry.spell||'')}</b><br>${escapeHtml(entry.description||'')}<br><span style="color:var(--muted)">Element Power improves the effect. Matching weaknesses increase activation and strength.${key==='ice'?' Guardians gain temporary resistance after being frozen, preventing permanent freeze loops.':''}</span></div>`).join('');}
-  function lifetimeModel(){
-    const source=stats(),highest=new Map();
-    Object.entries(source.boardClears||{}).filter(([,value])=>Number(value)>0).forEach(([key,value])=>{
-      const modern=key.match(/^([^:]+):(normal|nightmare|hell):b(\d+)$/),legacy=key.match(/^([^:]+):b(\d+)$/),classId=modern?.[1]||legacy?.[1],mode=modern?.[2]||'normal',board=Number(modern?.[3]||legacy?.[2]||0);
-      if(!classId||!board)return;const group=`${classId}:${mode}`;highest.set(group,Math.max(highest.get(group)||0,board));
-    });
-    const clears=[...highest.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([key,board])=>{const [classId,mode]=key.split(':'),entry=classes().find(candidate=>candidate.id===classId),label=mode[0].toUpperCase()+mode.slice(1);return `${entry?.icon||'•'} ${entry?.name||classId} — ${label}: Board ${board}`;});
-    return Object.freeze({
-      owner:OWNER,
-      values:Object.freeze({runsStarted:source.runsStarted,runsFinished:source.runsFinished,fullVictories:source.fullVictories,tilesTraveled:source.tilesTraveled,rolls:source.rolls,highestRunLevel:source.highestRunLevel,damageDealt:source.damageDealt,damageTaken:Math.max(source.damageTaken||0,runtime.getMetaDamageTaken?.()||0),healingDone:source.healingDone,goldEarned:source.goldEarned,goldSpent:source.goldSpent,highestGold:source.highestGold,enemiesDefeated:source.enemiesDefeated,bossesDefeated:source.bossesDefeated,powerupsTaken:source.powerupsTaken}),
-      clears:Object.freeze(clears)
-    });
-  }
-  function renderStats(){
-    const overlay=ensureSurface(),grid=overlay?.querySelector('[data-lifetime-stats]');
-    const model=lifetimeModel();if(!grid)return model;
-    const fmt=value=>Math.round(Number(value)||0).toLocaleString(),labels=[['runsStarted','Runs started'],['runsFinished','Runs finished'],['fullVictories','Full victories'],['tilesTraveled','Tiles traveled'],['rolls','Dice rolls'],['highestRunLevel','Highest run level'],['damageDealt','Damage dealt'],['damageTaken','Damage taken'],['healingDone','Healing done'],['goldEarned','Gold earned'],['goldSpent','Gold spent'],['highestGold','Highest gold held'],['enemiesDefeated','Enemies defeated'],['bossesDefeated','Bosses defeated'],['powerupsTaken','Powerups taken']];
-    grid.innerHTML=labels.map(([key,label])=>`<div class="lifetime-stat"><span>${label}</span><strong>${fmt(model.values[key])}</strong></div>`).join('')+`<div class="lifetime-stat lifetime-wide"><span>Board clears by class</span><div class="class-clear-list">${model.clears.length?model.clears.map(escapeHtml).join('<br>'):'No recorded class-specific board clears yet.'}</div></div>`;
-    return model;
-  }
   function render(){
     const overlay=ensureSurface();if(!overlay)return viewModel();
     const sections=overlay.querySelector('[data-info-sections]'),elementGuide=overlay.querySelector('[data-element-guide]');
-    if(sections)sections.innerHTML=guideHtml();if(elementGuide)elementGuide.innerHTML=elementsHtml();renderStats();runtime.afterRender?.();return viewModel();
+    if(sections)sections.innerHTML=guideHtml();if(elementGuide)elementGuide.innerHTML=elementsHtml();runtime.afterRender?.();return viewModel();
   }
   function viewModel(){return Object.freeze({owner:OWNER,guideSections:Object.freeze(['rarity','gear','travel','combat','signature','poison','powerups','equipment','artifact-set','companions','legacy','modes','classes','achievements']),elementCount:Object.keys(elements()).length,classCount:classes().filter(entry=>!entry.secret||isClassUnlocked(entry.id)).length});}
   function activateTab(name='guide'){
-    const overlay=ensureSurface(),tab=['guide','stats','elements','save'].includes(name)?name:'guide';if(!overlay)return tab;
+    const overlay=ensureSurface(),tab=['guide','elements','save'].includes(name)?name:'guide';if(!overlay)return tab;
     overlay.querySelectorAll('[data-info-tab]').forEach(button=>button.classList.toggle('active',button.dataset.infoTab===tab));
     overlay.querySelectorAll('[data-info-panel]').forEach(panel=>panel.classList.toggle('active',panel.dataset.infoPanel===tab));
-    if(tab==='stats')renderStats();return tab;
+    return tab;
   }
   function open(){const overlay=ensureSurface();render();activateTab('guide');if(overlay){overlay.classList.remove('hidden');overlay.setAttribute('aria-hidden','false');}runtime.onOpen?.();return overlay;}
   function close(){const overlay=find('infoOverlay');if(overlay){overlay.classList.add('hidden');overlay.setAttribute('aria-hidden','true');}runtime.onClose?.();return overlay||null;}
@@ -161,7 +139,7 @@
   function bindTrigger(){const trigger=find('infoBtn');if(!trigger||trigger.dataset.infoGuideWired==='1')return;trigger.dataset.infoGuideWired='1';trigger.addEventListener('click',open);}
   function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};bindTrigger();return api;}
   function inspect(){const overlay=find('infoOverlay');return Object.freeze({owner:overlay?.dataset.infoGuideOwner||null,open:!!overlay&&!overlay.classList.contains('hidden'),hasDone:!!overlay?.querySelector?.('[data-info-done]'),activeTab:overlay?.querySelector?.('[data-info-tab].active')?.dataset.infoTab||null,sections:overlay?.querySelectorAll?.('[data-guide-section]').length||0});}
-  const api=Object.freeze({configure,open,close,render,renderStats,activateTab,viewModel,inspect,owner:OWNER});
+  const api=Object.freeze({configure,open,close,render,activateTab,viewModel,inspect,owner:OWNER});
   window.DiceboundInfoGuide=api;
-  window.DiceboundInfoGuideTest=Object.freeze({viewModel,lifetimeModel,guideSections:()=>viewModel().guideSections});
+  window.DiceboundInfoGuideTest=Object.freeze({viewModel,guideSections:()=>viewModel().guideSections});
 })(window);
