@@ -12,7 +12,9 @@
 
   const OWNER='progression/facade';
   const PRESTIGE=window.DiceboundPrestige;
+  const CAREER=window.DiceboundCareerHistory;
   if(!PRESTIGE?.award)throw new Error('DiceboundProgression requires DiceboundPrestige.');
+  if(!CAREER?.finalizeRun)throw new Error('DiceboundProgression requires DiceboundCareerHistory.');
 
   const RETIRED_TALENT_REFUNDS=Object.freeze({legacy_storage:3});
   let runtime=Object.freeze({});
@@ -80,18 +82,36 @@
     state.points-=talent.cost;state.purchased[talent.id]=rank+1;call('saveMeta');call('sfxLevel');call('showToast',`${talent.name} rank ${rank+1} · activates next run`);call('renderTalents');return true;
   }
 
+  function careerStats(){return CAREER.stats(meta());}
+  function runHistory(){return CAREER.history(meta());}
+  function careerInspect(){return CAREER.inspect(meta());}
+  function recordRunStarted(facts={}){const result=CAREER.beginRun(meta(),facts);call('saveMeta');return result;}
+  function recordBoardClear(board,classId,mode=call('getRunMode')){const result=CAREER.recordBoardClear(meta(),{board,classId,mode});call('saveMeta');checkDynamicClassUnlocks();return result;}
+  function hasBoardClear(classId,board){return CAREER.hasBoardClear(meta(),classId,board);}
+  function recordDamageDealt(amount){return CAREER.recordDamage(meta(),amount);}
+  function recordHealing(amount){return CAREER.recordHealing(meta(),amount);}
+  function recordGoldEarned(amount){return CAREER.recordGoldEarned(meta(),amount);}
+  function recordGoldSpent(amount){return CAREER.recordGoldSpent(meta(),amount);}
+  function recordPotionUse(){return CAREER.recordPotion(meta());}
+  function recordPowerupTaken(){return CAREER.recordPowerup(meta());}
+  function recordElementProc(count=1){return CAREER.recordElementProc(meta(),count);}
+  function recordStrike(result){return CAREER.recordStrike(meta(),result);}
+  function recordEnemyDefeats(enemies,context={}){return CAREER.recordEnemyDefeats(meta(),enemies,context);}
+  function recordVitals(facts={}){return CAREER.recordVitals(meta(),facts);}
+
   function legacyXpForLevel(level){return call('legacyXpForLevel',level);}
   function grantLegacyXp(amount){
     const state=meta();state.xp+=amount;
     while(state.xp>=state.xpNext){state.xp-=state.xpNext;state.level++;state.points++;state.xpNext=legacyXpForLevel(state.level);}
   }
-  function finalizeRun(){
+  function finalizeRun(options={}){
     if(call('isRunFinalized'))return call('getLastLegacyAward');
     call('setRunFinalized',true);
-    const player=call('getPlayer'),tilesMoved=call('getTilesMovedThisRun'),travelAward=Math.max(0,Math.round(tilesMoved*(1+player.legacyXpBonus))),goldAward=Math.max(0,Math.floor(player.gold/10)),state=meta(),baseAward=(travelAward+goldAward)*(call('isNightmare')?5:1),award=Math.max(0,Math.round(baseAward*PRESTIGE.legacyXpMultiplier(state.prestige))),stats=call('ensureAlphaMeta');
+    const player=call('getPlayer'),tilesMoved=call('getTilesMovedThisRun'),travelAward=Math.max(0,Math.round(tilesMoved*(1+player.legacyXpBonus))),goldAward=Math.max(0,Math.floor(player.gold/10)),state=meta(),baseAward=(travelAward+goldAward)*(call('isNightmare')?5:1),award=Math.max(0,Math.round(baseAward*PRESTIGE.legacyXpMultiplier(state.prestige)));
     call('setLastGoldLegacyAward',goldAward);call('setLastLegacyAward',award);
     state.runs++;state.bestTiles=Math.max(state.bestTiles,tilesMoved);
-    stats.runsFinished++;stats.rolls+=call('getRolls');stats.tilesTraveled+=tilesMoved;stats.highestRunLevel=Math.max(stats.highestRunLevel,player.level);stats.classMaxLevel[player.classId]=Math.max(stats.classMaxLevel[player.classId]||1,player.level);stats.highestGold=Math.max(stats.highestGold,player.gold);
+    const snapshot={...(call('getCareerRunSnapshot')||{}),...options,rolls:call('getRolls'),tilesMoved,legacyXp:award};
+    CAREER.finalizeRun(state,snapshot);
     grantLegacyXp(award);call('saveMeta');call('updateMetaUI');return award;
   }
 
@@ -120,7 +140,7 @@
   function achievementById(id){return achievementRegistry().find(entry=>entry.id===id)||null;}
   function achievementEntry(input){return typeof input==='string'?achievementById(input):input||null;}
   function anyBoardClear(board){
-    const target=Math.max(1,Number(board)||0),stats=call('ensureAlphaMeta'),suffix=`:b${target}`;
+    const target=Math.max(1,Number(board)||0),stats=careerStats(),suffix=`:b${target}`;
     if(Object.entries(stats.boardClears||{}).some(([key,count])=>Number(count)>0&&String(key).endsWith(suffix)))return true;
     // Achievement truth is the canonical stats.boardClears ledger. Historical
     // feature counters remain readable here for old saves but do not own achievement state.
@@ -129,9 +149,9 @@
 
   function achievementDone(input){
     const a=achievementEntry(input);if(!a)return false;
-    const state=meta(),stats=call('ensureAlphaMeta'),parts=String(a.condition||'').split(':'),kind=parts[0],player=call('getPlayer');
+    const state=meta(),stats=careerStats(),parts=String(a.condition||'').split(':'),kind=parts[0],player=call('getPlayer');
     if(kind==='runsStarted')return (stats.runsStarted||0)>0||call('getGameStarted');
-    if(kind==='boardClear')return call('hasBoardClear',parts[1],Number(parts[2]));
+    if(kind==='boardClear')return hasBoardClear(parts[1],Number(parts[2]));
     if(kind==='classUnlocked')return isClassUnlocked(parts[1]);
     if(kind==='nightmareUnlocked')return !!state.nightmareUnlocked;
     if(kind==='anyBoardClear')return anyBoardClear(parts[1]);
@@ -237,7 +257,7 @@
     const state=meta(),text=String(gate);
     if(text.startsWith('achievement:')){const achievement=achievementById(text.slice('achievement:'.length));return !!achievement&&achievementDone(achievement);}
     const directAchievement=achievementById(text);if(directAchievement)return achievementDone(directAchievement);
-    const classGate=/^class_b([2345]):(.*)$/.exec(text);if(classGate)return call('hasBoardClear',classGate[2],Number(classGate[1]));
+    const classGate=/^class_b([2345]):(.*)$/.exec(text);if(classGate)return hasBoardClear(classGate[2],Number(classGate[1]));
     const spec=call('getPowerupGateRegistry')?.[text];
     if(spec){
       if(spec.type==='prestige')return (state.prestige?.count||0)>=Number(spec.minimum||0);
@@ -245,12 +265,12 @@
       if(spec.type==='flag')return !!state[spec.field];
       if(spec.type==='counter')return (state[spec.field]||0)>=Number(spec.minimum||0);
       if(spec.type==='elementProgress')return (state.elementProgress?.[spec.element]||0)>=Number(spec.minimum||0);
-      if(spec.type==='boardClear')return call('hasBoardClear',spec.classId,Number(spec.board));
-      if(spec.type==='classLevel')return (call('ensureAlphaMeta').classMaxLevel?.[spec.classId]||0)>=Number(spec.minimum||0);
-      if(spec.type==='lifetimeStat')return (call('ensureAlphaMeta')[spec.stat]||0)>=Number(spec.minimum||0);
+      if(spec.type==='boardClear')return hasBoardClear(spec.classId,Number(spec.board));
+      if(spec.type==='classLevel')return (careerStats().classMaxLevel?.[spec.classId]||0)>=Number(spec.minimum||0);
+      if(spec.type==='lifetimeStat')return (careerStats()[spec.stat]||0)>=Number(spec.minimum||0);
       if(spec.type==='allPetsUnlocked')return Object.values(state.pets||{}).every(pet=>pet.unlocked);
       if(spec.type==='achievements')return (spec.requirements||[]).every(id=>{const achievement=achievementById(id);return !!achievement&&achievementDone(achievement);});
-      if(spec.type==='boardClears')return (spec.requirements||[]).every(requirement=>call('hasBoardClear',requirement.classId,Number(requirement.board)));
+      if(spec.type==='boardClears')return (spec.requirements||[]).every(requirement=>hasBoardClear(requirement.classId,Number(requirement.board)));
     }
     return !!state.achievements?.[gate];
   }
@@ -281,7 +301,7 @@
   function unlockClass(id){if(!call('classUnlockMayCommit',id,classUnlockContext()))return false;return commitClassUnlock(id);}
   function checkDynamicClassUnlocks(){
     const observed=call('classUnlockRecordObservedProgress',classUnlockContext());
-    if(observed.changed){const stats=call('ensureAlphaMeta');stats.highestGold=observed.highestGold;meta().classUnlockFacts=observed.facts;}
+    if(observed.changed){const stats=careerStats();stats.highestGold=observed.highestGold;meta().classUnlockFacts=observed.facts;}
     call('classUnlockResolveDynamic',{getContext:()=>classUnlockContext(),unlock:id=>unlockClass(id)});
     if(observed.changed)call('saveMeta');
   }
@@ -292,6 +312,7 @@
     owner:OWNER,apiVersion:1,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
     heirloomLoadoutCapacity,heirloomStorageUnlocked,heirloomStorageCapacity,heirloomStorageMilestones,
+    careerStats,runHistory,careerInspect,recordRunStarted,recordBoardClear,hasBoardClear,recordDamageDealt,recordHealing,recordGoldEarned,recordGoldSpent,recordPotionUse,recordPowerupTaken,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
     hasAnyBoardClear:anyBoardClear,achievementDone,achievementConditionText,achievementRewardText,achievementGateConditionText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
     isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks
