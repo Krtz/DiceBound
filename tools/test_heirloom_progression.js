@@ -84,7 +84,9 @@ assert.equal(award,30,"10 tiles + 10 Gold Legacy XP at lifetime Prestige 10 must
 assert.equal(meta.xp,30);
 
 const slots=["weapon","offhand","boots","legs","chest","hat","ring","amulet"];
-meta.prestige=vault;meta.board5Clears=1;meta.merchantKills=1;meta.bloodmageKills=1;meta.devilBossKills=1;
+let fullHeirloomPrestige=vault;
+for(let i=0;i<3;i++)fullHeirloomPrestige=prestige.purchase(fullHeirloomPrestige,"heirloom-loadout",()=>0).prestige;
+meta.prestige=fullHeirloomPrestige;meta.board5Clears=1;meta.merchantKills=1;meta.bloodmageKills=1;meta.devilBossKills=1;
 meta.purchased={legacy_heirloom:4};
 meta.heirloomStorage=Array.from({length:42},(_,i)=>({id:`item-${i}`,slot:slots[i%slots.length],name:`Item ${i}`,rarity:"common"}));
 meta.heirlooms=meta.heirloomStorage.slice(0,10);
