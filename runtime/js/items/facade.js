@@ -1,9 +1,7 @@
 /* DiceBound Items public subsystem facade.
  *
- * Ordinary callers should depend on DiceboundItems rather than coordinating the
- * equipment, loot and legacy generator surfaces directly. During migration the
- * monolith configures the still-authoritative released implementations behind
- * this boundary; focused Items internals will replace those callbacks in place.
+ * Ordinary callers depend on DiceboundItems rather than coordinating focused
+ * generation, equipment and Heirloom internals directly.
  */
 (function(){
   'use strict';
@@ -16,10 +14,7 @@
     if(typeof fn!=='function')throw new Error(`DiceboundItems capability is not configured: ${name}`);
     return fn;
   }
-  function configure(nextRuntime={}){
-    runtime=Object.freeze({...runtime,...nextRuntime});
-    return api;
-  }
+  function configure(nextRuntime={}){runtime=Object.freeze({...runtime,...nextRuntime});return api;}
   function generateEquipment(rarity=null,slot=null){return requireCapability('generateEquipment')(rarity,slot);}
   function generateLegendary(slot=null,preferUndiscovered=false){return requireCapability('generateLegendary')(slot,preferUndiscovered);}
   function rollGearRarity(bonus=0){return requireCapability('rollGearRarity')(bonus);}
@@ -30,24 +25,25 @@
   function score(item){return requireCapability('score')(item);}
   function formatBonuses(item){return requireCapability('formatBonuses')(item);}
   function formatComparison(item,current){return requireCapability('formatComparison')(item,current);}
+  function syncHeirloomState(){return requireCapability('syncHeirloomState')();}
+  function toggleStoredHeirloomActive(item){return requireCapability('toggleStoredHeirloomActive')(item);}
+  function discardStoredHeirloom(item){return requireCapability('discardStoredHeirloom')(item);}
+  function toggleRunHeirloomStorage(item){return requireCapability('toggleRunHeirloomStorage')(item);}
+  function toggleLegacyHeirloom(item){return requireCapability('toggleLegacyHeirloom')(item);}
   function inspect(){
     return Object.freeze({
       owner:OWNER,
-      configured:Object.freeze({
-        generateEquipment:typeof runtime.generateEquipment==='function',
-        generateLegendary:typeof runtime.generateLegendary==='function',
-        rollGearRarity:typeof runtime.rollGearRarity==='function',
-        openLoot:typeof runtime.openLoot==='function',
-        equip:typeof runtime.equip==='function',
-        sellValue:typeof runtime.sellValue==='function',
-        rawSellValue:typeof runtime.rawSellValue==='function',
-        score:typeof runtime.score==='function',
-        formatBonuses:typeof runtime.formatBonuses==='function',
-        formatComparison:typeof runtime.formatComparison==='function'
-      })
+      configured:Object.freeze(Object.fromEntries([
+        'generateEquipment','generateLegendary','rollGearRarity','openLoot','equip','sellValue','rawSellValue','score','formatBonuses','formatComparison',
+        'syncHeirloomState','toggleStoredHeirloomActive','discardStoredHeirloom','toggleRunHeirloomStorage','toggleLegacyHeirloom'
+      ].map(name=>[name,typeof runtime[name]==='function'])))
     });
   }
 
-  const api=Object.freeze({configure,generateEquipment,generateLegendary,rollGearRarity,openLoot,equip,sellValue,rawSellValue,score,formatBonuses,formatComparison,inspect,owner:OWNER});
+  const api=Object.freeze({
+    configure,generateEquipment,generateLegendary,rollGearRarity,openLoot,equip,sellValue,rawSellValue,score,formatBonuses,formatComparison,
+    syncHeirloomState,toggleStoredHeirloomActive,discardStoredHeirloom,toggleRunHeirloomStorage,toggleLegacyHeirloom,
+    inspect,owner:OWNER
+  });
   window.DiceboundItems=api;
 })();

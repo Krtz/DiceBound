@@ -92,7 +92,8 @@ for(const owned of [
   "prestigeInspect","prestigePurchase","prestigeRefundAll","prestigeFormatStats",
   "achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked",
   "heroMasteryEntries","achievementCount","isClassUnlocked","commitClassUnlock","unlockClass",
-  "checkDynamicClassUnlocks","repairTalentPrerequisites","gameplayTalentRank","allocatedTalentPoints"
+  "checkDynamicClassUnlocks","repairTalentPrerequisites","gameplayTalentRank","allocatedTalentPoints",
+  "heirloomLoadoutCapacity","heirloomStorageUnlocked","heirloomStorageCapacity","heirloomStorageMilestones"
 ])assert.ok(lifecycle.includes(owned),`Progression owner capability missing: ${owned}`);
 
 assert.ok(monolith.includes("function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}"),"Prestige summary must route through DiceboundProgression");

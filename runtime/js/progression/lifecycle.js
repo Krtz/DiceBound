@@ -14,6 +14,7 @@
   const PRESTIGE=window.DiceboundPrestige;
   if(!PRESTIGE?.award)throw new Error('DiceboundProgression requires DiceboundPrestige.');
 
+  const RETIRED_TALENT_REFUNDS=Object.freeze({legacy_storage:3});
   let runtime=Object.freeze({});
   function configure(nextRuntime={}){runtime=Object.freeze({...runtime,...nextRuntime});return api;}
   function requireCapability(name){const fn=runtime[name];if(typeof fn!=='function')throw new Error(`DiceboundProgression capability is not configured: ${name}`);return fn;}
@@ -39,9 +40,39 @@
   }
   function allocatedTalentPoints(){return talents().reduce((sum,talent)=>sum+talentRank(talent.id)*talent.cost,0);}
   function repairTalentPrerequisites(){
-    const entries=talents(),byId=Object.fromEntries(entries.map(talent=>[talent.id,talent]));let changed=true,guard=0;
-    while(changed&&guard++<100){changed=false;for(const talent of entries){if(!talentRank(talent.id))continue;for(const requirement of talent.requires||[]){const requiredTalent=byId[requirement.id];if(requiredTalent&&talentRank(requirement.id)<requirement.rank){meta().purchased[requirement.id]=Math.min(requiredTalent.maxRank,requirement.rank);changed=true;}}}}
-    if(changed===false)call('saveMeta');
+    const state=meta(),entries=talents(),byId=Object.fromEntries(entries.map(talent=>[talent.id,talent]));
+    let dirty=false;
+    for(const [id,cost] of Object.entries(RETIRED_TALENT_REFUNDS)){
+      const retiredRank=Math.max(0,Number(state.purchased?.[id])||0);
+      if(!retiredRank)continue;
+      state.points=(Number(state.points)||0)+retiredRank*cost;
+      delete state.purchased[id];
+      dirty=true;
+    }
+    let changed=true,guard=0;
+    while(changed&&guard++<100){changed=false;for(const talent of entries){if(!talentRank(talent.id))continue;for(const requirement of talent.requires||[]){const requiredTalent=byId[requirement.id];if(requiredTalent&&talentRank(requirement.id)<requirement.rank){state.purchased[requirement.id]=Math.min(requiredTalent.maxRank,requirement.rank);changed=true;dirty=true;}}}}
+    if(dirty)call('saveMeta');
+  }
+
+  function heirloomLoadoutCapacity(){
+    const slotCount=Math.max(1,Number(call('getEquipmentSlotCount'))||1);
+    return Math.min(slotCount,1+talentRank('legacy_heirloom')+PRESTIGE.loadoutSlots(meta().prestige));
+  }
+  function heirloomStorageUnlocked(){return PRESTIGE.hasPurchase(meta().prestige,'heirloom-storage');}
+  function heirloomStorageMilestones(){
+    const state=meta(),rank=PRESTIGE.rank(state.prestige,'heirloom-vault-expansion'),bonus=PRESTIGE.vaultExpansionSlots(state.prestige);
+    return [
+      {on:rank>0,text:`Vault Expansion ${rank}/7 (+${bonus})`},
+      {on:(state.board5Clears||0)>0,text:'Board 5 cleared (+1)'},
+      {on:(state.merchantKills||0)>0,text:'Road Merchant defeated (+1)'},
+      {on:(state.bloodmageKills||0)>0,text:'Blood Mage defeated (+1)'},
+      {on:(state.devilBossKills||0)>0,text:'Pale Devil defeated (+1)'}
+    ];
+  }
+  function heirloomStorageCapacity(){
+    if(!heirloomStorageUnlocked())return 0;
+    const state=meta(),base=Math.max(1,Number(call('getEquipmentSlotCount'))||1),milestoneSlots=[state.board5Clears,state.merchantKills,state.bloodmageKills,state.devilBossKills].reduce((sum,value)=>sum+(Number(value)>0?1:0),0);
+    return base+PRESTIGE.vaultExpansionSlots(state.prestige)+milestoneSlots;
   }
   function purchaseTalent(id){
     const talent=talents().find(node=>node.id===id),rank=talentRank(id),state=meta();
@@ -57,7 +88,7 @@
   function finalizeRun(){
     if(call('isRunFinalized'))return call('getLastLegacyAward');
     call('setRunFinalized',true);
-    const player=call('getPlayer'),tilesMoved=call('getTilesMovedThisRun'),travelAward=Math.max(0,Math.round(tilesMoved*(1+player.legacyXpBonus))),goldAward=Math.max(0,Math.floor(player.gold/10)),award=(travelAward+goldAward)*(call('isNightmare')?5:1),state=meta(),stats=call('ensureAlphaMeta');
+    const player=call('getPlayer'),tilesMoved=call('getTilesMovedThisRun'),travelAward=Math.max(0,Math.round(tilesMoved*(1+player.legacyXpBonus))),goldAward=Math.max(0,Math.floor(player.gold/10)),state=meta(),baseAward=(travelAward+goldAward)*(call('isNightmare')?5:1),award=Math.max(0,Math.round(baseAward*PRESTIGE.legacyXpMultiplier(state.prestige))),stats=call('ensureAlphaMeta');
     call('setLastGoldLegacyAward',goldAward);call('setLastLegacyAward',award);
     state.runs++;state.bestTiles=Math.max(state.bestTiles,tilesMoved);
     stats.runsFinished++;stats.rolls+=call('getRolls');stats.tilesTraveled+=tilesMoved;stats.highestRunLevel=Math.max(stats.highestRunLevel,player.level);stats.classMaxLevel[player.classId]=Math.max(stats.classMaxLevel[player.classId]||1,player.level);stats.highestGold=Math.max(stats.highestGold,player.gold);
@@ -70,8 +101,7 @@
     if(rewards<1)return false;
     const state=meta();state.prestige=PRESTIGE.award(state.prestige,rewards);state.purchased={};state.level=1;state.xp=0;state.xpNext=legacyXpForLevel(1);state.points=remainder;
     call('hidePrestigeHeirloomOverlay');
-    if(call('storageUnlocked'))call('syncStorage');
-    const cap=call('getHeirloomSlots');state.heirlooms=(state.heirlooms||[]).slice(0,cap).map(item=>call('normalizeSavedItem',item));
+    call('syncHeirloomState');
     call('saveMeta');checkDynamicClassUnlocks();call('sfxHoly');call('showToast',`Prestige gained ${rewards} unspent Prestige Point${rewards===1?'':'s'}`);call('renderTalents');call('updateMetaUI');call('openStartScreen');return true;
   }
 
@@ -114,7 +144,7 @@
     if(kind==='setPieces')return call('mythicalSetCount')>=Number(parts[1]||0);
     if(kind==='merchantKills')return (state.merchantKills||0)>=Number(parts[1]||0);
     if(kind==='hellUnlocked')return !!state.hellUnlocked;
-    if(kind==='heirloomStorageUnlocked')return !!state.heirloomStorageUnlocked||call('storageUnlocked');
+    if(kind==='heirloomStorageUnlocked')return heirloomStorageUnlocked();
     if(kind==='legendaryRelics')return (state.legendaryRelics||[]).length>=Number(parts[1]||0);
     if(kind==='devilBossKills')return (state.devilBossKills||0)>=Number(parts[1]||0);
     if(kind==='devilHornsFound')return !!state.devilHornsFound;
@@ -261,6 +291,7 @@
   const api=Object.freeze({
     owner:OWNER,apiVersion:1,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
+    heirloomLoadoutCapacity,heirloomStorageUnlocked,heirloomStorageCapacity,heirloomStorageMilestones,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
     hasAnyBoardClear:anyBoardClear,achievementDone,achievementConditionText,achievementRewardText,achievementGateConditionText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
     isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks

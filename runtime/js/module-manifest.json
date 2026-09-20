@@ -65,6 +65,7 @@
     "item-consumables",
     "item-generation",
     "item-operations",
+    "item-heirlooms",
     "items-facade",
     "progression-talents",
     "progression-prestige",
@@ -797,6 +798,18 @@
       ]
     },
     {
+      "id": "item-heirlooms",
+      "path": "js/items/heirlooms.js",
+      "domain": "items/heirloom-vault-inventory-and-active-loadout-operations",
+      "status": "extracted",
+      "requires": [
+        "item-equipment"
+      ],
+      "provides": [
+        "DiceboundHeirloomOperations"
+      ]
+    },
+    {
       "id": "items-facade",
       "path": "js/items/facade.js",
       "domain": "items/public-items-subsystem-facade",
@@ -806,7 +819,8 @@
         "item-equipment",
         "item-consumables",
         "item-generation",
-        "item-operations"
+        "item-operations",
+        "item-heirlooms"
       ],
       "provides": [
         "DiceboundItems"
@@ -1254,7 +1268,8 @@
         "ui-info-guide",
         "combat-victory-resolution",
         "items-facade",
-        "pet-lifecycle"
+        "pet-lifecycle",
+        "item-heirlooms"
       ],
       "provides": []
     }

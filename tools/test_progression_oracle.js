@@ -96,7 +96,7 @@ async function main(){
 
       {const before=restore('moon-held');progression.setPrestige({count:3,moon:{legacySpent:0,purchases:[]}});finish({name:'moon-held',kind:'moon',inspect:progression.prestigeInspect()},before);}
       {const before=restore('moon-random-stats');progression.setPrestige({count:1,moon:{legacySpent:0,purchases:[]}});const result=progression.prestigeDomainPurchase('five-random-stats');finish({name:'moon-random-stats',kind:'moon',result,inspect:progression.prestigeInspect()},before);}
-      {const before=restore('moon-storage-chain');progression.setPrestige({count:8,moon:{legacySpent:0,purchases:[]}});const a=progression.prestigeDomainPurchase('heirloom-storage'),b=progression.prestigeDomainPurchase('heirloom-slot-i'),c=progression.prestigeDomainPurchase('heirloom-slot-ii');finish({name:'moon-storage-chain',kind:'moon',results:[a,b,c],inspect:progression.prestigeInspect()},before);}
+      {const before=restore('moon-storage-chain');progression.setPrestige({count:8,moon:{legacySpent:0,purchases:[]}});const a=progression.prestigeDomainPurchase('heirloom-storage'),b=progression.prestigeDomainPurchase('heirloom-vault-expansion'),c=progression.prestigeDomainPurchase('heirloom-vault-expansion');finish({name:'moon-storage-chain',kind:'moon',results:[a,b,c],inspect:progression.prestigeInspect()},before);}
       {const before=restore('moon-refund');progression.setPrestige({count:5,moon:{legacySpent:0,purchases:[]}});const a=progression.prestigeDomainPurchase('heirloom-storage'),b=progression.prestigeDomainPurchase('five-random-stats'),refund=progression.prestigeDomainRefund();finish({name:'moon-refund',kind:'moon',results:[a,b],refund,inspect:progression.prestigeInspect()},before);}
       {const before=restore('moon-normalize');progression.setPrestige({count:4,moon:{legacySpent:0,purchases:[{nodeId:'five-random-stats',cost:1,stats:{attack:2,crit:1,luck:2}},{nodeId:'heirloom-storage',cost:1,stats:{}}]}});const first=progression.prestigeInspect();progression.setPrestige(progression.rawPrestige());const second=progression.prestigeInspect();finish({name:'moon-normalize',kind:'moon',first,second},before);}
 
@@ -125,8 +125,39 @@ async function main(){
     const crownshot=heroMastery?.entries?.find(entry=>entry.id==="hero-talent:ranger:ranger_crownshot");
     assert.ok(crownshot,"frozen Progression fixture lost Ranger Crownshot");
     crownshot.description="Clear Board 1 as Ranger. Unlocks this hero-specific talent.";
-    assert.deepEqual(actual.cases,expected);
-    console.log(`Progression oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
+    // #330 deliberately redesigns Moon Heirloom nodes and adds derived lifetime
+    // Prestige acceleration fields. Preserve the old oracle for every unrelated
+    // Progression behavior while focused #330 tests own the changed semantics.
+    const canonicalizePurchase=result=>{
+      if(!result||typeof result!=="object")return result;
+      const copy=structuredClone(result);
+      delete copy.rank;
+      delete copy.cost;
+      if(copy.node){
+        copy.node={
+          id:copy.node.id,
+          cost:copy.node.cost,
+          refundable:copy.node.refundable,
+          kind:copy.node.kind,
+          placement:copy.node.placement
+        };
+      }
+      return copy;
+    };
+    const canonicalize=cases=>structuredClone(cases).map(entry=>{
+      if(entry.name==="moon-storage-chain")return {name:entry.name,kind:entry.kind,rngCalls:entry.rngCalls,rngState:entry.rngState};
+      if(entry.kind==="moon"){
+        if(entry.result)entry.result=canonicalizePurchase(entry.result);
+        if(Array.isArray(entry.results))entry.results=entry.results.map(canonicalizePurchase);
+        for(const key of ["inspect","first","second"]){
+          const view=entry[key];if(!view)continue;
+          delete view.nodes;delete view.legacyXpMultiplier;delete view.legacyXpBonusPercent;
+        }
+      }
+      return entry;
+    });
+    assert.deepEqual(canonicalize(actual.cases),canonicalize(expected));
+    console.log(`Progression oracle PASS: ${actual.cases.length} released behavior cases preserve all unrelated output/state/RNG facts from ${fixture.baselineVersion}; #330 Moon semantics are covered by focused tests.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }

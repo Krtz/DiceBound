@@ -29,9 +29,11 @@
   if(!dbItemGenerationOwner)throw new Error("dicebound.js requires DiceboundItemGeneration before loading.");
   const dbItemOperationsOwner=window.DiceboundItemOperations;
   if(!dbItemOperationsOwner)throw new Error("dicebound.js requires DiceboundItemOperations before loading.");
+  const dbHeirloomOperationsOwner=window.DiceboundHeirloomOperations;
+  if(!dbHeirloomOperationsOwner)throw new Error("dicebound.js requires DiceboundHeirloomOperations before loading.");
   const dbItems=window.DiceboundItems;
   if(!dbItems)throw new Error("dicebound.js requires DiceboundItems before loading.");
-  let dbItemGeneration=null,dbItemOperations=null;
+  let dbItemGeneration=null,dbItemOperations=null,dbHeirloomOperations=null;
 
   let elementChanceForRarity,rollGearRarity,generatePhilosophersStone;
   let v19SetDamageBonus,v19SetProcBonus,v19SetPetDoubleBonus;
@@ -47,7 +49,12 @@
     rawSellValue:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.rawSellValue(item);},
     score:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.score(item);},
     formatBonuses:item=>formatBonuses(item),
-    formatComparison:(item,current)=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.formatComparison(item,current);}
+    formatComparison:(item,current)=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.formatComparison(item,current);},
+    syncHeirloomState:()=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.sync();},
+    toggleStoredHeirloomActive:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleStoredActive(item);},
+    discardStoredHeirloom:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.discardStored(item);},
+    toggleRunHeirloomStorage:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleRunStorage(item);},
+    toggleLegacyHeirloom:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleLegacy(item);}
   });
   const dbRoadEvents=window.DiceboundRoadEvents;
   if(!dbRoadEvents)throw new Error("dicebound.js requires DiceboundRoadEvents before loading.");
@@ -133,9 +140,6 @@
   const DIBO_ELEMENTS=[...DB_ELEMENT_CONTENT.coreIds];
   const PET_UNLOCK_REQUIREMENT=dbPetLifecycleOwner.unlockRequirement;
   const GUARDIAN_SPECIAL_INTERVAL=5;
-  const DB_HEIRLOOM_STORAGE_NODE='heirloom-storage';
-  const DB_HEIRLOOM_SLOT_I_NODE='heirloom-slot-i';
-  const DB_HEIRLOOM_SLOT_II_NODE='heirloom-slot-ii';
 
         const DB317_CLASSES_RAW=window.DiceboundClasses?.createRegistry();
   if(!DB317_CLASSES_RAW)throw new Error("DiceboundClasses must load before dicebound.js");
@@ -591,29 +595,9 @@
   if(!dbEquipmentUi)throw new Error('DiceBound requires the equipment and Heirloom UI module before dicebound.js');
   function dbEquipmentUiState(){return {
     equipment:player.equipment||{},heirlooms:meta.heirlooms||[],storage:meta.heirloomStorage||[],
-    storageUnlocked:!!v24StorageUnlocked?.(),storageCapacity:v24StorageCapacity?.()||0,
-    activeCapacity:getHeirloomSlots(),storageMilestones:v24StorageMilestones?.()||[]
+    storageUnlocked:dbProgression.heirloomStorageUnlocked(),storageCapacity:dbProgression.heirloomStorageCapacity(),
+    activeCapacity:dbProgression.heirloomLoadoutCapacity(),storageMilestones:dbProgression.heirloomStorageMilestones()
   };}
-  function dbEquipmentUiToggleStoredActive(item){
-    let hs=[...(meta.heirlooms||[])],index=hs.findIndex(entry=>entry.id===item.id);
-    if(index>=0)hs.splice(index,1);
-    else{const same=hs.findIndex(entry=>entry.slot===item.slot);if(same>=0)hs.splice(same,1);if(hs.length>=getHeirloomSlots()){showToast(`Active heirloom loadout is full (${getHeirloomSlots()})`);return false;}hs.push(normalizeSavedItem(item));}
-    meta.heirlooms=hs;saveMeta();return true;
-  }
-  function dbEquipmentUiDiscardStored(item){meta.heirloomStorage=(meta.heirloomStorage||[]).filter(entry=>entry.id!==item.id);meta.heirlooms=(meta.heirlooms||[]).filter(entry=>entry.id!==item.id);saveMeta();showToast(`${item.name} removed from Heirloom Storage`);return true;}
-  function dbEquipmentUiToggleRunStorage(item){
-    let storage=[...(meta.heirloomStorage||[])],index=storage.findIndex(entry=>entry.id===item.id);
-    if(index>=0){storage.splice(index,1);meta.heirlooms=(meta.heirlooms||[]).filter(entry=>entry.id!==item.id);}
-    else{if(storage.length>=v24StorageCapacity()){showToast('Heirloom Storage is full');return false;}storage.push(normalizeSavedItem(item));}
-    meta.heirloomStorage=storage;saveMeta();return true;
-  }
-  function dbEquipmentUiToggleLegacyHeirloom(item){
-    if(!window.DiceboundEquipment.isHeirloomEligible(item)){showToast(`${item.name} cannot become an heirloom`);return false;}
-    let heirlooms=[...(meta.heirlooms||[])],index=heirlooms.findIndex(entry=>entry.id===item.id);
-    if(index>=0)heirlooms.splice(index,1);
-    else{const same=heirlooms.findIndex(entry=>entry.slot===item.slot);if(same>=0)heirlooms.splice(same,1);if(heirlooms.length>=getHeirloomSlots())heirlooms.shift();heirlooms.push(JSON.parse(JSON.stringify(item)));sfx.holy();showToast(`${item.name} bound as heirloom`);}
-    meta.heirlooms=heirlooms;saveMeta();return true;
-  }
   function dbEquipmentUiLootCopy(item){
     if(item?.rarity==='legendary')return {title:'LEGENDARY ITEM FOUND!',subtitle:'A 151–210 point generated item carrying one build-changing Legendary Effect.'};
     if(item?.rarity==='mythical'&&db060NamedMythicals?.has?.(item.name))return {subtitle:'A named Mythical relic. Prestige crafting will become its long-term reconstruction path.'};
@@ -633,8 +617,8 @@
     find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,
     getState:dbEquipmentUiState,getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
     resolveEquipmentArt:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item),itemSellValue:(...args)=>dbItems.sellValue(...args),
-    syncStorage:()=>v24SyncStorage?.(),toggleStoredActive:dbEquipmentUiToggleStoredActive,discardStored:dbEquipmentUiDiscardStored,
-    toggleRunStorage:dbEquipmentUiToggleRunStorage,toggleLegacyHeirloom:dbEquipmentUiToggleLegacyHeirloom,
+    syncStorage:()=>dbItems.syncHeirloomState(),toggleStoredActive:item=>dbItems.toggleStoredHeirloomActive(item),discardStored:item=>dbItems.discardStoredHeirloom(item),
+    toggleRunStorage:item=>dbItems.toggleRunHeirloomStorage(item),toggleLegacyHeirloom:item=>dbItems.toggleLegacyHeirloom(item),
     isHeirloomEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),confirm:diceboundConfirm,
     afterStorageChange:()=>updateMetaUI(),lootCopy:dbEquipmentUiLootCopy
   });
@@ -646,13 +630,18 @@
     isRunFinalized:()=>runFinalized,setRunFinalized:value=>{runFinalized=!!value;},getLastLegacyAward:()=>lastLegacyAward,setLastLegacyAward:value=>{lastLegacyAward=value;},setLastGoldLegacyAward:value=>{lastGoldLegacyAward=value;},
     getTilesMovedThisRun:()=>tilesMovedThisRun,getRolls:()=>rolls,isNightmare:()=>!!nightmareMode,random:()=>random(),updateMetaUI:()=>updateMetaUI(),
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
-    storageUnlocked:()=>!!v24StorageUnlocked?.(),syncStorage:()=>v24SyncStorage?.(),getHeirloomSlots:()=>getHeirloomSlots(),normalizeSavedItem:item=>normalizeSavedItem(item),
+    getEquipmentSlotCount:()=>EQUIPMENT_SLOTS.length,syncHeirloomState:()=>dbItems.syncHeirloomState(),
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
     ensureAlphaMeta:()=>ensureAlphaMeta(),hasBoardClear:(classId,board)=>hasBoardClear(classId,board),mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,
     getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
     classUnlockRecordObservedProgress:ctx=>DB_CLASS_UNLOCK_RULES.recordObservedProgress(ctx),classUnlockResolveDynamic:options=>DB_CLASS_UNLOCK_RULES.resolveDynamic(options),
     classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>window.DiceboundClassChooser.render(),addLog:html=>addLog(html),
     sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
+  });
+  dbHeirloomOperations=dbHeirloomOperationsOwner.createController({
+    getMeta:()=>meta,normalizeItem:item=>normalizeSavedItem(item),isEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),
+    storageUnlocked:()=>dbProgression.heirloomStorageUnlocked(),storageCapacity:()=>dbProgression.heirloomStorageCapacity(),activeCapacity:()=>dbProgression.heirloomLoadoutCapacity(),
+    saveMeta:()=>saveMeta(),showToast:(...args)=>showToast(...args),sfxHoly:()=>sfx.holy()
   });
   const talentRank=id=>dbProgression.talentRank(id);
 
@@ -727,7 +716,6 @@
     holy(){playSfx('holy',()=>{[392,523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.23,"sine",.045),i*115));},1)}
   };
 
-  function getHeirloomSlots(){return 1+talentRank("legacy_heirloom")+((meta.prestige?.count||0)>=20?1:0)+((meta.prestige?.count||0)>=60?1:0);}
   function applyTalentBonuses(){
     const rank=talentRank;
     if(rank("roadborn")){player.maxHp+=5;player.hp+=5;player.attack+=2;player.defense+=2;}
@@ -2013,7 +2001,7 @@ function returnToRoad(...args){
         summary:v22CampSummaryText(),
         prestigeSummary:`${prestigeSummary()} · ${dbProgression.allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
         ...dbEquipmentUi.campView(),
-        reveals:{...(meta.campReveals||{})},heirloomStorageUnlocked:!!meta.heirloomStorageUnlocked||!!v24StorageUnlocked?.(),
+        reveals:{...(meta.campReveals||{})},heirloomStorageUnlocked:dbProgression.heirloomStorageUnlocked(),
         nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
         hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
       };
@@ -2099,7 +2087,7 @@ function returnToRoad(...args){
     getTalents:()=>talents,
     getState:()=>{
       const pet=PETS[meta.activePet]||PETS.neutral,petState=meta.pets?.[meta.activePet]||{level:1};
-      return {level:meta.level,points:meta.points,runs:meta.runs,petLabel:`${pet.name} Lv ${petState.level||1}`,heirlooms:`${(meta.heirlooms||[]).length} / ${getHeirloomSlots()}`};
+      return {level:meta.level,points:meta.points,runs:meta.runs,petLabel:`${pet.name} Lv ${petState.level||1}`,heirlooms:`${(meta.heirlooms||[]).length} / ${dbProgression.heirloomLoadoutCapacity()}`};
     },
     rankFor:talentRank,
     isAvailable:talentAvailable,
@@ -2119,22 +2107,22 @@ function returnToRoad(...args){
     find:$,
     getState:()=>{
       const total=dbProgression.allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
-      return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Each unspent point grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
+      return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
     },
     prestige:()=>prestigeTree(),
     purchase:id=>{
       if(gameStarted){showToast('Spend Prestige Points between runs.');return Object.freeze({ok:false,reason:'Prestige Moon purchases are available between runs.'});}
       const result=dbProgression.prestigePurchase(id);
       if(!result.ok){showToast(result.reason);return result;}
-      const storagePurchase=[DB_HEIRLOOM_STORAGE_NODE,DB_HEIRLOOM_SLOT_I_NODE,DB_HEIRLOOM_SLOT_II_NODE].includes(id);
-      if(storagePurchase){if(id===DB_HEIRLOOM_STORAGE_NODE)meta.heirloomStorageUnlocked=true;v24SyncStorage();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} purchased.`);}else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
+      const heirloomPurchase=['heirloom-storage','heirloom-vault-expansion','heirloom-loadout'].includes(result.node.kind);
+      if(heirloomPurchase){dbItems.syncHeirloomState();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} ${result.rank>1?`rank ${result.rank} `:''}purchased.`);}else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
       saveMeta();updateMetaUI();return result;
     },
     refundAll:async()=>{
       if(gameStarted){showToast('Refund Prestige Points between runs.');return false;}
       const current=dbProgression.prestigeInspect();
       if(!current.refundableSpent)return false;
-      if(!(await diceboundConfirm(`Refund ${current.refundableSpent} refundable Prestige Point${current.refundableSpent===1?'':'s'}? Permanent Heirloom purchases stay unlocked.`,{title:'Refund Prestige stats?',confirmLabel:'Refund stats',danger:true})))return false;
+      if(!(await diceboundConfirm(`Refund ${current.refundableSpent} refundable Prestige Point${current.refundableSpent===1?'':'s'}? Permanent structural Moon upgrades stay unlocked.`,{title:'Refund Prestige stats?',confirmLabel:'Refund stats',danger:true})))return false;
       const result=dbProgression.prestigeRefundAll();saveMeta();updateMetaUI();showToast(`Refunded ${result.refunded} Prestige Point${result.refunded===1?'':'s'}.`);return true;
     },
     afterClose:()=>v22UpdateCamp()
@@ -2182,7 +2170,6 @@ function returnToRoad(...args){
 
   if($('restartBtn'))$('restartBtn').textContent='⛺ Back to camp';
 
-  meta.heirloomStorageUnlocked=!!meta.heirloomStorageUnlocked;
   meta.heirloomStorage=Array.isArray(meta.heirloomStorage)?meta.heirloomStorage.map(normalizeSavedItem):[];
   meta.devilPrimed=!!meta.devilPrimed;meta.devilBossKills=Number(meta.devilBossKills)||0;meta.devilHornsFound=Number(meta.devilHornsFound)||0;
   meta.legendaryRelics=Array.isArray(meta.legendaryRelics)?meta.legendaryRelics:[];
@@ -2242,13 +2229,6 @@ function returnToRoad(...args){
     {pieces:2,text:'+2% all damage.'},{pieces:3,text:'+4% all damage and +4% elemental proc chance.'},{pieces:4,text:'+7% all damage, +5% elemental proc chance, 25 starting Ultimate, +8% pet double-attack chance and 5% less Guardian-special damage.'},{pieces:5,text:'+10% all damage, +7% elemental proc chance, +5% elemental power, 30 starting Ultimate, 1 starting Barrier, +10% pet double-attack chance and 10% less Guardian-special damage.'},{pieces:6,text:'+14% all damage, +10% elemental proc chance, +9% elemental power, 35 starting Ultimate, +13% pet double-attack chance and 15% less Guardian-special damage.'},{pieces:7,text:'+20% all damage, +13% elemental proc chance, +14% elemental power, 40 starting Ultimate, +16% pet double-attack chance, 20% less Guardian-special damage, and once per battle at ≤25% HP restore 18% max HP + gain 1 Barrier.'}
   ];}
 
-  function v24StorageUnlocked(){return DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_STORAGE_NODE);}
-  function v24StorageCapacity(){if(!v24StorageUnlocked())return 0;let n=EQUIPMENT_SLOTS.length;if((meta.board5Clears||0)>0)n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE))n++;if(DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE))n++;if((meta.merchantKills||0)>=1)n++;return n;}
-  function v24SyncStorage(){
-    if(!v24StorageUnlocked())return;const byId=new Map((meta.heirloomStorage||[]).map(i=>[i.id,normalizeSavedItem(i)]));(meta.heirlooms||[]).forEach(i=>byId.set(i.id,normalizeSavedItem(i)));meta.heirloomStorage=[...byId.values()].slice(0,v24StorageCapacity());const ids=new Set(meta.heirloomStorage.map(i=>i.id));meta.heirlooms=(meta.heirlooms||[]).filter(i=>ids.has(i.id)).slice(0,getHeirloomSlots());saveMeta();
-  }
-  function v24StorageMilestones(){return [{on:(meta.board5Clears||0)>0,text:'Board 5 cleared'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_I_NODE),text:'Storage Slot I purchased'},{on:DB_PRESTIGE.hasPurchase(meta.prestige,DB_HEIRLOOM_SLOT_II_NODE),text:'Storage Slot II purchased'},{on:(meta.merchantKills||0)>=1,text:'Road Merchant defeated'}];}
-
   function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
@@ -2263,9 +2243,9 @@ function returnToRoad(...args){
   DB24.modules.camp={refresh:v24RefreshCamp};
   window.DiceboundCamp.configureShell({refreshCampV24:()=>v24RefreshCamp()});
 
-      DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
+      DB24.modules={rarity:{info:rarityInfo},storage:{capacity:()=>dbProgression.heirloomStorageCapacity(),render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
-  setTimeout(()=>{if(v24StorageUnlocked())v24SyncStorage();v24RefreshCamp();window.DiceboundTalentTree.render();renderEquipment();v24UpdateShieldBars();},0);
+  setTimeout(()=>{if(dbProgression.heirloomStorageUnlocked())dbItems.syncHeirloomState();v24RefreshCamp();window.DiceboundTalentTree.render();renderEquipment();v24UpdateShieldBars();},0);
 
   /* v2.4 final presentation consistency ----------------------------------- */
   function v24RefreshDebugLabels(){
@@ -2519,7 +2499,7 @@ dbReturnToRoadTraceReady=true;
 
   /* RANDOM CLASS ----------------------------------------------------------- */
   /* PRESTIGE: STORAGE REPLACES SURVIVOR CHOICE ----------------------------- */
-  async function prestigeTree(){const total=dbProgression.allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Storage and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return dbProgression.completePrestige(total);}
+  async function prestigeTree(){const total=dbProgression.allocatedTalentPoints()+(meta.points||0),rewards=db0633PrestigeOfferPoints(total),remainder=total%9;if(rewards<1)return false;const warning=`Prestige all ${total} talent points? Every 9 points becomes 1 unspent Prestige Point (${rewards} reward${rewards===1?'':'s'}). ${remainder?`${remainder} leftover point${remainder===1?'':'s'} will remain after the reset. `:''}Purchased Heirloom Vault and your stored collection persist; there is no survivor-pick step.${gameStarted?' THIS ENDS THE CURRENT RUN.':''}`;if(!(await diceboundConfirm(warning,{title:'Prestige?',confirmLabel:'Prestige',danger:true})))return false;return dbProgression.completePrestige(total);}
 
   /* ROADKEEPER RARITY GUIDE ------------------------------------------------ */
 
@@ -4552,7 +4532,7 @@ dbReturnToRoadTraceReady=true;
   /* SEMANTIC OWNER — Player / per-run initialization (#311). */
   dbRun.configurePlayerInitialization({
     getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
-    setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>getHeirloomSlots(),
+    setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>dbProgression.heirloomLoadoutCapacity(),
     equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
     classIdentityActive:id=>classIdentityActive(id),classHasMechanic:id=>classHasMechanic(id),shuffledPetIds:()=>dbPets.shuffledPetIds(),setCombatKind:value=>{v16CombatKind=value;},
