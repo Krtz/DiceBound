@@ -8,7 +8,7 @@ on:
       - .github/workflows/materialize-06715.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   materialize:
@@ -28,26 +28,44 @@ jobs:
         shell: pwsh
         run: |
           python tools/set_project_version.py --version 0.6.7.15 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/refresh_runtime_manifest.py --version 0.6.7.15 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/prepare_release.py --version 0.6.7.15 --channel Beta
-      - name: Run focused #330 tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run focused tests fail-fast
         shell: pwsh
         run: |
-          node tools/test_prestige_module.js
-          node tools/test_heirloom_progression.js
-          node tools/test_06515_prestige_heirloom_ui.js
-          node tools/test_items_facade.js
-          node tools/test_talent_registry.js
-          node tools/test_progression_owner.js
-      - name: Commit generated candidate metadata
-        shell: pwsh
-        run: |
-          git config user.name "dicebound-materializer[bot]"
-          git config user.email "dicebound-materializer[bot]@users.noreply.github.com"
-          git add -A
-          if (git diff --cached --quiet) {
-            Write-Host "No materialized changes."
-          } else {
-            git commit -m "release: materialize Beta 0.6.7.15 candidate"
-            git push origin HEAD:feature/0.6.7.15-heirloom-progression
+          $tests = @(
+            "tools/test_prestige_module.js",
+            "tools/test_heirloom_progression.js",
+            "tools/test_06515_prestige_heirloom_ui.js",
+            "tools/test_items_facade.js",
+            "tools/test_talent_registry.js",
+            "tools/test_progression_owner.js"
+          )
+          foreach ($test in $tests) {
+            node $test
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
+      - name: Show materialized files
+        shell: pwsh
+        run: |
+          git status --short
+          git diff --name-only
+      - name: Stage candidate artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path candidate | Out-Null
+          Copy-Item runtime/build-info.json candidate/runtime-build-info.json
+          Copy-Item wrapper-source/config/project.json candidate/project.json
+          Copy-Item runtime/js/version.js candidate/version.js
+          Copy-Item runtime/index.html candidate/index.html
+          Copy-Item wrapper-source/wrappers/webview2/native-go/main.go candidate/native-main.go
+          Copy-Item wrapper-source/release/generated/release-spec.json candidate/release-spec.json
+          Copy-Item wrapper-source/release/generated/release-notes.md candidate/release-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: materialized-0.6.7.15
+          path: candidate/
+          if-no-files-found: error
