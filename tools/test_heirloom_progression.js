@@ -9,7 +9,7 @@ const vm=require("node:vm");
 const root=path.resolve(__dirname,"..");
 const context={window:{},console};context.window.window=context.window;
 vm.createContext(context);
-for(const rel of ["runtime/js/progression/talents.js","runtime/js/progression/prestige.js","runtime/js/progression/lifecycle.js","runtime/js/items/heirlooms.js"]){
+for(const rel of ["runtime/js/progression/talents.js","runtime/js/progression/prestige.js","runtime/js/progression/career-history.js","runtime/js/progression/lifecycle.js","runtime/js/items/heirlooms.js"]){
   vm.runInContext(fs.readFileSync(path.join(root,rel),"utf8"),context,{filename:rel});
 }
 
@@ -45,7 +45,7 @@ progression.configure({
   getTilesMovedThisRun:()=>10,
   getRolls:()=>7,
   isNightmare:()=>false,
-  ensureAlphaMeta:()=>stats,
+  getCareerRunSnapshot:()=>({classId:player.classId,mode:"normal",boardReached:1,level:player.level,gold:player.gold}),
   updateMetaUI:()=>{},
   getRunTalentSnapshot:()=>null,
   setRunTalentSnapshot:()=>null

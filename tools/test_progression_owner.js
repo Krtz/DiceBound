@@ -85,7 +85,13 @@ for(const shadow of [
   "DB_CLASS_UNLOCK_RULES.recordObservedProgress(dbClassUnlockContext())",
   "DB_CLASS_UNLOCK_RULES.resolveDynamic({getContext:()=>dbClassUnlockContext()",
   "function baseClassUnlocked(id){return DB_CLASS_UNLOCK_RULES",
-  "if(id===\"bloodmage\"){meta.bloodmageUnlocked=true"
+  "if(id===\"bloodmage\"){meta.bloodmageUnlocked=true",
+  "function defaultLifetimeStats(){",
+  "function ensureAlphaMeta(){",
+  "function boardClearMode(){",
+  "function boardClearKey(",
+  "function hasBoardClear(",
+  "function recordBoardClear("
 ])assert.ok(!monolith.includes(shadow),`retired Progression semantic shadow remains: ${shadow}`);
 
 for(const owned of [
@@ -93,7 +99,8 @@ for(const owned of [
   "achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked",
   "heroMasteryEntries","achievementCount","isClassUnlocked","commitClassUnlock","unlockClass",
   "checkDynamicClassUnlocks","repairTalentPrerequisites","gameplayTalentRank","allocatedTalentPoints",
-  "heirloomLoadoutCapacity","heirloomStorageUnlocked","heirloomStorageCapacity","heirloomStorageMilestones"
+  "heirloomLoadoutCapacity","heirloomStorageUnlocked","heirloomStorageCapacity","heirloomStorageMilestones",
+  "careerStats","runHistory","recordRunStarted","recordBoardClear","hasBoardClear","recordDamageDealt","recordHealing","recordDamageTaken","recordGoldEarned","recordGoldSpent","recordPotionUse","recordPowerupTaken","recordElementProc","recordStrike","recordEnemyDefeats","recordVitals"
 ])assert.ok(lifecycle.includes(owned),`Progression owner capability missing: ${owned}`);
 
 assert.ok(monolith.includes("function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}"),"Prestige summary must route through DiceboundProgression");
@@ -102,4 +109,11 @@ assert.ok(monolith.includes("const result=dbProgression.prestigeRefundAll();"),"
 for(const shadow of ["DB_PRESTIGE.purchase(meta.prestige,id,random)","DB_PRESTIGE.refundAll(meta.prestige)","DB_PRESTIGE.inspect(meta.prestige)"])assert.ok(!monolith.includes(shadow),`ordinary Prestige Moon shadow remains: ${shadow}`);
 assert.ok(monolith.includes("isDone:achievement=>dbProgression.achievementDone(achievement)"),"Achievements UI must consume Progression completion policy");
 
-console.log("Progression owner PASS: call-only compatibility adapters are retired; intentional hooks/UI helpers and all Progression semantics route through DiceboundProgression.");
+const career=fs.readFileSync(path.join(root,"runtime/js/progression/career-history.js"),"utf8");
+assert.match(career,/owner:OWNER,HISTORY_LIMIT/);
+assert.match(career,/HISTORY_LIMIT=30/);
+assert.ok(monolith.includes("dbProgression.recordEnemyDefeats("),"semantic combat defeats must route through Progression");
+assert.ok(monolith.includes("dbProgression.recordRunStarted("),"run-start identity must route through Progression");
+assert.ok(monolith.includes("dbProgression.finalizeRun({outcome:"),"terminal outcomes must route through Progression");
+
+console.log("Progression owner PASS: Career telemetry/history and existing Progression semantics route through canonical owners with composition shadows drained.");

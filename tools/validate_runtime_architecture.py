@@ -485,7 +485,6 @@ def main() -> int:
         "data-info-done",
         "info-guide-chrome{position:sticky",
         "function guideHtml(",
-        "function lifetimeModel(",
     ]:
         if required_info_guide_behavior not in info_guide_source:
             errors.append(
@@ -496,13 +495,12 @@ def main() -> int:
         for expected_info_guide_adapter in [
             "let dbInfoGuide=null;",
             "function renderInfo(){return dbInfoGuide?.render();}",
-            "function renderLifetimeStats(){return dbInfoGuide?.renderStats();}",
             "function activateInfoTab(name='guide'){return dbInfoGuide?.activateTab(name);}",
             "function openInfo(){return dbInfoGuide?.open();}",
         ]:
             if expected_info_guide_adapter not in monolith_source:
                 errors.append("dicebound.js must retain only the thin Info/Guide lifecycle adapter")
-        for adapter in ["renderInfo", "renderLifetimeStats", "activateInfoTab", "openInfo"]:
+        for adapter in ["renderInfo", "activateInfoTab", "openInfo"]:
             if re.search(rf"(?m)^\s*{re.escape(adapter)}\s*=", monolith_source):
                 errors.append(f"dicebound.js retains retired {adapter} reassignment after Info/Guide extraction")
         for retired_info_guide_layer in [
@@ -1001,7 +999,7 @@ def main() -> int:
         "runtime.clearCheckpoint?.();",
         "if(runtime.isCompleting?.())",
         "runtime.setRunState?.({gameStarted:false,rollLocked:true});",
-        "const earned=Number(runtime.finalizeRun?.())||0;",
+        "const earned=Number(runtime.finalizeRun?.({outcome:'victory',boardReached:6}))||0;",
         "runtime.presentTerminalEnd?.(detail);",
         "if(first)runtime.recordFirstCompletion?.(detail);",
         "runtime.afterCompletion?.(detail);",

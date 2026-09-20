@@ -52,7 +52,7 @@ function harness(options={}) {
     delay:async ms=>call('delay',ms),
     winCombat:async()=>{call('win');currentEnemy=null;return 'win';},
     resolveEnemyResponse:async guarded=>{call('response',guarded);combatBusy=false;return 'response';},
-    ensureAlphaMeta:()=>stats,
+    recordCareerPotionUse:()=>{stats.potionsUsed=(stats.potionsUsed||0)+1;},
     checkDynamicClassUnlocks:()=>call('unlockCheck'),
     saveMeta:()=>call('save'),
     renderClassChooser:()=>call('chooser'),

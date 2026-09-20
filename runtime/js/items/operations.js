@@ -15,10 +15,10 @@
     const {
       getPlayer,getMeta,rarityValues,equipmentApi,classIdentityActive,bonusLabel,
       applyItemStats,clearGearTransform,applyGearTransform,usesMana,equipmentMana,syncMana,
-      ensureAlphaMeta,setStatsLastGold,rarityLabel,sfxLevel,sfxCoin,showToast,addLog,
+      recordCareerGoldEarned,setStatsLastGold,rarityLabel,sfxLevel,sfxCoin,showToast,addLog,
       renderEquipment,updateHUD
     }=services;
-    const required={getPlayer,getMeta,classIdentityActive,bonusLabel,applyItemStats,clearGearTransform,applyGearTransform,usesMana,equipmentMana,syncMana,ensureAlphaMeta,setStatsLastGold,rarityLabel,sfxLevel,sfxCoin,showToast,addLog,renderEquipment,updateHUD};
+    const required={getPlayer,getMeta,classIdentityActive,bonusLabel,applyItemStats,clearGearTransform,applyGearTransform,usesMana,equipmentMana,syncMana,recordCareerGoldEarned,setStatsLastGold,rarityLabel,sfxLevel,sfxCoin,showToast,addLog,renderEquipment,updateHUD};
     for(const [name,value] of Object.entries(required))if(typeof value!=='function')throw new Error(`DiceboundItemOperations requires ${name}.`);
     if(!rarityValues)throw new Error('DiceboundItemOperations requires rarity values.');
     if(!equipmentApi?.intrinsicBonusesForItem||!equipmentApi?.allBonusesForItem)throw new Error('DiceboundItemOperations requires equipment identity bonus helpers.');
@@ -98,7 +98,7 @@
       // v1.5 automatic sale of replaced gear occurred after the base equip.
       if(willSell){
         p.gold+=sale;
-        ensureAlphaMeta().goldEarned+=sale;
+        recordCareerGoldEarned(sale);
         setStatsLastGold(p.gold);
         sfxCoin();
         addLog(`Auto-sold replaced <b>${old.name}</b> for <b>${sale} gold</b>.`);

@@ -15,7 +15,7 @@
       "resolveCriticalTiers","rangerMarkTotal","setDamageBonus","petDamage","healPlayer","damageEnemy","animateClassAttack",
       "playElementAnimation","addCombatHistory","updateCombatUI","setCombatText","playHolySfx","triggerStrikeElements",
       "triggerElementEffect","identityFlash","reconcileDefeatedTarget","presentationTargetSnapshot","emitStrike","renderStrike",
-      "delay","chargeUltimate","hasDevilsHorns","hasLegendaryEffect","syncOuroborosAttack","syncOuroborosEconomy",
+      "delay","chargeUltimate","hasDevilsHorns","hasLegendaryEffect","syncOuroborosAttack","syncOuroborosEconomy","recordCareerStrike",
       "getElementKeys"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat strike-resolution runtime missing ${name}().`);
@@ -145,6 +145,7 @@
       elementDamage: element.totalDamage || 0, elementMessage: element.message || "", burst: base.burst || "",
       targetName: resolvedTarget.name, targetHp: resolvedTarget.hp, presentationTarget: rt.presentationTargetSnapshot()
     };
+    rt.recordCareerStrike(result);
     rt.emitStrike(result);
     rt.renderStrike(result);
     if(!echo)await rt.delay(460);

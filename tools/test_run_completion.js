@@ -20,7 +20,7 @@ for(const required of [
   "runtime.clearCheckpoint?.();",
   "if(runtime.isCompleting?.())",
   "runtime.setRunState?.({gameStarted:false,rollLocked:true});",
-  "const earned=Number(runtime.finalizeRun?.())||0;",
+  "const earned=Number(runtime.finalizeRun?.({outcome:'victory',boardReached:6}))||0;",
   "runtime.presentTerminalEnd?.(detail);",
   "if(first)runtime.recordFirstCompletion?.(detail);",
   "runtime.afterCompletion?.(detail);"
@@ -42,7 +42,7 @@ function scenario(mode="Normal"){
     setCompleting:value=>{state.completing=!!value;call(`completion:lock:${value}`);},
     setRunState:next=>{Object.assign(state,next);call(`run:${next.gameStarted}/${next.rollLocked}`);},
     isRunFinalized:()=>state.runFinalized,
-    finalizeRun:()=>{state.runFinalized=true;call("progression:finalize");return 91;},
+    finalizeRun:options=>{assert.equal(options?.outcome,"victory");assert.equal(options?.boardReached,6);state.runFinalized=true;call("progression:finalize");return 91;},
     getCompletionContext:()=>({mode,level:12,gold:345,rolls:67,legacyAward:91,goldLegacyAward:34}),
     updateHud:()=>call("ui:hud"),
     presentTerminalEnd:detail=>{state.presented=detail;call("ui:end-with-gear");},

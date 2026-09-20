@@ -21,12 +21,13 @@ assert.strictEqual(camp.layoutForViewport(1600,640).id,'stacked-or-short');
 assert.strictEqual(typeof camp.ensureOptionsButton,'function','Camp owns the semantic Options object too');
 assert.strictEqual(typeof camp.applyStageLayout,'function','Camp must own one final stage-layout writer');
 assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable by late patch code');
-assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
+assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campCareerBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
 assert.deepStrictEqual({...camp.stageAnchors.campNightmareBtn},{x:.889,y:.53,w:120},'Nightmare must move exactly 0.1 percentage points left without changing its vertical anchor');
 assert.deepStrictEqual({...camp.stageAnchors.campHellBtn},{x:.27,y:.33,w:118},'Hell must use the stable fallback anchor five percentage points right of the previous active volcano');
 assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.65,w:235},'Class Choice must sit another 10% lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
+assert.deepStrictEqual({...camp.stageAnchors.campCareerBtn},{x:.13,y:.62,w:145},'Career must have its own stable book destination without displacing the existing lower-left flow');
 assert.deepStrictEqual({...camp.stageAnchors.campBonfire},{x:.50,y:.72,w:170},'Bonfire must remain grounded in the lower clearing');
 assert.deepStrictEqual({...camp.stageAnchors.campGoBtn},{x:.85,y:.74,w:440,h:250},'Start Run must remain a major lower-right scene anchor with a matching hit area');
 assert.deepStrictEqual({...camp.stageAnchors.campChestBtn},{x:.64,y:.76,w:245,h:150},'Chest must remain lower-middle/right without overlapping Start Run');
@@ -59,7 +60,7 @@ assert.equal(typeof camp.renderPetFigure,'function','Camp must own semantic sele
 assert.match(source,/camp-pet-portrait/,'Camp selected Pet must use Camp-owned semantic art');
 
 const ids=[...camp.requiredSemanticIds()];
-for(const id of ['campTalentBtn','campInfoBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'])assert(ids.includes(id),`missing semantic Camp control ${id}`);
+for(const id of ['campTalentBtn','campInfoBtn','campCareerBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'])assert(ids.includes(id),`missing semantic Camp control ${id}`);
 assert(Object.isFrozen(camp.layouts),'layout definitions should not be mutable by late patch code');
 assert.doesNotMatch(source,/positionedLayoutControls/,'Camp must not retain the old partial-coordinate reassertion helper');
 assert.match(source,/function applyStageLayout\(/,'Camp must own the complete 16:9 stage calculation');

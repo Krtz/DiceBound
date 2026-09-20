@@ -12,7 +12,7 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat victory runtime is required.");
     const required = [
-      "getState", "ensureAlphaMeta", "recordBoardClear", "clearBloodOverhealTemp", "modifiedGold", "healPlayer",
+      "getState", "recordEnemyDefeats", "recordBoardClear", "clearBloodOverhealTemp", "modifiedGold", "healPlayer",
       "saveMeta", "showToast", "checkDynamicClassUnlocks", "addLog", "unlockClass", "refreshTile", "setCombatText",
       "playWin", "updateHud", "delay", "presentVictory", "hideCombatOverlay", "resetVictoryPresentation", "clearEncounterState",
       "grantXp", "getPendingLevelUps", "openLevelUp", "openCombatLootChain", "showLegendaryChoice", "advanceToNextBoard",
@@ -60,10 +60,7 @@
     const board = state.boardLevel, classId = p.classId;
 
     if (defeated) {
-      const stats = rt.ensureAlphaMeta();
-      stats.enemiesDefeated += all.length;
-      if (defeated.boss) stats.bossesDefeated++;
-      if (defeated.miniBoss) stats.minibossesDefeated++;
+      rt.recordEnemyDefeats(all,{boss:!!defeated.boss,miniboss:!!defeated.miniBoss});
       if (defeated.finalBoss) rt.recordBoardClear(board, classId);
     }
     if (p.bloodOverhealBonus) rt.clearBloodOverhealTemp();
@@ -187,9 +184,7 @@
   async function lateFinalCore(defeated, boardAtWin) {
     const rt = requireRuntime(), state = live(), p = state.player, meta = state.meta;
     const all = encounterEnemies(state, defeated), tileIndex = state.currentEnemyTile, classId = p.classId;
-    const stats = rt.ensureAlphaMeta();
-    stats.enemiesDefeated += all.length;
-    stats.bossesDefeated++;
+    rt.recordEnemyDefeats(all,{boss:true,miniboss:false});
     rt.recordBoardClear(boardAtWin, classId);
 
     const reward = rewardValues(state, all);

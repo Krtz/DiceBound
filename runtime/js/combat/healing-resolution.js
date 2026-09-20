@@ -12,7 +12,7 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Healing-resolution runtime is required.");
     const required = [
-      "getPlayer", "getCurrentEnemy", "ensureAlphaMeta", "setStatsLastHp", "saveMeta",
+      "getPlayer", "getCurrentEnemy", "recordCareerHealing", "setStatsLastHp", "saveMeta",
       "checkDynamicClassUnlocks", "isClassActive", "clamp", "identityFlash",
       "addCombatHistory", "syncShieldBars", "syncOuroborosAttack"
     ];
@@ -29,8 +29,7 @@
     const rt = requireRuntime(), p = player();
     amount = Math.max(0, Math.round(amount || 0));
     if (!amount) return 0;
-    const stats = rt.ensureAlphaMeta();
-    stats.healingDone += amount;
+    rt.recordCareerHealing(amount);
     rt.setStatsLastHp(p.hp);
     rt.saveMeta();
     rt.checkDynamicClassUnlocks();

@@ -2,10 +2,11 @@ from pathlib import Path
 import re
 root=Path(__file__).resolve().parents[1]
 mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
-for adapter in ['renderInfo', 'renderLifetimeStats', 'activateInfoTab', 'openInfo']:
+for adapter in ['renderInfo', 'activateInfoTab', 'openInfo']:
     assert len(re.findall(rf'function\s+{re.escape(adapter)}\s*\(', mono)) == 1, f'{adapter} must have one stable Info/Guide adapter'
     assert not re.search(rf'(?m)^\s*{re.escape(adapter)}\s*=', mono), f'{adapter} reassignment chain returned'
 assert 'let dbInfoGuide=null;' in mono
+assert not re.search(r'function\s+renderLifetimeStats\s*\(', mono), 'retired Info lifetime Stats adapter returned; Career owns lifetime presentation'
 assert 'openInfoV15' not in mono
 assert 'if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);' in mono
 for retired_transfer in ['function exportSave(', 'function importSave(', 'exportSave=dbInfoExportSave;', 'importSave=dbInfoImportSave;']:
@@ -168,7 +169,7 @@ assert mono.count('function v26ClearStoneBattle(') == 1, 'Stone cleanup must hav
 assert not re.search(r'(?m)^\s*healPlayer\s*=\s*function', mono), 'healPlayer reassignment chain must not return'
 assert "dbCombatHealingResolution=dbCombatHealingOwner.configure({" in mono, 'Healing owner is not configured by the composition root'
 assert 'dbCombat.heal(' in mono, 'Healing callers no longer route through the Combat facade'
-assert 'dbCombat.recordHealing(' in mono, 'Healing-record callers no longer route through the Combat facade'
+assert 'recordCareerHealing:amount=>dbProgression.recordHealing(amount)' in mono, 'Healing owner no longer reports resolved Career healing through Progression'
 assert 'dbCombat.clearBloodOverhealTemp(' in mono, 'Blood Overheal cleanup no longer routes through the Combat facade'
 assert 'dbCombat.clearStoneBattle(' in mono, 'Stone cleanup no longer routes through the Combat facade'
 
