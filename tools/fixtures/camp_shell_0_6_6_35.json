@@ -106,8 +106,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -165,8 +164,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -235,8 +233,7 @@
           "combatHidden": true,
           "victoryHidden": false,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -289,8 +286,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -346,8 +342,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -403,8 +398,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -460,8 +454,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -517,8 +510,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -574,8 +566,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -628,8 +619,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -685,8 +675,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": true
-        },
-        "requiredCount": 12
+        }
       }
     },
     {
@@ -747,8 +736,7 @@
           "combatHidden": true,
           "victoryHidden": true,
           "checkpoint": false
-        },
-        "requiredCount": 12
+        }
       }
     }
   ]
