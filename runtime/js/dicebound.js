@@ -4522,6 +4522,7 @@ dbReturnToRoadTraceReady=true;
     getClasses:()=>Object.values(CLASSES),
     getEnemies:()=>[...enemyPool,...Object.values(ENEMY_REGISTRY||{})],
     getPowerups:()=>upgrades,
+    getPets:()=>Object.values(PETS),
     onOpen:()=>saveMeta()
   });
 
