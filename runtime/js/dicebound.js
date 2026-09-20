@@ -2243,7 +2243,7 @@ function returnToRoad(...args){
   DB24.modules.camp={refresh:v24RefreshCamp};
   window.DiceboundCamp.configureShell({refreshCampV24:()=>v24RefreshCamp()});
 
-      DB24.modules={rarity:{info:rarityInfo},storage:{capacity:v24StorageCapacity,render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
+      DB24.modules={rarity:{info:rarityInfo},storage:{capacity:()=>dbProgression.heirloomStorageCapacity(),render:()=>dbEquipmentUi.renderCampStorage()},camp:DB24.modules.camp,testing:window.DiceboundV24Test};
   try{Object.defineProperty(window,'DiceboundModules24',{value:Object.freeze(DB24),enumerable:false,configurable:false,writable:false});}catch(e){}
   setTimeout(()=>{if(dbProgression.heirloomStorageUnlocked())dbItems.syncHeirloomState();v24RefreshCamp();window.DiceboundTalentTree.render();renderEquipment();v24UpdateShieldBars();},0);
 
