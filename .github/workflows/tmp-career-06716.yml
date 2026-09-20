@@ -1,4 +1,4 @@
-name: Temporary 0.6.7.16 Career validation
+name: Temporary 0.6.7.16 Career validation #2
 
 on:
   push:
@@ -26,6 +26,8 @@ jobs:
           Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
           $retired = Select-String -Path runtime/js/dicebound.js -Pattern "function defaultLifetimeStats\(","function ensureAlphaMeta\(","function boardClearKey\(","function recordBoardClear\(" -ErrorAction SilentlyContinue
           if ($retired) { $retired | Out-Host; exit 1 }
+          $legacyCareerPort = Get-ChildItem runtime/js -Recurse -Filter *.js | Select-String -Pattern "ensureAlphaMeta"
+          if ($legacyCareerPort) { $legacyCareerPort | Out-Host; exit 1 }
       - name: Focused Career contracts
         shell: pwsh
         run: |
