@@ -2087,7 +2087,7 @@ function returnToRoad(...args){
     getTalents:()=>talents,
     getState:()=>{
       const pet=PETS[meta.activePet]||PETS.neutral,petState=meta.pets?.[meta.activePet]||{level:1};
-      return {level:meta.level,points:meta.points,runs:meta.runs,petLabel:`${pet.name} Lv ${petState.level||1}`,heirlooms:`${(meta.heirlooms||[]).length} / ${getHeirloomSlots()}`};
+      return {level:meta.level,points:meta.points,runs:meta.runs,petLabel:`${pet.name} Lv ${petState.level||1}`,heirlooms:`${(meta.heirlooms||[]).length} / ${dbProgression.heirloomLoadoutCapacity()}`};
     },
     rankFor:talentRank,
     isAvailable:talentAvailable,
