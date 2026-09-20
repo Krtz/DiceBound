@@ -2,10 +2,11 @@ from pathlib import Path
 import re
 root=Path(__file__).resolve().parents[1]
 mono=(root/'runtime/js/dicebound.js').read_text(encoding='utf-8')
-for adapter in ['renderInfo', 'renderLifetimeStats', 'activateInfoTab', 'openInfo']:
+for adapter in ['renderInfo', 'activateInfoTab', 'openInfo']:
     assert len(re.findall(rf'function\s+{re.escape(adapter)}\s*\(', mono)) == 1, f'{adapter} must have one stable Info/Guide adapter'
     assert not re.search(rf'(?m)^\s*{re.escape(adapter)}\s*=', mono), f'{adapter} reassignment chain returned'
 assert 'let dbInfoGuide=null;' in mono
+assert not re.search(r'function\s+renderLifetimeStats\s*\(', mono), 'retired Info lifetime Stats adapter returned; Career owns lifetime presentation'
 assert 'openInfoV15' not in mono
 assert 'if(!meta.infoSeen)setTimeout(()=>activateInfoTab("guide"),250);' in mono
 for retired_transfer in ['function exportSave(', 'function importSave(', 'exportSave=dbInfoExportSave;', 'importSave=dbInfoImportSave;']:
