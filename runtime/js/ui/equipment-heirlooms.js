@@ -98,16 +98,16 @@
     if(!host){host=doc()?.createElement('div');if(!host)return null;host.id='campHeirloomStorage';host.className='heirloom-storage-wrap';panel.appendChild(host);}
     runtime.syncStorage?.();
     const current=state();
-    if(!current.storageUnlocked){host.innerHTML='<div class=\"storage-locked\"><b>🗄️ Heirloom Storage locked</b><br>Purchase Heirloom Storage on the Prestige Moon for 1 Prestige Point. It begins with one slot per equipment slot; Board 5, two permanent Moon slot purchases, and the Road Merchant can expand it.</div>';return Object.freeze({owner:OWNER,unlocked:false});}
+    if(!current.storageUnlocked){host.innerHTML='<div class=\"storage-locked\"><b>🗄️ Heirloom Vault locked</b><br>Purchase Heirloom Vault on the Prestige Moon for 1 Prestige Point. It begins with 8 slots; Vault Expansion adds 4 per rank, and Board 5, the Road Merchant, the Blood Mage and the Pale Devil each add one.</div>';return Object.freeze({owner:OWNER,unlocked:false});}
     const storage=current.storage||[],active=current.heirlooms||[],cap=Math.max(0,Number(current.storageCapacity)||0),activeCap=Math.max(0,Number(current.activeCapacity)||0),milestones=current.storageMilestones||[];
-    host.innerHTML=`<div class=\"heirloom-storage-head\"><div><b>🗄️ Heirloom Storage</b><br><span style=\"color:var(--muted)\">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run</span></div><div style=\"font-size:9px;color:var(--muted)\">Base 8 · ${milestones.map(entry=>`${entry.on?'✅':'⬜'} ${escapeHtml(entry.text)}`).join(' · ')}</div></div><div class=\"heirloom-storage-grid\" data-heirloom-storage-grid></div>`;
+    host.innerHTML=`<div class=\"heirloom-storage-head\"><div><b>🗄️ Heirloom Vault</b><br><span style=\"color:var(--muted)\">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run</span></div><div style=\"font-size:9px;color:var(--muted)\">Base 8 · ${milestones.map(entry=>`${entry.on?'✅':'⬜'} ${escapeHtml(entry.text)}`).join(' · ')}</div></div><div class=\"heirloom-storage-grid\" data-heirloom-storage-grid></div>`;
     const grid=host.querySelector('[data-heirloom-storage-grid]');
     storage.forEach(item=>{
       const on=active.some(entry=>entry?.id===item?.id),card=doc()?.createElement('div');if(!card||!grid)return;
       card.className=`heirloom-storage-item ${on?'active':''} ${item.rarity||''}`;
       card.innerHTML=`<b>${itemNameMarkup(item,'db-equipment-card-art')}</b><span>${escapeHtml(rarity(item).label||item.rarity||'Unknown')} · ${escapeHtml(label(item.slot))}<br>${escapeHtml(bonuses(item))}</span><div class=\"heirloom-storage-actions\"><button class=\"small-btn\" data-storage-toggle>${on?'Remove from active loadout':'Use next run'}</button><button class=\"small-btn danger\" data-storage-discard>Remove from chest</button></div>`;
       card.querySelector('[data-storage-toggle]')?.addEventListener('click',()=>{if(runtime.toggleStoredActive?.(item)!==false)refreshAfterStorageChange();});
-      card.querySelector('[data-storage-discard]')?.addEventListener('click',async()=>{if(!(await runtime.confirm?.(`Remove ${item.name} from Heirloom Storage?`,{title:'Remove stored heirloom?',confirmLabel:'Remove',danger:true})))return;if(runtime.discardStored?.(item)!==false)refreshAfterStorageChange();});
+      card.querySelector('[data-storage-discard]')?.addEventListener('click',async()=>{if(!(await runtime.confirm?.(`Remove ${item.name} from Heirloom Vault?`,{title:'Remove stored heirloom?',confirmLabel:'Remove',danger:true})))return;if(runtime.discardStored?.(item)!==false)refreshAfterStorageChange();});
       grid.appendChild(card);
     });
     return Object.freeze({owner:OWNER,unlocked:true,stored:storage.length,active:active.length});
@@ -119,7 +119,7 @@
     if(!grid)return null;
     grid.replaceChildren();
     if(current.storageUnlocked){
-      if(status)status.innerHTML=`Heirloom Storage: <strong>${(current.storage||[]).length}/${Math.max(0,Number(current.storageCapacity)||0)}</strong>. Click surviving run gear to store it. Choose the active next-run loadout from the Campsite chest.`;
+      if(status)status.innerHTML=`Heirloom Vault: <strong>${(current.storage||[]).length}/${Math.max(0,Number(current.storageCapacity)||0)}</strong>. Click surviving run gear to store it. Choose the active next-run loadout from the Campsite chest.`;
       if(!items.length){grid.innerHTML='<div class=\"hint\">No equipment survived this run. Stored heirlooms remain safe.</div>';renderEndStorageManager();return Object.freeze({owner:OWNER,storage:true,items:0});}
       const stored=current.storage||[];
       items.forEach(item=>{
@@ -148,16 +148,16 @@
     installStyles();const overlay=find('endOverlay'),modal=overlay?.querySelector('.modal');if(!modal)return null;
     let host=find('endStorageManager');if(!host){host=doc()?.createElement('div');if(!host)return null;host.id='endStorageManager';host.className='end-storage-manager';modal.insertBefore(host,find('endRestartBtn'));}
     const current=state();
-    if(!current.storageUnlocked){host.innerHTML='<h3>🗄️ Heirloom Storage</h3><div class=\"storage-locked\">Storage is not unlocked yet. Surviving equipment can still be handled with your normal heirloom slots.</div>';return Object.freeze({owner:OWNER,unlocked:false});}
+    if(!current.storageUnlocked){host.innerHTML='<h3>🗄️ Heirloom Vault</h3><div class=\"storage-locked\">Storage is not unlocked yet. Surviving equipment can still be handled with your normal heirloom slots.</div>';return Object.freeze({owner:OWNER,unlocked:false});}
     const storage=current.storage||[],active=current.heirlooms||[],cap=Math.max(0,Number(current.storageCapacity)||0),activeCap=Math.max(0,Number(current.activeCapacity)||0);
-    host.innerHTML=`<h3>🗄️ Heirloom Storage</h3><div class=\"end-storage-summary\">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run. Store surviving gear above, then manage the next-run loadout here before returning to camp.</div><div class=\"end-storage-grid\" data-end-storage-grid></div>`;
+    host.innerHTML=`<h3>🗄️ Heirloom Vault</h3><div class=\"end-storage-summary\">${storage.length}/${cap} stored · ${active.length}/${activeCap} equipped for the next run. Store surviving gear above, then manage the next-run loadout here before returning to camp.</div><div class=\"end-storage-grid\" data-end-storage-grid></div>`;
     const grid=host.querySelector('[data-end-storage-grid]');
     storage.forEach(item=>{
       const on=active.some(entry=>entry?.id===item?.id),card=doc()?.createElement('div');if(!card||!grid)return;
       card.className=`end-storage-card ${on?'active':''} ${item.rarity||''}`;
       card.innerHTML=`<b>${itemNameMarkup(item,'db-equipment-card-art')}</b><span>${escapeHtml(rarity(item).label||item.rarity||'Unknown')} · ${escapeHtml(label(item.slot))}<br>${escapeHtml(bonuses(item))}</span><div class=\"end-storage-actions\"><button class=\"small-btn\" data-end-storage-toggle>${on?'Unequip':'Use next run'}</button><button class=\"small-btn\" data-end-storage-discard>Discard</button></div>`;
       card.querySelector('[data-end-storage-toggle]')?.addEventListener('click',()=>{if(runtime.toggleStoredActive?.(item)!==false)refreshAfterStorageChange();});
-      card.querySelector('[data-end-storage-discard]')?.addEventListener('click',async()=>{if(!(await runtime.confirm?.(`Discard ${item.name} from Heirloom Storage?`,{title:'Discard stored heirloom?',confirmLabel:'Discard',danger:true})))return;if(runtime.discardStored?.(item)!==false)refreshAfterStorageChange();});
+      card.querySelector('[data-end-storage-discard]')?.addEventListener('click',async()=>{if(!(await runtime.confirm?.(`Discard ${item.name} from Heirloom Vault?`,{title:'Discard stored heirloom?',confirmLabel:'Discard',danger:true})))return;if(runtime.discardStored?.(item)!==false)refreshAfterStorageChange();});
       grid.appendChild(card);
     });
     return Object.freeze({owner:OWNER,unlocked:true,stored:storage.length,active:active.length});
