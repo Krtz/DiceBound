@@ -22,9 +22,11 @@
   function classes(){return runtime.getClasses?.()||[];}
   function enemies(){return runtime.getEnemies?.()||[];}
   function powerups(){return runtime.getPowerups?.()||[];}
+  function pets(){return runtime.getPets?.()||[];}
   function classById(id){return classes().find(entry=>entry.id===id)||null;}
   function enemyById(id){return enemies().find(entry=>entry.id===id)||null;}
   function powerupById(id){return powerups().find(entry=>entry.id===id)||null;}
+  function petById(id){return pets().find(entry=>entry.id===id)||null;}
 
   function installStyles(){
     const documentRef=doc();if(!documentRef||documentRef.getElementById("dicebound-career-styles"))return;
@@ -57,7 +59,7 @@
       #careerOverlay details.career-run summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;font-size:11px;font-weight:800}
       #careerOverlay .career-run-body{padding:0 14px 14px;border-top:1px solid rgba(255,255,255,.07)}
       #careerOverlay .career-run-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
-      #careerOverlay .career-mini{padding:8px;border-radius:10px;background:rgba(0,0,0,.19);font-size:10px}.career-mini b{display:block;margin-bottom:2px;color:#fff}
+      #careerOverlay .career-mini{padding:8px;border-radius:10px;background:rgba(0,0,0,.19);font-size:10px;overflow-wrap:anywhere}.career-mini b{display:block;margin-bottom:2px;color:#fff}
       #careerOverlay .career-list{font-size:10px;line-height:1.55;color:#dbe6f5}
       #careerOverlay .career-outcome-victory{color:#78e7a9}.career-outcome-death{color:#ff8a91}.career-outcome-abandoned{color:#f4c276}
       @media(max-width:760px){
@@ -127,10 +129,10 @@
   function historyHtml(){
     const runs=history();if(!runs.length)return '<div class="career-empty">No completed runs recorded yet. Run History begins with this Career release.</div>';
     return `<div class="career-history">${runs.map(entry=>{
-      const cls=classById(entry.classId),outcome=titleCase(entry.outcome),outcomeClass=`career-outcome-${entry.outcome}`;
+      const cls=classById(entry.classId),pet=petById(entry.petId),outcome=titleCase(entry.outcome),outcomeClass=`career-outcome-${entry.outcome}`;
       const gear=(entry.equipment||[]).map(item=>`${escapeHtml(item.slot)}: <b>${escapeHtml(item.name||item.id)}</b>${item.rarity?` (${escapeHtml(item.rarity)})`:""}`).join("<br>")||"No recorded equipment.";
       const powers=(entry.powerups||[]).map(item=>{const power=powerupById(item.id);return `${escapeHtml(power?.icon||"✨")} ${escapeHtml(power?.name||item.id)}${Number(item.count)>1?` ×${fmt(item.count)}`:""}`;}).join("<br>")||"No selected Powerups recorded.";
-      return `<details class="career-run"><summary><span>#${fmt(entry.sequence)} · ${escapeHtml(cls?.icon||"")} ${escapeHtml(cls?.name||entry.classId)} · ${escapeHtml(titleCase(entry.mode))}</span><span class="${outcomeClass}">${escapeHtml(outcome)} · Board ${fmt(entry.boardReached)}</span></summary><div class="career-run-body"><div class="career-run-grid"><div class="career-mini"><b>Final level</b>${fmt(entry.level)}</div><div class="career-mini"><b>Gold</b>${fmt(entry.gold)}</div><div class="career-mini"><b>Dice rolls</b>${fmt(entry.rolls)}</div><div class="career-mini"><b>Legacy XP</b>${fmt(entry.legacyXp)}</div><div class="career-mini"><b>Tiles moved</b>${fmt(entry.tilesMoved)}</div><div class="career-mini"><b>Companion</b>${escapeHtml(entry.petId||"—")}</div><div class="career-mini"><b>Prestige</b>${fmt(entry.prestigeCount)}</div><div class="career-mini"><b>Game version</b>${escapeHtml(entry.version||"—")}</div></div><div class="career-section"><h3>Final effective stats</h3><div class="career-list">${escapeHtml(statsSummary(entry))}</div></div><div class="career-section"><h3>Equipment</h3><div class="career-list">${gear}</div></div><div class="career-section"><h3>Powerups</h3><div class="career-list">${powers}</div></div></div></details>`;
+      return `<details class="career-run"><summary><span>#${fmt(entry.sequence)} · ${escapeHtml(cls?.icon||"")} ${escapeHtml(cls?.name||entry.classId)} · ${escapeHtml(titleCase(entry.mode))}</span><span class="${outcomeClass}">${escapeHtml(outcome)} · Board ${fmt(entry.boardReached)}</span></summary><div class="career-run-body"><div class="career-run-grid"><div class="career-mini"><b>Final level</b>${fmt(entry.level)}</div><div class="career-mini"><b>Gold</b>${fmt(entry.gold)}</div><div class="career-mini"><b>Dice rolls</b>${fmt(entry.rolls)}</div><div class="career-mini"><b>Legacy XP</b>${fmt(entry.legacyXp)}</div><div class="career-mini"><b>Tiles moved</b>${fmt(entry.tilesMoved)}</div><div class="career-mini"><b>Companion</b>${entry.petId?`${escapeHtml(pet?.icon||"")} ${escapeHtml(pet?.name||entry.petId)}`:"—"}</div><div class="career-mini"><b>Prestige</b>${fmt(entry.prestigeCount)}</div><div class="career-mini"><b>Game version</b>${escapeHtml(entry.version||"—")}</div><div class="career-mini"><b>Run seed</b>${escapeHtml(entry.seed||"—")}</div></div><div class="career-section"><h3>Final effective stats</h3><div class="career-list">${escapeHtml(statsSummary(entry))}</div></div><div class="career-section"><h3>Equipment</h3><div class="career-list">${gear}</div></div><div class="career-section"><h3>Powerups</h3><div class="career-list">${powers}</div></div></div></details>`;
     }).join("")}</div>`;
   }
 
