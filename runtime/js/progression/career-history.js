@@ -57,7 +57,7 @@
 
     return {
       id:String(raw.id||""),sequence:integer(raw.sequence),startedAt:raw.startedAt?String(raw.startedAt):null,
-      endedAt:raw.endedAt?String(raw.endedAt):null,version:String(raw.version||""),classId:String(raw.classId||"ranger"),
+      endedAt:raw.endedAt?String(raw.endedAt):null,version:String(raw.version||""),seed:raw.seed?String(raw.seed):null,classId:String(raw.classId||"ranger"),
       mode:MODES.has(String(raw.mode||"").toLowerCase())?String(raw.mode).toLowerCase():"normal",
       outcome:["victory","death","abandoned","ended"].includes(raw.outcome)?raw.outcome:"ended",
       boardReached:Math.max(1,integer(raw.boardReached)||1),position:integer(raw.position),level:Math.max(1,integer(raw.level)||1),
@@ -74,7 +74,7 @@
     career.activeRun=career.activeRun&&typeof career.activeRun==="object"?{
       id:String(career.activeRun.id||""),sequence:integer(career.activeRun.sequence),
       startedAt:career.activeRun.startedAt?String(career.activeRun.startedAt):null,
-      version:String(career.activeRun.version||""),classId:String(career.activeRun.classId||"ranger"),
+      version:String(career.activeRun.version||""),seed:career.activeRun.seed?String(career.activeRun.seed):null,classId:String(career.activeRun.classId||"ranger"),
       mode:MODES.has(String(career.activeRun.mode||"").toLowerCase())?String(career.activeRun.mode).toLowerCase():"normal",
       petId:career.activeRun.petId?String(career.activeRun.petId):null
     }:null;
@@ -86,11 +86,11 @@
   function stats(meta){return ensure(meta).stats;}
   function history(meta){return Object.freeze(ensure(meta).career.history.map(entry=>Object.freeze(clone(entry))));}
 
-  function beginRun(meta,{classId="ranger",mode="normal",petId=null,version="",startedAt=null}={}){
+  function beginRun(meta,{classId="ranger",mode="normal",petId=null,version="",seed=null,startedAt=null}={}){
     const state=ensure(meta),sequence=state.career.nextRunId++;
     const active={
       id:`run-${String(sequence).padStart(6,"0")}`,sequence,
-      startedAt:startedAt?String(startedAt):null,version:String(version||""),classId:String(classId||"ranger"),
+      startedAt:startedAt?String(startedAt):null,version:String(version||""),seed:seed?String(seed):null,classId:String(classId||"ranger"),
       mode:MODES.has(String(mode).toLowerCase())?String(mode).toLowerCase():"normal",
       petId:petId?String(petId):null
     };
@@ -163,7 +163,7 @@
     let active=career.activeRun;
     if(!active){
       const sequence=career.nextRunId++;
-      active={id:`run-${String(sequence).padStart(6,"0")}`,sequence,startedAt:null,version:String(snapshot.version||""),classId:String(snapshot.classId||"ranger"),mode:MODES.has(String(snapshot.mode||"").toLowerCase())?String(snapshot.mode).toLowerCase():"normal",petId:snapshot.petId?String(snapshot.petId):null};
+      active={id:`run-${String(sequence).padStart(6,"0")}`,sequence,startedAt:null,version:String(snapshot.version||""),seed:snapshot.seed?String(snapshot.seed):null,classId:String(snapshot.classId||"ranger"),mode:MODES.has(String(snapshot.mode||"").toLowerCase())?String(snapshot.mode).toLowerCase():"normal",petId:snapshot.petId?String(snapshot.petId):null};
     }
 
     const existing=career.history.find(entry=>entry.id===active.id);
