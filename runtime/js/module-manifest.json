@@ -70,6 +70,7 @@
     "progression-talents",
     "progression-prestige",
     "progression-achievements",
+    "progression-career-history",
     "progression-lifecycle",
     "event-rewards",
     "road-event-treasure",
@@ -94,6 +95,7 @@
     "ui-prestige-moon",
     "ui-achievements",
     "ui-info-guide",
+    "ui-career",
     "ui-merchant",
     "merchant-facade",
     "dicebound-monolith"
@@ -857,13 +859,24 @@
       ]
     },
     {
+      "id": "progression-career-history",
+      "path": "js/progression/career-history.js",
+      "domain": "progression/lifetime-career-telemetry-semantic-enemy-ledger-and-bounded-run-history",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCareerHistory"
+      ]
+    },
+    {
       "id": "progression-lifecycle",
       "path": "js/progression/lifecycle.js",
       "domain": "progression/talent-legacy-prestige-lifecycle-and-public-facade",
       "status": "extracted",
       "requires": [
         "progression-talents",
-        "progression-prestige"
+        "progression-prestige",
+        "progression-career-history"
       ],
       "provides": [
         "DiceboundProgression"
@@ -1175,6 +1188,22 @@
       ]
     },
     {
+      "id": "ui-career",
+      "path": "js/ui/career.js",
+      "domain": "ui/career-overview-semantic-enemy-ledger-and-bounded-run-history",
+      "status": "extracted",
+      "requires": [
+        "progression-lifecycle",
+        "combat-enemies",
+        "classes-registry",
+        "powerup-registry",
+        "ui-camp"
+      ],
+      "provides": [
+        "DiceboundCareerUi"
+      ]
+    },
+    {
       "id": "ui-merchant",
       "path": "js/ui/merchant.js",
       "domain": "ui/merchant-offer-presentation-and-purchase-interaction-orchestration",
@@ -1269,7 +1298,9 @@
         "combat-victory-resolution",
         "items-facade",
         "pet-lifecycle",
-        "item-heirlooms"
+        "item-heirlooms",
+        "progression-career-history",
+        "ui-career"
       ],
       "provides": []
     }
