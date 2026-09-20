@@ -3,13 +3,13 @@
   "version": "0.6.7.15",
   "channel": "Beta",
   "developmentState": "Unreleased",
-  "buildId": "dicebound-0.6.7.15-dev-1a7b084d3a9fa66d",
-  "browserContentHash": "1a7b084d3a9fa66d9f65362eb40335556ed50188d8f80e71f58a5c8a1579b2f9",
+  "buildId": "dicebound-0.6.7.15-dev-7734ce39930b33fd",
+  "browserContentHash": "7734ce39930b33fd8110d673726485797b712bf3e800afc483bbe7f8839837f7",
   "assetRegistryVersion": 22,
   "payloadFileCount": 525,
   "assetPayloadCount": 428,
   "files": {
-    "build-info.json": "f970236b25c9416c56c6b00808a0ea850bc65262876f1223b269765ec7ab6b2c",
+    "build-info.json": "27b2cb7f2783928113e251e1e5eab95be85b7fd651fed4dd44e97000e1fc8f42",
     "index.html": "7c7e36c7767a071a3f85e2786117aca1e30e8fda1ee1325cbbbb7433d25e345d",
     "css/dicebound.css": "05eaf329120deffcdbd0d5f1cc92fd20dab5a160389b27f180d9bef3c674b4f3",
     "js/version.js": "99bee08e299b152c35f2b89ef52ec54b43ee0002f414e16a6bd4b79e4652c8bf",
@@ -105,7 +105,7 @@
     "js/ui/info-guide.js": "58907caf77ea739b8e520451a9a2d39e1e1589cb6314f8cdf868af1b90098211",
     "js/ui/merchant.js": "7e222b98d0bc0426d31a3e7379055ba1f37c1dc390b6aa09958af29c46661150",
     "js/events/merchant-facade.js": "b9a00ff4ec9e565fcc6e523a8d06bf3720e39528d9250f4389ec813546e18d7d",
-    "js/dicebound.js": "b253bf1c1bd5b4f5b3b9cbf72e4b922a7102847da4dff41c77119d0bd6161b2c"
+    "js/dicebound.js": "bbc5634e8aa7d00917c10b74ef758a8436b3dddcb6638d15765ba2bc1d514fe1"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
