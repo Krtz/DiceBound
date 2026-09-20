@@ -61,12 +61,15 @@
   }
 
   function nodeMarkup(node) {
-    const purchased = !!node.purchased;
-    const costLabel = node.cost === null ? 'Cost TBD' : `${node.cost} PP`;
-    const disabled = node.cost === null || (!node.repeatable && purchased) || !node.affordable;
-    const label = purchased && node.id === 'moon-forge' ? 'Moon Forge built' : node.label;
-    const detail = purchased && node.id === 'moon-forge' ? 'The lunar smithy is ready for future Prestige crafting.' : node.detail;
-    return `<button type="button" class="prestige-moon-node ${escapeHtml(node.placement || '')}${purchased && node.id === 'moon-forge' ? ' forge-built' : ''}" data-prestige-node="${escapeHtml(node.id)}" ${disabled ? 'disabled' : ''}><b>${escapeHtml(label)}</b><span>${escapeHtml(detail)}</span><em>${escapeHtml(purchased ? 'Purchased' : node.unavailableReason || costLabel)}</em></button>`;
+    const rank=Number(node.rank)||0,maxRank=Number(node.maxRank)||0,maxed=!!node.maxed;
+    const nextCost=node.nextCost ?? node.cost;
+    const costLabel=nextCost===null?'Cost TBD':`${nextCost} PP`;
+    const rankLabel=maxRank>1?`Rank ${rank}/${maxRank}`:null;
+    const disabled=maxed||nextCost===null||!node.affordable;
+    const label=maxed&&node.id==='moon-forge'?'Moon Forge built':node.label;
+    const detail=maxed&&node.id==='moon-forge'?'The lunar smithy is ready for future Prestige crafting.':node.detail;
+    const status=maxed?(rankLabel?`${rankLabel} · Max rank`:'Purchased'):(node.unavailableReason||(rankLabel?`${rankLabel} · Next: ${costLabel}`:costLabel));
+    return `<button type="button" class="prestige-moon-node ${escapeHtml(node.placement || '')}${maxed&&node.id==='moon-forge'?' forge-built':''}" data-prestige-node="${escapeHtml(node.id)}" ${disabled?'disabled':''}><b>${escapeHtml(label)}</b><span>${escapeHtml(detail)}</span><em>${escapeHtml(status)}</em></button>`;
   }
 
   function render() {
@@ -74,7 +77,7 @@
     if (!overlay) return null;
     const state = runtime.getState?.() || {};
     const prestige = state.prestige || {unspent: 0, spent: 0, refundableSpent: 0, heldSummary: 'Unavailable', permanentSummary: 'Unavailable', nodes: []};
-    overlay.innerHTML = `<div class="prestige-moon-stars" aria-hidden="true"></div><section class="prestige-moon-scene"><button type="button" class="small-btn prestige-moon-back" data-prestige-back>Back to Camp</button><header class="prestige-moon-intro"><p class="prestige-moon-kicker">Account progression destination</p><h2 class="prestige-moon-title">Prestige Moon</h2><p class="prestige-moon-subtitle">Approach the lunar surface to convert Legacy progress into lasting account choices.</p></header><div class="prestige-moon-body"><div class="prestige-moon-orb"><button type="button" class="prestige-held-counter" data-prestige-held><span>Unspent Prestige Points</span><strong>${escapeHtml(prestige.unspent)}</strong><div class="prestige-held-tooltip"><b>Held Prestige bonus</b><br>Every unspent Prestige Point grants one deterministic stat point while it remains unspent.<br><br><b>Current held bonus:</b><br>${escapeHtml(prestige.heldSummary)}</div></button>${(prestige.nodes || []).map(nodeMarkup).join('')}<div class="prestige-moon-core"><b>Legacy conversion</b><p>${escapeHtml(state.prestigeDescription || 'Every 9 total Talent Points becomes one unspent Prestige Point.')}</p><button type="button" class="main-btn" data-prestige-action ${state.canPrestige ? '' : 'disabled'}>Prestige for ${state.prestigeOffer || 1} Point${state.prestigeOffer === 1 ? '' : 's'}</button><p>${escapeHtml(prestige.permanentSummary)}</p></div></div></div><button type="button" class="small-btn danger prestige-moon-refund" data-prestige-refund ${(prestige.refundableSpent ?? prestige.spent) > 0 ? '' : 'disabled'}>Refund Stats</button><div class="prestige-moon-status">${escapeHtml(state.status || 'Moon Forge is intentionally cost-TBD until balance review.')} </div></section>`;
+    overlay.innerHTML = `<div class="prestige-moon-stars" aria-hidden="true"></div><section class="prestige-moon-scene"><button type="button" class="small-btn prestige-moon-back" data-prestige-back>Back to Camp</button><header class="prestige-moon-intro"><p class="prestige-moon-kicker">Account progression destination</p><h2 class="prestige-moon-title">Prestige Moon</h2><p class="prestige-moon-subtitle">Approach the lunar surface to convert Legacy progress into lasting account choices.</p></header><div class="prestige-moon-body"><div class="prestige-moon-orb"><button type="button" class="prestige-held-counter" data-prestige-held><span>Unspent Prestige Points</span><strong>${escapeHtml(prestige.unspent)}</strong><div class="prestige-held-tooltip"><b>Held Prestige bonus</b><br>Every unspent Prestige Point grants one deterministic stat point while it remains unspent.<br><br><b>Lifetime Prestige:</b> ${escapeHtml(prestige.count||0)} PP earned · +${escapeHtml(prestige.legacyXpBonusPercent||0)}% Legacy XP per run.<br><br><b>Current held bonus:</b><br>${escapeHtml(prestige.heldSummary)}</div></button>${(prestige.nodes || []).map(nodeMarkup).join('')}<div class="prestige-moon-core"><b>Legacy conversion</b><p>${escapeHtml(state.prestigeDescription || 'Every 9 total Talent Points becomes one unspent Prestige Point.')}</p><button type="button" class="main-btn" data-prestige-action ${state.canPrestige ? '' : 'disabled'}>Prestige for ${state.prestigeOffer || 1} Point${state.prestigeOffer === 1 ? '' : 's'}</button><p>${escapeHtml(prestige.permanentSummary)}</p></div></div></div><button type="button" class="small-btn danger prestige-moon-refund" data-prestige-refund ${(prestige.refundableSpent ?? prestige.spent) > 0 ? '' : 'disabled'}>Refund Stats</button><div class="prestige-moon-status">${escapeHtml(state.status || 'Moon Forge is intentionally cost-TBD until balance review.')} </div></section>`;
     overlay.querySelector('[data-prestige-back]')?.addEventListener('click', close);
     overlay.querySelector('[data-prestige-action]')?.addEventListener('click', async () => {
       if (busy) return;
