@@ -1,0 +1,44 @@
+name: Temporary 0.6.7.16 Career validation
+
+on:
+  push:
+    branches:
+      - feature/0.6.7.16-career-history
+    paths:
+      - .github/workflows/tmp-career-06716.yml
+
+permissions:
+  contents: read
+
+jobs:
+  career:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/0.6.7.16-career-history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Runtime syntax and retired-owner scan
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          $retired = Select-String -Path runtime/js/dicebound.js -Pattern "function defaultLifetimeStats\(","function ensureAlphaMeta\(","function boardClearKey\(","function recordBoardClear\(" -ErrorAction SilentlyContinue
+          if ($retired) { $retired | Out-Host; exit 1 }
+      - name: Focused Career contracts
+        shell: pwsh
+        run: |
+          $tests = @(
+            "tools/test_career_history.js",
+            "tools/test_progression_owner.js",
+            "tools/test_info_guide_ui.js",
+            "tools/test_camp_ui.js",
+            "tools/test_info_browser.js",
+            "tools/test_info_file_browser.js",
+            "tools/test_career_browser.js"
+          )
+          foreach ($test in $tests) {
+            node $test
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
