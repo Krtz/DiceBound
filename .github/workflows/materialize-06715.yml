@@ -58,6 +58,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path candidate | Out-Null
           Copy-Item runtime/build-info.json candidate/runtime-build-info.json
+          Copy-Item runtime/build-manifest.json candidate/runtime-build-manifest.json
           Copy-Item wrapper-source/config/project.json candidate/project.json
           Copy-Item runtime/js/version.js candidate/version.js
           Copy-Item runtime/index.html candidate/index.html
