@@ -121,6 +121,7 @@
     const s=stats(meta);s.damageDealt+=dealt;s.largestHit=Math.max(s.largestHit,dealt);return dealt;
   }
   function recordHealing(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).healingDone+=value;return value;}
+  function recordDamageTaken(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).damageTaken+=value;return value;}
   function recordGoldEarned(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).goldEarned+=value;return value;}
   function recordGoldSpent(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).goldSpent+=value;return value;}
   function recordPotion(meta){const s=stats(meta);s.potionsUsed++;return s.potionsUsed;}
@@ -194,7 +195,7 @@
 
   window.DiceboundCareerHistory=Object.freeze({
     apiVersion:1,owner:OWNER,HISTORY_LIMIT,defaultStats,normalizeStats,normalizeHistoryEntry,ensure,stats,history,
-    beginRun,boardClearKey,recordBoardClear,hasBoardClear,recordDamage,recordHealing,recordGoldEarned,recordGoldSpent,
+    beginRun,boardClearKey,recordBoardClear,hasBoardClear,recordDamage,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,
     recordPotion,recordPowerup,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,finalizeRun,inspect
   });
 })();
