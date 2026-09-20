@@ -1,6 +1,6 @@
 /* DiceBound Info / Roadkeeper's Guide presentation owner.
  *
- * Runtime rules, save transfer, lifetime counters, class unlock state and
+ * Runtime rules, save transfer, class unlock state and
  * equipment-set data remain authoritative in their existing domains. This
  * module owns the player-facing Guide destination: surface, tabs, guide
  * composition, responsive rendering and persistent dismissal chrome.
