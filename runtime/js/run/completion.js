@@ -34,7 +34,7 @@
     runtime.setCompleting?.(true);
     runtime.setRunState?.({gameStarted:false,rollLocked:true});
     const first=!runtime.isRunFinalized?.();
-    const earned=Number(runtime.finalizeRun?.())||0;
+    const earned=Number(runtime.finalizeRun?.({outcome:'victory',boardReached:6}))||0;
     const context=completionContext();
     const detail=Object.freeze({domain:'run',type:'terminal-completion',completed:true,road:6,first,earned,context,before});
     runtime.updateHud?.();
