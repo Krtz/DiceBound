@@ -1091,7 +1091,7 @@ function returnToRoad(...args){
     isRollLocked:()=>!!rollLocked,setRollLocked:value=>{rollLocked=!!value;},isGameStarted:()=>!!gameStarted,hasCurrentEnemy:()=>!!currentEnemy,
     ensureAudio:()=>ensureAudio(),resumeAudio:()=>{if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();},updateHud:()=>updateHUD(),
     pick:list=>pick(list),rollSound:()=>sfx.roll(),delay:ms=>delay(ms),rand:(min,max)=>rand(min,max),random:()=>random(),
-    clamp:(value,min,max)=>clamp(value,min,max),incrementRolls:()=>{rolls++;ensureAlphaMeta().rolls++;},
+    clamp:(value,min,max)=>clamp(value,min,max),incrementRolls:()=>{rolls++;},
     hasMythicPiece:id=>hasMythicPiece(id),showToast:(...args)=>showToast(...args),addLog:html=>addLog(html),
     traceCommand:(name,fn)=>v25TraceCommand(name,fn,name==="rollDice"||name==="rollTwoDice"?"events":"detailed"),move:(...args)=>dbRun.move(...args)
   });
@@ -1169,7 +1169,7 @@ function returnToRoad(...args){
       storedHighestGold:Number(stats.highestGold)||0,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(currentPlayer.gold)||0):0),facts,
       petIds,petLevels,petUnlocked,beastmasterNightmareBoard5:!!meta.beastmasterNightmareBoard5,gameStarted:!!gameStarted,
       player:{gold:Number(currentPlayer.gold)||0,defense:Number(currentPlayer.defense)||0,doubleStrike:Number(currentPlayer.doubleStrike)||0,lifeSteal:Number(currentPlayer.lifeSteal)||0,crit:Number(currentPlayer.crit)||0,bossDamage:Number(currentPlayer.bossDamage)||0},
-      hasBoardClear:(classId,board)=>hasBoardClear(classId,board)
+      hasBoardClear:(classId,board)=>dbProgression.hasBoardClear(classId,board)
     };
   }
 
@@ -1345,7 +1345,7 @@ function returnToRoad(...args){
 
   let hellMode=false;
   function ensureV11Meta(){
-    ensureAlphaMeta();
+    dbProgression.careerStats();
     meta.hellUnlocked=!!meta.hellUnlocked;
     meta.debugAlwaysChooseRolls=!!meta.debugAlwaysChooseRolls;
     meta.bloodmageUnlocked=!!meta.bloodmageUnlocked;
@@ -3139,8 +3139,8 @@ dbReturnToRoadTraceReady=true;
 
   function v319ResetCareer(){
     dbRuntime.save?.reset?.();
-    meta=normalizeMetaCore(defaultMeta());
-    if(typeof ensureAlphaMeta==='function')ensureAlphaMeta();
+    meta=normalizeCareerMeta(normalizeMetaCore(defaultMeta()));
+    dbProgression.careerStats();
     selectedClassId='ranger';boardLevel=1;nightmareMode=false;hellMode=false;gameStarted=false;rollLocked=true;combatBusy=false;pendingLevelUps=0;currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;tiles=[];tileEls=[];
     return meta;
   }
@@ -3604,7 +3604,7 @@ dbReturnToRoadTraceReady=true;
     classIdentityActive:id=>classIdentityActive(id),bonusLabel:(key,value)=>db06314BonusLabel(key,value),
     applyItemStats:(item,sign)=>applyItemStats(item,sign),clearGearTransform:()=>db060ClearGearTransform(),applyGearTransform:()=>db060ApplyGearTransform(),
     usesMana:()=>db06421UsesMana(),equipmentMana:()=>db06421EquipmentMana(),syncMana:snapshot=>db06421SyncMana(snapshot),
-    ensureAlphaMeta:()=>ensureAlphaMeta(),setStatsLastGold:value=>{statsLastGold=value;},rarityLabel:rarity=>rarityInfo[rarity].label,
+    recordCareerGoldEarned:amount=>dbProgression.recordGoldEarned(amount),setStatsLastGold:value=>{statsLastGold=value;},rarityLabel:rarity=>rarityInfo[rarity].label,
     sfxLevel:()=>sfx.level(),sfxCoin:()=>sfx.coin(),showToast:text=>showToast(text),addLog:text=>addLog(text),
     renderEquipment:()=>renderEquipment(),updateHUD:()=>updateHUD()
   });
@@ -3920,11 +3920,11 @@ dbReturnToRoadTraceReady=true;
   window.DiceboundCamp.configureShell({resetInvokerCombat:()=>dbClasses.invokerResetCombat(),healAtCamp:()=>dbFriendHealAtCamp(),clearCombatPresentation:()=>dbFriendClearCombatPresentation()});
   function dbFriendCampRecoveryExercise(){resetPlayer('ranger');player.hp=1;openStartScreen();return Object.freeze({hp:player.hp,maxHp:player.maxHp,campVisible:!$('startOverlay')?.classList.contains('hidden')});}
   function dbFriendBoardClearModeRegressionExercise(){
-    const before={...(ensureAlphaMeta().boardClears||{})},modes={nightmare:nightmareMode,hell:hellMode};
+    const before={...(dbProgression.careerStats().boardClears||{})},modes={nightmare:nightmareMode,hell:hellMode};
     try{
-      meta.stats.boardClears={};nightmareMode=false;hellMode=false;recordBoardClear(2,'ranger');recordBoardClear(4,'ranger');nightmareMode=true;recordBoardClear(3,'ranger');hellMode=true;recordBoardClear(5,'ranger');renderLifetimeStats();
-      return Object.freeze({keys:Object.keys(meta.stats.boardClears).sort(),hasNormal:hasBoardClear('ranger',4),hasNightmare:hasBoardClear('ranger',3),hasHell:hasBoardClear('ranger',5),text:$('lifetimeStats')?.textContent||''});
-    }finally{meta.stats.boardClears=before;nightmareMode=modes.nightmare;hellMode=modes.hell;saveMeta();renderLifetimeStats();}
+      meta.stats.boardClears={};nightmareMode=false;hellMode=false;dbProgression.recordBoardClear(2,'ranger');dbProgression.recordBoardClear(4,'ranger');nightmareMode=true;dbProgression.recordBoardClear(3,'ranger');hellMode=true;dbProgression.recordBoardClear(5,'ranger');
+      return Object.freeze({keys:Object.keys(meta.stats.boardClears).sort(),hasNormal:dbProgression.hasBoardClear('ranger',4),hasNightmare:dbProgression.hasBoardClear('ranger',3),hasHell:dbProgression.hasBoardClear('ranger',5)});
+    }finally{meta.stats.boardClears=before;nightmareMode=modes.nightmare;hellMode=modes.hell;saveMeta();}
   }
 
   /* Dragoon #97 — class-action ownership lives in DiceboundClasses. */
@@ -3994,7 +3994,8 @@ dbReturnToRoadTraceReady=true;
     playNatureOnEnemy:enemy=>dbCombatView.playNatureOnEnemy(enemy),
     playNatureOnPlayer:()=>dbCombatView.playNatureOnPlayer(),
     playDonutRain:payload=>dbCombatView.playDonutRain(payload),
-    playProjectileProc:(key,payload)=>dbCombatView.playProjectileProc?.(key,payload)
+    playProjectileProc:(key,payload)=>dbCombatView.playProjectileProc?.(key,payload),
+    recordCareerElementProc:()=>dbProgression.recordElementProc(1)
   });
 
   const dbCombatHealingOwner=window.DiceboundCombatHealingResolution;
@@ -4002,7 +4003,7 @@ dbReturnToRoadTraceReady=true;
   dbCombatHealingResolution=dbCombatHealingOwner.configure({
     getPlayer:()=>player,
     getCurrentEnemy:()=>currentEnemy,
-    ensureAlphaMeta:()=>ensureAlphaMeta(),
+    recordCareerHealing:amount=>dbProgression.recordHealing(amount),
     setStatsLastHp:value=>{statsLastHp=value;},
     saveMeta:()=>saveMeta(),
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
@@ -4071,7 +4072,7 @@ dbReturnToRoadTraceReady=true;
     delay:ms=>delay(ms),
     winCombat:()=>dbCombat.win(),
     resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
-    ensureAlphaMeta:()=>ensureAlphaMeta(),
+    recordCareerPotionUse:()=>dbProgression.recordPotionUse(),
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     saveMeta:()=>saveMeta(),
     renderClassChooser:()=>window.DiceboundClassChooser?.render?.(),
@@ -4091,8 +4092,8 @@ dbReturnToRoadTraceReady=true;
   if(!dbCombatVictoryOwner)throw new Error('DiceBound requires the combat Victory-resolution owner before dicebound.js');
   dbCombatVictoryResolution=dbCombatVictoryOwner.configure({
     getState:()=>({player,meta,boardLevel,nightmareMode,hellMode,combatKind:v16CombatKind,tiles,currentEnemy,currentEnemies,currentEncounterLead,currentEnemyTile}),
-    ensureAlphaMeta:()=>ensureAlphaMeta(),
-    recordBoardClear:(board,classId)=>recordBoardClear(board,classId),
+    recordEnemyDefeats:(enemies,context)=>dbProgression.recordEnemyDefeats(enemies,context),
+    recordBoardClear:(board,classId)=>dbProgression.recordBoardClear(board,classId),
     clearBloodOverhealTemp:()=>dbCombat.clearBloodOverhealTemp(),
     modifiedGold:amount=>modifiedGold(amount),
     healPlayer:amount=>dbCombat.heal(amount),
@@ -4278,6 +4279,7 @@ dbReturnToRoadTraceReady=true;
     renderStrike:result=>CombatUI.renderStrike(result),delay:ms=>delay(ms),chargeUltimate:amount=>chargeUltimate(amount),
     hasDevilsHorns:()=>v24HasHorns(),hasLegendaryEffect:id=>db060HasEffect(id),syncOuroborosAttack:()=>v18SyncOuroborosAttack(),
     syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),getElementKeys:()=>ELEMENT_KEYS,
+    recordCareerStrike:result=>dbProgression.recordStrike(result),
     outgoingDamageMultiplier:()=>dbClasses.invokerOutgoingMultiplier(),
     afterPlayerHit:(target,options)=>dbClasses.invokerAfterPlayerHit(target,options)
   });
@@ -4463,7 +4465,7 @@ dbReturnToRoadTraceReady=true;
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),
     saveMeta:()=>saveMeta(),
     playHitSfx:()=>sfx.hit(),
-    recordDamageTaken:amount=>{meta.damageTaken=(meta.damageTaken||0)+amount;},
+    recordDamageTaken:amount=>{const value=Math.max(0,Number(amount)||0);meta.damageTaken=(meta.damageTaken||0)+value;dbProgression.recordDamageTaken(value);},
     wolfEchoChance:()=>db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode()),
     presentEnemyAttack:fact=>dbCombatView.enemyAttack(fact),
     dodge:unit=>dbCombatView.dodge(unit),
@@ -4496,7 +4498,7 @@ dbReturnToRoadTraceReady=true;
     try{
       const text=String(raw||'').trim();if(!text)throw new Error('empty');
       meta=dbRuntime.save.importText(text,{defaultFactory:defaultMeta,normalize:x=>normalizeCareerMeta(x)});
-      ensureAlphaMeta();saveMeta();dbProgression.repairTalentPrerequisites();window.DiceboundClassChooser.render();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
+      dbProgression.careerStats();saveMeta();dbProgression.repairTalentPrerequisites();window.DiceboundClassChooser.render();updateMetaUI();showToast('Save imported');dbInfoGuide.close();openStartScreen();return true;
     }catch(error){dbRuntime.platform.alert('That save string could not be imported.');return false;}
   }
   dbInfoGuide.configure({
@@ -4505,8 +4507,6 @@ dbReturnToRoadTraceReady=true;
     isClassUnlocked:(...args)=>dbProgression.isClassUnlocked(...args),
     getElements:()=>ELEMENTS,
     getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
-    getLifetimeStats:()=>ensureAlphaMeta(),
-    getMetaDamageTaken:()=>meta.damageTaken||0,
     isGameStarted:()=>gameStarted,
     exportSave:dbInfoExportSave,
     importSave:dbInfoImportSave,
