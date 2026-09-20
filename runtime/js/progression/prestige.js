@@ -1,9 +1,9 @@
 /* DiceBound Prestige currency and Moon-purchase domain owner.
  *
- * This module owns semantic Prestige currency bookkeeping, purchased Moon
- * upgrades, held-currency bonuses and free-refund transactions. It is pure:
- * the compatibility runtime supplies persistence, confirmation, reset and
- * gameplay composition; ui/prestige-moon.js supplies presentation.
+ * Owns lifetime Prestige currency, permanent/refundable Moon purchases,
+ * ranked structural upgrades, held-currency bonuses and Prestige-derived
+ * career acceleration. It remains pure: composition supplies persistence,
+ * RNG and presentation.
  */
 (() => {
   'use strict';
@@ -11,6 +11,10 @@
   const OWNER = 'progression/prestige';
   const STAT_KEYS = Object.freeze(['maxHp', 'attack', 'defense', 'crit', 'dodge', 'luck', 'lifeSteal']);
   const EMPTY_STATS = Object.freeze(Object.fromEntries(STAT_KEYS.map(key => [key, 0])));
+  const LEGACY_NODE_ALIASES = Object.freeze({
+    'heirloom-slot-i': 'heirloom-vault-expansion',
+    'heirloom-slot-ii': 'heirloom-vault-expansion'
+  });
   const NODES = Object.freeze([
     Object.freeze({
       id: 'five-random-stats',
@@ -24,34 +28,33 @@
     }),
     Object.freeze({
       id: 'heirloom-storage',
-      label: 'Unlock Heirloom Storage',
-      detail: 'Permanently unlock Heirloom Storage at Camp with one slot per equipment slot.',
+      label: 'Unlock Heirloom Vault',
+      detail: 'Permanently unlock the Heirloom Vault with 8 storage slots.',
       cost: 1,
-      repeatable: false,
       refundable: false,
       kind: 'heirloom-storage',
       placement: 'right-upper'
     }),
     Object.freeze({
-      id: 'heirloom-slot-i',
-      label: 'Heirloom Storage Slot I',
-      detail: 'Permanently add one extra Heirloom Storage slot.',
-      cost: 2,
-      repeatable: false,
+      id: 'heirloom-vault-expansion',
+      label: 'Vault Expansion',
+      detail: 'Permanently add 4 Heirloom Vault slots per rank.',
+      costs: Object.freeze([2, 3, 4, 5, 6, 7, 8]),
+      maxRank: 7,
       refundable: false,
       requires: 'heirloom-storage',
-      kind: 'heirloom-storage-slot',
+      kind: 'heirloom-vault-expansion',
       placement: 'right-middle'
     }),
     Object.freeze({
-      id: 'heirloom-slot-ii',
-      label: 'Heirloom Storage Slot II',
-      detail: 'Permanently add one more Heirloom Storage slot.',
-      cost: 5,
-      repeatable: false,
+      id: 'heirloom-loadout',
+      label: 'Heirloom Loadout',
+      detail: 'Permanently add one next-run Heirloom slot per rank, up to all 8 gear slots.',
+      costs: Object.freeze([1, 3, 5]),
+      maxRank: 3,
       refundable: false,
       requires: 'heirloom-storage',
-      kind: 'heirloom-storage-slot',
+      kind: 'heirloom-loadout',
       placement: 'right-lower'
     }),
     Object.freeze({
@@ -59,7 +62,6 @@
       label: 'Build Moon Forge',
       detail: 'A persistent lunar smithy will become the home of Prestige crafting.',
       cost: null,
-      repeatable: false,
       refundable: false,
       kind: 'structure',
       placement: 'left',
@@ -75,28 +77,34 @@
     return target;
   };
   const nodeFor = id => NODES.find(node => node.id === id) || null;
+  const maxRankFor = node => node?.repeatable ? Infinity : Math.max(1, finite(node?.maxRank) || 1);
+  const nextCostFor = (node, rank) => {
+    if (!node) return null;
+    if (!node.repeatable && rank >= maxRankFor(node)) return null;
+    if (Array.isArray(node.costs)) return node.costs[rank] ?? null;
+    return node.cost;
+  };
 
   function normalize(raw = {}) {
     const legacy = blankStats();
     addStats(legacy, raw);
     const count = finite(raw.count);
     const suppliedMoon = raw.moon && typeof raw.moon === 'object' ? raw.moon : {};
-    // Existing Beta careers already have permanent random stat rolls stored in
-    // the legacy fields. Those earned points are intentionally treated as
-    // already spent, so introducing the Moon cannot duplicate their bonuses.
     const legacySpent = Math.min(count, finite(suppliedMoon.legacySpent ?? count));
-    const purchases = Array.isArray(suppliedMoon.purchases) ? suppliedMoon.purchases
-      .filter(entry => entry && typeof entry === 'object' && nodeFor(entry.nodeId))
-      .map(entry => ({
-        nodeId: entry.nodeId,
-        cost: finite(entry.cost),
-        stats: (() => { const stats = blankStats(); addStats(stats, entry.stats); return stats; })()
-      })) : [];
-    return {
-      count,
-      ...legacy,
-      moon: {legacySpent, purchases}
-    };
+    const purchases = [], ranks = Object.create(null);
+    for (const entry of Array.isArray(suppliedMoon.purchases) ? suppliedMoon.purchases : []) {
+      if (!entry || typeof entry !== 'object') continue;
+      const nodeId = LEGACY_NODE_ALIASES[entry.nodeId] || entry.nodeId;
+      const node = nodeFor(nodeId);
+      if (!node) continue;
+      const current = ranks[nodeId] || 0;
+      if (!node.repeatable && current >= maxRankFor(node)) continue;
+      ranks[nodeId] = current + 1;
+      const stats = blankStats();
+      addStats(stats, entry.stats);
+      purchases.push({nodeId, cost: finite(entry.cost), stats});
+    }
+    return {count, ...legacy, moon: {legacySpent, purchases}};
   }
 
   function spent(prestige) {
@@ -109,10 +117,12 @@
     return Math.max(0, state.count - spent(state));
   }
 
-  function hasPurchase(prestige, id) {
+  function rank(prestige, id) {
     const state = normalize(prestige);
-    return state.moon.purchases.some(purchase => purchase.nodeId === id);
+    return state.moon.purchases.reduce((total, purchase) => total + (purchase.nodeId === id ? 1 : 0), 0);
   }
+
+  function hasPurchase(prestige, id) { return rank(prestige, id) > 0; }
 
   function refundableSpent(prestige) {
     const state = normalize(prestige);
@@ -124,9 +134,6 @@
 
   function heldStats(prestige) {
     const stats = blankStats();
-    // Held Prestige Points are intentionally deterministic rather than rolled:
-    // one point follows the canonical round-robin stat order, so reloads and
-    // refunds can never reroll or double-apply this temporary bonus.
     for (let index = 0; index < unspent(prestige); index += 1) stats[STAT_KEYS[index % STAT_KEYS.length]] += 1;
     return stats;
   }
@@ -150,6 +157,11 @@
     return totals;
   }
 
+  function legacyXpMultiplier(prestige) { return 1 + normalize(prestige).count * .05; }
+  function legacyXpBonusPercent(prestige) { return normalize(prestige).count * 5; }
+  function vaultExpansionSlots(prestige) { return rank(prestige, 'heirloom-vault-expansion') * 4; }
+  function loadoutSlots(prestige) { return rank(prestige, 'heirloom-loadout'); }
+
   function formatStats(stats) {
     const labels = {
       maxHp: value => `+${value * 3} Max HP`, attack: value => `+${value} Attack`, defense: value => `+${value} Defense`,
@@ -160,13 +172,15 @@
 
   function inspect(prestige) {
     const state = normalize(prestige), held = heldStats(state), purchased = purchasedStats(state), permanent = permanentStats(state), totals = statTotals(state);
-    const purchasedNodes = state.moon.purchases.map(purchase => purchase.nodeId);
+    const purchasedNodes = [...new Set(state.moon.purchases.map(purchase => purchase.nodeId))];
     return Object.freeze({
       owner: OWNER,
       count: state.count,
       spent: spent(state),
       refundableSpent: refundableSpent(state),
       unspent: unspent(state),
+      legacyXpMultiplier: legacyXpMultiplier(state),
+      legacyXpBonusPercent: legacyXpBonusPercent(state),
       held: Object.freeze(held),
       purchased: Object.freeze(purchased),
       totals: Object.freeze(totals),
@@ -175,8 +189,22 @@
       permanentSummary: formatStats(permanent) || 'No permanent Prestige stats yet.',
       purchasedNodes: Object.freeze(purchasedNodes),
       nodes: Object.freeze(NODES.map(node => {
-        const available = !node.requires || purchasedNodes.includes(node.requires);
-        return {...node, purchased: purchasedNodes.includes(node.id), available, affordable: available && node.cost !== null && unspent(state) >= node.cost, unavailableReason: available ? node.unavailableReason : `Requires ${nodeFor(node.requires)?.label || node.requires}.`};
+        const currentRank = rank(state, node.id), maxRank = node.repeatable ? null : maxRankFor(node);
+        const maxed = maxRank !== null && currentRank >= maxRank;
+        const nextCost = nextCostFor(node, currentRank);
+        const available = !node.requires || hasPurchase(state, node.requires);
+        return {
+          ...node,
+          rank: currentRank,
+          maxRank,
+          maxed,
+          purchased: currentRank > 0,
+          cost: nextCost,
+          nextCost,
+          available,
+          affordable: available && nextCost !== null && unspent(state) >= nextCost,
+          unavailableReason: available ? node.unavailableReason : `Requires ${nodeFor(node.requires)?.label || node.requires}.`
+        };
       }))
     });
   }
@@ -200,18 +228,22 @@
   function purchase(prestige, id, random) {
     const state = normalize(prestige), node = nodeFor(id);
     if (!node) return Object.freeze({ok: false, reason: 'Unknown Prestige Moon node.', prestige: state});
-    if (node.cost === null) return Object.freeze({ok: false, reason: node.unavailableReason || 'This node is not available yet.', prestige: state});
     if (node.requires && !hasPurchase(state, node.requires)) return Object.freeze({ok: false, reason: `Requires ${nodeFor(node.requires)?.label || node.requires}.`, prestige: state});
-    if (!node.repeatable && state.moon.purchases.some(entry => entry.nodeId === id)) return Object.freeze({ok: false, reason: 'Already purchased.', prestige: state});
-    if (unspent(state) < node.cost) return Object.freeze({ok: false, reason: 'Not enough unspent Prestige Points.', prestige: state});
+    const currentRank = rank(state, id), maxRank = node.repeatable ? null : maxRankFor(node);
+    if (maxRank !== null && currentRank >= maxRank) return Object.freeze({ok: false, reason: 'Maximum rank reached.', prestige: state});
+    const cost = nextCostFor(node, currentRank);
+    if (cost === null) return Object.freeze({ok: false, reason: node.unavailableReason || 'This node is not available yet.', prestige: state});
+    if (unspent(state) < cost) return Object.freeze({ok: false, reason: 'Not enough unspent Prestige Points.', prestige: state});
     const stats = node.kind === 'random-stat-bundle' ? rollBundle(random) : blankStats();
-    state.moon.purchases.push({nodeId: node.id, cost: node.cost, stats});
-    return Object.freeze({ok: true, node, prestige: state, stats: Object.freeze(stats)});
+    state.moon.purchases.push({nodeId: node.id, cost, stats});
+    return Object.freeze({ok: true, node, rank: currentRank + 1, cost, prestige: state, stats: Object.freeze(stats)});
   }
 
   function grantLegacyPurchase(prestige, id) {
     const state = normalize(prestige), node = nodeFor(id);
-    if (!node || node.repeatable || hasPurchase(state, id)) return state;
+    if (!node) return state;
+    const currentRank = rank(state, id), maxRank = node.repeatable ? null : maxRankFor(node);
+    if (maxRank !== null && currentRank >= maxRank) return state;
     state.moon.purchases.push({nodeId: id, cost: 0, stats: blankStats()});
     return state;
   }
@@ -229,19 +261,24 @@
   }
 
   window.DiceboundPrestige = Object.freeze({
-    apiVersion: 1,
+    apiVersion: 2,
     owner: OWNER,
     statKeys: STAT_KEYS,
     nodes: NODES,
     normalize,
     inspect,
     unspent,
+    rank,
     hasPurchase,
     refundableSpent,
     statTotals,
     heldStats,
     purchasedStats,
     permanentStats,
+    legacyXpMultiplier,
+    legacyXpBonusPercent,
+    vaultExpansionSlots,
+    loadoutSlots,
     formatStats,
     award,
     purchase,
