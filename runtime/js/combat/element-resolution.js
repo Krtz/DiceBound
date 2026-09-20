@@ -19,7 +19,7 @@
       "random", "clamp", "damageEnemy", "applyPlayerDamage", "healPlayer", "trackElementProgress",
       "playElementAnimation", "addLog", "showToast", "addCombatHistory", "renderEnemyParty",
       "updateCombatUI", "updateHUD", "setProcBonus", "setElementPower", "hasLegendaryEffect",
-      "reconcileDefeatedTarget", "withNatureLegacyPresentation", "livingNatureTargets",
+      "reconcileDefeatedTarget", "withNatureLegacyPresentation", "livingNatureTargets", "recordCareerElementProc",
       "playNatureOnEnemy", "playNatureOnPlayer", "playDonutRain", "playProjectileProc"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Element-resolution runtime missing ${name}().`);
@@ -327,6 +327,7 @@
     if (key === "donut" && result) rt.playDonutRain({ origin: "player", enemy: target });
     if (target?.hp <= 0) rt.reconcileDefeatedTarget(target, `element:${key}`);
     if (result && (key === "fire" || key === "gun")) rt.playProjectileProc(key, { origin: "player", enemy: target });
+    if (result) rt.recordCareerElementProc(key);
     return result;
   }
 
