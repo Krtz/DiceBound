@@ -15,7 +15,7 @@
       "getPlayer", "getCurrentEnemy", "livingEnemies", "getCombatBusy", "setCombatBusy",
       "isGameStarted", "getRollLocked", "rollD20Chaos", "healPlayer", "playHeal",
       "triggerElementEffect", "getDiboElements", "applyMythicPantsPulse", "setCombatText",
-      "updateCombatUI", "delay", "winCombat", "resolveEnemyResponse", "ensureAlphaMeta",
+      "updateCombatUI", "delay", "winCombat", "resolveEnemyResponse", "recordCareerPotionUse",
       "checkDynamicClassUnlocks", "saveMeta", "renderClassChooser", "addLog", "showToast",
       "updateHud", "traceCommand", "isClassActive", "dragoonActive", "dragoonLandingReady",
       "dragoonLanding", "tickDragoonCooldown"
@@ -37,8 +37,8 @@
 
   // Career tracking increments exactly once for every Potion actually consumed.
   function recordPotionUse() {
-    const rt = requireRuntime(), stats = rt.ensureAlphaMeta();
-    stats.potionsUsed = (stats.potionsUsed || 0) + 1;
+    const rt = requireRuntime();
+    rt.recordCareerPotionUse();
     rt.checkDynamicClassUnlocks();
     rt.saveMeta();
     if (!rt.isGameStarted()) rt.renderClassChooser();
