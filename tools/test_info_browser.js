@@ -54,9 +54,7 @@ async function main(){
     if(roadOpened.hidden)throw new Error(`Road Info pointer click did not open Guide; hit=${JSON.stringify(roadHit)} state=${JSON.stringify(roadOpened)}`);
     if(roadOpened.inspect?.sections<1)throw new Error(`Info Guide content did not render: ${JSON.stringify(roadOpened)}`);
 
-    await pointerClick(page,'#infoOverlay [data-info-tab="stats"]');
-    const stats=await page.evaluate(`(()=>({inspect:window.DiceboundInfoGuide?.inspect?.(),cards:document.querySelectorAll('#infoOverlay .lifetime-stat').length}))()`);
-    if(stats.inspect?.activeTab!=="stats"||stats.cards<1)throw new Error(`Info Stats pointer button did not work: ${JSON.stringify(stats)}`);
+    if(await page.evaluate("!!document.querySelector('#infoOverlay [data-info-tab=\"stats\"]')"))throw new Error("Career Stats tab must not remain duplicated inside Info");
     await pointerClick(page,'#infoOverlay [data-info-tab="elements"]');
     const elements=await page.evaluate(`(()=>({inspect:window.DiceboundInfoGuide?.inspect?.(),rows:document.querySelectorAll('#infoOverlay .element-row').length}))()`);
     if(elements.inspect?.activeTab!=="elements"||elements.rows<1)throw new Error(`Info Elements pointer button did not work: ${JSON.stringify(elements)}`);
