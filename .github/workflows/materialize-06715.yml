@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   materialize:
@@ -53,6 +54,15 @@ jobs:
         run: |
           git status --short
           git diff --name-only
+      - name: Transfer generated runtime metadata
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $bi = [Convert]::ToBase64String([IO.File]::ReadAllBytes("runtime/build-info.json"))
+          $bm = [Convert]::ToBase64String([IO.File]::ReadAllBytes("runtime/build-manifest.json"))
+          $body = "MATERIALIZED_06715_BEGIN`nBUILD_INFO_B64=$bi`nBUILD_MANIFEST_B64=$bm`nMATERIALIZED_06715_END"
+          gh issue comment 330 --body $body
       - name: Stage candidate artifact
         shell: pwsh
         run: |
