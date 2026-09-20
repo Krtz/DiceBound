@@ -59,7 +59,8 @@ function harness(options={}) {
     reconcileDefeatedTarget:(target,reason)=>call('reconcile',target.name,reason),
     withNatureLegacyPresentation:(key,fn)=>{call('natureScope',key);return fn();},
     livingNatureTargets:list=>list.slice(), playNatureOnEnemy:enemy=>call('natureEnemy',enemy.name), playNatureOnPlayer:()=>call('naturePlayer'),
-    playDonutRain:payload=>call('donutVfx',payload.origin), playProjectileProc:(key,payload)=>call('projectile',key,payload.origin)
+    playDonutRain:payload=>call('donutVfx',payload.origin), playProjectileProc:(key,payload)=>call('projectile',key,payload.origin),
+    recordCareerElementProc:key=>call('careerElement',key)
   };
   owner.configure(rt);
   return {p,enemies,trace,rt,get current(){return current;},get randomCalls(){return randomCalls;},get turn(){return turn;}};
