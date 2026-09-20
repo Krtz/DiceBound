@@ -128,9 +128,27 @@ async function main(){
     // #330 deliberately redesigns Moon Heirloom nodes and adds derived lifetime
     // Prestige acceleration fields. Preserve the old oracle for every unrelated
     // Progression behavior while focused #330 tests own the changed semantics.
+    const canonicalizePurchase=result=>{
+      if(!result||typeof result!=="object")return result;
+      const copy=structuredClone(result);
+      delete copy.rank;
+      delete copy.cost;
+      if(copy.node){
+        copy.node={
+          id:copy.node.id,
+          cost:copy.node.cost,
+          refundable:copy.node.refundable,
+          kind:copy.node.kind,
+          placement:copy.node.placement
+        };
+      }
+      return copy;
+    };
     const canonicalize=cases=>structuredClone(cases).map(entry=>{
       if(entry.name==="moon-storage-chain")return {name:entry.name,kind:entry.kind,rngCalls:entry.rngCalls,rngState:entry.rngState};
       if(entry.kind==="moon"){
+        if(entry.result)entry.result=canonicalizePurchase(entry.result);
+        if(Array.isArray(entry.results))entry.results=entry.results.map(canonicalizePurchase);
         for(const key of ["inspect","first","second"]){
           const view=entry[key];if(!view)continue;
           delete view.nodes;delete view.legacyXpMultiplier;delete view.legacyXpBonusPercent;
