@@ -54,11 +54,11 @@ assert.equal(equipment.identities.find(identity => identity.id === "bronze-longs
 assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 
 const achievements = achievementsApi.createRegistry();
-assert.equal(achievements.length, 36);
+assert.equal(achievements.length, 37);
 assert.equal(new Set(achievements.map((entry) => entry.id)).size, achievements.length);
 assert.deepEqual(
   achievements.reduce((counts, entry) => ({ ...counts, [entry.category]: (counts[entry.category] || 0) + 1 }), {}),
-  { roads: 8, builds: 11, collection: 12, secrets: 5 },
+  { roads: 8, builds: 12, collection: 12, secrets: 5 },
 );
 for (const achievement of achievements) {
   assert.equal(typeof achievement.id, "string");
