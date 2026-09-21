@@ -12,7 +12,7 @@
       "random","rand","clamp","modifiedGold","getUpgradeChoices","pick","applyUpgrade","showToast",
       "rollD20Chaos","animateClassAttack","getSetDamageBonus","applyMythicRingPulse","selectFirstLivingEnemy",
       "hasEffect","addCombatHistory","potionHealValue","recordPotionUse","chargeUltimate","pickElementKey","triggerElementEffect",
-      "rollTieredProc","triggerStrikeElements","playElementAnimation","gameplayTalentRank","dragoonActive","syncDragoonPresentation","dragoonLandPresentation"
+      "rollTieredProc","triggerStrikeElements","playElementAnimation","gameplayTalentRank","dragoonActive","syncDragoonPresentation","dragoonLandPresentation","resolvePlayerConfusionOffense"
     ]){
       if(typeof next?.[name]!=="function")throw new Error(`Classes action mechanics requires ${name}().`);
     }
@@ -100,6 +100,7 @@
   async function clericConsecration(){
     const rt=runtime(),player=rt.getPlayer();
     if(rt.getCombatBusy()||!rt.getCurrentEnemy()||(player.clericFaith||0)<100)return;
+    const confused=await rt.resolvePlayerConfusionOffense("Consecration");if(confused)return confused;
     rt.setCombatBusy(true);
     player.clericFaith=0;
     player.combatActionCount++;
@@ -138,6 +139,7 @@
   async function bloodmageExsanguinateBase(){
     const rt=runtime(),player=rt.getPlayer(),enemy=rt.getCurrentEnemy();
     if(rt.getCombatBusy()||!enemy)return;
+    const confused=await rt.resolvePlayerConfusionOffense("Exsanguinate");if(confused)return confused;
     rt.setCombatBusy(true);player.guardCooldown=0;player.combatAttackCount++;player.combatActionCount++;
     const costMult=player.bloodmageExsanguinateCostMult||1,damageMult=player.bloodmageExsanguinateDamageMult||1;
     const paid=Math.max(1,Math.ceil(player.maxHp*.12*costMult));player.hp=Math.max(1,player.hp-paid);
@@ -171,6 +173,7 @@
   async function alchemistVolatileFlask(){
     const rt=runtime(),player=rt.getPlayer();
     if(rt.getCombatBusy()||!rt.getCurrentEnemy()||player.potions<=0)return;
+    const confused=await rt.resolvePlayerConfusionOffense("Volatile Flask");if(confused)return confused;
     rt.setCombatBusy(true);player.guardCooldown=0;
     const free=rt.random()<rt.clamp(player.alchemistFreeFlask||0,0,.8);
     if(!free){player.potions--;rt.recordPotionUse();}

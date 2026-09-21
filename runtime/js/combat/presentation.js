@@ -62,11 +62,13 @@
       #combatOverlay .combat-hud .status-dots{justify-content:center;margin:2px 1px 0}
       #combatOverlay .combat-head{min-height:clamp(260px,34vh,350px);align-items:stretch!important;margin-top:0!important}
       #combatOverlay .combat-head>.fighter{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;min-height:inherit}
+      #combatOverlay .combat-head>.fighter:first-of-type{position:relative}
       #combatOverlay .combat-head>.fighter>.fighter-name{order:0}
-      #combatOverlay .combat-head>.fighter>.combat-pet,#combatOverlay .combat-head>.fighter>.enemy-weakness{order:1}
+      #combatOverlay .combat-head>.fighter>.enemy-weakness{order:1}
       #combatOverlay .combat-head>.fighter>.fighter-icon{order:2;margin-top:auto!important;margin-bottom:0;transform-origin:center bottom}
+      #combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{position:absolute!important;left:clamp(2px,8%,34px);bottom:2px;margin:0!important;z-index:9;transform-origin:center bottom}
       #combatOverlay .vs{align-self:center}
-      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}}
+      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
     `;
     doc.head?.appendChild(style);return style;
   }
@@ -89,7 +91,7 @@
     return entry;
   }
 
-  function statusDotsHTML(barriers = 0, poison = 0, affinity = null) {
+  function statusDotsHTML(barriers = 0, poison = 0, affinity = null, confused = false) {
     const rt = requireRuntime(), elements = rt.getElements();
     let html = "";
     barriers = Math.max(0, Number(barriers) || 0);
@@ -99,6 +101,7 @@
     if (poison >= 5) html += `<span class="status-count poison-count" title="${poison} Poison stacks">☠️ ${poison}</span>`;
     else for (let i = 0; i < poison; i++) html += '<span class="status-dot poison" title="Poison"></span>';
     if (affinity && elements[affinity]) html += `<span class="status-affinity" title="${elements[affinity].name} affinity">${elements[affinity].icon}</span>`;
+    if (confused) html += '<span class="status-confusion" title="Confused: next offensive action will misfire">🧮</span>';
     return html;
   }
 
@@ -360,7 +363,7 @@
     const strip = find("enemyParty"), stage = find("enemyIcon"); if (!strip || !stage) return;
     const enemies = state.currentEnemies || [], index = state.currentEnemyIndex || 0;
     strip.innerHTML = ""; stage.className = "fighter-icon enemy-stage-icons";
-    stage.innerHTML = enemies.map((e, i) => `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" data-enemy-index="${i}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0)}</span></span>`).join("");
+    stage.innerHTML = enemies.map((e, i) => `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" data-enemy-index="${i}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0, null, (e.confusionActions || 0) > 0)}</span></span>`).join("");
     enemies.forEach((e, i) => { const b = doc.createElement("button"); b.className = `enemy-chip${i === index && e.hp > 0 ? " active" : ""}${e.hp <= 0 ? " dead" : ""}`; b.disabled = e.hp <= 0; b.title = `${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.defense || 0} DEF`; b.innerHTML = `<strong class="target-number">${i + 1}</strong>`; b.addEventListener("click", () => rt.selectEnemy(i)); strip.appendChild(b); });
     stage.classList.toggle("db0636-tiered-enemy-stage", !!stage.querySelector?.(".db0636-tiered-enemy-art"));
   }
@@ -550,14 +553,14 @@
     if (find("enemyHpText")) find("enemyHpText").textContent = model.enemyHpText;
     if (find("enemyHpFill")) find("enemyHpFill").style.width = `${rt.clamp(enemy.hp / Math.max(1, enemy.maxHp) * 100, 0, 100)}%`;
     if (find("playerStatusDots")) {
-      find("playerStatusDots").innerHTML = statusDotsHTML(player.combatShield || 0, 0, null);
+      find("playerStatusDots").innerHTML = statusDotsHTML(player.combatShield || 0, 0, null, (player.confusionActions || 0) > 0);
       if ((player.devilBurnStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="${player.devilBurnStacks} Hellfire stacks · uncapped · 1% max HP each">🔥×${player.devilBurnStacks}</span>`);
       if ((player.db0511BurnStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status" title="Burn: 1% max HP per stack each action">🔥×${player.db0511BurnStacks}</span>`);
       if ((player.db0511PoisonStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status" title="Enemy Poison">☠️×${player.db0511PoisonStacks}</span>`);
       if (player._db0511SkipAction) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status">${player._db0511SkipAction.startsWith("❄️") ? "❄️ FROZEN" : "⚡ STUNNED"}</span>`);
     }
     if (find("enemyStatusDots")) {
-      find("enemyStatusDots").innerHTML = statusDotsHTML(enemy.enemyBarrier || 0, enemy.poisonStacks || 0, enemy.affinity);
+      find("enemyStatusDots").innerHTML = statusDotsHTML(enemy.enemyBarrier || 0, enemy.poisonStacks || 0, enemy.affinity, (enemy.confusionActions || 0) > 0);
       if ((enemy.burnStacks || 0) > 0) find("enemyStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="Burn ${enemy.burnStacks}/10: takes ${enemy.burnStacks}% max HP damage each turn">🔥×${enemy.burnStacks}</span>`);
     }
     [["attackBtn", model.attack], ["guardBtn", model.guard], ["potionBtn", model.potion], ["ultimateBtn", model.ultimate]].forEach(([id, spec]) => { const b = find(id); if (!b) return; b.disabled = !!spec.disabled; if (spec.text != null) b.textContent = spec.text; if (id === "attackBtn") b.className = spec.className || "combat-btn primary action-tooltip"; else if (spec.className) b.className = spec.className; b.dataset.tip = spec.tip || ""; });

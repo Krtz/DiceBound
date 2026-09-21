@@ -155,6 +155,12 @@ async function main(){
         // do not rewrite this historical fixture to pretend these fields
         // existed in 0.6.6.28.
         if(key==="career")continue;
+        if(key==="elementProgress"&&child&&typeof child==="object"){
+          const progress=stripPostBaselineCareerSchema(child);
+          delete progress.math;
+          copy[key]=progress;
+          continue;
+        }
         if(key==="stats"&&child&&typeof child==="object"){
           const stats=stripPostBaselineCareerSchema(child);
           for(const field of careerOnlyStatFields)delete stats[field];

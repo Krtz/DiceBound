@@ -109,9 +109,9 @@ assert.doesNotMatch(monolith,/async function bloodmageBloodletting\(/,'Bloodmage
 assert.doesNotMatch(monolith,/async function clericConsecration\(/,'Cleric Consecration still lives in monolith');
 assert.doesNotMatch(monolith,/function cycleBeastStance\(/,'Beastmaster stance mechanics still live in monolith');
 assert.match(monolith,/bloodmageAttack:\(\)=>dbClasses\.bloodmageBloodletting\(\)/);
-assert.match(monolith,/invokerQuasAttack:\(\)=>dbClasses\.invokerQuasStrike\(\)/);
-assert.match(monolith,/invokerWexAttack:\(\)=>dbClasses\.invokerWexStrike\(\)/);
-assert.match(monolith,/invokerExortAttack:\(\)=>dbClasses\.invokerExortStrike\(\)/);
+assert.match(monolith,/invokerQuasAttack:\(\)=>dbCombat\.offense\("Quas Strike",\(\)=>dbClasses\.invokerQuasStrike\(\)\)/);
+assert.match(monolith,/invokerWexAttack:\(\)=>dbCombat\.offense\("Wex Strike",\(\)=>dbClasses\.invokerWexStrike\(\)\)/);
+assert.match(monolith,/invokerExortAttack:\(\)=>dbCombat\.offense\("Exort Strike",\(\)=>dbClasses\.invokerExortStrike\(\)\)/);
 assert.match(monolith,/clericSpecial:\(\)=>dbClasses\.clericConsecration\(\)/);
 assert.match(monolith,/beastmasterSpecial:\(\)=>dbClasses\.cycleBeastStance\(\)/);
 assert.match(monolith,/bloodmageGuard:\(\)=>dbClasses\.bloodmageReplenish\(\)/);

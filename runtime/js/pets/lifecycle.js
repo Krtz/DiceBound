@@ -42,7 +42,8 @@
     metal:{label:"+1 Flat Damage Reduction",v:1,apply(p,s){p.flatReduction+=s;},remove(p,s){p.flatReduction-=s;}},
     coffee:{label:"+4 Luck",v:.04,apply(p,s){p.luck+=s;},remove(p,s){p.luck-=s;}},
     radiation:{label:"+6% Element Power",v:.06,apply(p,s){p.elementDamageBonus+=s;},remove(p,s){p.elementDamageBonus-=s;}},
-    gun:{label:"+5% Crit & +2 Luck",v:1,apply(p,s){p.crit+=.05*s;p.luck+=.02*s;},remove(p,s){p.crit-=.05*s;p.luck-=.02*s;}}
+    gun:{label:"+5% Crit & +2 Luck",v:1,apply(p,s){p.crit+=.05*s;p.luck+=.02*s;},remove(p,s){p.crit-=.05*s;p.luck-=.02*s;}},
+    math:{label:"+3% Element Proc Chance",v:.03,apply(p,s){p.elementProcBonus+=s;},remove(p,s){p.elementProcBonus-=s;}}
   });
 
   function bonusText(id){
@@ -123,8 +124,18 @@
   }
 
   function shuffledPetIds(){
-    const arr=Object.keys(pets()),r=rt();
+    const all=Object.keys(pets()),mathId=all.includes("math")?"math":null;
+    const arr=mathId?all.filter(id=>id!==mathId):all.slice(),r=rt();
+    // Compatibility invariant: adding Euler must not consume one more shared
+    // gameplay RNG draw and perturb every later roll in Trainer/borrowed-Trainer
+    // runs. Shuffle the historical roster with its exact Fisher-Yates draw
+    // count, then derive Euler's insertion point from that already-random order.
     for(let i=arr.length-1;i>0;i--){const j=r.rand(0,i),value=arr[i];arr[i]=arr[j];arr[j]=value;}
+    if(mathId){
+      let hash=2166136261>>>0;
+      for(const ch of arr.join("|")){hash^=ch.charCodeAt(0);hash=Math.imul(hash,16777619);}
+      arr.splice((hash>>>0)%(arr.length+1),0,mathId);
+    }
     return arr;
   }
 

@@ -121,7 +121,10 @@ function createProjectileDocument() {
   const document = {
     head: node("head"), body: node("body"), createElement: () => node(), getElementById: id => ids.get(id) || null,
     querySelector: selector => selector.includes(".stage-enemy") ? enemy : null,
-    querySelectorAll: selector => nodes.filter(current => current.connected && selector.includes(".db-combat-projectile-vfx") && current.className.includes("db-combat-projectile-vfx")),
+    querySelectorAll: selector => nodes.filter(current => current.connected && (
+      (selector.includes(".db-combat-projectile-vfx") && current.className.includes("db-combat-projectile-vfx")) ||
+      (selector.includes(".db-math-formula-vfx") && current.className.includes("db-math-formula-vfx"))
+    )),
   };
   return { document, player, enemy, nodes };
 }
@@ -152,6 +155,20 @@ assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_fire_02_no_
 projectileTimers[4]();
 assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_bullet_tracer_05.png", "Gun travel must use the authored bullet tracer");
 
+const timerStart=projectileTimers.length;
+assert.equal(projectileVfx.playMathFormula({origin:"player",enemy:projectileEnemy}),true,"Math must use the dedicated formula path");
+const mathNode=projectileDom.document.body.children.at(-1);
+assert.equal(mathNode.dataset.effect,"math");
+assert.equal(mathNode.dataset.origin,"player");
+assert.match(mathNode.textContent,/∑.*π.*√∞.*÷/,"Math VFX must visibly throw a complex formula");
+assert.equal(mathNode.style.left,"60px","Math formula must originate from the player center");
+assert.equal(mathNode.style.top,"85px");
+projectileTimers[timerStart]();
+assert.equal(mathNode.style.left,"410px","Math formula must travel to the semantic enemy center");
+assert.equal(mathNode.style.top,"170px");
+projectileVfx.clearTransient();
+assert.equal(mathNode.connected,false,"combat-boundary cleanup must remove a live Math formula even after cancelling its timers");
+
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 const elementOwner = fs.readFileSync(path.join(root, "runtime", "js", "combat", "element-resolution.js"), "utf8");
 assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player,getFloatingCombatNumbersEnabled:\(\)=>meta\.settings\?\.floatingCombatNumbers!==false\}\);/, "Combat VFX must be configured through Combat View with the persistent floating-number preference");
@@ -164,8 +181,9 @@ assert.doesNotMatch(monolith, /function db064PlayDonutRain/, "Donut DOM presenta
 assert.doesNotMatch(fs.readFileSync(path.join(root, "runtime", "js", "combat", "vfx.js"), "utf8"), /backgroundPosition: donutFramePosition/, "Donut must use its whole authored frames rather than CSS spritesheet cropping");
 assert.match(monolith, /dbCombatView\.clearTransient\(\)/, "Combat transitions must explicitly clear authored transient VFX through the Combat View facade");
 assert.match(monolith, /playProjectileProc:\(key,payload\)=>dbCombatView\.playProjectileProc\?\.\(key,payload\)/, "Element owner composition must inject the authored projectile presentation callback");
+assert.match(monolith, /playMathFormula:payload=>dbCombatView\.playMathFormula\?\.\(payload\)/, "Element owner composition must inject Math formula presentation through Combat View");
 assert.match(elementOwner, /if \(result && \(key === "fire" \|\| key === "gun"\)\) rt\.playProjectileProc\(key, \{ origin: "player", enemy: target \}\);/, "Player Fire/Gun procs must use the authored projectile owner");
-assert.match(monolith, /if\(key==='fire'\|\|key==='gun'\|\|key==='donut'\|\|dbCombatView\.suppressLegacyElementAnimation\(key\)\)return false;/, "Legacy emoji Fire/Gun/Donut presentation and Combat View scoped suppression must share the canonical animation gate");
+assert.match(monolith, /if\(key==='fire'\|\|key==='gun'\|\|key==='donut'\|\|key==='math'\|\|dbCombatView\.suppressLegacyElementAnimation\(key\)\)return false;/, "Authored Fire/Gun/Donut/Math presentation and Combat View scoped suppression must share the canonical animation gate");
 
 console.log("Combat VFX ownership PASS: Nature suppression scope, live-target filter, asset contracts and monolith adapters");
 

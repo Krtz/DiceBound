@@ -16,6 +16,9 @@ assert.ok(entry);assert.deepEqual(entry.provides,[]);assert.ok(entry.requires.in
 const mono=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
 assert.doesNotMatch(mono,/\bdbInvoker\b/);assert.doesNotMatch(mono,/window\.DiceboundInvoker/);
 assert.match(mono,/dbClasses\.configureInvoker\(\{/);
+for(const [label,call] of [["Quas Strike","invokerQuasStrike"],["Wex Strike","invokerWexStrike"],["Exort Strike","invokerExortStrike"]]){
+  assert.ok(mono.includes(`dbCombat.offense("${label}",()=>dbClasses.${call}())`),`${label} must pass through semantic Combat offense interception`);
+}
 for(const call of ["invokerResetCombat","invokerAfterPlayerAction","invokerActionBonuses","invokerQuasStrike","invokerWexStrike","invokerExortStrike","invokerElementalLance","invokerOutgoingMultiplier","invokerAfterPlayerHit","invokerUltimate","invokerBeginCombat","invokerResponseModifier"])assert.ok(mono.includes(`dbClasses.${call}`),`missing Classes Invoker route ${call}`);
 assert.doesNotMatch(mono,/invokerGeneratorManaMultiplier:\(\)=>dbClasses\.invokerGeneratorManaMultiplier\(\)/,"retired generic Invoker builder composition route returned");
 const owner=fs.readFileSync(path.join(root,"runtime/js/classes/invoker.js"),"utf8");

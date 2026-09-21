@@ -49,6 +49,8 @@ const vfxApi = Object.freeze({
   floatCombatText: (...args) => { calls.push(["vfx.floatCombatText", ...args]); return true; },
   prepareProjectileEffects: (...args) => { calls.push(["vfx.prepareProjectileEffects", ...args]); return true; },
   playProjectileProc: (...args) => { calls.push(["vfx.playProjectileProc", ...args]); return true; },
+  prepareMathFormula: (...args) => { calls.push(["vfx.prepareMathFormula", ...args]); return true; },
+  playMathFormula: (...args) => { calls.push(["vfx.playMathFormula", ...args]); return true; },
   clearTransient: (...args) => { calls.push(["vfx.clearTransient", ...args]); return 7; },
 });
 let configuredPresentationRuntime = null;
@@ -89,6 +91,8 @@ assert.deepEqual(view.floatingEntries(), [{kind:"damage"}]);
 assert.equal(view.floatCombatText({kind:"damage",amount:7,target:{unit:"player"}}), true);
 assert.deepEqual(calls.at(-1),["vfx.floatCombatText",{kind:"damage",amount:7,target:{unit:"player"}}]);
 assert.equal(view.playProjectileProc("fire", { origin: "player" }), true);
+assert.equal(view.playMathFormula({ origin: "player" }), true);
+assert.deepEqual(calls.at(-1),["vfx.playMathFormula",{origin:"player"}]);
 assert.equal(view.clearTransient("pre-presentation"), 7);
 assert(!calls.some(call => call[0] === "presentation.clearDragoonPresentation"), "VFX-only startup cleanup must not require presentation configuration");
 
@@ -128,6 +132,7 @@ assert.doesNotMatch(monolith, /\bfunction renderEnemyParty\s*\(/, "call-only ren
 assert.match(monolith, /withNatureLegacyPresentation:\(key,work\)=>dbCombatView\.withNatureLegacyPresentation\(key,work\)/, "element composition must route Nature presentation through Combat View");
 assert.match(monolith, /playDonutRain:payload=>dbCombatView\.playDonutRain\(payload\)/, "element composition must route Donut presentation through Combat View");
 assert.match(monolith, /playProjectileProc:\(key,payload\)=>dbCombatView\.playProjectileProc\?\.\(key,payload\)/, "element composition must route projectile presentation through Combat View");
+assert.match(monolith, /playMathFormula:payload=>dbCombatView\.playMathFormula\?\.\(payload\)/, "Math presentation must route through Combat View");
 assert.doesNotMatch(monolith, /window\.DiceboundCombatPresentation/, "monolith must not bind the focused Presentation owner directly");
 assert.doesNotMatch(monolith, /window\.DiceboundCombatVfx/, "monolith must not bind the focused VFX owner directly");
 assert.doesNotMatch(monolith, /\bdbCombatPresentation\b/, "peer-public Presentation variable must not survive in the monolith");

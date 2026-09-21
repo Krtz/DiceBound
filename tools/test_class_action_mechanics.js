@@ -11,7 +11,7 @@ for(const rel of ["runtime/js/classes/registry.js","runtime/js/classes/runtime.j
 }
 const classes=context.window.DiceboundClasses;
 let player={classId:"bloodmage",lifeSteal:.10},enemy={name:"Dummy",hp:100,maxHp:100},enemies=[enemy],busy=false,events=[];
-let boardLevel=2,encounterLead={boss:false},randomQueue=[],effects=new Set(),damageAllResult=47,ringText="",potionUses=0,applied=[];
+let boardLevel=2,encounterLead={boss:false},randomQueue=[],effects=new Set(),damageAllResult=47,ringText="",potionUses=0,applied=[],confusionResult=null;
 const push=(name,value)=>{events.push(value===undefined?name:`${name}:${value}`);};
 const nextRandom=()=>{if(!randomQueue.length)throw new Error("test RNG queue exhausted");const value=randomQueue.shift();push("rng",value);return value;};
 const firstLiving=()=>enemies.filter(candidate=>candidate.hp>0);
@@ -32,7 +32,8 @@ classes.configureActionMechanics({
   pickElementKey:()=>{nextRandom();return "fire";},triggerElementEffect:(key,target,options)=>{push("element",`${key}/${target?.name}/${options?.source}`);return {message:"Fire erupts.",totalDamage:0};},
   rollTieredProc:chance=>{push("tier",chance);return 0;},triggerStrikeElements:target=>{push("strikeElements",target?.name||"none");return {message:"",totalDamage:0};},
   playElementAnimation:(key,target)=>push("elementAnim",`${key}/${target?.name||"none"}`),gameplayTalentRank:()=>0,dragoonActive:()=>player.classId==="dragoon",
-  syncDragoonPresentation:()=>push("dragoonSync"),dragoonLandPresentation:()=>push("dragoonLand")
+  syncDragoonPresentation:()=>push("dragoonSync"),dragoonLandPresentation:()=>push("dragoonLand"),
+  resolvePlayerConfusionOffense:async()=>confusionResult
 });
 
 (async()=>{
@@ -44,6 +45,13 @@ classes.configureActionMechanics({
   await classes.clericConsecration();
   assert.equal(player.clericFaith,0);assert.equal(player.hp,62);assert.equal(player.combatShield,1);assert.equal(player.combatActionCount,1);
   assert.deepEqual(events,["busy:true","heal:22","tier:0.06","damageAll:31/0.75","text:☀️ Consecration spends 100 Faith, heals 22 HP, raises a Barrier and deals 47 Light-touched damage across the pack.","flash:☀️ CONSECRATION","holy","ui","delay:760","response:false"]);
+
+  player={classId:"cleric",maxHp:100,hp:40,attack:20,crit:.06,clericFaith:100,combatShield:0,combatActionCount:0};enemy={name:"Confused Dummy",hp:100,maxHp:100};enemies=[enemy];busy=false;events=[];confusionResult={misfired:true,target:"player",damage:15};
+  assert.deepEqual(await classes.clericConsecration(),confusionResult,"direct class offense must return the authoritative Confusion resolution");
+  assert.equal(player.clericFaith,100,"Confused Consecration must not spend Faith before the misfire interceptor");
+  assert.equal(player.combatActionCount,0,"Confused Consecration must not also execute its normal action");
+  assert.equal(enemy.hp,100,"Confused Consecration must not damage its intended enemy");
+  confusionResult=null;
 
   player={classId:"beastmaster",beastStance:"aggressive"};busy=false;events=[];
   classes.cycleBeastStance();classes.cycleBeastStance();classes.cycleBeastStance();

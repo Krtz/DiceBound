@@ -53,8 +53,19 @@ async function main(){
 
     await pointerClick(page,"#careerOverlay [data-career-done]");
     if(!(await page.evaluate("document.getElementById('careerOverlay')?.classList.contains('hidden')")))throw new Error("Career Done pointer did not close destination");
+
+    // Reproduce the real 0.6.7.18 failure shape: owned chrome survives but
+    // the owned tabs/panels are missing. The owner marker must never prevent
+    // the Career UI from reconstructing its complete surface on the next open.
+    const damaged=await page.evaluate(`(()=>{const overlay=document.getElementById('careerOverlay'),body=overlay?.querySelector('.career-body');if(!overlay||!body)return false;body.remove();return overlay.dataset.careerOwner==='ui/career'&&!!overlay.querySelector('.career-chrome')&&!overlay.querySelector('.career-body');})()`);
+    if(!damaged)throw new Error("Career damaged-surface regression fixture could not be created");
+    await pointerClick(page,"#campCareerBtn");
+    const repaired=await page.evaluate(`(()=>{const overlay=document.getElementById('careerOverlay'),tabs=[...overlay.querySelectorAll('[data-career-tab]')].map(node=>node.dataset.careerTab),panels=[...overlay.querySelectorAll('[data-career-panel]')].map(node=>node.dataset.careerPanel),text=overlay.querySelector('[data-career-panel="overview"]')?.textContent||'';return {open:!overlay.classList.contains('hidden'),owner:overlay.dataset.careerOwner,tabs,panels,cards:overlay.querySelectorAll('.career-card').length,text};})()`);
+    if(!repaired.open||repaired.owner!=="ui/career"||repaired.tabs.length!==3||repaired.panels.length!==3||repaired.cards<20||!repaired.text.includes("12,345"))throw new Error(`Career owner did not self-repair a damaged owned surface: ${JSON.stringify(repaired)}`);
+    await pointerClick(page,"#careerOverlay [data-career-done]");
+
     const errors=await page.evaluate("window.__careerErrors||[]");if(errors.length)throw new Error(`Career destination raised runtime errors: ${JSON.stringify(errors)}`);
-    console.log("Career Edge PASS: real persisted Career values, semantic Enemy Ledger, Run History and Done are player-visible through Camp");
+    console.log("Career Edge PASS: persisted values + damaged owned surface self-repair are player-visible through Camp");
   }finally{
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }

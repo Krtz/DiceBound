@@ -22,6 +22,10 @@ combat.configure({
   ultimate:svc('ultimate',['start']),
   petTurn:svc('petTurn',['petTurn','petDamage','trainerPetDamage','petElementFor','activeTrainerPetId','maybePetElementProc','trainerStrike']),
   turns:svc('turns',['enemyTurn','resolveEnemyResponse','applyPlayerDamage']),
+  confusion:{
+    resolvePlayerOffense:async()=>null,
+    applyEnemy:()=>undefined,applyPlayer:()=>undefined,consumeEnemyTarget:()=>null,clearPlayer:()=>undefined
+  },
   victory:svc('victory',['winCombat']),
   elements:svc('elements',['triggerElementEffect','currentWeaponElement','triggerWeaponElement','enemyElementProc','affinityElementMultiplier','elementHit','elementHitAll','restoreRadiationDefense','restoreEnemyElementDebuffs','addEnemyBurn']),
   healing:svc('healing',['recordHealing','healPlayer','clearBloodOverhealTemp','clearStoneBattle']),
@@ -29,10 +33,12 @@ combat.configure({
   strikes:svc('strikes',['strikeBaseDamage','performStrike']),
   scaling:svc('scaling',['scale'])
 });
-assert.strictEqual(combat.attack('a'),'attack.playerAttack');
+(async()=>{
+assert.strictEqual(await combat.offense('Custom',()=>Promise.resolve('custom.offense')),'custom.offense');
+assert.strictEqual(await combat.attack('a'),'attack.playerAttack');
 assert.strictEqual(combat.guard('g'),'guard.guardAction');
-assert.strictEqual(combat.spell('s'),'mana.occultSpellAttack');
-assert.strictEqual(combat.ultimate('u'),'ultimate.start');
+assert.strictEqual(await combat.spell('s'),'mana.occultSpellAttack');
+assert.strictEqual(await combat.ultimate('u'),'ultimate.start');
 assert.strictEqual(combat.petDamage(),'petTurn.petDamage');
 assert.strictEqual(combat.enemyResponse(false),'turns.resolveEnemyResponse');
 assert.strictEqual(combat.element('fire',{}),'elements.triggerElementEffect');
@@ -103,4 +109,6 @@ const manifest=JSON.parse(fs.readFileSync(path.join(root,'runtime','js','module-
 const entry=manifest.modules.find(module=>module.id==='combat-facade');
 assert(entry&&entry.provides.includes('DiceboundCombat'),'Combat facade missing from module manifest');
 assert(!entry.requires.includes('combat-presentation')&&!entry.requires.includes('combat-vfx'),'Combat Engine facade must keep View/VFX out of its dependency boundary');
-console.log('Combat public facade ownership contract: PASS — call-only adapters retired; intentional hooks preserved.');
+assert(entry.requires.includes('combat-confusion-resolution'),'Combat facade must declare the focused Confusion owner dependency');
+console.log('Combat public facade ownership contract: PASS — call-only adapters retired; Confusion intercept stays behind the facade.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

@@ -16,7 +16,7 @@
       "setCombatText","updateCombatUI","addCombatHistory","renderEnemyParty","triggerElementEffect","defenseDamageReduction",
       "effectiveDodgeChance","enemyElementProc","damageEnemy","healPlayer","mythicalSetCount","guardianSpecialMultiplier",
       "hasMythicPiece","hasDevilsHorns","hasHeadphones","hasLegendaryEffect","checkDynamicClassUnlocks","saveMeta","playHitSfx",
-      "recordDamageTaken","wolfEchoChance","presentEnemyAttack","dodge","dragoonActive"
+      "recordDamageTaken","wolfEchoChance","presentEnemyAttack","dodge","dragoonActive","consumeEnemyConfusionTarget"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat turn-resolution runtime missing ${name}().`);
     if (!Number.isFinite(Number(nextRuntime.guardianSpecialInterval)) || Number(nextRuntime.guardianSpecialInterval) < 1) throw new Error("Combat turn-resolution runtime requires guardianSpecialInterval.");
@@ -145,8 +145,22 @@
     const responseModifier = typeof rt.responseModifier === "function" ? (rt.responseModifier() || {}) : {};
     const special = !!(lead?.guardian && (lead.miniBoss || lead.finalBoss || lead.merchantBoss || lead.bloodmageBoss || lead.devilBoss) && lead.hp > 0 && rt.getEncounterTurn() % rt.guardianSpecialInterval === 0 && !responseModifier.suppressSpecial);
     for (const enemy of livingEnemies()) {
+      if (!enemy || enemy.hp <= 0) continue;
       const messageStart = messages.length;
+      const confusedTarget = (enemy.skipTurns || 0) > 0 ? null : rt.consumeEnemyConfusionTarget(enemy);
       if ((enemy.skipTurns || 0) > 0 && !(special && enemy === lead)) { enemy.skipTurns -= 1; messages.push(`${enemy.name} is frozen.`); }
+      else if (confusedTarget) {
+        const dealt = rt.damageEnemy(confusedTarget, Math.max(1, Math.round(enemy.attack || 1)));
+        const targetName = confusedTarget === enemy ? "itself" : confusedTarget.name;
+        const message = `🧮 Confusion! ${enemy.name}'s action misfires into ${targetName} for ${dealt}.`;
+        messages.push(message);
+        rt.addCombatHistory(message);
+        rt.floatCombatText?.({kind:"damage",amount:dealt,target:{unit:"enemy",enemy:confusedTarget,enemyIndex:rt.getCurrentEnemies().indexOf(confusedTarget)}});
+        if (confusedTarget.hp <= 0 && rt.getCurrentEnemy() === confusedTarget) {
+          const next = livingEnemies()[0];
+          if (next) rt.selectEnemy(rt.getCurrentEnemies().indexOf(next));
+        }
+      }
       else if (special && enemy === lead) {
         const partialDR = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0)) * .55;
         if (enemy.bloodmageBoss || enemy.devilBoss) {

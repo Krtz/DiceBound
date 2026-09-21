@@ -2,7 +2,7 @@
   "use strict";
 
   const OWNER = "combat/element-resolution";
-  const FIRE_BURN_CHANCE = .15;
+  const FIRE_BURN_CHANCE = .25;
   const FIRE_BURN_CAP = 10;
   let runtime = null;
 
@@ -20,7 +20,8 @@
       "playElementAnimation", "addLog", "showToast", "addCombatHistory", "renderEnemyParty",
       "updateCombatUI", "updateHUD", "setProcBonus", "setElementPower", "hasLegendaryEffect",
       "reconcileDefeatedTarget", "withNatureLegacyPresentation", "livingNatureTargets", "recordCareerElementProc",
-      "playNatureOnEnemy", "playNatureOnPlayer", "playDonutRain", "playProjectileProc"
+      "playNatureOnEnemy", "playNatureOnPlayer", "playDonutRain", "playProjectileProc", "playMathFormula",
+      "applyEnemyConfusion", "applyPlayerConfusion", "clearPlayerConfusion"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Element-resolution runtime missing ${name}().`);
     runtime = nextRuntime;
@@ -110,29 +111,30 @@
     const mult = (weak ? 1.55 + p.weaknessElementBonus : 1) * (1 + p.elementDamageBonus) * rendPower * setElementPower;
     let totalDamage = 0, heal = 0;
     let extra = guaranteedRend ? " Reality Rend guarantees and strengthens the activation." : "";
-    const aoe = ["ice", "light", "nature", "metal", "donut"].includes(key);
+    const aoe = ["ice", "nature", "metal", "donut"].includes(key);
     const old = rt.getCurrentEnemy();
     rt.setCurrentEnemy(target);
 
     if (target.affinity === key) extra += ` ${target.name}'s ${e.name} affinity resists half of matching elemental damage.`;
-    if (key === "fire") totalDamage = elementHit(target, key, p.attack * .65 * mult);
+    if (key === "fire") totalDamage = elementHit(target, key, p.attack * .70 * mult);
     if (key === "ice") {
-      totalDamage = elementHitAll(key, p.attack * .38 * mult, .85);
-      if (target.guardian) {
-        if ((target.freezeCooldown || 0) <= 0) {
+      totalDamage = elementHitAll(key, p.attack * .70 * mult, .85);
+      if (rt.random() < .25) {
+        if (target.guardian) {
+          if ((target.freezeCooldown || 0) <= 0) {
+            target.skipTurns = (target.skipTurns || 0) + 1;
+            target.freezeCooldown = 2;
+            extra += " The guardian is frozen; Ice Nova cannot freeze it again until it has recovered.";
+          } else extra += ` The guardian resists the freeze (${target.freezeCooldown} response${target.freezeCooldown === 1 ? "" : "s"} remain).`;
+        } else {
           target.skipTurns = (target.skipTurns || 0) + 1;
-          target.freezeCooldown = 2;
-          extra += " The guardian is frozen; Ice Nova cannot freeze it again until it has recovered.";
-        } else extra += ` The guardian resists the freeze (${target.freezeCooldown} response${target.freezeCooldown === 1 ? "" : "s"} remain).`;
-      } else {
-        target.skipTurns = (target.skipTurns || 0) + 1;
-        extra += " The selected target is frozen.";
+          extra += " The selected target is frozen.";
+        }
       }
     }
     if (key === "electric") {
-      totalDamage = elementHit(target, key, p.attack * .90 * mult);
-      const stunChance = target.guardian ? .075 : .15;
-      if (rt.random() < stunChance) {
+      totalDamage = elementHit(target, key, p.attack * .70 * mult);
+      if (rt.random() < .25) {
         if (!target.guardian || (target.freezeCooldown || 0) <= 0) {
           target.skipTurns = (target.skipTurns || 0) + 1;
           if (target.guardian) target.freezeCooldown = 1;
@@ -141,9 +143,9 @@
       }
     }
     if (key === "light") {
-      totalDamage = elementHitAll(key, p.attack * .52 * mult, .75);
+      totalDamage = elementHit(target, key, p.attack * .70 * mult);
       heal = rt.healPlayer(Math.ceil(p.maxHp * (weak ? .15 : .09) * (1 + p.elementDamageBonus)));
-      extra += heal ? ` Holy restores ${heal} HP.` : "";
+      extra += heal ? ` Holy restores ${heal} HP across your allied side.` : "";
     }
     if (key === "void") totalDamage = elementHit(target, key, Math.max(1, Math.min(target.maxHp * (weak ? .14 : .09) * mult, p.attack * 4.5 * mult)), true);
     if (key === "nature") {
@@ -158,13 +160,13 @@
       extra += ` Donut Rain pelts the pack and restores ${heal} HP.`;
     }
     if (key === "tech") {
-      totalDamage = elementHit(target, key, p.attack * .42 * mult);
-      const cut = Math.max(1, Math.ceil(target.attack * (weak ? .22 : .14) * (1 + p.elementDamageBonus)));
-      target.attack = Math.max(1, target.attack - cut);
-      extra += ` Brain Hack lowers ${target.name}'s attack by ${cut}.`;
+      totalDamage = elementHit(target, key, p.attack * .30 * mult);
+      const before = target.attack || 0, cut = Math.min(Math.max(0, before - 1), Math.max(1, Math.ceil(Math.max(1, before) * .10)));
+      target.attack = Math.max(1, before - cut);
+      extra += ` Brain Hack lowers ${target.name}'s attack by ${before - target.attack} (10%).`;
     }
     if (key === "metal") {
-      totalDamage = elementHitAll(key, p.attack * .58 * mult, .78);
+      totalDamage = elementHitAll(key, p.attack * .70 * mult, .78);
       p.ultimateCharge = rt.clamp(p.ultimateCharge + (weak ? 22 : 14), 0, 100);
       extra += " The riff charges your ultimate.";
     }
@@ -175,9 +177,16 @@
       extra += " Caffeinated Haste deals damage and grants another action.";
     }
     if (key === "gun") {
-      const armorPierce = Math.ceil((target.defense || 0) * .5);
-      totalDamage = elementHit(target, key, p.attack * 1.05 * mult + armorPierce);
-      extra += " Deadeye Volley ignores roughly half the target's Defense.";
+      const armorPierce = Math.ceil(Math.max(0, target.defense || 0) * .75);
+      totalDamage = elementHit(target, key, p.attack * 1.20 * mult + armorPierce);
+      extra += " Deadeye Volley ignores 75% of the target's Defense.";
+    }
+    if (key === "math") {
+      totalDamage = elementHit(target, key, p.attack * .30 * mult);
+      if (target.hp > 0 && rt.random() < .25) {
+        rt.applyEnemyConfusion(target);
+        extra += ` ${target.name} is Confused; its next offensive action will misfire.`;
+      }
     }
 
     rt.setCurrentEnemy(old?.hp > 0 ? old : (living()[0] || target));
@@ -221,12 +230,12 @@
     }
     rt.playElementAnimation(key, target, false);
     const mult = (weak ? 1.55 + p.weaknessElementBonus : 1) * (1 + p.elementDamageBonus);
-    const damage = elementHit(target, key, p.attack * .34 * mult);
-    const before = target.defense || 0;
-    const shred = Math.min(before, Math.max(1, Math.round(1 + (weak ? 1 : 0) + p.elementDamageBonus * 2)));
+    const damage = elementHit(target, key, p.attack * .40 * mult);
+    const before = Math.max(0, Number(target.defense) || 0);
+    const shred = before > 0 ? Math.min(before, Math.max(1, Math.ceil(before * .10))) : 0;
     target.defense = Math.max(0, before - shred);
     rt.trackElementProgress(key, damage);
-    const message = `${weak ? "WEAKNESS! " : ""}☢️ Irradiate deals ${damage} damage and lowers ${target.name}'s Defense by ${shred}.`;
+    const message = `${weak ? "WEAKNESS! " : ""}☢️ Irradiate deals ${damage} damage${shred ? ` and lowers ${target.name}'s Defense by ${shred} (10%)` : ""}.`;
     rt.addLog(`<b>Irradiate</b> ${source} ${weak ? "exploits a weakness" : "activates"}.`);
     rt.showToast(`☢️ -${shred} DEF`);
     rt.renderEnemyParty();
@@ -236,8 +245,6 @@
 
   function resolvePreLegendary(key, target, opts = {}) {
     const rt = requireRuntime(), p = player();
-    const beforeAttack = target?.attack;
-    const beforeDefense = target?.defense;
     const v19BeforeTurns = p.hasteTurns || 0;
     const beta045BeforeTurns = p.hasteTurns || 0;
     const db046BeforeTurns = p.hasteTurns || 0;
@@ -255,20 +262,6 @@
       out.message = `${out.message || "🔥 Fireball erupts."} 🔥 Burn applied (${stacks}/${FIRE_BURN_CAP}).`;
       rt.addCombatHistory(`🔥 Fireball ignites ${target.name}: Burn ${stacks}/${FIRE_BURN_CAP}.`);
     }
-    if (key === "tech" && Number.isFinite(beforeAttack)) {
-      const cut = Math.max(1, Math.ceil(beforeAttack * .10));
-      target.attack = Math.max(1, beforeAttack - cut);
-      if (out.message) out.message = out.message.replace(/Brain Hack lowers .*? attack by \d+\./, `Brain Hack lowers ${target.name}'s attack by ${beforeAttack - target.attack} (10%).`);
-      rt.renderEnemyParty();
-      rt.updateCombatUI();
-    }
-    if (key === "radiation" && Number.isFinite(beforeDefense) && beforeDefense <= 0) {
-      target.defense = beforeDefense - 1;
-      out.message = `${target.weakness === "radiation" ? "WEAKNESS! " : ""}☢️ Irradiate deals ${out.totalDamage || 0} damage and drives ${target.name}'s Defense from ${beforeDefense} to ${target.defense}, increasing later damage.`;
-      rt.renderEnemyParty();
-      rt.updateCombatUI();
-    }
-
     if (key === "coffee") {
       if ((p.hasteCooldown || 0) > 0 && (p.hasteTurns || 0) > v19BeforeTurns) {
         p.hasteTurns = v19BeforeTurns;
@@ -325,6 +318,7 @@
     const result = rt.withNatureLegacyPresentation(key, () => resolveLegendaryLayer(key, target, opts));
     if (key === "nature" && result) natureCandidates.forEach(enemy => rt.playNatureOnEnemy(enemy));
     if (key === "donut" && result) rt.playDonutRain({ origin: "player", enemy: target });
+    if (key === "math" && result) rt.playMathFormula({ origin: "player", enemy: target });
     if (target?.hp <= 0) rt.reconcileDefeatedTarget(target, `element:${key}`);
     if (result && (key === "fire" || key === "gun")) rt.playProjectileProc(key, { origin: "player", enemy: target });
     if (result) rt.recordCareerElementProc(key);
@@ -369,15 +363,18 @@
     rt.playElementAnimation(key, enemy, true);
     let note = `${e.icon} ${enemy.name} activates ${e.spell}: `, hit = null;
     if (key === "fire") {
-      hit = applyPlayerElementDamage(enemy.attack * .65); note += `${hit.total} Fire damage.`;
-      if (rt.random() < .15) { const stacks = addPlayerBurn(1); note += ` Burn ${stacks}/10 applied.`; }
+      hit = applyPlayerElementDamage(enemy.attack * .70); note += `${hit.total} Fire damage.`;
+      if (rt.random() < .25) { const stacks = addPlayerBurn(1); note += ` Burn ${stacks}/10 applied.`; }
     } else if (key === "ice") {
-      hit = applyPlayerElementDamage(enemy.attack * .38); queuePlayerControl("❄️ Frozen by Ice Nova"); note += `${hit.total} Ice damage and you are Frozen for your next action.`;
+      hit = applyPlayerElementDamage(enemy.attack * .70); note += `${hit.total} Ice damage.`;
+      if (rt.random() < .25 && queuePlayerControl("❄️ Frozen by Ice Nova")) note += " You are Frozen for your next action.";
     } else if (key === "electric") {
-      hit = applyPlayerElementDamage(enemy.attack * .90); note += `${hit.total} Electric damage.`;
-      if (rt.random() < .15 && queuePlayerControl("⚡ Stunned by Static Shock")) note += " Static Shock stuns your next action.";
+      hit = applyPlayerElementDamage(enemy.attack * .70); note += `${hit.total} Electric damage.`;
+      if (rt.random() < .25 && queuePlayerControl("⚡ Stunned by Static Shock")) note += " Static Shock stuns your next action.";
     } else if (key === "light") {
-      hit = applyPlayerElementDamage(enemy.attack * .52); const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.ceil(enemy.maxHp * .09))); enemy.hp += heal; note += `${hit.total} Light damage and restores ${heal} HP to ${enemy.name}.`;
+      hit = applyPlayerElementDamage(enemy.attack * .70); let healed = 0;
+      for (const ally of living()) { const amount = Math.min(ally.maxHp - ally.hp, Math.max(1, Math.ceil(ally.maxHp * .09))); ally.hp += amount; healed += amount; }
+      note += `${hit.total} Light damage and Holy restores ${healed} HP across the enemy side.`;
     } else if (key === "void") {
       const raw = Math.max(1, Math.min(p.maxHp * .09, enemy.attack * 4.5)); hit = applyPlayerElementDamage(raw); note += `${hit.total} Void damage based on your max HP.`;
     } else if (key === "nature") {
@@ -385,17 +382,20 @@
     } else if (key === "donut") {
       hit = applyPlayerElementDamage(enemy.attack * .30); const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.ceil(enemy.maxHp * .18))); enemy.hp += heal; note += `${hit.total} Donut damage and restores ${heal} HP to ${enemy.name}.`;
     } else if (key === "tech") {
-      hit = applyPlayerElementDamage(enemy.attack * .42); const before = p.attack, cut = Math.max(1, Math.ceil(Math.max(1, before) * .10)); p.attack = Math.max(1, before - cut); const actual = Math.max(0, before - p.attack); p.db0511TechAttackLost = (p.db0511TechAttackLost || 0) + actual; note += `${hit.total} Tech damage and Brain Hack lowers your Attack by ${actual} for this battle.`;
+      hit = applyPlayerElementDamage(enemy.attack * .30); const before = p.attack, cut = Math.max(1, Math.ceil(Math.max(1, before) * .10)); p.attack = Math.max(1, before - cut); const actual = Math.max(0, before - p.attack); p.db0511TechAttackLost = (p.db0511TechAttackLost || 0) + actual; note += `${hit.total} Tech damage and Brain Hack lowers your Attack by ${actual} for this battle.`;
     } else if (key === "metal") {
-      hit = applyPlayerElementDamage(enemy.attack * .58);
+      hit = applyPlayerElementDamage(enemy.attack * .70);
       if (rt.getEncounterLead()?.guardian) { rt.setEncounterTurn(rt.getEncounterTurn() + 1); note += `${hit.total} Metal damage and advances the Guardian special clock.`; }
       else { const gain = Math.max(1, Math.round(enemy.attack * .05)); enemy.attack += gain; note += `${hit.total} Metal damage and powers ${enemy.name} up by ${gain} Attack for this battle.`; }
     } else if (key === "coffee") {
       hit = applyPlayerElementDamage(enemy.attack * .34); const extra = applyPlayerElementDamage(enemy.attack * .34); note += `${hit.total + extra.total} Coffee damage as Caffeinated Haste grants ${enemy.name} an immediate extra hit.`;
     } else if (key === "gun") {
-      const pierce = Math.ceil(Math.max(0, p.defense) * .5); hit = applyPlayerElementDamage(enemy.attack * 1.05 + pierce); note += `${hit.total} piercing damage, bypassing roughly half your Defense.`;
+      const pierce = Math.ceil(Math.max(0, p.defense) * .75); hit = applyPlayerElementDamage(enemy.attack * 1.20 + pierce); note += `${hit.total} piercing damage, bypassing 75% of your Defense.`;
     } else if (key === "radiation") {
-      hit = applyPlayerElementDamage(enemy.attack * .34); const loss = Math.min(Math.max(0, p.defense), 1); if (loss) { p.defense -= loss; p.radiationDefenseLost = (p.radiationDefenseLost || 0) + loss; } note += `${hit.total} Radiation damage${loss ? ` and your Defense falls by ${loss} for this battle` : ""}.`;
+      hit = applyPlayerElementDamage(enemy.attack * .40); const before = Math.max(0, Number(p.defense) || 0), loss = before > 0 ? Math.min(before, Math.max(1, Math.ceil(before * .10))) : 0; if (loss) { p.defense -= loss; p.radiationDefenseLost = (p.radiationDefenseLost || 0) + loss; } note += `${hit.total} Radiation damage${loss ? ` and your Defense falls by ${loss} (10%) for this battle` : ""}.`;
+    } else if (key === "math") {
+      hit = applyPlayerElementDamage(enemy.attack * .30); note += `${hit.total} Math damage.`;
+      if (p.hp > 0 && rt.random() < .25) { rt.applyPlayerConfusion(); note += " You are Confused; your next offensive action will misfire."; }
     }
     rt.addCombatHistory(note);
     rt.updateCombatUI();
@@ -411,6 +411,7 @@
       const effectiveKey = enemy?.affinity;
       const result = rt.withNatureLegacyPresentation(effectiveKey, () => resolveEnemyCore(enemy));
       if (effectiveKey === "nature" && result && player().hp > 0) rt.playNatureOnPlayer();
+      if (effectiveKey === "math" && result) rt.playMathFormula({ origin: "enemy", enemy });
       return result;
     } finally {
       if (innate) enemy.affinity = originalAffinity;
@@ -436,7 +437,7 @@
   }
 
   function restoreEnemyElementDebuffs() {
-    const p = player();
+    const rt = requireRuntime(), p = player();
     if (p.db0511TechAttackLost) {
       p.attack += p.db0511TechAttackLost;
       p.db0511TechAttackLost = 0;
@@ -447,6 +448,7 @@
     p.db0511PoisonPower = 0;
     p._db0511SkipAction = "";
     p._db0511SuppressControlProc = false;
+    rt.clearPlayerConfusion();
   }
 
   const api = Object.freeze({

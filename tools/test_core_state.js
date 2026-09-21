@@ -48,12 +48,20 @@ for(const relative of [["classes","registry.js"],["pets","registry.js"]]){
 const liveDefaults=api.createMetaService({
   classIds:context.window.DiceboundClasses.ids,
   petIds:context.window.DiceboundPets.ids,
-  elementIds:["fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation"],
+  elementIds:["fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation","math"],
   saveService:null,
 }).defaultMeta();
 const liveSerialized=JSON.stringify(liveDefaults);
-assert.equal(Buffer.byteLength(liveSerialized),2036,"full live default-career byte snapshot drifted");
-assert.equal(crypto.createHash("sha256").update(liveSerialized).digest("hex"),"6160aeb919873d83f381165654bc825c68f415b0b9ff10e33d1822cca44bb915","full live default-career data drifted");
+const legacyLive=JSON.parse(JSON.stringify(liveDefaults));
+delete legacyLive.pets.math;
+delete legacyLive.elementProgress.math;
+const legacyLiveSerialized=JSON.stringify(legacyLive);
+assert.equal(Buffer.byteLength(legacyLiveSerialized),2036,"pre-Math live default-career byte snapshot drifted");
+assert.equal(crypto.createHash("sha256").update(legacyLiveSerialized).digest("hex"),"6160aeb919873d83f381165654bc825c68f415b0b9ff10e33d1822cca44bb915","pre-Math live default-career data drifted");
+assert.ok(Buffer.byteLength(liveSerialized)>Buffer.byteLength(legacyLiveSerialized),"Math must extend, not replace, the live career defaults");
+assert.equal(liveDefaults.pets.math.level,1,"Euler must exist in fresh career Pet state");
+assert.equal(liveDefaults.pets.math.unlocked,false,"Euler must begin locked");
+assert.equal(liveDefaults.elementProgress.math,0,"Math progress must begin at zero");
 assert.equal(liveDefaults.unlocks.dragoon,false,"Dragoon must start locked on a fresh career");
 assert.equal(liveDefaults.unlocks.invoker,false,"Invoker must start locked until 100 real Mana-spender casts");
 

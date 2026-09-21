@@ -14,7 +14,8 @@
     "metal": {"id":"metal","name":"Riff","icon":"🐐","element":"metal","desc":"A metal goat that attacks with aggressively loud riffs."},
     "coffee": {"id":"coffee","name":"Mocha","icon":"🦉","element":"coffee","desc":"A caffeinated owl that refuses to blink."},
     "gun": {"id":"gun","name":"Trigger","icon":"🦝","element":"gun","desc":"A tiny gunslinger raccoon with extremely questionable licensing."},
-    "radiation": {"id":"radiation","name":"Glowbug","icon":"☢️🐛","element":"radiation","desc":"A suspiciously luminous companion. Slightly stronger than DiBo and grants a small Element Power bonus while active."}
+    "radiation": {"id":"radiation","name":"Glowbug","icon":"☢️🐛","element":"radiation","desc":"A suspiciously luminous companion. Slightly stronger than DiBo and grants a small Element Power bonus while active."},
+    "math": {"id":"math","name":"Euler","icon":"🐙","element":"math","desc":"An alarmingly clever octopus that hurls equations at anything standing in the way."}
   };
 
   const PET_IDS=Object.freeze(Object.keys(PET_DATA));

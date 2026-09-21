@@ -275,6 +275,30 @@ A proc belonging to the DiceBound elemental system.
 
 The actual resulting damage/status/animation comes from the authoritative elemental mechanic rather than being redefined independently by equipment text.
 
+### Math
+A full DiceBound element, mechanically peer to the other rollable elements even though its theme is deliberately strange.
+
+Canonical Math proc identity:
+- **30% Attack** base elemental damage before ordinary elemental multipliers, Weakness and Affinity;
+- **25% chance** on a successful Math proc to apply Confusion;
+- dedicated visual identity: a dense equation/formula is hurled at the resolved target;
+- normal full-element participation: qualifying weapons, enemies/guardians, elemental progress and the Euler companion.
+
+Math is an element, not an arithmetic minigame.
+
+### Confusion
+A one-qualifying-offensive-action combat status created by Math.
+
+When a Confused unit next attempts a qualifying offensive action:
+- the action **always misfires**;
+- the wrong target is selected uniformly from the attacker's own currently valid side, including the attacker itself;
+- a lone attacker therefore targets itself;
+- current enemy packs can redirect into the Confused enemy or one of its living allies;
+- current single-player combat naturally collapses the player-side candidate pool to the player until real allied/player-party combatants exist;
+- the status is consumed by that misfired qualifying offensive action, not by Guard, Potion or other non-offensive actions.
+
+Confusion targeting is semantic combat state. Never derive the recipient from DOM position, labels or rendered order.
+
 ### Barrier
 A defensive combat layer/state that blocks or absorbs damage according to the authoritative Barrier rules.
 

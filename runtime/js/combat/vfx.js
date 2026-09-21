@@ -50,7 +50,7 @@
       presentationEpoch += 1;
       transientTimers.forEach(timer => globalThis.clearTimeout?.(timer));
       transientTimers.clear();
-      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx,.db-combat-float-vfx').forEach(node => node.remove());
+      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx,.db-combat-float-vfx,.db-math-formula-vfx').forEach(node => node.remove());
       floatingNodesByTarget.clear();
       return presentationEpoch;
     }
@@ -416,6 +416,43 @@
       return { launch: frames[4] || frames[0], travel: frames[7] || frames[8] || frames[0], impact: frames[1] || frames[2] || frames[0] };
     }
 
+    function prepareMathFormula() {
+      return ensureStyle("dicebound-math-formula-vfx-style", `
+        .db-math-formula-vfx{position:fixed;z-index:10050;pointer-events:none;user-select:none;white-space:nowrap;font:950 clamp(20px,3vw,38px)/1 ui-monospace,Consolas,monospace;color:#e8f3ff;text-shadow:0 2px 3px #000,0 0 12px rgba(164,220,255,.95),0 0 28px rgba(190,150,255,.72);transform:translate(-50%,-50%) scale(.72) rotate(-7deg);opacity:.25;transition:left .42s cubic-bezier(.18,.8,.24,1),top .42s cubic-bezier(.18,.8,.24,1),transform .42s ease,opacity .16s ease}
+        .db-math-formula-vfx.db-arrived{transform:translate(-50%,-50%) scale(1.18) rotate(4deg);opacity:1}
+        .db-math-formula-vfx.db-resolve{transform:translate(-50%,-50%) scale(1.55) rotate(-2deg);opacity:0}
+        @media(prefers-reduced-motion:reduce){.db-math-formula-vfx{transition:opacity .12s ease;transform:translate(-50%,-50%) scale(1)}}
+      `);
+    }
+
+    function playMathFormula({ origin = "player", enemy = null } = {}) {
+      const document = documentRoot();
+      if (!document?.createElement || !prepareMathFormula()) return false;
+      const enemyHost = donutHostForEnemy(enemy);
+      const playerHost = document.getElementById?.("combatPlayerIcon");
+      const from = origin === "enemy" ? hostRect(enemyHost) : hostRect(playerHost);
+      const to = origin === "enemy" ? hostRect(playerHost) : hostRect(enemyHost);
+      if (!to) return false;
+      const reduced = !!rootWindow().matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      const node = document.createElement("span");
+      node.className = "db-math-formula-vfx";
+      node.dataset.effect = "math";
+      node.dataset.origin = origin === "enemy" ? "enemy" : "player";
+      node.textContent = "∑(π × √∞) ÷ x = ?!";
+      Object.assign(node.style, {
+        left: `${Math.round((reduced ? to : from || to).left)}px`,
+        top: `${Math.round((reduced ? to : from || to).top)}px`
+      });
+      document.body.append(node);
+      schedule(() => {
+        Object.assign(node.style, { left: `${Math.round(to.left)}px`, top: `${Math.round(to.top)}px` });
+        node.classList.add("db-arrived");
+      }, reduced ? 0 : 35);
+      schedule(() => node.classList.add("db-resolve"), reduced ? 180 : 470);
+      schedule(() => node.remove(), reduced ? 330 : 700);
+      return true;
+    }
+
     function playProjectileProc(key, { origin = 'player', enemy = null } = {}) {
       const document = documentRoot();
       const effect = assets()?.resolveCombatEffect?.(key === 'gun' ? 'gunProc' : key === 'fire' ? 'fireProc' : '') || null;
@@ -469,6 +506,8 @@
       floatCombatText,
       prepareProjectileEffects,
       playProjectileProc,
+      prepareMathFormula,
+      playMathFormula,
       clearTransient,
     });
   }

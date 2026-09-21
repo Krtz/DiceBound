@@ -12,6 +12,7 @@
     ultimate:["start"],
     petTurn:["petTurn","petDamage","trainerPetDamage","petElementFor","activeTrainerPetId","maybePetElementProc","trainerStrike"],
     turns:["enemyTurn","resolveEnemyResponse","applyPlayerDamage"],
+    confusion:["resolvePlayerOffense","applyEnemy","applyPlayer","consumeEnemyTarget","clearPlayer"],
     victory:["winCombat"],
     elements:["triggerElementEffect","currentWeaponElement","triggerWeaponElement","enemyElementProc","affinityElementMultiplier","elementHit","elementHitAll","restoreRadiationDefense","restoreEnemyElementDebuffs","addEnemyBurn"],
     healing:["recordHealing","healPlayer","clearBloodOverhealTemp","clearStoneBattle"],
@@ -31,18 +32,23 @@
     return api;
   }
   function service(name){if(!runtime)throw new Error("DiceboundCombat must be configured before use.");return runtime[name];}
+  async function playerOffense(label,work){
+    const misfire=await service("confusion").resolvePlayerOffense(label);
+    return misfire||work();
+  }
 
   const api=Object.freeze({
     owner:OWNER,apiVersion:1,configure,
     startEncounter:(...args)=>service("encounter").start(...args),
-    attack:(...args)=>service("attack").playerAttack(...args),
+    offense:(label,work)=>playerOffense(label,work),
+    attack:(...args)=>playerOffense("Attack",()=>service("attack").playerAttack(...args)),
     guard:(...args)=>service("guard").guardAction(...args),
     identityGuard:(...args)=>service("guard").identityGuardAction(...args),
     manaGain:(...args)=>service("mana").manaGain(...args),
-    channel:(...args)=>service("mana").occultChannelAttack(...args),
-    spell:(...args)=>service("mana").occultSpellAttack(...args),
+    channel:(...args)=>playerOffense("Mana attack",()=>service("mana").occultChannelAttack(...args)),
+    spell:(...args)=>playerOffense("Spell",()=>service("mana").occultSpellAttack(...args)),
     summonerConjure:(...args)=>service("mana").summonerConjure(...args),
-    ultimate:(...args)=>service("ultimate").start(...args),
+    ultimate:(...args)=>playerOffense("Ultimate",()=>service("ultimate").start(...args)),
     petTurn:(...args)=>service("petTurn").petTurn(...args),
     petDamage:(...args)=>service("petTurn").petDamage(...args),
     trainerPetDamage:(...args)=>service("petTurn").trainerPetDamage(...args),
@@ -53,6 +59,10 @@
     enemyTurn:(...args)=>service("turns").enemyTurn(...args),
     enemyResponse:(...args)=>service("turns").resolveEnemyResponse(...args),
     applyPlayerDamage:(...args)=>service("turns").applyPlayerDamage(...args),
+    applyEnemyConfusion:(...args)=>service("confusion").applyEnemy(...args),
+    applyPlayerConfusion:(...args)=>service("confusion").applyPlayer(...args),
+    consumeEnemyConfusionTarget:(...args)=>service("confusion").consumeEnemyTarget(...args),
+    clearPlayerConfusion:(...args)=>service("confusion").clearPlayer(...args),
     win:(...args)=>service("victory").winCombat(...args),
     element:(...args)=>service("elements").triggerElementEffect(...args),
     currentWeaponElement:(...args)=>service("elements").currentWeaponElement(...args),
