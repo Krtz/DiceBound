@@ -30,7 +30,7 @@
 
   function configureVfx(runtime) {
     vfx = vfxOwner.create(runtime);
-    if (!vfx || typeof vfx.playDonutRain !== "function" || typeof vfx.playProjectileProc !== "function") {
+    if (!vfx || typeof vfx.playDonutRain !== "function" || typeof vfx.playProjectileProc !== "function" || typeof vfx.floatCombatText !== "function") {
       throw new Error("Combat View VFX owner did not return its configured API.");
     }
     return api;
@@ -86,6 +86,9 @@
     suppressLegacyElementAnimation: (...args) => requireVfx().suppressLegacyElementAnimation(...args),
     donutEntries: (...args) => requireVfx().donutEntries(...args),
     playDonutRain: (...args) => requireVfx().playDonutRain(...args),
+    prepareFloatingCombatText: (...args) => requireVfx().prepareFloatingCombatText(...args),
+    floatingEntries: (...args) => requireVfx().floatingEntries(...args),
+    floatCombatText: (...args) => requireVfx().floatCombatText(...args),
     prepareProjectileEffects: (...args) => requireVfx().prepareProjectileEffects(...args),
     playProjectileProc: (...args) => requireVfx().playProjectileProc(...args),
     clearTransient: (...args) => {
