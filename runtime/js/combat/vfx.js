@@ -287,12 +287,13 @@
 
     function prepareFloatingCombatText() {
       return ensureStyle('dicebound-floating-combat-text-style', `
-        .db-combat-float-vfx{position:fixed;z-index:10060;pointer-events:none;user-select:none;white-space:nowrap;font-weight:950;font-size:clamp(18px,2.4vw,28px);line-height:1;letter-spacing:.01em;text-shadow:0 2px 3px rgba(0,0,0,.96),0 0 7px rgba(0,0,0,.82);transform:translate(-50%,-42%);opacity:1}
-        .db-combat-float-vfx.db-animate{animation:dbCombatFloatRise 1.02s cubic-bezier(.16,.76,.28,1) forwards}
+        .db-combat-float-vfx{position:fixed;z-index:10060;pointer-events:none;user-select:none;white-space:nowrap;font-weight:950;font-size:clamp(18px,2.4vw,28px);line-height:1;letter-spacing:.01em;text-shadow:0 2px 3px rgba(0,0,0,.96),0 0 7px rgba(0,0,0,.82);transform:translate(-50%,-42%);opacity:1;transition:opacity .20s ease-out}
+        .db-combat-float-vfx.db-animate{animation:dbCombatFloatRise .88s cubic-bezier(.16,.76,.28,1) forwards}
+        .db-combat-float-vfx.db-fade{opacity:0}
         .db-combat-float-vfx[data-kind="damage"]{color:#ffd2d2}.db-combat-float-vfx[data-kind="heal"]{color:#d6ffd8}.db-combat-float-vfx[data-kind="shield"],.db-combat-float-vfx[data-kind="absorb"]{color:#d8f4ff}.db-combat-float-vfx[data-kind="blocked"]{color:#ffe6a6}
-        .db-combat-float-vfx.db-reduced-motion.db-animate{animation:dbCombatFloatFade .72s ease-out forwards}
-        @keyframes dbCombatFloatRise{0%{opacity:1;transform:translate(-50%,-30%) scale(.82)}18%{opacity:1;transform:translate(-50%,-48%) scale(1.08)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-128%) scale(.98)}}
-        @keyframes dbCombatFloatFade{0%{opacity:1;transform:translate(-50%,-50%) scale(.92)}72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+        .db-combat-float-vfx.db-reduced-motion.db-animate{animation:dbCombatFloatSettle .58s ease-out forwards}
+        @keyframes dbCombatFloatRise{0%{transform:translate(-50%,-30%) scale(.82)}18%{transform:translate(-50%,-48%) scale(1.08)}100%{transform:translate(-50%,-118%) scale(.98)}}
+        @keyframes dbCombatFloatSettle{0%{transform:translate(-50%,-50%) scale(.92)}100%{transform:translate(-50%,-50%) scale(1)}}
       `);
     }
 
@@ -374,11 +375,12 @@
       const beginLifetime = () => {
         if (epoch !== presentationEpoch || node.isConnected === false) return;
         node.classList.add('db-animate');
+        schedule(() => node.classList.add('db-fade'), reduced ? 560 : 900);
         schedule(() => {
           node.remove();
           active.delete(node);
           if (!active.size) floatingNodesByTarget.delete(key);
-        }, reduced ? 760 : 1080);
+        }, reduced ? 780 : 1120);
       };
       const requestFrame = rootWindow().requestAnimationFrame?.bind(rootWindow());
       if (requestFrame) requestFrame(() => requestFrame(beginLifetime));
