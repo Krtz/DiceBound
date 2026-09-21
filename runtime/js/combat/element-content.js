@@ -15,8 +15,9 @@
     tech:Object.freeze({icon:"🤖",name:"Tech",spell:"Brain Hack",description:"Deals damage and permanently lowers enemy attack."}),
     metal:Object.freeze({icon:"🤘",name:"Metal",spell:"Hard Rock Metal Music",description:"Deals sonic damage and grants ultimate charge."}),
     coffee:Object.freeze({icon:"☕",name:"Coffee",spell:"Caffeinated Haste",description:"Grants an immediate extra action."}),
-    gun:Object.freeze({icon:"🔫",name:"Gun",spell:"Deadeye Volley",description:"Fires a piercing shot for heavy single-target damage, ignoring half of the target's Defense."}),
-    radiation:Object.freeze({name:"Radiation",icon:"☢️",spell:"Irradiate",description:"Deals light elemental damage and permanently lowers the target's Defense for the current battle."})
+    gun:Object.freeze({icon:"🔫",name:"Gun",spell:"Deadeye Volley",description:"Fires a piercing shot for heavy single-target damage, ignoring most of the target's Defense."}),
+    radiation:Object.freeze({name:"Radiation",icon:"☢️",spell:"Irradiate",description:"Deals elemental damage and lowers the target's Defense by 10% for the current battle."}),
+    math:Object.freeze({name:"Math",icon:"🧮",spell:"Weaponized Equation",description:"Deals damage and may Confuse the target, forcing its next offensive action to misfire into itself or an ally."})
   });
   const IDS=Object.freeze(Object.keys(DATA));
   const CORE_IDS=Object.freeze(["fire","ice","electric","nature","light","void"]);
