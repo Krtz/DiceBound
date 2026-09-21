@@ -66,7 +66,7 @@
     campTalentBtn:Object.freeze({x:.555,y:.125,w:165}),
     campMoonBtn:Object.freeze({x:.83,y:.115,w:165}),
     campNightmareBtn:Object.freeze({x:.889,y:.53,w:120}),
-    campHellBtn:Object.freeze({x:.37,y:.33,w:118}),
+    campHellBtn:Object.freeze({x:.42,y:.35,w:118}),
     campClassBtn:Object.freeze({x:.39,y:.65,w:235}),
     campInfoBtn:Object.freeze({x:.26,y:.78,w:145}),
     campCareerBtn:Object.freeze({x:.13,y:.62,w:145}),
