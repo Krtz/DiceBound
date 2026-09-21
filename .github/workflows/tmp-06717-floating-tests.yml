@@ -1,4 +1,4 @@
-name: Temporary 0.6.7.17 floating-text tests rerun 2
+name: Temporary 0.6.7.17 floating-text tests rerun 3
 
 on:
   push:
@@ -24,6 +24,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Focused #72 contracts
+        shell: pwsh
+        run: |
+          node tools/test_floating_combat_text.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_combat_turn_resolution.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_combat_healing_resolution.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_combat_view_facade.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tools/test_options_ui.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Syntax and JavaScript contracts
         shell: pwsh
         run: |
