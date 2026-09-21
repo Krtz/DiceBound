@@ -19,6 +19,7 @@
     "combat-element-content",
     "combat-effective-stats",
     "combat-healing-resolution",
+    "combat-confusion-resolution",
     "combat-element-resolution",
     "combat-d20-chaos-resolution",
     "combat-strike-policy",
@@ -295,6 +296,16 @@
       ]
     },
     {
+      "id": "combat-confusion-resolution",
+      "path": "js/combat/confusion-resolution.js",
+      "domain": "combat/confusion-status-semantic-friendly-target-redirection",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatConfusionResolution"
+      ]
+    },
+    {
       "id": "combat-element-resolution",
       "path": "js/combat/element-resolution.js",
       "domain": "combat/player-and-enemy-elemental-proc-effect-resolution",
@@ -559,6 +570,7 @@
         "combat-victory-resolution",
         "combat-enemy-scaling-resolution",
         "combat-encounter-lifecycle",
+        "combat-confusion-resolution",
         "combat-turn-resolution",
         "combat-mana-action-resolution"
       ],
@@ -1251,6 +1263,7 @@
         "rng",
         "runtime-facade",
         "combat-element-content",
+        "combat-confusion-resolution",
         "combat-effective-stats",
         "combat-d20-chaos-resolution",
         "combat-strike-policy",
