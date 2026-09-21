@@ -131,7 +131,7 @@ async function main(){
       const chooser=document.getElementById('enemyParty'),hud=document.querySelector('#combatOverlay .combat-hud'),stage=document.querySelector('#combatOverlay .combat-head');
       const playerIcon=document.getElementById('combatPlayerIcon'),enemyIcon=document.getElementById('enemyIcon');
       const playerBar=document.getElementById('combatPlayerFill')?.parentElement,enemyBar=document.getElementById('enemyHpFill')?.parentElement;
-      const rect=el=>el?.getBoundingClientRect?.()||null;
+      const rect=el=>{const r=el?.getBoundingClientRect?.();return r?{left:r.left,top:r.top,width:r.width,height:r.height,right:r.right,bottom:r.bottom}:null;};
       const style=node?getComputedStyle(node):null;
       const beforeOff=document.querySelectorAll('.db-combat-float-vfx').length;
       const out={
