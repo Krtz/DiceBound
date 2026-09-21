@@ -36,7 +36,7 @@ function snapshot(value, bytes, sha256, label) {
   assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"), sha256, `${label} data drifted`);
 }
 
-const petIds = ["neutral", "fire", "ice", "electric", "light", "void", "nature", "donut", "tech", "metal", "coffee", "gun", "radiation"];
+const petIds = ["neutral", "fire", "ice", "electric", "light", "void", "nature", "donut", "tech", "metal", "coffee", "gun", "radiation", "math"];
 const pets = petsApi.createRegistry();
 assert.deepEqual(Array.from(petsApi.ids), petIds);
 assert.deepEqual(Object.keys(pets), petIds);
@@ -46,7 +46,7 @@ for (const [id, pet] of Object.entries(pets)) {
   assert.equal(typeof pet.desc, "string");
   assert.ok(pet.element === null || typeof pet.element === "string");
 }
-snapshot(pets, 1758, "dc0f9488eebfcbab4b81a68207fe4dbfa1e0efe38745d0a10bb28fe7b01efe8e", "pet registry");
+snapshot(pets, 1917, "00d814cc6901e13ec4411674a7e7326dad9a1ec8250a2b6d5f0c322e2442856c", "pet registry");
 
 const enemies = enemiesApi.createNormalRegistry();
 assert.equal(enemies.length, 11);
