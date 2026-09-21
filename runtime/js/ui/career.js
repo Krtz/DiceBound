@@ -103,7 +103,7 @@
     const cards=[
       ["runsFinished","Runs finished"],["fullVictories","Full victories"],["deaths","Deaths"],["abandonedRuns","Abandoned"],
       ["tilesTraveled","Tiles traveled"],["rolls","Dice rolls"],["enemiesDefeated","Enemies defeated"],["bossesDefeated","Bosses defeated"],
-      ["damageDealt","Damage dealt"],["largestHit","Largest hit"],["criticalStrikes","Critical strikes"],["echoStrikes","Echo strikes"],
+      ["damageDealt","Damage dealt"],["damageTaken","Damage taken"],["largestHit","Largest hit"],["criticalStrikes","Critical strikes"],["echoStrikes","Echo strikes"],
       ["elementalProcs","Elemental procs"],["potionsUsed","Potions used"],["goldEarned","Gold earned"],["goldSpent","Gold spent"],
       ["healingDone","Healing done"],["highestGold","Highest gold held"],["powerupsTaken","Powerups taken"],["highestRunLevel","Highest run level"]
     ];
