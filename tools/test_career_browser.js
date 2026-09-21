@@ -36,7 +36,7 @@ async function main(){
     const opened=await page.evaluate(`(()=>({open:!document.getElementById('careerOverlay')?.classList.contains('hidden'),inspect:window.DiceboundCareerUi?.inspect?.(),infoStats:!!document.querySelector('#infoOverlay [data-info-tab="stats"]')}))()`);
     if(!opened.open)throw new Error(`Career pointer click did not open destination; hit=${JSON.stringify(hit)} state=${JSON.stringify(opened)}`);
     if(opened.infoStats)throw new Error("Lifetime Career Stats still exist as a duplicate Info tab");
-    if(opened.inspect?.activeTab!=="overview")throw new Error(`Career did not open on Overview: ${JSON.stringify(opened)}`);
+    if(!opened.inspect?.open||opened.inspect?.activeTab!=="overview")throw new Error(`Career owner did not retain the visible Overview surface: ${JSON.stringify(opened)}`);
 
     const overview=await page.evaluate(`(()=>({cards:document.querySelectorAll('#careerOverlay .career-card').length,text:document.querySelector('[data-career-panel="overview"]')?.textContent||'',clearSection:document.querySelector('#careerOverlay .career-clear-grid')?.textContent||''}))()`);
     if(overview.cards<20)throw new Error(`Career Overview did not render lifetime cards: ${JSON.stringify(overview)}`);
