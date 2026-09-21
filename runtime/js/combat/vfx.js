@@ -374,6 +374,15 @@
       const epoch = presentationEpoch;
       const beginLifetime = () => {
         if (epoch !== presentationEpoch || node.isConnected === false) return;
+        // Combat rendering can replace/reflow pack targets between resolution
+        // and the first paint. Re-resolve the semantic recipient now so the
+        // number follows the unit's settled on-screen position.
+        const settledHost=floatingTargetHost(target||{}),settledRect=settledHost?.getBoundingClientRect?.();
+        if(settledRect?.width&&settledRect?.height){
+          const settledLaneStep=Math.max(12,Math.min(22,settledRect.height*.15));
+          node.style.left=`${Math.round(settledRect.left+settledRect.width/2)}px`;
+          node.style.top=`${Math.round(settledRect.top+settledRect.height*.38-lane*settledLaneStep)}px`;
+        }
         node.classList.add('db-animate');
         schedule(() => node.classList.add('db-fade'), reduced ? 560 : 900);
         schedule(() => {
