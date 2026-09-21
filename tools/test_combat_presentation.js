@@ -245,7 +245,8 @@ const stageStyle=fakeDocument.getElementById('dicebound-combat-stage-style');
 assert(stageStyle,'Combat View must own the battle-stage layout');
 assert(!stageStyle.textContent.includes('>.fighter>.bar-label{'), 'HP labels must not return to model-attached fighter layout');
 assert(!stageStyle.textContent.includes('>.fighter>.bar{'), 'HP bars must not return to model-attached fighter layout');
-assert(stageStyle.textContent.includes('>.fighter-icon{margin-top:auto!important'), 'player/enemy models must use the free stage height to sit on the lower ground plane');
+assert(stageStyle.textContent.includes('>.fighter-icon{order:2;margin-top:auto!important;margin-bottom:0'), 'player/enemy models must be the bottom-most fighter element on the ground plane');
+assert(stageStyle.textContent.includes('>.fighter>.fighter-name{order:0'), 'fighter identity copy must stay above the grounded model rather than consuming ground space below it');
 assert(stageStyle.textContent.includes('.enemy-party{position:relative;z-index:4'), 'target chooser must sit above the fixed health HUD and fighter stage');
 assert(stageStyle.textContent.includes('.combat-hud{position:relative;z-index:4;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)'), 'player and enemy HP bars must remain parallel in a static top HUD');
 
