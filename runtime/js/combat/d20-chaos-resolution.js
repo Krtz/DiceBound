@@ -180,7 +180,7 @@
       const title=d20ResultTitle(out.roll),effect=d20ResolvedEffectText(action,out);
       const message=`🎲 ${out.roll}/20 — ${title}: ${effect||"No additional effect."}`;
       rt.addCombatHistory(`${action.toUpperCase()}: ${message}`);
-      rt.setCombatText(message);
+      rt.setCombatText(message,false);
       await rt.delay(260);
     }
     return out;
