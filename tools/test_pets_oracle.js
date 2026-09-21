@@ -88,8 +88,28 @@ async function main(){
     if(CAPTURE){console.log("PETS_FIXTURE_BEGIN");console.log(JSON.stringify(actual,null,2));console.log("PETS_FIXTURE_END");return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.27","Pets fixture must remain the released 0.6.6.27 baseline");
-    assert.deepEqual(actual.cases,fixture.cases);
-    console.log(`Pets oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
+
+    // Beta 0.6.7.19 intentionally adds Math/Euler to the Pet roster. Keep the
+    // historical oracle exact for every pre-Math case by projecting the new
+    // zero-valued Math progress field away, while separately proving the one
+    // intentionally changed Trainer shuffle surface.
+    const withoutMathProgress=value=>{
+      const clone=JSON.parse(JSON.stringify(value));
+      if(clone?.state?.elementProgress)delete clone.state.elementProgress.math;
+      return clone;
+    };
+    const actualLegacy=actual.cases.filter(entry=>entry.name!=="trainer-roster").map(withoutMathProgress);
+    const fixtureLegacy=fixture.cases.filter(entry=>entry.name!=="trainer-roster");
+    assert.deepEqual(actualLegacy,fixtureLegacy);
+
+    const trainer=actual.cases.find(entry=>entry.name==="trainer-roster");
+    assert.ok(trainer,"missing Trainer roster case");
+    assert.equal(trainer.roster.length,14,"Euler must extend Trainer to fourteen companions");
+    assert.equal(new Set(trainer.roster).size,14,"Trainer roster must still contain each companion exactly once");
+    assert.ok(trainer.roster.includes("math"),"Trainer roster must include Euler/Math");
+    assert.equal(trainer.rngCalls,13,"14-companion Fisher-Yates must consume exactly 13 draws");
+
+    console.log(`Pets oracle PASS: ${actualLegacy.length} historical cases remain exact to ${fixture.baselineVersion}; intentional 14-pet Math roster delta verified on runtime ${actual.runtimeVersion}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }
