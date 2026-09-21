@@ -153,7 +153,7 @@ async function main(){
     assert.notEqual(visual.node.display,"none","floating value must not be display:none");
     assert.notEqual(visual.node.visibility,"hidden","floating value must not be visibility:hidden");
     assert.ok(visual.node.opacity>0,"floating value must have visible opacity after paint");
-    assert.ok(Math.abs(visual.node.left-(visual.target.left+visual.target.width/2))<=3,"floating value must anchor to the semantic target center");
+    assert.ok(Math.abs(visual.node.left-(visual.target.left+visual.target.width/2))<=3,`floating value must anchor to the semantic target center: ${JSON.stringify({node:visual.node,target:visual.target,delta:visual.node.left-(visual.target.left+visual.target.width/2)})}`);
     assert.ok(visual.beforeOff>=1&&visual.afterOff===0,"Options Off must suppress floating values in real Edge combat");
     assert.ok(Math.abs(visual.playerBar.top-visual.enemyBar.top)<=3,"player/enemy HP bars must remain parallel in the static HUD");
     assert.ok(visual.chooser.top<=visual.hud.top&&visual.hud.top<visual.stage.top+visual.stage.height*.25,"target chooser and static HP HUD must stay above the battlefield models");
