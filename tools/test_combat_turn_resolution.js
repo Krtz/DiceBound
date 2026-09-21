@@ -104,7 +104,7 @@ function makeHarness(options={}){
     assert.equal(h.player.hp,100,"Confused enemy action must not also damage the player");
     assert.equal(ally.hp,90,"Confusion must damage the semantic same-side target");
     assert.ok(h.calls.some(call=>call[0]==="history"&&/Confusion! Confused Enemy/.test(call[1])),"friendly-fire result must enter Battle History");
-    assert.ok(h.calls.some(call=>call[0]==="float"&&call[1]?.target?.enemy===ally),"friendly-fire float must attach to the actual ally");
+    assert.ok(h.calls.some(call=>call[0]==="float"&&call[1]?.target?.unit==="enemy"&&call[1]?.target?.enemyIndex===1&&call[1]?.target?.enemy?.name==="Unlucky Ally"),"friendly-fire float must serialize the actual semantic ally target");
   }
   {
     const h=makeHarness();
