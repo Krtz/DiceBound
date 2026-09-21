@@ -91,7 +91,7 @@ meta.activePet='neutral';pets.syncActiveBonus();assert(Math.abs(player.elementPr
 meta.activePet='donut';meta.pets.donut.level=6;pets.syncActiveBonus();assert(Math.abs(player.maxHp-40.24)<1e-12);assert(Math.abs(player.potionPower-.054)<1e-12);
 meta.activePet='neutral';pets.syncActiveBonus();assert(Math.abs(player.maxHp-37)<1e-12);assert(Math.abs(player.potionPower)<1e-12);
 
-randCalls=0;const shuffled=pets.shuffledPetIds();assert.equal(shuffled.length,14);assert.equal(randCalls,13,'14-Pet Fisher-Yates must consume exactly 13 draws');
+randCalls=0;const shuffled=pets.shuffledPetIds();assert.equal(shuffled.length,14);assert.equal(randCalls,12,'Euler insertion must preserve the historical 12 shared RNG draws');assert.ok(shuffled.includes('math'));
 const chooser=pets.chooserState();assert.equal(chooser.unlockRequirement,500);assert.equal(chooser.activePetId,'neutral');assert.equal(chooser.pets.length,14);
 
 const index=fs.readFileSync(path.join(root,'runtime/index.html'),'utf8');
