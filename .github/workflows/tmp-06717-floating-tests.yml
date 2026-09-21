@@ -1,4 +1,4 @@
-name: Temporary 0.6.7.17 floating-text tests
+name: Temporary 0.6.7.17 floating-text tests rerun 2
 
 on:
   push:
