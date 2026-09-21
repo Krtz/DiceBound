@@ -44,6 +44,16 @@
     p._db047HastePrimed = false;
   }
 
+  function d20ResolvedEffectText(action,out={}) {
+    const notes=String(out.notes||"").replace(/^Roll \d+:\s*/i,"").replace(/^Natural 1:\s*/i,"").replace(/^NATURAL 20:\s*/i,"").trim();
+    const parts=[];
+    if(notes)parts.push(notes);
+    if(action==="attack"&&Number(out.mult)!==1)parts.push(`Attack power: ${Math.round((Number(out.mult)||1)*100)}%.`);
+    if(action==="potion"&&Number(out.potionMult)!==1)parts.push(`Potion healing: ${Math.round((Number(out.potionMult)||1)*100)}%.`);
+    if(action==="guard"&&Number(out.guardBonus))parts.push(`Guard strength: ${Number(out.guardBonus)>0?"+":""}${Math.round(Number(out.guardBonus)*100)}%.`);
+    return parts.join(" ").replace(/\s+/g," ").trim();
+  }
+
   // Final shipped D20 outcome table before the later presentation/Haste layers.
   // Decorative rolls are intentionally real RNG consumption and therefore must
   // remain ahead of the actual roll and High Roll Chance check.
@@ -158,37 +168,26 @@
       }
     }
 
-    rt.setCombatText(`🎲 ${action} d20: ${out.notes}`);
-    rt.showToast(`D20 rolled ${roll}`);
-    await rt.delay(260);
     return out;
   }
 
-  // V15 readability/history layer.
+  // One player-facing D20 result announcement. The combat history keeps the
+  // same resolved fact, but toast/identity-flash/resolving duplicates are retired.
   async function presentationLayer(action) {
     const rt = requireRuntime();
     const out = await baseRoll(action);
     if (rt.classIdentityActive("d20") && out?.roll) {
-      const title = d20ResultTitle(out.roll);
-      rt.identityFlash(`🎲 ${out.roll}/20 — ${title}`);
-      rt.addCombatHistory(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${title}. ${out.notes || ""}`);
-      rt.setCombatText(`🎲 Twenty-Sider ${action}: ${out.roll}/20 — ${title}. ${out.notes || ""}`);
-      rt.showToast(`🎲 ${out.roll}/20: ${title}`);
+      const title=d20ResultTitle(out.roll),effect=d20ResolvedEffectText(action,out);
+      const message=`🎲 ${out.roll}/20 — ${title}: ${effect||"No additional effect."}`;
+      rt.addCombatHistory(`${action.toUpperCase()}: ${message}`);
+      rt.setCombatText(message);
       await rt.delay(260);
     }
     return out;
   }
 
-  // V17 intentionally overwrites the prior final combat text briefly so callers
-  // get an explicit resolution beat before their action continues.
   async function resolvingLayer(action) {
-    const rt = requireRuntime();
-    const out = await presentationLayer(action);
-    if (rt.classIdentityActive("d20") && out?.roll) {
-      rt.setCombatText(`🎲 ${action.toUpperCase()} ROLL: ${out.roll}/20 — ${d20ResultTitle(out.roll)}. Resolving...`);
-      await rt.delay(300);
-    }
-    return out;
+    return presentationLayer(action);
   }
 
   async function v19HasteCooldownLayer(action) {
@@ -243,6 +242,7 @@
     configure,
     initializePlayerState,
     d20ResultTitle,
+    d20ResolvedEffectText,
     rollD20Chaos,
     _test: Object.freeze({
       baseRoll,
