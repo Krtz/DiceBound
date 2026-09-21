@@ -15,6 +15,10 @@ assert.ok(actions >= 0 && log > actions, "battle log must follow combat actions 
 assert.match(html, /id="combatHistoryToggle"[^>]*aria-controls="combatHistory"/);
 assert.match(css, /combat-history-wrap\.is-collapsed \.combat-history\{display:none\}/);
 assert.match(runtime, /db064SetBattleLogCollapsed/);
+const targetChooser=html.indexOf('id="enemyParty"'),healthHud=html.indexOf('class="combat-hud"'),fighterStage=html.indexOf('class="combat-head"');
+assert.ok(targetChooser>=0&&healthHud>targetChooser&&fighterStage>healthHud,"combat composition must be target chooser → static parallel HP HUD → grounded fighter stage");
+assert.match(html,/class="combat-hud-side combat-hud-player"[\s\S]*id="combatPlayerHp"[\s\S]*class="combat-hud-side combat-hud-enemy"[\s\S]*id="enemyHpText"/);
+
 assert.match(html, /id="appTooltipLayer" role="tooltip"/);
 assert.match(css, /\.app-tooltip-layer\{position:fixed;z-index:3000/);
 assert.match(runtime, /document\.addEventListener\('pointerover'/);
