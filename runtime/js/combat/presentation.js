@@ -55,17 +55,19 @@
     const style=doc.createElement("style");style.id="dicebound-combat-stage-style";
     style.textContent=`
       #combatOverlay .enemy-party{position:relative;z-index:4;margin:2px auto 6px!important}
+      #combatOverlay .combat-hud{position:relative;z-index:4;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,8vw,110px);align-items:start;width:min(880px,100%);margin:0 auto 4px}
+      #combatOverlay .combat-hud-side{min-width:0}
+      #combatOverlay .combat-hud .bar-label{margin:0 0 5px}
+      #combatOverlay .combat-hud .bar{margin:0 0 3px}
+      #combatOverlay .combat-hud .status-dots{justify-content:center;margin:2px 1px 0}
       #combatOverlay .combat-head{min-height:clamp(260px,34vh,350px);align-items:stretch!important;margin-top:0!important}
       #combatOverlay .combat-head>.fighter{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;min-height:inherit}
-      #combatOverlay .combat-head>.fighter>.bar-label{order:0;margin:0 0 5px}
-      #combatOverlay .combat-head>.fighter>.bar{order:1;margin:0 0 4px}
-      #combatOverlay .combat-head>.fighter>.status-dots{order:2;justify-content:center;margin:2px 1px 0}
-      #combatOverlay .combat-head>.fighter>.fighter-icon{order:3;margin-top:auto!important;margin-bottom:4px;transform-origin:center bottom}
+      #combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important;margin-bottom:4px;transform-origin:center bottom}
       #combatOverlay .combat-head>.fighter>.fighter-name{order:4}
       #combatOverlay .combat-head>.fighter>.combat-pet{order:5}
       #combatOverlay .combat-head>.fighter>.enemy-weakness{order:5}
       #combatOverlay .vs{align-self:center}
-      @media(max-width:700px){#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}}
+      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}}
     `;
     doc.head?.appendChild(style);return style;
   }
