@@ -139,7 +139,7 @@ assert.match(source,/requestAnimationFrame/,'floating values must start their vi
 assert.match(source,/db-animate/,'floating values need an explicit post-paint animation phase');
 
 const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8").replace(/\r\n/g,"\n");
-assert.match(monolith,/currentEnemies\.includes\(enemy\)/,"enemy floating text must only present for live combat participants");
+assert.match(monolith,/const enemyIndex=currentEnemies\.indexOf\(enemy\);[\s\S]*if\(enemyIndex>=0\)/,"enemy floating text must require a live combat participant and retain its exact pack index");
 assert.match(monolith,/const target=\{unit:'enemy',enemy,enemyIndex\}/,"enemy damage must carry both the resolved semantic enemy object and explicit pack index into Combat View");
 assert.match(monolith,/getFloatingCombatNumbersEnabled:\(\)=>meta\.settings\?\.floatingCombatNumbers!==false/,"Combat View must consume the persistent display preference without owning settings");
 assert.match(monolith,/setFloatingCombatNumbers:value=>\{meta\.settings=meta\.settings\|\|defaultSettings\(\);meta\.settings\.floatingCombatNumbers=!!value;saveMeta\(\);return meta\.settings\.floatingCombatNumbers;\}/,"Options must persist the toggle through canonical settings");
