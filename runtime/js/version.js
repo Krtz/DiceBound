@@ -6,7 +6,7 @@
   const VERSION="0.6.7.18";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Floating combat numbers & persistent display toggle.";
+  const RELEASE_SUMMARY="Grounded combat HUD, Career fixes & clearer combat feedback.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
