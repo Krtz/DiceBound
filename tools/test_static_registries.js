@@ -121,6 +121,8 @@ for (const [rawOwner, opener] of [["PETS", "\\{"], ["ENEMY_POOL", "\\["], ["RARI
 assert.doesNotMatch(monolith, /const\s+DB317_CLASS_TAGS_RAW\s*=\s*\{/);
 assert.match(monolith, /DB317_CLASS_TAGS_RAW=Object\.fromEntries\(Object\.entries\(DB317_CLASSES_RAW\)/);
 assert.match(monolith, /dbPets\.createRegistry\?\.\(\)/,'composition monolith must obtain Pet identities through the public Pet facade');
+assert.match(monolith, /DiceboundAssets\?\.manifest\?\.pets\?\.\[id\]\|\|null/,'pet art lookup must distinguish authored art from missing art');
+assert.match(monolith, /if\(!entry\)\{el\.innerHTML='';el\.textContent=def\.icon\|\|'🐾';return;\}/,'unauthored pets such as Euler must render their registry icon immediately');
 assert.match(monolith, /window\.DiceboundEnemies\?\.createNormalRegistry\(\)/);
 assert.match(monolith, /window\.DiceboundEnemies\?\.createSpecialRegistry\?\.\(\)/);
 assert.match(monolith, /window\.DiceboundRarities\?\.createInfoRegistry\(\)/);
