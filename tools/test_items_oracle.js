@@ -89,7 +89,14 @@ async function main(){
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.26","Items fixture must remain the released 0.6.6.26 baseline");
     const retired=new Set(['compat-artifact','compat-mythical','compat-omega','invalid-bogus']);
-    assert.deepEqual(actual.cases.filter(c=>c.kind!=='reject'),fixture.cases.filter(c=>!retired.has(c.name)));
+    const expected=structuredClone(fixture.cases.filter(c=>!retired.has(c.name)));
+    // Beta 0.6.7.19 expands the normal rollable element pool with Math. The
+    // seeded equip-value Shortbow keeps the exact same identity, power, stats
+    // and RNG cursor; only its full-element pick moves from Metal to Coffee.
+    const equipValue=expected.find(c=>c.name==="equip-value");
+    equipValue.first.element="coffee";
+    equipValue.equipped.element="coffee";
+    assert.deepEqual(actual.cases.filter(c=>c.kind!=='reject'),expected);
     console.log(`Items oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
