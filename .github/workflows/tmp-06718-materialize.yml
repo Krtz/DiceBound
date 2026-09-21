@@ -1,0 +1,47 @@
+name: Temporary materialize 0.6.7.18
+
+on:
+  push:
+    branches:
+      - feat/0.6.7.18-combat-career-polish
+    paths:
+      - .github/workflows/tmp-06718-materialize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/0.6.7.18-combat-career-polish
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Materialize release identity
+        shell: pwsh
+        run: |
+          python tools/set_project_version.py --version 0.6.7.18 --channel Beta
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/refresh_runtime_manifest.py --version 0.6.7.18 --channel Beta --development-state Unreleased
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/prepare_release.py --version 0.6.7.18 --channel Beta --output-dir wrapper-source/release/generated
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_version_identity.py --version 0.6.7.18 --channel Beta --release-spec wrapper-source/release/generated/release-spec.json --release-notes wrapper-source/release/generated/release-notes.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_asset_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Commit materialized metadata
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add wrapper-source/config/project.json runtime/index.html runtime/js/version.js wrapper-source/wrappers/webview2/native-go/main.go runtime/build-info.json runtime/build-manifest.json wrapper-source/release/generated/release-spec.json wrapper-source/release/generated/release-notes.md
+          git diff --cached --stat
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { throw "Materializer produced no committed changes." }
+          git commit -m "release: materialize Beta 0.6.7.18"
+          git push origin HEAD:feat/0.6.7.18-combat-career-polish
