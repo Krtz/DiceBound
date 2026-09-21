@@ -13,7 +13,7 @@
     const required = [
       "getPlayer", "classIdentityActive", "rand", "random", "pick", "clamp",
       "getAttackFx", "delay", "getElements", "getCoreElements", "setCombatText",
-      "showToast", "identityFlash", "addCombatHistory", "clampQueuedHaste"
+      "addCombatHistory", "clampQueuedHaste"
     ];
     for (const name of required) if (typeof next?.[name] !== "function") throw new Error(`D20 chaos runtime missing ${name}().`);
     runtime = next;
