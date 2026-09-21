@@ -124,8 +124,18 @@
   }
 
   function shuffledPetIds(){
-    const arr=Object.keys(pets()),r=rt();
+    const all=Object.keys(pets()),mathId=all.includes("math")?"math":null;
+    const arr=mathId?all.filter(id=>id!==mathId):all.slice(),r=rt();
+    // Compatibility invariant: adding Euler must not consume one more shared
+    // gameplay RNG draw and perturb every later roll in Trainer/borrowed-Trainer
+    // runs. Shuffle the historical roster with its exact Fisher-Yates draw
+    // count, then derive Euler's insertion point from that already-random order.
     for(let i=arr.length-1;i>0;i--){const j=r.rand(0,i),value=arr[i];arr[i]=arr[j];arr[j]=value;}
+    if(mathId){
+      let hash=2166136261>>>0;
+      for(const ch of arr.join("|")){hash^=ch.charCodeAt(0);hash=Math.imul(hash,16777619);}
+      arr.splice((hash>>>0)%(arr.length+1),0,mathId);
+    }
     return arr;
   }
 
