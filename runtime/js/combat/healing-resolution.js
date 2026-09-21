@@ -48,6 +48,7 @@
     const normalRoom = Math.max(0, beforeMax - beforeHp);
     const beforeFaith = p.clericFaith || 0;
     const beforeGrace = p.paladinGrace || 0;
+    const beforeEnergyShield = Number(p.energyShield) || 0;
 
     let healed = 0;
     if (raw > 0) {
@@ -122,6 +123,11 @@
       const gain = excess * aegisRate;
       p.energyShield = Math.min(p.maxHp, (p.energyShield || 0) + gain);
       if (rt.getCurrentEnemy()) rt.addCombatHistory(`🩸🔵 Crimson Aegis turns ${excess} overheal into +${gain.toFixed(1)} Energy Shield.`);
+    }
+    const shieldGain = Math.max(0, (Number(p.energyShield) || 0) - beforeEnergyShield);
+    if (rt.getCurrentEnemy()) {
+      if (healed > 0) rt.floatCombatText?.({ kind: "heal", amount: healed, target: { unit: "player" } });
+      if (shieldGain > 0) rt.floatCombatText?.({ kind: "shield", amount: shieldGain, target: { unit: "player" } });
     }
     rt.syncShieldBars();
     return healed;
