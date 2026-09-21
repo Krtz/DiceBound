@@ -107,6 +107,58 @@ async function main(){
     })()`);
 
     assertCoverage(actual);
+
+    // #72/#412 real Edge visibility/geometry gate. Synthetic DOM tests are not
+    // enough: exercise the shipped combat DOM, wait for an actual paint, and
+    // prove the floating value is visible over the semantic pack target while
+    // the static HUD remains above grounded combatants.
+    const visual=await page.evaluate(`(async()=>{
+      const combat=window.DiceboundCombatOracleTest;
+      combat.setup({
+        classId:'ranger',currentIndex:1,
+        player:{hp:500,maxHp:500,attack:30,defense:100},
+        enemies:[
+          {name:'Visual A',hp:500,maxHp:500,attack:1,defense:0,weakness:'ice'},
+          {name:'Visual B',hp:500,maxHp:500,attack:1,defense:0,weakness:'fire'}
+        ]
+      });
+      window.DiceboundProgressionOracleTest.patchMeta({settings:{floatingCombatNumbers:true}});
+      window.DiceboundCombatView?.clearTransient?.();
+      combat.element('fire',{forced:true,source:'Edge visibility gate'});
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(resolve,90))));
+      const node=document.querySelector('.db-combat-float-vfx');
+      const target=document.querySelector('#enemyIcon .stage-enemy[data-enemy-index="1"]');
+      const chooser=document.getElementById('enemyParty'),hud=document.querySelector('#combatOverlay .combat-hud'),stage=document.querySelector('#combatOverlay .combat-head');
+      const playerIcon=document.getElementById('combatPlayerIcon'),enemyIcon=document.getElementById('enemyIcon');
+      const playerBar=document.getElementById('combatPlayerFill')?.parentElement,enemyBar=document.getElementById('enemyHpFill')?.parentElement;
+      const rect=el=>el?.getBoundingClientRect?.()||null;
+      const style=node?getComputedStyle(node):null;
+      const beforeOff=document.querySelectorAll('.db-combat-float-vfx').length;
+      const out={
+        node:node?{text:node.textContent,target:node.dataset.target,left:parseFloat(node.style.left)||0,top:parseFloat(node.style.top)||0,display:style.display,visibility:style.visibility,opacity:Number(style.opacity)}:null,
+        target:rect(target),chooser:rect(chooser),hud:rect(hud),stage:rect(stage),playerIcon:rect(playerIcon),enemyIcon:rect(enemyIcon),playerBar:rect(playerBar),enemyBar:rect(enemyBar),beforeOff
+      };
+      window.DiceboundCombatView?.clearTransient?.();
+      window.DiceboundProgressionOracleTest.patchMeta({settings:{floatingCombatNumbers:false}});
+      combat.element('fire',{forced:true,source:'Edge disabled visibility gate'});
+      await new Promise(resolve=>setTimeout(resolve,80));
+      out.afterOff=document.querySelectorAll('.db-combat-float-vfx').length;
+      window.DiceboundProgressionOracleTest.patchMeta({settings:{floatingCombatNumbers:true}});
+      combat.cleanup();
+      return out;
+    })()`);
+    assert.ok(visual.node,"real Edge combat must render a floating-combat-text node");
+    assert.equal(visual.node.target,"enemy:1","floating value must identify the actual second pack member");
+    assert.ok(visual.node.text&&visual.node.text!=="-0","floating value must contain a resolved readable amount");
+    assert.notEqual(visual.node.display,"none","floating value must not be display:none");
+    assert.notEqual(visual.node.visibility,"hidden","floating value must not be visibility:hidden");
+    assert.ok(visual.node.opacity>0,"floating value must have visible opacity after paint");
+    assert.ok(Math.abs(visual.node.left-(visual.target.left+visual.target.width/2))<=3,"floating value must anchor to the semantic target center");
+    assert.ok(visual.beforeOff>=1&&visual.afterOff===0,"Options Off must suppress floating values in real Edge combat");
+    assert.ok(Math.abs(visual.playerBar.top-visual.enemyBar.top)<=3,"player/enemy HP bars must remain parallel in the static HUD");
+    assert.ok(visual.chooser.top<=visual.hud.top&&visual.hud.top<visual.stage.top+visual.stage.height*.25,"target chooser and static HP HUD must stay above the battlefield models");
+    assert.ok(visual.playerIcon.bottom>=visual.stage.bottom-80&&visual.enemyIcon.bottom>=visual.stage.bottom-80,"player/enemy models must occupy the lower ground region of the real combat stage");
+
     if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Combat fixture captured: ${actual.cases.length} cases -> ${FIXTURE_PATH}`);return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.30","Combat fixture must remain the released 0.6.6.30 baseline");
