@@ -4570,7 +4570,7 @@ dbReturnToRoadTraceReady=true;
     delay:ms=>delay(ms),
     getElements:()=>ELEMENTS,
     getCoreElements:()=>DIBO_ELEMENTS,
-    setCombatText:text=>setCombatText(text),
+    setCombatText:(text,record=true)=>setCombatText(text,record),
     addCombatHistory:text=>addCombatHistory(text),
     clampQueuedHaste:before=>dbCombatElementResolution.clampQueuedHaste(before)
   });
