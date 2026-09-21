@@ -30,10 +30,11 @@
     return true;
   }
 
-  function create({ getEnemies = () => [], getPlayer = () => null } = {}) {
+  function create({ getEnemies = () => [], getPlayer = () => null, getFloatingCombatNumbersEnabled = () => true } = {}) {
     let natureLegacySuppressions = 0;
     let presentationEpoch = 0;
     const transientTimers = new Set();
+    const floatingNodesByTarget = new Map();
 
     function schedule(callback, delay) {
       const epoch = presentationEpoch;
@@ -49,7 +50,8 @@
       presentationEpoch += 1;
       transientTimers.forEach(timer => globalThis.clearTimeout?.(timer));
       transientTimers.clear();
-      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx').forEach(node => node.remove());
+      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx,.db-combat-float-vfx').forEach(node => node.remove());
+      floatingNodesByTarget.clear();
       return presentationEpoch;
     }
 
@@ -278,6 +280,100 @@
       return true;
     }
 
+    function floatingCombatTextEnabled() {
+      try { return getFloatingCombatNumbersEnabled?.() !== false; }
+      catch (_) { return true; }
+    }
+
+    function prepareFloatingCombatText() {
+      return ensureStyle('dicebound-floating-combat-text-style', `
+        .db-combat-float-vfx{position:fixed;z-index:10060;pointer-events:none;user-select:none;white-space:nowrap;font-weight:950;font-size:clamp(16px,2.2vw,26px);line-height:1;letter-spacing:.01em;text-shadow:0 2px 2px rgba(0,0,0,.92),0 0 5px rgba(0,0,0,.72);transform:translate(-50%,-42%);animation:dbCombatFloatRise .82s cubic-bezier(.16,.76,.28,1) forwards}
+        .db-combat-float-vfx[data-kind="damage"]{color:#ffd2d2}.db-combat-float-vfx[data-kind="heal"]{color:#d6ffd8}.db-combat-float-vfx[data-kind="shield"]{color:#d8f4ff}.db-combat-float-vfx[data-kind="blocked"]{color:#ffe6a6}
+        .db-combat-float-vfx.db-reduced-motion{animation:dbCombatFloatFade .52s ease-out forwards}
+        @keyframes dbCombatFloatRise{0%{opacity:0;transform:translate(-50%,-30%) scale(.82)}18%{opacity:1;transform:translate(-50%,-48%) scale(1.08)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-128%) scale(.98)}}
+        @keyframes dbCombatFloatFade{0%{opacity:0;transform:translate(-50%,-50%) scale(.92)}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+      `);
+    }
+
+    function floatingTargetHost(target = {}) {
+      const document = documentRoot();
+      if (!document) return null;
+      if (target?.unit === 'player') return document.getElementById?.('combatPlayerIcon') || null;
+      if (target?.unit !== 'enemy') return null;
+      if (target.enemy) return natureHostForEnemy(target.enemy);
+      const index = Number(target.enemyIndex);
+      if (!Number.isInteger(index) || index < 0) return null;
+      return document.querySelector?.(`#enemyIcon .stage-enemy[data-enemy-index="${index}"]`) || null;
+    }
+
+    function floatingTargetKey(target = {}, host = null) {
+      if (target?.unit === 'player') return 'player';
+      let index = Number(host?.dataset?.enemyIndex);
+      if (!Number.isInteger(index)) index = Number(target?.enemyIndex);
+      if (!Number.isInteger(index) && target?.enemy) index = (getEnemies?.() || []).indexOf(target.enemy);
+      return Number.isInteger(index) && index >= 0 ? `enemy:${index}` : null;
+    }
+
+    function floatingLabel(kind, amount, label) {
+      if (label != null && String(label).trim()) return String(label).trim();
+      const value = Math.max(0, Math.round(Number(amount) || 0));
+      if (kind === 'heal') return `+${value} Heal`;
+      if (kind === 'shield') return `${value} Shield`;
+      if (kind === 'blocked') return 'Barrier';
+      return `-${value}`;
+    }
+
+    function floatingEntries() {
+      const document = documentRoot();
+      if (!document?.querySelectorAll) return [];
+      return [...document.querySelectorAll('.db-combat-float-vfx')].map(node => ({
+        kind: node.dataset.kind || '',
+        target: node.dataset.target || '',
+        amount: Number(node.dataset.amount || 0),
+        label: node.textContent || '',
+        lane: Number(node.dataset.lane || 0),
+      }));
+    }
+
+    function floatCombatText({ kind = 'damage', amount = 0, target = null, label = null } = {}) {
+      if (!floatingCombatTextEnabled()) return false;
+      const normalizedKind = ['damage','heal','shield','blocked'].includes(kind) ? kind : 'damage';
+      const value = Math.max(0, Math.round(Number(amount) || 0));
+      if (normalizedKind !== 'blocked' && value <= 0) return false;
+      const document = documentRoot(), host = floatingTargetHost(target || {});
+      if (!document?.createElement || !document?.body || !host || !prepareFloatingCombatText()) return false;
+      const rect = host.getBoundingClientRect?.();
+      if (!rect?.width || !rect?.height) return false;
+      const key = floatingTargetKey(target || {}, host);
+      if (!key) return false;
+
+      let active = floatingNodesByTarget.get(key);
+      if (!active) { active = new Set(); floatingNodesByTarget.set(key, active); }
+      const lane = active.size % 4;
+      const laneStep = Math.max(12, Math.min(22, rect.height * .15));
+      const node = document.createElement('span');
+      const reduced = !!rootWindow().matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      node.className = `db-combat-float-vfx${reduced ? ' db-reduced-motion' : ''}`;
+      node.dataset.kind = normalizedKind;
+      node.dataset.target = key;
+      node.dataset.amount = String(value);
+      node.dataset.lane = String(lane);
+      node.textContent = floatingLabel(normalizedKind, value, label);
+      node.setAttribute?.('aria-hidden','true');
+      Object.assign(node.style, {
+        left: `${Math.round(rect.left + rect.width / 2)}px`,
+        top: `${Math.round(rect.top + rect.height * .38 - lane * laneStep)}px`,
+      });
+      document.body.append(node);
+      active.add(node);
+      schedule(() => {
+        node.remove();
+        active.delete(node);
+        if (!active.size) floatingNodesByTarget.delete(key);
+      }, reduced ? 540 : 840);
+      return true;
+    }
+
     function prepareProjectileEffects() {
       return ensureStyle('dicebound-projectile-vfx-style', `
         .db-combat-projectile-vfx{position:fixed;z-index:10020;pointer-events:none;display:grid;place-items:center;will-change:left,top,transform,opacity;filter:drop-shadow(0 8px 12px rgba(0,0,0,.52));transition:left .30s cubic-bezier(.22,.78,.28,1),top .30s cubic-bezier(.22,.78,.28,1),transform .30s ease,opacity .18s ease}
@@ -345,6 +441,9 @@
       suppressLegacyElementAnimation,
       donutEntries,
       playDonutRain,
+      prepareFloatingCombatText,
+      floatingEntries,
+      floatCombatText,
       prepareProjectileEffects,
       playProjectileProc,
       clearTransient,
