@@ -86,7 +86,7 @@
       "rarity": "poor",
       "icon": "🪙",
       "name": "Heavy Purse",
-      get desc(){const base=goldBaseFor("heavyPurse",player.level),total=modifiedGold(base),bonus=Math.round((player.goldBonus||0)*100);return `Gain ${total} gold now (${base} base at Adventurer Level ${Math.max(1,Math.floor(Number(player.level)||1))}${bonus?`, ${bonus}% Gold bonus`:''}${services.economy.isNightmare()?', Nightmare reward reduction included':''}).`;},
+      get desc(){return `Gain ${modifiedGold(goldBaseFor("heavyPurse",player.level))} gold now.`;},
       "apply": function(){player.gold+=modifiedGold(goldBaseFor("heavyPurse",player.level));},
       "tags": [
         "wealth"
