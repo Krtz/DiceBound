@@ -50,7 +50,7 @@
       presentationEpoch += 1;
       transientTimers.forEach(timer => globalThis.clearTimeout?.(timer));
       transientTimers.clear();
-      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx,.db-combat-float-vfx').forEach(node => node.remove());
+      documentRoot()?.querySelectorAll?.('.db-nature-vines-vfx,.db-donut-rain-vfx,.db-combat-projectile-vfx,.db-combat-float-vfx,.db-math-formula-vfx').forEach(node => node.remove());
       floatingNodesByTarget.clear();
       return presentationEpoch;
     }
