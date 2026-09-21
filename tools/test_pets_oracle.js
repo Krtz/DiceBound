@@ -103,11 +103,14 @@ async function main(){
     assert.deepEqual(actualLegacy,fixtureLegacy);
 
     const trainer=actual.cases.find(entry=>entry.name==="trainer-roster");
-    assert.ok(trainer,"missing Trainer roster case");
+    const legacyTrainer=fixture.cases.find(entry=>entry.name==="trainer-roster");
+    assert.ok(trainer&&legacyTrainer,"missing Trainer roster case");
     assert.equal(trainer.roster.length,14,"Euler must extend Trainer to fourteen companions");
     assert.equal(new Set(trainer.roster).size,14,"Trainer roster must still contain each companion exactly once");
     assert.ok(trainer.roster.includes("math"),"Trainer roster must include Euler/Math");
-    assert.equal(trainer.rngCalls,13,"14-companion Fisher-Yates must consume exactly 13 draws");
+    assert.deepEqual(trainer.roster.filter(id=>id!=="math"),legacyTrainer.roster,"Euler must not reorder the historical companion permutation");
+    assert.equal(trainer.rngCalls,legacyTrainer.rngCalls,"Euler must not add a shared gameplay RNG draw");
+    assert.equal(trainer.rngState,legacyTrainer.rngState,"Euler must leave the shared gameplay RNG cursor exactly where the historical shuffle left it");
 
     console.log(`Pets oracle PASS: ${actualLegacy.length} historical cases remain exact to ${fixture.baselineVersion}; intentional 14-pet Math roster delta verified on runtime ${actual.runtimeVersion}.`);
   } finally {
