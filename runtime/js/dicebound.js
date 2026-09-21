@@ -1200,7 +1200,7 @@ function returnToRoad(...args){
   }
 
   function playElementAnimation(key,target=currentEnemy,enemySource=false){
-    if(key==='fire'||key==='gun'||key==='donut'||dbCombatView.suppressLegacyElementAnimation(key))return false;
+    if(key==='fire'||key==='gun'||key==='donut'||key==='math'||dbCombatView.suppressLegacyElementAnimation(key))return false;
     const head=document.querySelector("#combatOverlay .combat-head");if(!head||!ELEMENTS[key])return;
     const el=document.createElement("div");el.className=`element-proc-fx ${key}`;
     const art={fire:"🔥☄️",ice:"❄️✳️",electric:"⚡⚡",light:"✨☀️",void:"🕳️🌑",nature:"🌿🪴",donut:"🍩🍩🍩",tech:"🤖📡",metal:"🤘🎸",coffee:"☕💨",gun:"🔫💥"}[key]||ELEMENTS[key].icon;
@@ -1227,6 +1227,7 @@ function returnToRoad(...args){
   let dbCombatPetTurnResolution=null;
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
+  let dbCombatConfusionResolution=null;
   let dbCombatTurns=null;
     async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}
   function applyCombatPlayerDamage(raw){return dbCombat.applyPlayerDamage(raw);}
@@ -1553,7 +1554,8 @@ function returnToRoad(...args){
     gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),
     dragoonActive:()=>player?.classId==='dragoon',
     syncDragoonPresentation:()=>dbCombatView.syncDragoonPresentation(),
-    dragoonLandPresentation:()=>dbCombatView.dragoonLandPresentation()
+    dragoonLandPresentation:()=>dbCombatView.dragoonLandPresentation(),
+    resolvePlayerConfusionOffense:label=>dbCombatConfusionResolution.resolvePlayerOffense(label)
   });
   dbClasses.configureActions({
     basicAttack:()=>dbCombat.attack(),
@@ -4020,6 +4022,10 @@ dbReturnToRoadTraceReady=true;
     playNatureOnPlayer:()=>dbCombatView.playNatureOnPlayer(),
     playDonutRain:payload=>dbCombatView.playDonutRain(payload),
     playProjectileProc:(key,payload)=>dbCombatView.playProjectileProc?.(key,payload),
+    playMathFormula:payload=>dbCombatView.playMathFormula?.(payload),
+    applyEnemyConfusion:enemy=>dbCombatConfusionResolution.applyEnemy(enemy),
+    applyPlayerConfusion:()=>dbCombatConfusionResolution.applyPlayer(),
+    clearPlayerConfusion:()=>dbCombatConfusionResolution.clearPlayer(),
     recordCareerElementProc:()=>dbProgression.recordElementProc(1)
   });
 
@@ -4497,7 +4503,29 @@ dbReturnToRoadTraceReady=true;
     floatCombatText:fact=>dbCombatView.floatCombatText?.(fact),
     dodge:unit=>dbCombatView.dodge(unit),
     dragoonActive:()=>dbFriendDragoonActive(),
-    responseModifier:()=>dbClasses.invokerResponseModifier()
+    responseModifier:()=>dbClasses.invokerResponseModifier(),
+    consumeEnemyConfusionTarget:enemy=>dbCombatConfusionResolution.consumeEnemyTarget(enemy)
+  });
+
+  const dbCombatConfusionOwner=window.DiceboundCombatConfusionResolution;
+  if(!dbCombatConfusionOwner)throw new Error('DiceBound requires the combat Confusion-resolution owner before dicebound.js');
+  dbCombatConfusionResolution=dbCombatConfusionOwner.configure({
+    getPlayer:()=>player,
+    getCurrentEnemy:()=>currentEnemy,
+    livingEnemies:()=>livingEnemies(),
+    playerSideTargets:()=>[{kind:'player',id:'player',name:'you',entity:player}],
+    random:()=>random(),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    defenseDamageReduction:value=>defenseDamageReduction(value),
+    applyPlayerDamage:raw=>applyCombatPlayerDamage(raw),
+    damageFriendlyTarget:(target,raw)=>target?.entity===player?applyCombatPlayerDamage(raw):{total:0},
+    setCombatText:text=>setCombatText(text),
+    addCombatHistory:text=>addCombatHistory(text),
+    updateCombatUI:()=>updateCombatUI(),
+    delay:ms=>delay(ms),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    handlePlayerDeath:()=>handlePlayerDeath()
   });
 
   dbClasses.configureInvoker({
@@ -4579,7 +4607,7 @@ dbReturnToRoadTraceReady=true;
   // outside this facade for the separate Combat View ownership wave.
   dbCombat=dbCombatOwner.configure({
     encounter:dbCombatEncounterLifecycle,attack:dbCombatAttackResolution,guard:dbCombatGuardResolution,mana:dbCombatManaActionResolution,
-    ultimate:dbCombatUltimateResolution,petTurn:dbCombatPetTurnResolution,turns:dbCombatTurns,victory:dbCombatVictoryResolution,
+    ultimate:dbCombatUltimateResolution,petTurn:dbCombatPetTurnResolution,turns:dbCombatTurns,confusion:dbCombatConfusionResolution,victory:dbCombatVictoryResolution,
     elements:dbCombatElementResolution,healing:dbCombatHealingResolution,d20:dbCombatD20ChaosResolution,strikes:dbCombatStrikes,
     scaling:dbEnemyScalingResolution
   });
