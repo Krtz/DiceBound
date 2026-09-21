@@ -3145,11 +3145,13 @@ dbReturnToRoadTraceReady=true;
 
   function db059PetArtEntry(petId){
     const id=String(petId||'neutral');
-    return window.DiceboundAssets?.resolvePetArt?.(id)||{portrait:`assets/pets/portraits/${id}.png`,alt:PETS[id]?.name||id};
+    return window.DiceboundAssets?.manifest?.pets?.[id]||null;
   }
   function db059SetPetArt(el,petId,extraClass='',context='portrait'){
     if(!el)return;
-    const def=PETS[petId]||PETS.neutral,entry=db059PetArtEntry(def.id),src=entry?.[context]||entry?.portrait||`assets/pets/portraits/${def.id}.png`;
+    const def=PETS[petId]||PETS.neutral,entry=db059PetArtEntry(def.id);
+    if(!entry){el.innerHTML='';el.textContent=def.icon||'🐾';return;}
+    const src=entry?.[context]||entry?.portrait;
     let img=el.querySelector(':scope > img.db059-pet-art');
     if(!img){el.innerHTML='';img=document.createElement('img');el.appendChild(img);}
     img.className=`db059-pet-art ${extraClass}`.trim();img.alt=def.name;img.draggable=false;
