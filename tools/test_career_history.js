@@ -20,6 +20,14 @@ assert.equal(old.stats.largestHit,0);
 assert.deepEqual([...career.history(old)],[],"historical saves must not fabricate old run records");
 assert.equal(old.career.nextRunId,1);
 
+const legacy={runs:14,board6Clears:3,damageTaken:777,stats:{runsStarted:0,runsFinished:0,fullVictories:0,damageTaken:20}};
+career.ensure(legacy);
+assert.equal(legacy.stats.runsFinished,14,'legacy completed-run count must remain visible in Career');
+assert.equal(legacy.stats.runsStarted,14,'runs started must never fall below trustworthy completed-run history');
+assert.equal(legacy.stats.fullVictories,3,'historical Board 6 clears are trustworthy full victories');
+assert.equal(legacy.stats.damageTaken,777,'top-level historical damage taken must survive Career normalization');
+assert.deepEqual([...career.history(legacy)],[],'migration must not fabricate individual run records');
+
 const meta={};
 const first=career.beginRun(meta,{classId:"ranger",mode:"nightmare",petId:"fire",version:"0.6.7.16"});
 assert.equal(first.id,"run-000001");
