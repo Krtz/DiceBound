@@ -96,7 +96,7 @@ const vfx=api.create({
 assert.equal(vfx.floatCombatText({kind:"damage",amount:17,target:{unit:"enemy",enemy:enemyB}}),true);
 assert.equal(vfx.floatCombatText({kind:"damage",amount:5,target:{unit:"enemy",enemy:enemyB}}),true);
 assert.equal(vfx.floatCombatText({kind:"damage",amount:9,target:{unit:"enemy",enemy:enemyA}}),true);
-assert.equal(vfx.floatCombatText({kind:"shield",amount:6,target:{unit:"player"}}),true);
+assert.equal(vfx.floatCombatText({kind:"absorb",amount:6,target:{unit:"player"}}),true);
 assert.equal(vfx.floatCombatText({kind:"damage",amount:4,target:{unit:"player"}}),true);
 assert.equal(vfx.floatCombatText({kind:"heal",amount:8,target:{unit:"player"}}),true);
 
@@ -105,7 +105,7 @@ assert.deepEqual(entries.map(entry=>[entry.kind,entry.target,entry.amount,entry.
   ["damage","enemy:1",17,"-17",0],
   ["damage","enemy:1",5,"-5",1],
   ["damage","enemy:0",9,"-9",0],
-  ["shield","player",6,"6 Shield",0],
+  ["absorb","player",6,"6 Absorbed",0],
   ["damage","player",4,"-4",1],
   ["heal","player",8,"+8 Heal",2],
 ],"floating text must preserve semantic recipient identity and readable rapid-hit lanes");
@@ -133,7 +133,8 @@ const reducedNode=dom.document.body.children.find(node=>node.connected&&node.dat
 assert.match(reducedNode.className,/db-reduced-motion/,"prefers-reduced-motion must retain readable text without travel animation");
 assert.match(source,/prefers-reduced-motion: reduce/);
 assert.match(source,/\+\$\{value\} Heal/);
-assert.match(source,/\$\{value\} Shield/);
+assert.match(source,/\+\$\{value\} Shield/);
+assert.match(source,/\$\{value\} Absorbed/);
 
 const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 assert.match(monolith,/currentEnemies\.includes\(enemy\)/,"enemy floating text must only present for live combat participants");
