@@ -28,16 +28,20 @@ async function main(){
     child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--disable-gpu-sandbox","--no-sandbox","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
     page=await connect(url);await page.send("Runtime.enable");await page.send("Emulation.setDeviceMetricsOverride",{width:1680,height:1000,deviceScaleFactor:1,mobile:false});
     const deadline=Date.now()+20000;while(Date.now()<deadline){if(await page.evaluate("document.readyState==='complete'&&!!window.DiceboundCareerUi&&!!window.DiceboundProgression&&!!document.getElementById('campCareerBtn')"))break;await sleep(100);}
-    await page.evaluate(`(()=>{window.__careerErrors=[];window.addEventListener('error',event=>window.__careerErrors.push(String(event.error?.stack||event.message||event.error||'window error')));})()`);
+    await page.evaluate(`(()=>{const seed={level:42,runs:8,bestTiles:321,board6Clears:2,damageTaken:999,prestige:{count:3},stats:{runsStarted:0,runsFinished:0,fullVictories:0,deaths:1,abandonedRuns:1,rolls:77,tilesTraveled:654,damageDealt:12345,damageTaken:12,healingDone:4321,goldEarned:6789,goldSpent:2345,highestGold:4567,enemiesDefeated:88,bossesDefeated:9,minibossesDefeated:6,powerupsTaken:44,potionsUsed:13,highestRunLevel:27,largestHit:777,criticalStrikes:31,echoStrikes:22,elementalProcs:19,boardClears:{'ranger:normal:b4':1},classMaxLevel:{ranger:27},classRuns:{ranger:5},enemyDefeats:{demon:4}},career:{nextRunId:2,activeRun:null,history:[{id:'run-000001',sequence:1,classId:'ranger',mode:'normal',outcome:'victory',boardReached:4,level:27,gold:4567,rolls:77,tilesMoved:321,legacyXp:900,petId:'neutral',prestigeCount:3,legacyLevel:42,equipment:[],powerups:[],finalStats:{maxHp:100,hp:100,attack:50,defense:20,crit:.2,dodge:.1,lifeSteal:.05,luck:.1,echo:.5,bossDamage:.2}}]}};window.DiceboundSave.reset();window.DiceboundSave.saveMeta(seed);location.reload();return true;})()`);
+    const reloadDeadline=Date.now()+20000;let reloadReady=false;while(Date.now()<reloadDeadline){reloadReady=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundCareerUi&&!!window.DiceboundProgression&&!!window.DiceboundCamp&&document.getElementById('campCareerBtn')?.dataset?.dbCampWired==='1'");if(reloadReady)break;await sleep(100);}if(!reloadReady)throw new Error("Career reload never reached a fully wired Camp surface");
+    await page.evaluate(`(()=>{window.__careerErrors=[];window.addEventListener('error',event=>window.__careerErrors.push(String(event.error?.stack||event.message||event.error||'window error')));document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');return true;})()`);
 
     const hit=await pointerClick(page,"#campCareerBtn");
-    const opened=await page.evaluate(`(()=>({open:!document.getElementById('careerOverlay')?.classList.contains('hidden'),inspect:window.DiceboundCareerUi?.inspect?.(),infoStats:!!document.querySelector('#infoOverlay [data-info-tab="stats"]')}))()`);
+    const opened=await page.evaluate(`(()=>{const overlay=document.getElementById('careerOverlay');return {open:!!overlay&&!overlay.classList.contains('hidden'),inspect:window.DiceboundCareerUi?.inspect?.(),infoStats:!!document.querySelector('#infoOverlay [data-info-tab="stats"]')};})()`);
     if(!opened.open)throw new Error(`Career pointer click did not open destination; hit=${JSON.stringify(hit)} state=${JSON.stringify(opened)}`);
     if(opened.infoStats)throw new Error("Lifetime Career Stats still exist as a duplicate Info tab");
-    if(opened.inspect?.activeTab!=="overview")throw new Error(`Career did not open on Overview: ${JSON.stringify(opened)}`);
+    if(!opened.inspect?.open||opened.inspect?.activeTab!=="overview")throw new Error(`Career owner did not retain the visible Overview surface: ${JSON.stringify(opened)}`);
 
-    const overview=await page.evaluate(`(()=>({cards:document.querySelectorAll('#careerOverlay .career-card').length,clearSection:document.querySelector('#careerOverlay .career-clear-grid')?.textContent||''}))()`);
-    if(overview.cards<10)throw new Error(`Career Overview did not render lifetime cards: ${JSON.stringify(overview)}`);
+    const overview=await page.evaluate(`(()=>({cards:document.querySelectorAll('#careerOverlay .career-card').length,text:document.querySelector('[data-career-panel="overview"]')?.textContent||'',clearSection:document.querySelector('#careerOverlay .career-clear-grid')?.textContent||''}))()`);
+    if(overview.cards<20)throw new Error(`Career Overview did not render lifetime cards: ${JSON.stringify(overview)}`);
+    for(const expected of ['42','Prestige','3','Completed runs','8','321 tiles','12,345','4,321','999'])if(!overview.text.includes(expected))throw new Error(`Career Overview lost persisted value ${expected}: ${JSON.stringify(overview)}`);
+    if(!overview.clearSection.includes('Ranger')||!overview.clearSection.includes('Normal: 4'))throw new Error(`Career class clear ledger did not render seeded authoritative fact: ${JSON.stringify(overview)}`);
 
     await pointerClick(page,'#careerOverlay [data-career-tab="enemies"]');
     const enemies=await page.evaluate(`(()=>({tab:window.DiceboundCareerUi?.inspect?.().activeTab,text:document.querySelector('[data-career-panel="enemies"]')?.textContent||''}))()`);
@@ -45,12 +49,12 @@ async function main(){
 
     await pointerClick(page,'#careerOverlay [data-career-tab="runs"]');
     const runs=await page.evaluate(`(()=>({tab:window.DiceboundCareerUi?.inspect?.().activeTab,text:document.querySelector('[data-career-panel="runs"]')?.textContent||''}))()`);
-    if(runs.tab!=="runs"||!runs.text.includes("Run History begins"))throw new Error(`Fresh Career Run History did not render truthful empty state: ${JSON.stringify(runs)}`);
+    if(runs.tab!=="runs"||!runs.text.includes("Ranger")||!runs.text.includes("Victory")||!runs.text.includes("Board 4"))throw new Error(`Persisted Career Run History did not render seeded record: ${JSON.stringify(runs)}`);
 
     await pointerClick(page,"#careerOverlay [data-career-done]");
     if(!(await page.evaluate("document.getElementById('careerOverlay')?.classList.contains('hidden')")))throw new Error("Career Done pointer did not close destination");
     const errors=await page.evaluate("window.__careerErrors||[]");if(errors.length)throw new Error(`Career destination raised runtime errors: ${JSON.stringify(errors)}`);
-    console.log("Career Edge PASS: Camp hit target, Overview, semantic Enemy Ledger, bounded Run History and Done are player-reachable");
+    console.log("Career Edge PASS: real persisted Career values, semantic Enemy Ledger, Run History and Done are player-visible through Camp");
   }finally{
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }

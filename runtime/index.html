@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Dicebound: Beta v0.6.7.17</title>
+<title>Dicebound: Beta v0.6.7.18</title>
 <link rel="stylesheet" href="css/dicebound.css">
 <link rel="stylesheet" href="css/extracted-monolith.css">
 <style id="db-boot-gate">
@@ -20,8 +20,8 @@
     <div class="brand">
       <div class="brand-mark">🎲</div>
       <div>
-        <h1>Dicebound: Beta v0.6.7.17</h1>
-        <p>Beta v0.6.7.17 · Floating combat numbers & persistent display toggle.</p>
+        <h1>Dicebound: Beta v0.6.7.18</h1>
+        <p>Beta v0.6.7.18 · Grounded combat HUD, Career fixes & clearer combat feedback.</p>
       </div>
     </div>
     <div class="top-actions">
@@ -121,25 +121,33 @@
   <div class="modal">
     <h2 id="combatTitle">Battle!</h2>
     <p class="subtitle" id="combatSubtitle">A creature blocks the road.</p>
+    <div class="enemy-party" id="enemyParty"></div>
+    <div class="combat-hud" aria-label="Combat health">
+      <div class="combat-hud-side combat-hud-player">
+        <div class="bar-label"><span>Player HP</span><span id="combatPlayerHp">30 / 30</span></div>
+        <div class="bar hpbar"><i id="combatPlayerFill"></i></div>
+        <div class="status-dots" id="playerStatusDots"></div>
+      </div>
+      <div class="combat-hud-side combat-hud-enemy">
+        <div class="bar-label"><span>Enemy HP</span><span id="enemyHpText">12 / 12</span></div>
+        <div class="bar enemy-bar"><i id="enemyHpFill"></i></div>
+        <div class="status-dots" id="enemyStatusDots"></div>
+      </div>
+    </div>
     <div class="combat-head">
       <div class="fighter">
         <div class="fighter-icon" id="combatPlayerIcon">🛡️</div>
         <div class="fighter-name" id="combatPlayerName">Fighter</div>
         <div class="combat-pet" id="combatPet">🎲</div>
-        <div class="bar-label"><span>HP</span><span id="combatPlayerHp">30 / 30</span></div>
-        <div class="bar hpbar"><i id="combatPlayerFill"></i></div><div class="status-dots" id="playerStatusDots"></div>
       </div>
       <div class="vs">VS</div>
       <div class="fighter">
         <div class="fighter-icon" id="enemyIcon">👹</div>
         <div class="fighter-name" id="enemyName">Goblin</div>
         <div class="enemy-weakness" id="enemyWeakness">Weakness: 🔥 Fire</div>
-        <div class="bar-label"><span>HP</span><span id="enemyHpText">12 / 12</span></div>
-        <div class="bar enemy-bar"><i id="enemyHpFill"></i></div><div class="status-dots" id="enemyStatusDots"></div>
       </div>
       <div class="attack-fx" id="attackFx"></div>
     </div>
-    <div class="enemy-party" id="enemyParty"></div>
     <div class="boss-special hidden" id="bossSpecialIndicator">⚠️ Special attack in 5 turns</div>
     <div class="combat-text" id="combatText">Choose your action.</div>
     <div class="battle-victory hidden" id="battleVictory" aria-live="polite">

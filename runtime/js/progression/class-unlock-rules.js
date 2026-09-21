@@ -194,7 +194,6 @@
 
     // Later wrapper append order.
     attempt("summoner",ctx=>petLevel10Count(ctx)>=3);
-    attempt("pokemontrainer",ctx=>allPetsLevel10(ctx)&&!!ctx.beastmasterNightmareBoard5);
     attempt("alchemist",ctx=>statsValue(ctx,"potionsUsed")>=100);
     attempt("ouroboros",ctx=>!!ctx.gameStarted&&playerValue(ctx,"doubleStrike")>=4);
     attempt("ceo",ctx=>!!ctx.gameStarted&&playerValue(ctx,"bossDamage")>=3);

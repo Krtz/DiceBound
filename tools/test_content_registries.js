@@ -54,11 +54,11 @@ assert.equal(equipment.identities.find(identity => identity.id === "bronze-longs
 assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 
 const achievements = achievementsApi.createRegistry();
-assert.equal(achievements.length, 36);
+assert.equal(achievements.length, 37);
 assert.equal(new Set(achievements.map((entry) => entry.id)).size, achievements.length);
 assert.deepEqual(
   achievements.reduce((counts, entry) => ({ ...counts, [entry.category]: (counts[entry.category] || 0) + 1 }), {}),
-  { roads: 8, builds: 11, collection: 12, secrets: 5 },
+  { roads: 8, builds: 12, collection: 12, secrets: 5 },
 );
 for (const achievement of achievements) {
   assert.equal(typeof achievement.id, "string");
@@ -66,7 +66,7 @@ for (const achievement of achievements) {
   assert.equal(typeof achievement.condition, "string");
 }
 assert.ok(achievements.every(entry => entry.hierarchy && typeof entry.hierarchy.group === "string"), "achievement hierarchy metadata is missing");
-snapshot(achievements, 6210, "adb04405c1b38852c60e68ade9df3a83a5fdca2595bdd1cac475b7f1caed65b7", "achievement registry");
+snapshot(achievements, 6386, "89e69e35b2e9fd9e9938997fc7a699fd86099a25813365ddb69df0a5da71c863", "achievement registry");
 
 boards["6"].balance.threePackChance = -1;
 equipment.special["devils-horns"].rarity = "poor";

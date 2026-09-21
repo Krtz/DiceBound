@@ -33,7 +33,6 @@ function baseContext(overrides={}){
     petIds:[...PET_IDS],
     petLevels:Object.fromEntries(PET_IDS.map(id=>[id,1])),
     petUnlocked:Object.fromEntries(PET_IDS.map(id=>[id,false])),
-    beastmasterNightmareBoard5:false,
     gameStarted:false,
     player:{gold:0,defense:0,doubleStrike:0,lifeSteal:0,crit:0,bossDamage:0},
     publicSlimeCandidateIds:["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","slime","vampire","ninja","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","dragoon","invoker","slimerouge"].filter(id=>id!=="slime"),
@@ -119,7 +118,7 @@ function dynamicContext(){return baseContext({
   prestigeCount:10,damageTaken:1000,merchantKills:5,
   stats:{healingDone:1000,highestGold:5000,potionsUsed:100},storedHighestGold:5000,highestGold:5000,
   petLevels:Object.fromEntries(PET_IDS.map(id=>[id,30])),petUnlocked:Object.fromEntries(PET_IDS.map(id=>[id,true])),
-  beastmasterNightmareBoard5:true,gameStarted:true,
+  gameStarted:true,
   player:{gold:5000,defense:41,doubleStrike:4,lifeSteal:2,crit:1.01,bossDamage:3},
   hasBoardClear:(id,board)=>board===3&&(id==="fighter"||id==="cleric"),
 });}
@@ -133,11 +132,13 @@ const result=R.resolveDynamic({
 });
 assert.deepEqual(Array.from(result.attempted),[
   "d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue",
-  "summoner","pokemontrainer","alchemist","ouroboros","ceo","alchemist","alchemist","alchemist","alchemist",
+  "summoner","alchemist","ouroboros","ceo","alchemist","alchemist","alchemist","alchemist",
   "pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon"
 ]);
 for(const id of ["d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue","slime","summoner","pokemontrainer","alchemist","ouroboros","invoker","dragoon"]){
   assert.equal(dynamicState.persistedUnlocks[id],true,`${id} did not commit in full dynamic scan`);
 }
+
+assert.doesNotMatch(source,/beastmasterNightmareBoard5/,"stale Nightmare-only Pokémon Trainer path must stay retired");
 
 console.log("Class unlock resolution contract preserved");

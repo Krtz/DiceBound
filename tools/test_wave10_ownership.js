@@ -30,8 +30,8 @@ assert.equal(window.DiceboundCombatStrikeResolution.echoDelayCap, undefined, "re
 load("runtime/js/combat/presentation.js");
 const timing = window.DiceboundCombatPresentation._test.playerAttackTiming;
 assert.equal(typeof timing, "function");
-for (const [ordinal, expected] of [[1,180],[2,177],[5,168],[10,153],[41,60],[125,60]]) {
-  assert.equal(timing("echo","ranger",ordinal).totalMs, expected, `Echo #${ordinal} should use explicit presentation cadence ${expected}ms`);
+for (const [ordinal, expected] of [[1,590],[2,560],[5,470],[10,320],[41,180],[125,180]]) {
+  assert.equal(timing("echo","ranger",ordinal).totalMs, expected, `Echo #${ordinal} should use progressive presentation cadence ${expected}ms`);
 }
 assert.equal(timing("normal","ranger",1).totalMs,590,"ordinary Ranger attack timing must not inherit Echo acceleration");
 assert.equal(timing("crit","ranger",1).totalMs,650,"Crit timing must not inherit Echo acceleration");

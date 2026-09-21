@@ -99,6 +99,12 @@
       "reward": "class:beastmaster"
     },
     {
+      "id": "beastmaster-b5-roster",
+      "category": "builds",
+      "name": "A Bigger Roster",
+      "condition": "boardClear:beastmaster:5"
+    },
+    {
       "id": "prestige10",
       "category": "collection",
       "name": "Red Horizon",

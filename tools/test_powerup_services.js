@@ -88,14 +88,14 @@ assert.equal(activePlayer.attack, 11, "live player port did not follow reset/rep
 assert.equal(firstPlayer.attack, 11, "stale player object was mutated after replacement");
 
 const purse = registry.find((powerup) => powerup.id === "purse");
-assert.match(purse.desc, /Gain 74 gold now \(49 base at Adventurer Level 1, 50% Gold bonus\)/);
+assert.equal(purse.desc, "Gain 74 gold now.");
 nightmare = true;
-assert.match(purse.desc, /Nightmare reward reduction included/);
+assert.equal(purse.desc, "Gain 74 gold now.", "Heavy Purse copy should expose the resolved reward, not the internal formula");
 purse.apply();
 assert.equal(activePlayer.gold, 74);
 activePlayer.level = 10;
 activePlayer.goldBonus = 0.8;
-assert.match(purse.desc, /Gain 315 gold now \(175 base at Adventurer Level 10, 80% Gold bonus/);
+assert.equal(purse.desc, "Gain 315 gold now.");
 purse.apply();
 assert.equal(activePlayer.gold, 389, "mechanic did not consume the same level-scaled modified reward shown by the description");
 
@@ -156,7 +156,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "728b05b1bb9dd9025ce064cc2d4b1e85b9f2a436ba663a669e09167bb31e6598";
+const expectedDigest = "4ca18892fe2e05f63eb7bffd061737b951cf4fc7ed562231c6cc40e576b44f37";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {

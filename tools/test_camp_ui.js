@@ -24,7 +24,7 @@ assert(Object.isFrozen(camp.stageAnchors),'stage anchors should not be mutable b
 assert.deepStrictEqual(Object.keys(camp.stageAnchors),['campOptionsBtn','campTalentBtn','campMoonBtn','campNightmareBtn','campHellBtn','campClassBtn','campInfoBtn','campCareerBtn','campBonfire','campGoBtn','campChestBtn','campAchievementBtn','campPetBtn']);
 assert.deepStrictEqual({...camp.stageAnchors.campOptionsBtn},{x:.085,y:.105,w:110},'Options must retain its approved stage anchor');
 assert.deepStrictEqual({...camp.stageAnchors.campNightmareBtn},{x:.889,y:.53,w:120},'Nightmare must move exactly 0.1 percentage points left without changing its vertical anchor');
-assert.deepStrictEqual({...camp.stageAnchors.campHellBtn},{x:.27,y:.33,w:118},'Hell must use the stable fallback anchor five percentage points right of the previous active volcano');
+assert.deepStrictEqual({...camp.stageAnchors.campHellBtn},{x:.37,y:.33,w:118},'Hell must sit ten scene-percentage points farther right than the 0.6.7.17 anchor');
 assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.65,w:235},'Class Choice must sit another 10% lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
 assert.deepStrictEqual({...camp.stageAnchors.campCareerBtn},{x:.13,y:.62,w:145},'Career must have its own stable book destination without displacing the existing lower-left flow');

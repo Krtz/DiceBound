@@ -8,7 +8,7 @@
   "use strict";
 
   const OWNER="ui/career";
-  let runtime={};
+  let runtime={},surface=null;
 
   const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const fmt=value=>Math.round(Number(value)||0).toLocaleString();
@@ -18,6 +18,7 @@
   function doc(){return runtime.document?.()||document;}
   function find(id){return runtime.find?.(id)||doc()?.getElementById(id)||null;}
   function stats(){return runtime.getCareerStats?.()||{};}
+  function context(){return runtime.getCareerContext?.()||{};}
   function history(){return runtime.getRunHistory?.()||[];}
   function classes(){return runtime.getClasses?.()||[];}
   function enemies(){return runtime.getEnemies?.()||[];}
@@ -75,8 +76,9 @@
 
   function ensureSurface(){
     const documentRef=doc();if(!documentRef)return null;installStyles();
-    let overlay=find("careerOverlay");
+    let overlay=surface&&surface.isConnected!==false?surface:find("careerOverlay");
     if(!overlay){overlay=documentRef.createElement("div");overlay.id="careerOverlay";overlay.className="hidden";overlay.setAttribute("aria-hidden","true");documentRef.body?.appendChild(overlay);}
+    surface=overlay;
     if(overlay.dataset.careerOwner!==OWNER){
       overlay.dataset.careerOwner=OWNER;
       overlay.innerHTML=`<section class="career-shell"><header class="career-chrome"><div><span class="career-kicker">The roads remember</span><h2>Career</h2></div><button type="button" class="small-btn career-done" data-career-done>Done</button></header><div class="career-body"><nav class="career-tabs" aria-label="Career sections"><button type="button" class="small-btn active" data-career-tab="overview">Overview</button><button type="button" class="small-btn" data-career-tab="enemies">Enemy Ledger</button><button type="button" class="small-btn" data-career-tab="runs">Run History</button></nav><section class="career-panel active" data-career-panel="overview"></section><section class="career-panel" data-career-panel="enemies"></section><section class="career-panel" data-career-panel="runs"></section></div></section>`;
@@ -98,17 +100,17 @@
   }
 
   function overviewHtml(){
-    const s=stats(),played=Object.entries(s.classRuns||{}).sort((a,b)=>Number(b[1])-Number(a[1])),favorite=played[0],favoriteClass=favorite?classById(favorite[0]):null;
+    const s=stats(),ctx=context(),played=Object.entries(s.classRuns||{}).sort((a,b)=>Number(b[1])-Number(a[1])),favorite=played[0],favoriteClass=favorite?classById(favorite[0]):null;
     const cards=[
       ["runsFinished","Runs finished"],["fullVictories","Full victories"],["deaths","Deaths"],["abandonedRuns","Abandoned"],
       ["tilesTraveled","Tiles traveled"],["rolls","Dice rolls"],["enemiesDefeated","Enemies defeated"],["bossesDefeated","Bosses defeated"],
-      ["damageDealt","Damage dealt"],["largestHit","Largest hit"],["criticalStrikes","Critical strikes"],["echoStrikes","Echo strikes"],
+      ["damageDealt","Damage dealt"],["damageTaken","Damage taken"],["largestHit","Largest hit"],["criticalStrikes","Critical strikes"],["echoStrikes","Echo strikes"],
       ["elementalProcs","Elemental procs"],["potionsUsed","Potions used"],["goldEarned","Gold earned"],["goldSpent","Gold spent"],
       ["healingDone","Healing done"],["highestGold","Highest gold held"],["powerupsTaken","Powerups taken"],["highestRunLevel","Highest run level"]
     ];
     const clears=highestClears(s);
     const clearRows=clears.map(({classId,modes})=>{const entry=classById(classId);return `<div><b>${escapeHtml(entry?.icon||"•")} ${escapeHtml(entry?.name||classId)}</b><br>Normal: ${modes.normal||"—"} · Nightmare: ${modes.nightmare||"—"} · Hell: ${modes.hell||"—"}</div>`;}).join("");
-    return `<div class="career-stat-grid">${cards.map(([key,label])=>`<div class="career-card"><span>${escapeHtml(label)}</span><strong>${fmt(s[key])}</strong></div>`).join("")}<div class="career-card career-wide"><span>Most played class</span><strong>${favorite?`${escapeHtml(favoriteClass?.icon||"")} ${escapeHtml(favoriteClass?.name||favorite[0])} · ${fmt(favorite[1])} run${Number(favorite[1])===1?"":"s"}`:"No recorded runs yet"}</strong></div></div><div class="career-section"><h3>Highest Board cleared by class & difficulty</h3><div class="career-clear-grid">${clearRows||'<div class="career-empty">No recorded Board clears yet.</div>'}</div></div>`;
+    return `<div class="career-section"><h3>Career snapshot</h3><div class="career-stat-grid"><div class="career-card"><span>Legacy level</span><strong>${fmt(ctx.legacyLevel)}</strong></div><div class="career-card"><span>Prestige</span><strong>${fmt(ctx.prestigeCount)}</strong></div><div class="career-card"><span>Completed runs</span><strong>${fmt(Math.max(Number(ctx.completedRuns)||0,Number(s.runsFinished)||0))}</strong></div><div class="career-card"><span>Best run distance</span><strong>${fmt(ctx.bestTiles)} tiles</strong></div></div></div><div class="career-stat-grid">${cards.map(([key,label])=>`<div class="career-card"><span>${escapeHtml(label)}</span><strong>${fmt(s[key])}</strong></div>`).join("")}<div class="career-card career-wide"><span>Most played class</span><strong>${favorite?`${escapeHtml(favoriteClass?.icon||"")} ${escapeHtml(favoriteClass?.name||favorite[0])} · ${fmt(favorite[1])} run${Number(favorite[1])===1?"":"s"}`:"No recorded class-run history yet"}</strong></div></div><div class="career-section"><h3>Highest Board cleared by class & difficulty</h3><div class="career-clear-grid">${clearRows||'<div class="career-empty">No class-specific Board clears have been recorded yet.</div>'}</div></div>`;
   }
 
   function enemiesHtml(){
@@ -153,9 +155,10 @@
   function open(tab="overview"){
     const overlay=ensureSurface();render();activateTab(tab);if(overlay){overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}runtime.onOpen?.();return overlay;
   }
-  function close(){const overlay=find("careerOverlay");if(overlay){overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}runtime.onClose?.();return overlay||null;}
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};return api;}
-  function inspect(){const overlay=find("careerOverlay");return Object.freeze({owner:overlay?.dataset.careerOwner||OWNER,open:!!overlay&&!overlay.classList.contains("hidden"),activeTab:overlay?.querySelector?.("[data-career-tab].active")?.dataset.careerTab||null,historyCount:history().length,enemyKinds:Object.keys(stats().enemyDefeats||{}).filter(id=>Number(stats().enemyDefeats[id])>0).length});}
+  function ownedSurface(){return surface&&surface.isConnected!==false?surface:find("careerOverlay");}
+  function close(){const overlay=ownedSurface();if(overlay){overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}runtime.onClose?.();return overlay||null;}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};surface=null;return api;}
+  function inspect(){const overlay=ownedSurface();return Object.freeze({owner:overlay?.dataset.careerOwner||OWNER,open:!!overlay&&!overlay.classList.contains("hidden"),activeTab:overlay?.querySelector?.("[data-career-tab].active")?.dataset.careerTab||null,historyCount:history().length,enemyKinds:Object.keys(stats().enemyDefeats||{}).filter(id=>Number(stats().enemyDefeats[id])>0).length});}
 
   const api=Object.freeze({apiVersion:1,owner:OWNER,configure,open,close,render,activateTab,inspect});
   window.DiceboundCareerUi=api;

@@ -83,6 +83,18 @@
     return Object.freeze({stats:meta.stats,career:meta.career});
   }
 
+  function migrateLegacy(meta={}){
+    const state=ensure(meta),s=state.stats;
+    // Legacy fields are read exactly at load/import normalization. Keeping this
+    // bridge out of ensure() prevents ordinary live reads from rewriting
+    // current Career counters later in the same run.
+    s.runsFinished=Math.max(s.runsFinished,integer(meta.runs));
+    s.runsStarted=Math.max(s.runsStarted,s.runsFinished);
+    s.fullVictories=Math.max(s.fullVictories,integer(meta.board6Clears));
+    s.damageTaken=Math.max(s.damageTaken,Math.max(0,number(meta.damageTaken)));
+    return state;
+  }
+
   function stats(meta){return ensure(meta).stats;}
   function history(meta){return Object.freeze(ensure(meta).career.history.map(entry=>Object.freeze(clone(entry))));}
 
@@ -197,7 +209,7 @@
   }
 
   window.DiceboundCareerHistory=Object.freeze({
-    apiVersion:1,owner:OWNER,HISTORY_LIMIT,defaultStats,normalizeStats,normalizeHistoryEntry,ensure,stats,history,
+    apiVersion:1,owner:OWNER,HISTORY_LIMIT,defaultStats,normalizeStats,normalizeHistoryEntry,ensure,migrateLegacy,stats,history,
     beginRun,boardClearKey,recordBoardClear,hasBoardClear,recordDamage,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,
     recordPotion,recordPowerup,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,finalizeRun,inspect
   });

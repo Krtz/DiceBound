@@ -1039,8 +1039,7 @@ function returnToRoad(...args){
     for(const [id,val] of Object.entries(out.purchased)){const rank=Math.max(0,Number(val)||0),t=known.get(id);if(!t){refund+=rank*2;delete out.purchased[id];continue;}if(rank>t.maxRank){refund+=(rank-t.maxRank)*t.cost;out.purchased[id]=t.maxRank;}}
     out.points=(out.points||0)+refund;
     out.version="Alpha v1";
-    window.DiceboundCareerHistory.ensure(out);
-    out.stats.damageTaken=Math.max(Number(out.stats.damageTaken)||0,Number(out.damageTaken)||0);
+    window.DiceboundCareerHistory.migrateLegacy(out);
     out.achievements={...(out.achievements||{})};
     return out;
   }
@@ -1116,9 +1115,11 @@ function returnToRoad(...args){
         enemy.hp-=dealt;
       }
     }
-    if(currentEnemies.includes(enemy)){
-      if(blocked)dbCombatView.floatCombatText?.({kind:'blocked',target:{unit:'enemy',enemy},label:'Barrier'});
-      else if(dealt>0)dbCombatView.floatCombatText?.({kind:'damage',amount:dealt,target:{unit:'enemy',enemy}});
+    const enemyIndex=currentEnemies.indexOf(enemy);
+    if(enemyIndex>=0){
+      const target={unit:'enemy',enemy,enemyIndex};
+      if(blocked)dbCombatView.floatCombatText?.({kind:'blocked',target,label:'Barrier'});
+      else if(dealt>0)dbCombatView.floatCombatText?.({kind:'damage',amount:dealt,target});
     }
     if(gameStarted&&dealt>0)dbProgression.recordDamageDealt(dealt);
     if(player._v25CroakHitsRemaining>0){
@@ -1192,7 +1193,7 @@ function returnToRoad(...args){
       prestigeCount:Number(meta.prestige?.count)||0,damageTaken:Number(meta.damageTaken)||0,merchantKills:Number(meta.merchantKills)||0,
       stats:{healingDone:Number(stats.healingDone)||0,highestGold:Number(stats.highestGold)||0,potionsUsed:Number(stats.potionsUsed)||0},
       storedHighestGold:Number(stats.highestGold)||0,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(currentPlayer.gold)||0):0),facts,
-      petIds,petLevels,petUnlocked,beastmasterNightmareBoard5:!!meta.beastmasterNightmareBoard5,gameStarted:!!gameStarted,
+      petIds,petLevels,petUnlocked,gameStarted:!!gameStarted,
       player:{gold:Number(currentPlayer.gold)||0,defense:Number(currentPlayer.defense)||0,doubleStrike:Number(currentPlayer.doubleStrike)||0,lifeSteal:Number(currentPlayer.lifeSteal)||0,crit:Number(currentPlayer.crit)||0,bossDamage:Number(currentPlayer.bossDamage)||0},
       hasBoardClear:(classId,board)=>dbProgression.hasBoardClear(classId,board)
     };
@@ -1637,7 +1638,6 @@ function returnToRoad(...args){
 
   random();
 
-  meta.beastmasterNightmareBoard5=!!meta.beastmasterNightmareBoard5;
   meta.unlocks=meta.unlocks||{};
 
   // ---- Defense becomes diminishing percentage reduction --------------------
@@ -4546,6 +4546,7 @@ dbReturnToRoadTraceReady=true;
   dbCareerUi.configure({
     find:$,document:()=>document,
     getCareerStats:()=>dbProgression.careerStats(),
+    getCareerContext:()=>({legacyLevel:meta.level||1,prestigeCount:meta.prestige?.count||0,completedRuns:meta.runs||0,bestTiles:meta.bestTiles||0}),
     getRunHistory:()=>dbProgression.runHistory(),
     getClasses:()=>Object.values(CLASSES),
     getEnemies:()=>[...enemyPool,...Object.values(ENEMY_REGISTRY||{})],
@@ -4568,9 +4569,7 @@ dbReturnToRoadTraceReady=true;
     delay:ms=>delay(ms),
     getElements:()=>ELEMENTS,
     getCoreElements:()=>DIBO_ELEMENTS,
-    setCombatText:text=>setCombatText(text),
-    showToast:text=>showToast(text),
-    identityFlash:text=>identityFlash(text),
+    setCombatText:(text,record=true)=>setCombatText(text,record),
     addCombatHistory:text=>addCombatHistory(text),
     clampQueuedHaste:before=>dbCombatElementResolution.clampQueuedHaste(before)
   });
