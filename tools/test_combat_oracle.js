@@ -125,6 +125,13 @@ async function main(){
     };
     encounter.state.text="Ascended Slime block the road. Choose your action.";
     encounter.state.history=encounter.state.text;
+    // 0.6.7.18 deliberately collapses Twenty-Sider's duplicate toast/flash/text
+    // layers into one concrete battle announcement plus one history record.
+    // Keep the frozen mechanics/RNG/state fixture and transform only those
+    // approved presentation fields.
+    const d20Case=expected.find(c=>c.name==="d20-chaos");
+    d20Case.state.text="🎲 18/20 — HASTE: double-ish power and the enemy pack may lose its response to Haste. Attack power: 180%.";
+    d20Case.state.history="ATTACK: 🎲 18/20 — HASTE: double-ish power and the enemy pack may lose its response to Haste. Attack power: 180%.";
     assert.deepEqual(actual.cases,expected);
     console.log(`Combat oracle PASS: ${actual.cases.length} exact released-output/state/event/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
