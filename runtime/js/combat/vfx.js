@@ -291,8 +291,8 @@
         .db-combat-float-vfx.db-animate{animation:dbCombatFloatRise 1.02s cubic-bezier(.16,.76,.28,1) forwards}
         .db-combat-float-vfx[data-kind="damage"]{color:#ffd2d2}.db-combat-float-vfx[data-kind="heal"]{color:#d6ffd8}.db-combat-float-vfx[data-kind="shield"],.db-combat-float-vfx[data-kind="absorb"]{color:#d8f4ff}.db-combat-float-vfx[data-kind="blocked"]{color:#ffe6a6}
         .db-combat-float-vfx.db-reduced-motion.db-animate{animation:dbCombatFloatFade .72s ease-out forwards}
-        @keyframes dbCombatFloatRise{0%{opacity:0;transform:translate(-50%,-30%) scale(.82)}18%{opacity:1;transform:translate(-50%,-48%) scale(1.08)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-128%) scale(.98)}}
-        @keyframes dbCombatFloatFade{0%{opacity:0;transform:translate(-50%,-50%) scale(.92)}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+        @keyframes dbCombatFloatRise{0%{opacity:1;transform:translate(-50%,-30%) scale(.82)}18%{opacity:1;transform:translate(-50%,-48%) scale(1.08)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-128%) scale(.98)}}
+        @keyframes dbCombatFloatFade{0%{opacity:1;transform:translate(-50%,-50%) scale(.92)}72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
       `);
     }
 
