@@ -1039,8 +1039,7 @@ function returnToRoad(...args){
     for(const [id,val] of Object.entries(out.purchased)){const rank=Math.max(0,Number(val)||0),t=known.get(id);if(!t){refund+=rank*2;delete out.purchased[id];continue;}if(rank>t.maxRank){refund+=(rank-t.maxRank)*t.cost;out.purchased[id]=t.maxRank;}}
     out.points=(out.points||0)+refund;
     out.version="Alpha v1";
-    window.DiceboundCareerHistory.ensure(out);
-    out.stats.damageTaken=Math.max(Number(out.stats.damageTaken)||0,Number(out.damageTaken)||0);
+    window.DiceboundCareerHistory.migrateLegacy(out);
     out.achievements={...(out.achievements||{})};
     return out;
   }
