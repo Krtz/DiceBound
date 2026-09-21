@@ -26,6 +26,6 @@ for(const id of [...imported,...existing]){
 assert.strictEqual(assets.resolveEnemyMarker('Devil').key,'demon','legacy Devil labels may resolve art but must canonicalize to the ordinary Demon marker');
 
 for(const id of imported)assert.strictEqual(assets.resolveEnemyPortrait(names[id]),null,`${id} marker must not masquerade as battle art`);
-for(const id of existing)assert.strictEqual(assets.resolveEnemyPortrait(names[id]).src,`assets/enemies/normal/battle/${id}.png`);
+for(const id of existing)assert.strictEqual(assets.resolveEnemyPortrait(names[id]).src,`assets/enemies/normal/battle/${id}/portrait.png`);
 assert.strictEqual(assets.resolveEnemyMarker('Unknown'),null);
 console.log('Normal enemy marker registry PASS: 11 static semantic markers; marker-only identities have no battle-art fallback');

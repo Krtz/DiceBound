@@ -13,17 +13,19 @@ const assets=context.window.DiceboundAssets;
 assert.ok(Object.isFrozen(assets),"asset API must remain immutable");
 for(let board=1;board<=6;board++){
   const art=assets.resolveEnemyBattleArt("Nightmare Slime",board);
-  assert.deepEqual(JSON.parse(JSON.stringify(art)),{key:"slime",src:`assets/enemies/normal/battle/slime-board-${board}.png`,alt:"Slime",board});
-  assert.equal(assets.resolveEnemyBattleArt("Slime",board).src,`assets/enemies/normal/battle/slime-board-${board}.png`);
+  assert.deepEqual(JSON.parse(JSON.stringify(art)),{key:"slime",src:`assets/enemies/normal/battle/slime/board-${board}.png`,alt:"Slime",board});
+  assert.equal(assets.resolveEnemyBattleArt("Slime",board).src,`assets/enemies/normal/battle/slime/board-${board}.png`);
+  assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyBattleArt("Road Goblin",board))),{key:"goblin",src:`assets/enemies/normal/battle/goblin/board-${board}.png`,alt:"Goblin",board});
+  assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyBattleArt("Skeleton",board))),{key:"skeleton",src:`assets/enemies/normal/battle/skeleton/board-${board}.png`,alt:"Skeleton",board});
   const wolf=assets.resolveEnemyBattleArt("Ascended Wolf",board);
-  assert.deepEqual(JSON.parse(JSON.stringify(wolf)),{key:"wolf",src:`assets/enemies/normal/battle/wolf-board-${board}.png`,alt:"Wolf",board});
+  assert.deepEqual(JSON.parse(JSON.stringify(wolf)),{key:"wolf",src:`assets/enemies/normal/battle/wolf/board-${board}.png`,alt:"Wolf",board});
   const demon=assets.resolveEnemyBattleArt("Demon",board);
-  assert.deepEqual(JSON.parse(JSON.stringify(demon)),{key:"demon",src:`assets/enemies/normal/battle/devil-board-${board}.png`,alt:"Demon",board});
+  assert.deepEqual(JSON.parse(JSON.stringify(demon)),{key:"demon",src:`assets/enemies/normal/battle/demon/board-${board}.png`,alt:"Demon",board});
   assert.equal(assets.resolveEnemyBattleArt("Devil",board).key,"demon","legacy ordinary Devil labels may resolve art but must canonicalize to Demon");
 }
 assert.equal(assets.resolveEnemyBattleArt("Slime",0).board,1,"invalid low boards must safely select Board 1");
 assert.equal(assets.resolveEnemyBattleArt("Slime",99).board,6,"invalid high boards must safely select Board 6");
-for(let board=1;board<=6;board++)assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyBattleArt("Wraith",board))),{key:"wraith",src:`assets/enemies/normal/battle/wraith-board-${board}.png`,alt:"Wraith",board},"transparent Wraith Board art must retain its canonical semantic mapping without a matte contract");
+for(let board=1;board<=6;board++)assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyBattleArt("Wraith",board))),{key:"wraith",src:`assets/enemies/normal/battle/wraith/board-${board}.png`,alt:"Wraith",board},"transparent Wraith Board art must retain its canonical semantic mapping without a matte contract");
 const slimeMarker=assets.resolveEnemyMarker("Slime");
 assert.deepEqual(JSON.parse(JSON.stringify(slimeMarker)),{key:"slime",src:"assets/enemies/normal/board-markers/slime.png",alt:"Slime"});
 assert.notEqual(slimeMarker.src,assets.resolveEnemyBattleArt("Slime",1).src,"the static marker must remain separate from tiered battle art");
@@ -37,7 +39,7 @@ assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("normal")
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("Nightmare"))),{id:"nightmare",className:"db-enemy-mode-nightmare"});
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("HELL"))),{id:"hell",className:"db-enemy-mode-hell"});
 assert.equal(assets.resolveEnemyModeAura("unexpected").id,"normal");
-for(const identity of ["slime","wolf","devil","wraith"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",`${identity}-board-${board}.png`)));
+for(const identity of ["slime","goblin","skeleton","wolf","demon","wraith"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",identity,`board-${board}.png`)));
 const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
 assert.doesNotMatch(monolith,/db066TieredEnemyMarkupBase|db-enemy-dark-matte|wraith-dark-matte-style/,"transparent Wraith art must not retain the old Wraith-only matte/blending renderer wrapper");
 
