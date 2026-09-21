@@ -62,11 +62,13 @@
       #combatOverlay .combat-hud .status-dots{justify-content:center;margin:2px 1px 0}
       #combatOverlay .combat-head{min-height:clamp(260px,34vh,350px);align-items:stretch!important;margin-top:0!important}
       #combatOverlay .combat-head>.fighter{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;min-height:inherit}
+      #combatOverlay .combat-head>.fighter:first-of-type{position:relative}
       #combatOverlay .combat-head>.fighter>.fighter-name{order:0}
-      #combatOverlay .combat-head>.fighter>.combat-pet,#combatOverlay .combat-head>.fighter>.enemy-weakness{order:1}
+      #combatOverlay .combat-head>.fighter>.enemy-weakness{order:1}
       #combatOverlay .combat-head>.fighter>.fighter-icon{order:2;margin-top:auto!important;margin-bottom:0;transform-origin:center bottom}
+      #combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{position:absolute!important;left:clamp(2px,8%,34px);bottom:2px;margin:0!important;z-index:9;transform-origin:center bottom}
       #combatOverlay .vs{align-self:center}
-      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}}
+      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
     `;
     doc.head?.appendChild(style);return style;
   }
