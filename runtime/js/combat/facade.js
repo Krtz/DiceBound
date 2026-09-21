@@ -40,6 +40,7 @@
   const api=Object.freeze({
     owner:OWNER,apiVersion:1,configure,
     startEncounter:(...args)=>service("encounter").start(...args),
+    offense:(label,work)=>playerOffense(label,work),
     attack:(...args)=>playerOffense("Attack",()=>service("attack").playerAttack(...args)),
     guard:(...args)=>service("guard").guardAction(...args),
     identityGuard:(...args)=>service("guard").identityGuardAction(...args),
