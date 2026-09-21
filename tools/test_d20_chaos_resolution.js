@@ -113,19 +113,26 @@ function assertQueuesDrained(h) {
     assert.strictEqual(h.p._db047HastePrimed, false);
   });
 
-  await test('decorative rolls consume four RNG draws before real roll and preserve all presentation delays', async () => {
+  await test('decorative roll animation resolves to one concrete player-facing result', async () => {
     const h = makeHarness({ rand: standardRand(10) });
     const out = await owner.rollD20Chaos('attack');
     assert.strictEqual(out.roll, 10);
     assert.strictEqual(out.mult, 1.25);
     const rng = h.events.filter(e => e.startsWith('rand:'));
     assert.deepStrictEqual(rng, ['rand:1-20:11','rand:1-20:12','rand:1-20:13','rand:1-20:14','rand:1-20:10']);
-    assert.deepStrictEqual(h.events.filter(e => e.startsWith('delay:')), ['delay:105','delay:123','delay:141','delay:159','delay:430','delay:260','delay:260','delay:300']);
+    assert.deepStrictEqual(h.events.filter(e => e.startsWith('delay:')), ['delay:105','delay:123','delay:141','delay:159','delay:430','delay:260']);
     assert(h.events.indexOf('fx-text:🎲 14') < h.events.indexOf('rand:1-20:10'));
-    assert(h.events.some(e => e === 'flash:🎲 10/20 — EMPOWERED'));
-    assert(h.events.some(e => e.startsWith('history:🎲 ATTACK ROLL: 10/20 — EMPOWERED.')));
-    assert.strictEqual(h.events.filter(e => e.startsWith('text:')).at(-1), 'text:🎲 ATTACK ROLL: 10/20 — EMPOWERED. Resolving...');
+    assert.deepStrictEqual(h.events.filter(e => e.startsWith('flash:')), []);
+    assert.deepStrictEqual(h.events.filter(e => e.startsWith('toast:')), []);
+    assert.deepStrictEqual(h.events.filter(e => e.startsWith('text:')), ['text:🎲 10/20 — EMPOWERED: the action is empowered. Attack power: 125%.']);
+    assert.deepStrictEqual(h.events.filter(e => e.startsWith('history:')), ['history:ATTACK: 🎲 10/20 — EMPOWERED: the action is empowered. Attack power: 125%.']);
     assertQueuesDrained(h);
+  });
+
+  await test('resolved effect copy is action-specific and numeric', async () => {
+    assert.equal(owner.d20ResolvedEffectText('attack',{notes:'Roll 4: a mediocre timeline wins the argument.',mult:.78,potionMult:1,guardBonus:0}),'a mediocre timeline wins the argument. Attack power: 78%.');
+    assert.equal(owner.d20ResolvedEffectText('potion',{notes:'Roll 10: the action is empowered.',mult:1.25,potionMult:1.3,guardBonus:.1}),'the action is empowered. Potion healing: 130%.');
+    assert.equal(owner.d20ResolvedEffectText('guard',{notes:'Roll 10: the action is empowered.',mult:1.25,potionMult:1.3,guardBonus:.1}),'the action is empowered. Guard strength: +10%.');
   });
 
   await test('High Roll Chance checks after the real roll and rerolls 17-20 before outcome resolution', async () => {
