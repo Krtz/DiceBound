@@ -71,7 +71,8 @@ function makeHarness(options={}){
     presentEnemyAttack:async fact=>{calls.push(["attack-presentation",JSON.parse(JSON.stringify(fact))]);return fact;},
     floatCombatText:fact=>{calls.push(["float",JSON.parse(JSON.stringify(fact))]);return true;},
     dodge:unit=>{calls.push(["dodge",unit]);return true;},
-    dragoonActive:()=>!!options.dragoon
+    dragoonActive:()=>!!options.dragoon,
+    consumeEnemyConfusionTarget:enemy=>typeof options.consumeEnemyConfusionTarget==="function"?options.consumeEnemyConfusionTarget(enemy):null
   };
   turns.configure(runtime);
   return {player,enemies,calls,turn:()=>turn,busy:()=>busy,damageTaken:()=>damageTaken,runtime};
@@ -94,6 +95,16 @@ function makeHarness(options={}){
     assert.equal(h.player.hasteCooldown,2,"composed anti-lock layers must leave the existing two-response cooldown");
     assert.ok(h.calls.some(call=>call[0]==="text"&&/Haste/.test(call[1])));
     assert.equal(h.damageTaken(),0);
+  }
+  {
+    const confused={name:"Confused Enemy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0,confusionActions:1};
+    const ally={name:"Unlucky Ally",hp:100,maxHp:100,attack:10,defense:0,skipTurns:1,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0};
+    const h=makeHarness({enemies:[confused,ally],consumeEnemyConfusionTarget:enemy=>enemy===confused?ally:null});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.hp,100,"Confused enemy action must not also damage the player");
+    assert.equal(ally.hp,90,"Confusion must damage the semantic same-side target");
+    assert.ok(h.calls.some(call=>call[0]==="history"&&/Confusion! Confused Enemy/.test(call[1])),"friendly-fire result must enter Battle History");
+    assert.ok(h.calls.some(call=>call[0]==="float"&&call[1]?.target?.enemy===ally),"friendly-fire float must attach to the actual ally");
   }
   {
     const h=makeHarness();
