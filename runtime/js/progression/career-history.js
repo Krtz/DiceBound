@@ -69,12 +69,6 @@
 
   function ensure(meta={}){
     meta.stats=normalizeStats(meta.stats||{});
-    // Trustworthy legacy fields predate the Career surface. Carry forward only
-    // facts that can be mapped without inventing history.
-    meta.stats.runsFinished=Math.max(meta.stats.runsFinished,integer(meta.runs));
-    meta.stats.runsStarted=Math.max(meta.stats.runsStarted,meta.stats.runsFinished);
-    meta.stats.fullVictories=Math.max(meta.stats.fullVictories,integer(meta.board6Clears));
-    meta.stats.damageTaken=Math.max(meta.stats.damageTaken,Math.max(0,number(meta.damageTaken)));
     const career=meta.career&&typeof meta.career==="object"?meta.career:{};
     career.nextRunId=Math.max(1,integer(career.nextRunId)||1);
     career.activeRun=career.activeRun&&typeof career.activeRun==="object"?{
@@ -87,6 +81,18 @@
     career.history=(Array.isArray(career.history)?career.history:[]).map(normalizeHistoryEntry).filter(entry=>entry.id).slice(0,HISTORY_LIMIT);
     meta.career=career;
     return Object.freeze({stats:meta.stats,career:meta.career});
+  }
+
+  function migrateLegacy(meta={}){
+    const state=ensure(meta),s=state.stats;
+    // Legacy fields are read exactly at load/import normalization. Keeping this
+    // bridge out of ensure() prevents ordinary live reads from rewriting
+    // current Career counters later in the same run.
+    s.runsFinished=Math.max(s.runsFinished,integer(meta.runs));
+    s.runsStarted=Math.max(s.runsStarted,s.runsFinished);
+    s.fullVictories=Math.max(s.fullVictories,integer(meta.board6Clears));
+    s.damageTaken=Math.max(s.damageTaken,Math.max(0,number(meta.damageTaken)));
+    return state;
   }
 
   function stats(meta){return ensure(meta).stats;}
@@ -203,7 +209,7 @@
   }
 
   window.DiceboundCareerHistory=Object.freeze({
-    apiVersion:1,owner:OWNER,HISTORY_LIMIT,defaultStats,normalizeStats,normalizeHistoryEntry,ensure,stats,history,
+    apiVersion:1,owner:OWNER,HISTORY_LIMIT,defaultStats,normalizeStats,normalizeHistoryEntry,ensure,migrateLegacy,stats,history,
     beginRun,boardClearKey,recordBoardClear,hasBoardClear,recordDamage,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,
     recordPotion,recordPowerup,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,finalizeRun,inspect
   });
