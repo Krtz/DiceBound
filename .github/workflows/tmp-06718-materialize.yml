@@ -1,4 +1,4 @@
-name: Temporary materialize 0.6.7.18
+name: Temporary materialize 0.6.7.18 rerun 2
 
 on:
   push:
