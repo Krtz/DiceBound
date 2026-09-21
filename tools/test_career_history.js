@@ -22,10 +22,12 @@ assert.equal(old.career.nextRunId,1);
 
 const legacy={runs:14,board6Clears:3,damageTaken:777,stats:{runsStarted:0,runsFinished:0,fullVictories:0,damageTaken:20}};
 career.ensure(legacy);
-assert.equal(legacy.stats.runsFinished,14,'legacy completed-run count must remain visible in Career');
+assert.equal(legacy.stats.runsFinished,0,'ordinary Career reads must not reinterpret live legacy counters');
+career.migrateLegacy(legacy);
+assert.equal(legacy.stats.runsFinished,14,'load-boundary migration must preserve trustworthy completed-run count');
 assert.equal(legacy.stats.runsStarted,14,'runs started must never fall below trustworthy completed-run history');
 assert.equal(legacy.stats.fullVictories,3,'historical Board 6 clears are trustworthy full victories');
-assert.equal(legacy.stats.damageTaken,777,'top-level historical damage taken must survive Career normalization');
+assert.equal(legacy.stats.damageTaken,777,'top-level historical damage taken must survive load normalization');
 assert.deepEqual([...career.history(legacy)],[],'migration must not fabricate individual run records');
 
 const meta={};
