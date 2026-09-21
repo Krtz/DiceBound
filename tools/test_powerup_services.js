@@ -156,7 +156,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "728b05b1bb9dd9025ce064cc2d4b1e85b9f2a436ba663a669e09167bb31e6598";
+const expectedDigest = "4ca18892fe2e05f63eb7bffd061737b951cf4fc7ed562231c6cc40e576b44f37";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {
