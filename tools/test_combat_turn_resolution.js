@@ -113,7 +113,7 @@ function makeHarness(options={}){
     assert.equal(h.player.energyShield,0);
     assert.equal(h.player.hp,96);
     assert.deepEqual(h.calls.filter(call=>call[0]==="float").map(call=>call[1]),[
-      {kind:"shield",amount:6,target:{unit:"player"}},
+      {kind:"absorb",amount:6,target:{unit:"player"}},
       {kind:"damage",amount:4,target:{unit:"player"}}
     ],"Energy Shield absorption and HP damage must remain distinct resolved presentation facts");
     assert.equal(h.damageTaken(),10,"floating presentation must not change damage accounting");
