@@ -135,10 +135,12 @@ assert.match(source,/prefers-reduced-motion: reduce/);
 assert.match(source,/\+\$\{value\} Heal/);
 assert.match(source,/\+\$\{value\} Shield/);
 assert.match(source,/\$\{value\} Absorbed/);
+assert.match(source,/requestAnimationFrame/,'floating values must start their visible lifetime after a browser paint');
+assert.match(source,/db-animate/,'floating values need an explicit post-paint animation phase');
 
 const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 assert.match(monolith,/currentEnemies\.includes\(enemy\)/,"enemy floating text must only present for live combat participants");
-assert.match(monolith,/target:\{unit:'enemy',enemy\}/,"enemy damage must carry the resolved semantic enemy object into Combat View");
+assert.match(monolith,/const target=\{unit:'enemy',enemy,enemyIndex\}/,"enemy damage must carry both the resolved semantic enemy object and explicit pack index into Combat View");
 assert.match(monolith,/getFloatingCombatNumbersEnabled:\(\)=>meta\.settings\?\.floatingCombatNumbers!==false/,"Combat View must consume the persistent display preference without owning settings");
 assert.match(monolith,/setFloatingCombatNumbers:value=>\{meta\.settings=meta\.settings\|\|defaultSettings\(\);meta\.settings\.floatingCombatNumbers=!!value;saveMeta\(\);return meta\.settings\.floatingCombatNumbers;\}/,"Options must persist the toggle through canonical settings");
 assert.doesNotMatch(source,/Math\.random|\brandom\s*\(/,"floating presentation must never consume gameplay RNG");
