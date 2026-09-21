@@ -245,7 +245,8 @@ const stageStyle=fakeDocument.getElementById('dicebound-combat-stage-style');
 assert(stageStyle,'Combat View must own the battle-stage layout');
 assert(stageStyle.textContent.includes('>.bar-label{order:0'), 'health labels must render above combatant models');
 assert(stageStyle.textContent.includes('>.bar{order:1'), 'health bars must render above combatant models');
-assert(stageStyle.textContent.includes('>.fighter-icon{order:3;margin-top:12px'), 'player/enemy models must sit below the health/status stack');
+assert(stageStyle.textContent.includes('>.fighter-icon{order:3;margin-top:auto!important'), 'player/enemy models must use the free stage height to sit on the lower ground plane');
+assert(stageStyle.textContent.includes('.enemy-party{position:relative;z-index:4'), 'target chooser must sit above the fighter stage');
 
 state.nightmareMode = true;
 background = owner.applyCombatBackground();
@@ -259,16 +260,17 @@ assert.strictEqual(combatOverlay.dataset.combatBackground, undefined, 'Hell must
 assert.strictEqual(combatOverlay.style.getPropertyValue('--db-combat-background-image'), '', 'Hell must clear stale background image');
 
 const echo1=owner._test.playerAttackTiming('echo','ranger',1),echo2=owner._test.playerAttackTiming('echo','ranger',2),echo10=owner._test.playerAttackTiming('echo','ranger',10),echo100=owner._test.playerAttackTiming('echo','ranger',100);
-assert.strictEqual(echo1.totalMs,180,'first Echo must remain snappy but readable');
-assert.strictEqual(echo2.totalMs,177,'each additional Echo should accelerate by only 3ms');
-assert.strictEqual(echo10.totalMs,153);
-assert.strictEqual(echo100.totalMs,60,'high Echo must respect the explicit readability floor');
 assert.strictEqual(owner._test.playerAttackTiming('normal','ranger',0).totalMs,590,'ordinary Ranger cadence must preserve released timing');
 assert.strictEqual(owner._test.playerAttackTiming('crit','ranger',0).totalMs,650,'Crit cadence must preserve released timing');
+assert.strictEqual(echo1.totalMs,590,'the first Echo must read like a second ordinary attack at 100% Echo or lower');
+assert.strictEqual(echo2.totalMs,560,'only additional Echoes begin a gradual acceleration');
+assert.strictEqual(echo10.totalMs,320);
+assert.strictEqual(echo100.totalMs,180,'extreme Echo must retain a readable presentation floor');
+assert.ok(echo1.totalMs>echo2.totalMs&&echo2.totalMs>echo10.totalMs&&echo10.totalMs>echo100.totalMs,'Echo cadence must accelerate monotonically after the first Echo');
 presentationDelays.length=0;
 state.player.classId='ranger';state.currentEnemyIndex=0;
 await owner.playerAttack('echo',{echoIndex:1});
-assert.strictEqual(presentationDelays.reduce((a,b)=>a+b,0),180,'Echo pacing must be owned by presentation rather than a global delay clamp');
+assert.strictEqual(presentationDelays.reduce((a,b)=>a+b,0),590,'first-Echo pacing must be owned by presentation and match ordinary attack animation cadence');
 
 presentationDelays.length=0;
 const semantic=owner._test.resolveEnemyAttackPresentation({attackerId:'wolf',attackId:'wolf-echo'});
