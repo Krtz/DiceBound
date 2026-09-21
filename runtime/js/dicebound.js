@@ -4546,6 +4546,7 @@ dbReturnToRoadTraceReady=true;
   dbCareerUi.configure({
     find:$,document:()=>document,
     getCareerStats:()=>dbProgression.careerStats(),
+    getCareerContext:()=>({legacyLevel:meta.level||1,prestigeCount:meta.prestige?.count||0,completedRuns:meta.runs||0,bestTiles:meta.bestTiles||0}),
     getRunHistory:()=>dbProgression.runHistory(),
     getClasses:()=>Object.values(CLASSES),
     getEnemies:()=>[...enemyPool,...Object.values(ENEMY_REGISTRY||{})],
