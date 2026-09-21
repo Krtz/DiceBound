@@ -437,7 +437,7 @@
   }
 
   function restoreEnemyElementDebuffs() {
-    const p = player();
+    const rt = requireRuntime(), p = player();
     if (p.db0511TechAttackLost) {
       p.attack += p.db0511TechAttackLost;
       p.db0511TechAttackLost = 0;
