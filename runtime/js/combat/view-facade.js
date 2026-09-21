@@ -91,6 +91,8 @@
     floatCombatText: (...args) => requireVfx().floatCombatText(...args),
     prepareProjectileEffects: (...args) => requireVfx().prepareProjectileEffects(...args),
     playProjectileProc: (...args) => requireVfx().playProjectileProc(...args),
+    prepareMathFormula: (...args) => requireVfx().prepareMathFormula(...args),
+    playMathFormula: (...args) => requireVfx().playMathFormula(...args),
     clearTransient: (...args) => {
       const result = vfx ? vfx.clearTransient(...args) : undefined;
       if (presentation) { presentation.clearEnemyAttackPresentation(); presentation.clearDodgePresentation(); presentation.clearDragoonPresentation(); }
