@@ -69,6 +69,7 @@ function makeHarness(options={}){
     recordDamageTaken:amount=>{damageTaken+=amount;calls.push(["damage-taken",amount]);},
     wolfEchoChance:()=>options.wolfEchoChance||0,
     presentEnemyAttack:async fact=>{calls.push(["attack-presentation",JSON.parse(JSON.stringify(fact))]);return fact;},
+    floatCombatText:fact=>{calls.push(["float",JSON.parse(JSON.stringify(fact))]);return true;},
     dodge:unit=>{calls.push(["dodge",unit]);return true;},
     dragoonActive:()=>!!options.dragoon
   };
@@ -104,6 +105,18 @@ function makeHarness(options={}){
     const attacks=h.calls.filter(call=>call[0]==="attack-presentation").map(call=>call[1]);
     assert.equal(attacks.length,1);assert.equal(attacks[0].attackId,"basic-attack");assert.equal(attacks[0].enemyIndex,0);assert.equal(attacks[0].outcome,"hit");
     assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
+    assert.deepEqual(h.calls.filter(call=>call[0]==="float").map(call=>call[1]),[{kind:"damage",amount:10,target:{unit:"player"}}],"landed player damage must report the already-resolved HP loss");
+  }
+  {
+    const h=makeHarness({player:{energyShield:6}});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.energyShield,0);
+    assert.equal(h.player.hp,96);
+    assert.deepEqual(h.calls.filter(call=>call[0]==="float").map(call=>call[1]),[
+      {kind:"shield",amount:6,target:{unit:"player"}},
+      {kind:"damage",amount:4,target:{unit:"player"}}
+    ],"Energy Shield absorption and HP damage must remain distinct resolved presentation facts");
+    assert.equal(h.damageTaken(),10,"floating presentation must not change damage accounting");
   }
   {
     const h=makeHarness({dodgeChance:1,randomValues:[0]});
