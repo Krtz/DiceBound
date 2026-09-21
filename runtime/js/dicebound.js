@@ -1100,10 +1100,35 @@ function returnToRoad(...args){
 
   function startCombat(kind="normal"){return dbCombat.startEncounter(kind);}
   function damageEnemy(enemy,amount,ignoreDefense=false){
-    const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);amount=dbClasses.berserkerDamage(adjusted.amount);ignoreDefense=adjusted.ignoreDefense;let dealt=0;
-    if(enemy&&enemy.hp>0){if(enemy.enemyBarrier>0&&!ignoreDefense){enemy.enemyBarrier--;addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);}else{const raw=Math.max(0,Math.round(amount)),actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0)));dealt=Math.min(enemy.hp,actual);enemy.hp-=dealt;}}
+    const adjusted=dbClasses.ninjaExecutionDamage(amount,ignoreDefense);
+    amount=dbClasses.berserkerDamage(adjusted.amount);
+    ignoreDefense=adjusted.ignoreDefense;
+    let dealt=0,blocked=false;
+    if(enemy&&enemy.hp>0){
+      if(enemy.enemyBarrier>0&&!ignoreDefense){
+        enemy.enemyBarrier--;
+        blocked=true;
+        addCombatHistory(`${enemy.name}'s merchant barrier cancels the hit. ${enemy.enemyBarrier} remain.`);
+      }else{
+        const raw=Math.max(0,Math.round(amount));
+        const actual=Math.max(raw>0?1:0,raw-(ignoreDefense?0:(enemy.defense||0)));
+        dealt=Math.min(enemy.hp,actual);
+        enemy.hp-=dealt;
+      }
+    }
+    if(currentEnemies.includes(enemy)){
+      if(blocked)dbCombatView.floatCombatText?.({kind:'blocked',target:{unit:'enemy',enemy},label:'Barrier'});
+      else if(dealt>0)dbCombatView.floatCombatText?.({kind:'damage',amount:dealt,target:{unit:'enemy',enemy}});
+    }
     if(gameStarted&&dealt>0)dbProgression.recordDamageDealt(dealt);
-    if(player._v25CroakHitsRemaining>0){player._v25CroakHitsRemaining--;const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;if(enemy?.hp>0&&rank>0&&random()<chance){enemy.poisonStacks=(enemy.poisonStacks||0)+1;addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);}}
+    if(player._v25CroakHitsRemaining>0){
+      player._v25CroakHitsRemaining--;
+      const rank=dbProgression.gameplayTalentRank('monk_flow_ceiling'),chance=rank*.05;
+      if(enemy?.hp>0&&rank>0&&random()<chance){
+        enemy.poisonStacks=(enemy.poisonStacks||0)+1;
+        addCombatHistory(`🐸☠️ Croak Cascade leaves 1 Poison stack (${Math.round(chance*100)}% from Endless Form rank ${rank}).`);
+      }
+    }
     return dealt;
   }
   function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}
@@ -2804,12 +2829,13 @@ dbReturnToRoadTraceReady=true;
   }
   const dbOptionsUi=window.DiceboundOptionsUi?.configure({
     find:$,
-    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth',fastWheelSlots:!!meta.settings?.fastWheelSlots,fastWheelSlotsUnlocked:dbProgression.hasAnyBoardClear(6)}),
+    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth',floatingCombatNumbers:meta.settings?.floatingCombatNumbers!==false,fastWheelSlots:!!meta.settings?.fastWheelSlots,fastWheelSlotsUnlocked:dbProgression.hasAnyBoardClear(6)}),
     nativeSaveSupported:()=>!!dbRuntime.platform?.capabilities?.openSaveFolder,
     openSaveFolder:()=>{const button=$('saveFolderBtn');button?.click();return !!button;},
     toggleMuted:()=>{$('muteBtn')?.click();return muted;},
     setVolume:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.masterVolume=clamp(Number(value),0,1);saveMeta();return meta.settings.masterVolume;},
     setSoundPack:pack=>{meta.settings=meta.settings||defaultSettings();meta.settings.soundPack=pack==='custom'?'custom':'synth';saveMeta();return meta.settings.soundPack;},
+    setFloatingCombatNumbers:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.floatingCombatNumbers=!!value;saveMeta();return meta.settings.floatingCombatNumbers;},
     setFastWheelSlots:value=>{if(!dbProgression.hasAnyBoardClear(6))return false;meta.settings=meta.settings||defaultSettings();meta.settings.fastWheelSlots=!!value;saveMeta();return meta.settings.fastWheelSlots;},
     playPreview:()=>{try{sfx.coin();}catch(_){}},
     resetProgress:()=>window.DiceboundTalentTree?.resetProgress?.()
@@ -3534,7 +3560,7 @@ dbReturnToRoadTraceReady=true;
   /* Nature Poison Vines combat VFX (#80, #71).
      Presentation observes completed proc outcomes only: combat damage, targeting,
      RNG and turns remain owned by the live combat pipeline. */
-  dbCombatView.configureVfx({getEnemies:()=>currentEnemies,getPlayer:()=>player});
+  dbCombatView.configureVfx({getEnemies:()=>currentEnemies,getPlayer:()=>player,getFloatingCombatNumbersEnabled:()=>meta.settings?.floatingCombatNumbers!==false});
   dbCombatView.prepareNature();
   // Browser/native smoke adapter for the authored Nature VFX.  This owns no
   // gameplay: it drives the already-configured element-resolution and VFX
@@ -4010,6 +4036,7 @@ dbReturnToRoadTraceReady=true;
     clamp:(value,min,max)=>clamp(value,min,max),
     identityFlash:text=>identityFlash(text),
     addCombatHistory:text=>addCombatHistory(text),
+    floatCombatText:fact=>dbCombatView.floatCombatText?.(fact),
     syncShieldBars:()=>v24UpdateShieldBars(),
     syncOuroborosAttack:()=>v18SyncOuroborosAttack()
   });
@@ -4467,6 +4494,7 @@ dbReturnToRoadTraceReady=true;
     recordDamageTaken:amount=>{const value=Math.max(0,Number(amount)||0);meta.damageTaken=(meta.damageTaken||0)+value;dbProgression.recordDamageTaken(value);},
     wolfEchoChance:()=>db064EnemyPolicy.wolfEchoChance(boardLevel,db064CombatMode()),
     presentEnemyAttack:fact=>dbCombatView.enemyAttack(fact),
+    floatCombatText:fact=>dbCombatView.floatCombatText?.(fact),
     dodge:unit=>dbCombatView.dodge(unit),
     dragoonActive:()=>dbFriendDragoonActive(),
     responseModifier:()=>dbClasses.invokerResponseModifier()
