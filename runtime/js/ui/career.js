@@ -39,7 +39,7 @@
       #careerOverlay .career-kicker{display:block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:900}
       #careerOverlay .career-chrome h2{margin:2px 0 0;font-size:25px}
       #careerOverlay .career-done{flex:0 0 auto;min-width:94px}
-      #careerOverlay .career-body{overflow:auto;padding:14px 18px 28px}
+      #careerOverlay .career-body{flex:1;min-height:0;overflow:auto;padding:14px 18px 28px}
       #careerOverlay .career-tabs{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 0 12px;background:#0d1626}
       #careerOverlay .career-tabs button.active{border-color:rgba(115,211,255,.75);box-shadow:0 0 0 1px rgba(115,211,255,.18) inset}
       #careerOverlay .career-panel{display:none}.career-panel.active{display:block}
@@ -79,7 +79,12 @@
     let overlay=surface&&surface.isConnected!==false?surface:find("careerOverlay");
     if(!overlay){overlay=documentRef.createElement("div");overlay.id="careerOverlay";overlay.className="hidden";overlay.setAttribute("aria-hidden","true");documentRef.body?.appendChild(overlay);}
     surface=overlay;
-    if(overlay.dataset.careerOwner!==OWNER){
+    const completeOwnedSurface=overlay.dataset.careerOwner===OWNER
+      &&!!overlay.querySelector(".career-shell")
+      &&!!overlay.querySelector(".career-body")
+      &&!!overlay.querySelector("[data-career-done]")
+      &&["overview","enemies","runs"].every(name=>!!overlay.querySelector(`[data-career-tab="${name}"]`)&&!!overlay.querySelector(`[data-career-panel="${name}"]`));
+    if(!completeOwnedSurface){
       overlay.dataset.careerOwner=OWNER;
       overlay.innerHTML=`<section class="career-shell"><header class="career-chrome"><div><span class="career-kicker">The roads remember</span><h2>Career</h2></div><button type="button" class="small-btn career-done" data-career-done>Done</button></header><div class="career-body"><nav class="career-tabs" aria-label="Career sections"><button type="button" class="small-btn active" data-career-tab="overview">Overview</button><button type="button" class="small-btn" data-career-tab="enemies">Enemy Ledger</button><button type="button" class="small-btn" data-career-tab="runs">Run History</button></nav><section class="career-panel active" data-career-panel="overview"></section><section class="career-panel" data-career-panel="enemies"></section><section class="career-panel" data-career-panel="runs"></section></div></section>`;
       overlay.querySelector("[data-career-done]")?.addEventListener("click",close);
