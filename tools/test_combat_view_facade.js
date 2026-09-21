@@ -44,6 +44,9 @@ const vfxApi = Object.freeze({
   suppressLegacyElementAnimation: (...args) => { calls.push(["vfx.suppressLegacyElementAnimation", ...args]); return args[0] === "nature"; },
   donutEntries: (...args) => { calls.push(["vfx.donutEntries", ...args]); return ["donut-entry"]; },
   playDonutRain: (...args) => { calls.push(["vfx.playDonutRain", ...args]); return true; },
+  prepareFloatingCombatText: (...args) => { calls.push(["vfx.prepareFloatingCombatText", ...args]); return true; },
+  floatingEntries: (...args) => { calls.push(["vfx.floatingEntries", ...args]); return [{kind:"damage"}]; },
+  floatCombatText: (...args) => { calls.push(["vfx.floatCombatText", ...args]); return true; },
   prepareProjectileEffects: (...args) => { calls.push(["vfx.prepareProjectileEffects", ...args]); return true; },
   playProjectileProc: (...args) => { calls.push(["vfx.playProjectileProc", ...args]); return true; },
   clearTransient: (...args) => { calls.push(["vfx.clearTransient", ...args]); return 7; },
@@ -81,6 +84,10 @@ assert.equal(configuredVfxRuntime, vfxRuntime);
 assert.equal(view.isVfxConfigured(), true);
 assert.equal(view.prepareNature(), "nature-ready");
 assert.equal(view.playDonutRain({ origin: "player" }), true);
+assert.equal(view.prepareFloatingCombatText(), true);
+assert.deepEqual(view.floatingEntries(), [{kind:"damage"}]);
+assert.equal(view.floatCombatText({kind:"damage",amount:7,target:{unit:"player"}}), true);
+assert.deepEqual(calls.at(-1),["vfx.floatCombatText",{kind:"damage",amount:7,target:{unit:"player"}}]);
 assert.equal(view.playProjectileProc("fire", { origin: "player" }), true);
 assert.equal(view.clearTransient("pre-presentation"), 7);
 assert(!calls.some(call => call[0] === "presentation.clearDragoonPresentation"), "VFX-only startup cleanup must not require presentation configuration");
@@ -114,7 +121,7 @@ assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransi
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 assert.match(monolith, /const dbCombatView=window\.DiceboundCombatView;/, "monolith must bind the Combat View facade");
-assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player\}\);/, "monolith must configure VFX through the facade");
+assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player,getFloatingCombatNumbersEnabled:\(\)=>meta\.settings\?\.floatingCombatNumbers!==false\}\);/, "monolith must configure VFX and its display preference through the facade");
 assert.match(monolith, /dbCombatView\.configurePresentation\(\{/, "monolith must configure presentation through the facade");
 assert.match(monolith, /function updateCombatUI\(\)\{const result=dbCombatView\.update\(\);updateHUD\(\);return result;\}/, "updateCombatUI is a real HUD-coupled seam and must stay singular");
 assert.doesNotMatch(monolith, /\bfunction renderEnemyParty\s*\(/, "call-only renderEnemyParty adapter must stay retired");
