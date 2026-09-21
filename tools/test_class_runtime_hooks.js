@@ -48,7 +48,7 @@ const mono=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
 assert.match(mono,/function effectiveDodgeChance\(\)\{const raw=rawDodgeChance\(\),base=raw\/\(1\+raw\);return dbClasses\.identityDodgeAdjustments\(dbClasses\.legacyMonkDodge\(base\)\);\}/);
 assert.doesNotMatch(mono,/effectiveDodgeChanceV12/);
 assert.doesNotMatch(mono,/effectiveDodgeChanceV13/);
-assert.match(mono,/const adjusted=dbClasses\.ninjaExecutionDamage\(amount,ignoreDefense\);amount=dbClasses\.berserkerDamage\(adjusted\.amount\);ignoreDefense=adjusted\.ignoreDefense/);
+assert.match(mono,/const adjusted=dbClasses\.ninjaExecutionDamage\(amount,ignoreDefense\);\s*amount=dbClasses\.berserkerDamage\(adjusted\.amount\);\s*ignoreDefense=adjusted\.ignoreDefense/,"damageEnemy must still compose Ninja execution then Berserker scaling before resolution");
 assert.match(mono,/function v18SyncOuroborosAttack\(\)\{return dbClasses\.syncOuroborosAttack\(\);\}/);
 assert.match(mono,/function v27SyncOuroborosEconomy\(\)\{return dbClasses\.syncOuroborosEconomy\(\);\}/);
 assert.doesNotMatch(mono,/classIdentityActive\("monk"\)\?1-\(1-base\)\*\(1-base\):base/);

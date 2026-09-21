@@ -41,6 +41,7 @@ function harness(options={}) {
     clamp:(value,min,max)=>Math.max(min,Math.min(max,value)),
     identityFlash:text=>call('flash',text),
     addCombatHistory:text=>call('history',text),
+    floatCombatText:fact=>{call('float',JSON.parse(JSON.stringify(fact)));return true;},
     syncShieldBars:()=>call('shieldUI'),
     syncOuroborosAttack:()=>call('ouroSync')
   };
@@ -62,6 +63,13 @@ function harness(options={}) {
   assert.strictEqual(owner.healPlayer(20),5);
   assert.strictEqual(h.p.hp,100);
   assert.strictEqual(h.stats.healingDone,5);
+}
+{
+  const h=harness({currentEnemy:{name:'Combat Dummy',hp:100},player:{hp:50,maxHp:100}});
+  assert.strictEqual(owner.healPlayer(12),12);
+  assert.deepStrictEqual(h.trace.filter(x=>x[0]==='float').map(x=>x[1]),[
+    {kind:'heal',amount:12,target:{unit:'player'}}
+  ],'combat healing must report the actual resolved heal');
 }
 
 // Blood Overheal grows max HP only from true excess, then cleanup reverses it.
@@ -125,6 +133,9 @@ function harness(options={}) {
   const h=harness({currentEnemy:{name:'Dummy',hp:100},player:{hp:100,maxHp:100,attack:10,equipment:{hat:null,amulet:{bloodmageStone:true}}}});
   owner.healPlayer(40);
   assert.strictEqual(h.p.energyShield,2);
+  assert.deepStrictEqual(h.trace.filter(x=>x[0]==='float').map(x=>x[1]),[
+    {kind:'shield',amount:2,target:{unit:'player'}}
+  ],'combat overheal Shield gain must report the resolved net Energy Shield increase');
   assert.strictEqual(h.p.attack,10.4);
   assert.strictEqual(h.p.v26StoneBattleAttack,.4);
   owner.clearStoneBattle();

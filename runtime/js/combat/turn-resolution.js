@@ -40,6 +40,8 @@
     const hp = Math.min(player.hp, raw);
     player.hp = Math.max(0, player.hp - hp);
     rt.recordDamageTaken(shield + hp);
+    if (shield > 0) rt.floatCombatText?.({ kind: "absorb", amount: shield, target: { unit: "player" } });
+    if (hp > 0) rt.floatCombatText?.({ kind: "damage", amount: hp, target: { unit: "player" } });
     return Object.freeze({ shield, hp, total: shield + hp });
   }
 

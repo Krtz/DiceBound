@@ -154,7 +154,7 @@ assert.equal(gunNode.children[0].src, "assets/combat/effects/gun/gun_bullet_trac
 
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 const elementOwner = fs.readFileSync(path.join(root, "runtime", "js", "combat", "element-resolution.js"), "utf8");
-assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player\}\);/, "Combat VFX must be configured through Combat View");
+assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player,getFloatingCombatNumbersEnabled:\(\)=>meta\.settings\?\.floatingCombatNumbers!==false\}\);/, "Combat VFX must be configured through Combat View with the persistent floating-number preference");
 assert.match(monolith, /playDonutRain:payload=>dbCombatView\.playDonutRain\(payload\)/, "Element owner composition must inject the authored Donut presentation callback");
 assert.match(elementOwner, /if \(key === "donut" && result\) rt\.playDonutRain\(\{ origin: "player", enemy: target \}\);/, "Player-origin Donut presentation is not routed with its real target");
 assert.doesNotMatch(monolith, /db064DonutEnemyElementProcBase|db064DonutTriggerElementBase/, "Retired Donut mechanic/VFX wrappers must not survive in the monolith");
