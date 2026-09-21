@@ -8,7 +8,7 @@
   "use strict";
 
   const OWNER="ui/career";
-  let runtime={};
+  let runtime={},surface=null;
 
   const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   const fmt=value=>Math.round(Number(value)||0).toLocaleString();
@@ -76,8 +76,9 @@
 
   function ensureSurface(){
     const documentRef=doc();if(!documentRef)return null;installStyles();
-    let overlay=find("careerOverlay");
+    let overlay=surface&&surface.isConnected!==false?surface:find("careerOverlay");
     if(!overlay){overlay=documentRef.createElement("div");overlay.id="careerOverlay";overlay.className="hidden";overlay.setAttribute("aria-hidden","true");documentRef.body?.appendChild(overlay);}
+    surface=overlay;
     if(overlay.dataset.careerOwner!==OWNER){
       overlay.dataset.careerOwner=OWNER;
       overlay.innerHTML=`<section class="career-shell"><header class="career-chrome"><div><span class="career-kicker">The roads remember</span><h2>Career</h2></div><button type="button" class="small-btn career-done" data-career-done>Done</button></header><div class="career-body"><nav class="career-tabs" aria-label="Career sections"><button type="button" class="small-btn active" data-career-tab="overview">Overview</button><button type="button" class="small-btn" data-career-tab="enemies">Enemy Ledger</button><button type="button" class="small-btn" data-career-tab="runs">Run History</button></nav><section class="career-panel active" data-career-panel="overview"></section><section class="career-panel" data-career-panel="enemies"></section><section class="career-panel" data-career-panel="runs"></section></div></section>`;
@@ -154,9 +155,10 @@
   function open(tab="overview"){
     const overlay=ensureSurface();render();activateTab(tab);if(overlay){overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}runtime.onOpen?.();return overlay;
   }
-  function close(){const overlay=find("careerOverlay");if(overlay){overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}runtime.onClose?.();return overlay||null;}
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};return api;}
-  function inspect(){const overlay=find("careerOverlay");return Object.freeze({owner:overlay?.dataset.careerOwner||OWNER,open:!!overlay&&!overlay.classList.contains("hidden"),activeTab:overlay?.querySelector?.("[data-career-tab].active")?.dataset.careerTab||null,historyCount:history().length,enemyKinds:Object.keys(stats().enemyDefeats||{}).filter(id=>Number(stats().enemyDefeats[id])>0).length});}
+  function ownedSurface(){return surface&&surface.isConnected!==false?surface:find("careerOverlay");}
+  function close(){const overlay=ownedSurface();if(overlay){overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}runtime.onClose?.();return overlay||null;}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};surface=null;return api;}
+  function inspect(){const overlay=ownedSurface();return Object.freeze({owner:overlay?.dataset.careerOwner||OWNER,open:!!overlay&&!overlay.classList.contains("hidden"),activeTab:overlay?.querySelector?.("[data-career-tab].active")?.dataset.careerTab||null,historyCount:history().length,enemyKinds:Object.keys(stats().enemyDefeats||{}).filter(id=>Number(stats().enemyDefeats[id])>0).length});}
 
   const api=Object.freeze({apiVersion:1,owner:OWNER,configure,open,close,render,activateTab,inspect});
   window.DiceboundCareerUi=api;
