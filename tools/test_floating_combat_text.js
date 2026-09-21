@@ -124,7 +124,7 @@ assert.equal(vfx.floatCombatText({kind:"blocked",target:{unit:"enemy",enemy:enem
 assert.equal(vfx.floatingEntries().at(-1).label,"Barrier","barrier presentation must not rely on color alone");
 
 assert.equal(vfx.clearTransient(),1);
-assert.deepEqual(vfx.floatingEntries(),[],"combat-boundary cleanup must remove every floating value");
+assert.equal(vfx.floatingEntries().length,0,"combat-boundary cleanup must remove every floating value");
 assert.ok(cleared.length>=7,"combat-boundary cleanup must cancel pending floating-text timers");
 
 reduced=true;
