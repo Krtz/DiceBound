@@ -18,6 +18,7 @@
   function doc(){return runtime.document?.()||document;}
   function find(id){return runtime.find?.(id)||doc()?.getElementById(id)||null;}
   function stats(){return runtime.getCareerStats?.()||{};}
+  function context(){return runtime.getCareerContext?.()||{};}
   function history(){return runtime.getRunHistory?.()||[];}
   function classes(){return runtime.getClasses?.()||[];}
   function enemies(){return runtime.getEnemies?.()||[];}
@@ -98,7 +99,7 @@
   }
 
   function overviewHtml(){
-    const s=stats(),played=Object.entries(s.classRuns||{}).sort((a,b)=>Number(b[1])-Number(a[1])),favorite=played[0],favoriteClass=favorite?classById(favorite[0]):null;
+    const s=stats(),ctx=context(),played=Object.entries(s.classRuns||{}).sort((a,b)=>Number(b[1])-Number(a[1])),favorite=played[0],favoriteClass=favorite?classById(favorite[0]):null;
     const cards=[
       ["runsFinished","Runs finished"],["fullVictories","Full victories"],["deaths","Deaths"],["abandonedRuns","Abandoned"],
       ["tilesTraveled","Tiles traveled"],["rolls","Dice rolls"],["enemiesDefeated","Enemies defeated"],["bossesDefeated","Bosses defeated"],
@@ -108,7 +109,7 @@
     ];
     const clears=highestClears(s);
     const clearRows=clears.map(({classId,modes})=>{const entry=classById(classId);return `<div><b>${escapeHtml(entry?.icon||"•")} ${escapeHtml(entry?.name||classId)}</b><br>Normal: ${modes.normal||"—"} · Nightmare: ${modes.nightmare||"—"} · Hell: ${modes.hell||"—"}</div>`;}).join("");
-    return `<div class="career-stat-grid">${cards.map(([key,label])=>`<div class="career-card"><span>${escapeHtml(label)}</span><strong>${fmt(s[key])}</strong></div>`).join("")}<div class="career-card career-wide"><span>Most played class</span><strong>${favorite?`${escapeHtml(favoriteClass?.icon||"")} ${escapeHtml(favoriteClass?.name||favorite[0])} · ${fmt(favorite[1])} run${Number(favorite[1])===1?"":"s"}`:"No recorded runs yet"}</strong></div></div><div class="career-section"><h3>Highest Board cleared by class & difficulty</h3><div class="career-clear-grid">${clearRows||'<div class="career-empty">No recorded Board clears yet.</div>'}</div></div>`;
+    return `<div class="career-section"><h3>Career snapshot</h3><div class="career-stat-grid"><div class="career-card"><span>Legacy level</span><strong>${fmt(ctx.legacyLevel)}</strong></div><div class="career-card"><span>Prestige</span><strong>${fmt(ctx.prestigeCount)}</strong></div><div class="career-card"><span>Completed runs</span><strong>${fmt(Math.max(Number(ctx.completedRuns)||0,Number(s.runsFinished)||0))}</strong></div><div class="career-card"><span>Best run distance</span><strong>${fmt(ctx.bestTiles)} tiles</strong></div></div></div><div class="career-stat-grid">${cards.map(([key,label])=>`<div class="career-card"><span>${escapeHtml(label)}</span><strong>${fmt(s[key])}</strong></div>`).join("")}<div class="career-card career-wide"><span>Most played class</span><strong>${favorite?`${escapeHtml(favoriteClass?.icon||"")} ${escapeHtml(favoriteClass?.name||favorite[0])} · ${fmt(favorite[1])} run${Number(favorite[1])===1?"":"s"}`:"No recorded class-run history yet"}</strong></div></div><div class="career-section"><h3>Highest Board cleared by class & difficulty</h3><div class="career-clear-grid">${clearRows||'<div class="career-empty">No class-specific Board clears have been recorded yet.</div>'}</div></div>`;
   }
 
   function enemiesHtml(){
