@@ -1194,7 +1194,7 @@ function returnToRoad(...args){
       prestigeCount:Number(meta.prestige?.count)||0,damageTaken:Number(meta.damageTaken)||0,merchantKills:Number(meta.merchantKills)||0,
       stats:{healingDone:Number(stats.healingDone)||0,highestGold:Number(stats.highestGold)||0,potionsUsed:Number(stats.potionsUsed)||0},
       storedHighestGold:Number(stats.highestGold)||0,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(currentPlayer.gold)||0):0),facts,
-      petIds,petLevels,petUnlocked,beastmasterNightmareBoard5:!!meta.beastmasterNightmareBoard5,gameStarted:!!gameStarted,
+      petIds,petLevels,petUnlocked,gameStarted:!!gameStarted,
       player:{gold:Number(currentPlayer.gold)||0,defense:Number(currentPlayer.defense)||0,doubleStrike:Number(currentPlayer.doubleStrike)||0,lifeSteal:Number(currentPlayer.lifeSteal)||0,crit:Number(currentPlayer.crit)||0,bossDamage:Number(currentPlayer.bossDamage)||0},
       hasBoardClear:(classId,board)=>dbProgression.hasBoardClear(classId,board)
     };
@@ -1639,7 +1639,6 @@ function returnToRoad(...args){
 
   random();
 
-  meta.beastmasterNightmareBoard5=!!meta.beastmasterNightmareBoard5;
   meta.unlocks=meta.unlocks||{};
 
   // ---- Defense becomes diminishing percentage reduction --------------------
