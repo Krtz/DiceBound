@@ -4571,8 +4571,6 @@ dbReturnToRoadTraceReady=true;
     getElements:()=>ELEMENTS,
     getCoreElements:()=>DIBO_ELEMENTS,
     setCombatText:text=>setCombatText(text),
-    showToast:text=>showToast(text),
-    identityFlash:text=>identityFlash(text),
     addCombatHistory:text=>addCombatHistory(text),
     clampQueuedHaste:before=>dbCombatElementResolution.clampQueuedHaste(before)
   });
