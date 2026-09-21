@@ -1,0 +1,38 @@
+name: Temporary 0.6.7.17 floating-text tests
+
+on:
+  push:
+    branches:
+      - feature/0.6.7.17-floating-combat-numbers
+    paths:
+      - .github/workflows/tmp-06717-floating-tests.yml
+
+permissions:
+  contents: read
+
+jobs:
+  focused-and-js:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/0.6.7.17-floating-combat-numbers
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Syntax and JavaScript contracts
+        shell: pwsh
+        run: |
+          Get-ChildItem runtime/js -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+          Get-ChildItem tools -Filter test_*.js | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+      - name: Ownership guards
+        shell: pwsh
+        run: |
+          python tools/test_shadow_ownership_drain.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/validate_runtime_architecture.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
