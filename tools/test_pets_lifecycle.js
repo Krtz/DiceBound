@@ -20,8 +20,9 @@ assert.equal(pets.owner,'pets/facade');
 assert.equal(pets.apiVersion,2);
 assert.equal(lifecycle.owner,'pets/lifecycle');
 assert.equal(lifecycle.unlockRequirement,500);
-assert.equal(pets.ids.length,13);
+assert.equal(pets.ids.length,14);
 assert.equal(pets.createRegistry().gun.name,'Trigger','registry compatibility must remain intact');
+assert.equal(pets.createRegistry().math.name,'Euler','Math must publish the dedicated Euler companion');
 assert.throws(()=>pets.feed(1),/not configured/,'facade must fail closed before composition');
 
 const registry=pets.createRegistry();
@@ -30,7 +31,7 @@ let meta={
   pets:Object.fromEntries(pets.ids.map(id=>[id,{unlocked:true,level:1,xp:0,xpNext:2,progress:0}])),
   elementProgress:Object.fromEntries(pets.ids.filter(id=>id!=='neutral').map(id=>[id,0]))
 };
-let player={attack:6,defense:1,crit:.15,doubleStrike:0,maxHp:37,hp:37,potionPower:0,bossDamage:0,flatReduction:0,luck:0,elementDamageBonus:0,cookieBondBonus:0,_activePetBonusId:'neutral',_v17PetBonusScale:1};
+let player={attack:6,defense:1,crit:.15,doubleStrike:0,maxHp:37,hp:37,potionPower:0,bossDamage:0,flatReduction:0,luck:0,elementDamageBonus:0,elementProcBonus:0,cookieBondBonus:0,_activePetBonusId:'neutral',_v17PetBonusScale:1};
 let runActive=false,petClass=false,saveCount=0,unlockChecks=0,levelSfx=0,coinSfx=0,holySfx=0,metaUpdates=0,hudUpdates=0,petCollectionRenders=0,activePetArtRefreshes=0;
 const toasts=[],logs=[];
 let randCalls=0;
@@ -80,16 +81,18 @@ petClass=true;assert.equal(pets.canSwitch('fire'),true);assert.equal(pets.select
 
 // Frozen V1.7 bonus replacement semantics: always remove the previous scaled
 // bonus before applying the active one, including forced same-pet resync.
-player={attack:6,defense:1,crit:.15,doubleStrike:0,maxHp:37,hp:37,potionPower:0,bossDamage:0,flatReduction:0,luck:0,elementDamageBonus:0,cookieBondBonus:0,_activePetBonusId:'neutral',_v17PetBonusScale:1};
+player={attack:6,defense:1,crit:.15,doubleStrike:0,maxHp:37,hp:37,potionPower:0,bossDamage:0,flatReduction:0,luck:0,elementDamageBonus:0,elementProcBonus:0,cookieBondBonus:0,_activePetBonusId:'neutral',_v17PetBonusScale:1};
 meta.activePet='fire';meta.pets.fire.level=11;runActive=true;
 pets.syncActiveBonus(true);assert.equal(player.attack,7.16);assert.equal(player._v17PetBonusScale,1.16);
 pets.syncActiveBonus(true);assert(Math.abs(player.attack-7.16)<1e-12,'forced same-Pet resync must not drift');
 meta.activePet='neutral';pets.syncActiveBonus();assert(Math.abs(player.attack-6)<1e-12);
+meta.activePet='math';meta.pets.math.level=1;pets.syncActiveBonus();assert(Math.abs(player.elementProcBonus-.03)<1e-12,'Euler must grant +3% Element Proc Chance at Bond Lv 1');
+meta.activePet='neutral';pets.syncActiveBonus();assert(Math.abs(player.elementProcBonus)<1e-12,'Euler bonus must remove cleanly when switching away');
 meta.activePet='donut';meta.pets.donut.level=6;pets.syncActiveBonus();assert(Math.abs(player.maxHp-40.24)<1e-12);assert(Math.abs(player.potionPower-.054)<1e-12);
 meta.activePet='neutral';pets.syncActiveBonus();assert(Math.abs(player.maxHp-37)<1e-12);assert(Math.abs(player.potionPower)<1e-12);
 
-randCalls=0;const shuffled=pets.shuffledPetIds();assert.equal(shuffled.length,13);assert.equal(randCalls,12,'13-Pet Fisher-Yates must consume exactly 12 draws');
-const chooser=pets.chooserState();assert.equal(chooser.unlockRequirement,500);assert.equal(chooser.activePetId,'neutral');assert.equal(chooser.pets.length,13);
+randCalls=0;const shuffled=pets.shuffledPetIds();assert.equal(shuffled.length,14);assert.equal(randCalls,13,'14-Pet Fisher-Yates must consume exactly 13 draws');
+const chooser=pets.chooserState();assert.equal(chooser.unlockRequirement,500);assert.equal(chooser.activePetId,'neutral');assert.equal(chooser.pets.length,14);
 
 const index=fs.readFileSync(path.join(root,'runtime/index.html'),'utf8');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'runtime/js/module-manifest.json'),'utf8'));
