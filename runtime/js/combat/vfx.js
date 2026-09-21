@@ -372,7 +372,7 @@
       active.add(node);
       const epoch = presentationEpoch;
       const beginLifetime = () => {
-        if (epoch !== presentationEpoch || !node.isConnected) return;
+        if (epoch !== presentationEpoch || node.isConnected === false) return;
         node.classList.add('db-animate');
         schedule(() => {
           node.remove();
