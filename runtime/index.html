@@ -122,21 +122,29 @@
     <h2 id="combatTitle">Battle!</h2>
     <p class="subtitle" id="combatSubtitle">A creature blocks the road.</p>
     <div class="enemy-party" id="enemyParty"></div>
+    <div class="combat-hud" aria-label="Combat health">
+      <div class="combat-hud-side combat-hud-player">
+        <div class="bar-label"><span>Player HP</span><span id="combatPlayerHp">30 / 30</span></div>
+        <div class="bar hpbar"><i id="combatPlayerFill"></i></div>
+        <div class="status-dots" id="playerStatusDots"></div>
+      </div>
+      <div class="combat-hud-side combat-hud-enemy">
+        <div class="bar-label"><span>Enemy HP</span><span id="enemyHpText">12 / 12</span></div>
+        <div class="bar enemy-bar"><i id="enemyHpFill"></i></div>
+        <div class="status-dots" id="enemyStatusDots"></div>
+      </div>
+    </div>
     <div class="combat-head">
       <div class="fighter">
         <div class="fighter-icon" id="combatPlayerIcon">🛡️</div>
         <div class="fighter-name" id="combatPlayerName">Fighter</div>
         <div class="combat-pet" id="combatPet">🎲</div>
-        <div class="bar-label"><span>HP</span><span id="combatPlayerHp">30 / 30</span></div>
-        <div class="bar hpbar"><i id="combatPlayerFill"></i></div><div class="status-dots" id="playerStatusDots"></div>
       </div>
       <div class="vs">VS</div>
       <div class="fighter">
         <div class="fighter-icon" id="enemyIcon">👹</div>
         <div class="fighter-name" id="enemyName">Goblin</div>
         <div class="enemy-weakness" id="enemyWeakness">Weakness: 🔥 Fire</div>
-        <div class="bar-label"><span>HP</span><span id="enemyHpText">12 / 12</span></div>
-        <div class="bar enemy-bar"><i id="enemyHpFill"></i></div><div class="status-dots" id="enemyStatusDots"></div>
       </div>
       <div class="attack-fx" id="attackFx"></div>
     </div>
