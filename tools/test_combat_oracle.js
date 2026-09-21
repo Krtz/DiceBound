@@ -184,6 +184,16 @@ async function main(){
     const d20Case=expected.find(c=>c.name==="d20-chaos");
     d20Case.state.text="🎲 18/20 — HASTE: double-ish power and the enemy pack may lose its response to Haste. Attack power: 180%.";
     d20Case.state.history="ATTACK: 🎲 18/20 — HASTE: double-ish power and the enemy pack may lose its response to Haste. Attack power: 180%.";
+
+    // 0.6.7.19 intentionally expands the full rollable element pool with Math,
+    // so this seeded generated affinity moves from Metal to Coffee while the
+    // RNG call count/cursor stay frozen. Fire's approved 65% -> 70% identity
+    // pass also changes only its resolved damage/state, not its RNG sequence.
+    const fireCase=expected.find(c=>c.name==="element-fire");
+    fireCase.result.totalDamage=24;
+    fireCase.result.message="WEAKNESS! 🔥 Fireball deals 24 elemental damage.";
+    fireCase.state.enemies[0].hp=476;
+
     assert.deepEqual(actual.cases,expected);
     console.log(`Combat oracle PASS: ${actual.cases.length} exact released-output/state/event/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
   } finally {
