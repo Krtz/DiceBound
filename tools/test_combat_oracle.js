@@ -157,7 +157,7 @@ async function main(){
     assert.ok(visual.beforeOff>=1&&visual.afterOff===0,"Options Off must suppress floating values in real Edge combat");
     assert.ok(Math.abs(visual.playerBar.top-visual.enemyBar.top)<=3,"player/enemy HP bars must remain parallel in the static HUD");
     assert.ok(visual.chooser.top<=visual.hud.top&&visual.hud.top<visual.stage.top+visual.stage.height*.25,"target chooser and static HP HUD must stay above the battlefield models");
-    assert.ok(visual.playerIcon.bottom>=visual.stage.bottom-80&&visual.enemyIcon.bottom>=visual.stage.bottom-80,"player/enemy models must occupy the lower ground region of the real combat stage");
+    assert.ok(visual.playerIcon.bottom>=visual.stage.bottom-80&&visual.enemyIcon.bottom>=visual.stage.bottom-80,`player/enemy models must occupy the lower ground region of the real combat stage: ${JSON.stringify({stage:visual.stage,playerIcon:visual.playerIcon,enemyIcon:visual.enemyIcon,playerGap:visual.stage.bottom-visual.playerIcon.bottom,enemyGap:visual.stage.bottom-visual.enemyIcon.bottom})}`);
 
     if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Combat fixture captured: ${actual.cases.length} cases -> ${FIXTURE_PATH}`);return;}
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
