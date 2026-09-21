@@ -34,6 +34,7 @@ combat.configure({
   scaling:svc('scaling',['scale'])
 });
 (async()=>{
+assert.strictEqual(await combat.offense('Custom',()=>Promise.resolve('custom.offense')),'custom.offense');
 assert.strictEqual(await combat.attack('a'),'attack.playerAttack');
 assert.strictEqual(combat.guard('g'),'guard.guardAction');
 assert.strictEqual(await combat.spell('s'),'mana.occultSpellAttack');
