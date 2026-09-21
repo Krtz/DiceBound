@@ -173,7 +173,7 @@ async function main(){
       id:"slime",name:"Ascended Slime",icon:"🟢",hp:28,attack:6,defenseBias:-0.8,
       xp:14,gold:11,weakness:"electric",maxHp:28,defense:2,boss:false,guardian:false,
       miniBoss:false,finalBoss:false,merchantBoss:false,skipTurns:0,poisonStacks:0,
-      affinity:"metal",elementProcChance:0.12525252525252525
+      affinity:"coffee",elementProcChance:0.12525252525252525
     };
     encounter.state.text="Ascended Slime block the road. Choose your action.";
     encounter.state.history=encounter.state.text;
