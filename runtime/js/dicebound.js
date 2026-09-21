@@ -1116,9 +1116,11 @@ function returnToRoad(...args){
         enemy.hp-=dealt;
       }
     }
-    if(currentEnemies.includes(enemy)){
-      if(blocked)dbCombatView.floatCombatText?.({kind:'blocked',target:{unit:'enemy',enemy},label:'Barrier'});
-      else if(dealt>0)dbCombatView.floatCombatText?.({kind:'damage',amount:dealt,target:{unit:'enemy',enemy}});
+    const enemyIndex=currentEnemies.indexOf(enemy);
+    if(enemyIndex>=0){
+      const target={unit:'enemy',enemy,enemyIndex};
+      if(blocked)dbCombatView.floatCombatText?.({kind:'blocked',target,label:'Barrier'});
+      else if(dealt>0)dbCombatView.floatCombatText?.({kind:'damage',amount:dealt,target});
     }
     if(gameStarted&&dealt>0)dbProgression.recordDamageDealt(dealt);
     if(player._v25CroakHitsRemaining>0){
