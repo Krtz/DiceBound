@@ -42,7 +42,8 @@
     metal:{label:"+1 Flat Damage Reduction",v:1,apply(p,s){p.flatReduction+=s;},remove(p,s){p.flatReduction-=s;}},
     coffee:{label:"+4 Luck",v:.04,apply(p,s){p.luck+=s;},remove(p,s){p.luck-=s;}},
     radiation:{label:"+6% Element Power",v:.06,apply(p,s){p.elementDamageBonus+=s;},remove(p,s){p.elementDamageBonus-=s;}},
-    gun:{label:"+5% Crit & +2 Luck",v:1,apply(p,s){p.crit+=.05*s;p.luck+=.02*s;},remove(p,s){p.crit-=.05*s;p.luck-=.02*s;}}
+    gun:{label:"+5% Crit & +2 Luck",v:1,apply(p,s){p.crit+=.05*s;p.luck+=.02*s;},remove(p,s){p.crit-=.05*s;p.luck-=.02*s;}},
+    math:{label:"+3% Element Proc Chance",v:.03,apply(p,s){p.elementProcBonus+=s;},remove(p,s){p.elementProcBonus-=s;}}
   });
 
   function bonusText(id){
