@@ -21,7 +21,8 @@ function fakeDocument(){
   const byId=new Map();
   function node(tag="div"){
     const result={
-      tagName:tag.toUpperCase(),id:"",className:"",title:"",textContent:"",hidden:false,children:[],classList:classList(),
+      tagName:tag.toUpperCase(),id:"",className:"",title:"",textContent:"",hidden:false,children:[],dataset:{},attributes:{},classList:classList(),
+      setAttribute(name,value){this.attributes[name]=String(value);},removeAttribute(name){delete this.attributes[name];},
       appendChild(child){this.children.push(child);if(child.id)byId.set(child.id,child);return child;},
       replaceChildren(...children){this.children=[...children];},
       insertBefore(child){return this.appendChild(child);},
@@ -56,7 +57,7 @@ const ui=window.DiceboundEquipmentHeirlooms;
 assert.ok(ui,"equipment/Heirloom UI owner is not public");
 
 const state={
-  equipment:{weapon:{id:"w1",slot:"weapon",name:"Ash Bow",icon:"🏹",rarity:"rare",seedCode:"ash-1"},hat:{id:"h1",slot:"hat",name:"Road Hat",icon:"🎩",rarity:"common"}},
+  equipment:{weapon:{id:"w1",slot:"weapon",name:"Ash Bow",icon:"🏹",rarity:"rare",seedCode:"ash-1",bonuses:{attack:8}},hat:{id:"h1",slot:"hat",name:"",equipmentId:"bronze-full-helm",icon:"🎩",rarity:"common"}},
   heirlooms:[{id:"w1",slot:"weapon",name:"Ash Bow",icon:"🏹",rarity:"rare"}],
   storage:[{id:"w1",slot:"weapon",name:"Ash Bow",icon:"🏹",rarity:"rare"},{id:"h1",slot:"hat",name:"Road Hat",icon:"🎩",rarity:"common"}],
   storageUnlocked:true,storageCapacity:8,activeCapacity:2,storageMilestones:[{on:true,text:"Board 5"}]
@@ -64,7 +65,7 @@ const state={
 let storageSyncs=0,characterLayout="modern";
 ui.configure({
   getSlots:()=>["weapon","hat"],getSlotLabel:slot=>({weapon:"Weapon",hat:"Hat"})[slot],
-  getRarityInfo:rarity=>({label:String(rarity||"unknown").toUpperCase()}),formatBonuses:item=>`+${item.slot==="weapon"?8:3} Attack`,
+  getRarityInfo:rarity=>({label:String(rarity||"unknown").toUpperCase()}),formatBonuses:item=>`+${item.slot==="weapon"?8:3} Attack`,getEquipmentIdentity:item=>item?.equipmentId==="bronze-full-helm"?{displayName:"Bronze Full Helm"}:null,
   getState:()=>state,getCharacterLayout:()=>characterLayout,getArtifactSet:()=>({count:2,tiers:[{pieces:2,text:"Damage"},{pieces:4,text:"Barrier"}]}),
   resolveEquipmentArt:item=>item?.id==="w1"?{image:"assets/equipment/weapon/ash-bow.png",alt:"Ash Bow art"}:null,
   itemSellValue:()=>42,syncStorage:()=>{storageSyncs++;},isHeirloomEligible:()=>true,confirm:async()=>true
@@ -82,7 +83,10 @@ assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/db-
 assert.match(document.getElementById("equipmentGrid").children[0].className,/character-gear-slot slot-weapon rare/,"occupied Character slot must carry slot identity and rarity frame class");
 assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("db-rarity-name"),"occupied Character slot must not print the item name inside the WoW-style icon frame");
 assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("slot-label"),"occupied Character slot must be image-only");
-assert.match(document.getElementById("equipmentGrid").children[0].title,/Ash Bow/,"item details must remain discoverable from the icon slot");
+assert.match(document.getElementById("equipmentGrid").children[0].dataset.tip,/Ash Bow/,"Character gear must publish item identity through the shared root tooltip path");
+assert.match(document.getElementById("equipmentGrid").children[0].dataset.tip,/\+8 Attack/,"Character gear tooltip must include authoritative item bonuses");
+assert.match(document.getElementById("equipmentGrid").children[1].dataset.tip,/Bronze Full Helm/,"incomplete item records must fall back to semantic equipment identity");
+assert.equal(document.getElementById("equipmentGrid").children[0].title,"","Modern gear must not rely on native title tooltips");
 characterLayout="classic";
 const classicEquipment=ui.renderEquipment();
 assert.equal(classicEquipment.layout,"classic");
@@ -130,6 +134,7 @@ assert.match(ownerStyle.textContent,/\.db-rarity-rare\{color:#438bd8\}/,"Heirloo
 assert.match(ownerStyle.textContent,/\.vault-paper-doll\{/,"Heirloom UI owner must own the Vault paper-doll layout");
 assert.match(ownerStyle.textContent,/\.vault-tab\.active\{/,"Heirloom UI owner must own Vault category-tab presentation");
 assert.match(ownerStyle.textContent,/\.character-gear-grid\{/,"Equipment UI owner must own the in-run Character paper-doll layout");
+assert.match(ownerStyle.textContent,/grid-template-columns:repeat\(4,minmax\(42px,1fr\)\).*grid-template-areas:"hat amulet ring offhand" "weapon chest legs boots"/s,"narrow Character Gear must use the compact two-row layout");
 assert.match(ownerStyle.textContent,/\.character-gear-slot\.rare,.vault-paper-slot\.rare\{border-color:#65a9ff/,"Character and Vault paper dolls must share the rarity-frame language");
 assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderers must not fall back to unbounded semantic art");
 
@@ -139,6 +144,8 @@ for(const adapter of [
   "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}"
 ])assert.ok(monolith.includes(adapter),`missing thin equipment/Heirloom UI adapter: ${adapter}`);
 assert.ok(monolith.includes("dbEquipmentUi.renderEndGear();"),"end-run gear rendering must route directly through the Equipment/Heirloom UI owner");
+assert.ok(monolith.includes("formatBonuses,formatDetailBonuses:item=>formatBonuses(item)"),"Character detail must resolve the final live formatter without changing released loot/storage formatting");
+assert.ok(monolith.includes("getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item)"),"Equipment UI must receive semantic identity fallback from the canonical equipment owner");
 assert.ok(!/function\s+renderEndGear\s*\(/.test(monolith),"retired renderEndGear call-only adapter returned to the monolith");
 for(const retired of ["renderEquipment=function","renderEndGear=function","openLoot=function","renderEquipmentV110Base","renderEquipmentV23Base","renderEquipmentV24Base","v24RenderHeirloomStorage","v25RenderEndStorageManager","db06314RenderEquipmentBase","db06314OpenLootBase","dicebound-06314-equipment-identity-style"])assert.ok(!monolith.includes(retired),`retired equipment/Heirloom UI layer remains: ${retired}`);
 

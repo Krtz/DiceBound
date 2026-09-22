@@ -22,6 +22,13 @@ Presentation owners render semantic IDs, selected authored art and hit targets.
 Domain owners retain mechanics, data, persistence, RNG and progression policy.
 Do not duplicate computed values or make UI text the source of gameplay truth.
 
+## Combat art direction
+
+Enemy combat art should face **left, toward the player**. Treat this as the
+default orientation for newly authored enemy, guardian and boss battle art so
+the combat scene reads as two sides confronting each other. Only depart from
+this orientation when a specific authored composition deliberately requires it.
+
 ## Runtime architecture and responsibility ownership
 
 DiceBound targets **12 coherent public gameplay subsystem families plus one explicit

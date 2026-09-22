@@ -38,10 +38,13 @@ async function main(){
      state=await snapshot(page);
      if(state.activeTab!=="gear"||!state.statsHidden||state.gearHidden||state.gearDisplay==="none"||state.grid.width<=0||state.grid.height<=0||state.slots!==8)throw new Error(`Gear tab unusable at ${width}x${height}: ${JSON.stringify(state)}`);
      if(state.card.right>width+1||state.card.left<-1)throw new Error(`Character card escaped viewport at ${width}x${height}: ${JSON.stringify(state)}`);
+     if(state.grid.height>=190)throw new Error(`Character Gear still wastes sidebar height at ${width}x${height}: ${JSON.stringify(state)}`);
      await pointerClick(page,'#characterTabs [data-character-tab="stats"]');
    }
    await page.send("Emulation.setDeviceMetricsOverride",{width:1680,height:1000,deviceScaleFactor:1,mobile:false});
    await pointerClick(page,'#characterTabs [data-character-tab="gear"]');
+   const tooltipProbe=await page.evaluate(`(()=>{const item={id:'character-tooltip-probe',slot:'amulet',name:'',equipmentId:'hawkeye-charm',icon:'◇',rarity:'poor',bonuses:{crit:.02}};window.DiceboundItems.equip(item,true);window.DiceboundEquipmentHeirlooms.renderEquipment();const slot=document.querySelector('#equipmentGrid .slot-amulet');slot?.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const layer=document.getElementById('appTooltipLayer');return {tip:slot?.dataset.tip||'',text:layer?.textContent||'',hidden:layer?.classList.contains('hidden')??true};})()`);
+   if(tooltipProbe.hidden||!tooltipProbe.tip.includes('Hawkeye Charm')||!tooltipProbe.text.includes('Hawkeye Charm')||!tooltipProbe.text.includes('Crit')||!tooltipProbe.text.includes('Dodge'))throw new Error(`Character gear root tooltip lost semantic identity/stats: ${JSON.stringify(tooltipProbe)}`);
    await page.send("Emulation.setDeviceMetricsOverride",{width:1040,height:640,deviceScaleFactor:1,mobile:false});await sleep(120);
    const resized=await snapshot(page);
    if(resized.activeTab!=="gear"||resized.gearHidden||resized.grid.width<=0||resized.slots!==8)throw new Error(`Live resize lost Gear state: ${JSON.stringify(resized)}`);
@@ -55,7 +58,7 @@ async function main(){
    await page.evaluate("window.DiceboundOptionsUi.close()");
    const modernAgain=await page.evaluate(`(()=>{const card=document.getElementById('characterCard'),grid=document.getElementById('equipmentGrid');return {layout:card?.dataset.characterLayout,bodyLayout:document.body.dataset.characterLayout,paperSlots:grid?.querySelectorAll('.character-gear-slot').length||0};})()`);
    if(modernAgain.layout!=="modern"||modernAgain.bodyLayout!=="modern"||modernAgain.paperSlots!==8)throw new Error(`Options Modern restore failed: ${JSON.stringify(modernAgain)}`);
-   console.log("Character Edge PASS: Modern paper doll, live resize, Options Classic fallback and live restore");
+   console.log("Character Edge PASS: compact Modern Gear, authoritative root tooltip details, live resize, Classic fallback and live restore");
  }finally{
    try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
  }

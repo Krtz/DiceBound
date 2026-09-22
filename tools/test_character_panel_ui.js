@@ -21,6 +21,9 @@ assert.ok(owner.includes("activateCharacterTab"),"Equipment UI owner must own Ch
 assert.ok(owner.includes("gearIconMarkup(item,'db-equipment-slot-art')"),"Character Gear must use image-first slot rendering");
 assert.ok(owner.includes("character-gear-slot slot-${slot} ${item?.rarity||'empty'}"),"Character Gear slot classes must carry slot + rarity identity");
 assert.ok(owner.includes("entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art')"),"Modern Character Gear must render image-only occupied slots");
+assert.ok(owner.includes("entry.dataset.tip=detail"),"Character Gear must publish hover/focus detail through the shared root tooltip contract");
+assert.ok(owner.includes("displayName(item)"),"Character Gear detail must have semantic equipment-identity fallback");
+assert.match(owner,/grid-template-columns:repeat\(4,minmax\(42px,1fr\)\).*grid-template-areas:"hat amulet ring offhand" "weapon chest legs boots"/s,"Modern Character Gear must use the compact two-row sidebar layout");
 assert.ok(owner.includes("item?itemNameMarkup(item,'db-equipment-slot-art')"),"Classic Character Gear must preserve the named equipment-row renderer");
 
 const stateSource=fs.readFileSync(path.join(root,"runtime/js/core/state.js"),"utf8");
