@@ -97,6 +97,7 @@
     "js/ui/camp.js": "2dae7f17ae4fe590738d507bdeed42e4c4198ea886147a45a8036dc6b7f3879a",
     "js/ui/camp-shell.js": "c6444f4a0fe572abbb1ca1786d64dc027b65fb37ad371cada3c187162b52d45d",
     "js/ui/options.js": "93f755aa44c2d568d99017c2fec1525b901877f66da6922d1a7ffc182eaefffd",
+    "js/ui/input-router.js": "fd5aa0e069a6ca7d01092a9c3e6bedd6b9e5f5d07129b156ae19037c46f916e7",
     "js/ui/equipment-heirlooms.js": "3c3a819d63ff4121455a185817c282b0590a8e087fd7a10a84ab737f25a8c4be",
     "js/ui/class-presentation.js": "27489ba0134b151684cd14dffa12345db70342170e7f04a7d40504036106b634",
     "js/ui/class-chooser.js": "d74446e770b603f134a0f5454908836824a2856d5c7eb6ee43528e4a3cb7a25c",
@@ -108,8 +109,7 @@
     "js/ui/career.js": "fa4c2efe9f850b093fd831561b2becea24cd271dfa72e5bd51b31bfef4fe05c7",
     "js/ui/merchant.js": "7e222b98d0bc0426d31a3e7379055ba1f37c1dc390b6aa09958af29c46661150",
     "js/events/merchant-facade.js": "b9a00ff4ec9e565fcc6e523a8d06bf3720e39528d9250f4389ec813546e18d7d",
-    "js/dicebound.js": "b392aefa39d8e132f356b6b8372709a53e7c0836386a52fd463e45d6241e3679",
-    "js/ui/input-router.js": "fd5aa0e069a6ca7d01092a9c3e6bedd6b9e5f5d07129b156ae19037c46f916e7"
+    "js/dicebound.js": "b392aefa39d8e132f356b6b8372709a53e7c0836386a52fd463e45d6241e3679"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
