@@ -101,5 +101,7 @@ for(const id of ["merchantContinueBtn","buffCloseBtn","debugCloseBtn"]){
   assert.match(html,re,id+" must participate in the shared dismissal contract");
 }
 assert.match(html,/legacy-dismiss-chrome/,"legacy dismissible overlays must use persistent top-right chrome");
+const css=fs.readFileSync(path.join(ROOT,"runtime","css","dicebound.css"),"utf8");
+assert.match(css,/\.legacy-dismiss-chrome\{position:sticky;top:0/,"legacy dismissal chrome must remain visible while modal bodies scroll");
 
 console.log("Input router PASS: editing safety, repeat suppression, semantic Escape dismissal, modal priority and Road Dice delegation");
