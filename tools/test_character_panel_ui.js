@@ -20,7 +20,8 @@ assert.ok(owner.includes("layout===\'classic\'"),"Equipment renderer must preser
 assert.ok(owner.includes("activateCharacterTab"),"Equipment UI owner must own Character tab presentation state");
 assert.ok(owner.includes("gearIconMarkup(item,'db-equipment-slot-art')"),"Character Gear must use image-first slot rendering");
 assert.ok(owner.includes("character-gear-slot slot-${slot} ${item?.rarity||'empty'}"),"Character Gear slot classes must carry slot + rarity identity");
-assert.ok(!/entry\.innerHTML=.*itemNameMarkup\(item,'db-equipment-slot-art'\)/.test(owner),"Character Gear must not regress to visible item-name text inside occupied slots");
+assert.ok(owner.includes("entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art')"),"Modern Character Gear must render image-only occupied slots");
+assert.ok(owner.includes("item?itemNameMarkup(item,'db-equipment-slot-art')"),"Classic Character Gear must preserve the named equipment-row renderer");
 
 const stateSource=fs.readFileSync(path.join(root,"runtime/js/core/state.js"),"utf8");
 assert.match(stateSource,/characterLayout:"modern"/,"saved Character layout must default to Modern");
