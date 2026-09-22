@@ -53,7 +53,7 @@
   </main>
 
   <aside class="sidebar">
-    <section class="card character-card" id="characterCard">
+    <section class="card character-card" id="characterCard" data-character-layout="modern">
       <div class="character-card-head">
         <h2>Character</h2>
         <div class="character-tabs" id="characterTabs" role="tablist" aria-label="Character details">
@@ -61,18 +61,16 @@
           <button class="small-btn" type="button" role="tab" aria-selected="false" aria-controls="characterGearPanel" data-character-tab="gear">Gear</button>
         </div>
       </div>
-      <div class="hero-line">
-        <div class="hero-avatar" id="heroAvatar">🏹</div>
-        <div>
-          <div class="hero-name" id="heroName">Ranger</div>
-          <div class="hero-level" id="levelText">Level 1</div>
+      <section class="card character-tab-panel character-layout-card active" id="characterStatsPanel" role="tabpanel" data-character-panel="stats">
+        <h2 class="character-classic-title">Adventurer</h2>
+        <div class="hero-line">
+          <div class="hero-avatar" id="heroAvatar">🏹</div>
+          <div><div class="hero-name" id="heroName">Ranger</div><div class="hero-level" id="levelText">Level 1</div></div>
         </div>
-      </div>
-      <div class="bar-label"><span>HP</span><span id="hpText">30 / 30</span></div>
-      <div class="bar hpbar"><i id="hpFill"></i></div>
-      <div class="bar-label"><span>XP</span><span id="xpText">0 / 20</span></div>
-      <div class="bar xpbar"><i id="xpFill"></i></div>
-      <section class="character-tab-panel active" id="characterStatsPanel" role="tabpanel" data-character-panel="stats">
+        <div class="bar-label"><span>HP</span><span id="hpText">30 / 30</span></div>
+        <div class="bar hpbar"><i id="hpFill"></i></div>
+        <div class="bar-label"><span>XP</span><span id="xpText">0 / 20</span></div>
+        <div class="bar xpbar"><i id="xpFill"></i></div>
         <div class="stats-grid">
           <div class="stat"><span>Attack</span><strong id="attackText">5</strong></div>
           <div class="stat"><span>Defense</span><strong id="defenseText">1</strong></div>
@@ -89,7 +87,8 @@
         <button class="small-btn outside-potion" id="outsidePotionBtn">🧪 Drink potion outside combat</button>
         <button class="small-btn run-buff-btn" id="runBuffBtn">📜 View current run buffs</button>
       </section>
-      <section class="character-tab-panel" id="characterGearPanel" role="tabpanel" data-character-panel="gear" hidden>
+      <section class="card character-tab-panel character-layout-card" id="characterGearPanel" role="tabpanel" data-character-panel="gear" hidden>
+        <h2 class="character-classic-title">Equipment</h2>
         <div class="character-gear-copy">Hover a slot for item details. Border colour shows rarity.</div>
         <div class="equipment-grid character-gear-grid" id="equipmentGrid" aria-label="Equipped gear"></div>
         <div class="mythic-set-box" id="mythicSetStatus" hidden><strong>🌈 Impossible Road set</strong><br>0/4 pieces equipped.</div>
