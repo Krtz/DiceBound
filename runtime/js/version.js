@@ -6,7 +6,7 @@
   const VERSION="0.6.7.24";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Tabbed Character Stats/Gear panel with image-only rarity-framed equipment paper doll.";
+  const RELEASE_SUMMARY="Modern tabbed Character paper doll with a persistent Classic layout option.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
