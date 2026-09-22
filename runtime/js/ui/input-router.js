@@ -32,7 +32,9 @@
     return false;
   }
   function isUsableDismissControl(node){
-    return !!node&&!node.disabled&&!hiddenByAncestor(node);
+    if(!node||node.disabled||hiddenByAncestor(node))return false;
+    if(typeof node.getClientRects==="function"&&node.getClientRects().length===0)return false;
+    return true;
   }
   function visibleDismissControls(){
     return [...(doc()?.querySelectorAll?.("[data-app-dismiss]")||[])].filter(isUsableDismissControl);
