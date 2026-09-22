@@ -2849,7 +2849,8 @@ dbReturnToRoadTraceReady=true;
     getWindow:()=>window,
     openOptions:()=>dbOptionsUi?.open?.(),
     handleRoadKeydown:event=>dbRunDice.handleRoadKeydown(event)
-  }).bind();
+  });
+  dbInputRouter.bind();
   function beta042EnsureCampOptions(){return window.DiceboundCamp?.ensureOptionsButton();}
   function beta042RefreshCampAndHud(){
     dbOptionsUi?.ensureTopAction?.();
