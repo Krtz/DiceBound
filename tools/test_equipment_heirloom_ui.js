@@ -61,11 +61,11 @@ const state={
   storage:[{id:"w1",slot:"weapon",name:"Ash Bow",icon:"🏹",rarity:"rare"},{id:"h1",slot:"hat",name:"Road Hat",icon:"🎩",rarity:"common"}],
   storageUnlocked:true,storageCapacity:8,activeCapacity:2,storageMilestones:[{on:true,text:"Board 5"}]
 };
-let storageSyncs=0;
+let storageSyncs=0,characterLayout="modern";
 ui.configure({
   getSlots:()=>["weapon","hat"],getSlotLabel:slot=>({weapon:"Weapon",hat:"Hat"})[slot],
   getRarityInfo:rarity=>({label:String(rarity||"unknown").toUpperCase()}),formatBonuses:item=>`+${item.slot==="weapon"?8:3} Attack`,
-  getState:()=>state,getArtifactSet:()=>({count:2,tiers:[{pieces:2,text:"Damage"},{pieces:4,text:"Barrier"}]}),
+  getState:()=>state,getCharacterLayout:()=>characterLayout,getArtifactSet:()=>({count:2,tiers:[{pieces:2,text:"Damage"},{pieces:4,text:"Barrier"}]}),
   resolveEquipmentArt:item=>item?.id==="w1"?{image:"assets/equipment/weapon/ash-bow.png",alt:"Ash Bow art"}:null,
   itemSellValue:()=>42,syncStorage:()=>{storageSyncs++;},isHeirloomEligible:()=>true,confirm:async()=>true
 });
@@ -83,6 +83,14 @@ assert.match(document.getElementById("equipmentGrid").children[0].className,/cha
 assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("db-rarity-name"),"occupied Character slot must not print the item name inside the WoW-style icon frame");
 assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("slot-label"),"occupied Character slot must be image-only");
 assert.match(document.getElementById("equipmentGrid").children[0].title,/Ash Bow/,"item details must remain discoverable from the icon slot");
+characterLayout="classic";
+const classicEquipment=ui.renderEquipment();
+assert.equal(classicEquipment.layout,"classic");
+assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/slot-label/,"Classic layout must restore visible slot labels");
+assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/db-rarity-name/,"Classic layout must restore named equipment rows");
+assert.ok(!document.getElementById("equipmentGrid").children[0].className.includes("character-gear-slot"),"Classic equipment rows must not keep paper-doll slot layout");
+characterLayout="modern";
+ui.renderEquipment();
 assert.match(document.getElementById("mythicSetStatus").innerHTML,/Impossible Road set/);
 
 const loot=ui.renderLoot(state.equipment.weapon);
