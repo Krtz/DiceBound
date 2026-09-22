@@ -6,11 +6,10 @@ on:
       - fix/0.6.7.21-career-visible-panel
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   materialize:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,14 +29,16 @@ jobs:
           python tools/set_project_version.py --version 0.6.7.21 --channel Beta
           python tools/refresh_runtime_manifest.py --version 0.6.7.21 --channel Beta --development-state Unreleased
           python tools/prepare_release.py
-          git rm .github/workflows/tmp-materialize-0.6.7.21.yml
-          git status --short
-      - name: Commit generated identity
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "release: materialize Beta 0.6.7.21"
-          git push origin HEAD:fix/0.6.7.21-career-visible-panel
+          mkdir -p materialized/runtime/js materialized/wrapper-source/config materialized/wrapper-source/wrappers/webview2/native-go materialized/wrapper-source/release/generated
+          cp runtime/build-info.json materialized/runtime/build-info.json
+          cp runtime/build-manifest.json materialized/runtime/build-manifest.json
+          cp runtime/index.html materialized/runtime/index.html
+          cp runtime/js/version.js materialized/runtime/js/version.js
+          cp wrapper-source/config/project.json materialized/wrapper-source/config/project.json
+          cp wrapper-source/wrappers/webview2/native-go/main.go materialized/wrapper-source/wrappers/webview2/native-go/main.go
+          cp wrapper-source/release/generated/release-spec.json materialized/wrapper-source/release/generated/release-spec.json
+          cp wrapper-source/release/generated/release-notes.md materialized/wrapper-source/release/generated/release-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: materialized-0.6.7.21
+          path: materialized
