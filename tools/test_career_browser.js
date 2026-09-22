@@ -38,18 +38,19 @@ async function main(){
     if(opened.infoStats)throw new Error("Lifetime Career Stats still exist as a duplicate Info tab");
     if(!opened.inspect?.open||opened.inspect?.activeTab!=="overview")throw new Error(`Career owner did not retain the visible Overview surface: ${JSON.stringify(opened)}`);
 
-    const overview=await page.evaluate(`(()=>({cards:document.querySelectorAll('#careerOverlay .career-card').length,text:document.querySelector('[data-career-panel="overview"]')?.textContent||'',clearSection:document.querySelector('#careerOverlay .career-clear-grid')?.textContent||''}))()`);
+    const overview=await page.evaluate(`(()=>{const panel=document.querySelector('[data-career-panel="overview"]'),style=panel?getComputedStyle(panel):null,rect=panel?.getBoundingClientRect();return {cards:document.querySelectorAll('#careerOverlay .career-card').length,text:panel?.textContent||'',clearSection:document.querySelector('#careerOverlay .career-clear-grid')?.textContent||'',display:style?.display||null,visibility:style?.visibility||null,width:rect?.width||0,height:rect?.height||0};})()`);
     if(overview.cards<20)throw new Error(`Career Overview did not render lifetime cards: ${JSON.stringify(overview)}`);
+    if(overview.display==='none'||overview.visibility==='hidden'||overview.width<=0||overview.height<=0)throw new Error(`Career Overview rendered DOM but is not visibly presented: ${JSON.stringify(overview)}`);
     for(const expected of ['42','Prestige','3','Completed runs','8','321 tiles','12,345','4,321','999'])if(!overview.text.includes(expected))throw new Error(`Career Overview lost persisted value ${expected}: ${JSON.stringify(overview)}`);
     if(!overview.clearSection.includes('Ranger')||!overview.clearSection.includes('Normal: 4'))throw new Error(`Career class clear ledger did not render seeded authoritative fact: ${JSON.stringify(overview)}`);
 
     await pointerClick(page,'#careerOverlay [data-career-tab="enemies"]');
-    const enemies=await page.evaluate(`(()=>({tab:window.DiceboundCareerUi?.inspect?.().activeTab,text:document.querySelector('[data-career-panel="enemies"]')?.textContent||''}))()`);
-    if(enemies.tab!=="enemies"||!enemies.text)throw new Error(`Enemy Ledger tab did not render: ${JSON.stringify(enemies)}`);
+    const enemies=await page.evaluate(`(()=>{const panel=document.querySelector('[data-career-panel="enemies"]'),style=panel?getComputedStyle(panel):null,rect=panel?.getBoundingClientRect(),overview=document.querySelector('[data-career-panel="overview"]');return {tab:window.DiceboundCareerUi?.inspect?.().activeTab,text:panel?.textContent||'',display:style?.display||null,width:rect?.width||0,height:rect?.height||0,overviewDisplay:overview?getComputedStyle(overview).display:null};})()`);
+    if(enemies.tab!=="enemies"||!enemies.text||enemies.display==='none'||enemies.width<=0||enemies.height<=0||enemies.overviewDisplay!=='none')throw new Error(`Enemy Ledger tab is not exclusively visible: ${JSON.stringify(enemies)}`);
 
     await pointerClick(page,'#careerOverlay [data-career-tab="runs"]');
-    const runs=await page.evaluate(`(()=>({tab:window.DiceboundCareerUi?.inspect?.().activeTab,text:document.querySelector('[data-career-panel="runs"]')?.textContent||''}))()`);
-    if(runs.tab!=="runs"||!runs.text.includes("Ranger")||!runs.text.includes("Victory")||!runs.text.includes("Board 4"))throw new Error(`Persisted Career Run History did not render seeded record: ${JSON.stringify(runs)}`);
+    const runs=await page.evaluate(`(()=>{const panel=document.querySelector('[data-career-panel="runs"]'),style=panel?getComputedStyle(panel):null,rect=panel?.getBoundingClientRect(),enemy=document.querySelector('[data-career-panel="enemies"]');return {tab:window.DiceboundCareerUi?.inspect?.().activeTab,text:panel?.textContent||'',display:style?.display||null,width:rect?.width||0,height:rect?.height||0,enemyDisplay:enemy?getComputedStyle(enemy).display:null};})()`);
+    if(runs.tab!=="runs"||!runs.text.includes("Ranger")||!runs.text.includes("Victory")||!runs.text.includes("Board 4")||runs.display==='none'||runs.width<=0||runs.height<=0||runs.enemyDisplay!=='none')throw new Error(`Persisted Career Run History is not exclusively visible: ${JSON.stringify(runs)}`);
 
     await pointerClick(page,"#careerOverlay [data-career-done]");
     if(!(await page.evaluate("document.getElementById('careerOverlay')?.classList.contains('hidden')")))throw new Error("Career Done pointer did not close destination");
