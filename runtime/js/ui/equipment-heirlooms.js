@@ -24,6 +24,7 @@
   function identity(item){return runtime.getEquipmentIdentity?.(item)||null;}
   function displayName(item){return item?.name||identity(item)?.displayName||'Equipment';}
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
+  function detailBonuses(item){return runtime.formatDetailBonuses?.(item)||bonuses(item);}
   function state(){return runtime.getState?.()||{};}
   function setModel(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
   function characterLayout(){return runtime.getCharacterLayout?.()==='classic'?'classic':'modern';}
@@ -44,7 +45,7 @@
   function itemDetail(item,slot=item?.slot){
     if(!item)return `Empty ${label(slot)} slot`;
     const rarityLabel=rarity(item).label||item.rarity||'Unknown';
-    return `${displayName(item)} · ${rarityLabel} ${label(slot)} · ${bonuses(item)}`;
+    return `${displayName(item)} · ${rarityLabel} ${label(slot)} · ${detailBonuses(item)}`;
   }
   function vaultSlotMarkup(slot,activeBySlot){
     const item=activeBySlot.get(slot),slotId=escapeHtml(slot),detail=escapeHtml(itemDetail(item,slot));
