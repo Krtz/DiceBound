@@ -41,7 +41,9 @@ assert.equal(power.apiVersion,1);
 assert.equal(power.owner,"powerups/facade");
 assert.equal(power.createRegistry({token:"services"}),fakeCatalog);
 assert.equal(power.describe(fakeCatalog[0]),"services:Generic");
-assert.deepEqual(Array.from(power.ownerIds(fakeCatalog[1])),["ranger"]);
+const rangerFixture=fakeCatalog.find(up=>up.id==="ranger");
+assert.ok(rangerFixture,"Ranger fixture must exist");
+assert.deepEqual(Array.from(power.ownerIds(rangerFixture)),["ranger"]);
 
 const events=[];
 let gate=false,randomCalls=0,randomValue=.25;
@@ -98,7 +100,7 @@ assert.equal(power.choices(()=>true,3).length,3);
 assert.equal(randomCalls,3,"three weighted choices must consume exactly three RNG draws");
 
 state.player.luck=2;randomValue=.999;randomCalls=0;
-const highLuckPick=power.weighted([fakeCatalog[0],fakeCatalog[1]]);
+const highLuckPick=power.weighted([fakeCatalog[0],rangerFixture]);
 assert.equal(highLuckPick.id,"ranger","Luck waterfall must eventually exhaust the lowest available Powerup tier");
 assert.equal(randomCalls,1,"Luck waterfall must not add an RNG draw to weighted Powerup selection");
 state.player.luck=1.10;randomCalls=0;
