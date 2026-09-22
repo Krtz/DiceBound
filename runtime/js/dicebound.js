@@ -1175,6 +1175,7 @@ function returnToRoad(...args){
     slimePowerCompatible:u=>{const unlocked=["slime",...Object.keys(CLASSES).filter(id=>id!=="slime"&&dbProgression.isClassUnlocked(id))],tags=inferUpgradeTags(u),caps=new Set(classMechanicsFor("slime"));return dbPowerups.ownershipAllowed(u,"slime",unlocked)&&!tags.includes("ultimate")&&db32PowerMechanicsCompatible(u,caps);},
     slimeRougePowerCompatible:u=>v318SlimeRougePowerCompatible(u),
     cascadeLuckRows:(rows,luck,progression)=>DB_RARITIES.cascadeLuckRows(rows,luck,progression),
+    isPowerupRarityAtLeast:(rarity,floor)=>DB_RARITIES.isPowerupRarityAtLeast(rarity,floor),
     getBoardLevel:()=>boardLevel,currentTileCount:()=>currentTileCount(),random:()=>random(),rand:(min,max)=>rand(min,max),pick:list=>pick(list),clamp:(value,min,max)=>clamp(value,min,max),
     classIdentityActive:id=>classIdentityActive(id),hasLegendaryEffect:id=>db060HasEffect(id),saveMeta:()=>saveMeta(),addLog:html=>addLog(html),showToast:(...args)=>showToast(...args),
     checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),recordRunBuff:(...args)=>recordRunBuff(...args),recordPowerupTaken:()=>{dbProgression.recordPowerupTaken();saveMeta();},syncOuroborosEconomy:()=>v27SyncOuroborosEconomy(),
@@ -1362,7 +1363,6 @@ function returnToRoad(...args){
   $("runBuffBtn").addEventListener("click",openRunBuffs);$("buffCloseBtn").addEventListener("click",()=>$("buffOverlay").classList.add("hidden"));
 
   window.addEventListener("resize",()=>placePawn(false));
-  window.addEventListener("keydown",e=>dbRunDice.handleRoadKeydown(e));
 
   dbRun.generateBoard();buildBoard();window.DiceboundClassChooser.render();renderEquipment();updateHUD();updateMetaUI();
 
@@ -2829,6 +2829,8 @@ dbReturnToRoadTraceReady=true;
     document.body?.setAttribute('data-sidebar-companion',hasSet?'below':'adjacent');
     return hasSet;
   }
+  const dbInputRouter=window.DiceboundInputRouter;
+  if(!dbInputRouter?.configure)throw new Error("DiceBound requires the app input router before dicebound.js");
   const dbOptionsUi=window.DiceboundOptionsUi?.configure({
     find:$,
     getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth',floatingCombatNumbers:meta.settings?.floatingCombatNumbers!==false,fastWheelSlots:!!meta.settings?.fastWheelSlots,fastWheelSlotsUnlocked:dbProgression.hasAnyBoardClear(6)}),
@@ -2842,6 +2844,12 @@ dbReturnToRoadTraceReady=true;
     playPreview:()=>{try{sfx.coin();}catch(_){}},
     resetProgress:()=>window.DiceboundTalentTree?.resetProgress?.()
   });
+  dbInputRouter.configure({
+    getDocument:()=>document,
+    getWindow:()=>window,
+    openOptions:()=>dbOptionsUi?.open?.(),
+    handleRoadKeydown:event=>dbRunDice.handleRoadKeydown(event)
+  }).bind();
   function beta042EnsureCampOptions(){return window.DiceboundCamp?.ensureOptionsButton();}
   function beta042RefreshCampAndHud(){
     dbOptionsUi?.ensureTopAction?.();
