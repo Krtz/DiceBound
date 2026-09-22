@@ -78,7 +78,11 @@ assert.match(camp.setHtml,/2-piece bonus/);
 const equipment=ui.renderEquipment();
 assert.equal(equipment.equipped,2);
 assert.equal(document.getElementById("equipmentGrid").children.length,2);
-assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/db-equipment-slot-art/,"HUD must resolve semantic equipment art");
+assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/db-equipment-slot-art/,"Character Gear paper doll must resolve semantic equipment art");
+assert.match(document.getElementById("equipmentGrid").children[0].className,/character-gear-slot slot-weapon rare/,"occupied Character slot must carry slot identity and rarity frame class");
+assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("db-rarity-name"),"occupied Character slot must not print the item name inside the WoW-style icon frame");
+assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("slot-label"),"occupied Character slot must be image-only");
+assert.match(document.getElementById("equipmentGrid").children[0].title,/Ash Bow/,"item details must remain discoverable from the icon slot");
 assert.match(document.getElementById("mythicSetStatus").innerHTML,/Impossible Road set/);
 
 const loot=ui.renderLoot(state.equipment.weapon);
@@ -93,6 +97,8 @@ assert.equal(storage.unlocked,true);
 assert.equal(storage.tab,"all");
 assert.equal(storage.visible,2);
 assert.match(document.getElementById("campHeirloomStorage").innerHTML,/vault-paper-doll/,"Camp Vault must show the active next-run paper doll");
+assert.match(document.getElementById("campHeirloomStorage").innerHTML,/db-vault-slot-art/,"Vault occupied paper-doll slots must be image-first");
+assert.ok(!document.getElementById("campHeirloomStorage").innerHTML.includes("db-rarity-name"),"Vault occupied paper-doll slots must not print item names inside icon frames");
 assert.match(document.getElementById("campHeirloomStorage").innerHTML,/All <span>2<\/span>/,"Vault must expose the All inventory tab with a count");
 assert.match(document.getElementById("campHeirloomStorage").innerHTML,/Weapons <span>1<\/span>/,"Vault must group Weapon and Offhand gear");
 assert.match(document.getElementById("campHeirloomStorage").innerHTML,/Armour <span>1<\/span>/,"Vault must group armour slots");
@@ -115,6 +121,8 @@ assert.match(ownerStyle.textContent,/\.db-equipment-card-art\{width:48px;height:
 assert.match(ownerStyle.textContent,/\.db-rarity-rare\{color:#438bd8\}/,"Heirloom UI owner must own the rarity-name colour palette");
 assert.match(ownerStyle.textContent,/\.vault-paper-doll\{/,"Heirloom UI owner must own the Vault paper-doll layout");
 assert.match(ownerStyle.textContent,/\.vault-tab\.active\{/,"Heirloom UI owner must own Vault category-tab presentation");
+assert.match(ownerStyle.textContent,/\.character-gear-grid\{/,"Equipment UI owner must own the in-run Character paper-doll layout");
+assert.match(ownerStyle.textContent,/\.character-gear-slot\.rare,.vault-paper-slot\.rare\{border-color:#65a9ff/,"Character and Vault paper dolls must share the rarity-frame language");
 assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderers must not fall back to unbounded semantic art");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
