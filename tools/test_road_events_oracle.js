@@ -128,7 +128,27 @@ async function main(){
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.version,"0.6.6.25","Road Events fixture must remain the released 0.6.6.25 baseline");
     assert.ok(actual.version,"runtime version must be exposed while executing the baseline oracle");
-    assert.deepEqual(actual.cases,fixture.cases);
+
+    // 0.6.7.22 approved #202 downstream delta:
+    // blessing-d applies Miracle Engine first, which grants three random
+    // Sealed-Relic-style high-rarity Powerups. Expanding that canonical floor
+    // from Rare+ to Uncommon+ changes only the resulting player stats/signature;
+    // the offer set plus exact RNG call count/state remain frozen.
+    const expected=structuredClone(fixture.cases);
+    {
+      const record=expected.find(c=>c.name==="blessing-d");
+      assert.ok(record,"missing frozen blessing-d Road Events case");
+      record.player.luck=0;
+      record.player.crit=.27;
+      record.player.doubleStrike=.40;
+      record.signature="823d4f05";
+    }
+    for(const actualCase of actual.cases){
+      const expectedCase=expected.find(c=>c.name===actualCase.name);
+      assert.ok(expectedCase,"unexpected Road Events case "+actualCase.name);
+      assert.deepEqual(actualCase,expectedCase,"Road Events oracle mismatch: "+actualCase.name);
+    }
+    assert.equal(actual.cases.length,expected.length,"Road Events case count changed unexpectedly");
     console.log(`Road Events oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.version} baseline on runtime ${actual.version}.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
