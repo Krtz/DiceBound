@@ -90,5 +90,5 @@
   }
 
   const api=Object.freeze({apiVersion:1,owner:OWNER,configure,bind,handleKeydown,isTextEditingTarget,visibleDismissControls,dismissTop,hasBlockingOverlay,inspect});
-  root.DiceboundInputRouter=api;
+  window.DiceboundInputRouter=api;
 })(window);
