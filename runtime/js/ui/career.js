@@ -82,7 +82,7 @@
     const completeOwnedSurface=overlay.dataset.careerOwner===OWNER
       &&!!overlay.querySelector(".career-shell")
       &&!!overlay.querySelector(".career-body")
-      &&!!overlay.querySelector("[data-career-done]")
+      &&!!overlay.querySelector("[data-career-done][data-app-dismiss]")
       &&["overview","enemies","runs"].every(name=>!!overlay.querySelector(`[data-career-tab="${name}"]`)&&!!overlay.querySelector(`[data-career-panel="${name}"]`));
     if(!completeOwnedSurface){
       overlay.dataset.careerOwner=OWNER;
