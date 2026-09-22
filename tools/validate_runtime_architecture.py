@@ -209,9 +209,31 @@ def main() -> int:
         for retired_road_dice_layer in ["function rollDice(", "function chooseDieResult(", "pendingDiceChoiceResolve", "const diceFaces =", 'addEventListener("click",rollDice)', "{rollDice,applyUpgrade"]:
             if retired_road_dice_layer in monolith_source:
                 errors.append("retired road-dice implementation remains in dicebound.js: " + retired_road_dice_layer)
-        for required_run_dice_route in ["dbRunDice.bindPrimaryButton()", "dbRunDice.handleRoadKeydown(e)", "move:(...args)=>dbRun.move(...args)"]:
+        for required_run_dice_route in ["dbRunDice.bindPrimaryButton()", "handleRoadKeydown:event=>dbRunDice.handleRoadKeydown(event)", "move:(...args)=>dbRun.move(...args)"]:
             if required_run_dice_route not in monolith_source:
                 errors.append("dicebound.js is missing Run Dice composition route: " + required_run_dice_route)
+        if 'window.addEventListener("keydown",e=>dbRunDice.handleRoadKeydown(e))' in monolith_source:
+            errors.append("dicebound.js must not own the raw global Road Dice key listener after input-router extraction")
+
+    input_router_module = by_id.get("ui-input-router")
+    input_router_source = sources.get("ui-input-router", "")
+    if not input_router_module:
+        errors.append("App input owner ui-input-router is missing from the runtime manifest")
+    else:
+        required = set(input_router_module.get("requires") or [])
+        if input_router_module.get("path") != "js/ui/input-router.js" or "DiceboundInputRouter" not in (input_router_module.get("provides") or []):
+            errors.append("ui-input-router must own js/ui/input-router.js and provide DiceboundInputRouter")
+        if not {"run-dice", "ui-options"}.issubset(required):
+            errors.append("ui-input-router must depend on run-dice and ui-options")
+        if position.get("ui-input-router", -1) >= position.get(str(monolith_id), -1):
+            errors.append("ui-input-router must load before the composition monolith")
+    for required_input_owner in ["function handleKeydown(", "function isTextEditingTarget(", "[data-app-dismiss]", "function hasBlockingOverlay("]:
+        if required_input_owner not in input_router_source:
+            errors.append("ui-input-router is missing required input responsibility: " + required_input_owner)
+    if monolith_source:
+        for required_input_route in ["const dbInputRouter=window.DiceboundInputRouter", "dbInputRouter.configure({", "dbInputRouter.bind()"]:
+            if required_input_route not in monolith_source:
+                errors.append("dicebound.js is missing app input composition route: " + required_input_route)
 
     if monolith_source:
         expected_reset_adapter = "function resetPlayer(classId=selectedClassId){return dbRun.initializePlayer(classId);}"
