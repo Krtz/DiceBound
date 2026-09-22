@@ -112,7 +112,7 @@
     overlay.setAttribute('aria-label','Choose companion');
     if(overlay.dataset.petChooserSurface!=='1'){
       overlay.dataset.petChooserSurface='1';
-      overlay.innerHTML=`<section class="pet-chooser-shell"><header class="pet-chooser-chrome"><div><span class="pet-chooser-kicker">Between expeditions</span><h2>Choose your companion</h2></div><button type="button" class="small-btn pet-chooser-done" data-pet-chooser-done>Done</button></header><div class="pet-chooser-content"><div class="pet-chooser-summary" data-pet-chooser-summary></div><div class="pet-chooser-feed" data-pet-chooser-feed></div><p class="pet-chooser-run-note" data-pet-chooser-run-note hidden></p><div class="pet-chooser-grid" data-pet-chooser-grid></div></div></section>`;
+      overlay.innerHTML=`<section class="pet-chooser-shell"><header class="pet-chooser-chrome"><div><span class="pet-chooser-kicker">Between expeditions</span><h2>Choose your companion</h2></div><button type="button" class="small-btn pet-chooser-done" data-pet-chooser-done data-app-dismiss>Done</button></header><div class="pet-chooser-content"><div class="pet-chooser-summary" data-pet-chooser-summary></div><div class="pet-chooser-feed" data-pet-chooser-feed></div><p class="pet-chooser-run-note" data-pet-chooser-run-note hidden></p><div class="pet-chooser-grid" data-pet-chooser-grid></div></div></section>`;
       overlay.querySelector('[data-pet-chooser-done]')?.addEventListener('click',close);
     }
     return overlay;

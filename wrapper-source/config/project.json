@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.7.21",
+  "version": "0.6.7.22",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -95,6 +95,7 @@
     "js/ui/camp.js",
     "js/ui/camp-shell.js",
     "js/ui/options.js",
+    "js/ui/input-router.js",
     "js/ui/equipment-heirlooms.js",
     "js/ui/class-presentation.js",
     "js/ui/class-chooser.js",

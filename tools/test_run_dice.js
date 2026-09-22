@@ -37,7 +37,8 @@ async function clickChoice(h,value){await tick();const b=h.nodes.diceChoiceGrid.
   assert.doesNotMatch(SOURCE,/call\("random"\)\(\)/,"injected RNG result must never be invoked as a function");
   for(const pattern of [/function\s+rollDice\s*\(/,/function\s+chooseDieResult\s*\(/,/pendingDiceChoiceResolve/,/const\s+diceFaces\s*=/,/addEventListener\(\"click\",rollDice\)/,/\{rollDice,applyUpgrade/])assert.doesNotMatch(MONOLITH,pattern,`road-dice implementation returned to dicebound.js: ${pattern}`);
   assert.match(MONOLITH,/dbRunDice\.bindPrimaryButton\(\)/,"composition must bind the canonical primary dice owner");
-  assert.match(MONOLITH,/dbRunDice\.handleRoadKeydown\(e\)/,"keyboard road rolling must delegate to the canonical dice owner");
+  assert.match(MONOLITH,/handleRoadKeydown:event=>dbRunDice\.handleRoadKeydown\(event\)/,"app input routing must delegate Road Dice keys to the canonical dice owner");
+  assert.doesNotMatch(MONOLITH,/window\.addEventListener\("keydown",e=>dbRunDice\.handleRoadKeydown\(e\)\)/,"raw global Road Dice listener must stay drained from the composition root");
   const configuredAt=MONOLITH.indexOf("dbRunDice.configure({"),firstBootstrapHud=MONOLITH.indexOf('dbRun.generateBoard();buildBoard();window.DiceboundClassChooser.render();renderEquipment();updateHUD();updateMetaUI();');
   assert.ok(configuredAt>=0&&firstBootstrapHud>=0&&configuredAt<firstBootstrapHud,"Run Dice must be configured before the first bootstrap HUD refresh");
   assert.equal((MONOLITH.match(/dbRunDice\.configure\(\{/g)||[]).length,1,"Run Dice must have exactly one composition/configuration boundary");
