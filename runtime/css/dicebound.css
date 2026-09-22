@@ -362,6 +362,8 @@
     position:relative;
   }
   .modal.wide{width:min(760px,100%)}
+  .legacy-dismiss-chrome{position:sticky;top:0;z-index:9;display:flex;justify-content:flex-end;margin:-10px -10px 8px 0;pointer-events:none}
+  .legacy-dismiss-chrome > .small-btn{width:auto!important;margin:0!important;pointer-events:auto;flex:0 0 auto}
   .modal.start-modal{width:min(940px,96vw);max-height:96vh;padding:28px}
   .modal h2{margin:0;text-align:center;font-size:30px}
   .modal .subtitle{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin:8px auto 18px;max-width:52ch}
