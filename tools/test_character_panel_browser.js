@@ -45,7 +45,17 @@ async function main(){
    await page.send("Emulation.setDeviceMetricsOverride",{width:1040,height:640,deviceScaleFactor:1,mobile:false});await sleep(120);
    const resized=await snapshot(page);
    if(resized.activeTab!=="gear"||resized.gearHidden||resized.grid.width<=0||resized.slots!==8)throw new Error(`Live resize lost Gear state: ${JSON.stringify(resized)}`);
-   console.log("Character Edge PASS: Stats/Gear tabs, eight-slot paper doll and live resize stay usable");
+   await page.evaluate("window.DiceboundOptionsUi.open()");
+   await pointerClick(page,'#optionsCharacterLayoutBtn');
+   await page.evaluate("window.DiceboundOptionsUi.close()");
+   const classic=await page.evaluate(`(()=>{const card=document.getElementById('characterCard'),stats=document.getElementById('characterStatsPanel'),gear=document.getElementById('characterGearPanel'),grid=document.getElementById('equipmentGrid');return {layout:card?.dataset.characterLayout,bodyLayout:document.body.dataset.characterLayout,statsHidden:!!stats?.hidden,gearHidden:!!gear?.hidden,tabsDisplay:getComputedStyle(document.querySelector('.character-card-head')).display,paperSlots:grid?.querySelectorAll('.character-gear-slot').length||0,namedSlots:grid?.querySelectorAll('.slot-label').length||0};})()`);
+   if(classic.layout!=="classic"||classic.bodyLayout!=="classic"||classic.statsHidden||classic.gearHidden||classic.tabsDisplay!=="none"||classic.paperSlots!==0||classic.namedSlots!==8)throw new Error(`Options Classic layout failed: ${JSON.stringify(classic)}`);
+   await page.evaluate("window.DiceboundOptionsUi.open()");
+   await pointerClick(page,'#optionsCharacterLayoutBtn');
+   await page.evaluate("window.DiceboundOptionsUi.close()");
+   const modernAgain=await page.evaluate(`(()=>{const card=document.getElementById('characterCard'),grid=document.getElementById('equipmentGrid');return {layout:card?.dataset.characterLayout,bodyLayout:document.body.dataset.characterLayout,paperSlots:grid?.querySelectorAll('.character-gear-slot').length||0};})()`);
+   if(modernAgain.layout!=="modern"||modernAgain.bodyLayout!=="modern"||modernAgain.paperSlots!==8)throw new Error(`Options Modern restore failed: ${JSON.stringify(modernAgain)}`);
+   console.log("Character Edge PASS: Modern paper doll, live resize, Options Classic fallback and live restore");
  }finally{
    try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
  }
