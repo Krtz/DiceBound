@@ -1,11 +1,11 @@
 {
   "format": 1,
   "name": "DiceBound",
-  "version": "0.6.7.22",
+  "version": "0.6.7.23",
   "channel": "Beta",
-  "buildId": "dicebound-0.6.7.22-363d0e6f8d57a299",
-  "url": "https://github.com/Krtz/DiceBound/releases/download/beta-0.6.7.22/DiceBound.exe",
-  "sha256": "9c3ac9a57997441875b33ba01017bf9e1ade145196af7cf4030b80049bb40475",
-  "bytes": 548920832,
+  "buildId": "dicebound-0.6.7.23-c5ee7e3fe83a308f",
+  "url": "https://github.com/Krtz/DiceBound/releases/download/beta-0.6.7.23/DiceBound.exe",
+  "sha256": "6dfb8e3db7666edbf3881b0d0977584918ffd1c73e4d28cb37f44f7667d38e96",
+  "bytes": 548923904,
   "executable": "DiceBound.exe"
 }
