@@ -42,7 +42,7 @@
       #careerOverlay .career-body{flex:1;min-height:0;overflow:auto;padding:14px 18px 28px}
       #careerOverlay .career-tabs{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 0 12px;background:#0d1626}
       #careerOverlay .career-tabs button.active{border-color:rgba(115,211,255,.75);box-shadow:0 0 0 1px rgba(115,211,255,.18) inset}
-      #careerOverlay .career-panel{display:none}.career-panel.active{display:block}
+      #careerOverlay .career-panel{display:none}#careerOverlay .career-panel.active{display:block}
       #careerOverlay .career-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
       #careerOverlay .career-card{padding:11px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:rgba(255,255,255,.045)}
       #careerOverlay .career-card span{display:block;color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
