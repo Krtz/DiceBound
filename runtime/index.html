@@ -53,8 +53,14 @@
   </main>
 
   <aside class="sidebar">
-    <section class="card">
-      <h2>Adventurer</h2>
+    <section class="card character-card" id="characterCard">
+      <div class="character-card-head">
+        <h2>Character</h2>
+        <div class="character-tabs" id="characterTabs" role="tablist" aria-label="Character details">
+          <button class="small-btn active" type="button" role="tab" aria-selected="true" aria-controls="characterStatsPanel" data-character-tab="stats">Stats</button>
+          <button class="small-btn" type="button" role="tab" aria-selected="false" aria-controls="characterGearPanel" data-character-tab="gear">Gear</button>
+        </div>
+      </div>
       <div class="hero-line">
         <div class="hero-avatar" id="heroAvatar">🏹</div>
         <div>
@@ -66,27 +72,28 @@
       <div class="bar hpbar"><i id="hpFill"></i></div>
       <div class="bar-label"><span>XP</span><span id="xpText">0 / 20</span></div>
       <div class="bar xpbar"><i id="xpFill"></i></div>
-      <div class="stats-grid">
-        <div class="stat"><span>Attack</span><strong id="attackText">5</strong></div>
-        <div class="stat"><span>Defense</span><strong id="defenseText">1</strong></div>
-        <div class="stat"><span>Gold</span><strong id="goldText">0</strong></div>
-        <div class="stat v18-stat-tooltip" id="goldGainStat"><span>Gold gain</span><strong id="goldGainText">100%</strong></div>
-        <div class="stat"><span>Potions</span><strong id="potionText">1</strong></div>
-        <div class="stat"><span>Crit</span><strong id="critText">5%</strong></div>
-        <div class="stat"><span>Dodge</span><strong id="dodgeText">0%</strong></div>
-        <div class="stat"><span>Lifesteal</span><strong id="lifeStealText">0%</strong></div>
-        <div class="stat"><span>Luck</span><strong id="luckText">0</strong></div>
-        <div class="stat"><span>Echo Strike</span><strong id="echoText">0%</strong></div>
-        <div class="stat"><span>Boss Damage</span><strong id="bossDamageText">0%</strong></div>
-      </div>
-      <button class="small-btn outside-potion" id="outsidePotionBtn">🧪 Drink potion outside combat</button>
-      <button class="small-btn run-buff-btn" id="runBuffBtn">📜 View current run buffs</button>
-    </section>
-
-    <section class="card equipment-card">
-      <h2>Equipment</h2>
-      <div class="equipment-grid" id="equipmentGrid"></div>
-      <div class="mythic-set-box" id="mythicSetStatus" hidden><strong>🌈 Impossible Road set</strong><br>0/4 pieces equipped.</div>
+      <section class="character-tab-panel active" id="characterStatsPanel" role="tabpanel" data-character-panel="stats">
+        <div class="stats-grid">
+          <div class="stat"><span>Attack</span><strong id="attackText">5</strong></div>
+          <div class="stat"><span>Defense</span><strong id="defenseText">1</strong></div>
+          <div class="stat"><span>Gold</span><strong id="goldText">0</strong></div>
+          <div class="stat v18-stat-tooltip" id="goldGainStat"><span>Gold gain</span><strong id="goldGainText">100%</strong></div>
+          <div class="stat"><span>Potions</span><strong id="potionText">1</strong></div>
+          <div class="stat"><span>Crit</span><strong id="critText">5%</strong></div>
+          <div class="stat"><span>Dodge</span><strong id="dodgeText">0%</strong></div>
+          <div class="stat"><span>Lifesteal</span><strong id="lifeStealText">0%</strong></div>
+          <div class="stat"><span>Luck</span><strong id="luckText">0</strong></div>
+          <div class="stat"><span>Echo Strike</span><strong id="echoText">0%</strong></div>
+          <div class="stat"><span>Boss Damage</span><strong id="bossDamageText">0%</strong></div>
+        </div>
+        <button class="small-btn outside-potion" id="outsidePotionBtn">🧪 Drink potion outside combat</button>
+        <button class="small-btn run-buff-btn" id="runBuffBtn">📜 View current run buffs</button>
+      </section>
+      <section class="character-tab-panel" id="characterGearPanel" role="tabpanel" data-character-panel="gear" hidden>
+        <div class="character-gear-copy">Hover a slot for item details. Border colour shows rarity.</div>
+        <div class="equipment-grid character-gear-grid" id="equipmentGrid" aria-label="Equipped gear"></div>
+        <div class="mythic-set-box" id="mythicSetStatus" hidden><strong>🌈 Impossible Road set</strong><br>0/4 pieces equipped.</div>
+      </section>
     </section>
 
     <section class="card pet-card">
