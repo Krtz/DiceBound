@@ -88,6 +88,7 @@
     "ui-camp",
     "ui-camp-shell-policy",
     "ui-options",
+    "ui-input-router",
     "ui-equipment-heirlooms",
     "ui-class-presentation",
     "ui-class-chooser",
@@ -1088,6 +1089,19 @@
       ]
     },
     {
+      "id": "ui-input-router",
+      "path": "js/ui/input-router.js",
+      "domain": "ui/app-shell-keyboard-routing-and-semantic-dismissal",
+      "status": "extracted",
+      "requires": [
+        "run-dice",
+        "ui-options"
+      ],
+      "provides": [
+        "DiceboundInputRouter"
+      ]
+    },
+    {
       "id": "ui-equipment-heirlooms",
       "path": "js/ui/equipment-heirlooms.js",
       "domain": "ui/equipment-hud-loot-heirloom-storage-and-semantic-art-presentation",
@@ -1300,6 +1314,7 @@
         "powerup-presentation",
         "ui-camp",
         "ui-options",
+        "ui-input-router",
         "ui-equipment-heirlooms",
         "ui-class-presentation",
         "ui-class-chooser",
