@@ -123,7 +123,7 @@
     overlay.setAttribute('aria-label','Achievements');
     if(overlay.dataset.achievementsSurface!=='1'){
       overlay.dataset.achievementsSurface='1';
-      overlay.innerHTML=`<section class="achievements-shell"><header class="achievements-chrome"><div><span class="achievements-kicker">Trophy hall</span><h2>🏆 Achievements</h2></div><button type="button" class="small-btn achievements-done" data-achievements-done>Done</button></header><div class="achievements-content"><p class="achievements-intro">Milestones are tracked by the current transferable save.</p><div class="achievements-grid" data-achievements-grid></div></div></section>`;
+      overlay.innerHTML=`<section class="achievements-shell"><header class="achievements-chrome"><div><span class="achievements-kicker">Trophy hall</span><h2>🏆 Achievements</h2></div><button type="button" class="small-btn achievements-done" data-achievements-done data-app-dismiss>Done</button></header><div class="achievements-content"><p class="achievements-intro">Milestones are tracked by the current transferable save.</p><div class="achievements-grid" data-achievements-grid></div></div></section>`;
       overlay.querySelector('[data-achievements-done]')?.addEventListener('click',close);
     }
     return overlay;
