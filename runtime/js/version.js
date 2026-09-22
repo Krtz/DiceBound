@@ -6,7 +6,7 @@
   const VERSION="0.6.7.20";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Career recovery, battle polish & Math/Confusion.";
+  const RELEASE_SUMMARY="Career panel visibility hotfix.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
