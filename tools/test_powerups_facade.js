@@ -16,6 +16,7 @@ assert.doesNotMatch(source,/Math\.random/);
 
 const fakeCatalog=[
   {id:"generic",rarity:"common",name:"Generic",apply(){state.player.attack+=1;}},
+  {id:"uncommon",rarity:"uncommon",name:"Uncommon",apply(){state.player.defense+=1;}},
   {id:"ranger",classId:"ranger",rarity:"rare",name:"Ranger",apply(){state.player.attack+=2;}},
   {id:"fighter",classId:"fighter",rarity:"rare",name:"Fighter",apply(){state.player.defense+=2;}},
   {id:"unique",rarity:"epic",unique:true,name:"Unique",apply(){state.player.maxHp+=5;}},
@@ -54,6 +55,10 @@ power.configure({
   slimeIdentityActive:()=>state.player.classId==="slime",
   slimePowerCompatible:up=>up.id==="fighter",
   slimeRougePowerCompatible:up=>up.id!=="fighter",
+  isPowerupRarityAtLeast:(rarity,floor="rare")=>{
+    const order=["common","uncommon","rare","epic","legendary","mythical"],at=order.indexOf(rarity),min=order.indexOf(floor);
+    return at>=0&&min>=0&&at>=min;
+  },
   cascadeLuckRows:(rows,luck,progression)=>{
     const out=rows.map(row=>[row[0],Math.max(0,Number(row[1])||0)]),total=out.reduce((sum,row)=>sum+row[1],0);
     let budget=Math.max(0,Number(luck)||0)*100*.005*total;
@@ -75,15 +80,15 @@ power.configure({
   renderLevelUp:()=>"level",renderPowerupChoice:()=>"choice",renderLegendaryChoice:()=>"legendary",renderAllEligible:()=>"all",perfectedSignature:()=>({id:"perfected_signature"})
 });
 
-assert.deepEqual(power.eligible().map(up=>up.id),["generic","ranger","unique"]);
+assert.deepEqual(power.eligible().map(up=>up.id),["generic","uncommon","ranger","unique"]);
 gate=true;
-assert.deepEqual(power.eligible().map(up=>up.id),["generic","ranger","unique","gated"]);
+assert.deepEqual(power.eligible().map(up=>up.id),["generic","uncommon","ranger","unique","gated"]);
 state.player.upgradeCounts.unique=1;
-assert.deepEqual(power.eligible().map(up=>up.id),["generic","ranger","gated"]);
+assert.deepEqual(power.eligible().map(up=>up.id),["generic","uncommon","ranger","gated"]);
 state.player.classId="slime";state.player.upgradeCounts={};
-assert.deepEqual(power.eligible().map(up=>up.id),["generic","fighter","unique","gated"]);
+assert.deepEqual(power.eligible().map(up=>up.id),["generic","uncommon","fighter","unique","gated"]);
 state.player.classId="slimerouge";
-assert.deepEqual(power.eligible().map(up=>up.id),["generic","ranger","unique","gated"]);
+assert.deepEqual(power.eligible().map(up=>up.id),["generic","uncommon","ranger","unique","gated"]);
 
 state.player.classId="ranger";state.player.upgradeCounts={};randomCalls=0;
 assert.ok(power.weighted(power.eligible()));
@@ -117,6 +122,15 @@ assert.equal(state.player.upgradeCounts.generic,1);
 assert.ok(events.some(event=>Array.isArray(event)&&event[0]==="log"),"D20 application keeps presentation hook ordering");
 assert.ok(events.includes("unlock-check"));
 assert.ok(events.includes("taken"));
+
+state.player.classId="ranger";state.player.upgradeCounts={};gate=true;events.length=0;
+let sealedPool=null;
+power.configure({pick:list=>{sealedPool=list.map(up=>up.id);return list[0];}});
+const sealed=power.applyRandomHighRarity("Sealed Relic",false);
+assert.equal(sealed.id,"uncommon","Sealed Relic must allow Uncommon as its floor");
+assert.deepEqual(sealedPool,["uncommon","ranger","unique","gated"],"Sealed Relic must include every eligible Uncommon+ Powerup and exclude Common/Poor");
+gate=false;
+power.configure({pick:list=>list[0]});
 
 state.player.classId="ranger";state.player.levelChoiceBonus=1;randomCalls=0;
 assert.equal(power.levelChoices().length,4);
