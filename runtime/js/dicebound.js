@@ -620,6 +620,7 @@
     syncStorage:()=>dbItems.syncHeirloomState(),toggleStoredActive:item=>dbItems.toggleStoredHeirloomActive(item),discardStored:item=>dbItems.discardStoredHeirloom(item),
     toggleRunStorage:item=>dbItems.toggleRunHeirloomStorage(item),toggleLegacyHeirloom:item=>dbItems.toggleLegacyHeirloom(item),
     isHeirloomEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),confirm:diceboundConfirm,
+    getCharacterLayout:()=>meta.settings?.characterLayout==='classic'?'classic':'modern',
     afterStorageChange:()=>updateMetaUI(),lootCopy:dbEquipmentUiLootCopy
   });
 
@@ -2833,12 +2834,13 @@ dbReturnToRoadTraceReady=true;
   if(!dbInputRouter?.configure)throw new Error("DiceBound requires the app input router before dicebound.js");
   const dbOptionsUi=window.DiceboundOptionsUi?.configure({
     find:$,
-    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth',floatingCombatNumbers:meta.settings?.floatingCombatNumbers!==false,fastWheelSlots:!!meta.settings?.fastWheelSlots,fastWheelSlotsUnlocked:dbProgression.hasAnyBoardClear(6)}),
+    getSettings:()=>({muted,masterVolume:meta.settings?.masterVolume??.70,soundPack:meta.settings?.soundPack||'synth',characterLayout:meta.settings?.characterLayout==='classic'?'classic':'modern',floatingCombatNumbers:meta.settings?.floatingCombatNumbers!==false,fastWheelSlots:!!meta.settings?.fastWheelSlots,fastWheelSlotsUnlocked:dbProgression.hasAnyBoardClear(6)}),
     nativeSaveSupported:()=>!!dbRuntime.platform?.capabilities?.openSaveFolder,
     openSaveFolder:()=>{const button=$('saveFolderBtn');button?.click();return !!button;},
     toggleMuted:()=>{$('muteBtn')?.click();return muted;},
     setVolume:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.masterVolume=clamp(Number(value),0,1);saveMeta();return meta.settings.masterVolume;},
     setSoundPack:pack=>{meta.settings=meta.settings||defaultSettings();meta.settings.soundPack=pack==='custom'?'custom':'synth';saveMeta();return meta.settings.soundPack;},
+    setCharacterLayout:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.characterLayout=value==='classic'?'classic':'modern';saveMeta();dbEquipmentUi.syncCharacterLayout?.();dbEquipmentUi.renderEquipment?.();return meta.settings.characterLayout;},
     setFloatingCombatNumbers:value=>{meta.settings=meta.settings||defaultSettings();meta.settings.floatingCombatNumbers=!!value;saveMeta();return meta.settings.floatingCombatNumbers;},
     setFastWheelSlots:value=>{if(!dbProgression.hasAnyBoardClear(6))return false;meta.settings=meta.settings||defaultSettings();meta.settings.fastWheelSlots=!!value;saveMeta();return meta.settings.fastWheelSlots;},
     playPreview:()=>{try{sfx.coin();}catch(_){}},

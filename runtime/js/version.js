@@ -3,10 +3,10 @@
 
   // These are the only release-version literals in the browser runtime.
   // tools/set_project_version.py stamps them from its explicit Version/Channel input.
-  const VERSION="0.6.7.23";
+  const VERSION="0.6.7.24";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Heirloom Vault redesign and Camp/Career Escape dismissal fixes.";
+  const RELEASE_SUMMARY="Modern tabbed Character paper doll with a persistent Classic layout option.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,

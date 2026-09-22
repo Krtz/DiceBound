@@ -12,6 +12,7 @@
   const STYLE_ID='dicebound-equipment-heirloom-ui-owner';
   let runtime={};
   let campStorageTab='all';
+  let characterTab='stats';
   const VAULT_TAB_SLOTS=Object.freeze({all:null,weapons:Object.freeze(['weapon','offhand']),armour:Object.freeze(['hat','chest','legs','boots']),accessories:Object.freeze(['amulet','ring'])});
 
   function doc(){return root.document||null;}
@@ -23,6 +24,7 @@
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
   function state(){return runtime.getState?.()||{};}
   function setModel(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
+  function characterLayout(){return runtime.getCharacterLayout?.()==='classic'?'classic':'modern';}
   function vaultTabForSlot(slot){
     if(VAULT_TAB_SLOTS.weapons.includes(slot))return 'weapons';
     if(VAULT_TAB_SLOTS.armour.includes(slot))return 'armour';
@@ -33,9 +35,18 @@
     const allowed=VAULT_TAB_SLOTS[tab]||null;
     return !allowed||allowed.includes(item?.slot);
   }
+  function gearIconMarkup(item,klass=''){
+    if(!item)return '';
+    return artMarkup(item,klass)||`<span class="db-equipment-icon-fallback" aria-hidden="true">${escapeHtml(item.icon||'◇')}</span>`;
+  }
+  function itemDetail(item,slot=item?.slot){
+    if(!item)return `Empty ${label(slot)} slot`;
+    const rarityLabel=rarity(item).label||item.rarity||'Unknown';
+    return `${item.name||'Equipment'} · ${rarityLabel} ${label(slot)} · ${bonuses(item)}`;
+  }
   function vaultSlotMarkup(slot,activeBySlot){
-    const item=activeBySlot.get(slot),slotId=escapeHtml(slot);
-    return `<div class="vault-paper-slot vault-slot-${slotId} ${item?.rarity||'empty'}" data-vault-slot="${slotId}" title="${escapeHtml(item?`${item.name}: ${bonuses(item)}`:`Empty ${label(slot)} slot`)}"><span class="vault-paper-slot-label">${escapeHtml(label(slot))}</span><span class="vault-paper-slot-item">${item?itemNameMarkup(item,'db-vault-slot-art'):'— Empty —'}</span></div>`;
+    const item=activeBySlot.get(slot),slotId=escapeHtml(slot),detail=escapeHtml(itemDetail(item,slot));
+    return `<div class="vault-paper-slot vault-slot-${slotId} ${item?.rarity||'empty'}" data-vault-slot="${slotId}" title="${detail}" aria-label="${detail}">${item?gearIconMarkup(item,'db-vault-slot-art'):`<span class="vault-paper-slot-label">${escapeHtml(label(slot))}</span>`}</div>`;
   }
   function vaultPaperDoll(active){
     const activeBySlot=new Map((active||[]).filter(Boolean).map(item=>[item.slot,item]));
@@ -55,7 +66,12 @@
     const style=documentRef.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      .db-equipment-art{display:block;object-fit:contain}.slot-item:has(.db-equipment-slot-art){display:flex;align-items:center;gap:4px}.db-equipment-slot-art{width:20px;height:20px;flex:0 0 20px}.loot-icon:has(.db-equipment-loot-art){width:58px;height:58px}.db-equipment-loot-art{width:58px;height:58px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42))}
+      .db-equipment-art{display:block;object-fit:contain}.loot-icon:has(.db-equipment-loot-art){width:58px;height:58px}.db-equipment-loot-art{width:58px;height:58px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42))}
+      .character-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.character-card-head h2{margin:0}.character-classic-title{display:none}.character-card[data-character-layout="modern"] .character-layout-card{padding:0;border:0;background:transparent;box-shadow:none;border-radius:0}.character-card[data-character-layout="classic"]{display:contents}.character-card[data-character-layout="classic"] .character-card-head{display:none}.character-card[data-character-layout="classic"] .character-layout-card{display:block!important;margin:0}.character-card[data-character-layout="classic"] .character-classic-title{display:block}.character-card[data-character-layout="classic"] .character-gear-copy{display:none}.character-tabs{display:flex;gap:6px}.character-tabs .small-btn{width:auto!important;margin:0!important;padding:6px 10px}.character-tabs .small-btn.active{border-color:rgba(101,169,255,.62);background:linear-gradient(180deg,rgba(101,169,255,.24),rgba(181,140,255,.12));box-shadow:inset 0 0 0 1px rgba(101,169,255,.18)}.character-tab-panel[hidden]{display:none!important}.character-tab-panel{margin-top:10px}.character-gear-copy{margin:0 0 9px;color:var(--muted);font-size:9px;line-height:1.4}
+      .character-gear-grid{position:relative;display:grid!important;grid-template-columns:repeat(5,minmax(42px,1fr))!important;grid-template-areas:". . hat . ." ". amulet chest ring ." "weapon . chest . offhand" ". . legs . ." ". . boots . .";gap:7px!important;min-height:250px;align-items:stretch;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.045),transparent 42%),rgba(0,0,0,.12)}
+      .character-gear-grid::before{content:"♙";position:absolute;left:50%;top:49%;translate:-50% -50%;font-size:150px;line-height:1;color:rgba(255,255,255,.035);pointer-events:none}.character-gear-slot{position:relative;z-index:1;min-width:0!important;min-height:58px!important;aspect-ratio:1/1;padding:5px!important;display:grid;place-items:center;border-width:2px!important;border-style:solid!important;background:rgba(5,9,17,.72)!important;overflow:visible!important}.character-gear-slot.slot-hat{grid-area:hat}.character-gear-slot.slot-amulet{grid-area:amulet}.character-gear-slot.slot-chest{grid-area:chest}.character-gear-slot.slot-weapon{grid-area:weapon}.character-gear-slot.slot-offhand{grid-area:offhand}.character-gear-slot.slot-ring{grid-area:ring}.character-gear-slot.slot-legs{grid-area:legs}.character-gear-slot.slot-boots{grid-area:boots}.db-equipment-slot-art{width:100%;height:100%;max-width:48px;max-height:48px;object-fit:contain;filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}.db-equipment-icon-fallback{font-size:28px;line-height:1}.character-empty-slot{font-size:7px;line-height:1.1;text-align:center;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.28);font-weight:900}
+      .character-gear-slot.empty{border-color:rgba(255,255,255,.10)!important}.character-gear-slot.poor,.vault-paper-slot.poor{border-color:#8f949c!important}.character-gear-slot.common,.vault-paper-slot.common{border-color:#d9dde5!important}.character-gear-slot.uncommon,.vault-paper-slot.uncommon{border-color:#62d79a!important}.character-gear-slot.rare,.vault-paper-slot.rare{border-color:#65a9ff!important}.character-gear-slot.epic,.vault-paper-slot.epic{border-color:#b58cff!important}.character-gear-slot.legendary,.vault-paper-slot.legendary{border-color:#f5c85b!important;box-shadow:0 0 10px rgba(245,200,91,.12),inset 0 0 14px rgba(245,200,91,.05)!important}.character-gear-slot.artifact,.vault-paper-slot.artifact{border-color:#ff9c38!important;box-shadow:0 0 10px rgba(255,156,56,.16)!important}.character-gear-slot.mythical,.vault-paper-slot.mythical{border-color:#bd83ff!important;box-shadow:0 0 12px rgba(189,131,255,.18)!important}.character-gear-slot.omega,.vault-paper-slot.omega{border-color:#e7d6ff!important;box-shadow:0 0 12px rgba(181,108,255,.28),inset 0 0 12px rgba(231,214,255,.08)!important}
+      @media(max-width:620px){.character-card-head{align-items:flex-start;flex-direction:column}.character-tabs{width:100%}.character-tabs .small-btn{flex:1}.character-gear-grid{grid-template-columns:repeat(4,minmax(42px,1fr))!important;grid-template-areas:"hat amulet ring offhand" "weapon chest legs boots"!important;min-height:0}.character-gear-grid::before{display:none}.character-gear-slot{grid-area:auto!important}}
       .db-equipment-card-art{width:48px;height:48px;max-width:48px;max-height:48px;flex:0 0 48px;filter:drop-shadow(0 4px 5px rgba(0,0,0,.35))}.heirloom-storage-item b:has(.db-equipment-card-art),.end-storage-card b:has(.db-equipment-card-art),.gear-keep-btn strong:has(.db-equipment-card-art){display:flex;align-items:center;gap:8px;min-width:0}.db-rarity-name{font:inherit;text-shadow:0 1px 2px rgba(0,0,0,.72)}.db-rarity-poor{color:#c4c8cf}.db-rarity-common{color:#fff}.db-rarity-uncommon{color:#a9dbff}.db-rarity-rare{color:#438bd8}.db-rarity-epic{color:#f5e9a8}.db-rarity-legendary{color:#ffd45f}.db-rarity-artifact{color:#ff9c38}.db-rarity-mythical{color:#bd83ff}.db-rarity-omega{color:#e7d6ff}
       .heirloom-storage-wrap{margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,.11);border-radius:16px;background:rgba(0,0,0,.13)}
       .heirloom-storage-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.heirloom-storage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.heirloom-storage-item{padding:10px;border:1px solid rgba(255,255,255,.10);border-radius:13px;background:rgba(255,255,255,.035);color:var(--ink);text-align:left}.heirloom-storage-item.active{border-color:var(--gold);box-shadow:inset 0 0 20px rgba(245,200,91,.08)}.heirloom-storage-item b,.heirloom-storage-item span{display:block}.heirloom-storage-item span{font-size:9px;color:var(--muted);margin-top:4px;line-height:1.4}.heirloom-storage-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:stretch;margin-top:8px}.heirloom-storage-actions .small-btn{width:auto;margin-top:0!important;min-height:34px}.heirloom-storage-actions .danger{border-color:rgba(255,100,118,.34)!important;background:rgba(106,24,42,.28)!important;color:#ffd3da!important}
@@ -63,7 +79,7 @@
       .vault-overview,.vault-inventory{padding:16px;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:rgba(0,0,0,.16)}.vault-inventory{margin-top:14px}
       .vault-summary{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:14px}.vault-summary>div:first-child{display:grid;gap:3px}.vault-kicker{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.vault-summary b{font-size:18px}.vault-summary span{font-size:10px;color:var(--muted)}.vault-milestones{max-width:55%;font-size:9px;color:var(--muted);line-height:1.5;text-align:right}
       .vault-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.vault-section-title>div{display:grid;gap:2px}.vault-section-title b{font-size:13px}.vault-section-title span{font-size:9px;color:var(--muted)}
-      .vault-loadout{position:relative;padding:14px;border-radius:16px;background:linear-gradient(180deg,rgba(181,140,255,.08),rgba(255,255,255,.025));border:1px solid rgba(181,140,255,.15);overflow:hidden}.vault-paper-doll{position:relative;display:grid;grid-template-columns:repeat(5,minmax(90px,1fr));grid-template-areas:". . hat . ." ". amulet chest ring ." "weapon . chest . offhand" ". . legs . ." ". . boots . .";gap:8px;align-items:stretch}.vault-paper-doll::before{content:"♙";position:absolute;inset:50% auto auto 50%;translate:-50% -50%;font-size:190px;line-height:1;color:rgba(255,255,255,.035);pointer-events:none}.vault-paper-slot{position:relative;z-index:1;min-height:72px;padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(4,8,17,.56);display:grid;align-content:center;gap:5px;text-align:center}.vault-paper-slot:not(.empty){border-color:rgba(245,200,91,.26);box-shadow:inset 0 0 18px rgba(245,200,91,.05)}.vault-paper-slot-label{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.vault-paper-slot-item{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;font-size:9px;font-weight:800}.db-vault-slot-art{width:34px;height:34px;max-width:34px;max-height:34px;object-fit:contain;filter:drop-shadow(0 3px 5px rgba(0,0,0,.4))}.vault-slot-hat{grid-area:hat}.vault-slot-amulet{grid-area:amulet}.vault-slot-chest{grid-area:chest}.vault-slot-weapon{grid-area:weapon}.vault-slot-offhand{grid-area:offhand}.vault-slot-ring{grid-area:ring}.vault-slot-legs{grid-area:legs}.vault-slot-boots{grid-area:boots}
+      .vault-loadout{position:relative;padding:14px;border-radius:16px;background:linear-gradient(180deg,rgba(181,140,255,.08),rgba(255,255,255,.025));border:1px solid rgba(181,140,255,.15);overflow:hidden}.vault-paper-doll{position:relative;display:grid;grid-template-columns:repeat(5,minmax(90px,1fr));grid-template-areas:". . hat . ." ". amulet chest ring ." "weapon . chest . offhand" ". . legs . ." ". . boots . .";gap:8px;align-items:stretch}.vault-paper-doll::before{content:"♙";position:absolute;inset:50% auto auto 50%;translate:-50% -50%;font-size:190px;line-height:1;color:rgba(255,255,255,.035);pointer-events:none}.vault-paper-slot{position:relative;z-index:1;min-height:72px;padding:7px;border-radius:12px;border:2px solid rgba(255,255,255,.09);background:rgba(4,8,17,.56);display:grid;place-items:center;text-align:center}.vault-paper-slot-label{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.30)}.db-vault-slot-art{width:100%;height:100%;max-width:52px;max-height:52px;object-fit:contain;filter:drop-shadow(0 3px 5px rgba(0,0,0,.4))}.vault-slot-hat{grid-area:hat}.vault-slot-amulet{grid-area:amulet}.vault-slot-chest{grid-area:chest}.vault-slot-weapon{grid-area:weapon}.vault-slot-offhand{grid-area:offhand}.vault-slot-ring{grid-area:ring}.vault-slot-legs{grid-area:legs}.vault-slot-boots{grid-area:boots}
       .vault-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.vault-tab{width:auto!important;margin:0!important}.vault-tab span{display:inline-flex;min-width:18px;justify-content:center;margin-left:4px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.08)}.vault-tab.active{border-color:var(--gold);background:rgba(245,200,91,.12)}
       .vault-active-badge{display:inline-flex;width:max-content;margin-top:7px;padding:3px 7px;border-radius:999px;font-size:8px;font-style:normal;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#dff7e9;background:rgba(98,215,154,.12);border:1px solid rgba(98,215,154,.22)}.vault-empty{grid-column:1/-1;padding:26px;text-align:center;color:var(--muted);border:1px dashed rgba(255,255,255,.12);border-radius:14px}
       @media(max-width:760px){.vault-summary{display:grid}.vault-milestones{max-width:none;text-align:left}.vault-paper-doll{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:none}.vault-paper-slot{grid-area:auto!important}.vault-paper-doll::before{display:none}}
@@ -92,23 +108,70 @@
   }
   function campView(){return Object.freeze({owner:OWNER,heirloomHtml:campHeirloomHtml(),setHtml:artifactSetHtml()});}
 
+  function activateCharacterTab(name='stats'){
+    characterTab=name==='gear'?'gear':'stats';
+    const layout=characterLayout(),tabs=find('characterTabs'),stats=find('characterStatsPanel'),gear=find('characterGearPanel');
+    tabs?.querySelectorAll?.('[data-character-tab]').forEach(button=>{
+      const active=button.dataset.characterTab===characterTab;
+      button.classList.toggle('active',active);
+      button.setAttribute?.('aria-selected',active?'true':'false');
+    });
+    if(layout==='classic'){
+      if(stats){stats.hidden=false;stats.classList?.add?.('active');}
+      if(gear){gear.hidden=false;gear.classList?.add?.('active');}
+    }else{
+      if(stats){stats.hidden=characterTab!=='stats';stats.classList?.toggle?.('active',characterTab==='stats');}
+      if(gear){gear.hidden=characterTab!=='gear';gear.classList?.toggle?.('active',characterTab==='gear');}
+    }
+    return characterTab;
+  }
+  function syncCharacterLayout(){
+    const layout=characterLayout(),card=find('characterCard'),grid=find('equipmentGrid');
+    if(card)card.dataset.characterLayout=layout;
+    doc()?.body?.setAttribute?.('data-character-layout',layout);
+    grid?.classList?.toggle?.('character-gear-grid',layout==='modern');
+    activateCharacterTab(characterTab);
+    return layout;
+  }
+  function setCharacterLayout(layout){
+    runtime.setCharacterLayout?.(layout==='classic'?'classic':'modern');
+    syncCharacterLayout();
+    renderEquipment();
+    return characterLayout();
+  }
+  function bindCharacterTabs(){
+    const tabs=find('characterTabs');
+    if(!tabs||tabs.dataset?.dbCharacterTabsWired==='1')return;
+    if(tabs.dataset)tabs.dataset.dbCharacterTabsWired='1';
+    tabs.addEventListener?.('click',event=>{
+      const button=event.target?.closest?.('[data-character-tab]');
+      if(button)activateCharacterTab(button.dataset.characterTab);
+    });
+  }
+
   function renderEquipment(){
     installStyles();
-    const grid=find('equipmentGrid'),current=state(),equipped=current.equipment||{};
+    bindCharacterTabs();
+    const layout=syncCharacterLayout(),grid=find('equipmentGrid'),current=state(),equipped=current.equipment||{};
     if(grid){
       grid.replaceChildren();
       slots().forEach(slot=>{
         const item=equipped[slot],entry=doc()?.createElement('div');if(!entry)return;
-        entry.className=`equipment-slot ${item?.rarity||'empty'}`;
-        entry.title=item?`${item.name}: ${bonuses(item)}`:`Empty ${label(slot)} slot`;
-        entry.innerHTML=`<span class=\"slot-label\">${escapeHtml(label(slot))}</span><span class=\"slot-item\">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
+        entry.title=itemDetail(item,slot);
+        if(layout==='classic'){
+          entry.className=`equipment-slot ${item?.rarity||'empty'}`;
+          entry.innerHTML=`<span class="slot-label">${escapeHtml(label(slot))}</span><span class="slot-item">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
+        }else{
+          entry.className=`equipment-slot character-gear-slot slot-${slot} ${item?.rarity||'empty'}`;
+          entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art'):`<span class="character-empty-slot">${escapeHtml(label(slot))}</span>`;
+        }
         grid.appendChild(entry);
       });
     }
     const setBox=find('mythicSetStatus'),set=setModel();
     if(setBox){setBox.hidden=(Number(set.count)||0)<1;if(!setBox.hidden)setBox.innerHTML=artifactSetHtml(set);}
     renderCampStorage();
-    return Object.freeze({owner:OWNER,slots:slots().length,equipped:slots().filter(slot=>!!equipped[slot]).length,setPieces:Number(set.count)||0});
+    return Object.freeze({owner:OWNER,layout,slots:slots().length,equipped:slots().filter(slot=>!!equipped[slot]).length,setPieces:Number(set.count)||0});
   }
 
   function renderLoot(item){
@@ -205,9 +268,9 @@
     return Object.freeze({owner:OWNER,unlocked:true,stored:storage.length,active:active.length});
   }
 
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();return api;}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();bindCharacterTabs();syncCharacterLayout();return api;}
   function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage');return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0});}
-  const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,inspect,owner:OWNER});
+  const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,activateCharacterTab,syncCharacterLayout,setCharacterLayout,inspect,owner:OWNER});
   window.DiceboundEquipmentHeirlooms=api;
   window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect});
 })(window);
