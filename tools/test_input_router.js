@@ -90,7 +90,9 @@ for(const [file,pattern] of [
   ["ui/talent-tree.js",/data-talent-done[^>]*data-app-dismiss|data-app-dismiss[^>]*data-talent-done/],
   ["ui/prestige-moon.js",/data-prestige-back[^>]*data-app-dismiss|data-app-dismiss[^>]*data-prestige-back/],
   ["ui/info-guide.js",/data-info-done[^>]*data-app-dismiss|data-app-dismiss[^>]*data-info-done/],
-  ["ui/achievements.js",/data-achievements-done[^>]*data-app-dismiss|data-app-dismiss[^>]*data-achievements-done/]
+  ["ui/achievements.js",/data-achievements-done[^>]*data-app-dismiss|data-app-dismiss[^>]*data-achievements-done/],
+  ["ui/career.js",/data-career-done[^>]*data-app-dismiss|data-app-dismiss[^>]*data-career-done/],
+  ["ui/camp.js",/data-close-camp-panel[^>]*data-app-dismiss|data-app-dismiss[^>]*data-close-camp-panel/]
 ]){
   const src=fs.readFileSync(path.join(ROOT,"runtime","js",file),"utf8");
   assert.match(src,pattern,file+" must expose the shared dismissal contract");

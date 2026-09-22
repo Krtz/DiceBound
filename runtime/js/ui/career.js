@@ -82,11 +82,11 @@
     const completeOwnedSurface=overlay.dataset.careerOwner===OWNER
       &&!!overlay.querySelector(".career-shell")
       &&!!overlay.querySelector(".career-body")
-      &&!!overlay.querySelector("[data-career-done]")
+      &&!!overlay.querySelector("[data-career-done][data-app-dismiss]")
       &&["overview","enemies","runs"].every(name=>!!overlay.querySelector(`[data-career-tab="${name}"]`)&&!!overlay.querySelector(`[data-career-panel="${name}"]`));
     if(!completeOwnedSurface){
       overlay.dataset.careerOwner=OWNER;
-      overlay.innerHTML=`<section class="career-shell"><header class="career-chrome"><div><span class="career-kicker">The roads remember</span><h2>Career</h2></div><button type="button" class="small-btn career-done" data-career-done>Done</button></header><div class="career-body"><nav class="career-tabs" aria-label="Career sections"><button type="button" class="small-btn active" data-career-tab="overview">Overview</button><button type="button" class="small-btn" data-career-tab="enemies">Enemy Ledger</button><button type="button" class="small-btn" data-career-tab="runs">Run History</button></nav><section class="career-panel active" data-career-panel="overview"></section><section class="career-panel" data-career-panel="enemies"></section><section class="career-panel" data-career-panel="runs"></section></div></section>`;
+      overlay.innerHTML=`<section class="career-shell"><header class="career-chrome"><div><span class="career-kicker">The roads remember</span><h2>Career</h2></div><button type="button" class="small-btn career-done" data-career-done data-app-dismiss>Done</button></header><div class="career-body"><nav class="career-tabs" aria-label="Career sections"><button type="button" class="small-btn active" data-career-tab="overview">Overview</button><button type="button" class="small-btn" data-career-tab="enemies">Enemy Ledger</button><button type="button" class="small-btn" data-career-tab="runs">Run History</button></nav><section class="career-panel active" data-career-panel="overview"></section><section class="career-panel" data-career-panel="enemies"></section><section class="career-panel" data-career-panel="runs"></section></div></section>`;
       overlay.querySelector("[data-career-done]")?.addEventListener("click",close);
       overlay.querySelectorAll("[data-career-tab]").forEach(button=>button.addEventListener("click",()=>activateTab(button.dataset.careerTab)));
     }

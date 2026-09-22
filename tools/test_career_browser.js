@@ -33,9 +33,10 @@ async function main(){
     await page.evaluate(`(()=>{window.__careerErrors=[];window.addEventListener('error',event=>window.__careerErrors.push(String(event.error?.stack||event.message||event.error||'window error')));document.getElementById('classUnlockRevealOverlay')?.classList.add('hidden');return true;})()`);
 
     const hit=await pointerClick(page,"#campCareerBtn");
-    const opened=await page.evaluate(`(()=>{const overlay=document.getElementById('careerOverlay');return {open:!!overlay&&!overlay.classList.contains('hidden'),inspect:window.DiceboundCareerUi?.inspect?.(),infoStats:!!document.querySelector('#infoOverlay [data-info-tab="stats"]')};})()`);
+    const opened=await page.evaluate(`(()=>{const overlay=document.getElementById('careerOverlay');return {open:!!overlay&&!overlay.classList.contains('hidden'),inspect:window.DiceboundCareerUi?.inspect?.(),infoStats:!!document.querySelector('#infoOverlay [data-info-tab="stats"]'),semanticDismiss:!!overlay?.querySelector('[data-career-done][data-app-dismiss]')};})()`);
     if(!opened.open)throw new Error(`Career pointer click did not open destination; hit=${JSON.stringify(hit)} state=${JSON.stringify(opened)}`);
     if(opened.infoStats)throw new Error("Lifetime Career Stats still exist as a duplicate Info tab");
+    if(!opened.semanticDismiss)throw new Error("Career Done is missing the shared Escape dismissal semantic");
     if(!opened.inspect?.open||opened.inspect?.activeTab!=="overview")throw new Error(`Career owner did not retain the visible Overview surface: ${JSON.stringify(opened)}`);
 
     const overview=await page.evaluate(`(()=>{const panel=document.querySelector('[data-career-panel="overview"]'),style=panel?getComputedStyle(panel):null,rect=panel?.getBoundingClientRect();return {cards:document.querySelectorAll('#careerOverlay .career-card').length,text:panel?.textContent||'',clearSection:document.querySelector('#careerOverlay .career-clear-grid')?.textContent||'',display:style?.display||null,visibility:style?.visibility||null,width:rect?.width||0,height:rect?.height||0};})()`);
@@ -72,3 +73,4 @@ async function main(){
   }
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
+
