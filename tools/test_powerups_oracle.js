@@ -36,7 +36,7 @@ function assertCoverage(actual){
   assert.equal(actual.cases.find(c=>c.name==="apply-d20")?.rngCalls,1,"D20 Powerup application must consume exactly one RNG draw");
   assert.deepEqual({locked:actual.cases.find(c=>c.name==="achievement-gate")?.locked,unlocked:actual.cases.find(c=>c.name==="achievement-gate")?.unlocked,gateBefore:actual.cases.find(c=>c.name==="achievement-gate")?.gateBefore,gateAfter:actual.cases.find(c=>c.name==="achievement-gate")?.gateAfter},{locked:false,unlocked:true,gateBefore:false,gateAfter:true},"nature_master must stay locked at 499 Nature progress and unlock exactly at 500");
   assert.deepEqual({initial:actual.cases.find(c=>c.name==="unique-exclusion")?.initial,after:actual.cases.find(c=>c.name==="unique-exclusion")?.after},{initial:true,after:false},"ungated Unique power execute must be eligible once then excluded by upgradeCounts");
-  assert.equal(actual.cases.find(c=>c.name==="random-high-rarity")?.rngCalls,1,"random Rare/Epic reward must consume one selection RNG draw for non-D20");
+  assert.equal(actual.cases.find(c=>c.name==="random-high-rarity")?.rngCalls,1,"random Uncommon+ reward must consume one selection RNG draw for non-D20");
   assert.equal(actual.cases.find(c=>c.name==="legendary-choices")?.rngCalls,3,"three Legendary choices must consume exactly three RNG draws");
   assert.equal(actual.cases.find(c=>c.name==="miniboss-three")?.rngCalls,6,"three miniboss choices must consume rarity+pick RNG per choice");
   assert.equal(actual.cases.find(c=>c.name==="miniboss-four")?.rngCalls,8,"four miniboss choices must consume rarity+pick RNG per choice");
@@ -121,6 +121,28 @@ async function main(){
       const record=expected.find(c=>c.name===name);
       assert.ok(record,"missing frozen Luck-sensitive Powerups case "+name);
       record.choices=choices;
+    }
+
+    // 0.6.7.22 approved #202 delta: Sealed Relic now uses an Uncommon+
+    // floor through the canonical Powerup rarity order. The same frozen RNG
+    // draw therefore resolves Twin Fletching instead of Executioner; RNG call
+    // count/state and every unrelated oracle case must remain exact.
+    {
+      const record=expected.find(c=>c.name==="random-high-rarity");
+      assert.ok(record,"missing frozen random-high-rarity Powerups case");
+      record.applied={
+        id:"ranger_echo",name:"Twin Fletching",rarity:"uncommon",
+        classId:"ranger",classIds:[],unique:false,achievementGate:null
+      };
+      record.state.player.doubleStrike=.18;
+      record.state.player.upgradeCounts={ranger_echo:1};
+      record.state.player.runBuffs=[{
+        icon:"🏹",
+        name:"Twin Fletching",
+        desc:"Gain +18% Echo Strike chance.",
+        rarity:"uncommon",
+        source:"Oracle Relic"
+      }];
     }
     assert.deepEqual(actual.cases,expected);
     console.log(`Powerups oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.baselineVersion} baseline on runtime ${actual.runtimeVersion}.`);
