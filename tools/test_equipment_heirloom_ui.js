@@ -144,7 +144,7 @@ for(const adapter of [
   "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}"
 ])assert.ok(monolith.includes(adapter),`missing thin equipment/Heirloom UI adapter: ${adapter}`);
 assert.ok(monolith.includes("dbEquipmentUi.renderEndGear();"),"end-run gear rendering must route directly through the Equipment/Heirloom UI owner");
-assert.ok(monolith.includes("formatBonuses:item=>formatBonuses(item)"),"Equipment UI must resolve the final live formatter instead of capturing an early function generation");
+assert.ok(monolith.includes("formatBonuses,formatDetailBonuses:item=>formatBonuses(item)"),"Character detail must resolve the final live formatter without changing released loot/storage formatting");
 assert.ok(monolith.includes("getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item)"),"Equipment UI must receive semantic identity fallback from the canonical equipment owner");
 assert.ok(!/function\s+renderEndGear\s*\(/.test(monolith),"retired renderEndGear call-only adapter returned to the monolith");
 for(const retired of ["renderEquipment=function","renderEndGear=function","openLoot=function","renderEquipmentV110Base","renderEquipmentV23Base","renderEquipmentV24Base","v24RenderHeirloomStorage","v25RenderEndStorageManager","db06314RenderEquipmentBase","db06314OpenLootBase","dicebound-06314-equipment-identity-style"])assert.ok(!monolith.includes(retired),`retired equipment/Heirloom UI layer remains: ${retired}`);
