@@ -12,7 +12,7 @@
     audio:`${ROOT}/audio`,audioCustom:`${ROOT}/audio/custom`
   });
   const CLASSES=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","ouroboros","slimerouge","dragoon","invoker"];
-  const PETS=["neutral","fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation"];
+  const PETS=["neutral","fire","ice","electric","light","void","nature","donut","tech","metal","coffee","gun","radiation","math"];
   const MINI=["ogre-roadwarden","titan-guard","paradox-warden","crownless-auditor","ringbound-chancellor","abyssal-custodian"];
   const BOSS=["ancient-road-dragon","astral-devourer-dragon","nullstar-hydra","crown-eater","ring-tyrant","last-equation"];
   const SECRET=["road-merchant","bloodmage-boss","pale-devil"];
@@ -28,7 +28,9 @@
   const guardians=(ids,battleBase,markerBase)=>Object.fromEntries(ids.map(id=>[id,Object.freeze({battle:`${battleBase}/${id}.png`,boardMarker:`${markerBase}/${id}.png`,dedicatedBoardMarker:true,alt:id})]));
   const bossGuardians=guardians(BOSS,paths.bossBattle,paths.bossMarkers);
   bossGuardians["astral-devourer-dragon"]=Object.freeze({...bossGuardians["astral-devourer-dragon"],battle:`${paths.bossBattle}/astral-devourer-dragon-2.png`});
+  const normalEnemyBattleArt=(id,file)=>`${paths.normalEnemyBattle}/${id}/${file}`;
   const normalEnemy=(id,alt,portrait=null)=>Object.freeze({portrait,boardMarker:`${paths.normalEnemyMarkers}/${id}.png`,alt});
+  const tieredNormalEnemy=(id,alt,portrait=null)=>Object.freeze({...(portrait?{portrait}:{}),battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),normalEnemyBattleArt(id,`board-${board}.png`)]))),boardMarker:`${paths.normalEnemyMarkers}/${id}.png`,alt});
   const powerups=Object.freeze({
     secondWind:{image:`${paths.powerupPoor}/second-wind.png`,alt:"Second Wind"},fieldAlchemy:{image:`${paths.powerupPoor}/field-alchemy.png`,alt:"Field Alchemy"},
     sharperBlade:{image:`${paths.powerupPoor}/sharper-blade.png`,alt:"Sharper Blade"},faintEcho:{image:`${paths.powerupPoor}/faint-echo.png`,alt:"Faint Echo"},
@@ -42,15 +44,15 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:22,
+  const manifest=Object.freeze({version:23,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
-      slime:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/slime-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/slime.png`,alt:"Slime"}),
-      goblin:normalEnemy("goblin","Goblin"),skeleton:normalEnemy("skeleton","Skeleton"),
-      wolf:Object.freeze({portrait:`${paths.normalEnemyBattle}/wolf.png`,battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/wolf-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/wolf.png`,alt:"Wolf"}),bandit:normalEnemy("bandit","Bandit",`${paths.normalEnemyBattle}/bandit.png`),
-      orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/wraith-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/wraith.png`,alt:"Wraith"}),
-      troll:normalEnemy("troll","Troll",`${paths.normalEnemyBattle}/troll.png`),demon:Object.freeze({battleByBoard:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(board=>[String(board),`${paths.normalEnemyBattle}/devil-board-${board}.png`]))),boardMarker:`${paths.normalEnemyMarkers}/demon.png`,alt:"Demon"}),lich:normalEnemy("lich","Lich")
+      slime:tieredNormalEnemy("slime","Slime"),
+      goblin:tieredNormalEnemy("goblin","Goblin"),skeleton:tieredNormalEnemy("skeleton","Skeleton"),
+      wolf:tieredNormalEnemy("wolf","Wolf",normalEnemyBattleArt("wolf","portrait.png")),bandit:normalEnemy("bandit","Bandit",normalEnemyBattleArt("bandit","portrait.png")),
+      orc:normalEnemy("orc","Orc"),cultist:normalEnemy("cultist","Cultist"),wraith:tieredNormalEnemy("wraith","Wraith"),
+      troll:normalEnemy("troll","Troll",normalEnemyBattleArt("troll","portrait.png")),demon:tieredNormalEnemy("demon","Demon"),lich:normalEnemy("lich","Lich")
     }),
     minibosses:Object.freeze(guardians(MINI,paths.minibossBattle,paths.minibossMarkers)),bosses:Object.freeze(bossGuardians),secretBosses:Object.freeze(guardians(SECRET,paths.secretBossBattle,paths.secretBossMarkers)),
     classes:Object.freeze(classes),randomClass:Object.freeze({campsite:`${ROOT}/characters/random-class/campsite/random-class.png`,alt:"Random class"}),pets:Object.freeze(pets),powerups,
@@ -58,7 +60,7 @@
     board:Object.freeze({backgrounds:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map((n,i)=>[String(n),{image:`${paths.boardBackgrounds}/board-${n}-${["green-road","astral-road","fractured-road","crown-road","oblivion-ringroad","end-of-mathematics"][i]}.png`,alt:`Board ${n}`}]))),events:Object.freeze({gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"}})}),
     combat:Object.freeze({backgrounds:Object.freeze({normal:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(n=>[String(n),Object.freeze({image:`${paths.combatBackgrounds}/board-${n}-normal.png`,alt:`Board ${n} Normal battle background`,focus:"50% 50%"})]))),nightmare:Object.freeze(Object.fromEntries([1,2,3,4,5,6].map(n=>[String(n),Object.freeze({image:`${paths.combatBackgrounds}/board-${n}-nightmare.png`,alt:`Board ${n} Nightmare battle background`,focus:"50% 50%"})])))} ),effects:Object.freeze({naturePoisonVines:Object.freeze({frames:Object.freeze([1,2,3,4,5,6,7,8].map(frame=>`${paths.combatEffects}/nature/nature-poison-vines-${String(frame).padStart(2,"0")}.png`)),frameDurationMs:75,alt:"Thorny poison vines erupt, lash, and recede"}),donutProcRain:Object.freeze({frames:Object.freeze([1,2,3,4,5,6].map(frame=>`${paths.combatEffects}/donut/donut-proc-rain-${String(frame).padStart(2,"0")}.png`)),frameWidth:362,frameHeight:724,frameDurationMs:240,durationMs:1450,alt:"A magical cloud rains colorful donuts across the battlefield"}),gunProc:Object.freeze({frames:Object.freeze(["gun_spawn_01_no_arm.png","gun_fire_02_no_arm.png","gun_muzzle_smoke_03.png","gun_muzzle_flash_04.png","gun_bullet_tracer_05.png","gun_bullet_trail_06.png","gun_shell_casing_07.png","gun_impact_burst_08.png","gun_blood_burst_09.png","gun_blood_splatter_10.png"].map(file=>`${paths.combatEffects}/gun/${file}`)),frameDurationMs:78,alt:"A gun materializes, fires toward its target, and leaves an impact burst"}),fireProc:Object.freeze({frames:Object.freeze(["fire_embers_01.png","fire_impact_01.png","fire_impact_02.png","fire_impact_03.png","fire_launch_01.png","fire_launch_02.png","fire_trail_overlay_01.png","fire_travel_01.png","fire_travel_02.png"].map(file=>`${paths.combatEffects}/fire/${file.replaceAll("_","-")}`)),frameDurationMs:78,alt:"A fireball launches from the attacker, travels to its target, and explodes"})})}),
     equipment:Object.freeze({hat:Object.freeze({helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"}})}),
-    ui:Object.freeze({icons:Object.freeze({chest:{image:`${paths.campInteractions}/chest.png`,alt:"Treasure chest"},coins:{image:`${paths.uiCurrencies}/coins.png`,alt:"Coins"},troll:{image:`${paths.normalEnemyBattle}/troll.png`,alt:"Troll"},helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"},quickdraw:powerups.quickdraw,heavyPurse:powerups.heavyPurse,bandit:{image:`${paths.normalEnemyBattle}/bandit.png`,alt:"Bandit"},gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"},glassNeedle:powerups.glassNeedle})}),
+    ui:Object.freeze({icons:Object.freeze({chest:{image:`${paths.campInteractions}/chest.png`,alt:"Treasure chest"},coins:{image:`${paths.uiCurrencies}/coins.png`,alt:"Coins"},troll:{image:normalEnemyBattleArt("troll","portrait.png"),alt:"Troll"},helmet:{image:`${paths.equipmentHat}/helmet.png`,alt:"Helmet"},quickdraw:powerups.quickdraw,heavyPurse:powerups.heavyPurse,bandit:{image:normalEnemyBattleArt("bandit","portrait.png"),alt:"Bandit"},gambler:{image:`${paths.boardEventTiles}/gambler.png`,alt:"Gambler"},glassNeedle:powerups.glassNeedle})}),
     audio:Object.freeze({sfx:Object.freeze(Object.fromEntries(["roll","step","hit","crit","coin","heal","lose","level","win","holy"].map(x=>[x,{customBase:x,alt:x}])) )})
   });
   const files=[]; const add=x=>{if(x&&!files.includes(x))files.push(x)}; const walk=x=>{if(!x)return;if(typeof x==="string"&&x.startsWith("assets/")&&/\.(png|ico)$/i.test(x))add(x);else if(Array.isArray(x))x.forEach(walk);else if(typeof x==="object")Object.values(x).forEach(walk)}; walk(manifest);

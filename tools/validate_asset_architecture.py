@@ -5,7 +5,7 @@ import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
-EXPECTED={'classes': 27, 'pets': 13, 'pet_battle_assets': 13, 'normal_enemies': 11, 'normal_enemy_battle_assets': 27, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 12, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 296, 'combat_effect_assets': 33, 'equipment_assets': 27}
+EXPECTED={'classes': 27, 'pets': 14, 'pet_battle_assets': 14, 'normal_enemies': 11, 'normal_enemy_battle_assets': 39, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 12, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 310, 'combat_effect_assets': 33, 'equipment_assets': 27}
 LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
@@ -43,8 +43,8 @@ def load_registry(runtime):
     p=subprocess.run(["node","-e",node,str(runtime/"js/assets.js")],text=True,capture_output=True)
     if p.returncode: fail(f"Could not load asset registry: {p.stderr or p.stdout}")
     return json.loads(p.stdout)
-def count(root,expected):
-    got=len(list(root.glob("*.png")))
+def count(root,expected,recursive=False):
+    got=len(list(root.rglob("*.png") if recursive else root.glob("*.png")))
     if got!=expected: fail(f"expected {expected} PNGs in {root}, found {got}")
 def collect_live_pointers(runtime):
     out={}
@@ -67,13 +67,22 @@ def main():
         p=runtime/rel
         if not p.is_file() or p.stat().st_size==0: fail(f"registry/preload target missing or empty: {rel}")
     for ctx in ("campsite","battle","markers"): count(runtime/f"assets/characters/classes/{ctx}",EXPECTED["classes"])
-    count(runtime/"assets/characters/pets/portraits",13)
+    count(runtime/"assets/characters/pets/portraits",EXPECTED["pets"])
     count(runtime/"assets/characters/pets/battle",EXPECTED["pet_battle_assets"])
     for role,expected in (("minibosses",6),("bosses",6),("secret-bosses",3)):
         count(runtime/f"assets/enemies/{role}/battle",expected)
     for role,expected in (("normal",11),("minibosses",6),("bosses",6),("secret-bosses",3)):
         count(runtime/f"assets/enemies/{role}/board-markers",expected)
-    count(runtime/"assets/enemies/normal/battle",EXPECTED["normal_enemy_battle_assets"])
+    normal_battle=runtime/"assets/enemies/normal/battle"
+    count(normal_battle,EXPECTED["normal_enemy_battle_assets"],recursive=True)
+    flat_normal_battle=list(normal_battle.glob("*.png"))
+    if flat_normal_battle: fail("normal-enemy battle PNGs must live in their semantic enemy folders: "+", ".join(p.name for p in flat_normal_battle))
+    for enemy_id,entry in m["enemies"].items():
+        enemy_dir=normal_battle/enemy_id
+        if not enemy_dir.is_dir(): fail(f"normal enemy is missing its battle-art home: {enemy_id}")
+        for source in [entry.get("portrait"),*(entry.get("battleByBoard") or {}).values()]:
+            if source and not source.startswith(f"assets/enemies/normal/battle/{enemy_id}/"):
+                fail(f"normal enemy battle asset escaped its semantic owner folder: {enemy_id} -> {source}")
     count(runtime/"assets/enemies/normal/board-markers",EXPECTED["normal_enemy_board_markers"])
     count(runtime/"assets/board/backgrounds",6)
     count(runtime/"assets/combat/backgrounds",12)

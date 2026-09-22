@@ -98,7 +98,7 @@ if ($sourcePngCount -ne $stagedPngCount) {
 
 $requiredArtwork = @(
     "assets\board\backgrounds\board-6-end-of-mathematics.png",
-    "assets\enemies\normal\battle\wolf.png",
+    "assets\enemies\normal\battle\wolf\board-1.png",
     "assets\enemies\normal\board-markers\wolf.png",
     "assets\enemies\minibosses\board-markers\titan-guard.png",
     "assets\enemies\bosses\board-markers\last-equation.png",

@@ -11,6 +11,9 @@ wrapper-source/release/
 build/
 dist/
 
+# Local native-build cache (SDK packages and loader probes)
+.release-tools/
+
 # Runtime / user data
 runtime-cache/
 saves/

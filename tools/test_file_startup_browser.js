@@ -89,6 +89,13 @@ async function connectWithHandshake(){
     assert.equal(state?.legacyVisible,false,"obsolete Alpha start presentation must never be visible");
     assert.equal(state?.beginVisible,false,"obsolete Begin button must never be visible");
     assert.equal(diagnostics.length,0,`local file startup emitted runtime errors: ${diagnostics.join(' | ')}`);
+    const art=await page.evaluate(`(async()=>{const assets=window.DiceboundAssets,load=src=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{const canvas=document.createElement('canvas'),context=canvas.getContext('2d');canvas.width=canvas.height=1;context.drawImage(image,0,0,1,1);resolve({src,width:image.naturalWidth,height:image.naturalHeight,cornerAlpha:context.getImageData(0,0,1,1).data[3]});};image.onerror=()=>reject(new Error('Could not load '+src));image.src=src;});const pet=assets.resolvePetArt('math'),goblin=[1,2,3,4,5,6].map(board=>assets.resolveEnemyBattleArtById('goblin',board)),skeleton=[1,2,3,4,5,6].map(board=>assets.resolveEnemyBattleArtById('skeleton',board)),sources=[pet.portrait,pet.battle,...goblin.map(entry=>entry.src),...skeleton.map(entry=>entry.src)];return {pet,goblin,skeleton,loaded:await Promise.all(sources.map(load))};})()`);
+    assert.deepEqual(art.pet,{portrait:"assets/characters/pets/portraits/math.png",battle:"assets/characters/pets/battle/math.png",alt:"math"});
+    for(const [index,entry] of art.goblin.entries())assert.deepEqual(entry,{key:"goblin",src:`assets/enemies/normal/battle/goblin/board-${index+1}.png`,alt:"Goblin",board:index+1});
+    for(const [index,entry] of art.skeleton.entries())assert.deepEqual(entry,{key:"skeleton",src:`assets/enemies/normal/battle/skeleton/board-${index+1}.png`,alt:"Skeleton",board:index+1});
+    assert.equal(art.loaded.length,14,"all imported Euler, Goblin and Skeleton assets must be loaded by Edge");
+    for(const loaded of art.loaded){assert.ok(loaded.width>=1000&&loaded.height>=1000,`imported artwork did not retain its full-resolution dimensions: ${loaded.src}`);assert.ok(loaded.cornerAlpha<255,`imported artwork has an opaque corner/matte: ${loaded.src}`);}
+    console.log("Local file authored-art PASS: Euler plus Goblin/Skeleton Board 1--6 assets resolve and load with transparency");
     console.log("Local file Camp startup PASS");
   }finally{
     try{if(page)await page.send("Browser.close");}catch(_){}

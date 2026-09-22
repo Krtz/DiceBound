@@ -19,8 +19,8 @@ assert.deepEqual(normal.map(enemy => enemy.id), ["slime","goblin","skeleton","wo
 assert.equal(new Set(normal.map(enemy => enemy.id)).size, normal.length, "ordinary enemy ids must be unique");
 
 load("runtime/js/assets.js");
-assert.match(window.DiceboundAssets.resolveEnemyPortraitById("bandit").src, /bandit\.png$/);
-assert.match(window.DiceboundAssets.resolveEnemyBattleArtById("slime", 3).src, /slime-board-3\.png$/);
+assert.match(window.DiceboundAssets.resolveEnemyPortraitById("bandit").src, /assets\/enemies\/normal\/battle\/bandit\/portrait\.png$/);
+assert.match(window.DiceboundAssets.resolveEnemyBattleArtById("slime", 3).src, /assets\/enemies\/normal\/battle\/slime\/board-3\.png$/);
 assert.match(window.DiceboundAssets.resolveEnemyMarkerById("goblin").src, /goblin\.png$/);
 assert.equal(window.DiceboundAssets.resolveEnemyPortraitById("goblin"), null, "missing dedicated portrait is explicit, not a guessed fallback");
 assert.equal(window.DiceboundAssets.resolveEnemyPortraitById("not-an-enemy"), null);

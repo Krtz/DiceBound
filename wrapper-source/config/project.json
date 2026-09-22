@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.7.19",
+  "version": "0.6.7.20",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
