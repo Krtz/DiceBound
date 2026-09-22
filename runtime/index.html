@@ -230,13 +230,13 @@
 
 <div class="overlay hidden" id="merchantOverlay">
   <div class="modal wide">
+    <div class="legacy-dismiss-chrome"><button class="small-btn" id="merchantContinueBtn" data-app-dismiss>Leave merchant</button></div>
     <div class="start-art" style="font-size:58px">🧔‍♂️🛒</div>
     <h2 id="merchantTitle">Roadside Merchant</h2>
     <p class="subtitle" id="merchantSubtitle">A suspiciously well-positioned trader appears every twelve tiles.</p>
     <div class="shop-gold">Your purse: <span id="merchantGold">0</span> gold</div>
     <div class="merchant-notice" id="merchantNotice"></div>
     <div class="shop-grid" id="shopGrid"></div>
-    <button class="small-btn" id="merchantContinueBtn" style="width:100%">Leave merchant</button>
   </div>
 </div>
 
@@ -277,10 +277,10 @@
 
 <div class="overlay hidden" id="buffOverlay">
   <div class="modal wide">
+    <div class="legacy-dismiss-chrome"><button class="small-btn" id="buffCloseBtn" data-app-dismiss>Return to the road</button></div>
     <h2>Current Run Buffs</h2>
     <p class="subtitle">Everything affecting this adventurer right now: class traits, selected powerups, equipment and derived combat modifiers.</p>
     <div class="buff-grid" id="buffGrid"></div>
-    <button class="small-btn" id="buffCloseBtn" style="width:100%;margin-top:10px">Return to the road</button>
   </div>
 </div>
 
@@ -330,6 +330,7 @@
 
 <div class="overlay hidden" id="debugOverlay">
   <div class="modal wide">
+    <div class="legacy-dismiss-chrome"><button class="small-btn" id="debugCloseBtn" data-app-dismiss>Close testing menu</button></div>
     <h2>🧪 Secret Testing Menu</h2>
     <p class="subtitle">Developer conveniences. These buttons intentionally ruin balance.</p>
     <div class="debug-grid" id="debugGrid">
@@ -358,7 +359,6 @@
       <p class="memory-diagnostics-status" id="memoryDiagnosticsStatus" aria-live="polite">Recording off · heap unavailable</p>
       <pre class="memory-diagnostics-log" id="memoryDiagnosticsLog" aria-live="polite"></pre>
     </details>
-    <button class="main-btn" id="debugCloseBtn" style="width:100%;margin-top:12px">Close testing menu</button>
   </div>
 </div>
 
@@ -488,6 +488,7 @@
 <script src="js/ui/camp.js"></script>
 <script src="js/ui/camp-shell.js"></script>
 <script src="js/ui/options.js"></script>
+<script src="js/ui/input-router.js"></script>
 <script src="js/ui/equipment-heirlooms.js"></script>
 <script src="js/ui/class-presentation.js"></script>
 <script src="js/ui/class-chooser.js"></script>
