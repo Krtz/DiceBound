@@ -131,7 +131,7 @@
   }
 
   function applyRandomHighRarity(source="Sealed Relic",announce=true){
-    const pool=eligible(up=>up.rarity==="rare"||up.rarity==="epic"),up=call("pick",pool);
+    const pool=eligible(up=>call("isPowerupRarityAtLeast",up.rarity,"uncommon")),up=call("pick",pool);
     apply(up,source);
     if(announce){call("addLog",`A ${source.toLowerCase()} grants <b>${up.name}</b>.`);call("showToast",`${rarityInfo()[up.rarity].label}: ${up.name}`);}
     return up;
