@@ -90,6 +90,13 @@ assert.equal(document.getElementById("sellLootBtn").textContent,"Sell for 42 gol
 
 const storage=ui.renderCampStorage();
 assert.equal(storage.unlocked,true);
+assert.equal(storage.tab,"all");
+assert.equal(storage.visible,2);
+assert.match(document.getElementById("campHeirloomStorage").innerHTML,/vault-paper-doll/,"Camp Vault must show the active next-run paper doll");
+assert.match(document.getElementById("campHeirloomStorage").innerHTML,/All <span>2<\/span>/,"Vault must expose the All inventory tab with a count");
+assert.match(document.getElementById("campHeirloomStorage").innerHTML,/Weapons <span>1<\/span>/,"Vault must group Weapon and Offhand gear");
+assert.match(document.getElementById("campHeirloomStorage").innerHTML,/Armour <span>1<\/span>/,"Vault must group armour slots");
+assert.match(document.getElementById("campHeirloomStorage").innerHTML,/Accessories <span>0<\/span>/,"Vault must group accessory slots");
 assert.equal(document.getElementById("campHeirloomStorage").storageGrid.children.length,2);
 assert.match(document.getElementById("campHeirloomStorage").storageGrid.children[0].innerHTML,/db-equipment-card-art/,"Camp storage authored art must use bounded card sizing");
 assert.ok(storageSyncs>0,"storage synchronization must remain a domain callback");
@@ -106,6 +113,8 @@ assert.match(endStorage.endStorageGrid.children[0].innerHTML,/db-rarity-name db-
 const ownerStyle=document.getElementById("dicebound-equipment-heirloom-ui-owner");
 assert.match(ownerStyle.textContent,/\.db-equipment-card-art\{width:48px;height:48px;max-width:48px;max-height:48px;/,"Heirloom card art must have explicit maximum dimensions");
 assert.match(ownerStyle.textContent,/\.db-rarity-rare\{color:#438bd8\}/,"Heirloom UI owner must own the rarity-name colour palette");
+assert.match(ownerStyle.textContent,/\.vault-paper-doll\{/,"Heirloom UI owner must own the Vault paper-doll layout");
+assert.match(ownerStyle.textContent,/\.vault-tab\.active\{/,"Heirloom UI owner must own Vault category-tab presentation");
 assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderers must not fall back to unbounded semantic art");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
