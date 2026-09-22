@@ -72,3 +72,5 @@ async function main(){
   }
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
+
+assert.match(source,/data-career-done data-app-dismiss|data-app-dismiss data-career-done/,"Career Done must participate in the shared Escape dismissal contract");
