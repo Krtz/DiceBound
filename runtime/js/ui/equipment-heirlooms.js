@@ -24,6 +24,7 @@
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
   function state(){return runtime.getState?.()||{};}
   function setModel(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
+  function characterLayout(){return runtime.getCharacterLayout?.()==='classic'?'classic':'modern';}
   function vaultTabForSlot(slot){
     if(VAULT_TAB_SLOTS.weapons.includes(slot))return 'weapons';
     if(VAULT_TAB_SLOTS.armour.includes(slot))return 'armour';
@@ -66,7 +67,7 @@
     style.id=STYLE_ID;
     style.textContent=`
       .db-equipment-art{display:block;object-fit:contain}.loot-icon:has(.db-equipment-loot-art){width:58px;height:58px}.db-equipment-loot-art{width:58px;height:58px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42))}
-      .character-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.character-card-head h2{margin:0}.character-tabs{display:flex;gap:6px}.character-tabs .small-btn{width:auto!important;margin:0!important;padding:6px 10px}.character-tabs .small-btn.active{border-color:rgba(101,169,255,.62);background:linear-gradient(180deg,rgba(101,169,255,.24),rgba(181,140,255,.12));box-shadow:inset 0 0 0 1px rgba(101,169,255,.18)}.character-tab-panel[hidden]{display:none!important}.character-tab-panel{margin-top:10px}.character-gear-copy{margin:0 0 9px;color:var(--muted);font-size:9px;line-height:1.4}
+      .character-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.character-card-head h2{margin:0}.character-classic-title{display:none}.character-card[data-character-layout="modern"] .character-layout-card{padding:0;border:0;background:transparent;box-shadow:none;border-radius:0}.character-card[data-character-layout="classic"]{display:contents}.character-card[data-character-layout="classic"] .character-card-head{display:none}.character-card[data-character-layout="classic"] .character-layout-card{display:block!important;margin:0}.character-card[data-character-layout="classic"] .character-classic-title{display:block}.character-card[data-character-layout="classic"] .character-gear-copy{display:none}.character-tabs{display:flex;gap:6px}.character-tabs .small-btn{width:auto!important;margin:0!important;padding:6px 10px}.character-tabs .small-btn.active{border-color:rgba(101,169,255,.62);background:linear-gradient(180deg,rgba(101,169,255,.24),rgba(181,140,255,.12));box-shadow:inset 0 0 0 1px rgba(101,169,255,.18)}.character-tab-panel[hidden]{display:none!important}.character-tab-panel{margin-top:10px}.character-gear-copy{margin:0 0 9px;color:var(--muted);font-size:9px;line-height:1.4}
       .character-gear-grid{position:relative;display:grid!important;grid-template-columns:repeat(5,minmax(42px,1fr))!important;grid-template-areas:". . hat . ." ". amulet chest ring ." "weapon . chest . offhand" ". . legs . ." ". . boots . .";gap:7px!important;min-height:250px;align-items:stretch;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.045),transparent 42%),rgba(0,0,0,.12)}
       .character-gear-grid::before{content:"♙";position:absolute;left:50%;top:49%;translate:-50% -50%;font-size:150px;line-height:1;color:rgba(255,255,255,.035);pointer-events:none}.character-gear-slot{position:relative;z-index:1;min-width:0!important;min-height:58px!important;aspect-ratio:1/1;padding:5px!important;display:grid;place-items:center;border-width:2px!important;border-style:solid!important;background:rgba(5,9,17,.72)!important;overflow:visible!important}.character-gear-slot.slot-hat{grid-area:hat}.character-gear-slot.slot-amulet{grid-area:amulet}.character-gear-slot.slot-chest{grid-area:chest}.character-gear-slot.slot-weapon{grid-area:weapon}.character-gear-slot.slot-offhand{grid-area:offhand}.character-gear-slot.slot-ring{grid-area:ring}.character-gear-slot.slot-legs{grid-area:legs}.character-gear-slot.slot-boots{grid-area:boots}.db-equipment-slot-art{width:100%;height:100%;max-width:48px;max-height:48px;object-fit:contain;filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}.db-equipment-icon-fallback{font-size:28px;line-height:1}.character-empty-slot{font-size:7px;line-height:1.1;text-align:center;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.28);font-weight:900}
       .character-gear-slot.empty{border-color:rgba(255,255,255,.10)!important}.character-gear-slot.poor,.vault-paper-slot.poor{border-color:#8f949c!important}.character-gear-slot.common,.vault-paper-slot.common{border-color:#d9dde5!important}.character-gear-slot.uncommon,.vault-paper-slot.uncommon{border-color:#62d79a!important}.character-gear-slot.rare,.vault-paper-slot.rare{border-color:#65a9ff!important}.character-gear-slot.epic,.vault-paper-slot.epic{border-color:#b58cff!important}.character-gear-slot.legendary,.vault-paper-slot.legendary{border-color:#f5c85b!important;box-shadow:0 0 10px rgba(245,200,91,.12),inset 0 0 14px rgba(245,200,91,.05)!important}.character-gear-slot.artifact,.vault-paper-slot.artifact{border-color:#ff9c38!important;box-shadow:0 0 10px rgba(255,156,56,.16)!important}.character-gear-slot.mythical,.vault-paper-slot.mythical{border-color:#bd83ff!important;box-shadow:0 0 12px rgba(189,131,255,.18)!important}.character-gear-slot.omega,.vault-paper-slot.omega{border-color:#e7d6ff!important;box-shadow:0 0 12px rgba(181,108,255,.28),inset 0 0 12px rgba(231,214,255,.08)!important}
@@ -107,23 +108,70 @@
   }
   function campView(){return Object.freeze({owner:OWNER,heirloomHtml:campHeirloomHtml(),setHtml:artifactSetHtml()});}
 
+  function activateCharacterTab(name='stats'){
+    characterTab=name==='gear'?'gear':'stats';
+    const layout=characterLayout(),tabs=find('characterTabs'),stats=find('characterStatsPanel'),gear=find('characterGearPanel');
+    tabs?.querySelectorAll?.('[data-character-tab]').forEach(button=>{
+      const active=button.dataset.characterTab===characterTab;
+      button.classList.toggle('active',active);
+      button.setAttribute?.('aria-selected',active?'true':'false');
+    });
+    if(layout==='classic'){
+      if(stats){stats.hidden=false;stats.classList?.add?.('active');}
+      if(gear){gear.hidden=false;gear.classList?.add?.('active');}
+    }else{
+      if(stats){stats.hidden=characterTab!=='stats';stats.classList?.toggle?.('active',characterTab==='stats');}
+      if(gear){gear.hidden=characterTab!=='gear';gear.classList?.toggle?.('active',characterTab==='gear');}
+    }
+    return characterTab;
+  }
+  function syncCharacterLayout(){
+    const layout=characterLayout(),card=find('characterCard'),grid=find('equipmentGrid');
+    if(card)card.dataset.characterLayout=layout;
+    doc()?.body?.setAttribute?.('data-character-layout',layout);
+    grid?.classList?.toggle?.('character-gear-grid',layout==='modern');
+    activateCharacterTab(characterTab);
+    return layout;
+  }
+  function setCharacterLayout(layout){
+    runtime.setCharacterLayout?.(layout==='classic'?'classic':'modern');
+    syncCharacterLayout();
+    renderEquipment();
+    return characterLayout();
+  }
+  function bindCharacterTabs(){
+    const tabs=find('characterTabs');
+    if(!tabs||tabs.dataset?.dbCharacterTabsWired==='1')return;
+    if(tabs.dataset)tabs.dataset.dbCharacterTabsWired='1';
+    tabs.addEventListener?.('click',event=>{
+      const button=event.target?.closest?.('[data-character-tab]');
+      if(button)activateCharacterTab(button.dataset.characterTab);
+    });
+  }
+
   function renderEquipment(){
     installStyles();
-    const grid=find('equipmentGrid'),current=state(),equipped=current.equipment||{};
+    bindCharacterTabs();
+    const layout=syncCharacterLayout(),grid=find('equipmentGrid'),current=state(),equipped=current.equipment||{};
     if(grid){
       grid.replaceChildren();
       slots().forEach(slot=>{
         const item=equipped[slot],entry=doc()?.createElement('div');if(!entry)return;
-        entry.className=`equipment-slot ${item?.rarity||'empty'}`;
-        entry.title=item?`${item.name}: ${bonuses(item)}`:`Empty ${label(slot)} slot`;
-        entry.innerHTML=`<span class=\"slot-label\">${escapeHtml(label(slot))}</span><span class=\"slot-item\">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
+        entry.title=itemDetail(item,slot);
+        if(layout==='classic'){
+          entry.className=`equipment-slot ${item?.rarity||'empty'}`;
+          entry.innerHTML=`<span class="slot-label">${escapeHtml(label(slot))}</span><span class="slot-item">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
+        }else{
+          entry.className=`equipment-slot character-gear-slot slot-${slot} ${item?.rarity||'empty'}`;
+          entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art'):`<span class="character-empty-slot">${escapeHtml(label(slot))}</span>`;
+        }
         grid.appendChild(entry);
       });
     }
     const setBox=find('mythicSetStatus'),set=setModel();
     if(setBox){setBox.hidden=(Number(set.count)||0)<1;if(!setBox.hidden)setBox.innerHTML=artifactSetHtml(set);}
     renderCampStorage();
-    return Object.freeze({owner:OWNER,slots:slots().length,equipped:slots().filter(slot=>!!equipped[slot]).length,setPieces:Number(set.count)||0});
+    return Object.freeze({owner:OWNER,layout,slots:slots().length,equipped:slots().filter(slot=>!!equipped[slot]).length,setPieces:Number(set.count)||0});
   }
 
   function renderLoot(item){
@@ -220,9 +268,9 @@
     return Object.freeze({owner:OWNER,unlocked:true,stored:storage.length,active:active.length});
   }
 
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();return api;}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();bindCharacterTabs();syncCharacterLayout();return api;}
   function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage');return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0});}
-  const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,inspect,owner:OWNER});
+  const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,activateCharacterTab,syncCharacterLayout,setCharacterLayout,inspect,owner:OWNER});
   window.DiceboundEquipmentHeirlooms=api;
   window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect});
 })(window);
