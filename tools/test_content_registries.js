@@ -46,7 +46,13 @@ assert.deepEqual(Array.from(equipment.slots), ["weapon", "offhand", "boots", "le
 assert.deepEqual(Array.from(equipment.rarities), ["common", "uncommon", "rare", "epic", "legendary", "mythical", "omega", "poor", "artifact"]);
 assert.deepEqual(Array.from(equipment.ordinaryRarities), ["poor", "common", "uncommon", "rare", "epic"]);
 assert.equal(Object.keys(equipment.special).length, 11);
-assert.equal(equipment.special["axels-coffee-mug"].rarity, "legendary");
+assert.equal(equipment.special["axels-coffee-mug"].rarity, "mythical");
+assert.equal(equipment.special["kratz-headphones"].rarity, "mythical");
+assert.equal(equipment.special["kellys-jean-jacket"].rarity, "mythical");
+for (const id of ["axels-coffee-mug", "kratz-headphones", "kellys-jean-jacket"]) {
+  assert.equal(equipment.special[id].exclusiveSpecial, true, `${id} must remain an exclusive named Mythical base`);
+  assert.ok(Object.keys(equipment.special[id].intrinsicBonuses || {}).length > 0, `${id} must own its Intrinsic`);
+}
 assert.equal(equipment.special["devils-horns"].rarity, "omega");
 assert.equal(equipment.special["impossible-weapon"].setName, "Impossible Road");
 assert.equal(equipment.identities.length, 26, "approved birthday identities must remain part of the one equipment registry");
