@@ -586,12 +586,14 @@ def main() -> int:
             )
     if monolith_source:
         for expected_equipment_ui_route in [
-            "function renderEquipment(){\n    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();\n  }",
+            "function renderEquipment(){\n    repairEquipmentPresentationData();\n    return dbEquipmentUi.renderEquipment();\n  }",
             "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}",
             "dbEquipmentUi.renderEndGear()",
         ]:
             if expected_equipment_ui_route not in monolith_source:
                 errors.append("dicebound.js must route equipment/Heirloom UI lifecycle through DiceboundEquipmentHeirlooms")
+        if "beta043RefreshEquipmentArt" in monolith_source:
+            errors.append("dicebound.js retains retired Beta 0.4.3 equipment HTML mutation")
         if re.search(r"\bfunction\s+renderEndGear\s*\(", monolith_source):
             errors.append("dicebound.js retains obsolete renderEndGear compatibility adapter")
         for retired_equipment_ui_layer in [
