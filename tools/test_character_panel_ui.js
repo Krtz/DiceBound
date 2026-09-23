@@ -24,7 +24,8 @@ assert.ok(owner.includes("character-gear-slot slot-${slot} ${item?.rarity||'empt
 assert.ok(owner.includes("entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art')"),"Modern Character Gear must render image-only occupied slots");
 assert.ok(owner.includes("DETAIL_POPOVER_ID=\'dbEquipmentDetailPopover\'")&&owner.includes("showDetailPopover(target)"),"Modern Character Gear must own an explicit rich detail popover");
 assert.ok(owner.includes("entry.dataset.equipmentSlot=slot"),"Modern Character Gear must publish the authoritative equipment slot key");
-assert.ok(owner.includes("if(entry.dataset)entry.dataset.tip=detail")&&owner.includes("if(layout===\'classic\')"),"Classic Gear may retain the shared text-tooltip contract");
+assert.ok(owner.includes("entry.dataset.tip=detail")&&owner.includes("if(layout==='classic')"),"Classic Gear may retain the shared text-tooltip contract");
+assert.ok(owner.includes("delete entry.dataset.tip")&&owner.includes("entry.dataset.equipmentSlot=slot"),"Modern Gear must explicitly clear the generic tooltip contract and publish its semantic slot key");
 assert.ok(owner.includes("displayName(item,slot)"),"Character Gear detail must resolve semantic equipment identity using the actual rendered slot");
 assert.ok(owner.includes("/^equipment$/i.test(raw)")&&owner.includes("semantic?.displayName"),"generic Equipment names must fall back to semantic identity");
 assert.ok(owner.includes("runtime.getAllBonuses?.(item)")&&owner.includes("runtime.formatBonus?.(key,value)"),"Character Gear detail must recover canonical total stats when composed copy is empty");
