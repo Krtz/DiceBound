@@ -130,6 +130,57 @@
   function reset(){storage.remove(PRIMARY_KEY);BACKUP_KEYS.forEach(key=>storage.remove(key));clearRunCheckpoint();return true;}
   function hasSave(){return storage.has(PRIMARY_KEY)||BACKUP_KEYS.some(key=>storage.has(key));}
   function legacySaveKeysPresent(){return LEGACY_KEYS.filter(k=>storage.has(k));}
+  function ageMs(savedAt,atMs){
+    const then=Date.parse(String(savedAt||""));
+    return Number.isFinite(then)?Math.max(0,atMs-then):null;
+  }
+  function storedHealth(key,parser,atMs){
+    const raw=storage.getString(key);
+    if(!raw)return Object.freeze({present:false,valid:false,savedAt:null,ageMs:null,schemaVersion:null,gameVersion:null,error:null});
+    let stored=null;
+    try{stored=JSON.parse(raw);}catch(error){return Object.freeze({present:true,valid:false,savedAt:null,ageMs:null,schemaVersion:null,gameVersion:null,error:String(error?.message||error)});}
+    try{
+      const validated=parser(raw);
+      const savedAt=String(stored?.savedAt||validated?.savedAt||"").trim()||null;
+      return Object.freeze({
+        present:true,
+        valid:!!validated,
+        savedAt,
+        ageMs:savedAt?ageMs(savedAt,atMs):null,
+        schemaVersion:Number.isFinite(Number(stored?.schemaVersion))?Number(stored.schemaVersion):null,
+        gameVersion:typeof stored?.gameVersion==="string"?stored.gameVersion:null,
+        error:null
+      });
+    }catch(error){
+      const savedAt=typeof stored?.savedAt==="string"&&stored.savedAt.trim()?stored.savedAt:null;
+      return Object.freeze({
+        present:true,
+        valid:false,
+        savedAt,
+        ageMs:savedAt?ageMs(savedAt,atMs):null,
+        schemaVersion:Number.isFinite(Number(stored?.schemaVersion))?Number(stored.schemaVersion):null,
+        gameVersion:typeof stored?.gameVersion==="string"?stored.gameVersion:null,
+        error:String(error?.message||error)
+      });
+    }
+  }
+  function health(atMs=Date.now()){
+    const clock=Number.isFinite(Number(atMs))?Number(atMs):Date.now();
+    const primary=storedHealth(PRIMARY_KEY,parseStored,clock);
+    const backups=BACKUP_KEYS.map((key,index)=>Object.freeze({slot:index+1,key,...storedHealth(key,parseStored,clock)}));
+    const runPrimary=storedHealth(RUN_PRIMARY_KEY,parseRunStored,clock);
+    const runBackups=RUN_BACKUP_KEYS.map((key,index)=>Object.freeze({slot:index+1,key,...storedHealth(key,parseRunStored,clock)}));
+    return Object.freeze({
+      apiVersion:1,
+      checkedAt:new Date(clock).toISOString(),
+      current:Object.freeze({gameVersion:GAME_VERSION,schemaVersion:SCHEMA_VERSION,runSchemaVersion:RUN_SCHEMA_VERSION}),
+      primary,
+      backups:Object.freeze(backups),
+      newestValidBackup:backups.find(entry=>entry.valid)||null,
+      activeRun:Object.freeze({primary:runPrimary,backups:Object.freeze(runBackups),newestValidBackup:runBackups.find(entry=>entry.valid)||null})
+    });
+  }
+
   function diagnostics(){
     let primaryValid=false;try{primaryValid=!!parseStored(storage.getString(PRIMARY_KEY));}catch(_){}
     const backups=BACKUP_KEYS.map((key,i)=>{let valid=false;try{valid=!!parseStored(storage.getString(key));}catch(_){}return Object.freeze({slot:i+1,key,present:storage.has(key),valid});});
@@ -138,5 +189,5 @@
     return Object.freeze({apiVersion:2,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:[...BACKUP_KEYS],backupSlots:BACKUP_KEYS.length,hasPrimary:storage.has(PRIMARY_KEY),hasBackup:backups.some(x=>x.present),primaryValid,backupValid:backups.some(x=>x.valid),backups,activeRun:Object.freeze({format:RUN_FORMAT,schemaVersion:RUN_SCHEMA_VERSION,primaryKey:RUN_PRIMARY_KEY,backupKeys:[...RUN_BACKUP_KEYS],hasPrimary:storage.has(RUN_PRIMARY_KEY),hasBackup:runBackups.some(x=>x.present),primaryValid:runPrimaryValid,backupValid:runBackups.some(x=>x.valid),backups:runBackups}),legacyKeys:legacySaveKeysPresent(),storage:storage.diagnostics()});
   }
 
-  window.DiceboundSave=Object.freeze({apiVersion:2,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:Object.freeze([...BACKUP_KEYS]),runFormat:RUN_FORMAT,runSchemaVersion:RUN_SCHEMA_VERSION,runPrimaryKey:RUN_PRIMARY_KEY,runBackupKeys:Object.freeze([...RUN_BACKUP_KEYS]),loadMeta,saveMeta,saveRunCheckpoint,loadRunCheckpoint,clearRunCheckpoint,hasRunCheckpoint,exportText,importText,reset,hasSave,diagnostics,migrate});
+  window.DiceboundSave=Object.freeze({apiVersion:2,format:FORMAT,schemaVersion:SCHEMA_VERSION,gameVersion:GAME_VERSION,primaryKey:PRIMARY_KEY,backupKey:BACKUP_KEY,backupKeys:Object.freeze([...BACKUP_KEYS]),runFormat:RUN_FORMAT,runSchemaVersion:RUN_SCHEMA_VERSION,runPrimaryKey:RUN_PRIMARY_KEY,runBackupKeys:Object.freeze([...RUN_BACKUP_KEYS]),loadMeta,saveMeta,saveRunCheckpoint,loadRunCheckpoint,clearRunCheckpoint,hasRunCheckpoint,exportText,importText,reset,hasSave,health,diagnostics,migrate});
 })();
