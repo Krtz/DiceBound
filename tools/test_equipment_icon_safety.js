@@ -6,9 +6,11 @@ const path=require("path");
 const vm=require("vm");
 
 const root=path.resolve(__dirname,"..");
+const raritySource=fs.readFileSync(path.join(root,"runtime/js/items/rarities.js"),"utf8");
 const source=fs.readFileSync(path.join(root,"runtime/js/items/equipment.js"),"utf8");
 const context={window:{}};
 vm.createContext(context);
+vm.runInContext(raritySource,context,{filename:"rarities.js"});
 vm.runInContext(source,context,{filename:"equipment.js"});
 const equipment=context.window.DiceboundEquipment;
 assert(equipment,"DiceboundEquipment must load");
