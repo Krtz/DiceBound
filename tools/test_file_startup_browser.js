@@ -143,19 +143,28 @@ async function connectWithHandshake(){
     console.log("Local file authored-art PASS: Euler plus Goblin/Skeleton Board 1--6 assets resolve and load with transparency");
 
     // #455: reproduce the 0.6.7.29 live regression with an old-style special
-    // Hat: no equipmentId, generic saved name, and HTML accidentally persisted
-    // in item.icon by the retired Beta 0.4.3 presentation bridge.
-    const gearDetail=await page.evaluate(`(()=>{const item=window.DiceboundArtifacts.create('hat');item.rarity='mythical';item.name='Equipment';item.icon='<img class="db-art-icon db-art-inline" src="assets/equipment/hat/helmet.png" alt="Helmet">';window.DiceboundItems.equip(item,true);window.DiceboundEquipmentHeirlooms.activateCharacterTab('gear');const slot=document.querySelector('#equipmentGrid .slot-hat'),tip=slot?.dataset?.tip||'';slot?.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const layer=document.getElementById('appTooltipLayer');return {html:slot?.innerHTML||'',tip,aria:slot?.getAttribute('aria-label')||'',tooltip:layer?.textContent||'',storedIcon:window.DiceboundRunResumeTest.state().player.equipment?.hat?.icon||''};})()`);
+    // Hat while also proving the new rule: Impossible Road is named Artifact
+    // gear layered over a real modern equipment identity + Intrinsic.
+    const gearDetail=await page.evaluate(`(()=>{const item=window.DiceboundArtifacts.create('hat'),generatedId=item.equipmentId||null,generatedIdentity=window.DiceboundEquipment.identityForItem(item),generatedIntrinsic=window.DiceboundEquipment.intrinsicBonusesForItem(item);delete item.equipmentId;item.rarity='mythical';item.name='Equipment';item.icon='<img class="db-art-icon db-art-inline" src="assets/equipment/hat/helmet.png" alt="Helmet">';const before=window.DiceboundRunResumeTest.state().player;window.DiceboundItems.equip(item,true);window.DiceboundEquipmentHeirlooms.activateCharacterTab('gear');const after=window.DiceboundRunResumeTest.state().player,equipped=after.equipment?.hat||{},identity=window.DiceboundEquipment.identityForItem(equipped),intrinsic=window.DiceboundEquipment.intrinsicBonusesForItem(equipped),total=window.DiceboundEquipment.allBonusesForItem(equipped),intrinsicKey=Object.keys(intrinsic)[0]||null;const slot=document.querySelector('#equipmentGrid .slot-hat'),tip=slot?.dataset?.tip||'';slot?.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const layer=document.getElementById('appTooltipLayer'),art=slot?.querySelector('img.db-equipment-slot-art');return {html:slot?.innerHTML||'',tip,aria:slot?.getAttribute('aria-label')||'',tooltip:layer?.textContent||'',storedIcon:equipped.icon||'',generatedId,generatedSlot:generatedIdentity?.slot||null,generatedIntrinsicCount:Object.keys(generatedIntrinsic).length,equipmentId:equipped.equipmentId||null,identityName:identity?.displayName||null,intrinsic,intrinsicKey,expectedDelta:intrinsicKey!=null?Number(total[intrinsicKey]||0):null,actualDelta:intrinsicKey!=null&&Number.isFinite(Number(before[intrinsicKey]))&&Number.isFinite(Number(after[intrinsicKey]))?Number(after[intrinsicKey])-Number(before[intrinsicKey]):null,artSrc:art?.getAttribute('src')||null};})()`);
+    assert.ok(gearDetail.generatedId,"Impossible Road factory must assign a modern equipmentId before presentation");
+    assert.equal(gearDetail.generatedSlot,'hat',"Impossible Road factory selected a wrong-slot identity");
+    assert.ok(gearDetail.generatedIntrinsicCount>0,"Impossible Road factory base identity must carry an Intrinsic");
+    assert.equal(gearDetail.equipmentId,gearDetail.generatedId,"old special save migration must deterministically recover the generated base identity");
+    assert.ok(gearDetail.identityName,"migrated special Hat lost its modern base identity");
+    assert.ok(Object.keys(gearDetail.intrinsic).length>0,"migrated Impossible Road Hat has no Intrinsic");
+    assert.equal(gearDetail.actualDelta,gearDetail.expectedDelta,"modern equipment Intrinsic did not reach the live equip stat transaction");
     assert.equal(gearDetail.storedIcon,'👑',"historical Hat HTML icon contamination must be repaired in live item state");
+    assert.match(gearDetail.artSrc||'',/^assets\/equipment\/hat\//,"Impossible Road Hat must render art from its modern equipmentId");
     assert.doesNotMatch(gearDetail.html,/<img class="db-art-icon|&lt;img|<img class=\"db-art-icon/i,"Character Gear must never render persisted HTML icon text");
     assert.match(gearDetail.tip,/Crown of the Road That Should Not Exist/,"generic special-item names must recover canonical Artifact identity");
     assert.match(gearDetail.tip,/MYTHICAL · HAT/,"Gear detail must identify rarity and real slot");
+    assert.match(gearDetail.tip,/INTRINSIC \(/,"Gear detail must expose the modern base identity Intrinsic");
     assert.match(gearDetail.tip,/Unique: Crown of the Fourth Road/,"Gear detail must include unique effect");
     assert.match(gearDetail.tip,/Set: Impossible Road/,"Gear detail must include set identity");
     assert.equal(gearDetail.aria,gearDetail.tip,"accessible Gear detail must match hover detail");
     assert.equal(gearDetail.tooltip,gearDetail.tip,"shared root tooltip must render the authoritative Gear detail");
     assert.doesNotMatch(gearDetail.tooltip,/<img|&lt;img/i,"Gear tooltip must never contain presentation markup");
-    console.log("Character Gear Edge PASS: special Hat identity/stats survive historical HTML-icon contamination");
+    console.log("Character Gear Edge PASS: Impossible Road modern base identity + Intrinsic + old-save HTML repair");
 
     console.log("Local file Camp startup PASS");
   }finally{
