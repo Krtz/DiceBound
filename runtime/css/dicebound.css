@@ -920,6 +920,33 @@ body[data-window-height="very-short"] .equipment-slot{min-height:40px;padding:5p
 body[data-window-height="very-short"] .pet-avatar{width:38px;height:38px;font-size:24px}
 body[data-window-height="very-short"] .log{height:82px}
 
+/* Roomy desktop windows use the horizontal play-space that a height-limited
+   square Board would otherwise leave empty. Travel controls move beside the
+   Board, freeing vertical room so the Board can grow while remaining square. */
+body[data-play-flow="side-controls"] .game-panel{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) var(--db-road-side-width,170px);
+  grid-template-rows:minmax(0,1fr);
+  column-gap:clamp(8px,.8vw,12px);
+  align-items:center;
+}
+body[data-play-flow="side-controls"] .board-wrap{
+  grid-column:1;grid-row:1;justify-self:end;align-self:center;
+}
+body[data-play-flow="side-controls"] .road-controls{
+  grid-column:2;grid-row:1;align-self:center;width:100%;
+  grid-template-columns:1fr;grid-template-rows:auto auto auto;
+  gap:8px;padding:10px;
+}
+body[data-play-flow="side-controls"] .road-controls h2{grid-column:1;text-align:center!important}
+body[data-play-flow="side-controls"] .road-controls .dice{
+  grid-row:auto;margin:0 auto;width:62px;height:62px;font-size:41px;border-radius:16px;
+}
+body[data-play-flow="side-controls"] .road-controls .travel-actions{grid-row:auto;gap:6px}
+body[data-play-flow="side-controls"] .road-status{grid-template-columns:1fr;gap:5px}
+body[data-play-flow="side-controls"] .road-status .stat{padding:6px 7px}
+body[data-play-flow="side-controls"] .road-controls .hint{font-size:8px;line-height:1.3;text-align:center}
+
 /* Below the desktop breakpoint we deliberately return to natural document
    scrolling. The board is always square and fills the available content width. */
 @media (max-width:900px){
