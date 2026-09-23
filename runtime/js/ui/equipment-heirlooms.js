@@ -24,7 +24,7 @@
   function identity(item){return runtime.getEquipmentIdentity?.(item)||null;}
   function specialIdentity(item){return runtime.getSpecialEquipmentIdentity?.(item)||null;}
   function displayName(item){
-    const semantic=identity(item)||specialIdentity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
+    const semantic=specialIdentity(item)||identity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
     const generic=!raw||/^equipment$/i.test(raw)||/^item$/i.test(raw)||(slotName&&raw.toLowerCase()===slotName.toLowerCase());
     return generic?(semantic?.displayName||raw||'Equipment'):raw;
   }
