@@ -24,7 +24,7 @@
 
   let deps = null;
   function configure(next = {}) {
-    for (const name of ["getPlayer", "random", "pick", "getElementKeys"]) {
+    for (const name of ["getPlayer", "random", "pick", "getElementKeys", "ensureEquipmentIdentity"]) {
       if (typeof next?.[name] !== "function") {
         throw new Error(`DiceboundArtifacts factories require ${name}().`);
       }
@@ -51,6 +51,8 @@
 
   function artifactize(item) {
     if (!item) return item;
+    const rt=runtime(),classId=rt.getPlayer()?.classId||null;
+    rt.ensureEquipmentIdentity(item,{classId,rarity:"legendary",seed:item.id||item.name,requireIntrinsic:true});
     item.rarity = "artifact";
     item.artifact = true;
     item.mythical = false;
