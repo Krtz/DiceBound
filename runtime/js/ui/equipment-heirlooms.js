@@ -114,6 +114,77 @@
     if(!entry?.image)return '';
     return `<img class=\"db-equipment-art ${klass}\" src=\"${escapeHtml(entry.image)}\" alt=\"${escapeHtml(entry.alt||displayName(item))}\" draggable=\"false\">`;
   }
+
+  function detailPopover(){
+    const documentRef=doc();if(!documentRef)return null;
+    let pop=documentRef.getElementById(DETAIL_POPOVER_ID);
+    if(!pop){
+      pop=documentRef.createElement('div');
+      pop.id=DETAIL_POPOVER_ID;
+      pop.className='db-equipment-detail-popover hidden';
+      pop.setAttribute('role','tooltip');
+      documentRef.body?.appendChild(pop);
+    }
+    return pop;
+  }
+  function detailStatsMarkup(item){
+    const raw=detailBonuses(item),parts=String(raw||'No bonuses').split(/\s+·\s+/).map(part=>part.trim()).filter(Boolean);
+    return (parts.length?parts:['No bonuses']).map(part=>`<span>${escapeHtml(part)}</span>`).join('');
+  }
+  function positionDetailPopover(target,pop){
+    if(!target||!pop||pop.classList.contains('hidden'))return false;
+    const rect=target.getBoundingClientRect(),box=pop.getBoundingClientRect(),gap=10,margin=8;
+    let left=rect.left+rect.width/2-box.width/2,top=rect.top-box.height-gap;
+    left=Math.min(root.innerWidth-box.width-margin,Math.max(margin,left));
+    if(top<margin)top=Math.min(root.innerHeight-box.height-margin,rect.bottom+gap);
+    pop.style.left=`${Math.round(left)}px`;
+    pop.style.top=`${Math.round(Math.max(margin,top))}px`;
+    return true;
+  }
+  function hideDetailPopover(){
+    const pop=detailPopover();if(!pop)return false;
+    pop.classList.add('hidden');pop.removeAttribute('data-slot');return true;
+  }
+  function showDetailPopover(target){
+    const slot=target?.dataset?.equipmentSlot,item=slot?state().equipment?.[slot]:null,pop=detailPopover();
+    if(!slot||!item||!pop)return hideDetailPopover();
+    const rarityId=String(item.rarity||'common').toLowerCase(),tier=rarity(item),name=displayName(item,slot);
+    const art=artMarkup(item,'db-equipment-detail-art')||`<span class="db-equipment-icon-fallback" aria-hidden="true">${escapeHtml(safeIcon(item))}</span>`;
+    pop.className=`db-equipment-detail-popover ${escapeHtml(rarityId)}`;
+    pop.dataset.slot=slot;
+    pop.innerHTML=`<div class="db-equipment-detail-popover-art">${art}</div><div><div class="db-equipment-detail-name">${escapeHtml(name)}</div><div class="db-equipment-detail-meta">${escapeHtml(String(tier.label||item.rarity||'Unknown').toUpperCase())} · ${escapeHtml(String(label(slot)).toUpperCase())}</div></div><div class="db-equipment-detail-stats">${detailStatsMarkup(item)}</div>`;
+    find('appTooltipLayer')?.classList.add('hidden');
+    find('touchTipPopover')?.classList.add('hidden');
+    positionDetailPopover(target,pop);
+    return true;
+  }
+  function bindCharacterGearPopover(){
+    const grid=find('equipmentGrid');if(!grid||grid.dataset?.dbEquipmentPopoverWired==='1')return;
+    if(grid.dataset)grid.dataset.dbEquipmentPopoverWired='1';
+    const targetFor=event=>event.target?.closest?.('.character-gear-slot[data-equipment-slot]');
+    grid.addEventListener?.('pointerover',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();showDetailPopover(target);
+    });
+    grid.addEventListener?.('pointerout',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();if(!target.contains(event.relatedTarget))hideDetailPopover();
+    });
+    grid.addEventListener?.('focusin',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();showDetailPopover(target);
+    });
+    grid.addEventListener?.('focusout',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();hideDetailPopover();
+    });
+    grid.addEventListener?.('pointerdown',event=>{
+      if(!event.pointerType||event.pointerType==='mouse')return;
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();showDetailPopover(target);
+    });
+  }
+
   function rarityNameMarkup(item){
     const rarityId=escapeHtml(String(item?.rarity||"common").toLowerCase());
     return `<span class="db-rarity-name db-rarity-${rarityId}">${escapeHtml(displayName(item))}</span>`;
