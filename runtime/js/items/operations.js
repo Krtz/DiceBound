@@ -74,6 +74,9 @@
 
     function equip(item,silent=false){
       const p=player();
+      // Special/Artifact gear must receive its modern base identity before any
+      // stat transaction so its Intrinsic is real gameplay, not presentation.
+      equipmentApi.repairPresentationFields?.(item,{classId:p.classId});
       // 0.6.4.21 was the outermost historical wrapper: snapshot the non-gear
       // Mana pool before any old/new gear mutation or Legendary transform.
       const priorEquipmentMana=usesMana()?equipmentMana():0;
