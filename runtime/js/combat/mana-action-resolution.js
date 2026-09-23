@@ -75,11 +75,13 @@
     const id = rt.classIdentityId(), cfg = spellFor(id);
     if (!cfg) return rt.playerAttack();
     builderInFlight = true;
+    let channelStateArmed = false;
     try {
       if (rt.isClassActive("invoker") && rt.invokerActive()) return await rt.invokerWexStrike();
       const requested = resolvedBuilderGain(id), gained = manaGain(requested);
       p._occultChanneling = true;
       p._occultChannelMultiplier = 0;
+      channelStateArmed = true;
       rt.identityFlash(`${cfg.builderIcon} +${gained} Mana`);
       const result = await rt.playerAttack();
       const capped = gained < requested ? ` (resolved ${requested}, capped by max Mana)` : "";
@@ -87,8 +89,10 @@
       rt.updateCombatUI();
       return result;
     } finally {
-      p._occultChanneling = false;
-      p._occultChannelMultiplier = 0;
+      if (channelStateArmed) {
+        p._occultChanneling = false;
+        p._occultChannelMultiplier = 0;
+      }
       builderInFlight = false;
     }
   }
