@@ -138,6 +138,23 @@
   function pickOrdinaryAffix(random,pool,slot){const eligible=eligibleOrdinaryAffixes(pool,slot);if(!eligible.length)return null;const roll=Math.max(0,Math.min(.999999999,Number(random?.())||0));return eligible[Math.floor(roll*eligible.length)];}
   function equipmentIdentity(id){return IDENTITY_BY_ID[String(id||"")]||null;}
   function identityForItem(item){const identity=equipmentIdentity(item?.equipmentId);return identity&&identity.slot===item?.slot?identity:null;}
+  const SLOT_ICON_FALLBACK=Object.freeze({weapon:"⚔️",offhand:"🛡️",boots:"🥾",legs:"👖",chest:"🥋",hat:"🪖",ring:"💍",amulet:"📿"});
+  function iconContainsMarkup(value){const raw=String(value??"");return /<[^>]+>/.test(raw)||/&lt;\s*(?:img|span)\b/i.test(raw);}
+  function fallbackIconForItem(item){
+    if(item?.devilHorns)return "👿";
+    if(item?.oneHitPerRound)return "🎧";
+    if(item?.mythicPiece==="hat"&&item?.setName==="Impossible Road")return "👑";
+    return SLOT_ICON_FALLBACK[item?.slot]||"◇";
+  }
+  function safeIconForItem(item){
+    const raw=String(item?.icon??"").trim();
+    return raw&&!iconContainsMarkup(raw)?raw:fallbackIconForItem(item);
+  }
+  function repairPresentationFields(item){
+    if(!item||typeof item!=="object"||!iconContainsMarkup(item.icon))return false;
+    item.icon=fallbackIconForItem(item);
+    return true;
+  }
   function eligibleEquipmentIdentities({slot,rarity}={}){return EQUIPMENT_DATA.identities.filter(identity=>identity.slot===slot&&identity.rarityEligibility.includes(rarity));}
   function hashIdentitySeed(seed){let h=2166136261>>>0;for(const char of String(seed||"")){h^=char.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
   function identityWeight(identity,classId){return Math.max(0,Number(identity?.rollWeight)||0)*Math.max(0,Number(identity?.classRollModifiers?.[classId])||1);}
@@ -178,5 +195,5 @@
     item.itemPower=clamp(Number(item.itemPower)||rarityBudgets[rarity][0],rarityBudgets[rarity][0],rarityBudgets[rarity][1]);return item;
   }
 
-  window.DiceboundEquipment=Object.freeze({apiVersion:3,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix,equipmentIdentity,identityForItem,eligibleEquipmentIdentities,identityWeight,selectEquipmentIdentity,intrinsicBonusesForItem,allBonusesForItem,isHeirloomEligible,generateOrdinaryFromSeedCode,generateOrdinaryItem});
+  window.DiceboundEquipment=Object.freeze({apiVersion:4,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix,equipmentIdentity,identityForItem,iconContainsMarkup,safeIconForItem,repairPresentationFields,eligibleEquipmentIdentities,identityWeight,selectEquipmentIdentity,intrinsicBonusesForItem,allBonusesForItem,isHeirloomEligible,generateOrdinaryFromSeedCode,generateOrdinaryItem});
 })();
