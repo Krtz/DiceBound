@@ -174,7 +174,7 @@ async function connectWithHandshake(){
     assert.match(gearDetail.popStats,/INTRINSIC \(/,"rich Gear detail must expose the modern base identity Intrinsic");
     assert.match(gearDetail.popStats,/Unique: Crown of the Fourth Road/,"rich Gear detail must include unique effect");
     assert.match(gearDetail.popStats,/Set: Impossible Road/,"rich Gear detail must include set identity");
-    assert.match(gearDetail.aria,/Crown of the Road That Should Not Exist\\nMYTHICAL · HAT\\n/,"accessible Gear detail must match the canonical rich content");
+    assert.ok(gearDetail.aria.startsWith('Crown of the Road That Should Not Exist\nMYTHICAL · HAT\n'),`accessible Gear detail must match the canonical rich content: ${JSON.stringify(gearDetail.aria)}`);
     assert.equal(gearDetail.rootHidden,true,"generic root tooltip must stay hidden while rich Gear detail owns the hover");
     assert.equal(gearDetail.detailArtSrc,gearDetail.artSrc,"rich Gear detail and slot must resolve the same semantic equipment art");
     console.log("Character Gear Edge PASS: player-visible rich Impossible Road detail + modern identity/Intrinsic + old-save HTML repair");
