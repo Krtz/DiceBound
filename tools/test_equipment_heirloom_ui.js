@@ -140,12 +140,16 @@ assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderer
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");
 for(const adapter of [
-  "function renderEquipment(){\n    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();\n  }",
+  "function renderEquipment(){\n    repairEquipmentPresentationData();\n    return dbEquipmentUi.renderEquipment();\n  }",
   "function openLoot(item,callback){if(!dbEquipmentPrepareLoot(item,callback))return;pendingLootItem=item;pendingLootCallback=callback;return dbEquipmentUi.renderLoot(item);}"
 ])assert.ok(monolith.includes(adapter),`missing thin equipment/Heirloom UI adapter: ${adapter}`);
 assert.ok(monolith.includes("dbEquipmentUi.renderEndGear();"),"end-run gear rendering must route directly through the Equipment/Heirloom UI owner");
 assert.ok(monolith.includes("formatBonuses,formatDetailBonuses:item=>formatBonuses(item)"),"Character detail must resolve the final live formatter without changing released loot/storage formatting");
 assert.ok(monolith.includes("getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item)"),"Equipment UI must receive semantic identity fallback from the canonical equipment owner");
+assert.ok(monolith.includes("getSafeEquipmentIcon:item=>window.DiceboundEquipment?.safeIconForItem?.(item)"),"Equipment UI must receive safe scalar icon data from the canonical equipment owner");
+assert.ok(monolith.includes("getSpecialEquipmentIdentity:item=>"),"special equipment must have a semantic identity fallback without inventing a second item model");
+assert.ok(monolith.includes("function repairEquipmentPresentationData(){"),"composition must repair historical equipment presentation contamination before rendering or persistence");
+assert.ok(!monolith.includes("beta043RefreshEquipmentArt"),"retired Beta 0.4.3 Hat HTML mutation must not return");
 assert.ok(!/function\s+renderEndGear\s*\(/.test(monolith),"retired renderEndGear call-only adapter returned to the monolith");
 for(const retired of ["renderEquipment=function","renderEndGear=function","openLoot=function","renderEquipmentV110Base","renderEquipmentV23Base","renderEquipmentV24Base","v24RenderHeirloomStorage","v25RenderEndStorageManager","db06314RenderEquipmentBase","db06314OpenLootBase","dicebound-06314-equipment-identity-style"])assert.ok(!monolith.includes(retired),`retired equipment/Heirloom UI layer remains: ${retired}`);
 
