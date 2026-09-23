@@ -621,7 +621,7 @@
     toggleRunStorage:item=>dbItems.toggleRunHeirloomStorage(item),toggleLegacyHeirloom:item=>dbItems.toggleLegacyHeirloom(item),
     isHeirloomEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),confirm:diceboundConfirm,
     getCharacterLayout:()=>meta.settings?.characterLayout==='classic'?'classic':'modern',
-    afterStorageChange:()=>updateMetaUI(),afterCharacterPresentationChange:()=>beta042ScheduleSidebarLayout(),lootCopy:dbEquipmentUiLootCopy
+    afterStorageChange:()=>updateMetaUI(),afterCharacterPresentationChange:()=>setTimeout(()=>beta042ScheduleSidebarLayout(),0),lootCopy:dbEquipmentUiLootCopy
   });
 
   const req=(id,rank=1)=>({id,rank});
