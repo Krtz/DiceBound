@@ -58,6 +58,14 @@ assert.doesNotMatch(source,/renderClassPortrait/,'Camp must not use the portrait
 assert.doesNotMatch(source,/assets\/ui\/class-art/,'Camp must not fall back to the retired portrait-art compatibility path');
 assert.equal(typeof camp.renderPetFigure,'function','Camp must own semantic selected-pet figure rendering');
 assert.match(source,/camp-pet-portrait/,'Camp selected Pet must use Camp-owned semantic art');
+for(const [id,label] of [['campClassBtn','Class'],['campNightmareBtn','Nightmare'],['campChestBtn','Heirloom Vault'],['campPetBtn','Companion']]){
+  assert.match(source,new RegExp(`id="${id}"[^>]*aria-label="${label}"`),`${id} must keep an accessible semantic name`);
+}
+assert.doesNotMatch(source,/id="campClassBtn"[^>]*>[\s\S]*?<div class="camp-label">Class<\/div>/,'Class Camp control must be art-only');
+assert.doesNotMatch(source,/id="campNightmareBtn"[^>]*>[\s\S]*?<div class="camp-label">Nightmare<\/div>/,'Nightmare Camp control must be art-only');
+assert.doesNotMatch(source,/id="campChestBtn"[^>]*>[\s\S]*?<div class="camp-label">Chest<\/div>/,'Chest Camp control must be art-only');
+assert.doesNotMatch(source,/id="campPetBtn"[^>]*>[\s\S]*?<div class="camp-label">Pet<\/div>/,'Pet Camp control must be art-only');
+assert.match(source,/button\.className='camp-spot camp-painted-interaction';button\.setAttribute\('aria-label','Heirloom Vault'\)/,'dynamically recreated Chest must remain art-only and exact-painted');
 
 const ids=[...camp.requiredSemanticIds()];
 for(const id of ['campTalentBtn','campInfoBtn','campCareerBtn','campMoonBtn','campOptionsBtn','campNightmareBtn','campHellBtn','campClassBtn','campPetBtn','campChestBtn','campAchievementBtn','campGoBtn'])assert(ids.includes(id),`missing semantic Camp control ${id}`);
@@ -110,16 +118,15 @@ assert.match(source,/setObjectArt\('campHellBtn','hellOn','db066-hell-volcano-ar
 assert.match(source,/hell-volcano-active/,'Camp must expose one semantic active-Hell state for layout and hit-target synchronization');
 assert.match(source,/if\(hellVolcano\)spec=\{\.\.\.spec,w:460,h:174\}/,'active Hell volcano must grow around the same stable Hell anchor instead of jumping position');
 assert.match(source,/db066-hell-volcano-art/,'active Hell art needs its Camp-owned semantic presentation class');
-assert.match(source,/camp-hell-ritual-hotspot/,'Camp must own one tiny explicit Hell ritual hotspot');
-assert.match(source,/width:18px;height:18px/,'the Hell ritual target must remain deliberately tiny rather than covering the mountain');
-assert.match(source,/function armHellRitual\(/,'Camp must own ritual arming');
-assert.match(source,/function trackHellRitual\(/,'Camp must own bonfire-circle tracking');
-assert.match(source,/runtime\.primeHellRitual\?\.\(\)/,'Camp presentation must delegate persistent secret progression to composition');
-assert.doesNotMatch(monolith,/v24ArmDance|v24TrackDance|v24DanceArmed|v24SuppressHellClickUntil/,'legacy Hell ritual implementation must not return to dicebound.js');
-assert.doesNotMatch(monolith,/#campHellBtn \.camp-icon/,'whole Hell icon/mountain must not remain the ritual activation target');
-assert.doesNotMatch(monolith,/armDevil:/,'legacy DB24 ritual export must stay retired');
-assert.match(source,/#campScene\.devil-ritual-tracking\{touch-action:none;overscroll-behavior:none\}/,'Camp must own ritual touch-tracking presentation');
-assert.doesNotMatch(stylesheet,/#campScene\.devil-ritual-tracking/,'shared stylesheet must not retain Camp ritual interaction ownership');
+assert.match(source,/function triggerPaleDevilFromBonfire\(/,'Camp must own the semantic Pale Devil bonfire trigger');
+assert.match(source,/runtime\.canPrimePaleDevil\?\.\(\)/,'bonfire trigger must be gated by live Hell-mode semantics');
+assert.match(source,/runtime\.primePaleDevil\?\.\(\)/,'Camp presentation must delegate persistent Pale Devil priming to composition');
+assert.match(source,/bonfire\.classList\.toggle\('pale-devil-trigger-active',!!view\.hellMode\)/,'bonfire must expose click affordance only while Hell is active');
+assert.match(source,/<button type="button" class="camp-bonfire" aria-label="Bonfire"/,'the visible fire itself must be the semantic secret trigger');
+assert.doesNotMatch(source,/camp-hell-ritual-hotspot|armHellRitual|trackHellRitual|devil-ritual-tracking/,'retired tiny-devil/circle ritual code must be deleted');
+assert.doesNotMatch(monolith,/v24ArmDance|v24TrackDance|v24DanceArmed|v24SuppressHellClickUntil|canArmHellRitual|primeHellRitual/,'legacy Hell ritual implementation must not return to dicebound.js');
+assert.match(monolith,/canPrimePaleDevil:\(\)=>!!hellMode&&!!meta\.hellUnlocked/,'composition must expose one Hell-gated Pale Devil priming policy');
+assert.doesNotMatch(stylesheet,/#campScene\.devil-ritual-tracking/,'shared stylesheet must not retain retired ritual interaction ownership');
 assert.match(source,/campGoBtn:Object\.freeze\(\{x:\.85,y:\.74,w:440,h:250\}\)/,'Start Run must retain its minimum authored scene footprint');
 assert.match(source,/const CAMP_BASE_STYLE=/,'Camp must own its responsive base/grid presentation style');
 for(const retiredCampLayer of ['function beta043RefreshCampIcons(','function beta045RefreshCampLayout(','function db046RefreshCamp(','function db047RefreshCamp(','const db055Style=','const db057Style=','const db058Style=','const db0510Style=','const db0512Style=','const db060CampStyle='])assert(!monolith.includes(retiredCampLayer),`retired Camp style/wrapper remains in dicebound.js: ${retiredCampLayer}`);
@@ -131,4 +138,4 @@ for(const retiredRewardPolicyOwner of ['campAnchors','function scaleCamp(','#sta
 assert.match(source,/\.camp-panel\.active > \.camp-panel-head\{position:sticky!important;top:0!important/,'Camp panel header must stay visible while panel content scrolls');
 assert.match(source,/\.camp-panel-head \.camp-close-btn\{margin-left:auto!important/,'Camp Done/Exit control must stay pinned to the top-right header');
 
-console.log('Camp UI owner PASS: deterministic layouts, semantic controls and monolith drain contract');
+console.log('Camp UI owner PASS: deterministic layouts, art-only controls, bonfire Pale Devil trigger and monolith drain contract');
