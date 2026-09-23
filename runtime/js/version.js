@@ -3,10 +3,10 @@
 
   // These are the only release-version literals in the browser runtime.
   // tools/set_project_version.py stamps them from its explicit Version/Channel input.
-  const VERSION="0.6.7.28";
+  const VERSION="0.6.7.29";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Integrated enemy, Hell and Camp art with Road controls restored below the Board.";
+  const RELEASE_SUMMARY="Camp art cleanup, Pale Devil bonfire trigger, Mana builder hardening and Class chooser verification.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
