@@ -26,7 +26,7 @@ function assertCoverage(actual){
   const expected=["startup-camp","camp-recovery","camp-entry-checkpoint-reset","camp-entry-reset","meta-refresh","hud-board5-premini","hud-board5-final","hud-board6-premini","hud-board6-final","hud-hell-floor","hud-stat-sync","hud-checkpoint-schedule","camp-art-refresh"];
   assert.deepEqual(actual.cases.map(entry=>entry.name),expected,"Camp/App-Shell oracle case set drifted");
   for(const entry of actual.cases){if(Object.hasOwn(entry.result||{},"actionRngCalls"))assert.equal(entry.result.actionRngCalls,0,`${entry.name} shell action consumed gameplay RNG`);}
-  const startup=actual.cases[0].result;assert.equal(startup.scene,true);assert.equal(startup.campFullscreen,true);assert.ok(startup.requiredCount>=8);assert.ok(startup.presentRequired.length>=7,'released starter Camp must expose its seven always-available semantic controls');
+  const startup=actual.cases[0].result;assert.equal(startup.scene,true);assert.equal(startup.campFullscreen,true);assert.ok(startup.requiredCount>=8);assert.ok(startup.presentRequired.length>=7,'released starter Camp must expose its seven always-available semantic controls');assert.equal(startup.nightmareStatus,"","Nightmare Camp control must be art-only");
   const recovery=actual.cases.find(entry=>entry.name==="camp-recovery").result;assert.equal(recovery.result.hp,recovery.result.maxHp);assert.equal(recovery.result.campVisible,true);
   const checkpoint=actual.cases.find(entry=>entry.name==="camp-entry-checkpoint-reset").result;assert.equal(checkpoint.saved,true);assert.equal(checkpoint.hadBefore,true);assert.equal(checkpoint.hasAfter,false);assert.equal(checkpoint.hp,checkpoint.maxHp);
   const reset=actual.cases.find(entry=>entry.name==="camp-entry-reset").result;assert.equal(reset.hp,reset.maxHp);assert.equal(reset.shell.combatHidden,true);assert.notDeepEqual(reset.invokerBefore,reset.invokerAfter,"Camp entry must reset Invoker combat state");
@@ -63,9 +63,13 @@ async function main(){
     const actual=await page.evaluate(`(async()=>{const api=window.DiceboundCampShellOracleTest,out=[];const add=(name,result)=>out.push({name,result:result==null?result:JSON.parse(JSON.stringify(result))});add('startup-camp',api.startup());add('camp-recovery',api.recovery());add('camp-entry-checkpoint-reset',api.checkpointReset());add('camp-entry-reset',api.campReset());add('meta-refresh',api.metaRefresh());add('hud-board5-premini',api.hudBoard5Pre());add('hud-board5-final',api.hudBoard5Final());add('hud-board6-premini',api.hudBoard6Pre());add('hud-board6-final',api.hudBoard6Final());add('hud-hell-floor',api.hudHell());add('hud-stat-sync',api.hudStats());add('hud-checkpoint-schedule',await api.hudCheckpoint());add('camp-art-refresh',api.artRefresh());api.cleanup();return {baselineVersion:'0.6.6.35',runtimeVersion:window.DiceboundVersion?.version||null,cases:out};})()`);
     assertCoverage(actual);
     if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Camp/App-Shell fixture captured: ${FIXTURE_PATH}`);return;}
-    // The fixture remains the release-oracle baseline, with deliberate
-    // presentation deltas (such as art-only Camp labels) updated explicitly.
-    const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));assert.equal(fixture.baselineVersion,"0.6.6.35");assert.deepEqual(actual.cases,fixture.cases);console.log(`Camp/App-Shell oracle PASS: ${actual.cases.length} exact released-0.6.6.35 cases`);
+    // Preserve the frozen release fixture. Intentional presentation-only
+    // deltas are asserted above and excluded narrowly from structural equality.
+    const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));assert.equal(fixture.baselineVersion,"0.6.6.35");
+    const comparable=JSON.parse(JSON.stringify(actual.cases)),expected=JSON.parse(JSON.stringify(fixture.cases));
+    delete comparable.find(entry=>entry.name==="startup-camp")?.result?.nightmareStatus;
+    delete expected.find(entry=>entry.name==="startup-camp")?.result?.nightmareStatus;
+    assert.deepEqual(comparable,expected);console.log(`Camp/App-Shell oracle PASS: ${actual.cases.length} released-0.6.6.35 structural cases + intentional art-only Nightmare delta`);
   }finally{try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}}
 }
 main().catch(error=>{console.error(error?.stack||error);process.exitCode=1;});
