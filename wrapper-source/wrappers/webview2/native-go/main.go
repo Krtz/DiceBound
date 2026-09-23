@@ -247,6 +247,57 @@ func allStorageKeys(saveDir string) []string {
 }
 func writeAtomic(path string,data []byte) error { if err:=os.MkdirAll(filepath.Dir(path),0755);err!=nil{return err};tmp:=path+".tmp";if err:=os.WriteFile(tmp,data,0644);err!=nil{return err};return os.Rename(tmp,path) }
 func openFolder(path string) error { if err:=os.MkdirAll(path,0755);err!=nil{return err};return exec.Command("explorer.exe",path).Start() }
+func revealFile(path string) error { return exec.Command("explorer.exe","/select,"+path).Start() }
+
+type debugBundleRequest struct {
+    IncludeSave bool `json:"includeSave"`
+    Report json.RawMessage `json:"report"`
+}
+type debugBundleResult struct {
+    OK bool `json:"ok"`
+    Filename string `json:"filename"`
+    Path string `json:"path"`
+    IncludedSave bool `json:"includedSave"`
+}
+func zipBytes(zw *zip.Writer,name string,data []byte) error {
+    h:=&zip.FileHeader{Name:filepath.ToSlash(name),Method:zip.Deflate};h.SetModTime(time.Unix(0,0).UTC())
+    w,err:=zw.CreateHeader(h);if err!=nil{return err};_,err=w.Write(data);return err
+}
+func zipFileIfPresent(zw *zip.Writer,name,path string) error {
+    b,err:=os.ReadFile(path);if os.IsNotExist(err){return nil};if err!=nil{return err};return zipBytes(zw,name,b)
+}
+func createDebugBundle(gameDir,saveDir string,req debugBundleRequest)(debugBundleResult,error){
+    if len(req.Report)==0||!json.Valid(req.Report){return debugBundleResult{},fmt.Errorf("debug report is missing or invalid JSON")}
+    outDir:=filepath.Join(dataRoot,"debug-bundles");if err:=os.MkdirAll(outDir,0755);err!=nil{return debugBundleResult{},err}
+    filename:="DiceBound-debug-"+time.Now().UTC().Format("20060102-150405")+".zip";path:=filepath.Join(outDir,filename)
+    file,err:=os.Create(path);if err!=nil{return debugBundleResult{},err}
+    zw:=zip.NewWriter(file);ok:=false
+    defer func(){if !ok{_ = os.Remove(path)}}()
+    context:=map[string]any{
+        "generatedAt":time.Now().UTC().Format(time.RFC3339Nano),
+        "version":"0.6.7.31","buildKey":runtimeBuildKey,"releaseSourceSHA":releaseSourceSHA,
+        "wrapperMode":"native-webview2","webView2BootstrapMode":webViewBootstrapMode,
+        "paths":map[string]string{"dataRoot":dataRoot,"saveDir":runtimeSaveDir,"runtimeCacheDir":runtimeCacheDir,"gameDir":runtimeGameDir,"webView2UserDataDir":runtimeUserDataDir,"logPath":logPath},
+    }
+    contextBytes,_:=json.MarshalIndent(context,"","  ")
+    privacy:=[]byte("DiceBound debug bundle\n\nSave/progression files included: "+strconv.FormatBool(req.IncludeSave)+"\nSave files are excluded unless the player explicitly opts in from Options.\n")
+    if err:=zipBytes(zw,"diagnostics/runtime-report.json",req.Report);err!=nil{return debugBundleResult{},err}
+    if err:=zipBytes(zw,"diagnostics/native-context.json",append(contextBytes,'\n'));err!=nil{return debugBundleResult{},err}
+    if err:=zipBytes(zw,"PRIVACY.txt",privacy);err!=nil{return debugBundleResult{},err}
+    if err:=zipFileIfPresent(zw,"build/build-info.json",filepath.Join(gameDir,"build-info.json"));err!=nil{return debugBundleResult{},err}
+    if err:=zipFileIfPresent(zw,"build/build-manifest.json",filepath.Join(gameDir,"build-manifest.json"));err!=nil{return debugBundleResult{},err}
+    if err:=zipFileIfPresent(zw,"logs/native-wrapper.log",logPath);err!=nil{return debugBundleResult{},err}
+    if req.IncludeSave {
+        for _,key:=range allStorageKeys(saveDir){
+            src:=safeKeyFile(saveDir,key)
+            if err:=zipFileIfPresent(zw,"save/"+filepath.Base(src),src);err!=nil{return debugBundleResult{},err}
+        }
+    }
+    if err:=zw.Close();err!=nil{_ = file.Close();return debugBundleResult{},err}
+    if err:=file.Close();err!=nil{return debugBundleResult{},err};ok=true
+    _ = revealFile(path)
+    return debugBundleResult{OK:true,Filename:filename,Path:path,IncludedSave:req.IncludeSave},nil
+}
 
 func requestRuntimeRepair(reason string){
     logf("Runtime repair requested: %s (alreadyAttempted=%v)",reason,repairAttempted)
