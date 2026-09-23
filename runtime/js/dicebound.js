@@ -558,9 +558,16 @@
     elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{}
   };
 
+  const dbEquipmentIdentityOwner=window.DiceboundEquipment;
+  if(!dbEquipmentIdentityOwner?.ensureEquipmentIdentity)throw new Error('DiceboundEquipment modern identity owner must load before Dicebound artifacts.');
+  function ensureModernEquipmentIdentity(item,{classId=player?.classId||selectedClassId,requireIntrinsic=true}={}){
+    if(!item)return item;
+    dbEquipmentIdentityOwner.ensureEquipmentIdentity(item,{classId,rarity:"legendary",seed:item.seedCode||item.seed||item.id||item.name,requireIntrinsic});
+    return item;
+  }
   const dbArtifacts=window.DiceboundArtifacts;
   if(!dbArtifacts?.configure||!dbArtifacts?.create)throw new Error('DiceboundArtifacts final factory owner must load before dicebound.js');
-  dbArtifacts.configure({getPlayer:()=>player,random:()=>random(),pick:values=>pick(values),getElementKeys:()=>ELEMENT_KEYS});
+  dbArtifacts.configure({getPlayer:()=>player,random:()=>random(),pick:values=>pick(values),getElementKeys:()=>ELEMENT_KEYS,ensureEquipmentIdentity:(item,options)=>dbEquipmentIdentityOwner.ensureEquipmentIdentity(item,options)});
 
                     /* rarityValues is registry-owned. */
 
@@ -571,13 +578,22 @@
     const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
     return `+${pct?Math.round(value*100)+"%":value} ${names[key]||key}`;
   }
-  function formatBonuses(item){const stats=Object.entries(item?.bonuses||{}).map(([k,v])=>bonusLabel(k,v));if(item?.element&&ELEMENTS[item.element])stats.push(elementSummary(item));if(item?.uniqueEffect)stats.push(`Unique: ${item.uniqueEffect}`);if(item?.setName)stats.push(`Set: ${item.setName}`);return stats.join(" · ")||"No bonuses";}
+  function formatBonuses(item){
+    const stats=Object.entries(item?.bonuses||{}).map(([k,v])=>bonusLabel(k,v));
+    const identity=dbEquipmentIdentityOwner.identityForItem?.(item),intrinsic=dbEquipmentIdentityOwner.intrinsicBonusesForItem?.(item)||{};
+    const intrinsicText=Object.entries(intrinsic).map(([k,v])=>bonusLabel(k,v));
+    if(identity&&intrinsicText.length)stats.push(`INTRINSIC (${identity.displayName}): ${intrinsicText.join(" · ")}`);
+    if(item?.element&&ELEMENTS[item.element])stats.push(elementSummary(item));
+    if(item?.uniqueEffect)stats.push(`Unique: ${item.uniqueEffect}`);
+    if(item?.setName)stats.push(`Set: ${item.setName}`);
+    return stats.join(" · ")||"No bonuses";
+  }
   function mythicalSetCount(){return EQUIPMENT_SLOTS.reduce((n,slot)=>n+(player.equipment?.[slot]?.setName==="Impossible Road"?1:0),0);}
   function hasMythicPiece(piece){return EQUIPMENT_SLOTS.some(slot=>player.equipment?.[slot]?.mythicPiece===piece);}
   function applyItemStats(item,sign){
     if(!item)return;
-    const oldMax=player.maxHp;
-    Object.entries(item.bonuses||{}).forEach(([key,value])=>{if(typeof player[key]==="number")player[key]+=value*sign;});
+    const oldMax=player.maxHp,total=dbEquipmentIdentityOwner.allBonusesForItem?.(item)||item.bonuses||{};
+    Object.entries(total).forEach(([key,value])=>{if(typeof player[key]==="number")player[key]+=value*sign;});
     player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
     if(player.maxHp<1)player.maxHp=1;
     if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
@@ -588,7 +604,7 @@
     const repair=window.DiceboundEquipment?.repairPresentationFields;
     if(typeof repair!=="function")return 0;
     let repaired=0;const seen=new Set();
-    const visit=item=>{if(!item||typeof item!=="object"||seen.has(item))return;seen.add(item);if(repair(item))repaired++;};
+    const visit=item=>{if(!item||typeof item!=="object"||seen.has(item))return;seen.add(item);if(repair(item,{classId:player?.classId||selectedClassId}))repaired++;};
     Object.values(player?.equipment||{}).forEach(visit);
     (meta?.heirlooms||[]).forEach(visit);
     (meta?.heirloomStorage||[]).forEach(visit);
@@ -1431,7 +1447,7 @@ function returnToRoad(...args){
 
   window.DiceboundCamp.configureShell({ensureHellToggle:()=>ensureHellToggle()});
 
-    function generateMerchantWeapon(){return {id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}};}
+    function generateMerchantWeapon(){return ensureModernEquipmentIdentity({id:`merchant_omega_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:"weapon",rarity:"omega",mythical:true,merchantWeapon:true,icon:"⚖️",name:"The Final Price",uniqueEffect:"Compound Interest: every basic and Echo attack adds flat damage equal to your current gold.",bonuses:{attack:12,luck:.35,goldBonus:.60,bossDamage:.45}});}
   function applyMythicRingPulse(){if(!(player.equipment?.ring?.mythicPiece==="ring")||player.combatActionCount<1||player.combatActionCount%4!==0)return "";player.combatShield=(player.combatShield||0)+1;player.ultimateCharge=clamp(player.ultimateCharge+12,0,100);return "💍 Ouroboros Halo grants 1 barrier and 12 ultimate.";}
 
   let dbDebugUiReady=false;
@@ -2267,9 +2283,9 @@ function returnToRoad(...args){
     {id:'true_legend_element_v24',rarity:'legendary',icon:'🌈🌟',name:'Legend of the Prismatic Road',unique:true,desc:'Gain +20% elemental proc chance and +35% elemental power this run.',apply(){player.elementProcBonus=(player.elementProcBonus||0)+.20;player.elementDamageBonus=(player.elementDamageBonus||0)+.35;}}
   ];
 
-  function generateAxelsCoffeeMug(){return {id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'mythical',specialMythical:true,specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}};}
-  function generateKratzHeadphones(){return {id:`legend_headphones_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'mythical',specialMythical:true,specialLegendary:true,oneHitPerRound:true,icon:'🎧',name:'Kratz Headphones',uniqueEffect:'Once an attack actually reaches you in an enemy round, every later hit that round is drowned out. Dodges and Barriers do not consume this protection.',bonuses:{dodge:.25,defense:25,doubleStrike:-.25,attack:15,bossDamage:.25,crit:.25,goldBonus:-.50}};}
-  function generateKellysJeanJacket(){return {id:`legend_jacket_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'chest',rarity:'mythical',specialMythical:true,specialLegendary:true,softDefenseCurve:true,icon:'🧥',name:"The Jean Jacket Lost at Kelly's",uniqueEffect:'Defense suffers dramatically less diminishing returns while this jacket is equipped.',bonuses:{dodge:.30,defense:30,luck:-.50,doubleStrike:.15,lifeSteal:.15,attack:-10}};}
+  function generateAxelsCoffeeMug(){return ensureModernEquipmentIdentity({id:`legend_mug_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'offhand',rarity:'mythical',specialMythical:true,specialLegendary:true,coffeeActionProc:.18,icon:'☕',name:"Axel's Coffee Mug",uniqueEffect:'Every combat action has an 18% chance to trigger an empowered Coffee elemental proc.',bonuses:{doubleStrike:.75,attack:30,crit:.30,defense:-5,bossDamage:.34,lifeSteal:.10}});}
+  function generateKratzHeadphones(){return ensureModernEquipmentIdentity({id:`legend_headphones_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'mythical',specialMythical:true,specialLegendary:true,oneHitPerRound:true,icon:'🎧',name:'Kratz Headphones',uniqueEffect:'Once an attack actually reaches you in an enemy round, every later hit that round is drowned out. Dodges and Barriers do not consume this protection.',bonuses:{dodge:.25,defense:25,doubleStrike:-.25,attack:15,bossDamage:.25,crit:.25,goldBonus:-.50}});}
+  function generateKellysJeanJacket(){return ensureModernEquipmentIdentity({id:`legend_jacket_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'chest',rarity:'mythical',specialMythical:true,specialLegendary:true,softDefenseCurve:true,icon:'🧥',name:"The Jean Jacket Lost at Kelly's",uniqueEffect:'Defense suffers dramatically less diminishing returns while this jacket is equipped.',bonuses:{dodge:.30,defense:30,luck:-.50,doubleStrike:.15,lifeSteal:.15,attack:-10}});}
   const V24_LEGENDARY_RELICS=[generateAxelsCoffeeMug,generateKratzHeadphones,generateKellysJeanJacket];
   function v24HasLegendaryRelic(id){return (meta.legendaryRelics||[]).includes(id)||(meta.heirloomStorage||[]).some(x=>x?.specialLegendary&&x.name===id)||(meta.heirlooms||[]).some(x=>x?.specialLegendary&&x.name===id);}
   function v24RandomLegendaryRelic(){const candidates=V24_LEGENDARY_RELICS.map(fn=>fn()).filter(i=>!v24HasLegendaryRelic(i.name));return candidates.length?pick(candidates):pick(V24_LEGENDARY_RELICS)();}
@@ -2284,7 +2300,7 @@ function returnToRoad(...args){
     {pieces:2,text:'+2% all damage.'},{pieces:3,text:'+4% all damage and +4% elemental proc chance.'},{pieces:4,text:'+7% all damage, +5% elemental proc chance, 25 starting Ultimate, +8% pet double-attack chance and 5% less Guardian-special damage.'},{pieces:5,text:'+10% all damage, +7% elemental proc chance, +5% elemental power, 30 starting Ultimate, 1 starting Barrier, +10% pet double-attack chance and 10% less Guardian-special damage.'},{pieces:6,text:'+14% all damage, +10% elemental proc chance, +9% elemental power, 35 starting Ultimate, +13% pet double-attack chance and 15% less Guardian-special damage.'},{pieces:7,text:'+20% all damage, +13% elemental proc chance, +14% elemental power, 40 starting Ultimate, +16% pet double-attack chance, 20% less Guardian-special damage, and once per battle at ≤25% HP restore 18% max HP + gain 1 Barrier.'}
   ];}
 
-  function generateDevilsHorns(){return {id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}};}
+  function generateDevilsHorns(){return ensureModernEquipmentIdentity({id:`omega_devils_horns_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'hat',rarity:'omega',mythical:true,devilHorns:true,icon:'👿',name:"The Devil's Horns",uniqueEffect:'First/basic hits have a 0.5% chance to instantly kill their target; Echo Strikes cannot trigger it. Overhealing becomes Energy Shield up to 100% of max HP.',bonuses:{maxHp:32,attack:10,crit:.18,bossDamage:.30,lifeSteal:.12}});}
   function v24HasHorns(){return !!player.equipment?.hat?.devilHorns;}
   function v24HasHeadphones(){return !!player.equipment?.hat?.oneHitPerRound;}
   function v24HasJeanJacket(){return !!player.equipment?.chest?.softDefenseCurve;}
@@ -2498,7 +2514,7 @@ dbReturnToRoadTraceReady=true;
   /* OUROBOROS: ATTACK IS A CURRENCY FOR ECHO, NOT NORMAL DAMAGE ----------- */
 
   /* PHILOSOPHER'S STONE ---------------------------------------------------- */
-  generatePhilosophersStone=function(){return {id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}};};
+  generatePhilosophersStone=function(){return ensureModernEquipmentIdentity({id:`philosopher_stone_${Date.now()}_${random().toString(36).slice(2,6)}`,slot:'amulet',rarity:'omega',mythical:true,bloodmageStone:true,icon:'🜂',name:"Philosopher's Stone",uniqueEffect:'Scarlet Transmutation: overhealing converts 5% of the excess into Energy Shield and 1% into temporary Attack for this battle. Blood-fuelled abilities cost less life.',bonuses:{maxHp:36,attack:12,lifeSteal:.24,crit:.20,luck:.20,bossDamage:.18}});};
   function v26ClearStoneBattle(...args){return dbCombat.clearStoneBattle(...args);}
 
   dbReturnToRoadStoneReady=true;
@@ -3632,11 +3648,6 @@ dbReturnToRoadTraceReady=true;
 
   const db06314Equipment=window.DiceboundEquipment;
   if(!db06314Equipment)throw new Error('DiceBound requires the equipment identity owner before dicebound.js');
-  const db06314FormatBonusesBase=formatBonuses;
-  formatBonuses=function(item){
-    const base=db06314FormatBonusesBase(item),intrinsic=db06314IntrinsicParts(item);
-    return intrinsic?`${base} · INTRINSIC (${intrinsic.identity.displayName}): ${intrinsic.values.join(' · ')}`:base;
-  };
   window.DiceboundEquipmentIdentityTest=Object.freeze({
     identity:id=>db06314Equipment.equipmentIdentity(id),
     art:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item)||null,
