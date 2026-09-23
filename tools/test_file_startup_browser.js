@@ -141,6 +141,22 @@ async function connectWithHandshake(){
     assert.equal(art.loaded.length,14,"all imported Euler, Goblin and Skeleton assets must be loaded by Edge");
     for(const loaded of art.loaded){assert.ok(loaded.width>=1000&&loaded.height>=1000,`imported artwork did not retain its full-resolution dimensions: ${loaded.src}`);assert.ok(loaded.cornerAlpha<255,`imported artwork has an opaque corner/matte: ${loaded.src}`);}
     console.log("Local file authored-art PASS: Euler plus Goblin/Skeleton Board 1--6 assets resolve and load with transparency");
+
+    // #455: reproduce the 0.6.7.29 live regression with an old-style special
+    // Hat: no equipmentId, generic saved name, and HTML accidentally persisted
+    // in item.icon by the retired Beta 0.4.3 presentation bridge.
+    const gearDetail=await page.evaluate(`(()=>{const item=window.DiceboundArtifacts.create('hat');item.rarity='mythical';item.name='Equipment';item.icon='<img class="db-art-icon db-art-inline" src="assets/equipment/hat/helmet.png" alt="Helmet">';window.DiceboundItems.equip(item,true);window.DiceboundEquipmentHeirlooms.activateCharacterTab('gear');const slot=document.querySelector('#equipmentGrid .slot-hat'),tip=slot?.dataset?.tip||'';slot?.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const layer=document.getElementById('appTooltipLayer');return {html:slot?.innerHTML||'',tip,aria:slot?.getAttribute('aria-label')||'',tooltip:layer?.textContent||'',storedIcon:window.DiceboundRunResumeTest.state().player.equipment?.hat?.icon||''};})()`);
+    assert.equal(gearDetail.storedIcon,'👑',"historical Hat HTML icon contamination must be repaired in live item state");
+    assert.doesNotMatch(gearDetail.html,/<img class="db-art-icon|&lt;img|<img class=\"db-art-icon/i,"Character Gear must never render persisted HTML icon text");
+    assert.match(gearDetail.tip,/Crown of the Road That Should Not Exist/,"generic special-item names must recover canonical Artifact identity");
+    assert.match(gearDetail.tip,/MYTHICAL · HAT/,"Gear detail must identify rarity and real slot");
+    assert.match(gearDetail.tip,/Unique: Crown of the Fourth Road/,"Gear detail must include unique effect");
+    assert.match(gearDetail.tip,/Set: Impossible Road/,"Gear detail must include set identity");
+    assert.equal(gearDetail.aria,gearDetail.tip,"accessible Gear detail must match hover detail");
+    assert.equal(gearDetail.tooltip,gearDetail.tip,"shared root tooltip must render the authoritative Gear detail");
+    assert.doesNotMatch(gearDetail.tooltip,/<img|&lt;img/i,"Gear tooltip must never contain presentation markup");
+    console.log("Character Gear Edge PASS: special Hat identity/stats survive historical HTML-icon contamination");
+
     console.log("Local file Camp startup PASS");
   }finally{
     try{if(page)await page.send("Browser.close");}catch(_){}
