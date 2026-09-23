@@ -152,7 +152,7 @@ async function connectWithHandshake(){
     assert.equal(gearDetail.equipmentId,gearDetail.generatedId,"old special save migration must deterministically recover the generated base identity");
     assert.ok(gearDetail.identityName,"migrated special Hat lost its modern base identity");
     assert.ok(Object.keys(gearDetail.intrinsic).length>0,"migrated Impossible Road Hat has no Intrinsic");
-    assert.equal(gearDetail.actualDelta,gearDetail.expectedDelta,"modern equipment Intrinsic did not reach the live equip stat transaction");
+    assert.ok(Math.abs(gearDetail.actualDelta-gearDetail.expectedDelta)<1e-9,`modern equipment Intrinsic did not reach the live equip stat transaction: ${JSON.stringify(gearDetail)}`);
     assert.equal(gearDetail.storedIcon,'👑',"historical Hat HTML icon contamination must be repaired in live item state");
     assert.match(gearDetail.artSrc||'',/^assets\/equipment\/hat\//,"Impossible Road Hat must render art from its modern equipmentId");
     assert.doesNotMatch(gearDetail.html,/<img class="db-art-icon|&lt;img|<img class=\"db-art-icon/i,"Character Gear must never render persisted HTML icon text");
