@@ -325,6 +325,14 @@ func startServer(gameDir,saveDir string)(string,error){
     mux.HandleFunc("/__dicebound/storage/keys",func(w http.ResponseWriter,r *http.Request){w.Header().Set("Content-Type","application/json");_ = json.NewEncoder(w).Encode(allStorageKeys(saveDir))})
     mux.HandleFunc("/__dicebound/platform/open-save-folder",func(w http.ResponseWriter,r *http.Request){if err:=openFolder(saveDir);err!=nil{http.Error(w,err.Error(),500);return};_,_=io.WriteString(w,"ok")})
     mux.HandleFunc("/__dicebound/platform/open-app-data-folder",func(w http.ResponseWriter,r *http.Request){if err:=openFolder(dataRoot);err!=nil{http.Error(w,err.Error(),500);return};_,_=io.WriteString(w,"ok")})
+    mux.HandleFunc("/__dicebound/platform/export-debug-bundle",func(w http.ResponseWriter,r *http.Request){
+        if r.Method!="POST"{http.Error(w,"POST required",405);return}
+        b,err:=io.ReadAll(io.LimitReader(r.Body,2<<20));if err!=nil{http.Error(w,"unable to read debug request",400);return}
+        var req debugBundleRequest;if err:=json.Unmarshal(b,&req);err!=nil{http.Error(w,"invalid debug request",400);return}
+        result,err:=createDebugBundle(gameDir,saveDir,req);if err!=nil{logf("Debug bundle export failed: %v",err);http.Error(w,err.Error(),500);return}
+        logf("Debug bundle exported: %s includeSave=%v",result.Path,result.IncludedSave)
+        w.Header().Set("Content-Type","application/json");_ = json.NewEncoder(w).Encode(result)
+    })
     mux.HandleFunc("/__dicebound/platform/ready",func(w http.ResponseWriter,r *http.Request){b,_:=io.ReadAll(io.LimitReader(r.Body,32<<10));logf("Frontend ready payload: %s",strings.TrimSpace(string(b)));select{case frontendReady<-true:default:};_,_=io.WriteString(w,"ok")})
     mux.HandleFunc("/__dicebound/platform/repair-runtime",func(w http.ResponseWriter,r *http.Request){_,_=io.WriteString(w,"ok");go requestRuntimeRepair("manual repair requested from Options")})
     mux.HandleFunc("/__dicebound/platform/quit",func(w http.ResponseWriter,r *http.Request){_,_=io.WriteString(w,"ok");if hwnd!=0{procPostMessageW.Call(hwnd,wmClose,0,0)}})
