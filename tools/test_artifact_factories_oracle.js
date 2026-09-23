@@ -7,11 +7,15 @@ const path=require("node:path");
 const vm=require("node:vm");
 
 const ROOT=path.join(__dirname,"..");
+const raritySource=fs.readFileSync(path.join(ROOT,"runtime","js","items","rarities.js"),"utf8");
+const equipmentSource=fs.readFileSync(path.join(ROOT,"runtime","js","items","equipment.js"),"utf8");
 const source=fs.readFileSync(path.join(ROOT,"runtime","js","items","artifacts.js"),"utf8");
 const context={window:{},console,Date:{now:()=>1700000000000}};
 vm.createContext(context);
+vm.runInContext(raritySource,context,{filename:"runtime/js/items/rarities.js"});
+vm.runInContext(equipmentSource,context,{filename:"runtime/js/items/equipment.js"});
 vm.runInContext(source,context,{filename:"runtime/js/items/artifacts.js"});
-const artifacts=context.window.DiceboundArtifacts;
+const equipment=context.window.DiceboundEquipment,artifacts=context.window.DiceboundArtifacts;
 assert.ok(artifacts?.configure&&artifacts?.create,"Artifact owner must expose configured final factories");
 
 const player={classId:"ranger"};
@@ -22,6 +26,7 @@ artifacts.configure({
   random:()=>{calls++;return .25;},
   pick:list=>{calls++;assert.deepEqual(Array.from(list),elements);return list[1];},
   getElementKeys:()=>elements,
+  ensureEquipmentIdentity:(item,options)=>equipment.ensureEquipmentIdentity(item,options),
 });
 
 function stable(item){
@@ -33,7 +38,11 @@ function stable(item){
   };
 }
 function make(slot,classId="ranger"){
-  player.classId=classId;calls=0;const item=stable(artifacts.create(slot));return {item,calls};
+  player.classId=classId;calls=0;const created=artifacts.create(slot),identity=equipment.identityForItem(created);
+  assert.ok(identity,`Artifact ${slot} must carry a valid modern equipmentId`);
+  assert.equal(identity.slot,slot,`Artifact ${slot} base identity used the wrong slot`);
+  assert.ok(Object.keys(equipment.intrinsicBonusesForItem(created)).length>0,`Artifact ${slot} must carry a real intrinsic bonus package`);
+  const item=stable(created);return {item,calls};
 }
 const shared=(slot,name,icon,uniqueEffect,bonuses,id)=>({
   id,slot,rarity:"artifact",artifact:true,mythical:false,v24Rarity:true,mythicPiece:slot,setName:"Impossible Road",name,icon,element:null,
@@ -66,4 +75,4 @@ assert.equal(tableCalls,1);
 assert.equal(artifacts.totalWeight,100);
 assert.deepEqual(Array.from(artifacts.entries,entry=>entry.slot),["boots","legs","ring","hat","amulet","offhand","weapon"]);
 
-console.log("Artifact factory oracle PASS: seven final Artifact factories, special class weapons, fallback weapon, v2.4 scaling and exact RNG call counts are frozen.");
+console.log("Artifact factory oracle PASS: seven final Artifact factories keep exact gameplay RNG/scaling while each carries a modern slot-valid equipmentId + Intrinsic.");
