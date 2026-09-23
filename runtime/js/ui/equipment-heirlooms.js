@@ -22,9 +22,18 @@
   function label(slot){return runtime.getSlotLabel?.(slot)||slot||'Equipment';}
   function rarity(item){return runtime.getRarityInfo?.(item?.rarity)||{label:item?.rarity||'Unknown'};}
   function identity(item){return runtime.getEquipmentIdentity?.(item)||null;}
-  function displayName(item){return item?.name||identity(item)?.displayName||'Equipment';}
+  function displayName(item){
+    const semantic=identity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
+    const generic=!raw||/^equipment$/i.test(raw)||/^item$/i.test(raw)||(slotName&&raw.toLowerCase()===slotName.toLowerCase());
+    return generic?(semantic?.displayName||raw||'Equipment'):raw;
+  }
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
-  function detailBonuses(item){return runtime.formatDetailBonuses?.(item)||bonuses(item);}
+  function detailBonuses(item){
+    const detail=runtime.formatDetailBonuses?.(item);
+    if(detail&&detail!=='No bonuses')return detail;
+    const total=runtime.getAllBonuses?.(item)||{},parts=Object.entries(total).filter(([,value])=>Number(value)!==0).map(([key,value])=>runtime.formatBonus?.(key,value)||`${key}: ${value}`);
+    return parts.length?parts.join(' · '):(detail||bonuses(item));
+  }
   function state(){return runtime.getState?.()||{};}
   function setModel(){return runtime.getArtifactSet?.()||{count:0,tiers:[]};}
   function characterLayout(){return runtime.getCharacterLayout?.()==='classic'?'classic':'modern';}
@@ -44,8 +53,8 @@
   }
   function itemDetail(item,slot=item?.slot){
     if(!item)return `Empty ${label(slot)} slot`;
-    const rarityLabel=rarity(item).label||item.rarity||'Unknown';
-    return `${displayName(item)} · ${rarityLabel} ${label(slot)} · ${detailBonuses(item)}`;
+    const rarityLabel=rarity(item).label||item.rarity||'Unknown',stats=detailBonuses(item);
+    return `${displayName(item)}\n${String(rarityLabel).toUpperCase()} · ${String(label(slot)).toUpperCase()}\n${stats}`;
   }
   function vaultSlotMarkup(slot,activeBySlot){
     const item=activeBySlot.get(slot),slotId=escapeHtml(slot),detail=escapeHtml(itemDetail(item,slot));
