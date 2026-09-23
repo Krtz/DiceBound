@@ -57,6 +57,32 @@ assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({sl
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"oak-shortbow"}))),{attack:2,crit:.01},"Oak Shortbow must remain a distinct approved identity");
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"offhand",equipmentId:"spellbook"}))),{maxMana:5});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.allBonusesForItem({slot:"weapon",equipmentId:"shortbow",bonuses:{attack:3}}))),{attack:4,crit:.01});
+
+const fixedMythicals={
+  "axels-coffee-mug":{slot:"offhand",intrinsic:{doubleStrike:.05}},
+  "kratz-headphones":{slot:"hat",intrinsic:{dodge:.02}},
+  "kellys-jean-jacket":{slot:"chest",intrinsic:{defense:2}},
+};
+for(const [id,expected] of Object.entries(fixedMythicals)){
+  const identity=equipment.equipmentIdentity(id);
+  assert.ok(identity,`${id} must resolve as a real equipment identity`);
+  assert.equal(identity.exclusiveSpecial,true,`${id} must be exclusive to its named Mythical`);
+  assert.equal(identity.slot,expected.slot);
+  assert.deepEqual(JSON.parse(JSON.stringify(identity.intrinsicBonuses)),expected.intrinsic);
+  for(const rarity of ["poor","common","uncommon","rare","epic","legendary","mythical"]){
+    assert.equal(equipment.eligibleEquipmentIdentities({slot:expected.slot,rarity}).some(candidate=>candidate.id===id),false,`${id} leaked into the generic base roll pool`);
+  }
+}
+const oldMug={id:"legacy-mug",slot:"offhand",rarity:"mythical",specialMythical:true,specialLegendary:true,coffeeActionProc:.18,name:"Axel's Coffee Mug",bonuses:{doubleStrike:.70}};
+assert.equal(equipment.repairPresentationFields(oldMug,{classId:"ranger"}),true,"old Axel's Coffee Mug must migrate to its fixed identity");
+assert.equal(oldMug.equipmentId,"axels-coffee-mug");
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem(oldMug))),{doubleStrike:.05});
+const oldHeadphones={id:"legacy-headphones",slot:"hat",rarity:"mythical",specialMythical:true,specialLegendary:true,oneHitPerRound:true,name:"Kratz Headphones",bonuses:{dodge:.23}};
+equipment.repairPresentationFields(oldHeadphones,{classId:"ranger"});
+assert.equal(oldHeadphones.equipmentId,"kratz-headphones");
+const oldJacket={id:"legacy-jacket",slot:"chest",rarity:"mythical",specialMythical:true,specialLegendary:true,softDefenseCurve:true,name:"The Jean Jacket Lost at Kelly's",bonuses:{defense:28}};
+equipment.repairPresentationFields(oldJacket,{classId:"ranger"});
+assert.equal(oldJacket.equipmentId,"kellys-jean-jacket");
 assert.equal(equipment.isHeirloomEligible({id:"ordinary",slot:"weapon",name:"Prismatic-sounding ordinary weapon"}),true,"ordinary eligibility must not inspect display names");
 assert.equal(equipment.isHeirloomEligible({id:"birthright",slot:"weapon",provenance:"prismatic-birthright",heirloomEligible:false}),false,"explicit run-only equipment must be rejected semantically");
 assert.equal(equipment.isHeirloomEligible(null),false,"missing equipment cannot become an heirloom");
@@ -72,10 +98,9 @@ assert.ok(Object.keys(equipment.intrinsicBonusesForItem(specialBase)).length>0,"
 const specialRepeat={...specialBase,equipmentId:null};
 equipment.ensureEquipmentIdentity(specialRepeat,{classId:"ranger",rarity:"legendary",seed:specialBase.id,requireIntrinsic:true});
 assert.equal(specialRepeat.equipmentId,specialBase.equipmentId,"special identity selection must stay deterministic without gameplay RNG");
-const legacySpecial={id:"legacy-special",slot:"offhand",rarity:"mythical",specialMythical:true,name:"Legacy special",icon:"☕",bonuses:{}};
-assert.equal(equipment.repairPresentationFields(legacySpecial,{classId:"ranger"}),true,"current special saves without equipmentId must be migrated");
-assert.ok(equipment.identityForItem(legacySpecial),"migrated special save did not receive a valid modern identity");
-assert.ok(Object.keys(equipment.intrinsicBonusesForItem(legacySpecial)).length>0,"migrated special save did not receive an Intrinsic");
+const legacySpecial={id:"legacy-special",slot:"offhand",rarity:"mythical",specialMythical:true,name:"Unknown legacy special",icon:"☕",bonuses:{}};
+assert.equal(equipment.repairPresentationFields(legacySpecial,{classId:"ranger"}),false,"unknown old Mythicals must not be silently reinterpreted as random bases");
+assert.equal(legacySpecial.equipmentId,undefined);
 
 const weaponIds=Array.from(equipment.eligibleEquipmentIdentities({slot:"weapon",rarity:"common"}),identity=>identity.id);
 assert.deepEqual(weaponIds,["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash","10th-birthday-balloons","ashen-staff","birthday-cake","oak-shortbow","bronze-battleaxe"]);
