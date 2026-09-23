@@ -4564,6 +4564,7 @@ dbReturnToRoadTraceReady=true;
     clamp:(value,min,max)=>clamp(value,min,max),getEncounterLead:()=>currentEncounterLead,getSetDamageBonus:()=>v19SetDamageBonus(),getEncounterTurn:()=>currentEncounterTurn,setEncounterTurn:value=>{currentEncounterTurn=value;},
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},saveMeta:()=>saveMeta(),checkDynamicClassUnlocks:()=>dbProgression.checkDynamicClassUnlocks(),document:()=>document,
     playerAttack:options=>dbCombat.attack(options),manaGain:amount=>dbCombat.manaGain(amount),
+    resolveManaBuilderGain:(id,options)=>dbCombatManaActionResolution.resolvedBuilderGain(id,options),
     rollTieredProc:chance=>rollTieredProc(chance),
     triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
     playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy)
