@@ -67,8 +67,11 @@ async function main(){
     // deltas are asserted above and excluded narrowly from structural equality.
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));assert.equal(fixture.baselineVersion,"0.6.6.35");
     const comparable=JSON.parse(JSON.stringify(actual.cases)),expected=JSON.parse(JSON.stringify(fixture.cases));
-    delete comparable.find(entry=>entry.name==="startup-camp")?.result?.nightmareStatus;
-    delete expected.find(entry=>entry.name==="startup-camp")?.result?.nightmareStatus;
+    const comparableStartup=comparable.find(entry=>entry.name==="startup-camp"),expectedStartup=expected.find(entry=>entry.name==="startup-camp");
+    if(comparableStartup?.result)delete comparableStartup.result.nightmareStatus;
+    if(expectedStartup?.result)delete expectedStartup.result.nightmareStatus;
+    assert.equal(Object.hasOwn(comparableStartup?.result||{},"nightmareStatus"),false,"intentional Nightmare presentation delta was not removed from actual oracle comparison");
+    assert.equal(Object.hasOwn(expectedStartup?.result||{},"nightmareStatus"),false,"intentional Nightmare presentation delta was not removed from expected oracle comparison");
     assert.deepEqual(comparable,expected);console.log(`Camp/App-Shell oracle PASS: ${actual.cases.length} released-0.6.6.35 structural cases + intentional art-only Nightmare delta`);
   }finally{try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}}
 }
