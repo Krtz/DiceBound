@@ -21,6 +21,9 @@ for(let board=1;board<=6;board++){
   assert.deepEqual(JSON.parse(JSON.stringify(wolf)),{key:"wolf",src:`assets/enemies/normal/battle/wolf/board-${board}.png`,alt:"Wolf",board});
   const demon=assets.resolveEnemyBattleArt("Demon",board);
   assert.deepEqual(JSON.parse(JSON.stringify(demon)),{key:"demon",src:`assets/enemies/normal/battle/demon/board-${board}.png`,alt:"Demon",board});
+  for(const [name,key] of [["Bandit","bandit"],["Orc","orc"],["Cultist","cultist"],["Lich","lich"]]){
+    assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyBattleArt(name,board))),{key,src:`assets/enemies/normal/battle/${key}/board-${board}.png`,alt:name,board},`${name} Board ${board} must use its authored tier art`);
+  }
   assert.equal(assets.resolveEnemyBattleArt("Devil",board).key,"demon","legacy ordinary Devil labels may resolve art but must canonicalize to Demon");
 }
 assert.equal(assets.resolveEnemyBattleArt("Slime",0).board,1,"invalid low boards must safely select Board 1");
@@ -39,8 +42,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("normal")
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("Nightmare"))),{id:"nightmare",className:"db-enemy-mode-nightmare"});
 assert.deepEqual(JSON.parse(JSON.stringify(assets.resolveEnemyModeAura("HELL"))),{id:"hell",className:"db-enemy-mode-hell"});
 assert.equal(assets.resolveEnemyModeAura("unexpected").id,"normal");
-for(const identity of ["slime","goblin","skeleton","wolf","demon","wraith"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",identity,`board-${board}.png`)));
+for(const identity of ["slime","goblin","skeleton","wolf","bandit","orc","cultist","wraith","demon","lich"])for(let board=1;board<=6;board++)assert.ok(fs.existsSync(path.join(root,"runtime","assets","enemies","normal","battle",identity,`board-${board}.png`)),`${identity} Board ${board} art missing`);
 const monolith=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
 assert.doesNotMatch(monolith,/db066TieredEnemyMarkupBase|db-enemy-dark-matte|wraith-dark-matte-style/,"transparent Wraith art must not retain the old Wraith-only matte/blending renderer wrapper");
 
-console.log("Ordinary Board battle-art registry: identity/Board resolution, independent marker ownership and mode-presentation separation pass");
+console.log("Ordinary Board battle-art registry PASS: ten tiered recurring families resolve authored Board art with independent markers and mode layers");
