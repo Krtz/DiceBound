@@ -29,7 +29,7 @@
   }
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
   function detailBonuses(item){
-    const detail=runtime.formatDetailBonuses?.(item);
+    const raw=String(runtime.formatDetailBonuses?.(item)||'').trim(),detail=raw.replace(/^No bonuses\s*·\s*/i,'').trim();
     if(detail&&detail!=='No bonuses')return detail;
     const total=runtime.getAllBonuses?.(item)||{},parts=Object.entries(total).filter(([,value])=>Number(value)!==0).map(([key,value])=>runtime.formatBonus?.(key,value)||`${key}: ${value}`);
     return parts.length?parts.join(' · '):(detail||bonuses(item));
