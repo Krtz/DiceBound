@@ -10,6 +10,7 @@
 
   const OWNER='ui/equipment-heirlooms';
   const STYLE_ID='dicebound-equipment-heirloom-ui-owner';
+  const DETAIL_POPOVER_ID='dbEquipmentDetailPopover';
   let runtime={};
   let campStorageTab='all';
   let characterTab='stats';
@@ -23,10 +24,15 @@
   function rarity(item){return runtime.getRarityInfo?.(item?.rarity)||{label:item?.rarity||'Unknown'};}
   function identity(item){return runtime.getEquipmentIdentity?.(item)||null;}
   function specialIdentity(item){return runtime.getSpecialEquipmentIdentity?.(item)||null;}
-  function displayName(item){
-    const semantic=specialIdentity(item)||identity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
+  function displayName(item,slot=item?.slot){
+    const semantic=specialIdentity(item)||identity(item),raw=String(item?.name||'').trim(),slotName=String(label(slot)||'').trim();
     const generic=!raw||/^equipment$/i.test(raw)||/^item$/i.test(raw)||(slotName&&raw.toLowerCase()===slotName.toLowerCase());
-    return generic?(semantic?.displayName||raw||'Equipment'):raw;
+    if(!generic)return raw;
+    const artAlt=String(runtime.resolveEquipmentArt?.(item)?.alt||'').trim();
+    if(semantic?.displayName)return semantic.displayName;
+    if(artAlt&&!/^equipment$/i.test(artAlt)&&(!slotName||artAlt.toLowerCase()!==slotName.toLowerCase()))return artAlt;
+    const rarityLabel=String(rarity(item).label||item?.rarity||'').trim();
+    return [rarityLabel,slotName].filter(Boolean).join(' ')||'Equipment';
   }
   function safeIcon(item){return String(runtime.getSafeEquipmentIcon?.(item)||item?.icon||'◇').trim()||'◇';}
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
@@ -56,7 +62,7 @@
   function itemDetail(item,slot=item?.slot){
     if(!item)return `Empty ${label(slot)} slot`;
     const rarityLabel=rarity(item).label||item.rarity||'Unknown',stats=detailBonuses(item);
-    return `${displayName(item)}\n${String(rarityLabel).toUpperCase()} · ${String(label(slot)).toUpperCase()}\n${stats}`;
+    return `${displayName(item,slot)}\n${String(rarityLabel).toUpperCase()} · ${String(label(slot)).toUpperCase()}\n${stats}`;
   }
   function vaultSlotMarkup(slot,activeBySlot){
     const item=activeBySlot.get(slot),slotId=escapeHtml(slot),detail=escapeHtml(itemDetail(item,slot));
