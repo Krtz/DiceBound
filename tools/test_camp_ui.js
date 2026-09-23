@@ -27,7 +27,7 @@ assert.deepStrictEqual({...camp.stageAnchors.campNightmareBtn},{x:.889,y:.53,w:1
 assert.deepStrictEqual({...camp.stageAnchors.campHellBtn},{x:.42,y:.35,w:118},'Hell must sit another five scene-percentage points right and two points down from the 0.6.7.18 anchor');
 assert.deepStrictEqual({...camp.stageAnchors.campClassBtn},{x:.39,y:.65,w:235},'Class Choice must sit another 10% lower on the authored Camp stage');
 assert.deepStrictEqual({...camp.stageAnchors.campInfoBtn},{x:.26,y:.78,w:145},'Info must sit in the lower-left flow between Pet and Trophy');
-assert.deepStrictEqual({...camp.stageAnchors.campCareerBtn},{x:.13,y:.62,w:145},'Career must have its own stable book destination without displacing the existing lower-left flow');
+assert.deepStrictEqual({...camp.stageAnchors.campCareerBtn},{x:.13,y:.62,w:145},'Career tent must retain the existing Career destination anchor without displacing the lower-left flow');
 assert.deepStrictEqual({...camp.stageAnchors.campBonfire},{x:.50,y:.72,w:170},'Bonfire must remain grounded in the lower clearing');
 assert.deepStrictEqual({...camp.stageAnchors.campGoBtn},{x:.85,y:.74,w:440,h:250},'Start Run must remain a major lower-right scene anchor with a matching hit area');
 assert.deepStrictEqual({...camp.stageAnchors.campChestBtn},{x:.64,y:.76,w:245,h:150},'Chest must remain lower-middle/right without overlapping Start Run');
@@ -95,6 +95,13 @@ assert.match(source,/function hideLegacyCampDestinations\(/,'Camp must own the h
 assert.match(source,/#startOverlay\.camp-fullscreen #nightmareBox,#startOverlay\.camp-fullscreen #hellBox\{display:none!important\}/,'Camp fullscreen must suppress the live legacy difficulty anchors at the destination layer');
 assert.doesNotMatch(source,/#startHeirloom/,'Camp owner must not retain the retired hidden start-Heirloom presentation target');
 assert.match(source,/assets\/camp\/interactions\/talent-star\.png/,'Camp Talents must resolve the canonical interaction asset');
+assert.match(source,/assets\/camp\/interactions\/career-tent\.png/,'Career must use the authored Camp tent at its existing anchor');
+assert.match(source,/assets\/camp\/interactions\/achievements\/tier-1\.png/,'Achievement interaction must have an authored tier-1 bootstrap asset');
+assert.match(source,/view\.achievementTrophyTier\?\.assetKey/,'Camp Achievement art must select its tier from canonical progression view data');
+assert.match(source,/camp-painted-interaction/,'Career and Achievement authored art must opt into painted-object hit targeting');
+assert.match(source,/#campCareerBtn \.camp-label,[^\n]*#campAchievementBtn \.camp-sub\{display:none!important\}/,'Career/Achievement fullscreen labels must not enlarge the painted interaction footprint');
+assert.match(assets,/careerTent:\{image:`\$\{paths\.campInteractions\}\/career-tent\.png`/,'asset registry must own Career tent art');
+for(let tier=1;tier<=6;tier++)assert(assets.includes(`achievementTier${tier}:{image:\`\${paths.campInteractions}/achievements/tier-${tier}.png\``),`asset registry missing Achievement tier ${tier}`);
 assert.doesNotMatch(source,/assets\/camp\/objects\/talent-star\.png/,'Camp must not retain an obsolete Talent-object fallback pointer');
 assert.match(assets,/hellOn:\{image:`\$\{paths\.hellToggle\}\/on\.png`,alt:"Active Hell volcano with a dancing devil"\}/,'Camp assets must register the approved active Hell-volcano scene semantically');
 assert.match(source,/function renderHellModeArt\(view\)/,'Camp must own active/inactive Hell artwork presentation');
