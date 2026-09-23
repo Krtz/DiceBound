@@ -2037,13 +2037,14 @@ function returnToRoad(...args){
     find:$,
     getViewModel:()=>{
       const randomClass=!!window.DiceboundClassChooser?.isRandomMode?.(),cls=randomClass?{id:'random',name:'Random',icon:'🎲'}:(CLASSES[selectedClassId]||CLASSES.ranger),pet=PETS[meta.activePet]||PETS.neutral,state=meta.pets?.[meta.activePet]||{level:1};
+      const achievementTrophyTier=window.DiceboundAchievements?.campTrophyTierForCount?.(dbProgression.achievementCount())||null;
       return {
         classId:cls.id,className:cls.name,classIcon:cls.icon,
         petId:pet.id,petName:pet.name,petIcon:pet.icon,petLine:`${pet.icon} ${pet.name} · Bond Lv ${state.level}`,
         summary:v22CampSummaryText(),
         prestigeSummary:`${prestigeSummary()} · ${dbProgression.allocatedTalentPoints()+(meta.points||0)} total talent points · every 9 becomes 1 Prestige point.`,
         ...dbEquipmentUi.campView(),
-        reveals:{...(meta.campReveals||{})},heirloomStorageUnlocked:dbProgression.heirloomStorageUnlocked(),
+        achievementTrophyTier,reveals:{...(meta.campReveals||{}),achievementTrophy:!!achievementTrophyTier},heirloomStorageUnlocked:dbProgression.heirloomStorageUnlocked(),
         nightmareUnlocked:!!meta.nightmareUnlocked,nightmareMode:!!nightmareMode,
         hellUnlocked:!!meta.hellUnlocked,hellMode:!!hellMode
       };
@@ -2686,12 +2687,9 @@ dbReturnToRoadTraceReady=true;
   let dbBeta02Frame=0,dbBeta02Last=null;
 
   function dbBeta02Number(value,fallback=0){const n=Number.parseFloat(value);return Number.isFinite(n)?n:fallback;}
-  function dbBeta02PlayFlowName(width,height){return width>=1450&&height>=800?'side-controls':'below-controls';}
-  function dbBeta02SideControlsWidth(width){return Math.round(Math.min(240,Math.max(164,dbBeta02Number(width,1600)*.115)));}
-  function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0,controlsWidth=0,controlsPlacement='below',paddingX=0,paddingY=0,gap=12,minSize=180,maxSize=1400}={}){
-    const side=controlsPlacement==='side';
-    const usableWidth=Math.max(0,dbBeta02Number(panelWidth)-dbBeta02Number(paddingX)-(side?dbBeta02Number(controlsWidth)+dbBeta02Number(gap):0));
-    const usableHeight=Math.max(0,dbBeta02Number(panelHeight)-dbBeta02Number(paddingY)-(side?0:dbBeta02Number(controlsHeight)+dbBeta02Number(gap)));
+  function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0,paddingX=0,paddingY=0,gap=12,minSize=180,maxSize=1400}={}){
+    const usableWidth=Math.max(0,dbBeta02Number(panelWidth)-dbBeta02Number(paddingX));
+    const usableHeight=Math.max(0,dbBeta02Number(panelHeight)-dbBeta02Number(paddingY)-dbBeta02Number(controlsHeight)-dbBeta02Number(gap));
     const raw=Math.floor(Math.min(usableWidth,usableHeight));
     if(raw<=0)return 0;
     return Math.max(Math.min(raw,dbBeta02Number(maxSize,1400)),Math.min(raw,dbBeta02Number(minSize,180)));
@@ -2701,10 +2699,11 @@ dbReturnToRoadTraceReady=true;
 
   function dbBeta02MeasureNow(){
     const root=document.documentElement,body=document.body,app=document.querySelector('.app'),panel=document.querySelector('.game-panel'),controls=document.querySelector('.road-controls');
-    const width=Math.max(0,window.innerWidth||root?.clientWidth||0),height=Math.max(0,window.innerHeight||root?.clientHeight||0),layout=dbBeta02LayoutName(width),heightMode=dbBeta02HeightName(height),playFlow=layout==='stacked'?'below-controls':dbBeta02PlayFlowName(width,height),sideControlsWidth=dbBeta02SideControlsWidth(width),travelDensity=playFlow==='side-controls'&&sideControlsWidth<205?'compact':'full';
-    body?.setAttribute('data-window-layout',layout);body?.setAttribute('data-window-height',heightMode);body?.setAttribute('data-play-flow',playFlow);body?.setAttribute('data-travel-density',travelDensity);
-    root?.style?.setProperty('--db-window-width',`${width}px`);root?.style?.setProperty('--db-window-height',`${height}px`);root?.style?.setProperty('--db-road-side-width',`${sideControlsWidth}px`);
-    const rollButton=document.getElementById('rollBtn');if(rollButton){rollButton.textContent=travelDensity==='compact'?'Roll':'Roll the dice';rollButton.setAttribute('aria-label','Roll the dice');}
+    const width=Math.max(0,window.innerWidth||root?.clientWidth||0),height=Math.max(0,window.innerHeight||root?.clientHeight||0),layout=dbBeta02LayoutName(width),heightMode=dbBeta02HeightName(height);
+    body?.setAttribute('data-window-layout',layout);body?.setAttribute('data-window-height',heightMode);
+    body?.removeAttribute('data-play-flow');body?.removeAttribute('data-travel-density');
+    root?.style?.setProperty('--db-window-width',`${width}px`);root?.style?.setProperty('--db-window-height',`${height}px`);root?.style?.removeProperty('--db-road-side-width');
+    const rollButton=document.getElementById('rollBtn');if(rollButton){rollButton.textContent='Roll the dice';rollButton.setAttribute('aria-label','Roll the dice');}
     let boardSize=0;
     if(layout==='stacked'){
       root?.style?.removeProperty('--db-board-size');
@@ -2712,10 +2711,10 @@ dbReturnToRoadTraceReady=true;
       const style=typeof getComputedStyle==='function'?getComputedStyle(panel):{};
       const paddingX=dbBeta02Number(style.paddingLeft)+dbBeta02Number(style.paddingRight),paddingY=dbBeta02Number(style.paddingTop)+dbBeta02Number(style.paddingBottom),gap=dbBeta02Number(style.rowGap||style.gap,12);
       const rect=panel.getBoundingClientRect?.()||{};
-      boardSize=dbBeta02CalculateBoardSize({panelWidth:panel.clientWidth||rect.width||0,panelHeight:panel.clientHeight||rect.height||0,controlsHeight:controls?.offsetHeight||controls?.getBoundingClientRect?.().height||0,controlsWidth:sideControlsWidth,controlsPlacement:playFlow==='side-controls'?'side':'below',paddingX,paddingY,gap});
+      boardSize=dbBeta02CalculateBoardSize({panelWidth:panel.clientWidth||rect.width||0,panelHeight:panel.clientHeight||rect.height||0,controlsHeight:controls?.offsetHeight||controls?.getBoundingClientRect?.().height||0,paddingX,paddingY,gap});
       if(boardSize>0)root?.style?.setProperty('--db-board-size',`${boardSize}px`);
     }
-    const result=Object.freeze({width,height,layout,heightMode,playFlow,travelDensity,sideControlsWidth,boardSize,appWidth:app?.clientWidth||0,panelWidth:panel?.clientWidth||0,panelHeight:panel?.clientHeight||0});
+    const result=Object.freeze({width,height,layout,heightMode,boardSize,appWidth:app?.clientWidth||0,panelWidth:panel?.clientWidth||0,panelHeight:panel?.clientHeight||0});
     dbBeta02Last=result;
     if(typeof gameStarted!=='undefined'&&gameStarted&&typeof placePawn==='function')requestAnimationFrame(()=>{try{placePawn(false);}catch(_){}});
     return result;
@@ -2730,7 +2729,7 @@ dbReturnToRoadTraceReady=true;
     for(const el of [document.querySelector('.app'),document.querySelector('.game-panel'),document.querySelector('.road-controls'),document.querySelector('.topbar')])if(el)observer.observe(el);
   }
   setTimeout(dbBeta02Schedule,0);
-  window.DiceboundResponsive=Object.freeze({apiVersion:1,calculateBoardSize:dbBeta02CalculateBoardSize,layoutName:dbBeta02LayoutName,heightName:dbBeta02HeightName,playFlowName:dbBeta02PlayFlowName,sideControlsWidth:dbBeta02SideControlsWidth,measure:dbBeta02MeasureNow,schedule:dbBeta02Schedule,diagnostics:()=>dbBeta02Last});
+  window.DiceboundResponsive=Object.freeze({apiVersion:2,calculateBoardSize:dbBeta02CalculateBoardSize,layoutName:dbBeta02LayoutName,heightName:dbBeta02HeightName,measure:dbBeta02MeasureNow,schedule:dbBeta02Schedule,diagnostics:()=>dbBeta02Last});
 
   // real combat and Steal implementations instead of reimplementing formulas.
   Object.defineProperty(window,'DiceboundBeta021Test',{configurable:true,value:Object.freeze({
@@ -3507,15 +3506,7 @@ dbReturnToRoadTraceReady=true;
 
   dbProgression.checkDynamicClassUnlocks();
 
-  const DB0633_CAMP_TROPHY_TIERS=Object.freeze([
-    Object.freeze({id:'current-trophy',minimumAchievementCount:2})
-  ]);
-  function db0633TrophyTierForAchievementCount(count){
-    const earned=Math.max(0,Math.floor(Number(count)||0));
-    let tier=null;
-    for(const candidate of DB0633_CAMP_TROPHY_TIERS)if(earned>=candidate.minimumAchievementCount)tier=candidate;
-    return tier;
-  }
+  function db0633TrophyTierForAchievementCount(count){return window.DiceboundAchievements?.campTrophyTierForCount?.(count)||null;}
   function db0633PrestigeOfferPoints(total=dbProgression.allocatedTalentPoints()+(meta.points||0)){return dbProgression.prestigeOffer(total);}
   function db0633ReconcileCampRevealState(current={},facts={}){
     const prior={achievementTrophy:!!current.achievementTrophy,talentStar:!!current.talentStar,prestigeMoon:!!current.prestigeMoon};
@@ -3524,14 +3515,14 @@ dbReturnToRoadTraceReady=true;
     const prestigeCount=Math.max(0,Math.floor(Number(facts.prestigeCount)||0));
     const prestigeOfferPoints=Math.max(0,Math.floor(Number(facts.prestigeOfferPoints)||0));
     return {
-      achievementTrophy:prior.achievementTrophy||!!db0633TrophyTierForAchievementCount(achievementCount),
+      achievementTrophy:!!db0633TrophyTierForAchievementCount(achievementCount),
       talentStar:prior.talentStar||!!facts.legacyLevelGained||legacyLevel>1||prestigeCount>0,
       prestigeMoon:prior.prestigeMoon||prestigeOfferPoints>=1||prestigeCount>0
     };
   }
   function db0633CurrentCampRevealState(){
     const state=meta.campReveals;
-    return {achievementTrophy:!!state?.achievementTrophy,talentStar:!!state?.talentStar,prestigeMoon:!!state?.prestigeMoon};
+    return {achievementTrophy:!!db0633TrophyTierForAchievementCount(db0633AchievementCount()),talentStar:!!state?.talentStar,prestigeMoon:!!state?.prestigeMoon};
   }
   function db0633AchievementCount(){return dbProgression.achievementCount();}
   function db0633ReconcileCampReveals(options={}){
@@ -3544,7 +3535,8 @@ dbReturnToRoadTraceReady=true;
       prestigeOfferPoints:db0633PrestigeOfferPoints()
     });
     let changed=false;
-    for(const key of ['achievementTrophy','talentStar','prestigeMoon']){
+    if(meta.campReveals&&Object.prototype.hasOwnProperty.call(meta.campReveals,'achievementTrophy')){delete meta.campReveals.achievementTrophy;changed=true;}
+    for(const key of ['talentStar','prestigeMoon']){
       if(next[key]&&!current[key]){
         if(!meta.campReveals||typeof meta.campReveals!=='object')meta.campReveals={};
         meta.campReveals[key]=true;changed=true;
@@ -3553,8 +3545,9 @@ dbReturnToRoadTraceReady=true;
     return {changed,state:db0633CurrentCampRevealState()};
   }
   function db0633SyncCampObjects(){
-    const state=db0633CurrentCampRevealState();
-    return window.DiceboundCamp?.syncProgressionReveals?.(state)||state;
+    const state=db0633CurrentCampRevealState(),synced=window.DiceboundCamp?.syncProgressionReveals?.(state)||state;
+    window.DiceboundCamp?.refreshArt?.();
+    return synced;
   }
   function db0633RefreshCampProgression(options={}){
     const result=db0633ReconcileCampReveals(options);if(result.changed)saveMeta();db0633SyncCampObjects();return result;
@@ -3566,7 +3559,7 @@ dbReturnToRoadTraceReady=true;
   };
   window.DiceboundCamp.configureShell({syncCampProgressionObjects:()=>db0633SyncCampObjects(),refreshCampProgression:()=>db0633RefreshCampProgression()});
   window.DiceboundCampProgressionTest=Object.freeze({
-    trophyTiers:()=>DB0633_CAMP_TROPHY_TIERS.map(tier=>({...tier})),
+    trophyTiers:()=>[...(window.DiceboundAchievements?.campTrophyTiers||[])].map(tier=>({...tier})),
     trophyTierForAchievementCount:db0633TrophyTierForAchievementCount,
     prestigeOfferPoints:db0633PrestigeOfferPoints,
     reconcile:(current,facts)=>db0633ReconcileCampRevealState(current,facts),

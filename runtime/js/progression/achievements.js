@@ -249,6 +249,14 @@
     Object.freeze({id:"hero-mastery",label:"✨ Hero Mastery"})
   ]);
   const CATEGORY_GROUP=Object.freeze({roads:"roads",builds:"builds",collection:"legacy",secrets:"secrets"});
+  const CAMP_TROPHY_TIERS=Object.freeze([
+    Object.freeze({id:"tier-1",minimumAchievementCount:2,assetKey:"achievementTier1"}),
+    Object.freeze({id:"tier-2",minimumAchievementCount:10,assetKey:"achievementTier2"}),
+    Object.freeze({id:"tier-3",minimumAchievementCount:20,assetKey:"achievementTier3"}),
+    Object.freeze({id:"tier-4",minimumAchievementCount:30,assetKey:"achievementTier4"}),
+    Object.freeze({id:"tier-5",minimumAchievementCount:40,assetKey:"achievementTier5"}),
+    Object.freeze({id:"tier-6",minimumAchievementCount:50,assetKey:"achievementTier6"})
+  ]);
   const HERO_MILESTONES=Object.freeze({
     "ranger-b1":"ranger",
     "sorcerer-b2":"sorcerer",
@@ -269,5 +277,11 @@
   function createRegistry(){
     return JSON.parse(JSON.stringify(ACHIEVEMENT_DATA)).map(achievement=>({...achievement,hierarchy:locationFor(achievement)}));
   }
-  window.DiceboundAchievements=Object.freeze({apiVersion:2,createRegistry,groups:GROUPS,locationFor});
+  function campTrophyTierForCount(count){
+    const earned=Math.max(0,Math.floor(Number(count)||0));
+    let tier=null;
+    for(const candidate of CAMP_TROPHY_TIERS)if(earned>=candidate.minimumAchievementCount)tier=candidate;
+    return tier;
+  }
+  window.DiceboundAchievements=Object.freeze({apiVersion:3,createRegistry,groups:GROUPS,locationFor,campTrophyTiers:CAMP_TROPHY_TIERS,campTrophyTierForCount});
 })();

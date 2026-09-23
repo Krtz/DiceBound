@@ -16,6 +16,18 @@ vm.runInContext(registrySource,sandbox,{filename:'achievements.js'});
 vm.runInContext(careerSource,sandbox,{filename:'progression/career-history.js'});
 vm.runInContext(progressionSource,sandbox,{filename:'progression/lifecycle.js'});
 
+const achievementDomain=sandbox.window.DiceboundAchievements;
+assert.equal(achievementDomain.apiVersion,3,"Achievement domain version must include Camp trophy policy");
+assert.deepEqual(JSON.parse(JSON.stringify(achievementDomain.campTrophyTiers.map(tier=>({id:tier.id,minimumAchievementCount:tier.minimumAchievementCount,assetKey:tier.assetKey})))),[
+  {id:"tier-1",minimumAchievementCount:2,assetKey:"achievementTier1"},
+  {id:"tier-2",minimumAchievementCount:10,assetKey:"achievementTier2"},
+  {id:"tier-3",minimumAchievementCount:20,assetKey:"achievementTier3"},
+  {id:"tier-4",minimumAchievementCount:30,assetKey:"achievementTier4"},
+  {id:"tier-5",minimumAchievementCount:40,assetKey:"achievementTier5"},
+  {id:"tier-6",minimumAchievementCount:50,assetKey:"achievementTier6"}
+],"Camp Trophy progression belongs to canonical Achievement policy");
+for(const [count,id] of [[0,null],[1,null],[2,"tier-1"],[9,"tier-1"],[10,"tier-2"],[20,"tier-3"],[30,"tier-4"],[40,"tier-5"],[50,"tier-6"]])assert.equal(achievementDomain.campTrophyTierForCount(count)?.id||null,id,`wrong canonical Camp Trophy tier for ${count}`);
+
 const registry=sandbox.window.DiceboundAchievements.createRegistry();
 registry.push({id:'secret-prereq',category:'secrets',name:'Hidden Name',condition:'merchantKills:1',secret:true,hierarchy:{group:'secrets'}});
 const meta={
@@ -94,4 +106,4 @@ const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8')
 assert(!monolith.includes('road4:{type:"counter",field:"board4Clears"'),'Road 4 achievement gate must not retain shadow counter ownership in dicebound.js');
 assert(monolith.includes('paladin_oath:{type:"achievements",requirements:["fighter-b3","cleric-b3"]}'),'Paladin prerequisite gate must reference canonical achievement IDs');
 
-console.log('Achievement policy PASS: canonical Board clears, legacy read bridge, prerequisite names and secret-safe copy');
+console.log('Achievement policy PASS: canonical Board clears, six-tier Camp Trophy policy, prerequisite names and secret-safe copy');

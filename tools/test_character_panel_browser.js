@@ -44,23 +44,21 @@ async function main(){
    }
    await page.send("Emulation.setDeviceMetricsOverride",{width:1715,height:886,deviceScaleFactor:1,mobile:false});await sleep(180);
    const widePlay=await snapshot(page);
-   if(widePlay.playFlow!=="side-controls")throw new Error(`Roomy desktop did not switch to side controls: ${JSON.stringify(widePlay)}`);
-   if(Math.abs(widePlay.board.width-widePlay.board.height)>2||widePlay.board.width<700)throw new Error(`Roomy desktop Board did not stay square and materially grow: ${JSON.stringify(widePlay)}`);
-   if(widePlay.controls.left<widePlay.board.right-2||widePlay.controls.top>=widePlay.board.bottom||widePlay.controls.bottom<=widePlay.board.top)throw new Error(`Travel controls are not beside the Board: ${JSON.stringify(widePlay)}`);
-   if(widePlay.board.left-widePlay.panel.left>45)throw new Error(`Play column still leaves a large dead strip before the Board: ${JSON.stringify(widePlay)}`);
-   if(widePlay.travelDensity!=="compact"||widePlay.roll.text!=="Roll"||widePlay.roll.height>64)throw new Error(`Narrow side Travel control did not use compact one-line Roll presentation: ${JSON.stringify(widePlay)}`);
+   if(widePlay.playFlow||widePlay.travelDensity)throw new Error(`Retired side-Travel state leaked into live DOM: ${JSON.stringify(widePlay)}`);
+   if(Math.abs(widePlay.board.width-widePlay.board.height)>2)throw new Error(`Roomy desktop Board stopped being square: ${JSON.stringify(widePlay)}`);
+   if(widePlay.controls.top<widePlay.board.bottom-2)throw new Error(`Road controls must stay below the Board: ${JSON.stringify(widePlay)}`);
+   if(widePlay.roll.text!=="Roll the dice")throw new Error(`Road control lost the canonical Roll label: ${JSON.stringify(widePlay)}`);
    if(widePlay.hudFlow==="expanded"){
-     if(widePlay.sidebarFlow!=="masonry")throw new Error(`Wide HUD did not choose measured masonry packing: ${JSON.stringify(widePlay)}`);
+     if(widePlay.sidebarFlow!=="masonry")throw new Error(`Wide HUD did not preserve measured masonry packing: ${JSON.stringify(widePlay)}`);
      if(Math.abs(widePlay.pet.top-widePlay.card.top)>3)throw new Error(`Companion did not pack beside Character at the top: ${JSON.stringify(widePlay)}`);
      if(widePlay.log.top<widePlay.pet.bottom-2||Math.abs(widePlay.log.left-widePlay.pet.left)>3||Math.abs(widePlay.log.width-widePlay.pet.width)>4)throw new Error(`Adventure Log did not pack directly below Companion: ${JSON.stringify(widePlay)}`);
    }
    await page.send("Emulation.setDeviceMetricsOverride",{width:2100,height:1000,deviceScaleFactor:1,mobile:false});await sleep(180);
    const widerPlay=await snapshot(page);
-   if(widerPlay.travelDensity!=="full"||widerPlay.roll.text!=="Roll the dice")throw new Error(`Wide side Travel control did not restore full Roll wording: ${JSON.stringify(widerPlay)}`);
-   await page.send("Emulation.setDeviceMetricsOverride",{width:1715,height:886,deviceScaleFactor:1,mobile:false});await sleep(180);
+   if(widerPlay.controls.top<widerPlay.board.bottom-2||widerPlay.roll.text!=="Roll the dice")throw new Error(`Very-wide desktop must still keep Road controls below the Board: ${JSON.stringify(widerPlay)}`);
    await page.send("Emulation.setDeviceMetricsOverride",{width:1200,height:620,deviceScaleFactor:1,mobile:false});await sleep(180);
    const shortPlay=await snapshot(page);
-   if(shortPlay.playFlow!=="below-controls"||shortPlay.controls.top<shortPlay.board.bottom-2)throw new Error(`Short-wide desktop did not preserve below-Board controls: ${JSON.stringify(shortPlay)}`);
+   if(shortPlay.controls.top<shortPlay.board.bottom-2||shortPlay.roll.text!=="Roll the dice")throw new Error(`Short-wide desktop must keep Road controls below the Board: ${JSON.stringify(shortPlay)}`);
    await page.send("Emulation.setDeviceMetricsOverride",{width:1680,height:1000,deviceScaleFactor:1,mobile:false});await sleep(180);
    await pointerClick(page,'#characterTabs [data-character-tab="gear"]');
    const tooltipProbe=await page.evaluate(`(()=>{const item={id:'character-tooltip-probe',slot:'amulet',name:'Equipment',equipmentId:'hawkeye-charm',icon:'◇',rarity:'common',bonuses:{}};window.DiceboundItems.equip(item,true);window.DiceboundEquipmentHeirlooms.renderEquipment();const slot=document.querySelector('#equipmentGrid .slot-amulet');slot?.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const layer=document.getElementById('appTooltipLayer');return {tip:slot?.dataset.tip||'',text:layer?.textContent||'',hidden:layer?.classList.contains('hidden')??true,whiteSpace:layer?getComputedStyle(layer).whiteSpace:''};})()`);
@@ -78,7 +76,7 @@ async function main(){
    await page.evaluate("window.DiceboundOptionsUi.close()");
    const modernAgain=await page.evaluate(`(()=>{const card=document.getElementById('characterCard'),grid=document.getElementById('equipmentGrid');return {layout:card?.dataset.characterLayout,bodyLayout:document.body.dataset.characterLayout,paperSlots:grid?.querySelectorAll('.character-gear-slot').length||0};})()`);
    if(modernAgain.layout!=="modern"||modernAgain.bodyLayout!=="modern"||modernAgain.paperSlots!==8)throw new Error(`Options Modern restore failed: ${JSON.stringify(modernAgain)}`);
-   console.log("Character Edge PASS: intrinsic Gear stats, measured HUD packing, adaptive Travel controls, live resize and Classic fallback");
+   console.log("Character Edge PASS: intrinsic Gear stats, measured HUD packing, Road controls below Board, live resize and Classic fallback");
  }finally{
    try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
  }
