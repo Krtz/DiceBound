@@ -161,7 +161,15 @@ var (
     repairAttempted bool
     runtimeCacheDir string
     dataRoot string
+    runtimeGameDir string
+    runtimeSaveDir string
+    runtimeUserDataDir string
+    runtimeBuildKey string
+    webViewBootstrapMode string
 )
+
+// tools/build_launcher.py injects the exact release-source commit when CI has it.
+var releaseSourceSHA = "unavailable"
 
 func utf16(s string) *uint16 { p, _ := syscall.UTF16PtrFromString(s); return p }
 
