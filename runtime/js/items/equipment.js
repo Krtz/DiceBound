@@ -203,7 +203,12 @@
     if(!item||typeof item!=="object")return false;
     let changed=false;
     if(iconContainsMarkup(item.icon)){item.icon=fallbackIconForItem(item);changed=true;}
-    if(shouldRepairSpecialIdentity(item)){
+    const fixedId=fixedSpecialEquipmentId(item);
+    if(fixedId&&item.equipmentId!==fixedId){
+      const before=item.equipmentId||null;
+      ensureEquipmentIdentity(item,{classId,rarity:"mythical",requireIntrinsic:true});
+      if((item.equipmentId||null)!==before)changed=true;
+    }else if(shouldRepairSpecialIdentity(item)){
       const current=identityForItem(item),hasIntrinsic=!!current&&Object.keys(current.intrinsicBonuses||{}).length>0;
       if(!hasIntrinsic){
         const before=item.equipmentId||null;
