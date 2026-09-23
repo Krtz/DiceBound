@@ -8,17 +8,14 @@ const js=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").repla
 const css=fs.readFileSync(path.join(root,"runtime/css/dicebound.css"),"utf8").replace(/\r\n/g,"\n");
 const equipment=fs.readFileSync(path.join(root,"runtime/js/ui/equipment-heirlooms.js"),"utf8").replace(/\r\n/g,"\n");
 
-assert.ok(js.includes("function dbBeta02PlayFlowName(width,height){return width>=1450&&height>=800?'side-controls':'below-controls';}"),"roomy desktop play-flow policy missing");
-assert.ok(js.includes("controlsPlacement='below'")&&js.includes("controlsPlacement==='side'"),"Board size calculator must distinguish side vs below controls");
-assert.ok(js.includes("body?.setAttribute('data-play-flow',playFlow)"),"responsive owner must publish play-flow semantics");
-assert.ok(js.includes("body?.setAttribute('data-travel-density',travelDensity)"),"Travel presentation must publish compact/full density");
-assert.ok(js.includes("rollButton.textContent=travelDensity==='compact'?'Roll':'Roll the dice'"),"Travel Roll label must adapt without multi-line wrapping");
-assert.ok(js.includes("controlsPlacement:playFlow==='side-controls'?'side':'below'"),"live Board measurement must use play-flow placement");
-assert.ok(css.includes('body[data-play-flow="side-controls"] .game-panel')&&css.includes("grid-template-columns:minmax(0,1fr) var(--db-road-side-width,170px)"),"side-control play cluster CSS missing");
-assert.ok(css.includes('body[data-play-flow="side-controls"] .road-controls')&&css.includes("grid-template-columns:1fr;grid-template-rows:auto auto auto"),"side Travel control layout missing");
-assert.ok(css.includes('[data-travel-density="compact"] #rollBtn')&&css.includes("white-space:nowrap"),"compact Travel control must keep Roll on one line");
-assert.ok(js.includes("function beta042SidebarSnapshot()")&&js.includes("characterHeight>=petHeight+80?'masonry':'paired'"),"sidebar packing must be chosen from measured card geometry");
-assert.ok(css.includes('[data-sidebar-flow="masonry"] .sidebar>.log-card')&&css.includes("grid-column:2!important;grid-row:2!important"),"masonry HUD must pack Adventure Log below Companion");
+assert.ok(js.includes("function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0"),"Board size calculator must account for Road controls below the Board");
+assert.ok(js.includes("dbBeta02Number(panelHeight)-dbBeta02Number(paddingY)-dbBeta02Number(controlsHeight)-dbBeta02Number(gap)"),"Road-control height must always reduce available Board height");
+for(const retired of ["dbBeta02PlayFlowName","dbBeta02SideControlsWidth","data-play-flow","data-travel-density","controlsPlacement","sideControlsWidth","travelDensity"])assert.equal(js.includes(retired),false,`rejected side-Travel policy remains in composition: ${retired}`);
+assert.equal(css.includes('data-play-flow="side-controls"'),false,"rejected side-Travel CSS must be deleted");
+assert.equal(css.includes("data-travel-density"),false,"rejected compact/full Travel density CSS must be deleted");
+assert.ok(js.includes("rollButton.textContent='Roll the dice'"),"Roll control must keep the canonical full label");
+assert.ok(js.includes("function beta042SidebarSnapshot()")&&js.includes("characterHeight>=petHeight+80?'masonry':'paired'"),"right-side HUD packing must still be chosen from measured card geometry");
+assert.ok(css.includes('[data-sidebar-flow="masonry"] .sidebar>.log-card')&&css.includes("grid-column:2!important;grid-row:2!important"),"masonry HUD must keep Adventure Log below Companion");
 assert.match(equipment,/grid-template-columns:repeat\(5,minmax\(42px,1fr\)\).*grid-template-areas:"\. \. hat \. \." "\. amulet chest ring \." "weapon \. chest \. offhand" "\. \. legs \. \." "\. \. boots \. \."/s,"normal desktop spatial Character paper doll missing");
 assert.ok(equipment.includes('body[data-hud-flow="landscape-2"] .character-gear-grid')&&equipment.includes('body[data-hud-flow="landscape-3"] .character-gear-grid'),"short-landscape compact paper-doll fallback missing");
-console.log("Board space layout PASS: adaptive Travel density, measured HUD packing and spatial Character Gear contracts are locked");
+console.log("Board space layout PASS: Road controls stay below, measured right-side HUD packing remains, spatial Gear stays intact");
