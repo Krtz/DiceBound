@@ -21,12 +21,13 @@
     bgr: { name: "Deafening Blast", tip: "165% AoE; next response deals 35% less damage and delays a special." }
   });
   let runtime = null;
+  let wexBuilderInFlight = false;
 
   function requireRuntime() { if (!runtime) throw new Error("DiceboundInvoker must be configured before use."); return runtime; }
   function configure(next) {
-    const required = ["getPlayer", "getMeta", "isClassActive", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy", "damageEnemy", "damageAll", "healPlayer", "addEnemyBurn", "updateCombatUI", "setCombatText", "addCombatHistory", "identityFlash", "delay", "winCombat", "resolveEnemyResponse", "selectEnemy", "animateUltimate", "animateClassAttack", "clamp", "getEncounterLead", "getSetDamageBonus", "getEncounterTurn", "setEncounterTurn", "recordManaSpenderCast", "saveMeta", "checkDynamicClassUnlocks", "document", "playerAttack", "manaGain", "rollTieredProc", "triggerStrikeElements", "playElementAnimation"];
+    const required = ["getPlayer", "getMeta", "isClassActive", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy", "damageEnemy", "damageAll", "healPlayer", "addEnemyBurn", "updateCombatUI", "setCombatText", "addCombatHistory", "identityFlash", "delay", "winCombat", "resolveEnemyResponse", "selectEnemy", "animateUltimate", "animateClassAttack", "clamp", "getEncounterLead", "getSetDamageBonus", "getEncounterTurn", "setEncounterTurn", "recordManaSpenderCast", "saveMeta", "checkDynamicClassUnlocks", "document", "playerAttack", "manaGain", "resolveManaBuilderGain", "rollTieredProc", "triggerStrikeElements", "playElementAnimation"];
     for (const key of required) if (typeof next?.[key] !== "function") throw new Error(`Invoker runtime missing ${key}().`);
-    runtime = next; return api;
+    runtime = next; wexBuilderInFlight = false; return api;
   }
   const active = () => !!requireRuntime().isClassActive("invoker");
   const player = () => requireRuntime().getPlayer();
@@ -98,13 +99,19 @@
   function scale(raw, { ignoreDefense = false } = {}) { const p = player(), rt = requireRuntime(); let amount = Math.max(1, Math.round(raw * outgoingMultiplier() * (1 + (p.damageBonus || 0) + rt.getSetDamageBonus()))); if (rt.getEncounterLead()?.boss) amount = Math.round(amount * (1 + (p.bossDamage || 0))); return { amount, ignoreDefense }; }
   function markAchievement(id) { const meta = requireRuntime().getMeta(); meta.achievements = meta.achievements || {}; meta.achievements[id] = true; }
   async function orbAttack(key) {
-    const rt = requireRuntime(), p = player(), spec = ATTACK[key];
-    if (!spec || !active() || rt.getCombatBusy() || !rt.getCurrentEnemy()) return false;
-    if (spec.mana > 0) {
-      const baseGain = spec.mana + Math.max(0, Number(p.manaBuilderBonus) || 0);
-      rt.manaGain(baseGain * generatorManaMultiplier());
+    const rt = requireRuntime(), p = player(), spec = ATTACK[key], manaBuilder = spec?.mana > 0;
+    if (!spec || !active() || rt.getCombatBusy() || !rt.getCurrentEnemy() || (manaBuilder && wexBuilderInFlight)) return false;
+    if (manaBuilder) wexBuilderInFlight = true;
+    try {
+      if (manaBuilder) {
+        const requested = rt.resolveManaBuilderGain("invoker", { multiplier: generatorManaMultiplier() }), gained = rt.manaGain(requested);
+        rt.identityFlash(`${spec.orb === ORB.GREEN ? "🟢" : "🔮"} +${gained} Mana`);
+        rt.addCombatHistory(`🟢 Wex Strike generates ${gained} Mana${gained < requested ? ` (resolved ${requested}, capped by max Mana)` : ""}.`);
+      }
+      return await rt.playerAttack({ echoMultiplier: spec.echoMultiplier, postActionKind: `orb:${spec.orb}`, damageMultiplier: spec.damage });
+    } finally {
+      if (manaBuilder) wexBuilderInFlight = false;
     }
-    return rt.playerAttack({ echoMultiplier: spec.echoMultiplier, postActionKind: `orb:${spec.orb}`, damageMultiplier: spec.damage });
   }
   const quasStrike = () => orbAttack("quas");
   const wexStrike = () => orbAttack("wex");

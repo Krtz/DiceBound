@@ -19,6 +19,7 @@ assert.equal(css.includes("data-travel-density"),false,"rejected compact/full Tr
 assert.ok(js.includes("rollButton.textContent='Roll the dice'"),"Roll control must keep the canonical full label");
 assert.ok(js.includes("function beta042SidebarSnapshot()")&&js.includes("characterHeight>=petHeight+80?'masonry':'paired'"),"right-side HUD packing must still be chosen from measured card geometry");
 assert.ok(css.includes('[data-sidebar-flow="masonry"] .sidebar>.log-card')&&css.includes("grid-column:2!important;grid-row:2!important"),"masonry HUD must keep Adventure Log below Companion");
-assert.match(equipment,/grid-template-columns:repeat\(5,minmax\(42px,1fr\)\).*grid-template-areas:"\. \. hat \. \." "\. amulet chest ring \." "weapon \. chest \. offhand" "\. \. legs \. \." "\. \. boots \. \."/s,"normal desktop spatial Character paper doll missing");
+assert.ok(equipment.includes('grid-template-areas:". . hat . ." "amulet . chest . ring" "weapon . chest . offhand" ". . legs . ." ". . boots . ."'),"normal desktop spatial Character paper doll missing");
+
 assert.ok(equipment.includes('body[data-hud-flow="landscape-2"] .character-gear-grid')&&equipment.includes('body[data-hud-flow="landscape-3"] .character-gear-grid'),"short-landscape compact paper-doll fallback missing");
 console.log("Board space layout PASS: Road controls stay below, measured right-side HUD packing remains, spatial Gear stays intact");

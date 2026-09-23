@@ -3,6 +3,7 @@
 
   const OWNER = "combat/mana-action-resolution";
   let runtime = null;
+  let builderInFlight = false;
   const SPELLS = {
     sorcerer:{builder:"Channel Bolt",builderIcon:"🔮",spell:"Arcane Lance",spellIcon:"✦",cost:35,gain:28,desc:"Channel Bolt deals slightly reduced normal attack damage and builds Mana. Arcane Lance spends 35 Mana for a crit-capable heavy spell, converts half of Echo Strike chance into bonus Lance damage, applies Echo-weighted Poison, Lifesteal, and guarantees a random core-element eruption."},
     vampire:{builder:"Night Siphon",builderIcon:"🦇",spell:"Grave Lance",spellIcon:"🌑",cost:35,gain:26,desc:"Night Siphon builds Mana while attacking. Grave Lance spends 35 Mana for a crit-capable heavy spell that scales with Lifesteal and 80% of Echo chance, uses 120% of normal Poison chance, rolls normal elements, and drains doubled Lifesteal from direct plus elemental damage."},
@@ -30,6 +31,7 @@
     ];
     for (const name of required) if (typeof next?.[name] !== "function") throw new Error(`Mana action runtime missing ${name}().`);
     runtime = next;
+    builderInFlight = false;
     return api;
   }
 
@@ -44,6 +46,7 @@
     return spell ? `Mana class — ${spell.builder} builds Mana; ${spell.spell} spends it.` : null;
   }
 
+  function positive(value) { return Math.max(0, Number(value) || 0); }
   function manaGain(amount) {
     const rt = requireRuntime(), p = player();
     if (!p.maxMana) return 0;
@@ -51,52 +54,52 @@
     p.mana = rt.clamp(p.mana + amount, 0, p.maxMana);
     return p.mana - before;
   }
-
-  // Generator transaction: Mana lands before the underlying Basic Attack.
-  async function baseChannelAttack() {
-    const rt = requireRuntime(), p = player();
-    if (rt.getCombatBusy() || !currentEnemy()) return;
-    const cfg = spellFor(rt.classIdentityId());
-    if (!cfg) return rt.playerAttack();
-    if (rt.isClassActive("invoker") && rt.invokerActive()) return rt.invokerWexStrike();
-    const gained = manaGain(cfg.gain);
-    p._occultChanneling = true;
-    p._occultChannelMultiplier = 0;
-    rt.identityFlash(`${cfg.builderIcon} +${gained} Mana`);
-    try {
-      await rt.playerAttack();
-    } finally {
-      p._occultChanneling = false;
-      p._occultChannelMultiplier = 0;
-    }
-    rt.updateCombatUI();
+  function resolvedBuilderGain(id = requireRuntime().classIdentityId(), { multiplier = 1 } = {}) {
+    const cfg = spellFor(id);
+    if (!cfg) return 0;
+    const p = player(), generic = positive(p.manaBuilderBonus), classBonus = id === "summoner" ? positive(p.summonerManaBonus) : 0;
+    return Math.max(0, positive(cfg.gain) + generic + classBonus) * Math.max(0, Number(multiplier) || 0);
+  }
+  function builderGainBreakdown(id = requireRuntime().classIdentityId(), { multiplier = 1 } = {}) {
+    const cfg = spellFor(id), p = player();
+    if (!cfg) return Object.freeze({ id, base: 0, generic: 0, classBonus: 0, multiplier: 1, resolved: 0 });
+    const base = positive(cfg.gain), generic = positive(p.manaBuilderBonus), classBonus = id === "summoner" ? positive(p.summonerManaBonus) : 0, scale = Math.max(0, Number(multiplier) || 0);
+    return Object.freeze({ id, base, generic, classBonus, multiplier: scale, resolved: (base + generic + classBonus) * scale });
   }
 
-  async function summonerChannelLayer(...args) {
+  // One immutable Generator transaction. Shared SPELLS definitions are never
+  // mutated across await boundaries; rapid/re-entrant attempts are ignored.
+  async function baseChannelAttack() {
     const rt = requireRuntime(), p = player();
-    if (!rt.isClassActive("summoner") || !(p.summonerManaBonus || 0)) return baseChannelAttack(...args);
-    const cfg = spellFor("summoner"), old = cfg.gain;
-    cfg.gain = old + (p.summonerManaBonus || 0);
+    if (builderInFlight || rt.getCombatBusy() || !currentEnemy()) return;
+    const id = rt.classIdentityId(), cfg = spellFor(id);
+    if (!cfg) return rt.playerAttack();
+    builderInFlight = true;
+    let channelStateArmed = false;
     try {
-      return await baseChannelAttack(...args);
+      if (rt.isClassActive("invoker") && rt.invokerActive()) return await rt.invokerWexStrike();
+      const requested = resolvedBuilderGain(id), gained = manaGain(requested);
+      p._occultChanneling = true;
+      p._occultChannelMultiplier = 0;
+      channelStateArmed = true;
+      rt.identityFlash(`${cfg.builderIcon} +${gained} Mana`);
+      const result = await rt.playerAttack();
+      const capped = gained < requested ? ` (resolved ${requested}, capped by max Mana)` : "";
+      rt.addCombatHistory(`${cfg.builderIcon} ${cfg.builder} generates ${gained} Mana${capped}.`);
+      rt.updateCombatUI();
+      return result;
     } finally {
-      cfg.gain = old;
+      if (channelStateArmed) {
+        p._occultChanneling = false;
+        p._occultChannelMultiplier = 0;
+      }
+      builderInFlight = false;
     }
   }
 
   async function occultChannelAttack(...args) {
-    const rt = requireRuntime(), p = player(), cfg = spellFor(rt.classIdentityId()), bonus = p.manaBuilderBonus || 0;
-    if (!cfg || !bonus) return summonerChannelLayer(...args);
-    const old = cfg.gain;
-    cfg.gain += bonus;
-    try {
-      return await summonerChannelLayer(...args);
-    } finally {
-      cfg.gain = old;
-    }
+    return baseChannelAttack(...args);
   }
-
-  function positive(value) { return Math.max(0, Number(value) || 0); }
   function echoDamageMultiplier(factor) { return 1 + positive(player().doubleStrike) * factor; }
   function critMultiplier(chance = player().crit) { return 1 + requireRuntime().rollTieredProc(positive(chance)); }
   function applyPoisonProc(target, chance, source) {
@@ -311,6 +314,8 @@
     owner: OWNER,
     configure,
     manaGain,
+    resolvedBuilderGain,
+    builderGainBreakdown,
     spells,
     spellFor,
     isManaClass,
@@ -320,7 +325,6 @@
     summonerConjure,
     _test: Object.freeze({
       baseChannelAttack,
-      summonerChannelLayer,
       baseSpellAttack,
       summonerDispatchSpellLayer,
       manaOverflowSpellLayer,

@@ -89,6 +89,51 @@ async function connectWithHandshake(){
     assert.equal(state?.legacyVisible,false,"obsolete Alpha start presentation must never be visible");
     assert.equal(state?.beginVisible,false,"obsolete Begin button must never be visible");
     assert.equal(diagnostics.length,0,`local file startup emitted runtime errors: ${diagnostics.join(' | ')}`);
+
+    // #453: selected Class, Nightmare, Chest and Pet are art-only semantic
+    // Camp controls. Fresh-save mode/storage locks may physically remove
+    // Nightmare/Chest, so verify present controls and their accessible names.
+    const campControls=await page.evaluate(`(()=>{const spec={campClassBtn:'Class',campNightmareBtn:'Nightmare',campChestBtn:'Heirloom Vault',campPetBtn:'Companion'},out={};for(const [id,label] of Object.entries(spec)){const node=document.getElementById(id);if(!node){out[id]={present:false,label};continue;}const r=node.getBoundingClientRect(),visual=node.querySelector('.camp-icon')?.getBoundingClientRect();out[id]={present:true,label:node.getAttribute('aria-label')||'',text:(node.innerText||'').trim(),button:{w:r.width,h:r.height},visual:visual?{w:visual.width,h:visual.height}:null,painted:node.dataset.db064HitTarget||''};}return out;})()`);
+    for(const [id,expected] of Object.entries({campClassBtn:'Class',campNightmareBtn:'Nightmare',campChestBtn:'Heirloom Vault',campPetBtn:'Companion'})){
+      const item=campControls[id];if(!item.present)continue;
+      assert.equal(item.label,expected,`${id} lost its accessible name`);
+      assert.equal(item.text,'',`${id} must be visually art-only`);
+      assert.equal(item.painted,'painted-object',`${id} must use painted-object hit targeting`);
+      if(item.visual){assert.ok(Math.abs(item.button.w-item.visual.w)<6&&Math.abs(item.button.h-item.visual.h)<6,`${id} click box drifted away from visible art: ${JSON.stringify(item)}`);}
+    }
+
+    // #236: verify the actual Camp Class chooser in real Edge across the three
+    // desktop regimes and while resizing live. It must own one persistent Done.
+    const opened=await page.evaluate(`(()=>{document.getElementById('campClassBtn')?.click();return true;})()`);assert.equal(opened,true);
+    await sleep(220);
+    async function chooserSnapshot(){
+      return page.evaluate(`(()=>{const panel=document.getElementById('campClassPanel'),popup=document.getElementById('campPopupLayer'),shell=panel?.querySelector('.class-chooser-shell'),done=panel?.querySelector('[data-class-chooser-done]'),allDone=panel?.querySelectorAll('[data-app-dismiss]')||[],pr=panel?.getBoundingClientRect(),rr=popup?.getBoundingClientRect(),sr=shell?.getBoundingClientRect(),dr=done?.getBoundingClientRect(),visible=node=>!!node&&node.getClientRects().length>0&&getComputedStyle(node).display!=='none'&&getComputedStyle(node).visibility!=='hidden';return {vw:innerWidth,vh:innerHeight,active:!!panel?.classList.contains('active'),panel:pr?{left:pr.left,right:pr.right,top:pr.top,bottom:pr.bottom,width:pr.width,height:pr.height}:null,popup:rr?{left:rr.left,right:rr.right,top:rr.top,bottom:rr.bottom,width:rr.width,height:rr.height}:null,shell:sr?{left:sr.left,right:sr.right,top:sr.top,bottom:sr.bottom,width:sr.width,height:sr.height}:null,done:dr?{left:dr.left,right:dr.right,top:dr.top,bottom:dr.bottom,width:dr.width,height:dr.height,visible:visible(done)}:null,dismissCount:allDone.length};})()`);
+    }
+    async function assertChooser(width,height,label){
+      await page.send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:false});await sleep(220);
+      const snap=await chooserSnapshot();
+      assert.equal(snap.active,true,`${label}: Class chooser closed during live resize`);
+      assert.ok(snap.popup&&Math.abs((snap.popup.left+snap.popup.right)/2-snap.vw/2)<=3,`${label}: popup is not horizontally centered: ${JSON.stringify(snap)}`);
+      assert.ok(snap.panel&&snap.panel.left>=-2&&snap.panel.right<=snap.vw+2,`${label}: panel escapes viewport horizontally: ${JSON.stringify(snap)}`);
+      assert.ok(snap.shell&&snap.shell.width>300&&snap.shell.height>180,`${label}: chooser shell is unusable: ${JSON.stringify(snap)}`);
+      assert.ok(snap.done?.visible&&snap.done.top>=-2&&snap.done.bottom<=snap.vh+2&&snap.done.right<=snap.vw+2,`${label}: persistent Done is clipped/unreachable: ${JSON.stringify(snap)}`);
+      assert.equal(snap.dismissCount,1,`${label}: Class chooser must own exactly one visible semantic Done action`);
+      return snap;
+    }
+    await assertChooser(1680,1000,'wide desktop');
+    await assertChooser(1200,800,'compact desktop');
+    await assertChooser(1200,620,'short-wide desktop');
+    await assertChooser(1680,1000,'live resize restore');
+
+    await page.evaluate(`(()=>{window.__classChooserDoneClicks=0;const done=document.querySelector('#campClassPanel [data-class-chooser-done]');done?.addEventListener('click',()=>window.__classChooserDoneClicks++,{capture:true});})()`);
+    await page.send("Input.dispatchKeyEvent",{type:"keyDown",key:"Escape",code:"Escape",windowsVirtualKeyCode:27,nativeVirtualKeyCode:27});
+    await page.send("Input.dispatchKeyEvent",{type:"keyUp",key:"Escape",code:"Escape",windowsVirtualKeyCode:27,nativeVirtualKeyCode:27});
+    await sleep(180);
+    const escaped=await page.evaluate(`(()=>({active:document.getElementById('campClassPanel')?.classList.contains('active')||false,doneClicks:window.__classChooserDoneClicks||0}))()`);
+    assert.equal(escaped.active,false,"Escape must dismiss the open Class chooser");
+    assert.equal(escaped.doneClicks,1,"Escape must invoke the visible Class chooser Done action exactly once");
+    console.log("Class chooser Edge PASS: wide/compact/short-wide centering, live resize, persistent Done and Escape dismissal");
+
     const art=await page.evaluate(`(async()=>{const assets=window.DiceboundAssets,load=src=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{const canvas=document.createElement('canvas'),context=canvas.getContext('2d');canvas.width=canvas.height=1;context.drawImage(image,0,0,1,1);resolve({src,width:image.naturalWidth,height:image.naturalHeight,cornerAlpha:context.getImageData(0,0,1,1).data[3]});};image.onerror=()=>reject(new Error('Could not load '+src));image.src=src;});const pet=assets.resolvePetArt('math'),goblin=[1,2,3,4,5,6].map(board=>assets.resolveEnemyBattleArtById('goblin',board)),skeleton=[1,2,3,4,5,6].map(board=>assets.resolveEnemyBattleArtById('skeleton',board)),sources=[pet.portrait,pet.battle,...goblin.map(entry=>entry.src),...skeleton.map(entry=>entry.src)];return {pet,goblin,skeleton,loaded:await Promise.all(sources.map(load))};})()`);
     assert.deepEqual(art.pet,{portrait:"assets/characters/pets/portraits/math.png",battle:"assets/characters/pets/battle/math.png",alt:"math"});
     for(const [index,entry] of art.goblin.entries())assert.deepEqual(entry,{key:"goblin",src:`assets/enemies/normal/battle/goblin/board-${index+1}.png`,alt:"Goblin",board:index+1});
