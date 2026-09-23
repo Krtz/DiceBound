@@ -83,9 +83,12 @@ assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/db-
 assert.match(document.getElementById("equipmentGrid").children[0].className,/character-gear-slot slot-weapon rare/,"occupied Character slot must carry slot identity and rarity frame class");
 assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("db-rarity-name"),"occupied Character slot must not print the item name inside the WoW-style icon frame");
 assert.ok(!document.getElementById("equipmentGrid").children[0].innerHTML.includes("slot-label"),"occupied Character slot must be image-only");
-assert.match(document.getElementById("equipmentGrid").children[0].dataset.tip,/Ash Bow/,"Character gear must publish item identity through the shared root tooltip path");
-assert.match(document.getElementById("equipmentGrid").children[0].dataset.tip,/\+8 Attack/,"Character gear tooltip must include authoritative item bonuses");
-assert.match(document.getElementById("equipmentGrid").children[1].dataset.tip,/Bronze Full Helm/,"incomplete item records must fall back to semantic equipment identity");
+assert.equal(document.getElementById("equipmentGrid").children[0].dataset.tip,undefined,"Modern Character gear must not publish through the generic root tooltip path");
+assert.equal(document.getElementById("equipmentGrid").children[0].dataset.equipmentSlot,"weapon","Modern Character gear must publish its authoritative slot key");
+assert.match(document.getElementById("equipmentGrid").children[0].attributes["aria-label"],/Ash Bow/,"Modern Character gear accessible detail must retain item identity");
+assert.match(document.getElementById("equipmentGrid").children[0].attributes["aria-label"],/\+8 Attack/,"Modern Character gear accessible detail must include authoritative item bonuses");
+assert.match(document.getElementById("equipmentGrid").children[1].attributes["aria-label"],/Bronze Full Helm/,"incomplete item records must fall back to semantic equipment identity");
+assert.match(window.DiceboundEquipmentHeirloomsTest.itemDetail(state.equipment.hat,"hat"),/Bronze Full Helm\nCOMMON · HAT\n\+3 Attack/,"rich-detail owner must build semantic item detail from the actual slot");
 assert.equal(document.getElementById("equipmentGrid").children[0].title,"","Modern gear must not rely on native title tooltips");
 characterLayout="classic";
 const classicEquipment=ui.renderEquipment();
@@ -93,8 +96,11 @@ assert.equal(classicEquipment.layout,"classic");
 assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/slot-label/,"Classic layout must restore visible slot labels");
 assert.match(document.getElementById("equipmentGrid").children[0].innerHTML,/db-rarity-name/,"Classic layout must restore named equipment rows");
 assert.ok(!document.getElementById("equipmentGrid").children[0].className.includes("character-gear-slot"),"Classic equipment rows must not keep paper-doll slot layout");
+assert.match(document.getElementById("equipmentGrid").children[0].dataset.tip,/Ash Bow/,"Classic equipment may retain the shared text-tooltip detail");
 characterLayout="modern";
 ui.renderEquipment();
+assert.equal(document.getElementById("equipmentGrid").children[0].dataset.tip,undefined,"returning to Modern must clear stale Classic tooltip state");
+assert.equal(document.getElementById("equipmentGrid").children[0].dataset.equipmentSlot,"weapon","returning to Modern must restore semantic slot ownership");
 assert.match(document.getElementById("mythicSetStatus").innerHTML,/Impossible Road set/);
 
 const loot=ui.renderLoot(state.equipment.weapon);

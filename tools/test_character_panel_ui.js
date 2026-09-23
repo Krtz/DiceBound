@@ -22,11 +22,16 @@ assert.ok(owner.includes("activateCharacterTab"),"Equipment UI owner must own Ch
 assert.ok(owner.includes("gearIconMarkup(item,'db-equipment-slot-art')"),"Character Gear must use image-first slot rendering");
 assert.ok(owner.includes("character-gear-slot slot-${slot} ${item?.rarity||'empty'}"),"Character Gear slot classes must carry slot + rarity identity");
 assert.ok(owner.includes("entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art')"),"Modern Character Gear must render image-only occupied slots");
-assert.ok(owner.includes("entry.dataset.tip=detail"),"Character Gear must publish hover/focus detail through the shared root tooltip contract");
-assert.ok(owner.includes("displayName(item)"),"Character Gear detail must have semantic equipment-identity fallback");
+assert.ok(owner.includes("DETAIL_POPOVER_ID=\'dbEquipmentDetailPopover\'")&&owner.includes("showDetailPopover(target)"),"Modern Character Gear must own an explicit rich detail popover");
+assert.ok(owner.includes("entry.dataset.equipmentSlot=slot"),"Modern Character Gear must publish the authoritative equipment slot key");
+assert.ok(owner.includes("entry.dataset.tip=detail")&&owner.includes("if(layout==='classic')"),"Classic Gear may retain the shared text-tooltip contract");
+assert.ok(owner.includes("delete entry.dataset.tip")&&owner.includes("entry.dataset.equipmentSlot=slot"),"Modern Gear must explicitly clear the generic tooltip contract and publish its semantic slot key");
+assert.ok(owner.includes("displayName(item,slot)"),"Character Gear detail must resolve semantic equipment identity using the actual rendered slot");
 assert.ok(owner.includes("/^equipment$/i.test(raw)")&&owner.includes("semantic?.displayName"),"generic Equipment names must fall back to semantic identity");
 assert.ok(owner.includes("runtime.getAllBonuses?.(item)")&&owner.includes("runtime.formatBonus?.(key,value)"),"Character Gear detail must recover canonical total stats when composed copy is empty");
-assert.ok(owner.includes("String(rarityLabel).toUpperCase()")&&owner.includes("\\n${stats}"),"Character Gear tooltip must separate identity, rarity/slot and stats into readable lines");
+assert.ok(owner.includes("String(rarityLabel).toUpperCase()")&&owner.includes("\\n${stats}"),"Accessible Character Gear detail must separate identity, rarity/slot and stats into readable lines");
+assert.ok(owner.includes("db-equipment-detail-name")&&owner.includes("db-equipment-detail-meta")&&owner.includes("db-equipment-detail-stats"),"rich Gear detail must render identity, rarity/slot and stat sections");
+assert.ok(owner.includes("detailStatsMarkup(item)")&&owner.includes("artMarkup(item,\'db-equipment-detail-art\')"),"rich Gear detail must include canonical stats and equipment art");
 assert.ok(owner.includes("runtime.getSafeEquipmentIcon?.(item)"),"Character Gear must resolve scalar icon data through the Equipment owner");
 assert.ok(owner.includes("runtime.getSpecialEquipmentIdentity?.(item)"),"special/Artifact gear must have a semantic identity fallback when equipmentId is absent");
 assert.equal(composition.includes("beta043RefreshEquipmentArt"),false,"retired Beta 0.4.3 Hat HTML mutation must not return");
@@ -39,4 +44,4 @@ assert.ok(owner.includes("item?itemNameMarkup(item,'db-equipment-slot-art')"),"C
 
 const stateSource=fs.readFileSync(path.join(root,"runtime/js/core/state.js"),"utf8");
 assert.match(stateSource,/characterLayout:"modern"/,"saved Character layout must default to Modern");
-console.log("Character panel UI PASS: Modern tabbed paper doll default plus persistent Classic fallback");
+console.log("Character panel UI PASS: Modern paper doll owns rich semantic Gear detail plus persistent Classic fallback");

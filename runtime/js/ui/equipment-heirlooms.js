@@ -10,6 +10,7 @@
 
   const OWNER='ui/equipment-heirlooms';
   const STYLE_ID='dicebound-equipment-heirloom-ui-owner';
+  const DETAIL_POPOVER_ID='dbEquipmentDetailPopover';
   let runtime={};
   let campStorageTab='all';
   let characterTab='stats';
@@ -23,10 +24,15 @@
   function rarity(item){return runtime.getRarityInfo?.(item?.rarity)||{label:item?.rarity||'Unknown'};}
   function identity(item){return runtime.getEquipmentIdentity?.(item)||null;}
   function specialIdentity(item){return runtime.getSpecialEquipmentIdentity?.(item)||null;}
-  function displayName(item){
-    const semantic=specialIdentity(item)||identity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
+  function displayName(item,slot=item?.slot){
+    const semantic=specialIdentity(item)||identity(item),raw=String(item?.name||'').trim(),slotName=String(label(slot)||'').trim();
     const generic=!raw||/^equipment$/i.test(raw)||/^item$/i.test(raw)||(slotName&&raw.toLowerCase()===slotName.toLowerCase());
-    return generic?(semantic?.displayName||raw||'Equipment'):raw;
+    if(!generic)return raw;
+    const artAlt=String(runtime.resolveEquipmentArt?.(item)?.alt||'').trim();
+    if(semantic?.displayName)return semantic.displayName;
+    if(artAlt&&!/^equipment$/i.test(artAlt)&&(!slotName||artAlt.toLowerCase()!==slotName.toLowerCase()))return artAlt;
+    const rarityLabel=String(rarity(item).label||item?.rarity||'').trim();
+    return [rarityLabel,slotName].filter(Boolean).join(' ')||'Equipment';
   }
   function safeIcon(item){return String(runtime.getSafeEquipmentIcon?.(item)||item?.icon||'◇').trim()||'◇';}
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
@@ -56,7 +62,7 @@
   function itemDetail(item,slot=item?.slot){
     if(!item)return `Empty ${label(slot)} slot`;
     const rarityLabel=rarity(item).label||item.rarity||'Unknown',stats=detailBonuses(item);
-    return `${displayName(item)}\n${String(rarityLabel).toUpperCase()} · ${String(label(slot)).toUpperCase()}\n${stats}`;
+    return `${displayName(item,slot)}\n${String(rarityLabel).toUpperCase()} · ${String(label(slot)).toUpperCase()}\n${stats}`;
   }
   function vaultSlotMarkup(slot,activeBySlot){
     const item=activeBySlot.get(slot),slotId=escapeHtml(slot),detail=escapeHtml(itemDetail(item,slot));
@@ -81,6 +87,7 @@
     style.id=STYLE_ID;
     style.textContent=`
       .db-equipment-art{display:block;object-fit:contain}.loot-icon:has(.db-equipment-loot-art){width:58px;height:58px}.db-equipment-loot-art{width:58px;height:58px;filter:drop-shadow(0 5px 6px rgba(0,0,0,.42))}
+      .db-equipment-detail-popover{position:fixed;z-index:3200;display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;width:min(390px,calc(100vw - 16px));padding:12px 14px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#080d17;box-shadow:0 18px 56px rgba(0,0,0,.68);color:#f5f1e8;pointer-events:none}.db-equipment-detail-popover.hidden{display:none!important}.db-equipment-detail-popover.poor{border-color:#8f949c}.db-equipment-detail-popover.common{border-color:#d9dde5}.db-equipment-detail-popover.uncommon{border-color:#62d79a}.db-equipment-detail-popover.rare{border-color:#65a9ff}.db-equipment-detail-popover.epic{border-color:#b58cff}.db-equipment-detail-popover.legendary{border-color:#f5c85b}.db-equipment-detail-popover.artifact{border-color:#ff9c38}.db-equipment-detail-popover.mythical{border-color:#bd83ff}.db-equipment-detail-popover.omega{border-color:#e7d6ff}.db-equipment-detail-popover-art{width:64px;height:64px;display:grid;place-items:center;align-self:start}.db-equipment-detail-popover-art .db-equipment-detail-art{width:64px;height:64px;max-width:64px;max-height:64px;object-fit:contain;filter:drop-shadow(0 5px 6px rgba(0,0,0,.48))}.db-equipment-detail-popover-art .db-equipment-icon-fallback{font-size:40px}.db-equipment-detail-name{font-size:14px;font-weight:950;line-height:1.2;color:#f5f1e8}.db-equipment-detail-popover.rare .db-equipment-detail-name{color:#65a9ff}.db-equipment-detail-popover.epic .db-equipment-detail-name{color:#d7bcff}.db-equipment-detail-popover.legendary .db-equipment-detail-name{color:#f5c85b}.db-equipment-detail-popover.artifact .db-equipment-detail-name{color:#ffad5c}.db-equipment-detail-popover.mythical .db-equipment-detail-name{color:#d6b4ff}.db-equipment-detail-popover.omega .db-equipment-detail-name{color:#f2eaff}.db-equipment-detail-meta{margin-top:4px;font-size:9px;font-weight:900;letter-spacing:.08em;color:#b9c1d2}.db-equipment-detail-stats{grid-column:1/-1;margin-top:1px;padding-top:10px;border-top:1px solid rgba(255,255,255,.09);font-size:10px;line-height:1.55;color:#e7ebf3;white-space:normal}.db-equipment-detail-stats span{display:block}.db-equipment-detail-stats span+span{margin-top:3px}@media(max-width:620px){.db-equipment-detail-popover{grid-template-columns:54px minmax(0,1fr)}.db-equipment-detail-popover-art,.db-equipment-detail-popover-art .db-equipment-detail-art{width:54px;height:54px;max-width:54px;max-height:54px}}
       .character-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.character-card-head h2{margin:0}.character-classic-title{display:none}.character-card[data-character-layout="modern"] .character-layout-card{padding:0;border:0;background:transparent;box-shadow:none;border-radius:0}.character-card[data-character-layout="classic"]{display:contents}.character-card[data-character-layout="classic"] .character-card-head{display:none}.character-card[data-character-layout="classic"] .character-layout-card{display:block!important;margin:0}.character-card[data-character-layout="classic"] .character-classic-title{display:block}.character-card[data-character-layout="classic"] .character-gear-copy{display:none}.character-tabs{display:flex;gap:6px}.character-tabs .small-btn{width:auto!important;margin:0!important;padding:6px 10px}.character-tabs .small-btn.active{border-color:rgba(101,169,255,.62);background:linear-gradient(180deg,rgba(101,169,255,.24),rgba(181,140,255,.12));box-shadow:inset 0 0 0 1px rgba(101,169,255,.18)}.character-tab-panel[hidden]{display:none!important}.character-tab-panel{margin-top:10px}.character-gear-copy{margin:0 0 9px;color:var(--muted);font-size:9px;line-height:1.4}
       .character-gear-grid{position:relative;display:grid!important;grid-template-columns:repeat(5,minmax(42px,1fr))!important;grid-template-areas:". . hat . ." "amulet . chest . ring" "weapon . chest . offhand" ". . legs . ." ". . boots . .";gap:7px!important;min-height:250px;align-items:stretch;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.045),transparent 42%),rgba(0,0,0,.12)}
       .character-gear-grid::before{content:"♙";position:absolute;left:50%;top:49%;translate:-50% -50%;font-size:150px;line-height:1;color:rgba(255,255,255,.035);pointer-events:none}.character-gear-slot{position:relative;z-index:1;min-width:0!important;min-height:58px!important;aspect-ratio:1/1;padding:5px!important;display:grid;place-items:center;border-width:2px!important;border-style:solid!important;background:rgba(5,9,17,.72)!important;overflow:visible!important}.character-gear-slot.slot-hat{grid-area:hat}.character-gear-slot.slot-amulet{grid-area:amulet}.character-gear-slot.slot-chest{grid-area:chest}.character-gear-slot.slot-weapon{grid-area:weapon}.character-gear-slot.slot-offhand{grid-area:offhand}.character-gear-slot.slot-ring{grid-area:ring}.character-gear-slot.slot-legs{grid-area:legs}.character-gear-slot.slot-boots{grid-area:boots}.db-equipment-slot-art{width:100%;height:100%;max-width:48px;max-height:48px;object-fit:contain;filter:drop-shadow(0 4px 5px rgba(0,0,0,.5))}.db-equipment-icon-fallback{font-size:28px;line-height:1}.character-empty-slot{font-size:7px;line-height:1.1;text-align:center;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.28);font-weight:900}
@@ -107,6 +114,77 @@
     if(!entry?.image)return '';
     return `<img class=\"db-equipment-art ${klass}\" src=\"${escapeHtml(entry.image)}\" alt=\"${escapeHtml(entry.alt||displayName(item))}\" draggable=\"false\">`;
   }
+
+  function detailPopover(){
+    const documentRef=doc();if(!documentRef)return null;
+    let pop=documentRef.getElementById(DETAIL_POPOVER_ID);
+    if(!pop){
+      pop=documentRef.createElement('div');
+      pop.id=DETAIL_POPOVER_ID;
+      pop.className='db-equipment-detail-popover hidden';
+      pop.setAttribute('role','tooltip');
+      documentRef.body?.appendChild(pop);
+    }
+    return pop;
+  }
+  function detailStatsMarkup(item){
+    const raw=detailBonuses(item),parts=String(raw||'No bonuses').split(/\s+·\s+/).map(part=>part.trim()).filter(Boolean);
+    return (parts.length?parts:['No bonuses']).map(part=>`<span>${escapeHtml(part)}</span>`).join('');
+  }
+  function positionDetailPopover(target,pop){
+    if(!target||!pop||pop.classList.contains('hidden'))return false;
+    const rect=target.getBoundingClientRect(),box=pop.getBoundingClientRect(),gap=10,margin=8;
+    let left=rect.left+rect.width/2-box.width/2,top=rect.top-box.height-gap;
+    left=Math.min(root.innerWidth-box.width-margin,Math.max(margin,left));
+    if(top<margin)top=Math.min(root.innerHeight-box.height-margin,rect.bottom+gap);
+    pop.style.left=`${Math.round(left)}px`;
+    pop.style.top=`${Math.round(Math.max(margin,top))}px`;
+    return true;
+  }
+  function hideDetailPopover(){
+    const pop=detailPopover();if(!pop)return false;
+    pop.classList.add('hidden');pop.removeAttribute('data-slot');return true;
+  }
+  function showDetailPopover(target){
+    const slot=target?.dataset?.equipmentSlot,item=slot?state().equipment?.[slot]:null,pop=detailPopover();
+    if(!slot||!item||!pop)return hideDetailPopover();
+    const rarityId=String(item.rarity||'common').toLowerCase(),tier=rarity(item),name=displayName(item,slot);
+    const art=artMarkup(item,'db-equipment-detail-art')||`<span class="db-equipment-icon-fallback" aria-hidden="true">${escapeHtml(safeIcon(item))}</span>`;
+    pop.className=`db-equipment-detail-popover ${escapeHtml(rarityId)}`;
+    pop.dataset.slot=slot;
+    pop.innerHTML=`<div class="db-equipment-detail-popover-art">${art}</div><div><div class="db-equipment-detail-name">${escapeHtml(name)}</div><div class="db-equipment-detail-meta">${escapeHtml(String(tier.label||item.rarity||'Unknown').toUpperCase())} · ${escapeHtml(String(label(slot)).toUpperCase())}</div></div><div class="db-equipment-detail-stats">${detailStatsMarkup(item)}</div>`;
+    find('appTooltipLayer')?.classList.add('hidden');
+    find('touchTipPopover')?.classList.add('hidden');
+    positionDetailPopover(target,pop);
+    return true;
+  }
+  function bindCharacterGearPopover(){
+    const grid=find('equipmentGrid');if(!grid||grid.dataset?.dbEquipmentPopoverWired==='1')return;
+    if(grid.dataset)grid.dataset.dbEquipmentPopoverWired='1';
+    const targetFor=event=>event.target?.closest?.('.character-gear-slot[data-equipment-slot]');
+    grid.addEventListener?.('pointerover',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();showDetailPopover(target);
+    });
+    grid.addEventListener?.('pointerout',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();if(!target.contains(event.relatedTarget))hideDetailPopover();
+    });
+    grid.addEventListener?.('focusin',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();showDetailPopover(target);
+    });
+    grid.addEventListener?.('focusout',event=>{
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();hideDetailPopover();
+    });
+    grid.addEventListener?.('pointerdown',event=>{
+      if(!event.pointerType||event.pointerType==='mouse')return;
+      const target=targetFor(event);if(!target)return;
+      event.stopPropagation();showDetailPopover(target);
+    });
+  }
+
   function rarityNameMarkup(item){
     const rarityId=escapeHtml(String(item?.rarity||"common").toLowerCase());
     return `<span class="db-rarity-name db-rarity-${rarityId}">${escapeHtml(displayName(item))}</span>`;
@@ -124,6 +202,7 @@
 
   function activateCharacterTab(name='stats'){
     characterTab=name==='gear'?'gear':'stats';
+    if(characterTab!=='gear')hideDetailPopover();
     const layout=characterLayout(),tabs=find('characterTabs'),stats=find('characterStatsPanel'),gear=find('characterGearPanel');
     tabs?.querySelectorAll?.('[data-character-tab]').forEach(button=>{
       const active=button.dataset.characterTab===characterTab;
@@ -167,19 +246,22 @@
   function renderEquipment(){
     installStyles();
     bindCharacterTabs();
+    bindCharacterGearPopover();
     const layout=syncCharacterLayout(),grid=find('equipmentGrid'),current=state(),equipped=current.equipment||{};
     if(grid){
       grid.replaceChildren();
       slots().forEach(slot=>{
         const item=equipped[slot],entry=doc()?.createElement('div');if(!entry)return;
         const detail=itemDetail(item,slot);
-        if(entry.dataset)entry.dataset.tip=detail;
         entry.setAttribute?.('aria-label',detail);
         entry.tabIndex=0;
         if(layout==='classic'){
+          if(entry.dataset){entry.dataset.tip=detail;delete entry.dataset.equipmentSlot;}
           entry.className=`equipment-slot ${item?.rarity||'empty'}`;
           entry.innerHTML=`<span class="slot-label">${escapeHtml(label(slot))}</span><span class="slot-item">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
         }else{
+          if(entry.dataset){entry.dataset.equipmentSlot=slot;delete entry.dataset.tip;delete entry.dataset.tooltip;}
+          entry.removeAttribute?.('title');
           entry.className=`equipment-slot character-gear-slot slot-${slot} ${item?.rarity||'empty'}`;
           entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art'):`<span class="character-empty-slot">${escapeHtml(label(slot))}</span>`;
         }
@@ -286,9 +368,9 @@
     return Object.freeze({owner:OWNER,unlocked:true,stored:storage.length,active:active.length});
   }
 
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();bindCharacterTabs();syncCharacterLayout();return api;}
-  function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage');return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0});}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();bindCharacterTabs();bindCharacterGearPopover();syncCharacterLayout();return api;}
+  function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage'),detail=detailPopover();return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0,detailPopover:!!detail,detailVisible:!!detail&&!detail.classList.contains('hidden'),detailSlot:detail?.dataset?.slot||null});}
   const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,activateCharacterTab,syncCharacterLayout,setCharacterLayout,inspect,owner:OWNER});
   window.DiceboundEquipmentHeirlooms=api;
-  window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect});
+  window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect,showDetailPopover,hideDetailPopover,itemDetail:(item,slot)=>itemDetail(item,slot),displayName:(item,slot)=>displayName(item,slot)});
 })(window);
