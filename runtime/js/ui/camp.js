@@ -172,6 +172,14 @@
   let shell=null;
   let resizeBound=false;
   let refreshFrame=0;
+
+  function doc(){return root.document||null;}
+  function find(id){return runtime.find?.(id)||doc()?.getElementById(id)||null;}
+  function action(name,...args){return runtime.actions?.[name]?.(...args);}
+  function asset(key,fallback){return root.DiceboundAssets?.resolveCampObject?.(key)?.image||fallback;}
+  function assetAlt(key,fallback){return root.DiceboundAssets?.resolveCampObject?.(key)?.alt||fallback;}
+  function important(node,property,value){node?.style?.setProperty?.(property,value,'important');}
+
   function triggerPaleDevilFromBonfire(){
     if(!runtime.canPrimePaleDevil?.())return false;
     if(!runtime.primePaleDevil?.())return false;
