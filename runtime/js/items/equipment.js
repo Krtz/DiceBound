@@ -195,5 +195,5 @@
     item.itemPower=clamp(Number(item.itemPower)||rarityBudgets[rarity][0],rarityBudgets[rarity][0],rarityBudgets[rarity][1]);return item;
   }
 
-  window.DiceboundEquipment=Object.freeze({apiVersion:4,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix,equipmentIdentity,identityForItem,iconContainsMarkup,safeIconForItem,repairPresentationFields,eligibleEquipmentIdentities,identityWeight,selectEquipmentIdentity,intrinsicBonusesForItem,allBonusesForItem,isHeirloomEligible,generateOrdinaryFromSeedCode,generateOrdinaryItem});
+  window.DiceboundEquipment=Object.freeze({apiVersion:3,createRegistry,ordinaryBaseName,eligibleOrdinaryAffixes,pickOrdinaryAffix,equipmentIdentity,identityForItem,iconContainsMarkup,safeIconForItem,repairPresentationFields,eligibleEquipmentIdentities,identityWeight,selectEquipmentIdentity,intrinsicBonusesForItem,allBonusesForItem,isHeirloomEligible,generateOrdinaryFromSeedCode,generateOrdinaryItem});
 })();
