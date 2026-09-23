@@ -3409,7 +3409,7 @@ dbReturnToRoadTraceReady=true;
     artifactRates:()=>JSON.parse(JSON.stringify(DB060_LOOT.artifactRates)),
     minibossGearChance:()=>JSON.parse(JSON.stringify(DB060_LOOT.minibossGearChances)),
     secretSignatureRates:()=>JSON.parse(JSON.stringify(DB060_LOOT.secretSignatureRates)),
-    namedMythicals:()=>[generateAxelsCoffeeMug(),generateKratzHeadphones(),generateKellysJeanJacket()].map(x=>({name:x.name,rarity:x.rarity,slot:x.slot})),
+    namedMythicals:()=>[generateAxelsCoffeeMug(),generateKratzHeadphones(),generateKellysJeanJacket()].map(x=>({name:x.name,rarity:x.rarity,slot:x.slot,equipmentId:x.equipmentId,intrinsic:dbEquipmentIdentityOwner.intrinsicBonusesForItem(x),baseName:dbEquipmentIdentityOwner.identityForItem(x)?.displayName||null})),
     artifactRollSample:(n=10000)=>{const out={};for(let i=0;i<n;i++){const x=dbArtifacts.pick(random);out[x.slot]=(out[x.slot]||0)+1;}return out;}
   });
 
