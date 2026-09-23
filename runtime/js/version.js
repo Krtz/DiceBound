@@ -6,7 +6,7 @@
   const VERSION="0.6.7.30";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Character Gear hotfix: real item detail, safe icons and current-save repair." ;
+  const RELEASE_SUMMARY="Character Gear hotfix: real item detail, safe icons and current-save repair.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
