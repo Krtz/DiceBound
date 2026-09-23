@@ -36,7 +36,8 @@ const runtimeServices = Object.freeze({
   createPowerupServices(ports) { powerupPorts = ports; return powerupServices; },
 });
 const memoryDiagnostics = Object.freeze({ diagnostics: () => Object.freeze({ recording: false }) });
-const window = { DiceboundVersion: identity, DiceboundPlatform: platform, DiceboundStorage: storage, DiceboundSave: save, DiceboundRunCheckpoint: runCheckpoint, DiceboundCoreState: coreState, DiceboundRuntimeServices: runtimeServices, DiceboundMemoryDiagnostics: memoryDiagnostics };
+const debugBundle = Object.freeze({ diagnostics: () => Object.freeze({ supported: false }) });
+const window = { DiceboundVersion: identity, DiceboundPlatform: platform, DiceboundStorage: storage, DiceboundSave: save, DiceboundRunCheckpoint: runCheckpoint, DiceboundCoreState: coreState, DiceboundRuntimeServices: runtimeServices, DiceboundMemoryDiagnostics: memoryDiagnostics, DiceboundDebugBundle: debugBundle };
 window.window = window;
 const context = vm.createContext({ window, console, Object, TypeError });
 vm.runInContext(source(path.join("core", "facade.js")), context, { filename: "core/facade.js" });
@@ -51,6 +52,7 @@ assert.equal(api.storage, storage);
 assert.equal(api.save, save);
 assert.equal(api.runCheckpoint, runCheckpoint);
 assert.equal(api.memoryDiagnostics, memoryDiagnostics);
+assert.equal(api.debugBundle, debugBundle);
 
 assert.equal(api.createMetaService({ classIds: ["ranger"], petIds: ["neutral"], elementIds: ["fire"], saveService: "shadow" }), metaService);
 assert.deepEqual(plain({ classIds: metaOptions.classIds, petIds: metaOptions.petIds, elementIds: metaOptions.elementIds }), { classIds: ["ranger"], petIds: ["neutral"], elementIds: ["fire"] });
@@ -70,6 +72,7 @@ assert.deepEqual(plain(api.diagnostics()), {
   runCheckpoint: { valid: false },
   wrapper: { contractVersion: 1, isWrapped: false },
   memory: { recording: false },
+  debugBundle: { supported: false },
 });
 assert.ok(Object.isFrozen(api.diagnostics()));
 
@@ -81,20 +84,21 @@ assert.match(monolith, /const DiceboundStateEvents=dbRuntime\.createEventBus\(\)
 assert.match(monolith, /const DB_POWERUP_SERVICES=dbRuntime\.createPowerupServices\(/);
 assert.match(monolith, /const DB_RUN_CHECKPOINT=dbRuntime\.runCheckpoint;/);
 assert.match(monolith, /const db064MemoryDiagnostics=dbRuntime\.memoryDiagnostics;/);
-assert.doesNotMatch(monolith, /window\.Dicebound(?:Version|Platform|Storage|Save|RunCheckpoint|CoreState|RuntimeServices|MemoryDiagnostics)\b/, "monolith still coordinates a peer Runtime/Core/Persistence global");
+assert.doesNotMatch(monolith, /window\.Dicebound(?:Version|Platform|Storage|Save|RunCheckpoint|CoreState|RuntimeServices|MemoryDiagnostics|DebugBundle)\b/, "monolith still coordinates a peer Runtime/Core/Persistence global");
 assert.equal((monolith.match(/window\.DiceboundRuntime\b/g) || []).length, 1, "monolith must acquire one Runtime facade");
 assert.doesNotMatch(source(path.join("core", "facade.js")), /DiceboundRng/, "Runtime facade must not hide deterministic gameplay RNG");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(runtime, "module-manifest.json"), "utf8"));
 const modules = Object.fromEntries(manifest.modules.map(module => [module.id, module]));
-assert.deepEqual(modules["runtime-facade"].requires, ["version", "platform", "storage", "save-system", "run-checkpoint", "core-state", "runtime-services", "memory-diagnostics"]);
+assert.deepEqual(modules["runtime-facade"].requires, ["version", "platform", "storage", "save-system", "run-checkpoint", "core-state", "runtime-services", "memory-diagnostics", "runtime-debug-bundle"]);
 assert.deepEqual(modules["runtime-facade"].provides, ["DiceboundRuntime"]);
 const monolithRequires = modules["dicebound-monolith"].requires;
 assert.ok(monolithRequires.includes("runtime-facade"));
-for (const peer of ["version", "wrapper-contract", "platform", "storage", "save-system", "run-checkpoint", "core-state", "runtime-services", "memory-diagnostics"]) {
+for (const peer of ["version", "wrapper-contract", "platform", "storage", "save-system", "run-checkpoint", "core-state", "runtime-services", "memory-diagnostics", "runtime-debug-bundle"]) {
   assert.ok(!monolithRequires.includes(peer), `compatibility monolith still declares peer Runtime dependency ${peer}`);
 }
-assert.ok(manifest.loadOrder.indexOf("memory-diagnostics") < manifest.loadOrder.indexOf("runtime-facade"));
+assert.ok(manifest.loadOrder.indexOf("memory-diagnostics") < manifest.loadOrder.indexOf("runtime-debug-bundle"));
+assert.ok(manifest.loadOrder.indexOf("runtime-debug-bundle") < manifest.loadOrder.indexOf("runtime-facade"));
 assert.ok(manifest.loadOrder.indexOf("runtime-facade") < manifest.loadOrder.indexOf("dicebound-monolith"));
 
 const project = JSON.parse(fs.readFileSync(path.join(root, "wrapper-source", "config", "project.json"), "utf8"));
@@ -103,6 +107,6 @@ assert.deepEqual(project.runtimeScripts, manifestScripts, "project runtimeScript
 const buildInfo = JSON.parse(fs.readFileSync(path.join(root, "runtime", "build-info.json"), "utf8"));
 assert.deepEqual(buildInfo.runtimeScripts, project.runtimeScripts, "build-info runtimeScripts drifted from project/manifest composition");
 const html = fs.readFileSync(path.join(root, "runtime", "index.html"), "utf8");
-assert.match(html, /js\/core\/memory-diagnostics\.js[\s\S]*js\/core\/facade\.js[\s\S]*js\/combat\/effective-stats\.js/);
+assert.match(html, /js\/core\/memory-diagnostics\.js[\s\S]*js\/core\/debug-bundle\.js[\s\S]*js\/core\/facade\.js[\s\S]*js\/combat\/effective-stats\.js/);
 
-console.log("Runtime facade owner PASS: career/save composition, event bus, service ports, diagnostics, load graph and monolith peer-global drain are authoritative");
+console.log("Runtime facade owner PASS: save/debug composition, event bus, service ports, diagnostics, load graph and monolith peer-global drain are authoritative");
