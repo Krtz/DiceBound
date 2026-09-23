@@ -143,13 +143,30 @@ async function main(){
       record.player.doubleStrike=.40;
       record.signature="823d4f05";
     }
+    // Beta 0.6.7.30 makes authored equipment Intrinsics part of the live
+    // formatter/stat model. Keep the 0.6.6.25 fixture frozen and approve only
+    // the two seeded Treasure presentation/signature deltas caused by their
+    // already-authored base Intrinsics. RNG, player state, tile state, names,
+    // rarity and all other Road Event facts remain exact.
+    {
+      const record=expected.find(c=>c.name==="treasure-a");
+      assert.ok(record,"missing frozen treasure-a Road Events case");
+      record.loot.bonuses="+2% Dodge+0% Crit"; // Leather Harness +1% Dodge Intrinsic
+      record.signature="9bb97482";
+    }
+    {
+      const record=expected.find(c=>c.name==="treasure-b");
+      assert.ok(record,"missing frozen treasure-b Road Events case");
+      record.loot.bonuses="+2 Defense+3 Max HP+2% Crit"; // Bronze Full Helm +1 Defense Intrinsic
+      record.signature="601f1ee5";
+    }
     for(const actualCase of actual.cases){
       const expectedCase=expected.find(c=>c.name===actualCase.name);
       assert.ok(expectedCase,"unexpected Road Events case "+actualCase.name);
       assert.deepEqual(actualCase,expectedCase,"Road Events oracle mismatch: "+actualCase.name);
     }
     assert.equal(actual.cases.length,expected.length,"Road Events case count changed unexpectedly");
-    console.log(`Road Events oracle PASS: ${actual.cases.length} exact released-output/state/RNG cases match ${fixture.version} baseline on runtime ${actual.version}.`);
+    console.log(`Road Events oracle PASS: ${actual.cases.length} released-output/state/RNG cases match ${fixture.version} with only approved #202 and 0.6.7.30 Intrinsic deltas.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }
