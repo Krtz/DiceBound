@@ -63,6 +63,20 @@ assert.equal(equipment.isHeirloomEligible(null),false,"missing equipment cannot 
 assert.equal(equipment.identityForItem({slot:"weapon",equipmentId:"bronze-round-shield"}),null,"wrong-slot identities must never be accepted from saves");
 assert.equal(equipment.identityForItem({slot:"weapon",name:"Old saved gear"}),null,"old saves must not be rerolled into random identities");
 
+const specialBase={id:"artifact-crown-fixture",slot:"hat",rarity:"artifact",setName:"Impossible Road",mythicPiece:"hat",name:"Crown fixture",bonuses:{}};
+const specialIdentity=equipment.ensureEquipmentIdentity(specialBase,{classId:"ranger",rarity:"legendary",seed:specialBase.id,requireIntrinsic:true});
+assert.ok(specialIdentity,"special gear must receive a modern base identity");
+assert.equal(specialIdentity.slot,"hat");
+assert.equal(specialBase.equipmentId,specialIdentity.id);
+assert.ok(Object.keys(equipment.intrinsicBonusesForItem(specialBase)).length>0,"Impossible Road base identity must carry an Intrinsic");
+const specialRepeat={...specialBase,equipmentId:null};
+equipment.ensureEquipmentIdentity(specialRepeat,{classId:"ranger",rarity:"legendary",seed:specialBase.id,requireIntrinsic:true});
+assert.equal(specialRepeat.equipmentId,specialBase.equipmentId,"special identity selection must stay deterministic without gameplay RNG");
+const legacySpecial={id:"legacy-special",slot:"offhand",rarity:"mythical",specialMythical:true,name:"Legacy special",icon:"☕",bonuses:{}};
+assert.equal(equipment.repairPresentationFields(legacySpecial,{classId:"ranger"}),true,"current special saves without equipmentId must be migrated");
+assert.ok(equipment.identityForItem(legacySpecial),"migrated special save did not receive a valid modern identity");
+assert.ok(Object.keys(equipment.intrinsicBonusesForItem(legacySpecial)).length>0,"migrated special save did not receive an Intrinsic");
+
 const weaponIds=Array.from(equipment.eligibleEquipmentIdentities({slot:"weapon",rarity:"common"}),identity=>identity.id);
 assert.deepEqual(weaponIds,["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash","10th-birthday-balloons","ashen-staff","birthday-cake","oak-shortbow","bronze-battleaxe"]);
 for(const classId of ["ranger","fighter","clown","rouge","frog","slime"]){
