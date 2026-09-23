@@ -2293,7 +2293,7 @@ function returnToRoad(...args){
 
   function v24RefreshCamp(){
     const overlay=$('startOverlay'),modal=overlay?.querySelector('.start-modal');if(modal){const h=modal.querySelector('h2');if(h)h.textContent='Campsite';const sub=modal.querySelector('.subtitle');if(sub)sub.innerHTML='Between expeditions. Choose who leaves camp, what they carry, and which terrible idea to enable next.';}overlay?.querySelector('.camp-help')?.remove();
-    dbEquipmentUi.renderEquipment();
+    renderEquipment();
   }
   DB24.modules.camp={refresh:v24RefreshCamp};
   window.DiceboundCamp.configureShell({refreshCampV24:()=>v24RefreshCamp()});
