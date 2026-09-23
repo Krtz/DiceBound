@@ -5,37 +5,28 @@ const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
 
-const source=fs.readFileSync(path.join(__dirname,"..","runtime","js","dicebound.js"),"utf8");
-const campSource=fs.readFileSync(path.join(__dirname,"..","runtime","js","ui","camp.js"),"utf8");
-const start=source.indexOf("  const DB0633_CAMP_TROPHY_TIERS=");
+const root=path.join(__dirname,"..");
+const source=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
+const campSource=fs.readFileSync(path.join(root,"runtime","js","ui","camp.js"),"utf8");
+const achievementSource=fs.readFileSync(path.join(root,"runtime","js","progression","achievements.js"),"utf8");
+const start=source.indexOf("  function db0633TrophyTierForAchievementCount(");
 const end=source.indexOf("  const db0633GrantLegacyXpBase=",start);
-assert.ok(start>=0&&end>start,"#109 Camp progression implementation block is missing");
+assert.ok(start>=0&&end>start,"Camp progression composition block is missing");
 const implementation=source.slice(start,end);
 
 class FakeNode{
   constructor(nodes,id=""){
-    this.nodes=nodes;this._id="";this.children=[];this.parentElement=null;this.dataset={};this.events={};this.type="";this.className="";this.innerHTML="";this.id=id;
+    this.nodes=nodes;this._id="";this.children=[];this.parentElement=null;this.dataset={};this.events={};this.type="";this.className="";this.innerHTML="";this.title="";this.id=id;
   }
   get id(){return this._id;}
-  set id(value){
-    if(this._id)delete this.nodes[this._id];
-    this._id=String(value||"");if(this._id)this.nodes[this._id]=this;
-  }
+  set id(value){if(this._id)delete this.nodes[this._id];this._id=String(value||"");if(this._id)this.nodes[this._id]=this;}
   register(){if(this._id)this.nodes[this._id]=this;}
   appendChild(child){child.remove();child.parentElement=this;child.register();this.children.push(child);return child;}
-  insertBefore(child,reference){
-    child.remove();child.parentElement=this;child.register();const index=reference?this.children.indexOf(reference):-1;
-    this.children.splice(index<0?this.children.length:index,0,child);return child;
-  }
-  after(child){
-    const parent=this.parentElement;if(!parent)return;
-    child.remove();child.parentElement=parent;child.register();const index=parent.children.indexOf(this);parent.children.splice(index+1,0,child);
-  }
-  remove(){
-    if(this.parentElement){const index=this.parentElement.children.indexOf(this);if(index>=0)this.parentElement.children.splice(index,1);this.parentElement=null;}
-    if(this._id)delete this.nodes[this._id];
-  }
+  insertBefore(child,reference){child.remove();child.parentElement=this;child.register();const index=reference?this.children.indexOf(reference):-1;this.children.splice(index<0?this.children.length:index,0,child);return child;}
+  after(child){const parent=this.parentElement;if(!parent)return;child.remove();child.parentElement=parent;child.register();const index=parent.children.indexOf(this);parent.children.splice(index+1,0,child);}
+  remove(){if(this.parentElement){const index=this.parentElement.children.indexOf(this);if(index>=0)this.parentElement.children.splice(index,1);this.parentElement=null;}if(this._id)delete this.nodes[this._id];}
   addEventListener(type,listener){(this.events[type]??=[]).push(listener);}
+  setAttribute(name,value){this[name]=String(value);}
 }
 
 const nodes={};
@@ -47,65 +38,63 @@ ground.appendChild(new FakeNode(nodes,"campAchievementBtn"));
 stars.insertBefore(new FakeNode(nodes,"campTalentBtn"),info);
 info.after(new FakeNode(nodes,"campMoonBtn"));
 
-const document={
-  createElement:()=>new FakeNode(nodes),
-  getElementById:id=>nodes[id]||null,
-  querySelectorAll:()=>[]
-};
-const progressionCalls=[];
+const document={createElement:()=>new FakeNode(nodes),getElementById:id=>nodes[id]||null,querySelectorAll:()=>[]};
+const progressionCalls=[];let achievementCount=0;
 const context=vm.createContext({
-  Math,Number,Object,
-  meta:{campReveals:{}},
-  document,
-  innerWidth:0,
-  innerHeight:0,
+  Math,Number,Object,JSON,Array,String,
+  meta:{campReveals:{}},document,innerWidth:0,innerHeight:0,
   $:id=>nodes[id]||null,
-  dbProgression:{prestigeOffer:total=>{progressionCalls.push(total);return 9000+Number(total);}}
+  dbProgression:{
+    achievementCount:()=>achievementCount,
+    prestigeOffer:total=>{progressionCalls.push(total);return 9000+Number(total);}
+  }
 });
 context.window=context;
+vm.runInContext(achievementSource,context,{filename:"progression/achievements.js"});
 vm.runInContext(campSource,context,{filename:"ui/camp.js"});
 context.window.DiceboundCamp.configure({find:id=>nodes[id]||null,actions:{}});
-vm.runInContext(`${implementation}\nthis.campApi={tiers:DB0633_CAMP_TROPHY_TIERS,trophy:db0633TrophyTierForAchievementCount,prestige:db0633PrestigeOfferPoints,reconcile:db0633ReconcileCampRevealState,sync:db0633SyncCampObjects};`,context,{filename:"#109-camp-progression"});
+vm.runInContext(`${implementation}\nthis.campApi={trophy:db0633TrophyTierForAchievementCount,prestige:db0633PrestigeOfferPoints,reconcile:db0633ReconcileCampRevealState,sync:db0633SyncCampObjects,current:db0633CurrentCampRevealState};`,context,{filename:"camp-progression-composition"});
 const api=context.campApi;
+const tiers=JSON.parse(JSON.stringify(context.window.DiceboundAchievements.campTrophyTiers));
 
-assert.deepEqual(JSON.parse(JSON.stringify(api.tiers)),[{id:"current-trophy",minimumAchievementCount:2}],"Trophy tiers must expose the stable count-based future-art seam");
-assert.equal(api.trophy(0),null);
-assert.equal(api.trophy(1),null);
-assert.equal(api.trophy(2).id,"current-trophy");
-assert.equal(api.trophy(10).id,"current-trophy");
+assert.deepEqual(tiers,[
+  {id:"tier-1",minimumAchievementCount:2,assetKey:"achievementTier1"},
+  {id:"tier-2",minimumAchievementCount:10,assetKey:"achievementTier2"},
+  {id:"tier-3",minimumAchievementCount:20,assetKey:"achievementTier3"},
+  {id:"tier-4",minimumAchievementCount:30,assetKey:"achievementTier4"},
+  {id:"tier-5",minimumAchievementCount:40,assetKey:"achievementTier5"},
+  {id:"tier-6",minimumAchievementCount:50,assetKey:"achievementTier6"}
+],"Achievement domain must own the six Camp trophy tiers");
+for(const [count,id] of [[0,null],[1,null],[2,"tier-1"],[9,"tier-1"],[10,"tier-2"],[19,"tier-2"],[20,"tier-3"],[30,"tier-4"],[40,"tier-5"],[50,"tier-6"],[999,"tier-6"]]){
+  assert.equal(api.trophy(count)?.id||null,id,`wrong trophy tier at ${count} achievements`);
+}
 
 const fresh={achievementCount:0,legacyLevel:1,legacyLevelGained:false,prestigeCount:0,prestigeOfferPoints:0};
-assert.deepEqual(JSON.parse(JSON.stringify(api.reconcile({},fresh))),{achievementTrophy:false,talentStar:false,prestigeMoon:false},"fresh career must not reveal Camp objects");
-assert.equal(api.reconcile({}, {...fresh,achievementCount:1}).achievementTrophy,false,"one achievement must not reveal the Trophy");
-assert.equal(api.reconcile({}, {...fresh,achievementCount:2}).achievementTrophy,true,"the second achievement must reveal the Trophy");
-assert.equal(api.reconcile({}, {...fresh,legacyLevelGained:true}).talentStar,true,"the first actually-earned Legacy level must reveal the Star");
-assert.equal(api.reconcile({}, {...fresh,legacyLevel:2}).talentStar,true,"advanced saves above fresh Legacy level must reconcile the Star");
-assert.equal(api.reconcile({}, {...fresh,prestigeOfferPoints:0}).prestigeMoon,false,"no Prestige offer must keep the Moon hidden");
-assert.equal(api.reconcile({}, {...fresh,prestigeOfferPoints:1}).prestigeMoon,true,"a one-point Prestige offer must reveal the Moon");
-assert.equal(api.reconcile({}, {...fresh,prestigeCount:1}).talentStar,true,"a previously Prestiged save must reconcile the Star");
-assert.equal(api.reconcile({}, {...fresh,prestigeCount:1}).prestigeMoon,true,"a previously Prestiged save must reconcile the Moon");
-assert.equal(api.prestige(8),9008,"Camp compatibility helper must delegate Prestige offer calculation to DiceboundProgression");
-assert.equal(api.prestige(9),9009,"Camp compatibility helper must preserve the facade result without rebuilding policy");
-assert.deepEqual(progressionCalls,[8,9],"Camp compatibility helper must delegate each Prestige offer query exactly once");
+assert.deepEqual(JSON.parse(JSON.stringify(api.reconcile({},fresh))),{achievementTrophy:false,talentStar:false,prestigeMoon:false});
+assert.equal(api.reconcile({achievementTrophy:true},{...fresh,achievementCount:0}).achievementTrophy,false,"stale persisted Trophy reveal must not override current achievement count");
+assert.equal(api.reconcile({}, {...fresh,achievementCount:2}).achievementTrophy,true,"second achievement must reveal Trophy");
+assert.equal(api.reconcile({}, {...fresh,legacyLevelGained:true}).talentStar,true);
+assert.equal(api.reconcile({}, {...fresh,prestigeOfferPoints:1}).prestigeMoon,true);
+assert.equal(api.prestige(8),9008);assert.equal(api.prestige(9),9009);assert.deepEqual(progressionCalls,[8,9]);
 
-const permanent=api.reconcile({achievementTrophy:true,talentStar:true,prestigeMoon:true},fresh);
-assert.deepEqual(JSON.parse(JSON.stringify(permanent)),{achievementTrophy:true,talentStar:true,prestigeMoon:true},"Camp reveals must never regress");
+const sticky=api.reconcile({achievementTrophy:true,talentStar:true,prestigeMoon:true},fresh);
+assert.deepEqual(JSON.parse(JSON.stringify(sticky)),{achievementTrophy:false,talentStar:true,prestigeMoon:true},"only Talent/Prestige reveals are permanent; Trophy follows current count");
 
-api.sync();
-for(const id of ["campAchievementBtn","campTalentBtn","campMoonBtn"])assert.equal(nodes[id],undefined,`${id} must be removed rather than left as a hidden click/focus target`);
-context.meta.campReveals={achievementTrophy:true,talentStar:true,prestigeMoon:true};
-api.sync();
-for(const id of ["campAchievementBtn","campTalentBtn","campMoonBtn"]){
-  assert.ok(nodes[id],`${id} must be recreated after its permanent reveal`);
-  assert.equal(nodes[id].type,"button");
-  assert.equal(nodes[id].events.click.length,1,`${id} must retain an explicit click binding when recreated`);
-}
-assert.equal(nodes.campAchievementBtn.parentElement,ground,"Trophy position must remain in the Camp ground grid");
-assert.equal(stars.children[0].id,"campTalentBtn","Star position must remain before Info");
-assert.equal(stars.children[2].id,"campMoonBtn","Moon position must remain after Info");
+context.meta.campReveals={achievementTrophy:true,talentStar:false,prestigeMoon:false};
+achievementCount=0;api.sync();
+assert.equal(nodes.campAchievementBtn,undefined,"0 achievements must physically remove stale Trophy DOM");
+achievementCount=1;api.sync();
+assert.equal(nodes.campAchievementBtn,undefined,"1 achievement must keep Trophy absent");
+achievementCount=2;api.sync();
+assert.ok(nodes.campAchievementBtn,"2 achievements must recreate Trophy");
+assert.equal(nodes.campAchievementBtn.parentElement,ground);
+assert.equal(nodes.campAchievementBtn.type,"button");
+assert.equal(nodes.campAchievementBtn.events.click.length,1);
+assert.equal(nodes.campAchievementBtn["aria-label"],"Achievements");
 
 assert.match(campSource,/syncProgressionReveals/);
-assert.match(campSource,/find\(entry\.id\)\?\.remove\(\)/,"hidden Camp objects must be physically removed by the Camp owner");
-assert.doesNotMatch(source,/db0633CampObjectMarkup|db0633AttachCampObject|db0633BindCampObject/,"the monolith must not recreate Camp controls");
-assert.match(source,/function db0633PrestigeOfferPoints\(total=.*\)\{return dbProgression\.prestigeOffer\(total\);\}/,"the live Camp/Prestige compatibility path must delegate to the Progression facade");
-console.log("Camp progression reveals pass: thresholds, permanence, facade delegation, advanced-save reconciliation and absent hidden DOM controls");
+assert.match(campSource,/find\(entry\.id\)\?\.remove\(\)/,"hidden Camp objects must be physically removed");
+assert.doesNotMatch(source,/DB0633_CAMP_TROPHY_TIERS/,"composition root must not own Trophy-tier policy");
+assert.match(source,/campTrophyTierForCount/,"composition root must delegate Trophy policy to DiceboundAchievements");
+assert.match(source,/delete meta\.campReveals\.achievementTrophy/,"stale persisted Trophy reveal must be cleaned at the composition boundary");
+console.log("Camp progression reveals PASS: canonical six-tier Achievement policy, non-sticky Trophy reveal and absent locked DOM");
