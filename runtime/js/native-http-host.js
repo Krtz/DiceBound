@@ -24,6 +24,7 @@
   const platform={
     openSaveFolder(){return request("POST","/__dicebound/platform/open-save-folder")==="ok";},
     openAppDataFolder(){return request("POST","/__dicebound/platform/open-app-data-folder")==="ok";},
+    exportDebugBundle(payload){const raw=request("POST","/__dicebound/platform/export-debug-bundle",JSON.stringify(payload??{}));return raw?JSON.parse(raw):null;},
     repairRuntime(){return request("POST","/__dicebound/platform/repair-runtime")==="ok";},
     quit(){request("POST","/__dicebound/platform/quit");return true;},
     reload(){location.reload();return true;},
