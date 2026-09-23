@@ -23,6 +23,9 @@ assert.ok(owner.includes("character-gear-slot slot-${slot} ${item?.rarity||'empt
 assert.ok(owner.includes("entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art')"),"Modern Character Gear must render image-only occupied slots");
 assert.ok(owner.includes("entry.dataset.tip=detail"),"Character Gear must publish hover/focus detail through the shared root tooltip contract");
 assert.ok(owner.includes("displayName(item)"),"Character Gear detail must have semantic equipment-identity fallback");
+assert.ok(owner.includes("/^equipment$/i.test(raw)")&&owner.includes("semantic?.displayName"),"generic Equipment names must fall back to semantic identity");
+assert.ok(owner.includes("runtime.getAllBonuses?.(item)")&&owner.includes("runtime.formatBonus?.(key,value)"),"Character Gear detail must recover canonical total stats when composed copy is empty");
+assert.ok(owner.includes("String(rarityLabel).toUpperCase()")&&owner.includes("\\n${stats}"),"Character Gear tooltip must separate identity, rarity/slot and stats into readable lines");
 assert.match(owner,/grid-template-columns:repeat\(5,minmax\(42px,1fr\)\).*grid-template-areas:"\. \. hat \. \." "\. amulet chest ring \." "weapon \. chest \. offhand" "\. \. legs \. \." "\. \. boots \. \."/s,"Normal desktop Modern Gear must preserve the spatial paper-doll layout");
 assert.ok(owner.includes('body[data-hud-flow="landscape-2"] .character-gear-grid')&&owner.includes('body[data-hud-flow="landscape-3"] .character-gear-grid'),"narrow short-landscape HUD cards must retain a compact fallback without replacing the normal spatial paper doll");
 assert.ok(owner.includes("item?itemNameMarkup(item,'db-equipment-slot-art')"),"Classic Character Gear must preserve the named equipment-row renderer");
