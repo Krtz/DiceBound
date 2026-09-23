@@ -3,10 +3,10 @@
 
   // These are the only release-version literals in the browser runtime.
   // tools/set_project_version.py stamps them from its explicit Version/Channel input.
-  const VERSION="0.6.7.30";
+  const VERSION="0.6.7.31";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Character Gear hotfix: real item detail, safe icons and current-save repair.";
+  const RELEASE_SUMMARY="Character Gear rich-detail + enemy battle-art scale hotfix.";
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
