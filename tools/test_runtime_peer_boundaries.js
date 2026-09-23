@@ -14,16 +14,17 @@ const peers={
   DiceboundCoreState:"core/state.js",
   DiceboundRuntimeServices:"core/runtime-services.js",
   DiceboundMemoryDiagnostics:"core/memory-diagnostics.js",
+  DiceboundDebugBundle:"core/debug-bundle.js",
 };
 const allowed={
-  DiceboundVersion:new Set(["native-http-host.js","wrapper-contract.js","platform.js","save-system.js","core/run-checkpoint.js"]),
-  DiceboundPlatform:new Set(["save-system.js"]),
-  DiceboundStorage:new Set(["save-system.js"]),
-  DiceboundSave:new Set(["core/run-checkpoint.js"]),
+  DiceboundVersion:new Set(["native-http-host.js","wrapper-contract.js","platform.js","save-system.js","core/run-checkpoint.js","core/debug-bundle.js"]),
+  DiceboundPlatform:new Set(["save-system.js","core/debug-bundle.js"]),
+  DiceboundStorage:new Set(["save-system.js","core/debug-bundle.js"]),
+  DiceboundSave:new Set(["core/run-checkpoint.js","core/debug-bundle.js"]),
   DiceboundRunCheckpoint:new Set(),
   DiceboundCoreState:new Set(),
   DiceboundRuntimeServices:new Set(),
-  DiceboundMemoryDiagnostics:new Set(),
+  DiceboundMemoryDiagnostics:new Set(["core/debug-bundle.js"]),
 };
 const violations=[];
 function walk(dir){
@@ -53,7 +54,7 @@ assert.doesNotMatch(feedback,/window\.DiceboundStorage\b/);
 
 const manifest=JSON.parse(fs.readFileSync(path.join(runtime,"module-manifest.json"),"utf8"));
 const modules=Object.fromEntries(manifest.modules.map(module=>[module.id,module]));
-const peerIds=new Set(["version","platform","storage","save-system","run-checkpoint","core-state","runtime-services","memory-diagnostics"]);
+const peerIds=new Set(["version","platform","storage","save-system","run-checkpoint","core-state","runtime-services","memory-diagnostics","runtime-debug-bundle"]);
 const focusedIds=new Set([...peerIds,"native-http-host","wrapper-contract","runtime-facade","dicebound-monolith"]);
 const stale=[];
 for(const module of manifest.modules){
