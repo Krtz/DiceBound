@@ -343,7 +343,7 @@
   syncMutedFromSettings();
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
-  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
+  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
   const DiceboundStateEvents=dbRuntime.createEventBus();
 
@@ -584,8 +584,19 @@
     player.hp=clamp(player.hp,1,player.maxHp);
   }
     function equipItem(item,silent=false){return dbItems.equip(item,silent);}
+  function repairEquipmentPresentationData(){
+    const repair=window.DiceboundEquipment?.repairPresentationFields;
+    if(typeof repair!=="function")return 0;
+    let repaired=0;const seen=new Set();
+    const visit=item=>{if(!item||typeof item!=="object"||seen.has(item))return;seen.add(item);if(repair(item))repaired++;};
+    Object.values(player?.equipment||{}).forEach(visit);
+    (meta?.heirlooms||[]).forEach(visit);
+    (meta?.heirloomStorage||[]).forEach(visit);
+    return repaired;
+  }
   function renderEquipment(){
-    beta043RefreshEquipmentArt?.();return dbEquipmentUi.renderEquipment();
+    repairEquipmentPresentationData();
+    return dbEquipmentUi.renderEquipment();
   }
     function closeLoot(){
     $("lootOverlay").classList.add("hidden");const cb=pendingLootCallback;pendingLootItem=null;pendingLootCallback=null;if(cb)cb();
@@ -614,7 +625,7 @@
     return true;
   }
   dbEquipmentUi.configure({
-    find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,formatDetailBonuses:item=>formatBonuses(item),getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item),getAllBonuses:item=>window.DiceboundEquipment?.allBonusesForItem?.(item),formatBonus:(key,value)=>bonusLabel(key,value),
+    find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,formatDetailBonuses:item=>formatBonuses(item),getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item),getSpecialEquipmentIdentity:item=>{if(item?.setName!=="Impossible Road")return null;const slot=item?.mythicPiece||item?.slot,entry=dbArtifacts.entries?.find?.(candidate=>candidate.slot===slot);return entry?{displayName:entry.label,slot:entry.slot}:null;},getSafeEquipmentIcon:item=>window.DiceboundEquipment?.safeIconForItem?.(item),getAllBonuses:item=>window.DiceboundEquipment?.allBonusesForItem?.(item),formatBonus:(key,value)=>bonusLabel(key,value),
     getState:dbEquipmentUiState,getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
     resolveEquipmentArt:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item),itemSellValue:(...args)=>dbItems.sellValue(...args),
     syncStorage:()=>dbItems.syncHeirloomState(),toggleStoredActive:item=>dbItems.toggleStoredHeirloomActive(item),discardStored:item=>dbItems.discardStoredHeirloom(item),
@@ -2910,14 +2921,6 @@ dbReturnToRoadTraceReady=true;
     const entry=list?.find?.(x=>x&&x.name===name);
     if(entry)entry.icon=beta043Art(key,name,klass)||entry.icon;
   }
-  function beta043RefreshEquipmentArt(){
-    EQUIPMENT_SLOTS.forEach(slot=>{
-      const item=player?.equipment?.[slot];
-      if(item?.slot==='hat')item.icon=beta043Art('helmet','Helmet','db-art-inline')||item.icon;
-    });
-    (meta.heirlooms||[]).forEach(item=>{if(item?.slot==='hat')item.icon=beta043Art('helmet','Helmet','db-art-inline')||item.icon;});
-    (meta.heirloomStorage||[]).forEach(item=>{if(item?.slot==='hat')item.icon=beta043Art('helmet','Helmet','db-art-inline')||item.icon;});
-  }
   function beta043ApplyArtMutations(){
     if(beta043ApplyArtMutations.done)return;beta043ApplyArtMutations.done=true;
     beta043ReplaceByName(upgrades,'Heavy Purse','heavyPurse');
@@ -2931,8 +2934,6 @@ dbReturnToRoadTraceReady=true;
     });
   }
   beta043ApplyArtMutations();
-
-  setTimeout(beta043RefreshEquipmentArt,0);
 
   v17OpenLegendaryChoice=function(source,onComplete=()=>{}){
     return dbPowerups.openLegendary(source,onComplete);
@@ -3408,6 +3409,7 @@ dbReturnToRoadTraceReady=true;
   function dbRunIsStable(){return gameStarted&&!runFinalized&&!rollLocked&&!combatBusy&&!currentEnemy&&pendingLevelUps===0&&!dbRunHasBlockingOverlay();}
   function dbRunSummary(){return {classId:player.classId,className:CLASSES[player.classId]?.name||player.classId,board:boardLevel,tile:Number(player.position||0)+1,level:player.level,gold:player.gold,difficulty:hellMode?'Hell':nightmareMode?'Nightmare':'Normal'};}
   function dbRunSnapshot(){
+    repairEquipmentPresentationData();
     return DB_RUN_CHECKPOINT.create({
       summary:dbRunSummary(),
       meta,
