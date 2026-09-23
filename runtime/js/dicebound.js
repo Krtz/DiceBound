@@ -2686,9 +2686,12 @@ dbReturnToRoadTraceReady=true;
   let dbBeta02Frame=0,dbBeta02Last=null;
 
   function dbBeta02Number(value,fallback=0){const n=Number.parseFloat(value);return Number.isFinite(n)?n:fallback;}
-  function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0,paddingX=0,paddingY=0,gap=12,minSize=180,maxSize=1400}={}){
-    const usableWidth=Math.max(0,dbBeta02Number(panelWidth)-dbBeta02Number(paddingX));
-    const usableHeight=Math.max(0,dbBeta02Number(panelHeight)-dbBeta02Number(paddingY)-dbBeta02Number(controlsHeight)-dbBeta02Number(gap));
+  function dbBeta02PlayFlowName(width,height){return width>=1450&&height>=800?'side-controls':'below-controls';}
+  function dbBeta02SideControlsWidth(width){return Math.round(Math.min(180,Math.max(150,dbBeta02Number(width,1600)*.10)));}
+  function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0,controlsWidth=0,controlsPlacement='below',paddingX=0,paddingY=0,gap=12,minSize=180,maxSize=1400}={}){
+    const side=controlsPlacement==='side';
+    const usableWidth=Math.max(0,dbBeta02Number(panelWidth)-dbBeta02Number(paddingX)-(side?dbBeta02Number(controlsWidth)+dbBeta02Number(gap):0));
+    const usableHeight=Math.max(0,dbBeta02Number(panelHeight)-dbBeta02Number(paddingY)-(side?0:dbBeta02Number(controlsHeight)+dbBeta02Number(gap)));
     const raw=Math.floor(Math.min(usableWidth,usableHeight));
     if(raw<=0)return 0;
     return Math.max(Math.min(raw,dbBeta02Number(maxSize,1400)),Math.min(raw,dbBeta02Number(minSize,180)));
@@ -2698,9 +2701,9 @@ dbReturnToRoadTraceReady=true;
 
   function dbBeta02MeasureNow(){
     const root=document.documentElement,body=document.body,app=document.querySelector('.app'),panel=document.querySelector('.game-panel'),controls=document.querySelector('.road-controls');
-    const width=Math.max(0,window.innerWidth||root?.clientWidth||0),height=Math.max(0,window.innerHeight||root?.clientHeight||0),layout=dbBeta02LayoutName(width),heightMode=dbBeta02HeightName(height);
-    body?.setAttribute('data-window-layout',layout);body?.setAttribute('data-window-height',heightMode);
-    root?.style?.setProperty('--db-window-width',`${width}px`);root?.style?.setProperty('--db-window-height',`${height}px`);
+    const width=Math.max(0,window.innerWidth||root?.clientWidth||0),height=Math.max(0,window.innerHeight||root?.clientHeight||0),layout=dbBeta02LayoutName(width),heightMode=dbBeta02HeightName(height),playFlow=layout==='stacked'?'below-controls':dbBeta02PlayFlowName(width,height),sideControlsWidth=dbBeta02SideControlsWidth(width);
+    body?.setAttribute('data-window-layout',layout);body?.setAttribute('data-window-height',heightMode);body?.setAttribute('data-play-flow',playFlow);
+    root?.style?.setProperty('--db-window-width',`${width}px`);root?.style?.setProperty('--db-window-height',`${height}px`);root?.style?.setProperty('--db-road-side-width',`${sideControlsWidth}px`);
     let boardSize=0;
     if(layout==='stacked'){
       root?.style?.removeProperty('--db-board-size');
@@ -2708,10 +2711,10 @@ dbReturnToRoadTraceReady=true;
       const style=typeof getComputedStyle==='function'?getComputedStyle(panel):{};
       const paddingX=dbBeta02Number(style.paddingLeft)+dbBeta02Number(style.paddingRight),paddingY=dbBeta02Number(style.paddingTop)+dbBeta02Number(style.paddingBottom),gap=dbBeta02Number(style.rowGap||style.gap,12);
       const rect=panel.getBoundingClientRect?.()||{};
-      boardSize=dbBeta02CalculateBoardSize({panelWidth:panel.clientWidth||rect.width||0,panelHeight:panel.clientHeight||rect.height||0,controlsHeight:controls?.offsetHeight||controls?.getBoundingClientRect?.().height||0,paddingX,paddingY,gap});
+      boardSize=dbBeta02CalculateBoardSize({panelWidth:panel.clientWidth||rect.width||0,panelHeight:panel.clientHeight||rect.height||0,controlsHeight:controls?.offsetHeight||controls?.getBoundingClientRect?.().height||0,controlsWidth:sideControlsWidth,controlsPlacement:playFlow==='side-controls'?'side':'below',paddingX,paddingY,gap});
       if(boardSize>0)root?.style?.setProperty('--db-board-size',`${boardSize}px`);
     }
-    const result=Object.freeze({width,height,layout,heightMode,boardSize,appWidth:app?.clientWidth||0,panelWidth:panel?.clientWidth||0,panelHeight:panel?.clientHeight||0});
+    const result=Object.freeze({width,height,layout,heightMode,playFlow,sideControlsWidth,boardSize,appWidth:app?.clientWidth||0,panelWidth:panel?.clientWidth||0,panelHeight:panel?.clientHeight||0});
     dbBeta02Last=result;
     if(typeof gameStarted!=='undefined'&&gameStarted&&typeof placePawn==='function')requestAnimationFrame(()=>{try{placePawn(false);}catch(_){}});
     return result;
@@ -2726,7 +2729,7 @@ dbReturnToRoadTraceReady=true;
     for(const el of [document.querySelector('.app'),document.querySelector('.game-panel'),document.querySelector('.road-controls'),document.querySelector('.topbar')])if(el)observer.observe(el);
   }
   setTimeout(dbBeta02Schedule,0);
-  window.DiceboundResponsive=Object.freeze({apiVersion:1,calculateBoardSize:dbBeta02CalculateBoardSize,layoutName:dbBeta02LayoutName,heightName:dbBeta02HeightName,measure:dbBeta02MeasureNow,schedule:dbBeta02Schedule,diagnostics:()=>dbBeta02Last});
+  window.DiceboundResponsive=Object.freeze({apiVersion:1,calculateBoardSize:dbBeta02CalculateBoardSize,layoutName:dbBeta02LayoutName,heightName:dbBeta02HeightName,playFlowName:dbBeta02PlayFlowName,sideControlsWidth:dbBeta02SideControlsWidth,measure:dbBeta02MeasureNow,schedule:dbBeta02Schedule,diagnostics:()=>dbBeta02Last});
 
   // real combat and Steal implementations instead of reimplementing formulas.
   Object.defineProperty(window,'DiceboundBeta021Test',{configurable:true,value:Object.freeze({
