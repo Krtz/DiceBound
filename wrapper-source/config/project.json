@@ -22,6 +22,7 @@
     "js/core/state.js",
     "js/core/runtime-services.js",
     "js/core/memory-diagnostics.js",
+    "js/core/debug-bundle.js",
     "js/core/facade.js",
     "js/combat/element-content.js",
     "js/combat/effective-stats.js",
