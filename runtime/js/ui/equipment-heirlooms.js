@@ -202,6 +202,7 @@
 
   function activateCharacterTab(name='stats'){
     characterTab=name==='gear'?'gear':'stats';
+    if(characterTab!=='gear')hideDetailPopover();
     const layout=characterLayout(),tabs=find('characterTabs'),stats=find('characterStatsPanel'),gear=find('characterGearPanel');
     tabs?.querySelectorAll?.('[data-character-tab]').forEach(button=>{
       const active=button.dataset.characterTab===characterTab;
@@ -255,11 +256,12 @@
         entry.setAttribute?.('aria-label',detail);
         entry.tabIndex=0;
         if(layout==='classic'){
-          if(entry.dataset)entry.dataset.tip=detail;
+          if(entry.dataset){entry.dataset.tip=detail;delete entry.dataset.equipmentSlot;}
           entry.className=`equipment-slot ${item?.rarity||'empty'}`;
           entry.innerHTML=`<span class="slot-label">${escapeHtml(label(slot))}</span><span class="slot-item">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
         }else{
-          if(entry.dataset)entry.dataset.equipmentSlot=slot;
+          if(entry.dataset){entry.dataset.equipmentSlot=slot;delete entry.dataset.tip;delete entry.dataset.tooltip;}
+          entry.removeAttribute?.('title');
           entry.className=`equipment-slot character-gear-slot slot-${slot} ${item?.rarity||'empty'}`;
           entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art'):`<span class="character-empty-slot">${escapeHtml(label(slot))}</span>`;
         }
