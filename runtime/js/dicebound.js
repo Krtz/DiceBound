@@ -614,14 +614,14 @@
     return true;
   }
   dbEquipmentUi.configure({
-    find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,formatDetailBonuses:item=>formatBonuses(item),getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item),
+    find:$,getSlots:()=>EQUIPMENT_SLOTS,getSlotLabel:slot=>SLOT_LABELS[slot],getRarityInfo:rarity=>rarityInfo[rarity],formatBonuses,formatDetailBonuses:item=>formatBonuses(item),getEquipmentIdentity:item=>window.DiceboundEquipment?.identityForItem?.(item),getAllBonuses:item=>window.DiceboundEquipment?.allBonusesForItem?.(item),formatBonus:(key,value)=>bonusLabel(key,value),
     getState:dbEquipmentUiState,getArtifactSet:()=>({count:mythicalSetCount(),tiers:v24SetTierData().map(tier=>({pieces:tier.pieces,text:tier.text}))}),
     resolveEquipmentArt:item=>window.DiceboundAssets?.resolveEquipmentArt?.(item),itemSellValue:(...args)=>dbItems.sellValue(...args),
     syncStorage:()=>dbItems.syncHeirloomState(),toggleStoredActive:item=>dbItems.toggleStoredHeirloomActive(item),discardStored:item=>dbItems.discardStoredHeirloom(item),
     toggleRunStorage:item=>dbItems.toggleRunHeirloomStorage(item),toggleLegacyHeirloom:item=>dbItems.toggleLegacyHeirloom(item),
     isHeirloomEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),confirm:diceboundConfirm,
     getCharacterLayout:()=>meta.settings?.characterLayout==='classic'?'classic':'modern',
-    afterStorageChange:()=>updateMetaUI(),lootCopy:dbEquipmentUiLootCopy
+    afterStorageChange:()=>updateMetaUI(),afterCharacterPresentationChange:()=>setTimeout(()=>beta042ScheduleSidebarLayout(),0),lootCopy:dbEquipmentUiLootCopy
   });
 
   const req=(id,rank=1)=>({id,rank});
@@ -2687,7 +2687,7 @@ dbReturnToRoadTraceReady=true;
 
   function dbBeta02Number(value,fallback=0){const n=Number.parseFloat(value);return Number.isFinite(n)?n:fallback;}
   function dbBeta02PlayFlowName(width,height){return width>=1450&&height>=800?'side-controls':'below-controls';}
-  function dbBeta02SideControlsWidth(width){return Math.round(Math.min(180,Math.max(150,dbBeta02Number(width,1600)*.10)));}
+  function dbBeta02SideControlsWidth(width){return Math.round(Math.min(240,Math.max(164,dbBeta02Number(width,1600)*.115)));}
   function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0,controlsWidth=0,controlsPlacement='below',paddingX=0,paddingY=0,gap=12,minSize=180,maxSize=1400}={}){
     const side=controlsPlacement==='side';
     const usableWidth=Math.max(0,dbBeta02Number(panelWidth)-dbBeta02Number(paddingX)-(side?dbBeta02Number(controlsWidth)+dbBeta02Number(gap):0));
@@ -2701,9 +2701,10 @@ dbReturnToRoadTraceReady=true;
 
   function dbBeta02MeasureNow(){
     const root=document.documentElement,body=document.body,app=document.querySelector('.app'),panel=document.querySelector('.game-panel'),controls=document.querySelector('.road-controls');
-    const width=Math.max(0,window.innerWidth||root?.clientWidth||0),height=Math.max(0,window.innerHeight||root?.clientHeight||0),layout=dbBeta02LayoutName(width),heightMode=dbBeta02HeightName(height),playFlow=layout==='stacked'?'below-controls':dbBeta02PlayFlowName(width,height),sideControlsWidth=dbBeta02SideControlsWidth(width);
-    body?.setAttribute('data-window-layout',layout);body?.setAttribute('data-window-height',heightMode);body?.setAttribute('data-play-flow',playFlow);
+    const width=Math.max(0,window.innerWidth||root?.clientWidth||0),height=Math.max(0,window.innerHeight||root?.clientHeight||0),layout=dbBeta02LayoutName(width),heightMode=dbBeta02HeightName(height),playFlow=layout==='stacked'?'below-controls':dbBeta02PlayFlowName(width,height),sideControlsWidth=dbBeta02SideControlsWidth(width),travelDensity=playFlow==='side-controls'&&sideControlsWidth<205?'compact':'full';
+    body?.setAttribute('data-window-layout',layout);body?.setAttribute('data-window-height',heightMode);body?.setAttribute('data-play-flow',playFlow);body?.setAttribute('data-travel-density',travelDensity);
     root?.style?.setProperty('--db-window-width',`${width}px`);root?.style?.setProperty('--db-window-height',`${height}px`);root?.style?.setProperty('--db-road-side-width',`${sideControlsWidth}px`);
+    const rollButton=document.getElementById('rollBtn');if(rollButton){rollButton.textContent=travelDensity==='compact'?'Roll':'Roll the dice';rollButton.setAttribute('aria-label','Roll the dice');}
     let boardSize=0;
     if(layout==='stacked'){
       root?.style?.removeProperty('--db-board-size');
@@ -2714,7 +2715,7 @@ dbReturnToRoadTraceReady=true;
       boardSize=dbBeta02CalculateBoardSize({panelWidth:panel.clientWidth||rect.width||0,panelHeight:panel.clientHeight||rect.height||0,controlsHeight:controls?.offsetHeight||controls?.getBoundingClientRect?.().height||0,controlsWidth:sideControlsWidth,controlsPlacement:playFlow==='side-controls'?'side':'below',paddingX,paddingY,gap});
       if(boardSize>0)root?.style?.setProperty('--db-board-size',`${boardSize}px`);
     }
-    const result=Object.freeze({width,height,layout,heightMode,playFlow,sideControlsWidth,boardSize,appWidth:app?.clientWidth||0,panelWidth:panel?.clientWidth||0,panelHeight:panel?.clientHeight||0});
+    const result=Object.freeze({width,height,layout,heightMode,playFlow,travelDensity,sideControlsWidth,boardSize,appWidth:app?.clientWidth||0,panelWidth:panel?.clientWidth||0,panelHeight:panel?.clientHeight||0});
     dbBeta02Last=result;
     if(typeof gameStarted!=='undefined'&&gameStarted&&typeof placePawn==='function')requestAnimationFrame(()=>{try{placePawn(false);}catch(_){}});
     return result;
@@ -2828,11 +2829,28 @@ dbReturnToRoadTraceReady=true;
     if(meta.doubleDiceUnlocked)parts.push('Double Dice ready');
     return parts.join(' · ');
   }
-  function beta042SyncSidebarLayout(){
-    const hasSet=typeof mythicalSetCount==='function'&&mythicalSetCount()>0;
-    document.body?.setAttribute('data-sidebar-companion',hasSet?'below':'adjacent');
-    return hasSet;
+  let beta042SidebarFrame=0,beta042SidebarObserver=null;
+  function beta042SidebarSnapshot(){
+    const sidebar=document.querySelector('.sidebar'),character=$('characterCard'),pet=document.querySelector('.sidebar>.pet-card'),log=document.querySelector('.sidebar>.log-card');
+    const gap=sidebar&&typeof getComputedStyle==='function'?Number.parseFloat(getComputedStyle(sidebar).gap)||10:10;
+    const width=sidebar?.getBoundingClientRect?.().width||0,characterHeight=character?.getBoundingClientRect?.().height||0,petHeight=pet?.getBoundingClientRect?.().height||0,logHeight=log?.getBoundingClientRect?.().height||0,columnWidth=(width-gap)/2;
+    const columns=width>=560&&columnWidth>=255,mode=!columns?'stacked':characterHeight>=petHeight+80?'masonry':'paired';
+    return Object.freeze({mode,width,columnWidth,characterHeight,petHeight,logHeight,gap});
   }
+  function beta042EnsureSidebarObserver(){
+    if(beta042SidebarObserver||typeof ResizeObserver==='undefined')return;
+    beta042SidebarObserver=new ResizeObserver(()=>beta042ScheduleSidebarLayout());
+    for(const el of [document.querySelector('.sidebar'),$('characterCard'),document.querySelector('.sidebar>.pet-card'),document.querySelector('.sidebar>.log-card')])if(el)beta042SidebarObserver.observe(el);
+  }
+  function beta042SyncSidebarLayout(){
+    beta042SidebarFrame=0;
+    const hasSet=typeof mythicalSetCount==='function'&&mythicalSetCount()>0,snapshot=beta042SidebarSnapshot();
+    document.body?.setAttribute('data-sidebar-companion',hasSet?'below':'adjacent');
+    document.body?.setAttribute('data-sidebar-flow',snapshot.mode);
+    beta042EnsureSidebarObserver();
+    return Object.freeze({...snapshot,hasSet});
+  }
+  function beta042ScheduleSidebarLayout(){if(beta042SidebarFrame)cancelAnimationFrame(beta042SidebarFrame);beta042SidebarFrame=requestAnimationFrame(beta042SyncSidebarLayout);}
   const dbInputRouter=window.DiceboundInputRouter;
   if(!dbInputRouter?.configure)throw new Error("DiceBound requires the app input router before dicebound.js");
   const dbOptionsUi=window.DiceboundOptionsUi?.configure({
