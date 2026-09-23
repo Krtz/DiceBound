@@ -15,6 +15,7 @@
     "core-state",
     "runtime-services",
     "memory-diagnostics",
+    "runtime-debug-bundle",
     "runtime-facade",
     "combat-element-content",
     "combat-effective-stats",
