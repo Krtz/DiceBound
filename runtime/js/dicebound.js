@@ -3668,7 +3668,7 @@ dbReturnToRoadTraceReady=true;
   }
   dbItemOperations=dbItemOperationsOwner.createController({
     getPlayer:()=>player,getMeta:()=>meta,rarityValues,equipmentApi:db06314Equipment,
-    classIdentityActive:id=>classIdentityActive(id),bonusLabel:(key,value)=>db06314BonusLabel(key,value),
+    classIdentityActive:id=>classIdentityActive(id),bonusLabel:(key,value)=>bonusLabel(key,value),
     applyItemStats:(item,sign)=>applyItemStats(item,sign),clearGearTransform:()=>db060ClearGearTransform(),applyGearTransform:()=>db060ApplyGearTransform(),
     usesMana:()=>db06421UsesMana(),equipmentMana:()=>db06421EquipmentMana(),syncMana:snapshot=>db06421SyncMana(snapshot),
     recordCareerGoldEarned:amount=>dbProgression.recordGoldEarned(amount),setStatsLastGold:value=>{statsLastGold=value;},rarityLabel:rarity=>rarityInfo[rarity].label,
