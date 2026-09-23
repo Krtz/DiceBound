@@ -197,7 +197,7 @@
     return identity;
   }
   function shouldRepairSpecialIdentity(item){
-    return ["legendary","artifact","mythical","omega"].includes(String(item?.rarity||"").toLowerCase())||item?.specialLegendary||item?.specialMythical||item?.artifact||item?.setName==="Impossible Road"||item?.merchantWeapon||item?.devilHorns||item?.bloodmageStone;
+    return !!(fixedSpecialEquipmentId(item)||item?.artifact||item?.setName==="Impossible Road"||item?.merchantWeapon||item?.devilHorns||item?.bloodmageStone);
   }
   function repairPresentationFields(item,{classId=null}={}){
     if(!item||typeof item!=="object")return false;
