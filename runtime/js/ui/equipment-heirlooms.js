@@ -22,11 +22,13 @@
   function label(slot){return runtime.getSlotLabel?.(slot)||slot||'Equipment';}
   function rarity(item){return runtime.getRarityInfo?.(item?.rarity)||{label:item?.rarity||'Unknown'};}
   function identity(item){return runtime.getEquipmentIdentity?.(item)||null;}
+  function specialIdentity(item){return runtime.getSpecialEquipmentIdentity?.(item)||null;}
   function displayName(item){
-    const semantic=identity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
+    const semantic=specialIdentity(item)||identity(item),raw=String(item?.name||'').trim(),slotName=String(label(item?.slot)||'').trim();
     const generic=!raw||/^equipment$/i.test(raw)||/^item$/i.test(raw)||(slotName&&raw.toLowerCase()===slotName.toLowerCase());
     return generic?(semantic?.displayName||raw||'Equipment'):raw;
   }
+  function safeIcon(item){return String(runtime.getSafeEquipmentIcon?.(item)||item?.icon||'◇').trim()||'◇';}
   function bonuses(item){return runtime.formatBonuses?.(item)||'No bonuses';}
   function detailBonuses(item){
     const raw=String(runtime.formatDetailBonuses?.(item)||'').trim(),detail=raw.replace(/^No bonuses\s*·\s*/i,'').trim();
@@ -49,7 +51,7 @@
   }
   function gearIconMarkup(item,klass=''){
     if(!item)return '';
-    return artMarkup(item,klass)||`<span class="db-equipment-icon-fallback" aria-hidden="true">${escapeHtml(item.icon||'◇')}</span>`;
+    return artMarkup(item,klass)||`<span class="db-equipment-icon-fallback" aria-hidden="true">${escapeHtml(safeIcon(item))}</span>`;
   }
   function itemDetail(item,slot=item?.slot){
     if(!item)return `Empty ${label(slot)} slot`;
@@ -109,14 +111,14 @@
     const rarityId=escapeHtml(String(item?.rarity||"common").toLowerCase());
     return `<span class="db-rarity-name db-rarity-${rarityId}">${escapeHtml(displayName(item))}</span>`;
   }
-  function itemNameMarkup(item,klass=''){const art=artMarkup(item,klass),name=rarityNameMarkup(item);return art?`${art}${name}`:`${escapeHtml(item?.icon||'')} ${name}`;}
+  function itemNameMarkup(item,klass=''){const art=artMarkup(item,klass),name=rarityNameMarkup(item);return art?`${art}${name}`:`${escapeHtml(safeIcon(item))} ${name}`;}
   function artifactSetHtml(model=setModel()){
     const count=Math.max(0,Number(model.count)||0),tiers=Array.isArray(model.tiers)?model.tiers:[];
     return `<strong>🌈 Impossible Road set · Artifact</strong><br><span style=\"color:var(--muted)\">${count}/7 pieces active.</span><div class=\"set-tier-grid\">${tiers.map(tier=>`<div class=\"set-tier${count>=Number(tier.pieces)?' active':''}\"><b>${escapeHtml(tier.pieces)}-piece bonus</b><span>${escapeHtml(tier.text)}</span></div>`).join('')}</div>`;
   }
   function campHeirloomHtml(){
     const current=state(),items=current.heirlooms||[],capacity=Math.max(0,Number(current.activeCapacity)||0);
-    return items.length?`<div class=\"camp-heirloom-card\"><strong>Bound heirlooms (${items.length}/${capacity})</strong><br>${items.map(item=>`<strong>${escapeHtml(item.icon||'')} ${escapeHtml(item.name||'Equipment')}</strong> — ${escapeHtml(bonuses(item))}`).join('<br>')}</div>`:`<div class=\"camp-heirloom-card\">No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?'':'s'}.</div>`;
+    return items.length?`<div class=\"camp-heirloom-card\"><strong>Bound heirlooms (${items.length}/${capacity})</strong><br>${items.map(item=>`<strong>${escapeHtml(safeIcon(item))} ${escapeHtml(displayName(item))}</strong> — ${escapeHtml(bonuses(item))}`).join('<br>')}</div>`:`<div class=\"camp-heirloom-card\">No heirlooms are currently bound. You have ${capacity} permanent slot${capacity===1?'':'s'}.</div>`;
   }
   function campView(){return Object.freeze({owner:OWNER,heirloomHtml:campHeirloomHtml(),setHtml:artifactSetHtml()});}
 
@@ -198,7 +200,7 @@
     if(title){title.textContent=copy.title||({omega:'OMEGA ITEM FOUND!',mythical:'MYTHICAL ITEM FOUND!',artifact:'ARTIFACT ITEM FOUND!',legendary:'LEGENDARY RELIC FOUND!'})[item.rarity]||'Equipment found';title.className=copy.titleClass||({omega:'omega-title',artifact:'artifact-title',legendary:'legendary-title',mythical:'mythic-drop-title'})[item.rarity]||'';}
     if(subtitle)subtitle.textContent=copy.subtitle||({omega:'A near-impossible Omega item claws its way into reality.',artifact:'An Artifact-tier relic of the Impossible Road refuses to obey ordinary item rules.',legendary:'This handcrafted Legendary cannot roll from ordinary equipment tables.',mythical:'A Mythical item tears its way out of the road.'})[item.rarity]||'Equip it now or sell it. Stored heirlooms can be managed at the Campsite.';
     overlay.classList.toggle('mythic-found',special);card.className=`loot-card ${item.rarity||''}`;
-    card.innerHTML=`<div class=\"loot-top\"><div class=\"loot-icon\">${artMarkup(item,'db-equipment-loot-art')||escapeHtml(item.icon||'')}</div><div><div class=\"rarity-badge\">${escapeHtml(tier.label||item.rarity||'Unknown')}</div><div class=\"loot-name\">${escapeHtml(item.name||'Equipment')}</div><div class=\"loot-slot\">${escapeHtml(label(item.slot))}</div></div></div><div class=\"loot-bonuses\">${escapeHtml(bonuses(item))}</div><div class=\"loot-current\">${current?`Currently equipped: <b>${escapeHtml(current.name||'Equipment')}</b> — ${escapeHtml(bonuses(current))}`:`The ${escapeHtml(label(item.slot))} slot is empty.`}</div>${item.seedCode?`<div class=\"seed-code\">Item seed: ${escapeHtml(item.seedCode)}</div>`:''}`;
+    card.innerHTML=`<div class=\"loot-top\"><div class=\"loot-icon\">${artMarkup(item,'db-equipment-loot-art')||escapeHtml(safeIcon(item))}</div><div><div class=\"rarity-badge\">${escapeHtml(tier.label||item.rarity||'Unknown')}</div><div class=\"loot-name\">${escapeHtml(displayName(item))}</div><div class=\"loot-slot\">${escapeHtml(label(item.slot))}</div></div></div><div class=\"loot-bonuses\">${escapeHtml(bonuses(item))}</div><div class=\"loot-current\">${current?`Currently equipped: <b>${escapeHtml(displayName(current))}</b> — ${escapeHtml(bonuses(current))}`:`The ${escapeHtml(label(item.slot))} slot is empty.`}</div>${item.seedCode?`<div class=\"seed-code\">Item seed: ${escapeHtml(item.seedCode)}</div>`:''}`;
     if(sell)sell.textContent=`Sell for ${Math.max(0,Number(runtime.itemSellValue?.(item))||0)} gold`;
     overlay.classList.remove('hidden');
     return Object.freeze({owner:OWNER,rarity:item.rarity||null,slot:item.slot||null,hasArt:!!runtime.resolveEquipmentArt?.(item)});
