@@ -142,6 +142,12 @@ async function connectWithHandshake(){
     for(const loaded of art.loaded){assert.ok(loaded.width>=1000&&loaded.height>=1000,`imported artwork did not retain its full-resolution dimensions: ${loaded.src}`);assert.ok(loaded.cornerAlpha<255,`imported artwork has an opaque corner/matte: ${loaded.src}`);}
     console.log("Local file authored-art PASS: Euler plus Goblin/Skeleton Board 1--6 assets resolve and load with transparency");
 
+    const namedMythicals=await page.evaluate(`(()=>window.DiceboundBeta06Test.namedMythicals())()`);
+    assert.deepEqual(namedMythicals.map(item=>item.equipmentId),["axels-coffee-mug","kratz-headphones","kellys-jean-jacket"],"named Mythicals must be locked to their own exclusive equipmentIds");
+    assert.deepEqual(namedMythicals.map(item=>item.baseName),["Axel's Coffee Mug","Kratz Headphones","The Jean Jacket Lost at Kelly's"],"named Mythical public/base identity drifted");
+    assert.deepEqual(namedMythicals.map(item=>item.intrinsic),[{doubleStrike:.05},{dodge:.02},{defense:2}],"named Mythical Intrinsics must belong to their exclusive special bases");
+    console.log("Named Mythical identity PASS: fixed exclusive equipmentIds + own Intrinsics");
+
     // #455: reproduce the 0.6.7.29 live regression with an old-style special
     // Hat while also proving the new rule: Impossible Road is named Artifact
     // gear layered over a real modern equipment identity + Intrinsic.
