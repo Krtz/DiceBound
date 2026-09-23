@@ -10,7 +10,10 @@ const equipment=fs.readFileSync(path.join(root,"runtime/js/ui/equipment-heirloom
 
 assert.ok(js.includes("function dbBeta02CalculateBoardSize({panelWidth=0,panelHeight=0,controlsHeight=0"),"Board size calculator must account for Road controls below the Board");
 assert.ok(js.includes("dbBeta02Number(panelHeight)-dbBeta02Number(paddingY)-dbBeta02Number(controlsHeight)-dbBeta02Number(gap)"),"Road-control height must always reduce available Board height");
-for(const retired of ["dbBeta02PlayFlowName","dbBeta02SideControlsWidth","data-play-flow","data-travel-density","controlsPlacement","sideControlsWidth","travelDensity"])assert.equal(js.includes(retired),false,`rejected side-Travel policy remains in composition: ${retired}`);
+for(const retired of ["dbBeta02PlayFlowName","dbBeta02SideControlsWidth","controlsPlacement","sideControlsWidth","travelDensity"])assert.equal(js.includes(retired),false,`rejected side-Travel policy remains in composition: ${retired}`);
+assert.equal(js.includes("setAttribute('data-play-flow'"),false,"composition must not set retired play-flow state");
+assert.equal(js.includes("setAttribute('data-travel-density'"),false,"composition must not set retired Travel-density state");
+assert.ok(js.includes("removeAttribute('data-play-flow')")&&js.includes("removeAttribute('data-travel-density')"),"responsive owner should clear stale side-Travel attributes from live DOM");
 assert.equal(css.includes('data-play-flow="side-controls"'),false,"rejected side-Travel CSS must be deleted");
 assert.equal(css.includes("data-travel-density"),false,"rejected compact/full Travel density CSS must be deleted");
 assert.ok(js.includes("rollButton.textContent='Roll the dice'"),"Roll control must keep the canonical full label");
