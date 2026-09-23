@@ -99,6 +99,7 @@ assert.match(source,/assets\/camp\/interactions\/career-tent\.png/,'Career must 
 assert.match(source,/assets\/camp\/interactions\/achievements\/tier-1\.png/,'Achievement interaction must have an authored tier-1 bootstrap asset');
 assert.match(source,/view\.achievementTrophyTier\?\.assetKey/,'Camp Achievement art must select its tier from canonical progression view data');
 assert.match(source,/camp-painted-interaction/,'Career and Achievement authored art must opt into painted-object hit targeting');
+assert.match(source,/const exactPainted=button\.classList\.contains\('camp-painted-interaction'\)/,'authored Career/Achievement buttons must be sized exactly to their painted art');
 assert.match(source,/#campCareerBtn \.camp-label,[^\n]*#campAchievementBtn \.camp-sub\{display:none!important\}/,'Career/Achievement fullscreen labels must not enlarge the painted interaction footprint');
 assert.match(assets,/careerTent:\{image:`\$\{paths\.campInteractions\}\/career-tent\.png`/,'asset registry must own Career tent art');
 for(let tier=1;tier<=6;tier++)assert(assets.includes(`achievementTier${tier}:{image:\`\${paths.campInteractions}/achievements/tier-${tier}.png\``),`asset registry missing Achievement tier ${tier}`);
