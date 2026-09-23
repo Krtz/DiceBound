@@ -2064,10 +2064,10 @@ function returnToRoad(...args){
       toggleHell:()=>{if(!meta.hellUnlocked){showToast('Hell is still locked');return;}hellMode=!hellMode;if(hellMode)nightmareMode=true;window.DiceboundClassChooser.render();showToast(`Hell ${hellMode?'enabled':'disabled'}`);},
       resetProgress:async()=>{if(await diceboundConfirm('Reset all Dicebound progress, achievements, pets, heirlooms and unlocks? This cannot be undone.',{title:'Reset ALL Dicebound progress?',confirmLabel:'Reset everything',danger:true})){dbRuntime.save?.reset();dbRuntime.platform?.reload();}}
     },
-    canArmHellRitual:()=>!!hellMode&&!!meta.hellUnlocked,
-    primeHellRitual:()=>{meta.devilPrimed=true;saveMeta();return true;},
-    playHellRitualSuccess:()=>sfx.holy(),
-    hellRitualToast:(...args)=>showToast(...args)
+    canPrimePaleDevil:()=>!!hellMode&&!!meta.hellUnlocked,
+    primePaleDevil:()=>{if(!hellMode||!meta.hellUnlocked)return false;meta.devilPrimed=true;saveMeta();return true;},
+    playPaleDevilSecret:()=>sfx.holy(),
+    paleDevilToast:(...args)=>showToast(...args)
   });
 
   // #199 / #209: the Class chooser owns live roster/detail presentation and
