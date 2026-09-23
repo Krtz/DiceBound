@@ -146,7 +146,11 @@ async function connectWithHandshake(){
     assert.deepEqual(namedMythicals.map(item=>item.equipmentId),["axels-coffee-mug","kratz-headphones","kellys-jean-jacket"],"named Mythicals must be locked to their own exclusive equipmentIds");
     assert.deepEqual(namedMythicals.map(item=>item.baseName),["Axel's Coffee Mug","Kratz Headphones","The Jean Jacket Lost at Kelly's"],"named Mythical public/base identity drifted");
     assert.deepEqual(namedMythicals.map(item=>item.intrinsic),[{doubleStrike:.05},{dodge:.02},{defense:2}],"named Mythical Intrinsics must belong to their exclusive special bases");
-    console.log("Named Mythical identity PASS: fixed exclusive equipmentIds + own Intrinsics");
+    assert.deepEqual(namedMythicals.map(item=>[item.bonuses.doubleStrike??null,item.bonuses.dodge??null,item.bonuses.defense??null]),[[.75,null,-5],[-.25,.25,25],[.15,.30,30]],"named Mythical authored bonus packages must remain at their pre-Intrinsic power");
+    assert.ok(Math.abs(namedMythicals[0].total.doubleStrike-.80)<1e-9,"Axel's Coffee Mug Intrinsic must add free Mythical power on top of +75% Double Strike");
+    assert.ok(Math.abs(namedMythicals[1].total.dodge-.27)<1e-9,"Kratz Headphones Intrinsic must add free Mythical power on top of +25% Dodge");
+    assert.equal(namedMythicals[2].total.defense,32,"Kelly's Jean Jacket Intrinsic must add free Mythical power on top of +30 Defense");
+    console.log("Named Mythical identity PASS: fixed exclusive equipmentIds + own Intrinsics added on top of full Mythical bonuses");
 
     // #455: reproduce the 0.6.7.29 live regression with an old-style special
     // Hat while also proving the new rule: Impossible Road is named Artifact
