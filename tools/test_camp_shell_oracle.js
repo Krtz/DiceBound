@@ -63,6 +63,8 @@ async function main(){
     const actual=await page.evaluate(`(async()=>{const api=window.DiceboundCampShellOracleTest,out=[];const add=(name,result)=>out.push({name,result:result==null?result:JSON.parse(JSON.stringify(result))});add('startup-camp',api.startup());add('camp-recovery',api.recovery());add('camp-entry-checkpoint-reset',api.checkpointReset());add('camp-entry-reset',api.campReset());add('meta-refresh',api.metaRefresh());add('hud-board5-premini',api.hudBoard5Pre());add('hud-board5-final',api.hudBoard5Final());add('hud-board6-premini',api.hudBoard6Pre());add('hud-board6-final',api.hudBoard6Final());add('hud-hell-floor',api.hudHell());add('hud-stat-sync',api.hudStats());add('hud-checkpoint-schedule',await api.hudCheckpoint());add('camp-art-refresh',api.artRefresh());api.cleanup();return {baselineVersion:'0.6.6.35',runtimeVersion:window.DiceboundVersion?.version||null,cases:out};})()`);
     assertCoverage(actual);
     if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Camp/App-Shell fixture captured: ${FIXTURE_PATH}`);return;}
+    // The fixture remains the release-oracle baseline, with deliberate
+    // presentation deltas (such as art-only Camp labels) updated explicitly.
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));assert.equal(fixture.baselineVersion,"0.6.6.35");assert.deepEqual(actual.cases,fixture.cases);console.log(`Camp/App-Shell oracle PASS: ${actual.cases.length} exact released-0.6.6.35 cases`);
   }finally{try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}}
 }
