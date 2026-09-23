@@ -294,7 +294,11 @@ await cancelled;
 
 const css=fs.readFileSync(path.join(root,'runtime','css','dicebound.css'),'utf8');
 assert(css.includes('dbEnemyAttackLunge'),'generic enemy attack CSS animation must remain installed');
+const extractedCss=fs.readFileSync(path.join(root,'runtime','css','extracted-monolith.css'),'utf8');
+assert(source.includes('data-enemy-id=')&&source.includes("escapePortraitLabel(String(e.id||''))"),'battle presentation must publish semantic enemy ids for art-only tuning');
+for(const id of ['skeleton','cultist','orc','bandit'])assert(extractedCss.includes(`data-enemy-id="${id}"`),`${id} battle-art scale selector is missing`);
+assert(extractedCss.includes('transform:scale(1.15);transform-origin:center bottom'),'Skeleton/Cultist/Orc/Bandit art must be exactly 15% larger from the ground anchor');
 
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
-console.log('Combat presentation owner PASS: final class controls, semantic player/enemy attack animation, Echo pacing, battle backgrounds, statuses and zero-RNG view models are deterministic');
+console.log('Combat presentation owner PASS: final class controls, semantic player/enemy attack animation, +15% selected enemy art scale, Echo pacing, battle backgrounds, statuses and zero-RNG view models are deterministic');
 })().catch(error=>{console.error(error);process.exitCode=1;});
