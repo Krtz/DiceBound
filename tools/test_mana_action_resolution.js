@@ -121,26 +121,46 @@ async function test(name, fn) {
     assert.strictEqual(h.p.mana, 100);
   });
 
-  await test('Sorcerer generator applies manaBuilderBonus before Basic Attack and restores config', async () => {
-    const h = makeHarness({ classId: 'sorcerer', mana: 0 });
-    h.p.manaBuilderBonus = 8;
-    const original = SPELLS.sorcerer.gain;
-    await owner.occultChannelAttack();
-    assert.strictEqual(h.p.mana, 36);
-    assert.strictEqual(SPELLS.sorcerer.gain, original);
-    assert(h.events.some(event => event.startsWith('attack:mana=36:channel=true')));
-    assert.strictEqual(h.p._occultChanneling, false);
-    assert.strictEqual(h.p._occultChannelMultiplier, 0);
+  await test('Every non-Invoker Mana identity resolves its canonical immutable base gain', async () => {
+    for (const [classId, expected] of [['sorcerer',28],['vampire',26],['rouge',27],['merchant',30],['summoner',26]]) {
+      const h = makeHarness({ classId, mana: 0 });
+      const canonical = owner.spellFor(classId).gain;
+      await owner.occultChannelAttack();
+      assert.strictEqual(h.p.mana, expected, classId);
+      assert.strictEqual(owner.spellFor(classId).gain, canonical, `${classId} shared spell config mutated`);
+      assert(h.events.some(event => event.includes(`generates ${expected} Mana`)), `${classId} did not report actual builder gain`);
+    }
   });
 
-  await test('Summoner generator preserves nested Summoner + generic gain bonuses', async () => {
+  await test('Quick Channel stacks additively without mutating canonical spell definitions', async () => {
+    const h = makeHarness({ classId: 'sorcerer', mana: 0 });
+    h.p.manaBuilderBonus = 16;
+    const canonical = owner.spellFor('sorcerer').gain;
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(owner.builderGainBreakdown('sorcerer'))),{id:'sorcerer',base:28,generic:16,classBonus:0,multiplier:1,resolved:44});
+    await owner.occultChannelAttack();
+    assert.strictEqual(h.p.mana, 44);
+    assert.strictEqual(owner.spellFor('sorcerer').gain, canonical);
+    assert(h.events.some(event => event.includes('Channel Bolt generates 44 Mana')));
+  });
+
+  await test('Summoner resolves generic Quick Channel plus class-specific builder bonus immutably', async () => {
     const h = makeHarness({ classId: 'summoner', mana: 0 });
     h.p.manaBuilderBonus = 8;
     h.p.summonerManaBonus = 7;
-    const original = SPELLS.summoner.gain;
+    const canonical = owner.spellFor('summoner').gain;
+    assert.strictEqual(owner.resolvedBuilderGain('summoner'),41);
     await owner.occultChannelAttack();
     assert.strictEqual(h.p.mana, 41);
-    assert.strictEqual(SPELLS.summoner.gain, original);
+    assert.strictEqual(owner.spellFor('summoner').gain, canonical);
+  });
+
+  await test('Slime Rouge borrowed Rouge identity receives Rouge builder gain and Quick Channel once', async () => {
+    const h = makeHarness({ classId: 'slimerouge', identity: 'rouge', mana: 0 });
+    h.p.manaBuilderBonus = 8;
+    await owner.occultChannelAttack();
+    assert.strictEqual(h.p.mana, 35);
+    assert.strictEqual(owner.spellFor('rouge').gain,27);
+    assert(h.events.some(event=>event.includes('Crimson Stroke generates 35 Mana')));
   });
 
   await test('Invoker generator delegates to canonical Wex Strike without old channel state', async () => {
@@ -154,15 +174,40 @@ async function test(name, fn) {
     assert.strictEqual(h.p._occultChanneling, undefined);
   });
 
-  await test('Generator temporary state and shared gain restore after async failure', async () => {
-    const original = SPELLS.summoner.gain;
+  await test('Generator failure clears transaction state without mutating canonical gain', async () => {
     const h = makeHarness({ classId: 'summoner', mana: 0, playerAttack: async () => { throw new Error('boom'); } });
     h.p.manaBuilderBonus = 4;
     h.p.summonerManaBonus = 3;
+    const canonical = owner.spellFor('summoner').gain;
     await assert.rejects(() => owner.occultChannelAttack(), /boom/);
-    assert.strictEqual(SPELLS.summoner.gain, original);
+    assert.strictEqual(owner.spellFor('summoner').gain, canonical);
     assert.strictEqual(h.p._occultChanneling, false);
     assert.strictEqual(h.p._occultChannelMultiplier, 0);
+  });
+
+  await test('Rapid re-entrant builder attempts cannot grant Mana twice', async () => {
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    const h = makeHarness({ classId:'rouge', mana:0, playerAttack: async () => gate });
+    h.p.manaBuilderBonus = 8;
+    const first = owner.occultChannelAttack();
+    await Promise.resolve();
+    const second = owner.occultChannelAttack();
+    await Promise.resolve();
+    assert.strictEqual(h.p.mana,35,'second in-flight Rouge builder must not grant another 35 Mana');
+    assert.strictEqual(h.counters.attack,1,'second in-flight builder must not start another Basic Attack');
+    release();
+    await first; await second;
+    assert.strictEqual(owner.spellFor('rouge').gain,27);
+  });
+
+  await test('Builder history reports actual capped gain without changing resolved gain', async () => {
+    const h=makeHarness({classId:'merchant',mana:95,maxMana:100});
+    h.p.manaBuilderBonus=16;
+    assert.strictEqual(owner.resolvedBuilderGain('merchant'),46);
+    await owner.occultChannelAttack();
+    assert.strictEqual(h.p.mana,100);
+    assert(h.events.some(event=>event.includes('Ledger Tap generates 5 Mana (resolved 46, capped by max Mana).')));
   });
 
   await test('Insufficient Mana is a no-op and does not record career progress', async () => {
