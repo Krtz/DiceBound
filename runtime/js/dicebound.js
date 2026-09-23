@@ -3545,8 +3545,9 @@ dbReturnToRoadTraceReady=true;
     return {changed,state:db0633CurrentCampRevealState()};
   }
   function db0633SyncCampObjects(){
-    const state=db0633CurrentCampRevealState();
-    return window.DiceboundCamp?.syncProgressionReveals?.(state)||state;
+    const state=db0633CurrentCampRevealState(),synced=window.DiceboundCamp?.syncProgressionReveals?.(state)||state;
+    window.DiceboundCamp?.refreshArt?.();
+    return synced;
   }
   function db0633RefreshCampProgression(options={}){
     const result=db0633ReconcileCampReveals(options);if(result.changed)saveMeta();db0633SyncCampObjects();return result;
