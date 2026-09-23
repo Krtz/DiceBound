@@ -138,4 +138,17 @@ for(const retiredRewardPolicyOwner of ['campAnchors','function scaleCamp(','#sta
 assert.match(source,/\.camp-panel\.active > \.camp-panel-head\{position:sticky!important;top:0!important/,'Camp panel header must stay visible while panel content scrolls');
 assert.match(source,/\.camp-panel-head \.camp-close-btn\{margin-left:auto!important/,'Camp Done/Exit control must stay pinned to the top-right header');
 
+let hellActive=false,primed=0,success=0,toasts=0;
+camp.configure({
+  canPrimePaleDevil:()=>hellActive,
+  primePaleDevil:()=>{primed++;return true;},
+  playPaleDevilSecret:()=>{success++;},
+  paleDevilToast:()=>{toasts++;}
+});
+assert.equal(camp.triggerPaleDevilFromBonfire(),false,'bonfire must be inert outside Hell Mode');
+assert.equal(primed,0);
+hellActive=true;
+assert.equal(camp.triggerPaleDevilFromBonfire(),true,'Hell-mode bonfire click must prime Pale Devil');
+assert.deepStrictEqual({primed,success,toasts},{primed:1,success:1,toasts:1});
+
 console.log('Camp UI owner PASS: deterministic layouts, art-only controls, bonfire Pale Devil trigger and monolith drain contract');
