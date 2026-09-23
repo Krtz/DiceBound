@@ -66,12 +66,13 @@ async function main(){
     // Preserve the frozen release fixture. Intentional presentation-only
     // deltas are asserted above and excluded narrowly from structural equality.
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));assert.equal(fixture.baselineVersion,"0.6.6.35");
-    const comparable=JSON.parse(JSON.stringify(actual.cases)),expected=JSON.parse(JSON.stringify(fixture.cases));
-    const comparableStartup=comparable.find(entry=>entry.name==="startup-camp"),expectedStartup=expected.find(entry=>entry.name==="startup-camp");
-    if(comparableStartup?.result)delete comparableStartup.result.nightmareStatus;
-    if(expectedStartup?.result)delete expectedStartup.result.nightmareStatus;
-    assert.equal(Object.hasOwn(comparableStartup?.result||{},"nightmareStatus"),false,"intentional Nightmare presentation delta was not removed from actual oracle comparison");
-    assert.equal(Object.hasOwn(expectedStartup?.result||{},"nightmareStatus"),false,"intentional Nightmare presentation delta was not removed from expected oracle comparison");
+    const actualStartup=actual.cases.find(entry=>entry.name==="startup-camp"),fixtureStartup=fixture.cases.find(entry=>entry.name==="startup-camp");
+    assert.ok(actualStartup&&fixtureStartup,"startup-camp oracle case missing");
+    for(const [key,value] of Object.entries(fixtureStartup.result||{})){
+      if(key==="nightmareStatus")continue;
+      assert.deepEqual(actualStartup.result?.[key],value,`startup-camp baseline drifted at ${key}`);
+    }
+    const comparable=actual.cases.filter(entry=>entry.name!=="startup-camp"),expected=fixture.cases.filter(entry=>entry.name!=="startup-camp");
     assert.deepEqual(comparable,expected);console.log(`Camp/App-Shell oracle PASS: ${actual.cases.length} released-0.6.6.35 structural cases + intentional art-only Nightmare delta`);
   }finally{try{page?.socket?.close();}catch(_){}try{child?.kill();}catch(_){}await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}}
 }
