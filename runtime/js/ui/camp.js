@@ -503,7 +503,8 @@
       const button=find(id),painted=button&&paintedBounds(button),buttonRect=button?.getBoundingClientRect();
       if(!button||!painted||!buttonRect)continue;
       const width=Math.ceil(painted.right-painted.left),height=Math.ceil(painted.bottom-painted.top);if(width<1||height<1)continue;
-      if(buttonRect.width<=width+3&&buttonRect.height<=height+3)continue;
+      const exactPainted=button.classList.contains('camp-painted-interaction');
+      if(!exactPainted&&buttonRect.width<=width+3&&buttonRect.height<=height+3)continue;
       button.style.setProperty('width',`${width}px`,'important');button.style.setProperty('min-width','0','important');button.style.setProperty('max-width',`${width}px`,'important');
       button.style.setProperty('height',`${height}px`,'important');button.style.setProperty('min-height','0','important');button.style.setProperty('max-height',`${height}px`,'important');
       button.style.setProperty('padding','0','important');button.style.setProperty('justify-self','center','important');
