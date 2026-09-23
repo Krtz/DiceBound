@@ -468,16 +468,18 @@ func bootstrapWithCompatibilityFallback(userDataDir string) error {
 
 func initWebView2(dataDir,userDataDir string) error {
     if loader,ok,err:=stagedOfficialLoaderPath(dataDir);err!=nil{return err}else if ok{
-        if err:=bootstrapWithPublicLoader(loader,userDataDir);err==nil{return nil}else{logf("Official WebView2Loader failed, using compatibility fallback: %v",err)}
+        if err:=bootstrapWithPublicLoader(loader,userDataDir);err==nil{webViewBootstrapMode="official-loader";return nil}else{logf("Official WebView2Loader failed, using compatibility fallback: %v",err)}
     }else{
         logf("Official WebView2Loader was not staged in this build; using isolated compatibility fallback")
     }
-    return bootstrapWithCompatibilityFallback(userDataDir)
+    if err:=bootstrapWithCompatibilityFallback(userDataDir);err!=nil{return err}
+    webViewBootstrapMode="compatibility-fallback"
+    return nil
 }
 
 func main(){
     runtime.LockOSThread();defer runtime.UnlockOSThread()
-    dataDir:=appDataDir();dataRoot=dataDir;for _,a:=range os.Args[1:]{if a=="--repair-attempted"{repairAttempted=true}};logPath=filepath.Join(dataDir,"logs","native-wrapper.log");windowFile=filepath.Join(dataDir,"wrapper","window.json");saveDir:=filepath.Join(dataDir,"saves");runtimeCacheDir=filepath.Join(dataDir,"runtime-cache");buildKey:=payloadHash()[:16];gameDir:=filepath.Join(runtimeCacheDir,"payloads",buildKey);userDataDir:=filepath.Join(runtimeCacheDir,"webview2",buildKey);_ = os.MkdirAll(saveDir,0755);_ = os.MkdirAll(runtimeCacheDir,0755)
+    dataDir:=appDataDir();dataRoot=dataDir;for _,a:=range os.Args[1:]{if a=="--repair-attempted"{repairAttempted=true}};logPath=filepath.Join(dataDir,"logs","native-wrapper.log");windowFile=filepath.Join(dataDir,"wrapper","window.json");saveDir:=filepath.Join(dataDir,"saves");runtimeSaveDir=saveDir;runtimeCacheDir=filepath.Join(dataDir,"runtime-cache");buildKey:=payloadHash()[:16];runtimeBuildKey=buildKey;gameDir:=filepath.Join(runtimeCacheDir,"payloads",buildKey);runtimeGameDir=gameDir;userDataDir:=filepath.Join(runtimeCacheDir,"webview2",buildKey);runtimeUserDataDir=userDataDir;_ = os.MkdirAll(saveDir,0755);_ = os.MkdirAll(runtimeCacheDir,0755)
     logf("Starting Dicebound Beta 0.6.7.31 native WebView2 wrapper. payload=%s repairAttempted=%v",buildKey,repairAttempted);logf("data=%s saves=%s runtime-cache=%s game=%s webview2=%s",dataDir,saveDir,runtimeCacheDir,gameDir,userDataDir)
     if len(os.Args)>1&&(os.Args[1]=="--open-save-folder"||os.Args[1]=="--open-app-data"||os.Args[1]=="--open-data-folder"){target:=saveDir;if os.Args[1]!="--open-save-folder"{target=dataDir};if err:=openFolder(target);err!=nil{fatal(err)};return}
     mutex,already,err:=createSingleInstance();if err!=nil{fatal(err)};defer procCloseHandle.Call(mutex);if already{focusExisting();return}
