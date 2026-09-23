@@ -245,19 +245,21 @@
   function renderEquipment(){
     installStyles();
     bindCharacterTabs();
+    bindCharacterGearPopover();
     const layout=syncCharacterLayout(),grid=find('equipmentGrid'),current=state(),equipped=current.equipment||{};
     if(grid){
       grid.replaceChildren();
       slots().forEach(slot=>{
         const item=equipped[slot],entry=doc()?.createElement('div');if(!entry)return;
         const detail=itemDetail(item,slot);
-        if(entry.dataset)entry.dataset.tip=detail;
         entry.setAttribute?.('aria-label',detail);
         entry.tabIndex=0;
         if(layout==='classic'){
+          if(entry.dataset)entry.dataset.tip=detail;
           entry.className=`equipment-slot ${item?.rarity||'empty'}`;
           entry.innerHTML=`<span class="slot-label">${escapeHtml(label(slot))}</span><span class="slot-item">${item?itemNameMarkup(item,'db-equipment-slot-art'):'— Empty —'}</span>`;
         }else{
+          if(entry.dataset)entry.dataset.equipmentSlot=slot;
           entry.className=`equipment-slot character-gear-slot slot-${slot} ${item?.rarity||'empty'}`;
           entry.innerHTML=item?gearIconMarkup(item,'db-equipment-slot-art'):`<span class="character-empty-slot">${escapeHtml(label(slot))}</span>`;
         }
@@ -364,9 +366,9 @@
     return Object.freeze({owner:OWNER,unlocked:true,stored:storage.length,active:active.length});
   }
 
-  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();bindCharacterTabs();syncCharacterLayout();return api;}
-  function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage');return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0});}
+  function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};installStyles();bindCharacterTabs();bindCharacterGearPopover();syncCharacterLayout();return api;}
+  function inspect(){const overlay=find('lootOverlay'),grid=find('equipmentGrid'),storage=find('campHeirloomStorage'),detail=detailPopover();return Object.freeze({owner:OWNER,hasEquipmentGrid:!!grid,lootOpen:!!overlay&&!overlay.classList.contains('hidden'),campStorage:!!storage,semanticArtCount:grid?.querySelectorAll?.('.db-equipment-slot-art').length||0,detailPopover:!!detail,detailVisible:!!detail&&!detail.classList.contains('hidden'),detailSlot:detail?.dataset?.slot||null});}
   const api=Object.freeze({configure,renderEquipment,renderLoot,renderCampStorage,renderEndGear,renderEndStorageManager,campView,rarityNameMarkup,activateCharacterTab,syncCharacterLayout,setCharacterLayout,inspect,owner:OWNER});
   window.DiceboundEquipmentHeirlooms=api;
-  window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect});
+  window.DiceboundEquipmentHeirloomsTest=Object.freeze({campView,inspect,showDetailPopover,hideDetailPopover,itemDetail:(item,slot)=>itemDetail(item,slot),displayName:(item,slot)=>displayName(item,slot)});
 })(window);
