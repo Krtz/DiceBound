@@ -135,6 +135,7 @@
       if(stats){stats.hidden=characterTab!=='stats';stats.classList?.toggle?.('active',characterTab==='stats');}
       if(gear){gear.hidden=characterTab!=='gear';gear.classList?.toggle?.('active',characterTab==='gear');}
     }
+    runtime.afterCharacterPresentationChange?.();
     return characterTab;
   }
   function syncCharacterLayout(){
