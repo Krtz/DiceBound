@@ -23,16 +23,14 @@ assert.doesNotMatch(rarityMarkup,/<img/,"canonical rarity-name presentation must
 assert.match(rarityMarkup,/&lt;img/,"escaped equipment name should remain visible text");
 for(const rarity of ["poor","common","uncommon","rare","epic","legendary","artifact","mythical","omega"]){const markup=window.DiceboundEquipmentHeirlooms.rarityNameMarkup({name:`${rarity} blade`,rarity});assert.match(markup,new RegExp(`db-rarity-${rarity}`),`canonical Merchant/equipment rarity class missing for ${rarity}`);}
 
-// Intrinsic-bonus presentation still uses the historical compatibility helper,
-// while overall gear comparison now belongs to the public DiceboundItems boundary.
-assert.equal(window.db06314BonusLabel("attack", 3), "+3 Attack");
-assert.equal(window.db06314BonusLabel("crit", .15), "+15% Crit");
-assert.deepEqual(window.db06314IntrinsicParts({ equipmentId: fakeIdentity.id }), {
-  identity: fakeIdentity,
-  values: ["+1 Attack", "+1% Crit"]
-});
-assert.equal(window.db06314IntrinsicParts({ equipmentId: "unknown" }), null);
-assert.match(monolith, /db06314IntrinsicParts\(item\)/, "live equipment formatter no longer consumes the compatibility bridge");
+// Equipment formatting no longer belongs to Merchant compatibility globals.
+// Intrinsics are consumed through the canonical Equipment owner/formatter,
+// while overall gear comparison belongs to the public DiceboundItems boundary.
+assert.doesNotMatch(source, /installEquipmentIdentityFormattingBridge|db06314IntrinsicParts|db06314BonusLabel/, "Merchant transaction must not install equipment-formatting compatibility globals");
+assert.doesNotMatch(monolith, /db06314IntrinsicParts|db06314BonusLabel/, "retired equipment-formatting compatibility bridge returned to the monolith");
+assert.match(monolith, /dbEquipmentIdentityOwner\.intrinsicBonusesForItem\?\.\(item\)/, "live equipment formatter must read Intrinsics from the Equipment owner");
+assert.match(monolith, /allBonusesForItem\?\.\(item\)\|\|item\.bonuses\|\|\{\}/, "live equipment stat application must use the canonical combined bonus set");
+assert.match(monolith, /bonusLabel:\(key,value\)=>bonusLabel\(key,value\)/, "Items operations must use the canonical bonus formatter rather than a Merchant-installed global");
 assert.match(monolith, /formatGearComparison:\(item,current\)=>dbItems\.formatComparison\(item,current\)/, "Merchant equipment comparison is not routed directly through DiceboundItems");
 assert.doesNotMatch(monolith, /function formatGearComparison\(item,current\)/, "retired Merchant comparison pass-through adapter returned to the monolith");
 
