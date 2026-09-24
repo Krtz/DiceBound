@@ -40,7 +40,7 @@
   // SLOT -------------------------------------------------------------------
   function slotSymbolHTML(symbol){
     if(symbol!=='🪙')return symbol;
-    const src=window.DiceboundAssets?.resolveUiIcon?.('coins')?.image||'assets/ui/icons/coins.png';
+    const src=window.DiceboundAssets?.resolveUiIcon?.('coins')?.image||'assets/ui/currencies/coins.png';
     return `<img class="slot-coin-art" src="${src}" alt="Gold coins">`;
   }
   function setSlotReelSymbol(reel,symbol){if(reel)reel.innerHTML=slotSymbolHTML(symbol);}
