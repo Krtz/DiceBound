@@ -2368,7 +2368,8 @@
       "rarity": "uncommon",
       "icon": "🧪⚙️",
       "name": "Quick Brew",
-      "desc": "Combat Distillery creates a potion every 2 basic attacks instead of every 3.",
+      "unique": true,
+      "desc": "Unique: Combat Distillery creates a potion every 2 basic attacks instead of every 3.",
       "tags": [
         "alchemy",
         "sustain"

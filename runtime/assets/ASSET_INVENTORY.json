@@ -367,7 +367,17 @@
     "powerups/placeholders/README.md",
     "ui/placeholders/README.md"
   ],
-  "compatibilityMirrors": [
+  "compatibilityMirrors": [],
+  "counts": {
+    "canonicalRegistryFiles": 332,
+    "implementedCurrent": 331,
+    "retiredSourceAssets": 1,
+    "powerupArtKeys": 22,
+    "powerupRenderedNameMappings": 28,
+    "placeholderDocumentationHomes": 27
+  },
+  "staged": [],
+  "retiredCompatibilityMirrors": [
     {
       "path": "enemies/portraits/",
       "canonical": "enemies/{normal|minibosses|bosses|secret-bosses}/battle/",
@@ -418,14 +428,5 @@
       "canonical": "audio/",
       "reason": "recovered monolith instructions/fallback compatibility"
     }
-  ],
-  "counts": {
-    "canonicalRegistryFiles": 332,
-    "implementedCurrent": 331,
-    "retiredSourceAssets": 1,
-    "powerupArtKeys": 22,
-    "powerupRenderedNameMappings": 28,
-    "placeholderDocumentationHomes": 27
-  },
-  "staged": []
+  ]
 }

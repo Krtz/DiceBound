@@ -6,7 +6,7 @@ from pathlib import Path
 from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
 EXPECTED={'classes': 27, 'pets': 14, 'pet_battle_assets': 14, 'normal_enemies': 11, 'normal_enemy_battle_assets': 63, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 18, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 347, 'combat_effect_assets': 33, 'equipment_assets': 27}
-LEGACY_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/ui/","assets/sounds/")
+RETIRED_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
 POINTER_RX=re.compile(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)")
@@ -103,19 +103,20 @@ def main():
     if bad: fail("unknown powerup art keys: "+", ".join(sorted(bad)))
 
     pointer_sources=collect_live_pointers(runtime); pointers=sorted({x for refs in pointer_sources.values() for x in refs})
-    unknown=[]; missing=[]
+    retired_pointers=[]; unknown=[]; missing=[]
     for lit in pointers:
+        if lit.startswith(RETIRED_PREFIXES): retired_pointers.append(lit); continue
         if lit.startswith(SEMANTIC_ROOTS):
             if re.search(r"\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)$",lit) and not (runtime/lit).is_file(): missing.append(lit)
             continue
-        if not lit.startswith(LEGACY_PREFIXES): unknown.append(lit); continue
-        if re.search(r"\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)$",lit) and not (runtime/lit).is_file(): missing.append(lit)
+        unknown.append(lit)
+    if retired_pointers: fail("retired compatibility asset pointers returned: "+", ".join(retired_pointers))
     if unknown: fail("unclassified live runtime asset pointers: "+", ".join(unknown))
     if missing: fail("live runtime asset pointers no longer resolve: "+", ".join(missing))
 
-    compat=["assets/enemies/portraits","assets/camp/backgrounds","assets/camp/objects","assets/pets/portraits","assets/ui/backgrounds","assets/ui/class-art","assets/ui/class-markers","assets/ui/icon","assets/ui/icons","assets/sounds"]
-    for rel in compat:
-        if not (runtime/rel).is_dir(): fail(f"compatibility mirror missing: {rel}")
+    retired_roots=["assets/enemies/portraits","assets/camp/backgrounds","assets/camp/objects","assets/pets/portraits","assets/ui/backgrounds","assets/ui/class-art","assets/ui/class-markers","assets/ui/icon","assets/ui/icons","assets/sounds"]
+    for rel in retired_roots:
+        if (runtime/rel).exists(): fail(f"retired compatibility root returned: {rel}")
     required=["assets/characters/random-class/campsite/README.md","assets/characters/random-class/markers/README.md","assets/camp/mode-toggles/hell/README.md","assets/equipment/gloves/README.md","assets/powerups/placeholders/README.md","assets/enemies/minibosses/board-markers/README.md","assets/enemies/bosses/board-markers/README.md","assets/enemies/secret-bosses/board-markers/README.md","assets/combat/status-icons/README.md","assets/installer/splash/README.md"]
     for rel in required:
         if not (runtime/rel).is_file(): fail(f"future art home missing: {rel}")
@@ -135,6 +136,6 @@ def main():
         for rel,expected in bm.get("files",{}).items():
             p=runtime/rel
             if not p.is_file() or sha256_file(p)!=expected: fail(f"materialized core manifest mismatch: {rel}")
-    print(json.dumps({"status":"pass","assetRegistryVersion":m["version"],"counts":counts,"canonicalRegistryFilesResolved":len(reg["files"]),"liveRuntimePointerSources":pointer_sources,"liveRuntimePointersClassified":len(pointers),"legacyCompatibilityRoots":compat,"buildMetadataMode":mode,"visualSmoke":"not-run-by-this-static-auditor"},indent=2))
+    print(json.dumps({"status":"pass","assetRegistryVersion":m["version"],"counts":counts,"canonicalRegistryFilesResolved":len(reg["files"]),"liveRuntimePointerSources":pointer_sources,"liveRuntimePointersClassified":len(pointers),"retiredCompatibilityRoots":retired_roots,"buildMetadataMode":mode,"visualSmoke":"not-run-by-this-static-auditor"},indent=2))
     return 0
 if __name__=="__main__": sys.exit(main())

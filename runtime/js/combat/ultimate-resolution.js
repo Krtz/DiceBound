@@ -13,7 +13,7 @@
     const required = [
       "getPlayer","getMeta","getCurrentEnemy","getCurrentEnemies","getEncounterLead","livingEnemies","getCombatBusy","setCombatBusy","selectEnemy",
       "isClassActive","hasLegendaryEffect","random","rand","pick","clamp","rollTieredProc","getSetDamageBonus","ultimateBaseDamage","scaleUltimateDamage",
-      "damageEnemy","damageAll","healPlayer","triggerStrikeElements","petDamage","trainerPetDamage","syncOuroborosAttack",
+      "damageEnemy","damageAll","healPlayer","manaGain","triggerStrikeElements","petDamage","trainerPetDamage","syncOuroborosAttack",
       "rollD20Chaos","updateCombatUI","animateUltimate","animateClassAttack","setCombatText","addCombatHistory","identityFlash",
       "playCritSfx","playHolySfx","delay","getCombatActionDelay","winCombat","resolveEnemyResponse","petTurn","applyMythicPantsPulse","applyMythicRingPulse",
       "potionHealValue","getPets","getGagInfo","slimeRougeUltimate",
@@ -51,7 +51,9 @@
       damage = Math.round(p.attack * 2.6) + rt.rand(2, 5); p.combatShield += 1 + (p.titanCleaveBarrierBonus || 0); twoTarget = true;
       text = `Titan Cleave hits up to two enemies for {DAMAGE} total damage and raises ${1 + (p.titanCleaveBarrierBonus || 0)} barrier${(1 + (p.titanCleaveBarrierBonus || 0)) === 1 ? "" : "s"}.`;
     } else if (p.classId === "ranger") { damage = Math.round(p.attack * 3.4) + rt.rand(3, 7); text = "Arrow Storm sweeps the pack for {DAMAGE}.";
-    } else if (p.classId === "sorcerer") { damage = Math.round(p.attack * 3) + rt.rand(4, 8); text = "Starfall crashes across the pack for {DAMAGE}.";
+    } else if (p.classId === "sorcerer") {
+      const restoredMana = rt.manaGain((Number(p.maxMana) || 0) * .33);
+      damage = Math.round(p.attack * 3) + rt.rand(4, 8); text = `Starfall crashes across the pack for {DAMAGE} and restores ${restoredMana} Mana.`;
     } else if (p.classId === "monk") { damage = Math.round(p.attack * 3.25) + rt.rand(3, 7); const h = rt.healPlayer(Math.ceil(p.maxHp * .10)); text = `Hundred Fists deals {DAMAGE} and restores ${h} HP.`;
     } else if (p.classId === "clown") { damage = Math.round(p.attack * (rt.rand(240, 420) / 100)) + rt.rand(2, 10); text = "Final Punchline devastates the pack for {DAMAGE}.";
     } else if (p.classId === "berserker") { damage = rt.ultimateBaseDamage("berserker", p, rt.rand(5, 10)); text = "Ragequake shatters the pack for {DAMAGE}.";

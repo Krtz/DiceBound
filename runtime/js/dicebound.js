@@ -4384,6 +4384,7 @@ dbReturnToRoadTraceReady=true;
     damageEnemy:(enemy,amount,ignoreDefense)=>damageEnemy(enemy,amount,ignoreDefense),
     damageAll:(amount,secondary)=>damageAll(amount,secondary),
     healPlayer:(amount,opts)=>dbCombat.heal(amount,opts),
+    manaGain:amount=>dbCombat.manaGain(amount),
     triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
     petDamage:()=>petDamage(),
     trainerPetDamage:id=>dbCombat.trainerPetDamage(id),

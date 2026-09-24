@@ -51,7 +51,7 @@
       "ultimate": {
         "name": "Starfall",
         "icon": "☄️",
-        "desc": "A 300% meteor that strikes the entire pack and restores 20% of damage dealt."
+        "desc": "A 300% meteor that strikes the entire pack, restores 20% of damage dealt as HP, and restores 33% of maximum Mana."
       },
       "base": {
         "maxHp": 31,
