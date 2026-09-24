@@ -331,6 +331,9 @@
   if(!DB_CORE_META)throw new Error("DiceboundRuntime must provide career-state composition before dicebound.js");
   const DB_PRESTIGE=window.DiceboundPrestige;
   if(!DB_PRESTIGE)throw new Error("DiceboundPrestige must load before dicebound.js");
+  const DB_ECHO_CRUCIBLE=window.DiceboundEchoCrucible;
+  if(!DB_ECHO_CRUCIBLE?.createController)throw new Error("DiceboundEchoCrucible must load before dicebound.js");
+  const dbEchoCrucible=DB_ECHO_CRUCIBLE.createController({effects:dbItemGenerationOwner.effects});
   const DB_CLASS_UNLOCK_RULES=window.DiceboundClassUnlockRules;
   if(!DB_CLASS_UNLOCK_RULES)throw new Error("DiceboundClassUnlockRules must load before dicebound.js");
   const {legacyXpForLevel,defaultPrestige,defaultPetState,defaultPets,defaultSettings,defaultMeta,normalizePurchased,normalizeSavedItem}=DB_CORE_META;
@@ -343,8 +346,9 @@
   let meta=loadMeta();
   syncMutedFromSettings();
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
-  normalizePrestigeState();
-  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
+  function normalizeEchoCrucibleState(){meta.echoCrucible=dbEchoCrucible.normalize(meta.echoCrucible);return meta.echoCrucible;}
+  normalizePrestigeState();normalizeEchoCrucibleState();
+  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();normalizeEchoCrucibleState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
   const DiceboundStateEvents=dbRuntime.createEventBus();
 
@@ -556,7 +560,7 @@
     shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,
     guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
     guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,
-    elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{}
+    elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},crucibleEchoEffectId:null
   };
 
   const dbEquipmentIdentityOwner=window.DiceboundEquipment;
@@ -1211,7 +1215,15 @@ function returnToRoad(...args){
   function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay","careerOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
-  function startNewGame(){return dbRun.startFreshRun();}
+  async function db068ConfirmEchoForRun(){
+    const warning=dbEchoCrucible.warning(meta.echoCrucible,{classId:selectedClassId,randomClass:!!window.DiceboundClassChooser?.isRandomMode?.()});
+    if(!warning)return true;
+    return diceboundConfirm(`${warning}\n\nStart the run anyway?`,{title:'Echo Crucible compatibility',confirmLabel:'Start anyway'});
+  }
+  async function startNewGame(options={}){
+    if(!(await db068ConfirmEchoForRun()))return false;
+    return dbRun.startFreshRun(options);
+  }
   function showEnd(victory){dbRunClearCheckpoint();rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
     dbPowerups.configure({
@@ -2191,11 +2203,45 @@ function returnToRoad(...args){
   // saves, effective stats, reset semantics and RNG in their existing owners.
   const db064PrestigeMoon=window.DiceboundPrestigeMoon;
   if(!db064PrestigeMoon)throw new Error('DiceBound requires the Prestige Moon UI module before dicebound.js');
+  function db068CrucibleView(){
+    const built=DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible'),view=dbEchoCrucible.inspect(meta.echoCrucible,{classId:selectedClassId});
+    const activeIds=new Set((meta.heirlooms||[]).map(item=>String(item?.id||'')));
+    const stored=(meta.heirloomStorage||[]).filter(item=>dbEchoCrucible.isEligibleItem(item)).map(item=>{
+      const effect=dbEchoCrucible.effect(item.legendaryEffectId);
+      return {id:String(item.id),name:item.name||'Generated Legendary',slot:item.slot,rarity:item.rarity,equipmentId:item.equipmentId||null,effectId:effect?.id||item.legendaryEffectId,effectName:effect?.name||item.legendaryEffectName||item.legendaryEffectId,effectDesc:effect?.desc||item.legendaryEffectDesc||'',effectIcon:effect?.icon||'✨',active:activeIds.has(String(item.id)),known:view.learnedEffectIds.includes(String(item.legendaryEffectId))};
+    });
+    return {...view,built,stored};
+  }
+  async function db068SacrificeCrucibleItem(itemId){
+    if(gameStarted){showToast('Use the Echo Crucible between runs.');return false;}
+    if(!DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible')){showToast('Build the Echo Crucible first.');return false;}
+    const item=(meta.heirloomStorage||[]).find(entry=>String(entry?.id||'')===String(itemId||''));
+    if(!item){showToast('That Legendary is no longer in the Vault.');return false;}
+    if((meta.heirlooms||[]).some(active=>String(active?.id||'')===String(item.id))){showToast('Remove that item from the active Heirloom loadout first.');return false;}
+    const effect=dbEchoCrucible.effect(item.legendaryEffectId),known=dbEchoCrucible.inspect(meta.echoCrucible).learnedEffectIds.includes(String(item.legendaryEffectId));
+    const reward=known?'This duplicate will become 1 Moon Metal.':'Its Legendary Effect will be learned permanently.';
+    if(!(await diceboundConfirm(`Sacrifice ${item.name||'this Legendary'}?\n\n${effect?.name||item.legendaryEffectName||'Legendary Effect'} — ${effect?.desc||item.legendaryEffectDesc||''}\n\n${reward}\n\nThe physical item will be destroyed.`,{title:'Sacrifice Legendary?',confirmLabel:'Sacrifice',danger:true})))return false;
+    const result=dbEchoCrucible.sacrifice({state:meta.echoCrucible,storage:meta.heirloomStorage||[],activeHeirlooms:meta.heirlooms||[],itemId});
+    if(!result.ok){showToast(result.reason);return false;}
+    meta.echoCrucible={...result.state};meta.heirloomStorage=[...result.storage];
+    dbItems.syncHeirloomState();saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();
+    showToast(result.outcome==='learned'?`Echo learned: ${result.effect.name}`:`Duplicate ${result.effect.name} converted to 1 Moon Metal.`,3200,true);
+    return result;
+  }
+  function db068SelectCrucibleEcho(effectId){
+    if(gameStarted){showToast('Switch Echoes between runs.');return false;}
+    if(!DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible'))return false;
+    const result=dbEchoCrucible.select(meta.echoCrucible,effectId||null);
+    if(!result.ok){showToast(result.reason);return false;}
+    meta.echoCrucible={...result.state};saveMeta();
+    showToast(result.effect?`Active Echo: ${result.effect.name}`:'Echo cleared.');
+    return result;
+  }
   db064PrestigeMoon.configure({
     find:$,
     getState:()=>{
       const total=dbProgression.allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
-      return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
+      return {prestige:dbProgression.prestigeInspect(),crucible:db068CrucibleView(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible')?'The Echo Crucible is online. Moon Forge crafting comes next.':'The Echo Crucible costs 20 PP and unlocks Legendary Effect extraction.'};
     },
     prestige:()=>prestigeTree(),
     purchase:id=>{
@@ -2203,9 +2249,13 @@ function returnToRoad(...args){
       const result=dbProgression.prestigePurchase(id);
       if(!result.ok){showToast(result.reason);return result;}
       const heirloomPurchase=['heirloom-storage','heirloom-vault-expansion','heirloom-loadout'].includes(result.node.kind);
-      if(heirloomPurchase){dbItems.syncHeirloomState();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} ${result.rank>1?`rank ${result.rank} `:''}purchased.`);}else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
+      if(heirloomPurchase){dbItems.syncHeirloomState();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} ${result.rank>1?`rank ${result.rank} `:''}purchased.`);}
+      else if(result.node.kind==='structure')showToast(`${result.node.label} built.`,3200,true);
+      else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
       saveMeta();updateMetaUI();return result;
     },
+    sacrificeCrucible:itemId=>db068SacrificeCrucibleItem(itemId),
+    selectCrucible:effectId=>db068SelectCrucibleEcho(effectId),
     refundAll:async()=>{
       if(gameStarted){showToast('Refund Prestige Points between runs.');return false;}
       const current=dbProgression.prestigeInspect();
@@ -3519,8 +3569,9 @@ dbReturnToRoadTraceReady=true;
   }
 
   window.DiceboundCamp.configureShell({scheduleRunCheckpoint:()=>dbRunScheduleCheckpoint(),clearCheckpoint:()=>dbRunClearCheckpoint(),refreshRunControls:()=>dbRunRefreshControls()});
-  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
+  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){await startNewGame({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
+  window.DiceboundEchoCrucibleTest=Object.freeze({view:()=>dbRunClone(db068CrucibleView()),hasEffect:id=>db060HasEffect(id),player:()=>dbRunClone(player)});
   // Test-only exercise of the live final-boss path. It deliberately resets the
   // ephemeral test session after each capture; it is never exposed to player UI.
   function dbGuardianIdentityExercise(board,mode="normal",resume=false){
@@ -4678,7 +4729,7 @@ dbReturnToRoadTraceReady=true;
 
   /* SEMANTIC OWNER — Player / per-run initialization (#311). */
   dbRun.configurePlayerInitialization({
-    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
+    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,getRunEchoEffectId:()=>dbEchoCrucible.runEffectId(meta.echoCrucible),
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>dbProgression.heirloomLoadoutCapacity(),
     equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),
