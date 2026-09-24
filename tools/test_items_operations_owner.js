@@ -29,6 +29,7 @@ const api=owner.createController({
   getPlayer:()=>player,getMeta:()=>({}),rarityValues:{poor:1,common:2,uncommon:3,rare:4,epic:5,legendary:6},
   equipmentApi:{
     intrinsicBonusesForItem:item=>item?.intrinsic||{},
+    elementProcBonusesForItem:item=>item?.elementProcs||{},
     allBonusesForItem:item=>({...item?.bonuses,...item?.intrinsic})
   },
   classIdentityActive:id=>id==="merchant",
