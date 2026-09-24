@@ -115,6 +115,8 @@ power.apply(fakeCatalog[0],"Facade Test");
 assert.equal(state.player.attack,beforeAttack+1);
 assert.equal(state.player.upgradeCounts.generic,1);
 assert.deepEqual(events,["unlock-check","buff","taken","ouro-sync"]);
+assert.equal(state.player.runBuffs.at(-1)[2],"services:Generic","run-buff tooltip copy must come from the canonical Powerup descriptor, not raw .desc text");
+assert.doesNotMatch(source,/powerup\.desc/,"Powerup facade must not snapshot raw descriptor text");
 
 state.player.classId="d20";state.player.upgradeCounts={};events.length=0;
 const d20Attack=state.player.attack;
