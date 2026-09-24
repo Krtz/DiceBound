@@ -124,6 +124,7 @@ function collectPresentation() {
     describeUltimate: id => `description:${id}`,
     berserkerRageBonus: () => 0.42,
     hasLegendaryEffect: id => legendary.has(id),
+    legendaryEffect: id => id === "unstable_ultimate" ? { id, name: "Unstable Ultimate", chargeThreshold: 63, damageMultiplier: 0.42 } : null,
     activeTrainerPetId: () => "ice",
     selectEnemy() {},
     dragoonActive: () => active.has("dragoon"),
