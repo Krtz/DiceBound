@@ -118,7 +118,7 @@
     }
     for(let i=0;i<copies;i++)powerup.apply();
     call("checkDynamicClassUnlocks");
-    call("recordRunBuff",powerup.icon,powerup.name,`${powerup.desc}${chaosNote?` · ${chaosNote}`:""}`,powerup.rarity,source);
+    call("recordRunBuff",powerup.icon,powerup.name,`${describe(powerup)}${chaosNote?` · ${chaosNote}`:""}`,powerup.rarity,source,powerup.id);
     call("recordPowerupTaken");
     call("syncOuroborosEconomy");
     if(swordAndShield){

@@ -110,7 +110,7 @@
       "rarity": "common",
       "icon": "🎯",
       "name": "Keen Eye",
-      "desc": "Gain +7% critical-hit chance.",
+      "desc": "Gain +7% Crit Chance.",
       apply(){player.crit+=.07;},
       "tags": [
         "damage"
@@ -344,7 +344,7 @@
       "rarity": "epic",
       "icon": "🎲",
       "name": "Dice of Destiny",
-      "desc": "Gain +25% extra-step chance, +25 Luck and +5% Crit this run.",
+      "desc": "Gain +25% extra-step chance, +25 Luck and +5% Crit Chance this run.",
       "apply": function(){player.extraStepChance+=.25;player.luck+=.25;player.crit+=.05;},
       "achievementGate": "prestige10",
       "tags": [
@@ -1171,7 +1171,7 @@
       "rarity": "epic",
       "icon": "🥷🥷",
       "name": "Shadow Parliament",
-      "desc": "Board 4 mastery: Gain +35% Crit and +25% Echo Strike. Critical Echoes gain another +25% damage.",
+      "desc": "Board 4 mastery: Gain +35% Crit Chance and +25% Echo Strike. Critical Echoes gain another +25% damage.",
       apply(){player.crit+=.35;player.doubleStrike+=.25;player.criticalEchoBonus=(player.criticalEchoBonus||0)+.25;},
       "tags": [
         "melee",
@@ -1338,7 +1338,7 @@
       "rarity": "uncommon",
       "icon": "🪡",
       "name": "Glass Needle",
-      "desc": "Gain +14% Crit and +2 Attack, but lose 6 max HP.",
+      "desc": "Gain +14% Crit Chance and +2 Attack, but lose 6 max HP.",
       apply(){player.crit+=.14;player.attack+=2;player.maxHp=Math.max(1,player.maxHp-6);player.hp=Math.min(player.hp,player.maxHp);},
       "tags": [
         "sustain",
@@ -1473,7 +1473,7 @@
       "rarity": "uncommon",
       "icon": "🌿🏹",
       "name": "Thorn Volley",
-      "desc": "Gain +10% Crit and +12% Nature activation.",
+      "desc": "Gain +10% Crit Chance and +12% Nature activation.",
       apply(){player.crit+=.10;player.classElementProcs.nature=(player.classElementProcs.nature||0)+.12;},
       "tags": [
         "ranged",
@@ -1589,7 +1589,7 @@
       "rarity": "rare",
       "icon": "🎪🎪🎪",
       "name": "Three-Ring Disaster",
-      "desc": "Board 3 mastery: Gain +15% Crit, +15% Echo and +0.5% Prismatic Accident.",
+      "desc": "Board 3 mastery: Gain +15% Crit Chance, +15% Echo and +0.5% Prismatic Accident.",
       apply(){player.crit+=.15;player.doubleStrike+=.15;player.omniElementChance=(player.omniElementChance||0)+.005;},
       "tags": [
         "weird",
@@ -1607,7 +1607,7 @@
       "rarity": "uncommon",
       "icon": "🌹🩸",
       "name": "Carmine Veins",
-      "desc": "Gain +16% Lifesteal and +8% Crit.",
+      "desc": "Gain +16% Lifesteal and +8% Crit Chance.",
       apply(){player.lifeSteal+=.16;player.crit+=.08;},
       "tags": [
         "weird",
@@ -1728,7 +1728,7 @@
       "rarity": "epic",
       "icon": "♻️🐸",
       "name": "Amphibian Recursion",
-      "desc": "Gain +50% Echo Strike and +12% Crit.",
+      "desc": "Gain +50% Echo Strike and +12% Crit Chance.",
       "apply": function(){player.doubleStrike+=.50;player.crit+=.12;},
       "tags": [
         "weird",
@@ -1813,7 +1813,7 @@
       "rarity": "uncommon",
       "icon": "🥷💨",
       "name": "Smoke Mathematics",
-      "desc": "Gain +16% Crit and +6% raw Dodge.",
+      "desc": "Gain +16% Crit Chance and +6% raw Dodge.",
       apply(){player.crit+=.16;player.dodge+=.06;},
       "tags": [
         "melee",
@@ -1936,7 +1936,7 @@
       "rarity": "uncommon",
       "icon": "💨🎯",
       "name": "Skirmisher's Tempo",
-      "desc": "Gain +8% Crit, +8% Echo Strike and +4% raw Dodge.",
+      "desc": "Gain +8% Crit Chance, +8% Echo Strike and +4% raw Dodge.",
       apply(){player.crit+=.08;player.doubleStrike+=.08;player.dodge+=.04;},
       "tags": [
         "tempo",
@@ -2002,7 +2002,7 @@
       "rarity": "uncommon",
       "icon": "🌿🎯",
       "name": "Thorn Venom",
-      "desc": "Gain +8% Crit and +10% chance to apply a Poison stack with basic and Echo strikes.",
+      "desc": "Gain +8% Crit Chance and +10% chance to apply a Poison stack with basic and Echo strikes.",
       apply(){player.crit+=.08;player.poisonOnHitChance=(player.poisonOnHitChance||0)+.10;},
       "tags": [
         "tempo",
@@ -2188,7 +2188,7 @@
       "rarity": "uncommon",
       "icon": "🗡️💰",
       "name": "Profitable Backstab",
-      "desc": "Gain +14% Crit and attacks add 0.2% of current gold as effective Attack.",
+      "desc": "Gain +14% Crit Chance and attacks add 0.2% of current gold as effective Attack.",
       apply(){player.crit+=.14;player.goldAttackScale=Math.max(player.goldAttackScale||0,.002);},
       "tags": [
         "melee",
@@ -2222,7 +2222,7 @@
       "achievementGate": "gold1500",
       "icon": "💎🗡️",
       "name": "Kingpin's Cut",
-      "desc": "Achievement-locked: +5 Attack, +20% Crit, +20% Echo and +50% gold.",
+      "desc": "Achievement-locked: +5 Attack, +20% Crit Chance, +20% Echo and +50% gold.",
       apply(){player.attack+=5;player.crit+=.20;player.doubleStrike+=.20;player.goldBonus+=.50;},
       "tags": [
         "melee",
@@ -2240,7 +2240,7 @@
       "achievementGate": "ranger_b1",
       "icon": "🏹👑",
       "name": "Crownshot",
-      "desc": "Achievement-locked: +15% Crit, +20% Boss Damage and Arrow Storm gains another +50% damage.",
+      "desc": "Achievement-locked: +15% Crit Chance, +20% Boss Damage and Arrow Storm gains another +50% damage.",
       apply(){player.crit+=.15;player.bossDamage+=.20;player.classUltimateBonus+=.50;},
       "tags": [
         "ranged",
@@ -2676,7 +2676,7 @@
       "rarity": "uncommon",
       "icon": "🎯✨",
       "name": "Predatory Focus",
-      "desc": "Gain +12% Crit this run.",
+      "desc": "Gain +12% Crit Chance this run.",
       apply(){player.crit+=.12;}
     },
     {
@@ -2693,7 +2693,7 @@
       "icon": "🗡️🌟",
       "name": "Legend of the First Blow",
       "unique": false,
-      "desc": "Gain +14 Attack, +18% Crit and +20% Boss Damage this run.",
+      "desc": "Gain +14 Attack, +18% Crit Chance and +20% Boss Damage this run.",
       apply(){player.attack+=14;player.crit+=.18;player.bossDamage+=.20;}
     ,
       "achievementGate": "achievement:road4"
@@ -2789,7 +2789,7 @@
       "rarity": "legendary",
       "icon": "🌠🗡️",
       "name": "Star-Eater's Rhythm",
-      "desc": "Gain +35% Crit, +60% Echo Strike and +20% Boss Damage.",
+      "desc": "Gain +35% Crit Chance, +60% Echo Strike and +20% Boss Damage.",
       apply(){player.crit+=.35;player.doubleStrike+=.60;player.bossDamage+=.20;}
     ,
       "achievementGate": "achievement:prestige20"
@@ -2856,7 +2856,7 @@
       "rarity": "poor",
       "icon": "🔭",
       "name": "Cracked Scope",
-      "desc": "Gain +4% Crit this run.",
+      "desc": "Gain +4% Crit Chance this run.",
       apply(){player.crit+=.04;},
       "tags": ["damage","tempo"],
       "v24Tiered": true
@@ -2926,7 +2926,7 @@
       "rarity": "uncommon",
       "icon": "🎖️🐉",
       "name": "Boss Hunter's Badge",
-      "desc": "Gain +18% Boss Damage and +6% Crit.",
+      "desc": "Gain +18% Boss Damage and +6% Crit Chance.",
       apply(){player.bossDamage+=.18;player.crit+=.06;},
       "tags": ["guardian","damage"],
       "v24Tiered": true

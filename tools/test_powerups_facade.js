@@ -115,6 +115,13 @@ power.apply(fakeCatalog[0],"Facade Test");
 assert.equal(state.player.attack,beforeAttack+1);
 assert.equal(state.player.upgradeCounts.generic,1);
 assert.deepEqual(events,["unlock-check","buff","taken","ouro-sync"]);
+assert.equal(state.player.runBuffs.at(-1)[2],"services:Generic","run-buff tooltip copy must come from the canonical Powerup descriptor, not raw .desc text");
+assert.equal(state.player.runBuffs.at(-1)[5],"generic","Powerup run buffs must retain their semantic id so later UI can recompute live copy");
+assert.doesNotMatch(source,/powerup\.desc/,"Powerup facade must not snapshot raw descriptor text");
+const compositionSource=fs.readFileSync(path.join(root,"runtime","js","dicebound.js"),"utf8");
+assert.match(compositionSource,/function runBuffDescription\(buff\)/,"run-buff UI needs a live semantic-description resolver");
+assert.match(compositionSource,/if\(powerup\)return dbPowerups\.describe\(powerup\)/,"run-buff UI must recompute Powerup descriptions when rendered");
+assert.doesNotMatch(compositionSource,/player\.runBuffs\.map\(b=>[^\n]*\$\{b\.desc\}/,"run-buff UI must not render frozen Powerup description snapshots directly");
 
 state.player.classId="d20";state.player.upgradeCounts={};events.length=0;
 const d20Attack=state.player.attack;

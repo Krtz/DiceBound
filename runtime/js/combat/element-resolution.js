@@ -2,6 +2,7 @@
   "use strict";
 
   const OWNER = "combat/element-resolution";
+  const DEDICATED_PLAYER_VFX=new Set(["fire","gun","donut","math"]);
   const FIRE_BURN_CHANCE = .25;
   const FIRE_BURN_CAP = 10;
   let runtime = null;
@@ -105,7 +106,7 @@
       if (!guaranteedRend && rt.random() >= chance) return null;
     }
 
-    rt.playElementAnimation(key, target, false);
+    if(!DEDICATED_PLAYER_VFX.has(key))rt.playElementAnimation(key, target, false);
     const rendPower = guaranteedRend ? 1.65 : 1;
     const setElementPower = rt.setElementPower();
     const mult = (weak ? 1.55 + p.weaknessElementBonus : 1) * (1 + p.elementDamageBonus) * rendPower * setElementPower;
@@ -197,7 +198,7 @@
 
     const echoed = rt.random() < rt.clamp(p.elementEchoChance, 0, .80);
     if (echoed) {
-      rt.playElementAnimation(key, target, false);
+      if(!DEDICATED_PLAYER_VFX.has(key))rt.playElementAnimation(key, target, false);
       if (totalDamage) {
         const echoTarget = target.hp > 0 ? target : (living()[0] || target);
         const echoDamage = aoe

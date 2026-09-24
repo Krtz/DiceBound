@@ -12,7 +12,7 @@
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat Ultimate-resolution runtime is required.");
     const required = [
       "getPlayer","getMeta","getCurrentEnemy","getCurrentEnemies","getEncounterLead","livingEnemies","getCombatBusy","setCombatBusy","selectEnemy",
-      "isClassActive","hasLegendaryEffect","random","rand","pick","clamp","rollTieredProc","getSetDamageBonus","ultimateBaseDamage","scaleUltimateDamage",
+      "isClassActive","hasLegendaryEffect","legendaryEffect","random","rand","pick","clamp","rollTieredProc","getSetDamageBonus","ultimateBaseDamage","scaleUltimateDamage",
       "damageEnemy","damageAll","healPlayer","manaGain","triggerStrikeElements","petDamage","trainerPetDamage","syncOuroborosAttack",
       "rollD20Chaos","updateCombatUI","animateUltimate","animateClassAttack","setCombatText","addCombatHistory","identityFlash",
       "playCritSfx","playHolySfx","delay","getCombatActionDelay","winCombat","resolveEnemyResponse","petTurn","applyMythicPantsPulse","applyMythicRingPulse",
@@ -213,11 +213,19 @@
     return v25FrogPoisonLifetime();
   }
 
+  function unstableUltimateRule(rt) {
+    const effect = rt.legendaryEffect("unstable_ultimate");
+    const chargeThreshold = Number(effect?.chargeThreshold), damageMultiplier = Number(effect?.damageMultiplier);
+    if (!Number.isFinite(chargeThreshold) || !Number.isFinite(damageMultiplier)) throw new Error("Unstable Ultimate requires authoritative chargeThreshold and damageMultiplier values.");
+    return { chargeThreshold, damageMultiplier };
+  }
+
   async function unstableUltimate() {
     const rt = requireRuntime(), p = player();
     if (!rt.hasLegendaryEffect("unstable_ultimate")) return currentClassUltimate();
-    if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < 70) return;
-    const oldBonus = p.classUltimateBonus || 0; p.ultimateCharge = 100; p.classUltimateBonus = oldBonus - .25;
+    const rule = unstableUltimateRule(rt);
+    if (rt.getCombatBusy() || !currentEnemy() || p.ultimateCharge < rule.chargeThreshold) return;
+    const oldBonus = p.classUltimateBonus || 0; p.ultimateCharge = 100; p.classUltimateBonus = oldBonus - (1 - rule.damageMultiplier);
     try { return await currentClassUltimate(); }
     finally { p.classUltimateBonus = oldBonus; p.ultimateCharge = Math.max(0, p.ultimateCharge); }
   }

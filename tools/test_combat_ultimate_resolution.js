@@ -71,6 +71,7 @@ function makeHarness(options = {}) {
     selectEnemy: index => { currentIndex = index; trace.push(['select', index]); },
     isClassActive: id => options.isClassActive ? options.isClassActive(id, player) : player.classId === id,
     hasLegendaryEffect: id => effects.has(id),
+    legendaryEffect: id => id === 'unstable_ultimate' ? (options.unstableRule || { name:'Unstable Ultimate', chargeThreshold:70, damageMultiplier:.75 }) : null,
     random: () => { trace.push(['random']); return 0; },
     rand: (min, max) => { const value = randValues.length ? randValues.shift() : min; trace.push(['rand', min, max, value]); return value; },
     pick: list => { const index = pickIndexes.length ? pickIndexes.shift() : 0, value = list[index % list.length]; trace.push(['pick', list.map(x => x?.name || x), index, value?.name || value]); return value; },
@@ -265,6 +266,14 @@ async function run() {
   {
     const h = makeHarness({ classId: 'fighter', effects: ['unstable_ultimate'], player: { ultimateCharge: 70, classUltimateBonus: .4 }, randValues: [2] });
     await owner.start(); const chaos = h.trace.find(x => x[0] === 'chaos'); assert(Math.abs(chaos[2] - .15) < 1e-9); assert(Math.abs(h.player.classUltimateBonus - .4) < 1e-9); assert.strictEqual(h.player.ultimateCharge, 0);
+  }
+
+  // Source-of-truth guard: changing the Legendary owner values must change behavior without editing this resolver.
+  {
+    const h = makeHarness({ classId: 'fighter', effects: ['unstable_ultimate'], unstableRule: { name:'Unstable Ultimate', chargeThreshold:64, damageMultiplier:.90 }, player: { ultimateCharge: 64, classUltimateBonus: .4 }, randValues: [2] });
+    await owner.start(); const chaos = h.trace.find(x => x[0] === 'chaos');
+    assert(chaos && Math.abs(chaos[2] - .30) < 1e-9, 'Unstable damage multiplier must come from the Legendary owner');
+    assert.strictEqual(h.player.ultimateCharge, 0);
   }
 
   // Slime Rouge recursion re-enters the whole owner; Unstable therefore nests twice before donor cast.

@@ -93,6 +93,14 @@ async function main(){
     const fixture=JSON.parse(fs.readFileSync(FIXTURE_PATH,"utf8"));
     assert.equal(fixture.baselineVersion,"0.6.6.32","Powerups fixture must remain the released 0.6.6.32 baseline");
     const expected=structuredClone(fixture.cases);
+    // Beta 0.6.7.34 keeps the semantic Powerup id on run-buff records so
+    // presentation can recompute live descriptions instead of freezing copy at
+    // acquisition time. Preserve the frozen baseline and normalize only that
+    // intentional metadata addition.
+    for(const [caseName,powerupId] of [["apply-normal","attack"],["apply-unique","legendary_golden_law"],["apply-d20","attack"],["random-high-rarity","ranger_echo"]]){
+      const record=expected.find(entry=>entry.name===caseName);
+      for(const buff of record?.state?.player?.runBuffs||[])buff.powerupId=powerupId;
+    }
     const approvedLuckChoices=new Map([
       ["weighted-three",[
         {id:"dodge",name:"Mist Step",rarity:"uncommon",classId:null,classIds:[],unique:false,achievementGate:null},
@@ -141,7 +149,8 @@ async function main(){
         name:"Twin Fletching",
         desc:"Gain +18% Echo Strike chance.",
         rarity:"uncommon",
-        source:"Oracle Relic"
+        source:"Oracle Relic",
+        powerupId:"ranger_echo"
       }];
     }
     assert.deepEqual(actual.cases,expected);

@@ -23,8 +23,8 @@
     const required = [
       "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
-      "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect",
-      "activeTrainerPetId","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
+      "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect","legendaryEffect",
+      "activeTrainerPetId","invokerAttackSpec","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat presentation runtime missing ${name}().`);
     if (!nextRuntime.document || typeof nextRuntime.document.createElement !== "function") throw new Error("Combat presentation runtime missing document.");
@@ -127,7 +127,7 @@
     const attack = {
       text: "⚔️ Attack",
       disabled: combatBusy,
-      tip: `Attack the selected enemy. Echo ${Math.round((player.doubleStrike || 0) * 100)}%, Crit ${Math.round((player.crit || 0) * 100)}%; every strike rolls crit, Poison and elements separately.`
+      tip: `Attack the selected enemy. Echo ${Math.round((player.doubleStrike || 0) * 100)}%, Crit Chance ${Math.round((player.crit || 0) * 100)}%; every strike rolls crit, Poison and elements separately.`
     };
     const guard = {
       text: (player.guardCooldown || 0) > 0 ? "🛡️ Guard (1 turn)" : "🛡️ Guard",
@@ -142,7 +142,7 @@
     const ultimate = {
       text: `${cls.ultimate?.icon || "⭐"} ${cls.ultimate?.name || "Ultimate"}`,
       disabled: combatBusy || (player.ultimateCharge || 0) < 100,
-      tip: cls.ultimate?.desc || ""
+      tip: rt.describeUltimate(player.classId)
     };
     const special = {
       hidden: true,
@@ -154,10 +154,15 @@
     };
     let hasSpecial = false;
     let resource = null;
+    const invokerStrikeTip=(key,orb)=>{
+      const spec=rt.invokerAttackSpec(key);
+      if(!spec)throw new Error(`Combat presentation missing Invoker ${key} attack spec.`);
+      return `${Math.round(spec.damage*100)}% normal strike damage, uses ${Math.round(spec.echoMultiplier*100)}% of your current Echo chance, and forms a ${orb} orb. Crit Chance, Poison, elements and Lifesteal remain normal.`;
+    };
     const invokerAttacks = {
       active: false,
-      quas: { text: "🔵 Quas Strike", tip: "85% normal strike damage, uses 70% of your current Echo chance, and forms a Blue orb. Crit, Poison, elements and Lifesteal remain normal.", disabled: combatBusy },
-      exort: { text: "🔴 Exort Strike", tip: "120% normal strike damage, uses 70% of your current Echo chance, and forms a Red orb. Crit, Poison, elements and Lifesteal remain normal.", disabled: combatBusy }
+      quas: { text: "🔵 Quas Strike", tip: invokerStrikeTip("quas","Blue"), disabled: combatBusy },
+      exort: { text: "🔴 Exort Strike", tip: invokerStrikeTip("exort","Red"), disabled: combatBusy }
     };
 
     const identityId = rt.classIdentityId();
@@ -165,7 +170,7 @@
       const cfg = rt.getOccultSpells()[identityId];
       attack.text = "🟢 Wex Strike";
       attack.className = "combat-btn primary action-tooltip invoker-wex";
-      attack.tip = `85% normal strike damage with 120% of your current Echo chance plus normal Crit/Poison/element/Lifesteal behavior; generates up to ${cfg?.gain || 25} base Mana and forms a Green orb.`;
+      attack.tip = `${invokerStrikeTip("wex","Green")} Generates up to ${cfg?.gain || 0} base Mana.`;
       special.hidden = false; hasSpecial = true;
       special.text = `🔴 Elemental Lance (${cfg?.cost || 50})`;
       special.tip = `${cfg?.desc || "Spend Mana for a heavy Red attack."} It can Crit, roll normal elements, apply Poison at Echo × Poison chance, and Lifesteal from direct plus elemental damage.`;
@@ -176,11 +181,11 @@
       const cfg = rt.getOccultSpells()[identityId];
       if (cfg) {
         attack.text = `${cfg.builderIcon} ${cfg.builder}`;
-        attack.tip = `${cfg.builder} is your Mana-building attack. It deals about 82% normal basic damage, still rolls Crit/Echo/elements, and grants up to ${cfg.gain} Mana.`;
+        attack.tip = `${cfg.builder} is your Mana-building attack. It uses the class-authored strike profile, still rolls Crit Chance/Echo/elements, and grants up to ${cfg.gain} Mana.`;
         special.hidden = false; hasSpecial = true;
         special.text = `${cfg.spellIcon} ${cfg.spell} (${cfg.cost})`;
         special.tip = identityId === "sorcerer"
-          ? `${cfg.desc} Current Echo conversion: +${Math.round(Math.max(0, player.doubleStrike || 0) * 50)}% Arcane Lance damage. Current Lifesteal: ${Math.round(Math.max(0, player.lifeSteal || 0) * 100)}%.`
+          ? `${cfg.desc} Current Lifesteal: ${Math.round(Math.max(0, player.lifeSteal || 0) * 100)}%.`
           : cfg.desc;
         special.disabled = combatBusy || (player.mana || 0) < cfg.cost;
         resource = classResource("mana", "Mana", player.mana || 0, player.maxMana || 0, cfg.desc);
@@ -189,21 +194,21 @@
       attack.text = "🩸 Bloodletting";
       attack.tip = "A normal basic attack with extra Lifesteal. Bloodletting restores HP so you can spend that HP as fuel on Exsanguinate.";
       guard.text = "💉 Replenish";
-      guard.tip = "Replenish heals you and the selected enemy, grants 20 Ultimate, and counts as Guard for the incoming enemy response.";
+      guard.tip = "Replenish heals you and the selected enemy, restores Ultimate charge, and counts as Guard for the incoming enemy response.";
       special.hidden = false; hasSpecial = true;
       special.text = "🩸 Exsanguinate";
-      special.tip = "Spend 12% max HP without killing yourself. Exsanguinate converts 50% of Echo chance into damage, can Crit, rolls normal elements, and applies Poison at (50% Echo) × Poison chance.";
+      special.tip = "Spend max-HP-scaled health without killing yourself. Exsanguinate converts part of Echo chance into damage, can Crit, rolls normal elements, and uses Echo-weighted Poison.";
       special.disabled = combatBusy || (player.hp || 0) <= 1;
       resource = classResource("blood", "Blood fuel (HP)", player.hp || 0, player.maxHp || 1, "Bloodmage has no Mana. Your HP bar is your spell resource; Bloodletting restores fuel and Exsanguinate spends it.");
     } else if (rt.isClassActive("rogue")) {
       special.hidden = false; hasSpecial = true; special.className += " steal";
       special.text = player.rogueStealUsed ? "🗡️ Steal (used)" : "🗡️ Steal";
-      special.tip = `Attempt once per battle. Success scales with Luck and steals gold, can steal a potion, and at high Luck can even steal a random powerup (chance starts above 50 Luck and caps at 35%).${player.rogueStealStatFraction ? " Stat Heist also steals 10% of the target's ATK/DEF for this battle." : ""}`;
+      special.tip = `Attempt once per battle. Success scales with Luck and steals gold, can steal a potion, and at high Luck can even steal a random powerup.${player.rogueStealStatFraction ? " Stat Heist also steals part of the target's ATK/DEF for this battle." : ""}`;
       special.disabled = combatBusy || !!player.rogueStealUsed;
     } else if (rt.isClassActive("cleric")) {
       special.hidden = false; hasSpecial = true; special.className += " faith";
       special.text = "☀️ Consecration";
-      special.tip = "At 100 Faith: heal, raise a Barrier and deal a pack-wide holy attack that can Crit. Healing builds Faith.";
+      special.tip = "At full Faith: heal, raise a Barrier and deal a pack-wide holy attack that can Crit. Healing builds Faith.";
       special.disabled = combatBusy || (player.clericFaith || 0) < 100;
       special.ready = !special.disabled && (player.clericFaith || 0) >= 100;
       resource = classResource("mana", "Faith", player.clericFaith || 0, 100, "Healing builds Faith. Consecration becomes available at 100.");
@@ -211,30 +216,30 @@
       const stance = player.beastStance || "aggressive";
       special.hidden = false; hasSpecial = true;
       special.text = `🐾 ${stance}`;
-      special.tip = "Cycle pet orders without spending a combat turn: Aggressive = +50% pet damage, Defensive = Barrier after pet attack, Support = small heal after pet attack.";
+      special.tip = "Cycle pet orders without spending a combat turn: Aggressive boosts pet damage, Defensive raises a Barrier after the pet attacks, and Support adds a small heal.";
       special.disabled = combatBusy;
       resource = classResource("mana", "Pack order", ["aggressive", "defensive", "support"].indexOf(stance) + 1, 3, "Aggressive → Defensive → Support. The button cycles the active companion order.");
     } else if (rt.isClassActive("monk")) {
       resource = classResource("combo", "Flowing Combo", player.monkCombo || 0, player.monkComboMax || 5, `Consecutive basics build up to ${player.monkComboMax || 5} Combo. Each stack adds damage, Echo and Dodge; Guard or Potion resets it.`);
     } else if (rt.isClassActive("ninja")) {
-      resource = classResource("smoke", "Smoke", player.ninjaSmoke || 0, player.ninjaSmokeNeed || 3, `Every critical tier grants 1 Smoke — a double crit grants 2, triple crit 3, including Echoes. At ${player.ninjaSmokeNeed || 3}, the next basic strike becomes Smoke Execution.`);
+      resource = classResource("smoke", "Smoke", player.ninjaSmoke || 0, player.ninjaSmokeNeed || 3, `Critical tiers build Smoke, with stronger critical tiers granting more. At ${player.ninjaSmokeNeed || 3}, the next basic strike becomes Smoke Execution.`);
     } else if (rt.isClassActive("ranger")) {
       const cap = Math.max(3, Number(player.rangerMarkMax) || 3), marks = enemy?.rangerMarks || 0;
-      resource = classResource("mark", "Marks on target", marks, cap, `Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: ${cap}.`);
+      resource = classResource("mark", "Marks on target", marks, cap, `Each landed basic strike or Echo adds 1 Mark. Marks add Crit Chance against that target; Arrow Storm consumes every mark in the pack. Current cap: ${cap}.`);
     } else if (rt.isClassActive("fighter")) {
-      resource = classResource("combo", "Counterblows", player.fighterCounterStacks || 0, player.fighterCounterMax || 1, "Guard stores one Counterblow. Each stored stack empowers one future basic attack by +55% damage.");
+      resource = classResource("combo", "Counterblows", player.fighterCounterStacks || 0, player.fighterCounterMax || 1, "Guard stores a Counterblow. Each stored stack empowers one future basic attack.");
     } else if (rt.isClassActive("turtle")) {
-      resource = classResource("combo", "Shell Momentum", player.turtleGuardChain || 0, player.turtleGuardMax || 5, "Consecutive Guards build Shell Momentum. Every even consecutive Guard raises a Barrier; your next basic attack consumes the chain for +18% damage per Shell Momentum stack.");
+      resource = classResource("combo", "Shell Momentum", player.turtleGuardChain || 0, player.turtleGuardMax || 5, "Consecutive Guards build Shell Momentum. Certain milestones raise a Barrier; your next basic attack consumes the chain for bonus damage per stack.");
     } else if (rt.isClassActive("clown")) {
       resource = textResource("gag", "Opening Gag", player.clownGimmick || "No gag yet", player.clownGimmick ? (rt.getGagInfo()[player.clownGimmick] || player.clownGimmick) : "A random gag appears when combat begins.");
     } else if (rt.isClassActive("ceo")) {
       const tier = (player.gold || 0) >= 1000 ? 3 : (player.gold || 0) >= 500 ? 2 : (player.gold || 0) >= 250 ? 1 : 0;
-      resource = classResource("mana", "Executive tier", tier, 3, `${player.gold || 0} gold. The class's main identity is an absurd +200% gold engine; 1000+ gold also starts battles with a Barrier.`);
+      resource = classResource("mana", "Executive tier", tier, 3, `${player.gold || 0} gold. Executive power scales with wealth; reaching the top wealth tier also starts battles with a Barrier.`);
     }
 
     if (rt.isClassActive("summoner")) {
       const cfg = rt.getOccultSpells().summoner, spirits = player.summonerSpirits || [], gain = cfg.gain + (player.summonerManaBonus || 0);
-      attack.tip = `Spirit Bolt is your Mana-building attack. It deals about 82% normal basic damage and grants up to ${gain} Mana.`;
+      attack.tip = `Spirit Bolt is your Mana-building attack. It uses the class-authored strike profile and grants up to ${gain} Mana.`;
       special.hidden = false; hasSpecial = true;
       special.text = `🐾 Conjure (${cfg.cost}) · ${spirits.length}/${player.summonerCap || 3}`;
       special.tip = `Spend ${cfg.cost} Mana to conjure a spirit. Conjure immediately makes your active companion and every spirit attack with a small temporary damage boost.`;
@@ -244,18 +249,18 @@
       const roster = player.trainerRoster || [], id = rt.activeTrainerPetId();
       special.hidden = false; hasSpecial = true;
       special.text = `🔄 Switch · ${pets[id]?.icon || "🐾"} ${pets[id]?.name || "Creature"}`;
-      special.tip = "Switch to the next creature in your six-member roster without spending a combat turn. The active creature attacks harder and can call a roster assist.";
+      special.tip = "Switch to the next creature in your current roster without spending a combat turn. The active creature attacks harder and can call a roster assist.";
       special.disabled = combatBusy || !roster.length;
       resource = classResource("mana", "Six-creature roster", (player.trainerActiveIndex || 0) + 1, Math.max(1, roster.length), `Run roster: ${roster.map((x, i) => `${i === player.trainerActiveIndex ? "▶ " : ""}${pets[x]?.icon || "🐾"} ${pets[x]?.name || x}`).join(" · ")}`);
     } else if (rt.isClassActive("paladin")) {
-      resource = classResource("faith", "Oath Grace", player.paladinGrace || 0, 100, "Healing stores Grace. Guard consumes it for up to +20% Guard power and 1 Barrier per 25 Grace.");
+      resource = classResource("faith", "Oath Grace", player.paladinGrace || 0, 100, "Healing stores Grace. Guard can consume stored Grace to strengthen Guard and raise Barriers.");
     }
 
     if (rt.isClassActive("alchemist")) {
       special.hidden = false; hasSpecial = true;
       special.className = "combat-btn special action-tooltip alchemist-special";
       special.text = `🧪 Volatile Flask (${player.potions || 0})`;
-      special.tip = `Consume 1 potion to damage the enemy pack for 150% Potion Healing + 100% Attack. The Flask can Crit and uses 250% of your current Poison chance on each surviving target. Current potion heal: ${rt.potionHealValue()} HP.`;
+      special.tip = `Consume 1 potion to damage the enemy pack using Potion Healing and Attack. The Flask can Crit and uses amplified Poison chance on each surviving target. Current potion heal: ${rt.potionHealValue()} HP.`;
       special.disabled = combatBusy || (player.potions || 0) <= 0;
       resource = classResource("mana", "Combat Distillery", player.alchemistBrewCounter || 0, player.alchemistBrewNeed || 3, `Every ${player.alchemistBrewNeed || 3} basic attacks creates a potion. Drink them to heal or throw them with Volatile Flask.`);
     }
@@ -272,8 +277,10 @@
       resource = classResource("rage", "Rage", rage, 100, `Every 1% missing HP grants +1% damage. Current Rage bonus: +${rage}% damage.`);
     }
     if (rt.hasLegendaryEffect("unstable_ultimate")) {
-      ultimate.disabled = combatBusy || !enemy || (player.ultimateCharge || 0) < 70;
-      ultimate.tip = `Unstable Ultimate: usable at 70 charge for 75% normal damage. Current charge: ${Math.round(player.ultimateCharge || 0)}.`;
+      const effect=rt.legendaryEffect("unstable_ultimate"),threshold=Number(effect?.chargeThreshold),multiplier=Number(effect?.damageMultiplier);
+      if(!Number.isFinite(threshold)||!Number.isFinite(multiplier))throw new Error("Combat presentation requires authoritative Unstable Ultimate values.");
+      ultimate.disabled = combatBusy || !enemy || (player.ultimateCharge || 0) < threshold;
+      ultimate.tip = `${effect.name}: usable at ${threshold} charge for ${Math.round(multiplier*100)}% normal damage. Current charge: ${Math.round(player.ultimateCharge || 0)}.`;
     }
 
     if (rt.dragoonActive()) {
@@ -554,14 +561,14 @@
     if (find("enemyHpFill")) find("enemyHpFill").style.width = `${rt.clamp(enemy.hp / Math.max(1, enemy.maxHp) * 100, 0, 100)}%`;
     if (find("playerStatusDots")) {
       find("playerStatusDots").innerHTML = statusDotsHTML(player.combatShield || 0, 0, null, (player.confusionActions || 0) > 0);
-      if ((player.devilBurnStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="${player.devilBurnStacks} Hellfire stacks · uncapped · 1% max HP each">🔥×${player.devilBurnStacks}</span>`);
-      if ((player.db0511BurnStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status" title="Burn: 1% max HP per stack each action">🔥×${player.db0511BurnStacks}</span>`);
+      if ((player.devilBurnStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="${player.devilBurnStacks} Hellfire stacks · uncapped max-HP-scaled damage">🔥×${player.devilBurnStacks}</span>`);
+      if ((player.db0511BurnStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status" title="Burn: max-HP-scaled damage each action">🔥×${player.db0511BurnStacks}</span>`);
       if ((player.db0511PoisonStacks || 0) > 0) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status" title="Enemy Poison">☠️×${player.db0511PoisonStacks}</span>`);
       if (player._db0511SkipAction) find("playerStatusDots").insertAdjacentHTML("beforeend", `<span class="db0511-player-status">${player._db0511SkipAction.startsWith("❄️") ? "❄️ FROZEN" : "⚡ STUNNED"}</span>`);
     }
     if (find("enemyStatusDots")) {
       find("enemyStatusDots").innerHTML = statusDotsHTML(enemy.enemyBarrier || 0, enemy.poisonStacks || 0, enemy.affinity, (enemy.confusionActions || 0) > 0);
-      if ((enemy.burnStacks || 0) > 0) find("enemyStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="Burn ${enemy.burnStacks}/10: takes ${enemy.burnStacks}% max HP damage each turn">🔥×${enemy.burnStacks}</span>`);
+      if ((enemy.burnStacks || 0) > 0) find("enemyStatusDots").insertAdjacentHTML("beforeend", `<span class="burn-status" title="${enemy.burnStacks} Burn stacks · max-HP-scaled damage each turn">🔥×${enemy.burnStacks}</span>`);
     }
     [["attackBtn", model.attack], ["guardBtn", model.guard], ["potionBtn", model.potion], ["ultimateBtn", model.ultimate]].forEach(([id, spec]) => { const b = find(id); if (!b) return; b.disabled = !!spec.disabled; if (spec.text != null) b.textContent = spec.text; if (id === "attackBtn") b.className = spec.className || "combat-btn primary action-tooltip"; else if (spec.className) b.className = spec.className; b.dataset.tip = spec.tip || ""; });
     const special = find("specialAttackBtn"); if (special) { special.hidden = !!model.special.hidden; special.className = model.special.className; special.textContent = model.special.text; special.dataset.tip = model.special.tip; special.disabled = !!model.special.disabled; special.classList.toggle("ready", !!model.special.ready); }

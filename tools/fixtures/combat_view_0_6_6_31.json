@@ -7,7 +7,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -22,7 +22,7 @@
         "ultimate": {
           "text": "🌧️ Arrow Storm",
           "disabled": false,
-          "tip": "Ranger ultimate."
+          "tip": "description:ranger"
         },
         "special": {
           "hidden": true,
@@ -38,7 +38,7 @@
           "name": "Marks on target",
           "value": 4,
           "max": 5,
-          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
+          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit Chance against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
           "textMode": false
         },
         "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
@@ -47,7 +47,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -62,7 +62,7 @@
         "ultimate": {
           "text": "🌘 Thousand Shadows",
           "disabled": false,
-          "tip": "Ninja ultimate."
+          "tip": "description:ninja"
         },
         "special": {
           "hidden": true,
@@ -78,7 +78,7 @@
           "name": "Smoke",
           "value": 2,
           "max": 3,
-          "note": "Every critical tier grants 1 Smoke — a double crit grants 2, triple crit 3, including Echoes. At 3, the next basic strike becomes Smoke Execution.",
+          "note": "Critical tiers build Smoke, with stronger critical tiers granting more. At 3, the next basic strike becomes Smoke Execution.",
           "textMode": false
         },
         "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
@@ -92,7 +92,7 @@
         "guard": {
           "text": "💉 Replenish",
           "disabled": false,
-          "tip": "Replenish heals you and the selected enemy, grants 20 Ultimate, and counts as Guard for the incoming enemy response."
+          "tip": "Replenish heals you and the selected enemy, restores Ultimate charge, and counts as Guard for the incoming enemy response."
         },
         "potion": {
           "text": null,
@@ -102,13 +102,13 @@
         "ultimate": {
           "text": "☄️ Sanguine Cataclysm",
           "disabled": false,
-          "tip": "Bloodmage ultimate."
+          "tip": "description:bloodmage"
         },
         "special": {
           "hidden": false,
           "className": "combat-btn special action-tooltip",
           "text": "🩸 Exsanguinate",
-          "tip": "Spend 12% max HP without killing yourself. Exsanguinate converts 50% of Echo chance into damage, can Crit, rolls normal elements, and applies Poison at (50% Echo) × Poison chance.",
+          "tip": "Spend max-HP-scaled health without killing yourself. Exsanguinate converts part of Echo chance into damage, can Crit, rolls normal elements, and uses Echo-weighted Poison.",
           "disabled": false,
           "ready": false
         },
@@ -127,7 +127,7 @@
         "attack": {
           "text": "✨ Spirit Bolt",
           "disabled": false,
-          "tip": "Spirit Bolt is your Mana-building attack. It deals about 82% normal basic damage and grants up to 20 Mana."
+          "tip": "Spirit Bolt is your Mana-building attack. It uses the class-authored strike profile and grants up to 20 Mana."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -142,7 +142,7 @@
         "ultimate": {
           "text": "🌌 Grand Convergence",
           "disabled": false,
-          "tip": "Summoner ultimate."
+          "tip": "description:summoner"
         },
         "special": {
           "hidden": false,
@@ -167,7 +167,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -182,13 +182,13 @@
         "ultimate": {
           "text": "🌈 Stampede",
           "disabled": false,
-          "tip": "Trainer ultimate."
+          "tip": "description:pokemontrainer"
         },
         "special": {
           "hidden": false,
           "className": "combat-btn special action-tooltip",
           "text": "🔄 Switch · ❄️ Frost",
-          "tip": "Switch to the next creature in your six-member roster without spending a combat turn. The active creature attacks harder and can call a roster assist.",
+          "tip": "Switch to the next creature in your current roster without spending a combat turn. The active creature attacks harder and can call a roster assist.",
           "disabled": false,
           "ready": false
         },
@@ -207,7 +207,7 @@
         "attack": {
           "text": "🟢 Wex Strike",
           "disabled": false,
-          "tip": "85% normal strike damage with 120% of your current Echo chance plus normal Crit/Poison/element/Lifesteal behavior; generates up to 25 base Mana and forms a Green orb.",
+          "tip": "85% normal strike damage, uses 120% of your current Echo chance, and forms a Green orb. Crit Chance, Poison, elements and Lifesteal remain normal. Generates up to 25 base Mana.",
           "className": "combat-btn primary action-tooltip invoker-wex"
         },
         "guard": {
@@ -223,7 +223,7 @@
         "ultimate": {
           "text": "🌀 Grand Invocation",
           "disabled": false,
-          "tip": "Invoker ultimate."
+          "tip": "description:invoker"
         },
         "special": {
           "hidden": false,
@@ -247,12 +247,12 @@
           "active": true,
           "quas": {
             "text": "🔵 Quas Strike",
-            "tip": "85% normal strike damage, uses 70% of your current Echo chance, and forms a Blue orb. Crit, Poison, elements and Lifesteal remain normal.",
+            "tip": "85% normal strike damage, uses 70% of your current Echo chance, and forms a Blue orb. Crit Chance, Poison, elements and Lifesteal remain normal.",
             "disabled": false
           },
           "exort": {
             "text": "🔴 Exort Strike",
-            "tip": "120% normal strike damage, uses 70% of your current Echo chance, and forms a Red orb. Crit, Poison, elements and Lifesteal remain normal.",
+            "tip": "120% normal strike damage, uses 70% of your current Echo chance, and forms a Red orb. Crit Chance, Poison, elements and Lifesteal remain normal.",
             "disabled": false
           }
         }
@@ -261,7 +261,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -276,13 +276,13 @@
         "ultimate": {
           "text": "✨ Divine Intervention",
           "disabled": false,
-          "tip": "Cleric ultimate."
+          "tip": "description:cleric"
         },
         "special": {
           "hidden": false,
           "className": "combat-btn special action-tooltip faith",
           "text": "☀️ Consecration",
-          "tip": "At 100 Faith: heal, raise a Barrier and deal a pack-wide holy attack that can Crit. Healing builds Faith.",
+          "tip": "At full Faith: heal, raise a Barrier and deal a pack-wide holy attack that can Crit. Healing builds Faith.",
           "disabled": false,
           "ready": true
         },
@@ -301,7 +301,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -316,13 +316,13 @@
         "ultimate": {
           "text": "⚗️ Grand Elixir",
           "disabled": false,
-          "tip": "Alchemist ultimate."
+          "tip": "description:alchemist"
         },
         "special": {
           "hidden": false,
           "className": "combat-btn special action-tooltip alchemist-special",
           "text": "🧪 Volatile Flask (3)",
-          "tip": "Consume 1 potion to damage the enemy pack for 150% Potion Healing + 100% Attack. The Flask can Crit and uses 250% of your current Poison chance on each surviving target. Current potion heal: 23 HP.",
+          "tip": "Consume 1 potion to damage the enemy pack using Potion Healing and Attack. The Flask can Crit and uses amplified Poison chance on each surviving target. Current potion heal: 23 HP.",
           "disabled": false,
           "ready": false
         },
@@ -341,7 +341,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -374,7 +374,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -389,7 +389,7 @@
         "ultimate": {
           "text": "🌧️ Arrow Storm",
           "disabled": false,
-          "tip": "Unstable Ultimate: usable at 70 charge for 75% normal damage. Current charge: 70."
+          "tip": "Unstable Ultimate: usable at 63 charge for 42% normal damage. Current charge: 70."
         },
         "special": {
           "hidden": true,
@@ -405,7 +405,7 @@
           "name": "Marks on target",
           "value": 4,
           "max": 5,
-          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
+          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit Chance against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
           "textMode": false
         },
         "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"
@@ -414,7 +414,7 @@
         "attack": {
           "text": "🐉 Land",
           "disabled": false,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -429,7 +429,7 @@
         "ultimate": {
           "text": "🐲 Dragon Dive",
           "disabled": true,
-          "tip": "Dragoon ultimate."
+          "tip": "description:dragoon"
         },
         "special": {
           "hidden": true,
@@ -447,7 +447,7 @@
         "attack": {
           "text": "⚔️ Attack",
           "disabled": true,
-          "tip": "Attack the selected enemy. Echo 25%, Crit 20%; every strike rolls crit, Poison and elements separately."
+          "tip": "Attack the selected enemy. Echo 25%, Crit Chance 20%; every strike rolls crit, Poison and elements separately."
         },
         "guard": {
           "text": "🛡️ Guard",
@@ -462,7 +462,7 @@
         "ultimate": {
           "text": "🌧️ Arrow Storm",
           "disabled": true,
-          "tip": "Ranger ultimate."
+          "tip": "description:ranger"
         },
         "special": {
           "hidden": true,
@@ -478,7 +478,7 @@
           "name": "Marks on target",
           "value": 4,
           "max": 5,
-          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
+          "note": "Each landed basic strike or Echo adds 1 Mark. Marks add Crit Chance against that target; Arrow Storm consumes every mark in the pack. Current cap: 5.",
           "textMode": false
         },
         "enemyHpText": "70 / 100 · 12 ATK · 4 DEF · 15% DODGE"

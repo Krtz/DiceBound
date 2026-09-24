@@ -48,6 +48,16 @@
     return src?`<img class="class-chooser-art class-chooser-art-${kind} ${extraClass}" src="${escapeHtml(src)}" alt="${escapeHtml(art?.alt||entry.name)}" draggable="false">`:`<span class="class-chooser-emoji" aria-hidden="true">${escapeHtml(entry.icon||'🎲')}</span>`;
   }
   function tagHtml(entry){return runtime.tagChips?.(entry.tags||[],'class')||'';}
+  function startingProfile(entry){
+    const base=entry?.base||{},parts=[];
+    if(Number.isFinite(Number(base.maxHp)))parts.push(`${Number(base.maxHp)} HP`);
+    if(Number.isFinite(Number(base.attack)))parts.push(`${Number(base.attack)} ATK`);
+    if(Number.isFinite(Number(base.defense)))parts.push(`${Number(base.defense)} DEF`);
+    for(const [key,label] of [["crit","Crit Chance"],["dodge","Dodge"],["doubleStrike","Echo"],["lifeSteal","Lifesteal"],["luck","Luck"]]){
+      const value=Number(base[key])||0;if(value>0)parts.push(`${Math.round(value*100)}% ${label}`);
+    }
+    return parts.join(" · ");
+  }
   function cardCopy(entry,unlocked,currentSelected){
     const lock=unlocked?'Unlocked':(entry.unlock||'Locked');
     return `<button type="button" class="class-choice-card${currentSelected?' selected':''}${unlocked?'':' locked'}" data-class-choice="${escapeHtml(entry.id)}" aria-pressed="${currentSelected?'true':'false'}">
@@ -74,7 +84,7 @@
       <div class="class-detail-tags">${tagHtml(entry)}</div>
       ${identity?`<p class="class-detail-identity">${escapeHtml(identity)}</p>`:''}
       ${entry.passive?`<p class="class-detail-passive"><b>Innate — ${escapeHtml(entry.passive.name)}:</b> ${escapeHtml(entry.passive.desc||'')}</p>`:''}
-      <dl class="class-detail-facts"><div><dt>Starting profile</dt><dd>${escapeHtml(entry.stats||'')}</dd></div><div><dt>Ultimate</dt><dd>${escapeHtml(entry.ultimate?.icon||'')} ${escapeHtml(entry.ultimate?.name||'')}</dd></div>${alchemist?`<div><dt>Potion uses</dt><dd>${escapeHtml(alchemist.used)} / ${escapeHtml(alchemist.required)}</dd></div>`:''}<div><dt>Status</dt><dd>${escapeHtml(lock)}</dd></div></dl>
+      <dl class="class-detail-facts"><div><dt>Starting profile</dt><dd>${escapeHtml(startingProfile(entry))}</dd></div><div><dt>Ultimate</dt><dd>${escapeHtml(entry.ultimate?.icon||'')} ${escapeHtml(entry.ultimate?.name||'')}</dd></div>${alchemist?`<div><dt>Potion uses</dt><dd>${escapeHtml(alchemist.used)} / ${escapeHtml(alchemist.required)}</dd></div>`:''}<div><dt>Status</dt><dd>${escapeHtml(lock)}</dd></div></dl>
       ${unlocked?`<button type="button" class="small-btn class-detail-select" data-class-select="${escapeHtml(entry.id)}">${current.selectedClassId===entry.id&&!randomMode?'Selected for next expedition':`Choose ${escapeHtml(entry.name)}`}</button>`:''}
       </div>`;
   }

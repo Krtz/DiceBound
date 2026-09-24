@@ -160,6 +160,14 @@ async function main(){
       record.loot.bonuses="+2 Defense+3 Max HP+2% Crit"; // Bronze Full Helm +1 Defense Intrinsic
       record.signature="601f1ee5";
     }
+    // Beta 0.6.7.34 standardizes player-facing probability wording to
+    // "Crit Chance". The slot mechanics, state and RNG remain frozen.
+    {
+      const record=expected.find(c=>c.name==="slot-e");
+      assert.ok(record,"missing frozen slot-e Road Events case");
+      record.result="Two stars: +8% Crit Chance.";
+      record.signature="3945928d";
+    }
     for(const actualCase of actual.cases){
       const expectedCase=expected.find(c=>c.name===actualCase.name);
       assert.ok(expectedCase,"unexpected Road Events case "+actualCase.name);

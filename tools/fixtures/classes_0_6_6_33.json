@@ -78,7 +78,7 @@
             "name": "Ranger",
             "secret": false,
             "unlock": "Always unlocked",
-            "stats": "37 HP · 6 ATK · 15% CRIT · 8% DODGE",
+            "stats": "37 HP · 6 ATK · 15% CRIT CHANCE · 8% DODGE",
             "tags": [
               "ranged",
               "precision",
@@ -211,7 +211,7 @@
             "name": "Clown",
             "secret": false,
             "unlock": "Defeat the Board 2 dragon",
-            "stats": "34 HP · 6 ATK · 12% CRIT · 8 LUCK",
+            "stats": "34 HP · 6 ATK · 12% CRIT CHANCE · 8 LUCK",
             "tags": [
               "weird",
               "chaotic",
@@ -244,7 +244,7 @@
             "name": "Rouge",
             "secret": false,
             "unlock": "Reach 10 Prestige points",
-            "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT",
+            "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT CHANCE",
             "tags": [
               "weird",
               "artful",
@@ -278,7 +278,7 @@
             "name": "Berserker",
             "secret": false,
             "unlock": "Take 1,000 total damage",
-            "stats": "51 HP · 8 ATK · 5% CRIT · RAGE",
+            "stats": "51 HP · 8 ATK · 5% CRIT CHANCE · RAGE",
             "tags": [
               "melee",
               "vampiric",
@@ -479,7 +479,7 @@
             "name": "Ninja",
             "secret": false,
             "unlock": "Reach more than 100% Critical chance during a run",
-            "stats": "33 HP · 8 ATK · 28% CRIT · 12% DODGE",
+            "stats": "33 HP · 8 ATK · 28% CRIT CHANCE · 12% DODGE",
             "tags": [
               "melee",
               "dodgy",
@@ -680,7 +680,7 @@
             "name": "Rogue",
             "secret": false,
             "unlock": "Hold 5,000 gold at one time and defeat the Board 3 miniboss",
-            "stats": "34 HP · 8 ATK · 22% CRIT · 14% DODGE",
+            "stats": "34 HP · 8 ATK · 22% CRIT CHANCE · 14% DODGE",
             "tags": [
               "melee",
               "dodgy",
@@ -851,7 +851,7 @@
             "name": "Ouroboros",
             "secret": true,
             "unlock": "Secret: reach 400% Echo Strike during a run",
-            "stats": "48 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT",
+            "stats": "48 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT CHANCE",
             "tags": [
               "secret",
               "weird",
@@ -883,7 +883,7 @@
             "name": "Dragoon",
             "secret": false,
             "unlock": "Defeat the Board 4 miniboss once",
-            "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT · JUMP",
+            "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT CHANCE · JUMP",
             "tags": [
               "melee",
               "precision",
@@ -2108,7 +2108,11 @@
         },
         "recipe": {
           "name": "Deafening Blast",
-          "tip": "165% AoE; next response deals 35% less damage and delays a special."
+          "tip": "165% AoE; next response deals 35% less damage and delays a special.",
+          "damage": 1.65,
+          "responses": 1,
+          "responseDamageMultiplier": 0.65,
+          "guardianDelay": 1
         },
         "bonuses": {
           "damage": 0.07,

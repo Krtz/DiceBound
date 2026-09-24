@@ -138,6 +138,8 @@ function harness(options={}) {
   const h=harness({enemies:[e],randoms:[.9]});
   const result=owner.triggerElementEffect('gun',e,{forced:true});
   assert.strictEqual(result.totalDamage,39,'20 ATK -> 24 base + 15 armor-pierce compensation');
+  assert(!h.trace.some(entry=>entry[0]==='anim'&&entry[1]==='gun'),'Deadeye Volley must not request the retired emoji element animation when dedicated art exists');
+  assert(h.trace.some(entry=>entry[0]==='projectile'&&entry[1]==='gun'),'Deadeye Volley must still request its dedicated authored projectile VFX');
 }
 
 // Tech is 30% damage with its 10% current-battle Attack reduction.

@@ -107,6 +107,9 @@ async function main(){
       if(copy?.kind==="treasure"&&copy?.loot&&typeof copy.loot.bonuses==="string"){
         copy.loot.bonuses=copy.loot.bonuses.replace("+9% Dodge","+8% Dodge");
       }
+      if(copy?.item?.legendaryEffectId==="unstable_ultimate"&&typeof copy.item.uniqueEffect==="string"){
+        copy.item.uniqueEffect=copy.item.uniqueEffect.replace(/^💥 Unstable Ultimate:/,"💥70 Unstable Ultimate:");
+      }
       return copy;
     });
     assert.deepEqual(normalizeIntentionalIntrinsicPresentation(actual.cases.filter(c=>c.kind!=="reject")),expected);
