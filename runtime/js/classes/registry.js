@@ -1282,6 +1282,7 @@
     invokerAfterPlayerAction:kind=>invokerRuntime?.afterPlayerAction?.(kind),
     invokerAfterPlayerHit:(target,options)=>invokerRuntime?.afterPlayerHit?.(target,options),
     invokerResponseModifier:()=>invokerRuntime?.responseModifier?.()||null,
+    invokerAttackSpec:key=>invokerRuntime?.ATTACK?.[key]||null,
     invokerQuasStrike:()=>callInvoker("quasStrike"),
     invokerWexStrike:()=>callInvoker("wexStrike"),
     invokerExortStrike:()=>callInvoker("exortStrike"),
