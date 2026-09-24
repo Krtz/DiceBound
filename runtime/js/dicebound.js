@@ -4441,6 +4441,7 @@ dbReturnToRoadTraceReady=true;
     berserkerRageBonus:()=>DB_EFFECTIVE_STATS.berserkerRageBonus(player),
     hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id],
     activeTrainerPetId:()=>dbCombat.activeTrainerPetId(),
+    invokerAttackSpec:key=>dbClasses.invokerAttackSpec(key),
     selectEnemy:index=>setCurrentEnemy(index),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
