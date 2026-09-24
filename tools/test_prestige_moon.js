@@ -20,7 +20,11 @@ assert.match(source,/top:clamp\(12px,2vw,28px\);right:clamp\(12px,2vw,28px\)/,'B
 assert.match(source,/data-prestige-held/,'Moon must expose the semantic held-currency counter');
 assert.match(source,/data-prestige-node/,'Moon must render data-driven upgrade nodes');
 assert.match(source,/data-prestige-refund/,'Moon must own the Refund All interaction surface');
-assert.match(source,/Moon Forge is intentionally cost-TBD/,'Moon must make the unresolved Forge cost explicit');
+assert.match(source,/data-prestige-crucible-open/,'built Echo Crucible must open its dedicated Moon surface');
+assert.match(source,/data-crucible-select/,'Crucible must expose learned-Echo selection');
+assert.match(source,/data-crucible-sacrifice/,'Crucible must expose explicit Legendary sacrifice controls');
+assert.match(source,/Moon Metal/,'Crucible must present Moon Metal currency');
+assert.match(source,/Artifact and authored Mythical gear can never be extracted/,'Crucible must communicate extraction eligibility');
 assert.doesNotMatch(source,/Math\.random|random\(/,'Moon presentation must not own purchase RNG');
 
 const monolith=fs.readFileSync(path.join(root,'runtime/js/dicebound.js'),'utf8');
@@ -28,6 +32,12 @@ const progression=fs.readFileSync(path.join(root,'runtime/js/progression/lifecyc
 const talent=fs.readFileSync(path.join(root,'runtime/js/ui/talent-tree.js'),'utf8');
 const camp=fs.readFileSync(path.join(root,'runtime/js/ui/camp.js'),'utf8');
 assert.match(monolith,/const DB_PRESTIGE=window\.DiceboundPrestige/,'monolith must consume the authoritative Prestige domain owner');
+assert.match(progression,/const ECHO_CRUCIBLE=window\.DiceboundEchoCrucible/,'Progression must consume the focused Echo Crucible owner');
+assert.match(progression,/function crucibleSacrifice\(itemId\)/,'Progression must own the Crucible sacrifice transaction');
+assert.match(progression,/call\('syncHeirloomState',\{persist:false\}\);call\('saveMeta'\)/,'Crucible sacrifice must synchronize item ownership and persist once inside Progression');
+assert.match(monolith,/const result=dbProgression\.crucibleSacrifice\(itemId\);/,'Moon sacrifice must route through Progression');
+assert.match(monolith,/const result=dbProgression\.crucibleSelect\(effectId\|\|null\);/,'Moon selection must route through Progression');
+assert.doesNotMatch(monolith,/dbEchoCrucible\.(?:sacrifice|select|inspect)\(/,'Crucible semantic transactions must not return to the monolith');
 assert.match(progression,/PRESTIGE\.purchase\(state\.prestige,id,\(\)=>call\('random'\)\)/,'Progression facade must be the ordinary purchase RNG boundary');
 assert.match(monolith,/const result=dbProgression\.prestigePurchase\(id\);/,'Prestige Moon purchase must route through DiceboundProgression');
 assert.match(progression,/PRESTIGE\.refundAll\(state\.prestige\)/,'Progression facade must coordinate the focused Prestige refund domain');
@@ -45,4 +55,4 @@ assert.doesNotMatch(fs.readFileSync(path.join(root,'runtime/css/dicebound.css'),
 assert.doesNotMatch(talent,/data-talent-prestige/,'Talent UI must not retain a second Prestige action');
 assert.doesNotMatch(talent,/talent-tree-prestige/,'Talent UI must not retain Prestige presentation markup or styles');
 
-console.log('Prestige Moon UI owner PASS: destination chrome, data-driven nodes and Progression-owned reset/purchase/refund facade contract');
+console.log('Prestige Moon UI owner PASS: Moon chrome, Crucible interaction surface and Progression-owned transactions');

@@ -50,7 +50,7 @@
     score:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.score(item);},
     formatBonuses:item=>formatBonuses(item),
     formatComparison:(item,current)=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.formatComparison(item,current);},
-    syncHeirloomState:()=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.sync();},
+    syncHeirloomState:options=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.sync(options);},
     toggleStoredHeirloomActive:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleStoredActive(item);},
     discardStoredHeirloom:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.discardStored(item);},
     toggleRunHeirloomStorage:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleRunStorage(item);},
@@ -344,7 +344,7 @@
   syncMutedFromSettings();
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
   normalizePrestigeState();
-  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
+  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();dbProgression?.crucibleNormalize?.();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
   const DiceboundStateEvents=dbRuntime.createEventBus();
 
@@ -556,7 +556,7 @@
     shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,
     guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
     guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,
-    elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{}
+    elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},crucibleEchoEffectId:null
   };
 
   const dbEquipmentIdentityOwner=window.DiceboundEquipment;
@@ -574,15 +574,17 @@
 
       function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
           function bonusLabel(key,value){
-    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage"};
-    if(key==="luck")return `+${Math.round(value*100)} Luck`;
+    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage",thorns:"Thorns"};
+    const amount=Number(value)||0,sign=amount<0?"−":"+",magnitude=Math.abs(amount);
+    if(key==="luck")return `${sign}${Math.round(magnitude*100)} Luck`;
+    if(String(key).startsWith("elementProc:")){const id=String(key).slice("elementProc:".length),element=ELEMENTS[id];return `${sign}${Math.round(magnitude*100)}% ${element?.name||id} proc`;}
     const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
-    return `+${pct?Math.round(value*100)+"%":value} ${names[key]||key}`;
+    return `${sign}${pct?Math.round(magnitude*100)+"%":magnitude} ${names[key]||key}`;
   }
   function formatBonuses(item){
     const stats=Object.entries(item?.bonuses||{}).map(([k,v])=>bonusLabel(k,v));
-    const identity=dbEquipmentIdentityOwner.identityForItem?.(item),intrinsic=dbEquipmentIdentityOwner.intrinsicBonusesForItem?.(item)||{};
-    const intrinsicText=Object.entries(intrinsic).map(([k,v])=>bonusLabel(k,v));
+    const identity=dbEquipmentIdentityOwner.identityForItem?.(item),intrinsic=dbEquipmentIdentityOwner.intrinsicBonusesForItem?.(item)||{},elementProcs=dbEquipmentIdentityOwner.elementProcBonusesForItem?.(item)||{};
+    const intrinsicText=[...Object.entries(intrinsic).map(([k,v])=>bonusLabel(k,v)),...Object.entries(elementProcs).map(([k,v])=>bonusLabel(`elementProc:${k}`,v))];
     if(identity&&intrinsicText.length)stats.push(`INTRINSIC (${identity.displayName}): ${intrinsicText.join(" · ")}`);
     if(item?.element&&ELEMENTS[item.element])stats.push(elementSummary(item));
     if(item?.uniqueEffect)stats.push(`Unique: ${item.uniqueEffect}`);
@@ -595,6 +597,11 @@
     if(!item)return;
     const oldMax=player.maxHp,total=dbEquipmentIdentityOwner.allBonusesForItem?.(item)||item.bonuses||{};
     Object.entries(total).forEach(([key,value])=>{if(typeof player[key]==="number")player[key]+=value*sign;});
+    player.equipmentElementProcs=player.equipmentElementProcs||{};
+    for(const [element,value] of Object.entries(dbEquipmentIdentityOwner.elementProcBonusesForItem?.(item)||{})){
+      player.equipmentElementProcs[element]=Math.max(0,(player.equipmentElementProcs[element]||0)+value*sign);
+      if(player.equipmentElementProcs[element]<=.000001)delete player.equipmentElementProcs[element];
+    }
     player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
     if(player.maxHp<1)player.maxHp=1;
     if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
@@ -660,7 +667,7 @@
     getTilesMovedThisRun:()=>tilesMovedThisRun,getRolls:()=>rolls,isNightmare:()=>!!nightmareMode,random:()=>random(),updateMetaUI:()=>updateMetaUI(),
     getRunMode:()=>dbCareerRunMode(),getCareerRunSnapshot:()=>dbCareerRunSnapshot(),
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
-    getEquipmentSlotCount:()=>EQUIPMENT_SLOTS.length,syncHeirloomState:()=>dbItems.syncHeirloomState(),
+    getEquipmentSlotCount:()=>EQUIPMENT_SLOTS.length,syncHeirloomState:options=>dbItems.syncHeirloomState(options),getLegendaryEffects:()=>dbItemGenerationOwner.effects,
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
     mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,
     getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
@@ -668,6 +675,7 @@
     classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>window.DiceboundClassChooser.render(),addLog:html=>addLog(html),
     sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
   });
+  dbProgression.crucibleNormalize();
   dbHeirloomOperations=dbHeirloomOperationsOwner.createController({
     getMeta:()=>meta,normalizeItem:item=>normalizeSavedItem(item),isEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),
     storageUnlocked:()=>dbProgression.heirloomStorageUnlocked(),storageCapacity:()=>dbProgression.heirloomStorageCapacity(),activeCapacity:()=>dbProgression.heirloomLoadoutCapacity(),
@@ -863,6 +871,7 @@ function returnToRoad(...args){
     function triggerStrikeElements(target,chaos=null){
     const results=[];const weapon=dbCombat.triggerWeaponElement(target);if(weapon)results.push(weapon);
     Object.entries(player.classElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"class affinity"});if(r)results.push(r);}});
+    Object.entries(player.equipmentElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"equipment intrinsic"});if(r)results.push(r);}});
     const omniTimes=rollTieredProc(player.omniElementChance||0);for(let n=0;n<omniTimes;n++)ELEMENT_KEYS.forEach(key=>{const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"Prismatic Accident"});if(r)results.push(r);});
     if(chaos?.forceElement){const r=dbCombat.element(chaos.forceElement,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"d20"});if(r)results.push(r);}
     if(chaos?.allElements)DIBO_ELEMENTS.forEach(key=>{const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"natural twenty"});if(r)results.push(r);});
@@ -910,8 +919,9 @@ function returnToRoad(...args){
 
   function choiceHTML(up){
     inferUpgradeTags(up);
-    const signature=up?.id==='perfected_signature';
-    return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc${signature?' signature-current':''}">${dbPowerups.describe(up)}</span><span class="choice-tags">${tagChips(up.tags,'power')}</span>`;
+    const signature=up?.id==='perfected_signature',art=window.DiceboundAssets?.resolvePowerupArtFor?.(up);
+    const icon=art?.image?`<img class="db-art-icon db-art-choice" src="${art.image}" alt="${String(art.alt||up.name||'Powerup').replace(/"/g,'&quot;')}">`:up.icon;
+    return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon" data-powerup-id="${up.id}">${icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc${signature?' signature-current':''}">${dbPowerups.describe(up)}</span><span class="choice-tags">${tagChips(up.tags,'power')}</span>`;
   }
 
   function attachPowerupReroll(grid,reroll){
@@ -1202,7 +1212,15 @@ function returnToRoad(...args){
   function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay","careerOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
-  function startNewGame(){return dbRun.startFreshRun();}
+  async function db068ConfirmEchoForRun(){
+    const warning=dbProgression.crucibleWarning({classId:selectedClassId,randomClass:!!window.DiceboundClassChooser?.isRandomMode?.()});
+    if(!warning)return true;
+    return diceboundConfirm(`${warning}\n\nStart the run anyway?`,{title:'Echo Crucible compatibility',confirmLabel:'Start anyway'});
+  }
+  async function startNewGame(options={}){
+    if(!(await db068ConfirmEchoForRun()))return false;
+    return dbRun.startFreshRun(options);
+  }
   function showEnd(victory){dbRunClearCheckpoint();rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
     dbPowerups.configure({
@@ -2182,11 +2200,26 @@ function returnToRoad(...args){
   // saves, effective stats, reset semantics and RNG in their existing owners.
   const db064PrestigeMoon=window.DiceboundPrestigeMoon;
   if(!db064PrestigeMoon)throw new Error('DiceBound requires the Prestige Moon UI module before dicebound.js');
+  async function db068SacrificeCrucibleItem(itemId){
+    const preview=dbProgression.crucibleSacrificePreview(itemId);
+    if(!preview.ok){showToast(preview.reason);return false;}
+    const {item,effect,reward}=preview;
+    if(!(await diceboundConfirm(`Sacrifice ${item.name||'this Legendary'}?\n\n${effect?.name||item.legendaryEffectName||'Legendary Effect'} — ${effect?.desc||item.legendaryEffectDesc||''}\n\n${reward}\n\nThe physical item will be destroyed.`,{title:'Sacrifice Legendary?',confirmLabel:'Sacrifice',danger:true})))return false;
+    const result=dbProgression.crucibleSacrifice(itemId);
+    if(!result.ok){showToast(result.reason);return false;}
+    dbEquipmentUi.renderCampStorage();updateMetaUI();
+    showToast(result.outcome==='learned'?`Echo learned: ${result.effect.name}`:`Duplicate ${result.effect.name} converted to 1 Moon Metal.`,3200,true);return result;
+  }
+  function db068SelectCrucibleEcho(effectId){
+    const result=dbProgression.crucibleSelect(effectId||null);
+    if(!result.ok){showToast(result.reason);return false;}
+    updateMetaUI();showToast(result.effect?`Active Echo: ${result.effect.name}`:'Echo cleared.');return result;
+  }
   db064PrestigeMoon.configure({
     find:$,
     getState:()=>{
       const total=dbProgression.allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
-      return {prestige:dbProgression.prestigeInspect(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:'Moon Forge cost is intentionally TBD until balance review.'};
+      return {prestige:dbProgression.prestigeInspect(),crucible:dbProgression.crucibleView({classId:selectedClassId}),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:dbProgression.crucibleBuilt()?'The Echo Crucible is online. Moon Forge crafting comes next.':'The Echo Crucible costs 20 PP and unlocks Legendary Effect extraction.'};
     },
     prestige:()=>prestigeTree(),
     purchase:id=>{
@@ -2194,9 +2227,13 @@ function returnToRoad(...args){
       const result=dbProgression.prestigePurchase(id);
       if(!result.ok){showToast(result.reason);return result;}
       const heirloomPurchase=['heirloom-storage','heirloom-vault-expansion','heirloom-loadout'].includes(result.node.kind);
-      if(heirloomPurchase){dbItems.syncHeirloomState();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} ${result.rank>1?`rank ${result.rank} `:''}purchased.`);}else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
+      if(heirloomPurchase){dbItems.syncHeirloomState();dbEquipmentUi.renderCampStorage();v24RefreshCamp();showToast(`${result.node.label} ${result.rank>1?`rank ${result.rank} `:''}purchased.`);}
+      else if(result.node.kind==='structure')showToast(`${result.node.label} built.`,3200,true);
+      else showToast(`${result.node.label}: ${dbProgression.prestigeFormatStats(result.stats)}.`);
       saveMeta();updateMetaUI();return result;
     },
+    sacrificeCrucible:itemId=>db068SacrificeCrucibleItem(itemId),
+    selectCrucible:effectId=>db068SelectCrucibleEcho(effectId),
     refundAll:async()=>{
       if(gameStarted){showToast('Refund Prestige Points between runs.');return false;}
       const current=dbProgression.prestigeInspect();
@@ -3234,13 +3271,6 @@ dbReturnToRoadTraceReady=true;
   }
   function v319BoardDigest(){return tiles.map((t,i)=>({i,type:t?.type||null,pack:t?.packSize||1,enemy:t?.enemyBase?.name||null}));}
 
-  // GLASS NEEDLE — normalize the live registry icon once so every canonical
-  // powerup-choice renderer receives the real art without wrapping choiceHTML.
-  const db0511GlassNeedleArt=window.DiceboundAssets?.resolveUiIcon?.('glassNeedle')?.image||'';
-
-  const db0511GlassNeedle=upgrades.find?.(u=>u?.name==='Glass Needle');
-  if(db0511GlassNeedle&&db0511GlassNeedleArt)db0511GlassNeedle.icon=`<img class="db-art-icon db-art-choice db-art-glass-needle" src="${db0511GlassNeedleArt}" alt="Glass Needle">`;
-
   // ALCHEMIST — the outside-potion DOM listener was registered against an old
   // function object before later tracking wrappers replaced usePotionOutsideCombat.
   // Capture the click and route it through the current live function instead.
@@ -3510,8 +3540,9 @@ dbReturnToRoadTraceReady=true;
   }
 
   window.DiceboundCamp.configureShell({scheduleRunCheckpoint:()=>dbRunScheduleCheckpoint(),clearCheckpoint:()=>dbRunClearCheckpoint(),refreshRunControls:()=>dbRunRefreshControls()});
-  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){dbRun.startFreshRun({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
+  document.addEventListener('click',event=>{const go=event.target?.closest?.('#campGoBtn');if(!go||!DB_RUN_CHECKPOINT.has())return;event.preventDefault();event.stopImmediatePropagation();(async()=>{if(await diceboundConfirm('Starting a new expedition will abandon the saved run. Continue?',{title:'Start a new run?',confirmLabel:'Abandon and start',danger:true})){await startNewGame({beforeFreshRun:()=>{$('startOverlay')?.classList.add('hidden');document.querySelectorAll('.camp-panel').forEach(panel=>panel.classList.remove('active'));}});}})();},true);
   window.DiceboundRunResumeTest=Object.freeze({isStable:dbRunIsStable,snapshot:dbRunSnapshot,save:dbRunWriteCheckpoint,load:()=>DB_RUN_CHECKPOINT.load(),restore:checkpoint=>dbRunRestore(checkpoint||DB_RUN_CHECKPOINT.load().checkpoint),clear:dbRunClearCheckpoint,state:()=>({gameStarted,rollLocked,combatBusy,boardLevel,position:player.position,player:dbRunClone(player),rng:window.DiceboundRng.snapshot(),summary:dbRunSummary()})});
+  window.DiceboundEchoCrucibleTest=Object.freeze({view:()=>dbRunClone(db068CrucibleView()),hasEffect:id=>db060HasEffect(id),player:()=>dbRunClone(player)});
   // Test-only exercise of the live final-boss path. It deliberately resets the
   // ephemeral test session after each capture; it is never exposed to player UI.
   function dbGuardianIdentityExercise(board,mode="normal",resume=false){
@@ -4669,7 +4700,7 @@ dbReturnToRoadTraceReady=true;
 
   /* SEMANTIC OWNER — Player / per-run initialization (#311). */
   dbRun.configurePlayerInitialization({
-    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,
+    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,getRunEchoEffectId:()=>dbProgression.crucibleRunEffectId(),
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>dbProgression.heirloomLoadoutCapacity(),
     equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),

@@ -7,10 +7,12 @@ const vm=require("node:vm");
 
 const root=path.join(__dirname,"..");
 const careerSource=fs.readFileSync(path.join(root,"runtime/js/progression/career-history.js"),"utf8");
+const crucibleSource=fs.readFileSync(path.join(root,"runtime/js/progression/echo-crucible.js"),"utf8");
 const source=fs.readFileSync(path.join(root,"runtime/js/progression/lifecycle.js"),"utf8");
 const sandbox={window:{DiceboundPrestige:{award:(state,count)=>({...state,count:(state?.count||0)+count})}},console};
 sandbox.window.window=sandbox.window;
 vm.runInNewContext(careerSource,sandbox,{filename:"progression/career-history.js"});
+vm.runInNewContext(crucibleSource,sandbox,{filename:"progression/echo-crucible.js"});
 vm.runInNewContext(source,sandbox,{filename:"progression/lifecycle.js"});
 const P=sandbox.window.DiceboundProgression;
 assert.ok(P,"Progression facade did not publish");

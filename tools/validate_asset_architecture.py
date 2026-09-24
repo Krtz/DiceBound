@@ -5,7 +5,7 @@ import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
-EXPECTED={'classes': 27, 'pets': 14, 'pet_battle_assets': 14, 'normal_enemies': 11, 'normal_enemy_battle_assets': 63, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 18, 'powerup_assets': 22, 'powerup_name_mappings': 28, 'registry_files': 347, 'combat_effect_assets': 33, 'equipment_assets': 27}
+EXPECTED={'classes': 27, 'pets': 14, 'pet_battle_assets': 14, 'normal_enemies': 11, 'normal_enemy_battle_assets': 69, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 18, 'powerup_assets': 37, 'powerup_id_mappings': 47, 'registry_files': 402, 'combat_effect_assets': 33, 'equipment_assets': 61}
 RETIRED_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/sounds/")
 SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
@@ -39,7 +39,7 @@ def runtime_scripts(runtime):
     if not scripts: fail("runtime module manifest has an empty load order")
     return scripts
 def load_registry(runtime):
-    node='global.window={};global.document=undefined;require(process.argv[1]);const A=window.DiceboundAssets,P=window.DiceboundPowerupArt;console.log(JSON.stringify({files:A.files,manifest:A.manifest,powerupNames:P?.nameKeys||{}}));'
+    node='global.window={};global.document=undefined;require(process.argv[1]);const A=window.DiceboundAssets;console.log(JSON.stringify({files:A.files,manifest:A.manifest,powerupIds:A.powerupIdKeys||{}}));'
     p=subprocess.run(["node","-e",node,str(runtime/"js/assets.js")],text=True,capture_output=True)
     if p.returncode: fail(f"Could not load asset registry: {p.stderr or p.stdout}")
     return json.loads(p.stdout)
@@ -59,7 +59,7 @@ def main():
     scripts=runtime_scripts(runtime)
     for rel in scripts: check_js(runtime/rel)
     reg=load_registry(runtime); m=reg["manifest"]
-    counts={"classes":len(m["classes"]),"pets":len(m["pets"]),"pet_battle_assets":sum(1 for entry in m["pets"].values() if entry.get("battle")),"normal_enemies":len(m["enemies"]),"normal_enemy_battle_assets":sum(len(entry.get("battleByBoard",{}))+(1 if entry.get("portrait") else 0) for entry in m["enemies"].values()),"normal_enemy_board_markers":sum(1 for entry in m["enemies"].values() if entry.get("boardMarker")),"minibosses":len(m["minibosses"]),"bosses":len(m["bosses"]),"secret_bosses":len(m["secretBosses"]),"board_backgrounds":len(m["board"]["backgrounds"]),"combat_backgrounds":sum(len(backgrounds) for backgrounds in m["combat"]["backgrounds"].values()),"combat_effect_assets":sum(len(entry.get("frames",[]))+(1 if entry.get("image") else 0) for entry in m["combat"]["effects"].values()),"powerup_assets":len(m["powerups"]),"powerup_name_mappings":len(reg["powerupNames"]),"registry_files":len(reg["files"]),"equipment_assets":len(list((runtime/"assets/equipment").rglob("*.png")))}
+    counts={"classes":len(m["classes"]),"pets":len(m["pets"]),"pet_battle_assets":sum(1 for entry in m["pets"].values() if entry.get("battle")),"normal_enemies":len(m["enemies"]),"normal_enemy_battle_assets":sum(len(entry.get("battleByBoard",{}))+(1 if entry.get("portrait") else 0) for entry in m["enemies"].values()),"normal_enemy_board_markers":sum(1 for entry in m["enemies"].values() if entry.get("boardMarker")),"minibosses":len(m["minibosses"]),"bosses":len(m["bosses"]),"secret_bosses":len(m["secretBosses"]),"board_backgrounds":len(m["board"]["backgrounds"]),"combat_backgrounds":sum(len(backgrounds) for backgrounds in m["combat"]["backgrounds"].values()),"combat_effect_assets":sum(len(entry.get("frames",[]))+(1 if entry.get("image") else 0) for entry in m["combat"]["effects"].values()),"powerup_assets":len(m["powerups"]),"powerup_id_mappings":len(reg["powerupIds"]),"registry_files":len(reg["files"]),"equipment_assets":len(list((runtime/"assets/equipment").rglob("*.png")))}
     if not isinstance(m.get("version"),int) or m["version"]<1: fail(f"invalid asset registry version: {m.get('version')}")
     for k,v in EXPECTED.items():
         if counts[k]!=v: fail(f"{k}: expected {v}, got {counts[k]}")
@@ -99,8 +99,8 @@ def main():
         if not (runtime/"assets"/rel).is_file(): fail(f"inventory staged asset missing: {rel}")
     for rel in inv.get("placeholderDocs",[]):
         if not (runtime/"assets"/rel).is_file(): fail(f"placeholder home missing: {rel}")
-    bad={k for k in reg["powerupNames"].values() if k not in m["powerups"] and k not in m["ui"]["icons"]}
-    if bad: fail("unknown powerup art keys: "+", ".join(sorted(bad)))
+    bad={k for k in reg["powerupIds"].values() if k not in m["powerups"] and k not in m["ui"]["icons"]}
+    if bad: fail("unknown semantic powerup art keys: "+", ".join(sorted(bad)))
 
     pointer_sources=collect_live_pointers(runtime); pointers=sorted({x for refs in pointer_sources.values() for x in refs})
     retired_pointers=[]; unknown=[]; missing=[]

@@ -58,14 +58,24 @@
       placement: 'right-lower'
     }),
     Object.freeze({
-      id: 'moon-forge',
-      label: 'Build Moon Forge',
-      detail: 'A persistent lunar smithy will become the home of Prestige crafting.',
-      cost: null,
+      id: 'echo-crucible',
+      label: 'Build Echo Crucible',
+      detail: 'Permanently unlock Legendary Effect extraction, one active Echo and Moon Metal.',
+      cost: 20,
       refundable: false,
       kind: 'structure',
-      placement: 'left',
-      unavailableReason: 'Moon Forge cost is awaiting balance approval.'
+      placement: 'left-upper'
+    }),
+    Object.freeze({
+      id: 'moon-forge',
+      label: 'Build Moon Forge',
+      detail: 'A persistent lunar smithy will craft learned Echoes into gear in a later release.',
+      cost: null,
+      refundable: false,
+      requires: 'echo-crucible',
+      kind: 'structure',
+      placement: 'left-lower',
+      unavailableReason: 'Moon Forge crafting is not available yet.'
     })
   ]);
 
@@ -261,7 +271,7 @@
   }
 
   window.DiceboundPrestige = Object.freeze({
-    apiVersion: 2,
+    apiVersion: 3,
     owner: OWNER,
     statKeys: STAT_KEYS,
     nodes: NODES,

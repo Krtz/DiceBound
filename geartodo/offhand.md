@@ -60,14 +60,6 @@ tags: source-inspired, martial, guardian
 eligibility: uncommon+
 intrinsic: +2 Defense, +1 Thorns, +1 Luck
 ---
-## Arcane Tome
-family: tome
-material: paper, leather
-weight: medium
-tags: arcane, caster
-eligibility: uncommon+
-intrinsic: +8 Mana, +1% Echo
----
 ## Attuned Crystal Orb
 family: orb
 material: crystal
@@ -83,14 +75,6 @@ weight: light
 tags: caster, book, source-inspired, prototype-reference
 eligibility: common+
 intrinsic: +6 Mana, +1% Echo
----
-## Bag of Confetti
-family: bag
-material: cloth
-weight: light
-tags: clown, weird
-eligibility: poor+
-intrinsic: +1 Luck
 ---
 ## Bane Square Shield
 family: square-shield

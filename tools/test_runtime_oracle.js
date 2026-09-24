@@ -84,9 +84,13 @@ pass("core-default-career",()=>{
   assert.equal(defaults.settings.characterLayout,"modern");
   const historical=JSON.parse(JSON.stringify(defaults));
   delete historical.settings.characterLayout;
+  delete historical.heirloomStorage;
+  delete historical.echoCrucible;
   const serialized=JSON.stringify(historical);
   assert.equal(Buffer.byteLength(serialized),864);
   assert.equal(crypto.createHash("sha256").update(serialized).digest("hex"),"792efe9975270b9abf6ad7acaa22a3724662fac68407d135c12549fa538fe488");
+  assert.deepEqual(Array.from(defaults.heirloomStorage),[],"fresh runtime Meta must start with an empty Heirloom Vault");
+  assert.deepEqual(JSON.parse(JSON.stringify(defaults.echoCrucible)),{learnedEffectIds:[],selectedEffectId:null,moonMetal:0},"fresh runtime Meta must start with an empty Echo Crucible");
   assert.equal(JSON.stringify([1,10,11,25,26,50,51,100,101].map(service.legacyXpForLevel)),JSON.stringify([10,28,32,88,93,213,221,613,624]));
 });
 
@@ -95,6 +99,7 @@ pass("core-normalization",()=>{
   const service=window.DiceboundCoreState.createMetaService({classIds:["ranger","fighter"],petIds:["neutral","fire"],elementIds:["fire"],petUnlockRequirement:500,saveService:null});
   const meta=service.normalizeMeta({level:26,xpNext:999,purchased:{fortune_gold:2},elementProgress:{fire:500},settings:{masterVolume:2,soundPack:"custom",muted:true}});
   assert.equal(meta.xpNext,93);assert.equal(meta.purchased.roadborn,1);assert.equal(meta.pets.fire.unlocked,true);assert.equal(meta.settings.masterVolume,1);assert.equal(meta.settings.soundPack,"custom");assert.equal(meta.settings.muted,true);assert.equal(meta.settings.characterLayout,"modern");
+  assert.deepEqual(Array.from(meta.heirloomStorage),[]);assert.deepEqual(JSON.parse(JSON.stringify(meta.echoCrucible)),{learnedEffectIds:[],selectedEffectId:null,moonMetal:0});
 });
 
 pass("core-event-bus",()=>{

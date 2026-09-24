@@ -12,13 +12,16 @@
 
   const OWNER='progression/facade';
   const PRESTIGE=window.DiceboundPrestige;
+  const ECHO_CRUCIBLE=window.DiceboundEchoCrucible;
   const CAREER=window.DiceboundCareerHistory;
   if(!PRESTIGE?.award)throw new Error('DiceboundProgression requires DiceboundPrestige.');
+  if(!ECHO_CRUCIBLE?.createController)throw new Error('DiceboundProgression requires DiceboundEchoCrucible.');
   if(!CAREER?.finalizeRun)throw new Error('DiceboundProgression requires DiceboundCareerHistory.');
 
   const RETIRED_TALENT_REFUNDS=Object.freeze({legacy_storage:3});
-  let runtime=Object.freeze({});
-  function configure(nextRuntime={}){runtime=Object.freeze({...runtime,...nextRuntime});return api;}
+  let runtime=Object.freeze({}),crucibleDomain=null;
+  function configure(nextRuntime={}){runtime=Object.freeze({...runtime,...nextRuntime});if(Object.hasOwn(nextRuntime,'getLegendaryEffects'))crucibleDomain=null;return api;}
+  function crucible(){return crucibleDomain||(crucibleDomain=ECHO_CRUCIBLE.createController({effects:call('getLegendaryEffects')||[]}));}
   function requireCapability(name){const fn=runtime[name];if(typeof fn!=='function')throw new Error(`DiceboundProgression capability is not configured: ${name}`);return fn;}
   function call(name,...args){return requireCapability(name)(...args);}
   function meta(){return call('getMeta');}
@@ -134,6 +137,45 @@
   }
   function prestigeRefundAll(){const state=meta(),result=PRESTIGE.refundAll(state.prestige);state.prestige=result.prestige;return result;}
   function prestigeFormatStats(stats){return PRESTIGE.formatStats(stats);}
+
+  function crucibleNormalize(){const state=meta();state.echoCrucible=crucible().normalize(state.echoCrucible);return state.echoCrucible;}
+  function crucibleBuilt(){return PRESTIGE.hasPurchase(meta().prestige,'echo-crucible');}
+  function crucibleInspect(options={}){return crucible().inspect(crucibleNormalize(),options);}
+  function crucibleEffect(id){return crucible().effect(id);}
+  function crucibleWarning(options={}){return crucible().warning(crucibleNormalize(),options);}
+  function crucibleRunEffectId(){return crucible().runEffectId(crucibleNormalize());}
+  function crucibleView(options={}){
+    const state=meta(),view=crucibleInspect(options),activeIds=new Set((state.heirlooms||[]).map(item=>String(item?.id||'')));
+    const stored=(state.heirloomStorage||[]).filter(item=>crucible().isEligibleItem(item)).map(item=>{
+      const effect=crucibleEffect(item.legendaryEffectId);
+      return {id:String(item.id),name:item.name||'Generated Legendary',slot:item.slot,rarity:item.rarity,equipmentId:item.equipmentId||null,effectId:effect?.id||item.legendaryEffectId,effectName:effect?.name||item.legendaryEffectName||item.legendaryEffectId,effectDesc:effect?.desc||item.legendaryEffectDesc||'',effectIcon:effect?.icon||'✨',active:activeIds.has(String(item.id)),known:view.learnedEffectIds.includes(String(item.legendaryEffectId))};
+    });
+    return Object.freeze({...view,built:crucibleBuilt(),stored:Object.freeze(stored)});
+  }
+  function crucibleSacrificePreview(itemId){
+    if(call('getGameStarted'))return Object.freeze({ok:false,reason:'Use the Echo Crucible between runs.'});
+    if(!crucibleBuilt())return Object.freeze({ok:false,reason:'Build the Echo Crucible first.'});
+    const state=meta(),item=(state.heirloomStorage||[]).find(entry=>String(entry?.id||'')===String(itemId||''));
+    if(!item)return Object.freeze({ok:false,reason:'That Legendary is no longer in the Vault.'});
+    if((state.heirlooms||[]).some(active=>String(active?.id||'')===String(item.id)))return Object.freeze({ok:false,reason:'Remove that item from the active Heirloom loadout first.'});
+    if(!crucible().isEligibleItem(item))return Object.freeze({ok:false,reason:'Only generated Legendary gear with a stable Legendary Effect can be sacrificed.'});
+    const effect=crucibleEffect(item.legendaryEffectId),known=crucibleInspect().learnedEffectIds.includes(String(item.legendaryEffectId));
+    return Object.freeze({ok:true,item,effect,known,reward:known?'This duplicate will become 1 Moon Metal.':'Its Legendary Effect will be learned permanently.'});
+  }
+  function crucibleSacrifice(itemId){
+    const preview=crucibleSacrificePreview(itemId);if(!preview.ok)return preview;
+    const state=meta(),result=crucible().sacrifice({state:crucibleNormalize(),storage:state.heirloomStorage||[],activeHeirlooms:state.heirlooms||[],itemId});
+    if(!result.ok)return result;
+    state.echoCrucible={...result.state};state.heirloomStorage=[...result.storage];
+    call('syncHeirloomState',{persist:false});call('saveMeta');return result;
+  }
+  function crucibleSelect(effectId){
+    if(call('getGameStarted'))return Object.freeze({ok:false,reason:'Switch Echoes between runs.'});
+    if(!crucibleBuilt())return Object.freeze({ok:false,reason:'Build the Echo Crucible first.'});
+    const state=meta(),result=crucible().select(crucibleNormalize(),effectId||null);
+    if(result.ok){state.echoCrucible={...result.state};call('saveMeta');}
+    return result;
+  }
 
   function achievementRegistry(){return call('getAchievementRegistry');}
   function classes(){return call('getClasses');}
@@ -310,11 +352,12 @@
   function inspect(){return Object.freeze({owner:OWNER,configured:Object.freeze(Object.fromEntries(Object.entries(runtime).map(([key,value])=>[key,typeof value==='function'])))});}
 
   const api=Object.freeze({
-    owner:OWNER,apiVersion:1,configure,inspect,
+    owner:OWNER,apiVersion:2,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
     heirloomLoadoutCapacity,heirloomStorageUnlocked,heirloomStorageCapacity,heirloomStorageMilestones,
     careerStats,runHistory,careerInspect,recordRunStarted,recordBoardClear,hasBoardClear,recordDamageDealt,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,recordPotionUse,recordPowerupTaken,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
+    crucibleNormalize,crucibleBuilt,crucibleInspect,crucibleEffect,crucibleWarning,crucibleRunEffectId,crucibleView,crucibleSacrificePreview,crucibleSacrifice,crucibleSelect,
     hasAnyBoardClear:anyBoardClear,achievementDone,achievementConditionText,achievementRewardText,achievementGateConditionText,achievementGateUnlocked,heroMasteryEntries,achievementCount,
     isClassUnlocked,commitClassUnlock,unlockClass,checkDynamicClassUnlocks
   });

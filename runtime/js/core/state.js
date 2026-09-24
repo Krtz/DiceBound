@@ -12,8 +12,9 @@
     const defaultPetState=(unlocked=false)=>({level:1,xp:0,xpNext:2,unlocked,progress:0});
     const defaultPets=()=>Object.fromEntries(petIds.map(id=>[id,defaultPetState(id==="neutral")]));
     const defaultSettings=()=>({masterVolume:.70,soundPack:"synth",muted:false,characterLayout:"modern"});
+    const defaultEchoCrucible=()=>({learnedEffectIds:[],selectedEffectId:null,moonMetal:0});
     const defaultClassUnlockFacts=()=>({board3MinibossDefeated:false,board3BossDefeated:false,board4MinibossDefeated:false,beastmasterBoard5Cleared:false,roadMerchantSecretBossDefeated:false,maxLifesteal:0,manaSpenderCasts:0});
-    const defaultMeta=()=>({level:1,xp:0,xpNext:legacyXpForLevel(1),points:0,runs:0,bestTiles:0,purchased:{},heirlooms:[],pets:defaultPets(),activePet:"neutral",petCookies:0,elementProgress:Object.fromEntries(elementIds.map(id=>[id,0])),damageTaken:0,prestige:defaultPrestige(),nightmareUnlocked:false,settings:defaultSettings(),classUnlockFacts:defaultClassUnlockFacts(),unlocks:Object.fromEntries(classIds.map(id=>[id,id==="ranger"]))});
+    const defaultMeta=()=>({level:1,xp:0,xpNext:legacyXpForLevel(1),points:0,runs:0,bestTiles:0,purchased:{},heirlooms:[],heirloomStorage:[],echoCrucible:defaultEchoCrucible(),pets:defaultPets(),activePet:"neutral",petCookies:0,elementProgress:Object.fromEntries(elementIds.map(id=>[id,0])),damageTaken:0,prestige:defaultPrestige(),nightmareUnlocked:false,settings:defaultSettings(),classUnlockFacts:defaultClassUnlockFacts(),unlocks:Object.fromEntries(classIds.map(id=>[id,id==="ranger"]))});
     function normalizePurchased(raw={}){const out={...raw};if(Object.keys(out).length&&!out.roadborn)out.roadborn=1;return out;}
     function normalizeSavedItem(item){return item?JSON.parse(JSON.stringify(item)):item;}
     function normalizeMeta(parsed={}){
@@ -25,18 +26,22 @@
       const unlocks={...base.unlocks,...(parsed?.unlocks||{})};
       const settings={...defaultSettings(),...(parsed?.settings||{})};
       const classUnlockFacts={...defaultClassUnlockFacts(),...(parsed?.classUnlockFacts||{})};
+      const echoRaw=parsed?.echoCrucible||{},echoCrucible=defaultEchoCrucible();
+      echoCrucible.learnedEffectIds=[...new Set((Array.isArray(echoRaw.learnedEffectIds)?echoRaw.learnedEffectIds:[]).map(String).filter(Boolean))];
+      echoCrucible.selectedEffectId=echoCrucible.learnedEffectIds.includes(String(echoRaw.selectedEffectId||""))?String(echoRaw.selectedEffectId):null;
+      echoCrucible.moonMetal=Math.max(0,Math.floor(Number(echoRaw.moonMetal)||0));
       settings.masterVolume=clamp(Number(settings.masterVolume),0,1);
       settings.soundPack=settings.soundPack==="custom"?"custom":"synth";
       settings.muted=!!settings.muted;
       settings.characterLayout=settings.characterLayout==="classic"?"classic":"modern";
-      return {...base,...parsed,xpNext:legacyXpForLevel(parsed?.level||1),purchased:normalizePurchased(parsed?.purchased||{}),heirlooms:(parsed?.heirlooms||[]).map(normalizeSavedItem),pets,elementProgress,prestige,unlocks,settings,classUnlockFacts};
+      return {...base,...parsed,xpNext:legacyXpForLevel(parsed?.level||1),purchased:normalizePurchased(parsed?.purchased||{}),heirlooms:(parsed?.heirlooms||[]).map(normalizeSavedItem),heirloomStorage:(parsed?.heirloomStorage||[]).map(normalizeSavedItem),echoCrucible,pets,elementProgress,prestige,unlocks,settings,classUnlockFacts};
     }
     function load(){
       if(!saveService)return {meta:normalizeMeta(defaultMeta()),source:"new",recovered:false,error:null};
       return saveService.loadMeta({defaultFactory:defaultMeta,normalize:normalizeMeta});
     }
     function save(meta){try{return saveService?.saveMeta(meta)??false;}catch(error){console.error("Dicebound save failed",error);return false;}}
-    return Object.freeze({legacyXpForLevel,defaultPrestige,defaultPetState,defaultPets,defaultSettings,defaultMeta,normalizePurchased,normalizeSavedItem,normalizeMeta,load,save});
+    return Object.freeze({legacyXpForLevel,defaultPrestige,defaultPetState,defaultPets,defaultSettings,defaultEchoCrucible,defaultMeta,normalizePurchased,normalizeSavedItem,normalizeMeta,load,save});
   }
 
   function createEventBus(){

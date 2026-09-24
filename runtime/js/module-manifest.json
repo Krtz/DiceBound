@@ -71,6 +71,7 @@
     "items-facade",
     "progression-talents",
     "progression-prestige",
+    "progression-echo-crucible",
     "progression-achievements",
     "progression-career-history",
     "progression-lifecycle",
@@ -880,6 +881,16 @@
       ]
     },
     {
+      "id": "progression-echo-crucible",
+      "path": "js/progression/echo-crucible.js",
+      "domain": "progression/echo-crucible-learned-effects-moon-metal-and-sacrifice-transaction",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundEchoCrucible"
+      ]
+    },
+    {
       "id": "progression-achievements",
       "path": "js/progression/achievements.js",
       "domain": "progression/achievements-registry",
@@ -907,6 +918,7 @@
       "requires": [
         "progression-talents",
         "progression-prestige",
+        "progression-echo-crucible",
         "progression-career-history"
       ],
       "provides": [
@@ -1222,6 +1234,7 @@
       "status": "extracted",
       "requires": [
         "assets",
+        "item-rarities",
         "classes-registry",
         "classes-invoker",
         "progression-achievements",

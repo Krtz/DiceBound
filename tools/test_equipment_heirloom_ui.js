@@ -9,6 +9,7 @@ const vm=require("vm");
 
 const root=path.resolve(__dirname,"..");
 const source=fs.readFileSync(path.join(root,"runtime/js/ui/equipment-heirlooms.js"),"utf8");
+const raritySource=fs.readFileSync(path.join(root,"runtime/js/items/rarities.js"),"utf8");
 
 function classList(){
   const values=new Set();
@@ -136,12 +137,15 @@ assert.match(endStorage.endStorageGrid.children[0].innerHTML,/db-equipment-card-
 assert.match(endStorage.endStorageGrid.children[0].innerHTML,/db-rarity-name db-rarity-rare/,"stored Heirloom item names must retain their rarity colour semantic class");
 const ownerStyle=document.getElementById("dicebound-equipment-heirloom-ui-owner");
 assert.match(ownerStyle.textContent,/\.db-equipment-card-art\{width:48px;height:48px;max-width:48px;max-height:48px;/,"Heirloom card art must have explicit maximum dimensions");
-assert.match(ownerStyle.textContent,/\.db-rarity-rare\{color:#438bd8\}/,"Heirloom UI owner must own the rarity-name colour palette");
+assert.match(raritySource,/rare:Object\.freeze\(\{color:"#438bd8"/,"Rarity owner must own the canonical Rare colour");
+assert.doesNotMatch(ownerStyle.textContent,/\.db-rarity-rare\{color:/,"Heirloom UI must not duplicate the canonical rarity palette");
+assert.match(ownerStyle.textContent,/\.db-rarity-name\{[^}]*color:var\(--db-rarity-color,#fff\)/,"Heirloom item names must consume the semantic rarity colour variable");
 assert.match(ownerStyle.textContent,/\.vault-paper-doll\{/,"Heirloom UI owner must own the Vault paper-doll layout");
 assert.match(ownerStyle.textContent,/\.vault-tab\.active\{/,"Heirloom UI owner must own Vault category-tab presentation");
 assert.match(ownerStyle.textContent,/\.character-gear-grid\{/,"Equipment UI owner must own the in-run Character paper-doll layout");
 assert.match(ownerStyle.textContent,/grid-template-columns:repeat\(4,minmax\(42px,1fr\)\).*grid-template-areas:"hat amulet ring offhand" "weapon chest legs boots"/s,"narrow Character Gear must use the compact two-row layout");
-assert.match(ownerStyle.textContent,/\.character-gear-slot\.rare,.vault-paper-slot\.rare\{border-color:#65a9ff/,"Character and Vault paper dolls must share the rarity-frame language");
+assert.match(ownerStyle.textContent,/\.character-gear-slot:not\(\.empty\),\.vault-paper-slot:not\(\.empty\)\{border-color:var\(--db-rarity-color,#fff\)!important/,"Character and Vault paper dolls must consume one semantic rarity-frame colour");
+assert.doesNotMatch(ownerStyle.textContent,/border-color:#65a9ff/,"retired hard-coded Rare frame colour must not return");
 assert.ok(!source.includes("itemNameMarkup(item,'')"),"Heirloom/storage renderers must not fall back to unbounded semantic art");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8").replace(/\r\n/g,"\n");

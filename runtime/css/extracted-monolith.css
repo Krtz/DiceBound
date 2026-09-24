@@ -112,28 +112,30 @@
     .node-req.always-visible{display:block;margin-top:7px;color:#d9c9ff}
 
 /* v24Style */
-/* v2.4 rarity palette. Ordinary gear stops at Epic; Legendary+ is handcrafted. */
-    .choice-btn.poor,.equipment-slot.poor,.loot-card.poor{border-color:#a8adb7;background:linear-gradient(145deg,rgba(142,148,160,.14),rgba(70,75,86,.12))}
-    .choice-btn.common,.equipment-slot.common,.loot-card.common{border-color:#f3f4f7;background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(150,158,171,.08))}
-    .choice-btn.uncommon,.equipment-slot.uncommon,.loot-card.uncommon{border-color:#82c7ff;background:linear-gradient(145deg,rgba(82,167,232,.18),rgba(35,76,120,.12))}
-    .choice-btn.rare,.equipment-slot.rare,.loot-card.rare{border-color:#438bd8;background:linear-gradient(145deg,rgba(39,105,179,.23),rgba(25,55,104,.15))}
-    .choice-btn.epic,.equipment-slot.epic,.loot-card.epic{border-color:#f2e49a;background:linear-gradient(145deg,rgba(230,210,99,.19),rgba(112,91,24,.13))}
-    .choice-btn.legendary,.equipment-slot.legendary,.loot-card.legendary{border-color:#ffd45f;box-shadow:0 0 18px rgba(255,212,95,.18),inset 0 0 20px rgba(255,212,95,.06);background:linear-gradient(145deg,rgba(255,209,77,.24),rgba(121,77,16,.16))}
-    .choice-btn.artifact,.equipment-slot.artifact,.loot-card.artifact{border-color:#ff982f;box-shadow:0 0 20px rgba(255,126,35,.20),inset 0 0 22px rgba(255,126,35,.08);background:linear-gradient(145deg,rgba(185,76,16,.29),rgba(85,36,18,.20))}
-    .choice-btn.mythical,.equipment-slot.mythical,.loot-card.mythical{border-color:#bd83ff;box-shadow:0 0 22px rgba(181,105,255,.22),inset 0 0 24px rgba(181,105,255,.08);background:linear-gradient(145deg,rgba(103,44,170,.30),rgba(45,25,82,.24))}
-    .choice-btn.omega,.equipment-slot.omega,.loot-card.omega{border-color:#fff;box-shadow:0 0 30px rgba(255,255,255,.22),0 0 18px rgba(168,71,255,.30),inset 0 0 28px rgba(255,255,255,.08)}
-    .choice-btn.poor .rarity-badge,.loot-card.poor .rarity-badge{color:#c4c8cf}.choice-btn.common .rarity-badge,.loot-card.common .rarity-badge{color:#fff}
-    .choice-btn.uncommon .rarity-badge,.loot-card.uncommon .rarity-badge{color:#a9dbff}.choice-btn.rare .rarity-badge,.loot-card.rare .rarity-badge{color:#69adff}
-    .choice-btn.epic .rarity-badge,.loot-card.epic .rarity-badge{color:#f5e9a8}.choice-btn.legendary .rarity-badge,.loot-card.legendary .rarity-badge{color:#ffd45f;text-shadow:0 0 9px rgba(255,212,95,.48)}
-    .choice-btn.artifact .rarity-badge,.loot-card.artifact .rarity-badge{color:#ff9c38;text-shadow:0 0 9px rgba(255,126,35,.40)}
-    .choice-btn.mythical .rarity-badge,.loot-card.mythical .rarity-badge{color:#d6b4ff}.choice-btn.omega .rarity-badge,.loot-card.omega .rarity-badge{color:#fff}
-    .artifact-title{color:#ff9c38;text-shadow:0 0 14px rgba(255,126,35,.42)}
-    .legendary-title{color:#ffd45f;text-shadow:0 0 14px rgba(255,212,95,.40)}
-    .gear-keep-btn.poor .journey-gear-name{color:#c4c8cf}.gear-keep-btn.common .journey-gear-name{color:#fff}
-    .gear-keep-btn.uncommon .journey-gear-name{color:#a9dbff}.gear-keep-btn.rare .journey-gear-name{color:#69adff}
-    .gear-keep-btn.epic .journey-gear-name{color:#f5e9a8}.gear-keep-btn.legendary .journey-gear-name{color:#ffd45f;text-shadow:0 0 8px rgba(255,212,95,.38)}
-    .gear-keep-btn.artifact .journey-gear-name{color:#ff9c38;text-shadow:0 0 8px rgba(255,126,35,.36)}.gear-keep-btn.mythical .journey-gear-name{color:#d6b4ff}
-    .gear-keep-btn.omega .journey-gear-name{color:#fff;text-shadow:0 0 8px rgba(168,71,255,.55)}
+/* Canonical rarity palette. Gameplay/UI owners use DiceboundRarities;
+   these variables keep CSS-only legacy surfaces visually identical. */
+    :root{--db-rarity-poor:#c4c8cf;--db-rarity-common:#ffffff;--db-rarity-uncommon:#a9dbff;--db-rarity-rare:#438bd8;--db-rarity-epic:#f5e9a8;--db-rarity-legendary:#ffd45f;--db-rarity-artifact:#ff9c38;--db-rarity-mythical:#bd83ff;--db-rarity-omega:#ffffff}
+    .choice-btn.poor,.equipment-slot.poor,.loot-card.poor{border-color:var(--db-rarity-poor);background:linear-gradient(145deg,rgba(142,148,160,.14),rgba(70,75,86,.12))}
+    .choice-btn.common,.equipment-slot.common,.loot-card.common{border-color:var(--db-rarity-common);background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(150,158,171,.08))}
+    .choice-btn.uncommon,.equipment-slot.uncommon,.loot-card.uncommon{border-color:var(--db-rarity-uncommon);background:linear-gradient(145deg,rgba(82,167,232,.18),rgba(35,76,120,.12))}
+    .choice-btn.rare,.equipment-slot.rare,.loot-card.rare{border-color:var(--db-rarity-rare);background:linear-gradient(145deg,rgba(39,105,179,.23),rgba(25,55,104,.15))}
+    .choice-btn.epic,.equipment-slot.epic,.loot-card.epic{border-color:var(--db-rarity-epic);background:linear-gradient(145deg,rgba(230,210,99,.19),rgba(112,91,24,.13))}
+    .choice-btn.legendary,.equipment-slot.legendary,.loot-card.legendary{border-color:var(--db-rarity-legendary);box-shadow:0 0 18px rgba(255,212,95,.18),inset 0 0 20px rgba(255,212,95,.06);background:linear-gradient(145deg,rgba(255,209,77,.24),rgba(121,77,16,.16))}
+    .choice-btn.artifact,.equipment-slot.artifact,.loot-card.artifact{border-color:var(--db-rarity-artifact);box-shadow:0 0 20px rgba(255,126,35,.20),inset 0 0 22px rgba(255,126,35,.08);background:linear-gradient(145deg,rgba(185,76,16,.29),rgba(85,36,18,.20))}
+    .choice-btn.mythical,.equipment-slot.mythical,.loot-card.mythical{border-color:var(--db-rarity-mythical);box-shadow:0 0 22px rgba(181,105,255,.22),inset 0 0 24px rgba(181,105,255,.08);background:linear-gradient(145deg,rgba(103,44,170,.30),rgba(45,25,82,.24))}
+    .choice-btn.omega,.equipment-slot.omega,.loot-card.omega{border-color:var(--db-rarity-omega);box-shadow:0 0 30px rgba(255,255,255,.22),0 0 18px rgba(168,71,255,.30),inset 0 0 28px rgba(255,255,255,.08)}
+    .choice-btn.poor .rarity-badge,.loot-card.poor .rarity-badge{color:var(--db-rarity-poor)}.choice-btn.common .rarity-badge,.loot-card.common .rarity-badge{color:var(--db-rarity-common)}
+    .choice-btn.uncommon .rarity-badge,.loot-card.uncommon .rarity-badge{color:var(--db-rarity-uncommon)}.choice-btn.rare .rarity-badge,.loot-card.rare .rarity-badge{color:var(--db-rarity-rare)}
+    .choice-btn.epic .rarity-badge,.loot-card.epic .rarity-badge{color:var(--db-rarity-epic)}.choice-btn.legendary .rarity-badge,.loot-card.legendary .rarity-badge{color:var(--db-rarity-legendary);text-shadow:0 0 9px rgba(255,212,95,.48)}
+    .choice-btn.artifact .rarity-badge,.loot-card.artifact .rarity-badge{color:var(--db-rarity-artifact);text-shadow:0 0 9px rgba(255,126,35,.40)}
+    .choice-btn.mythical .rarity-badge,.loot-card.mythical .rarity-badge{color:var(--db-rarity-mythical)}.choice-btn.omega .rarity-badge,.loot-card.omega .rarity-badge{color:var(--db-rarity-common)}
+    .artifact-title{color:var(--db-rarity-artifact);text-shadow:0 0 14px rgba(255,126,35,.42)}
+    .legendary-title{color:var(--db-rarity-legendary);text-shadow:0 0 14px rgba(255,212,95,.40)}
+    .gear-keep-btn.poor .journey-gear-name{color:var(--db-rarity-poor)}.gear-keep-btn.common .journey-gear-name{color:var(--db-rarity-common)}
+    .gear-keep-btn.uncommon .journey-gear-name{color:var(--db-rarity-uncommon)}.gear-keep-btn.rare .journey-gear-name{color:var(--db-rarity-rare)}
+    .gear-keep-btn.epic .journey-gear-name{color:var(--db-rarity-epic)}.gear-keep-btn.legendary .journey-gear-name{color:var(--db-rarity-legendary);text-shadow:0 0 8px rgba(255,212,95,.38)}
+    .gear-keep-btn.artifact .journey-gear-name{color:var(--db-rarity-artifact);text-shadow:0 0 8px rgba(255,126,35,.36)}.gear-keep-btn.mythical .journey-gear-name{color:var(--db-rarity-mythical)}
+    .gear-keep-btn.omega .journey-gear-name{color:var(--db-rarity-common);text-shadow:0 0 8px rgba(168,71,255,.55)}
     .energy-shield-fill{position:absolute!important;left:0;top:0;bottom:0;height:100%;background:linear-gradient(90deg,rgba(78,171,255,.94),rgba(105,211,255,.82));box-shadow:0 0 14px rgba(73,173,255,.65);z-index:3;pointer-events:none;transition:width .18s ease;border-radius:inherit}
     .hpbar{position:relative;overflow:hidden}.hpbar>i:not(.energy-shield-fill){position:relative;z-index:2}
     .storage-locked{padding:12px;border-radius:13px;background:rgba(255,255,255,.04);color:var(--muted);line-height:1.5}

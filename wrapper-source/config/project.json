@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.7.34",
+  "version": "0.6.8.0",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -78,6 +78,7 @@
     "js/items/facade.js",
     "js/progression/talents.js",
     "js/progression/prestige.js",
+    "js/progression/echo-crucible.js",
     "js/progression/achievements.js",
     "js/progression/career-history.js",
     "js/progression/lifecycle.js",

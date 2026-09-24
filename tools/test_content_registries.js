@@ -20,7 +20,7 @@ for (const relative of [
 const boardsApi = context.window.DiceboundBoards;
 const equipmentApi = context.window.DiceboundEquipment;
 const achievementsApi = context.window.DiceboundAchievements;
-const apiVersions = { boards: 1, equipment: 3, achievements: 3 };
+const apiVersions = { boards: 1, equipment: 4, achievements: 3 };
 for (const [name, api] of [["boards", boardsApi], ["equipment", equipmentApi], ["achievements", achievementsApi]]) {
   assert.ok(api, `${name} module did not publish its API`);
   assert.equal(api.apiVersion, apiVersions[name]);
@@ -55,7 +55,7 @@ for (const id of ["axels-coffee-mug", "kratz-headphones", "kellys-jean-jacket"])
 }
 assert.equal(equipment.special["devils-horns"].rarity, "omega");
 assert.equal(equipment.special["impossible-weapon"].setName, "Impossible Road");
-assert.equal(equipment.identities.length, 26, "approved birthday identities must remain part of the one equipment registry");
+assert.equal(equipment.identities.length, 58, "all approved authored equipment bases must remain part of the one equipment registry");
 assert.equal(equipment.identities.find(identity => identity.id === "bronze-longsword").intrinsicBonuses.attack, 1);
 assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 

@@ -16,24 +16,25 @@
     const meta=()=>getMeta();
     const clone=item=>JSON.parse(JSON.stringify(item));
 
-    function sync(){
-      const state=meta(),activeCap=Math.max(0,Number(activeCapacity())||0);
-      state.heirlooms=(state.heirlooms||[]).map(normalizeItem);
+    function sync({persist=true}={}){
+      const state=meta(),activeCap=Math.max(0,Number(activeCapacity())||0),commit=()=>{if(persist)saveMeta();};
+      state.heirlooms=(state.heirlooms||[]).map(normalizeItem).filter(isEligible);
       if(!storageUnlocked()){
         state.heirlooms=state.heirlooms.slice(0,activeCap);
-        saveMeta();
+        commit();
         return Object.freeze({unlocked:false,active:state.heirlooms.length,activeCapacity:activeCap});
       }
-      const cap=Math.max(0,Number(storageCapacity())||0),byId=new Map((state.heirloomStorage||[]).map(item=>[item.id,normalizeItem(item)]));
+      const cap=Math.max(0,Number(storageCapacity())||0),byId=new Map((state.heirloomStorage||[]).map(normalizeItem).filter(isEligible).map(item=>[item.id,item]));
       state.heirlooms.forEach(item=>byId.set(item.id,normalizeItem(item)));
       state.heirloomStorage=[...byId.values()].slice(0,cap);
       const storedIds=new Set(state.heirloomStorage.map(item=>item.id));
       state.heirlooms=state.heirlooms.filter(item=>storedIds.has(item.id)).slice(0,activeCap);
-      saveMeta();
+      commit();
       return Object.freeze({unlocked:true,stored:state.heirloomStorage.length,storageCapacity:cap,active:state.heirlooms.length,activeCapacity:activeCap});
     }
 
     function toggleStoredActive(item){
+      if(!isEligible(item)){showToast(`${item.name} cannot become an heirloom`);return false;}
       if(!storageUnlocked()){showToast('Unlock the Heirloom Vault first.');return false;}
       const state=meta(),cap=Math.max(0,Number(activeCapacity())||0),active=[...(state.heirlooms||[])];
       const index=active.findIndex(entry=>entry.id===item.id);
@@ -55,6 +56,7 @@
     }
 
     function toggleRunStorage(item){
+      if(!isEligible(item)){showToast(`${item.name} cannot become an heirloom`);return false;}
       if(!storageUnlocked()){showToast('Unlock the Heirloom Vault first.');return false;}
       const state=meta(),storage=[...(state.heirloomStorage||[])],index=storage.findIndex(entry=>entry.id===item.id);
       if(index>=0){
@@ -84,5 +86,5 @@
     return Object.freeze({owner:OWNER,sync,toggleStoredActive,discardStored,toggleRunStorage,toggleLegacy});
   }
 
-  window.DiceboundHeirloomOperations=Object.freeze({apiVersion:1,owner:OWNER,createController});
+  window.DiceboundHeirloomOperations=Object.freeze({apiVersion:2,owner:OWNER,createController});
 })();

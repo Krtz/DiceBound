@@ -490,7 +490,7 @@ def main() -> int:
     else:
         info_guide_owner_ok = (
             info_guide_module.get("path") == "js/ui/info-guide.js"
-            and {"assets", "classes-registry", "ui-camp"}.issubset(
+            and {"assets", "item-rarities", "classes-registry", "ui-camp"}.issubset(
                 set(info_guide_module.get("requires") or [])
             )
             and "DiceboundInfoGuide" in (info_guide_module.get("provides") or [])
@@ -498,7 +498,7 @@ def main() -> int:
         )
         if not info_guide_owner_ok:
             errors.append(
-                "ui-info-guide must provide DiceboundInfoGuide, require its UI dependencies, "
+                "ui-info-guide must provide DiceboundInfoGuide, require Assets/Rarities/UI dependencies, "
                 "and load before the monolith"
             )
     info_guide_source = sources.get("ui-info-guide", "")
@@ -980,11 +980,14 @@ def main() -> int:
     if monolith_source:
         for expected_run_lifecycle_adapter in [
             "dbRun.configure({lifecycle:{",
-            "function startNewGame(){return dbRun.startFreshRun();}",
-            "dbRun.startFreshRun({beforeFreshRun:()=>{",
+            "async function startNewGame(options={}){",
+            "if(!(await db068ConfirmEchoForRun()))return false;",
+            "return dbRun.startFreshRun(options);",
+            "await startNewGame({beforeFreshRun:()=>{",
+            "dbProgression.crucibleWarning({classId:selectedClassId",
         ]:
             if expected_run_lifecycle_adapter not in monolith_source:
-                errors.append("dicebound.js must use the run-lifecycle composition owner")
+                errors.append("dicebound.js must use the guarded run-lifecycle composition owner")
         for retired_run_lifecycle_layer in [
             "const startNewGameV15=startNewGame;",
             "const startNewGameV16GuardReset=startNewGame;",

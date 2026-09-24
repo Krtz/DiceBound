@@ -20,14 +20,6 @@ tags: martial, plate, material-tier
 eligibility: epic+
 intrinsic: +7 Defense, +2 Thorns
 ---
-## Basinet
-family: basinet
-material: 
-weight: heavy
-tags: source-inspired, martial
-eligibility: common+
-intrinsic: +2 Defense, +5 HP
----
 ## Black Full Helm
 family: full-helm
 material: black-metal
@@ -43,14 +35,6 @@ weight: light
 tags: vampiric, blood
 eligibility: rare+
 intrinsic: +2% Lifesteal, +2% Crit, +5 HP
----
-## Bucket
-family: bucket
-material: metal
-weight: medium
-tags: slime, weird
-eligibility: poor+
-intrinsic: +2 Defense, -1% Dodge
 ---
 ## Cap
 family: cap

@@ -21,7 +21,7 @@
     const required={getPlayer,getMeta,classIdentityActive,bonusLabel,applyItemStats,clearGearTransform,applyGearTransform,usesMana,equipmentMana,syncMana,recordCareerGoldEarned,setStatsLastGold,rarityLabel,sfxLevel,sfxCoin,showToast,addLog,renderEquipment,updateHUD};
     for(const [name,value] of Object.entries(required))if(typeof value!=='function')throw new Error(`DiceboundItemOperations requires ${name}.`);
     if(!rarityValues)throw new Error('DiceboundItemOperations requires rarity values.');
-    if(!equipmentApi?.intrinsicBonusesForItem||!equipmentApi?.allBonusesForItem)throw new Error('DiceboundItemOperations requires equipment identity bonus helpers.');
+    if(!equipmentApi?.intrinsicBonusesForItem||!equipmentApi?.elementProcBonusesForItem||!equipmentApi?.allBonusesForItem)throw new Error('DiceboundItemOperations requires equipment identity bonus helpers.');
 
     function player(){return getPlayer();}
 
@@ -54,6 +54,7 @@
       if(!item)return 0;
       let total=baseVisibleScore(item)+fallbackPower(item)*2.15+(item.element?10:0)+(item.legendaryEffectId?180:0);
       for(const [key,value] of Object.entries(equipmentApi.intrinsicBonusesForItem(item)||{}))total+=Math.abs(value)*(INTRINSIC_WEIGHTS[key]||2);
+      for(const value of Object.values(equipmentApi.elementProcBonusesForItem(item)||{}))total+=Math.abs(value)*INTRINSIC_WEIGHTS.elementProcBonus;
       return total;
     }
 
@@ -65,6 +66,14 @@
         const delta=(incoming[key]||0)-(equipped[key]||0);
         if(Math.abs(delta)>.0001){
           const label=bonusLabel(key,Math.abs(delta)).replace(/^\+/, '');
+          deltas.push(`<span class="${delta>0?'better':'worse'}">${delta>0?'+':'−'}${label}</span>`);
+        }
+      });
+      const incomingProcs=equipmentApi.elementProcBonusesForItem(item)||{},equippedProcs=equipmentApi.elementProcBonusesForItem(current)||{};
+      new Set([...Object.keys(equippedProcs),...Object.keys(incomingProcs)]).forEach(element=>{
+        const delta=(incomingProcs[element]||0)-(equippedProcs[element]||0);
+        if(Math.abs(delta)>.0001){
+          const label=bonusLabel(`elementProc:${element}`,Math.abs(delta)).replace(/^\+/,'');
           deltas.push(`<span class="${delta>0?'better':'worse'}">${delta>0?'+':'−'}${label}</span>`);
         }
       });
@@ -121,5 +130,5 @@
     return Object.freeze({owner:OWNER,baseVisibleScore,fallbackPower,rawSellValue,sellValue,score,formatComparison,equip});
   }
 
-  window.DiceboundItemOperations=Object.freeze({apiVersion:1,owner:OWNER,createController});
+  window.DiceboundItemOperations=Object.freeze({apiVersion:2,owner:OWNER,createController});
 })();

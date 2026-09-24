@@ -68,14 +68,6 @@ tags: artist, crimson
 eligibility: common+
 intrinsic: +1% Crit, +1% Fire proc chance
 ---
-## Gel Loop
-family: loop
-material: gel
-weight: light
-tags: slime, weird
-eligibility: poor+
-intrinsic: +5 HP, +1% Echo
----
 ## Gilded Ring
 family: gilded
 material: gold
@@ -107,14 +99,6 @@ weight: light
 tags: martial, spiritual
 eligibility: common+
 intrinsic: +1 Attack, +1% Echo
----
-## Lion Signet
-family: signet
-material: gold, iron
-weight: light
-tags: lion, knight
-eligibility: common+
-intrinsic: +1 Defense, +1 Attack
 ---
 ## Moonstone Loop
 family: loop

@@ -12,7 +12,7 @@ vm.runInNewContext(source,sandbox,{filename:'prestige.js'});
 const prestige=sandbox.window.DiceboundPrestige;
 assert(prestige,'Prestige progression module should publish one authoritative owner');
 assert.equal(prestige.owner,'progression/prestige');
-assert.equal(prestige.apiVersion,2);
+assert.equal(prestige.apiVersion,3);
 assert.deepEqual([...prestige.statKeys],['maxHp','attack','defense','crit','dodge','luck','lifeSteal']);
 
 let state=prestige.normalize({count:2,maxHp:1,attack:1});
@@ -89,7 +89,14 @@ for(const [count,mult,bonus] of [[0,1,0],[1,1.05,5],[10,1.5,50],[20,2,100],[60,4
 const spentSample=prestige.purchase(prestige.normalize({count:10,moon:{legacySpent:0,purchases:[]}}),'heirloom-storage',()=>0).prestige;
 assert.equal(prestige.legacyXpMultiplier(spentSample),1.5,'Legacy acceleration must use lifetime earned PP, not unspent PP');
 
-const forge=prestige.purchase(refunded.prestige,'moon-forge',()=>0);
-assert.equal(forge.ok,false);assert.match(forge.reason,/cost is awaiting balance approval/i);
+const forgeBeforeCrucible=prestige.purchase(refunded.prestige,'moon-forge',()=>0);
+assert.equal(forgeBeforeCrucible.ok,false);assert.match(forgeBeforeCrucible.reason,/requires build echo crucible/i);
+let crucible=prestige.purchase(refunded.prestige,'echo-crucible',()=>{structuralRng++;return 0;});
+assert.equal(crucible.ok,true);assert.equal(crucible.cost,20);assert.equal(prestige.hasPurchase(crucible.prestige,'echo-crucible'),true);
+assert.equal(structuralRng,0,'Echo Crucible is a permanent structural purchase and must not consume RNG');
+const forge=prestige.purchase(crucible.prestige,'moon-forge',()=>0);
+assert.equal(forge.ok,false);assert.match(forge.reason,/not available yet/i);
+const crucibleRefund=prestige.refundAll(crucible.prestige);
+assert.equal(prestige.hasPurchase(crucibleRefund.prestige,'echo-crucible'),true,'Echo Crucible must survive Refund Stats');
 
-console.log('Prestige progression owner PASS: ranked permanent Heirloom upgrades, migration, selective refunds and lifetime Legacy acceleration');
+console.log('Prestige progression owner PASS: ranked permanent Heirloom upgrades, Echo Crucible, selective refunds and lifetime Legacy acceleration');

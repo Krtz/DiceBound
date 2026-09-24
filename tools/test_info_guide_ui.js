@@ -8,9 +8,12 @@ const vm=require("vm");
 
 const root=path.resolve(__dirname,"..");
 const source=fs.readFileSync(path.join(root,"runtime/js/ui/info-guide.js"),"utf8");
+const raritySource=fs.readFileSync(path.join(root,"runtime/js/items/rarities.js"),"utf8");
 const window={};
 window.window=window;
-vm.runInNewContext(source,{window,console},{filename:"runtime/js/ui/info-guide.js"});
+const context=vm.createContext({window,console});
+vm.runInContext(raritySource,context,{filename:"runtime/js/items/rarities.js"});
+vm.runInContext(source,context,{filename:"runtime/js/ui/info-guide.js"});
 
 const guide=window.DiceboundInfoGuide;
 assert.ok(guide,"Info/Guide owner is not public");

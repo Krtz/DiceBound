@@ -1,0 +1,282 @@
+[
+  {
+    "sourcePack": "gear-base-models-2026-09-23/weapon/abyssal-wand.png",
+    "asset": "runtime/assets/equipment/weapon/abyssal-wand.png",
+    "sha256": "84fd6746854fb2e8e5e8ef190f4ce032fa0294a4d49e4dd641d5deed9cf6b4b2"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/weapon/adamant-halberd.png",
+    "asset": "runtime/assets/equipment/weapon/adamant-halberd.png",
+    "sha256": "9ec187704754197bba4e3d6a485599677f29ce636a8f10addd7194cb52d275dc"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/offhand/arcane-tome.png",
+    "asset": "runtime/assets/equipment/offhand/arcane-tome.png",
+    "sha256": "cb564583ec79889fa3c448885296d23bf325a6effee5c3357459359c42fffb1b"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/offhand/bag-of-confetti.png",
+    "asset": "runtime/assets/equipment/offhand/bag-of-confetti.png",
+    "sha256": "129aa9bc5a6d9de9a89188be0696a6d94aeb3054ae10dc39d34829da346bf411"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/hat/basinet.png",
+    "asset": "runtime/assets/equipment/hat/basinet.png",
+    "sha256": "90b32e51a9bb35f3635f9b810feff7ba10d60bd4c8e8c827ce4fba4a75e6a735"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/hat/bucket.png",
+    "asset": "runtime/assets/equipment/hat/bucket.png",
+    "sha256": "6534764790bbf92994800ef8db4cd6378d533e6442f88eed9b98bbe73db48a17"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/chest/band-t-shirt.png",
+    "asset": "runtime/assets/equipment/chest/band-t-shirt.png",
+    "sha256": "433fe1f9e4efd9425b95b134a4550dcfbd601db6f2fbcfab988d1ebd7fc536b8"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/chest/boneweave.png",
+    "asset": "runtime/assets/equipment/chest/boneweave.png",
+    "sha256": "16c016f84d5c491498b95628cecaea43fc800e213ba1dcfc134e0e4753f2d12e"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/legs/bogstrider-wraps.png",
+    "asset": "runtime/assets/equipment/legs/bogstrider-wraps.png",
+    "sha256": "9a1f92b09b3e748e5ca7f4d4925b2313b0312c9d12f2df0f46ea66ff66a150ca"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/legs/executive-legs.png",
+    "asset": "runtime/assets/equipment/legs/executive-legs.png",
+    "sha256": "d8f688f38c234d6ae5fb39d6086684012fb14a5cd4fa68c4d5f6aa3eabc0f50f"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/boots/astral-slippers.png",
+    "asset": "runtime/assets/equipment/boots/astral-slippers.png",
+    "sha256": "6d9e027915c4ddbc79d9e1495d0d7a59e2146a3c0eeec698e802719f25413321"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/boots/bloodmarch-boots.png",
+    "asset": "runtime/assets/equipment/boots/bloodmarch-boots.png",
+    "sha256": "8b4fefa4b2fd2ff3a0ed007ea6e143c343290d802cf579df6cd8a4105a129ada"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/ring/gel-loop.png",
+    "asset": "runtime/assets/equipment/ring/gel-loop.png",
+    "sha256": "eb5f1826fd1f434c6538d12aefd1ca442ade31181b11940e50ddca7e7f88b0d2"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/ring/lion-signet.png",
+    "asset": "runtime/assets/equipment/ring/lion-signet.png",
+    "sha256": "98147c5980bb08b8ed7f59ba55dc84afe4908058fc7a19e82ad5988a205e5315"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/amulet/distillers-amulet.png",
+    "asset": "runtime/assets/equipment/amulet/distillers-amulet.png",
+    "sha256": "2d803c5410c32a5ec2da1e45e8fc2be0e5973c3206c8e5998ccd54fb73af5559"
+  },
+  {
+    "sourcePack": "gear-base-models-2026-09-23/amulet/dragon-tooth.png",
+    "asset": "runtime/assets/equipment/amulet/dragon-tooth.png",
+    "sha256": "935ec2968142bbfbe9bf2e46204e6c0d23f6dacfe93d22ca55c6bd34d3950a10"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/weapon/adamant-crossbow.png",
+    "asset": "runtime/assets/equipment/weapon/adamant-crossbow.png",
+    "sha256": "dbe61e5ee74341a19368fcfc0d038a43859263e173c06f661ffad02677094ce0"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/weapon/adamant-claws.png",
+    "asset": "runtime/assets/equipment/weapon/adamant-claws.png",
+    "sha256": "a01f45ac558c178648fd601f2f1086d7facc1e2e1fc9bc64b7ca7b4725a83a8f"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/offhand/acid-bubble.png",
+    "asset": "runtime/assets/equipment/offhand/acid-bubble.png",
+    "sha256": "02d684e020ea673892cb192c9dbb03842a56667edd1befc49060297f984ee14d"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/offhand/barbed-quiver.png",
+    "asset": "runtime/assets/equipment/offhand/barbed-quiver.png",
+    "sha256": "80256fb20a4d71ae6679fb98aaeda93ed47fd049febb3e0849b419667686d170"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/hat/crimson-veil.png",
+    "asset": "runtime/assets/equipment/hat/crimson-veil.png",
+    "sha256": "bd5941c3f29f160549ee59c66b8a7faf130443ce5c121b37e19c2df3b9adc15f"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/hat/crown.png",
+    "asset": "runtime/assets/equipment/hat/crown.png",
+    "sha256": "3e24a53a89a77cb7cfc9c0ccd35daccc67c95a01497f12abb36d7e578204fb83"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/chest/cardigan.png",
+    "asset": "runtime/assets/equipment/chest/cardigan.png",
+    "sha256": "9ace79d0c5911ca89214cfab33bf10a42ed7bd30bed52586bedc3d5892b20196"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/chest/blood-iron-cuirass.png",
+    "asset": "runtime/assets/equipment/chest/blood-iron-cuirass.png",
+    "sha256": "6c84b0def2ca738619a4f9a23679d954283caa7d4a5d530ed40bb2a863bb44ce"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/legs/chain-leggings.png",
+    "asset": "runtime/assets/equipment/legs/chain-leggings.png",
+    "sha256": "40fcb86cd60bb2f572a169b6a8e09cb45c92a1a144dfd6a2ef294ea52eaa5aba"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/legs/distillers-legs.png",
+    "asset": "runtime/assets/equipment/legs/distillers-legs.png",
+    "sha256": "c658559e8007f5d73654893a5cf70859735331750a048c9744b7c1769cab346c"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/boots/cloudstep-sandals.png",
+    "asset": "runtime/assets/equipment/boots/cloudstep-sandals.png",
+    "sha256": "2d43c28af5ff8c56974c9589632264b9f316ab03b851b921b3d2e003a90661de"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/boots/demonhide-boots.png",
+    "asset": "runtime/assets/equipment/boots/demonhide-boots.png",
+    "sha256": "1fe1ca07c587001d94405711d2ba48f28984291d36a1ddec614d825334654580"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/ring/falcon-band.png",
+    "asset": "runtime/assets/equipment/ring/falcon-band.png",
+    "sha256": "de13a36eaf98bdef817a5b6b449205c9f49d624ecb4b6a43fb4744007a1c3982"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/ring/jade-band.png",
+    "asset": "runtime/assets/equipment/ring/jade-band.png",
+    "sha256": "f2549802cc2f8016f030133533d19fb3c379509050d6969e7eccd802347919f9"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/amulet/astral-prism.png",
+    "asset": "runtime/assets/equipment/amulet/astral-prism.png",
+    "sha256": "e3f0138987e64c24b29d2e12b3c7cf20e1dd269e67b75ceb371c86a5cc0fd1d7"
+  },
+  {
+    "sourcePack": "gear-base-models-batch-2-2026-09-23/amulet/golden-fly.png",
+    "asset": "runtime/assets/equipment/amulet/golden-fly.png",
+    "sha256": "4c4a097dbb2209e4364f6b1455460e238653983333866be554fcd52b1401e182"
+  },
+  {
+    "sourcePack": "troll-board-progression-2026-09-23/troll-board-1.png",
+    "asset": "runtime/assets/enemies/normal/battle/troll/board-1.png",
+    "sha256": "d36011e815f3bfc4b642d5cb32aa37b830ba7a10697977cca3df625710439b03"
+  },
+  {
+    "sourcePack": "troll-board-progression-2026-09-23/troll-board-2.png",
+    "asset": "runtime/assets/enemies/normal/battle/troll/board-2.png",
+    "sha256": "a8b32227be25f5e126c8ec548088abb70b9a0df42b934687396cf30312e63b12"
+  },
+  {
+    "sourcePack": "troll-board-progression-2026-09-23/troll-board-3.png",
+    "asset": "runtime/assets/enemies/normal/battle/troll/board-3.png",
+    "sha256": "e20490d1ba4461ff3a82688b02a6e396651ce9875a946bb902ad8360c1c1f1ea"
+  },
+  {
+    "sourcePack": "troll-board-progression-2026-09-23/troll-board-4.png",
+    "asset": "runtime/assets/enemies/normal/battle/troll/board-4.png",
+    "sha256": "5141ee9469b069ce78dbc1ff0b3aec9eceeaecce1b365b1c18e2de56e9f453f9"
+  },
+  {
+    "sourcePack": "troll-board-progression-2026-09-23/troll-board-5.png",
+    "asset": "runtime/assets/enemies/normal/battle/troll/board-5.png",
+    "sha256": "756afb537990a865dab4c3588ea5407af5009c0cbfaac753df06b819b2f1976e"
+  },
+  {
+    "sourcePack": "troll-board-progression-2026-09-23/troll-board-6.png",
+    "asset": "runtime/assets/enemies/normal/battle/troll/board-6.png",
+    "sha256": "f0d8a42a4e2673fad48c34e598da81c0e586a7f235665e7c6e08cd995e2d4821"
+  },
+  {
+    "sourcePack": "axels-coffee-mug-2026-09-23/axels-coffee-mug.png",
+    "asset": "runtime/assets/equipment/offhand/axels-coffee-mug.png",
+    "sha256": "d45f9ae6a101a7549d20756711231467c19438338f6e75010256142ffc0c0149"
+  },
+  {
+    "sourcePack": "kratz-headphones-2026-09-23/kratz-headphones.png",
+    "asset": "runtime/assets/equipment/hat/kratz-headphones.png",
+    "sha256": "e6ef210794cf27fa4206cbf0b104891ce4d90dba587b69f1507605a06fe7413d"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/rouge-full-body.png",
+    "asset": "runtime/assets/characters/classes/campsite/rouge.png",
+    "sha256": "7dcb2825466404e02d228c426b60cc8c761be48a3280d2a7c093927eb2d832f7"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/toughness.png",
+    "asset": "runtime/assets/powerups/poor/toughness.png",
+    "sha256": "d95d2856527d12f32bd731d190e269468db1bc5a44728e7aa6b31c79ce89002a"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/iron-skin.png",
+    "asset": "runtime/assets/powerups/poor/iron-skin.png",
+    "sha256": "89a5694b93b9aaa58deb1b004626c1a1d52661db32ba41c1eda0ddb6c793bcdb"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/roadside-mending.png",
+    "asset": "runtime/assets/powerups/poor/roadside-mending.png",
+    "sha256": "85dbd9a9d35b6827f97e3c20d90c263d45459252d92380450f04fa2e0e4f66dc"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/cracked-scope.png",
+    "asset": "runtime/assets/powerups/poor/cracked-scope.png",
+    "sha256": "ece9d36cfd6fe40b5081f94167cdd87d8133ebd86f0b3bef22b96657b09619c2"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/weak-tonic.png",
+    "asset": "runtime/assets/powerups/poor/weak-tonic.png",
+    "sha256": "05c71f9f2535fd810e11e05db1926c78289ef40736bab3f35a64ca3cc6f20ce9"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/folded-road-map.png",
+    "asset": "runtime/assets/powerups/shared/folded-road-map.png",
+    "sha256": "95ffe78bb5aa5a04542ffb66377bb3c0f3e969d85100564edd62e1789910f3bc"
+  },
+  {
+    "sourcePack": "rouge-painter-and-poor-powerups-2026-09-24/cheap-venom.png",
+    "asset": "runtime/assets/powerups/shared/cheap-venom.png",
+    "sha256": "85c85656b442805bd7f563a814ca04e8e2750e2cf44863072d4e5a0244e0766a"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/keen-eye.png",
+    "asset": "runtime/assets/powerups/shared/keen-eye.png",
+    "sha256": "2cda6e0fd48d0bd4207b61923d89ca672e0308167f11b5d90a8529c222b621d1"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/loaded-fate.png",
+    "asset": "runtime/assets/powerups/common/loaded-fate.png",
+    "sha256": "63c8efb687de062ad338d210aa967533e5357d4f20e219fa0442ef15e90bb32f"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/merchants-friend.png",
+    "asset": "runtime/assets/powerups/common/merchants-friend.png",
+    "sha256": "67c6f736b5f4e6a72f3cf9bbcd97d81b8c9fb756fa4ff21056d187598375808d"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/pocket-confetti.png",
+    "asset": "runtime/assets/powerups/class-specific/pocket-confetti.png",
+    "sha256": "c7d3f6aca3403d571e58dfc7b3aa622fd54e92282e0e88a24c4a229c26b01c93"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/crimson-primer.png",
+    "asset": "runtime/assets/powerups/class-specific/crimson-primer.png",
+    "sha256": "0c177c48f6655e259be77c18aa30c55daf8c444e406fa4ae3310c205b0997532"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/scarlet-combustion.png",
+    "asset": "runtime/assets/powerups/class-specific/scarlet-combustion.png",
+    "sha256": "856510f946cc2b4abb6f58be8926257ac53d01a02845ae99a35fd120a15f7b6f"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/glacial-shell.png",
+    "asset": "runtime/assets/powerups/class-specific/glacial-shell.png",
+    "sha256": "9e174a6bd7b93acea8df60e6219b865cc60f64b451364f18739d6e192251ce31"
+  },
+  {
+    "sourcePack": "common-powerups-batch-1-2026-09-24/orb-theory.png",
+    "asset": "runtime/assets/powerups/class-specific/orb-theory.png",
+    "sha256": "462b7e64bb3108a4f048563550ee72543b4bc253fdbcd9cd751580b07bb7dd0a"
+  }
+]

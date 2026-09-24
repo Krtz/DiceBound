@@ -9,7 +9,7 @@ const vm=require("node:vm");
 const root=path.resolve(__dirname,"..");
 const context={window:{},console};context.window.window=context.window;
 vm.createContext(context);
-for(const rel of ["runtime/js/progression/talents.js","runtime/js/progression/prestige.js","runtime/js/progression/career-history.js","runtime/js/progression/lifecycle.js","runtime/js/items/heirlooms.js"]){
+for(const rel of ["runtime/js/progression/talents.js","runtime/js/progression/prestige.js","runtime/js/progression/echo-crucible.js","runtime/js/progression/career-history.js","runtime/js/progression/lifecycle.js","runtime/js/items/heirlooms.js"]){
   vm.runInContext(fs.readFileSync(path.join(root,rel),"utf8"),context,{filename:rel});
 }
 
@@ -93,7 +93,7 @@ meta.heirlooms=meta.heirloomStorage.slice(0,10);
 const heirlooms=heirloomOwner.createController({
   getMeta:()=>meta,
   normalizeItem:item=>({...item}),
-  isEligible:()=>true,
+  isEligible:item=>!!item&&item.heirloomEligible!==false,
   storageUnlocked:()=>progression.heirloomStorageUnlocked(),
   storageCapacity:()=>progression.heirloomStorageCapacity(),
   activeCapacity:()=>progression.heirloomLoadoutCapacity(),
@@ -105,6 +105,13 @@ const synced=heirlooms.sync();
 assert.equal(synced.storageCapacity,40);
 assert.equal(meta.heirloomStorage.length,40);
 assert.equal(meta.heirlooms.length,8);
+const birthright={id:"run-only-birthright",slot:"weapon",name:"Prismatic Birthright",rarity:"rare",provenance:"prismatic-birthright",heirloomEligible:false};
+const beforeStorage=meta.heirloomStorage.length;
+assert.equal(heirlooms.toggleRunStorage(birthright),false,"run-only Prismatic Birthright must never enter the Vault");
+assert.equal(meta.heirloomStorage.length,beforeStorage,"rejected run-only gear must leave the Vault unchanged");
+meta.heirloomStorage.push(birthright);meta.heirlooms.push(birthright);heirlooms.sync({persist:false});
+assert.equal(meta.heirloomStorage.some(item=>item.id===birthright.id),false,"sync must repair leaked run-only Vault entries");
+assert.equal(meta.heirlooms.some(item=>item.id===birthright.id),false,"sync must repair leaked run-only active entries");
 
 const monolith=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
 for(const retired of ["function getHeirloomSlots(","function v24StorageUnlocked(","function v24StorageCapacity(","function v24SyncStorage(","function v24StorageMilestones(","dbEquipmentUiToggleStoredActive","dbEquipmentUiDiscardStored","dbEquipmentUiToggleRunStorage","dbEquipmentUiToggleLegacyHeirloom"]){

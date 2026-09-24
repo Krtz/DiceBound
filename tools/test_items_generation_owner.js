@@ -20,6 +20,7 @@ vm.runInContext(source,context,{filename:"items/generation.js"});
 const owner=context.window.DiceboundItemGeneration;
 assert.ok(owner,"DiceboundItemGeneration owner missing");
 assert.equal(owner.owner,"items/generation");
+assert.equal(owner.apiVersion,2);
 assert.equal(Object.isFrozen(owner),true);
 assert.equal(owner.effects.length,20,"released Legendary effect registry must remain exact");
 assert.equal(owner.effectById.twin_surge.name,"Twin Surge");
@@ -51,7 +52,15 @@ assert.equal(effectController.hasEffect("hoarders_arsenal"),true,"equipped Hoard
 effectPlayer=JSON.parse(JSON.stringify(effectPlayer));
 assert.equal(effectController.hasEffect("hoarders_arsenal"),true,"Hoarder's Arsenal effect identity must survive save/checkpoint-style serialization");
 effectPlayer.equipment.weapon={id:"replacement",slot:"weapon",legendaryEffectId:"reverse_engineering"};
-assert.equal(effectController.hasEffect("hoarders_arsenal"),false,"replacing Hoarder's Arsenal must remove the effect exactly once");
+assert.equal(effectController.hasEffect("hoarders_arsenal"),false,"replacing Hoarder's Arsenal must remove the equipped source exactly once");
+effectPlayer.crucibleEchoEffectId="hoarders_arsenal";
+assert.equal(effectController.hasEffect("hoarders_arsenal"),true,"run-locked compatible Echo must use the same semantic effect lookup");
+effectPlayer.crucibleEchoEffectId="twin_surge";
+assert.equal(effectController.hasEffect("twin_surge"),false,"class-specific Echo must do nothing on an incompatible class");
+effectPlayer.classId="sorcerer";
+assert.equal(effectController.hasEffect("twin_surge"),true,"class-specific Echo must activate on its compatible class");
+effectPlayer.equipment.weapon={id:"twin-equipped",slot:"weapon",legendaryEffectId:"twin_surge"};
+assert.equal(effectController.hasEffect("twin_surge"),true,"equipped and Echo copies must still collapse to one boolean semantic effect source");
 
 const module=manifest.modules.find(entry=>entry.id==="item-generation");
 assert.ok(module,"item-generation missing from module manifest");

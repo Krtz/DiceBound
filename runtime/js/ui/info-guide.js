@@ -10,17 +10,13 @@
 
   const OWNER='ui/info-guide';
   const STYLE_ID='dicebound-info-guide-ui-owner';
-  const RARITY_TIERS=Object.freeze([
-    ['poor','Poor','#c4c8cf','light grey','lowest ordinary tier'],
-    ['common','Common','#ffffff','white','reliable ordinary rewards'],
-    ['uncommon','Uncommon','#a9dbff','light blue','stronger ordinary rewards'],
-    ['rare','Rare','#438bd8','blue','high ordinary tier'],
-    ['epic','Epic','#f5e9a8','pale yellow','top ordinary generated gear and powerful powers'],
-    ['legendary','Legendary','#ffd45f','gold','very rare powers and handcrafted equipment'],
-    ['artifact','Artifact','#ff9c38','orange','Impossible Road chase set'],
-    ['mythical','Mythical','#bd83ff','purple','extreme handcrafted chase tier'],
-    ['omega','Omega','#ffffff','white/purple','highest secret equipment tier']
-  ]);
+  const rarityApi=root.DiceboundRarities;
+  if(!rarityApi)throw new Error("DiceBound Info Guide requires DiceboundRarities before loading.");
+  const RARITY_TIER_IDS=Object.freeze(["poor","common","uncommon","rare","epic","legendary","artifact","mythical","omega"]);
+  function rarityTiers(){
+    const registry=rarityApi.createInfoRegistry();
+    return RARITY_TIER_IDS.map(id=>{const info=registry[id]||rarityApi.infoFor?.(id)||{};return [id,info.label||id,info.color||"#ffffff",info.colorName||"",info.guideNote||""];});
+  }
   let runtime={};
 
   function doc(){return root.document||null;}
@@ -102,7 +98,7 @@
     const set=artifactSet(),count=Math.max(0,Number(set.count)||0),tiers=Array.isArray(set.tiers)?set.tiers:[],total=Math.max(0,...tiers.map(tier=>Number(tier.pieces)||0));
     return `<strong>Impossible Road set · Artifact</strong><br><span style="color:var(--muted)">${count}/${total||count} pieces active.</span><div class="set-tier-grid">${tiers.map(tier=>`<div class="set-tier${count>=Number(tier.pieces)?' active':''}"><b>${escapeHtml(tier.pieces)}-piece bonus</b><span>${escapeHtml(tier.text)}</span></div>`).join('')}</div>`;
   }
-  function rarityGuideHtml(){return `<p>Equipment and powerups use the same rarity language. Ordinary generated equipment stops at <b>Epic</b>; Legendary and above are special chase tiers.</p><div class="rarity-guide-grid">${RARITY_TIERS.map(([id,name,color,label,note])=>`<div class="rarity-guide-row"><span class="rarity-swatch" style="background:${color};${id==='omega'?'box-shadow:0 0 8px #b56cff':''}"></span><b style="color:${color}">${name}</b><span>${label} · ${note}</span></div>`).join('')}</div><p><b>Unique</b> is separate from rarity. A Unique power changes a rule or cannot safely stack; most ordinary Legendary stat powers can appear more than once.</p>`;}
+  function rarityGuideHtml(){return `<p>Equipment and powerups use the same rarity language. Ordinary generated equipment stops at <b>Epic</b>; Legendary and above are special chase tiers.</p><div class="rarity-guide-grid">${rarityTiers().map(([id,name,color,label,note])=>`<div class="rarity-guide-row"><span class="rarity-swatch" style="background:${color};${id==='omega'?'box-shadow:0 0 8px #b56cff':''}"></span><b style="color:${color}">${name}</b><span>${label} · ${note}</span></div>`).join('')}</div><p><b>Unique</b> is separate from rarity. A Unique power changes a rule or cannot safely stack; most ordinary Legendary stat powers can appear more than once.</p>`;}
   function guideHtml(){return [
     detail('rarity','Rarity tiers & colours',rarityGuideHtml()),
     detail('gear','Equipment & guardian loot','<p><b>Generated gear:</b> ordinary equipment progresses from Poor through Epic, while Legendary equipment can carry a build-changing Legendary Effect. Later roads improve expected quality.</p><p><b>Mythical</b> items are named handcrafted relics. Guardians can reveal Impossible Road Artifact pieces from their own weighted loot rules, and later-road Treasure can produce exceptional generated gear.</p>'),
