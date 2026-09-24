@@ -49,6 +49,12 @@ const presentationDelays=[];
 let active = new Set(['ranger']);
 let mechanics = new Set();
 let legendary = new Set();
+let legendaryRules = { unstable_ultimate: { name:'Unstable Ultimate', chargeThreshold:70, damageMultiplier:.75 } };
+const invokerAttackSpecs = {
+  quas:{damage:.85,echoMultiplier:.70},
+  wex:{damage:.85,echoMultiplier:1.20},
+  exort:{damage:1.20,echoMultiplier:.70}
+};
 let state = {
   player: {
     classId: 'ranger', hp: 80, maxHp: 100, potions: 2, level: 8, doubleStrike: .25, crit: .2,
@@ -128,6 +134,8 @@ function runtime() {
     describeUltimate: id => `description:${id}`,
     berserkerRageBonus: () => .42,
     hasLegendaryEffect: id => legendary.has(id),
+    legendaryEffect: id => legendaryRules[id] || null,
+    invokerAttackSpec: key => invokerAttackSpecs[key] || null,
     activeTrainerPetId: () => 'ice',
     selectEnemy() {},
     dragoonActive: () => active.has('dragoon'),
@@ -214,6 +222,9 @@ out = model(); assert.strictEqual(out.ultimate.text, '🌧️ Arrow Storm'); ass
 active = new Set(['ranger']); state.player.classId = 'ranger'; state.player.slimeRougeUltimateClass = null; state.player.ultimateCharge = 69; legendary = new Set(['unstable_ultimate']);
 out = model(); assert.strictEqual(out.ultimate.disabled, true); assert(out.ultimate.tip.includes('usable at 70 charge'));
 state.player.ultimateCharge = 70; out = model(); assert.strictEqual(out.ultimate.disabled, false);
+legendaryRules.unstable_ultimate = { name:'Unstable Ultimate', chargeThreshold:63, damageMultiplier:.42 };
+state.player.ultimateCharge = 62; out = model(); assert.strictEqual(out.ultimate.disabled, true); assert(out.ultimate.tip.includes('63 charge')); assert(out.ultimate.tip.includes('42% normal damage'));
+state.player.ultimateCharge = 63; out = model(); assert.strictEqual(out.ultimate.disabled, false, 'Unstable tooltip/button threshold must follow the Legendary owner instead of a copied 70');
 
 legendary = new Set(); active = new Set(['dragoon']); state.player.classId = 'dragoon'; state.player.dragoonLandingReady = true; state.player.dragoonAirborneResponses = 0; state.player.dragoonJumpCooldown = 0;
 out = model(); assert.strictEqual(out.attack.text, '🐉 Land'); assert.strictEqual(out.guard.disabled, true); assert.strictEqual(out.potion.disabled, true); assert.strictEqual(out.ultimate.disabled, true);
