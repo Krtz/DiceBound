@@ -25,7 +25,7 @@
   function score(item){return requireCapability('score')(item);}
   function formatBonuses(item){return requireCapability('formatBonuses')(item);}
   function formatComparison(item,current){return requireCapability('formatComparison')(item,current);}
-  function syncHeirloomState(){return requireCapability('syncHeirloomState')();}
+  function syncHeirloomState(options){return requireCapability('syncHeirloomState')(options);}
   function toggleStoredHeirloomActive(item){return requireCapability('toggleStoredHeirloomActive')(item);}
   function discardStoredHeirloom(item){return requireCapability('discardStoredHeirloom')(item);}
   function toggleRunHeirloomStorage(item){return requireCapability('toggleRunHeirloomStorage')(item);}

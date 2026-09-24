@@ -16,12 +16,12 @@
     const meta=()=>getMeta();
     const clone=item=>JSON.parse(JSON.stringify(item));
 
-    function sync(){
-      const state=meta(),activeCap=Math.max(0,Number(activeCapacity())||0);
+    function sync({persist=true}={}){
+      const state=meta(),activeCap=Math.max(0,Number(activeCapacity())||0),commit=()=>{if(persist)saveMeta();};
       state.heirlooms=(state.heirlooms||[]).map(normalizeItem).filter(isEligible);
       if(!storageUnlocked()){
         state.heirlooms=state.heirlooms.slice(0,activeCap);
-        saveMeta();
+        commit();
         return Object.freeze({unlocked:false,active:state.heirlooms.length,activeCapacity:activeCap});
       }
       const cap=Math.max(0,Number(storageCapacity())||0),byId=new Map((state.heirloomStorage||[]).map(normalizeItem).filter(isEligible).map(item=>[item.id,item]));
@@ -29,7 +29,7 @@
       state.heirloomStorage=[...byId.values()].slice(0,cap);
       const storedIds=new Set(state.heirloomStorage.map(item=>item.id));
       state.heirlooms=state.heirlooms.filter(item=>storedIds.has(item.id)).slice(0,activeCap);
-      saveMeta();
+      commit();
       return Object.freeze({unlocked:true,stored:state.heirloomStorage.length,storageCapacity:cap,active:state.heirlooms.length,activeCapacity:activeCap});
     }
 

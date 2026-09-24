@@ -50,7 +50,7 @@
     score:item=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.score(item);},
     formatBonuses:item=>formatBonuses(item),
     formatComparison:(item,current)=>{if(!dbItemOperations)throw new Error('Items operations owner is not configured.');return dbItemOperations.formatComparison(item,current);},
-    syncHeirloomState:()=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.sync();},
+    syncHeirloomState:options=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.sync(options);},
     toggleStoredHeirloomActive:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleStoredActive(item);},
     discardStoredHeirloom:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.discardStored(item);},
     toggleRunHeirloomStorage:item=>{if(!dbHeirloomOperations)throw new Error('Heirloom operations owner is not configured.');return dbHeirloomOperations.toggleRunStorage(item);},
@@ -2224,7 +2224,7 @@ function returnToRoad(...args){
     const result=dbEchoCrucible.sacrifice({state:meta.echoCrucible,storage:meta.heirloomStorage||[],activeHeirlooms:meta.heirlooms||[],itemId});
     if(!result.ok){showToast(result.reason);return false;}
     meta.echoCrucible={...result.state};meta.heirloomStorage=[...result.storage];
-    dbItems.syncHeirloomState();saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();
+    dbItems.syncHeirloomState({persist:false});saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();
     showToast(result.outcome==='learned'?`Echo learned: ${result.effect.name}`:`Duplicate ${result.effect.name} converted to 1 Moon Metal.`,3200,true);
     return result;
   }
@@ -3292,13 +3292,6 @@ dbReturnToRoadTraceReady=true;
     return meta;
   }
   function v319BoardDigest(){return tiles.map((t,i)=>({i,type:t?.type||null,pack:t?.packSize||1,enemy:t?.enemyBase?.name||null}));}
-
-  // GLASS NEEDLE — normalize the live registry icon once so every canonical
-  // powerup-choice renderer receives the real art without wrapping choiceHTML.
-  const db0511GlassNeedleArt=window.DiceboundAssets?.resolveUiIcon?.('glassNeedle')?.image||'';
-
-  const db0511GlassNeedle=upgrades.find?.(u=>u?.name==='Glass Needle');
-  if(db0511GlassNeedle&&db0511GlassNeedleArt)db0511GlassNeedle.icon=`<img class="db-art-icon db-art-choice db-art-glass-needle" src="${db0511GlassNeedleArt}" alt="Glass Needle">`;
 
   // ALCHEMIST — the outside-potion DOM listener was registered against an old
   // function object before later tracking wrappers replaced usePotionOutsideCombat.
