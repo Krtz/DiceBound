@@ -24,7 +24,7 @@ assert.match(source,/class-chooser-layout/,'chooser must render a roster/detail 
 assert.match(source,/entry\.secret&&!runtime\.isUnlocked/,'locked secret classes must remain hidden from the roster');
 assert.doesNotMatch(source,/entry\.stats/,'Starting profile must not read a duplicated authored stats string');
 assert.match(source,/startingProfile\(entry\)/,'Starting profile must derive from authoritative class base stats');
-assert.match(source,/base\.maxHp/);assert.match(source,/base\.attack/);assert.match(source,/base\.crit/);
+assert.match(source,/base\.maxHp/);assert.match(source,/base\.attack/);assert.match(source,/\["crit","Crit Chance"\]/);assert.match(source,/base\[key\]/);
 
 let selected='ranger';
 const classes=[
