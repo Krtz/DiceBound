@@ -895,9 +895,16 @@ function returnToRoad(...args){
   function grantXp(amount){const result=ProgressionState.grantXp(amount);ProgressionUI.render(result);dbProgression.recordVitals({previousHp:player.hp,currentHp:player.hp,previousGold:player.gold,currentGold:player.gold,classId:player.classId,level:player.level});dbProgression.checkDynamicClassUnlocks();saveMeta();return result;}
   function forceLevels(count){const result=ProgressionState.forceLevels(count);ProgressionUI.render(result);return result;}
 
-  function recordRunBuff(icon,name,desc,rarity="special",source="Road"){
+  function recordRunBuff(icon,name,desc,rarity="special",source="Road",powerupId=null){
     if(!player.runBuffs)player.runBuffs=[];
-    player.runBuffs.push({icon,name,desc,rarity,source});
+    player.runBuffs.push({icon,name,desc,rarity,source,...(powerupId?{powerupId}: {})});
+  }
+  function runBuffDescription(buff){
+    if(buff?.powerupId){
+      const powerup=upgrades.find(up=>up.id===buff.powerupId);
+      if(powerup)return dbPowerups.describe(powerup);
+    }
+    return buff?.desc||"";
   }
   function applyUpgrade(up,source="Powerup"){return dbPowerups.apply(up,source);}
 
@@ -1034,7 +1041,7 @@ function returnToRoad(...args){
     addCard("📊 Active modifiers",`<p>${mods.length?mods.join("<br>"):"No additional modifiers yet."}</p>`);
     const gear=EQUIPMENT_SLOTS.map(slot=>player.equipment[slot]).filter(Boolean);
     addCard("🧰 Equipment",`<p>${gear.length?gear.map(i=>`<strong>${i.icon} ${i.name}</strong> — ${formatBonuses(i)}`).join("<br>"):"No equipment currently worn."}</p>${mythicalSetCount()>0?`<div class="mythic-set-box"><strong>🌈 Impossible Road set</strong><br>${mythicalSetSummary()}</div>`:""}`);
-    const list=document.createElement("div");list.className="buff-card";list.style.gridColumn="1/-1";list.innerHTML=`<h3>✨ Acquired powers this run</h3><div class="buff-list">${(player.runBuffs||[]).length?player.runBuffs.map(b=>`<div class="buff-entry"><b>${b.icon} ${b.name}</b> · ${b.source}<br>${b.desc}</div>`).join(""):'<div class="buff-entry">No selected powerups yet.</div>'}</div>`;grid.appendChild(list);
+    const list=document.createElement("div");list.className="buff-card";list.style.gridColumn="1/-1";list.innerHTML=`<h3>✨ Acquired powers this run</h3><div class="buff-list">${(player.runBuffs||[]).length?player.runBuffs.map(b=>`<div class="buff-entry"><b>${b.icon} ${b.name}</b> · ${b.source}<br>${runBuffDescription(b)}</div>`).join(""):'<div class="buff-entry">No selected powerups yet.</div>'}</div>`;grid.appendChild(list);
   }
   function openRunBuffs(){if(!gameStarted)return;renderRunBuffs();$("buffOverlay").classList.remove("hidden");}
 
