@@ -10,7 +10,8 @@ const manifest=JSON.parse(fs.readFileSync(path.join(root,"runtime/js/module-mani
 const entry=manifest.modules.find(module=>module.id==="progression-lifecycle");
 assert.ok(entry,"progression-lifecycle manifest owner is missing");
 assert.deepEqual(entry.provides,["DiceboundProgression"]);
-assert.match(lifecycle,/owner:OWNER,apiVersion:1/);
+assert.match(lifecycle,/owner:OWNER,apiVersion:2/);
+assert.ok(entry.requires.includes('progression-echo-crucible'),'Progression facade must declare the Echo Crucible domain dependency');
 
 // These used to be one-line compatibility adapters in dicebound.js.  The
 // composition root now calls DiceboundProgression directly where a caller
@@ -96,6 +97,7 @@ for(const shadow of [
 
 for(const owned of [
   "prestigeInspect","prestigePurchase","prestigeRefundAll","prestigeFormatStats",
+  "crucibleNormalize","crucibleBuilt","crucibleInspect","crucibleWarning","crucibleRunEffectId","crucibleView","crucibleSacrificePreview","crucibleSacrifice","crucibleSelect",
   "achievementDone","achievementConditionText","achievementRewardText","achievementGateUnlocked",
   "heroMasteryEntries","achievementCount","isClassUnlocked","commitClassUnlock","unlockClass",
   "checkDynamicClassUnlocks","repairTalentPrerequisites","gameplayTalentRank","allocatedTalentPoints",
@@ -106,7 +108,10 @@ for(const owned of [
 assert.ok(monolith.includes("function prestigeSummary(){return dbProgression.prestigeInspect().permanentSummary;}"),"Prestige summary must route through DiceboundProgression");
 assert.ok(monolith.includes("const result=dbProgression.prestigePurchase(id);"),"Prestige Moon purchases must route through DiceboundProgression");
 assert.ok(monolith.includes("const result=dbProgression.prestigeRefundAll();"),"Prestige Moon refunds must route through DiceboundProgression");
-for(const shadow of ["DB_PRESTIGE.purchase(meta.prestige,id,random)","DB_PRESTIGE.refundAll(meta.prestige)","DB_PRESTIGE.inspect(meta.prestige)"])assert.ok(!monolith.includes(shadow),`ordinary Prestige Moon shadow remains: ${shadow}`);
+assert.ok(monolith.includes("dbProgression.crucibleView({classId:selectedClassId})"),"Moon Crucible state must route through DiceboundProgression");
+assert.ok(monolith.includes("const result=dbProgression.crucibleSacrifice(itemId);"),"Crucible sacrifice must route through DiceboundProgression");
+assert.ok(monolith.includes("const result=dbProgression.crucibleSelect(effectId||null);"),"Crucible selection must route through DiceboundProgression");
+for(const shadow of ["DB_PRESTIGE.purchase(meta.prestige,id,random)","DB_PRESTIGE.refundAll(meta.prestige)","DB_PRESTIGE.inspect(meta.prestige)","DB_ECHO_CRUCIBLE=window.DiceboundEchoCrucible","dbEchoCrucible.sacrifice(","dbEchoCrucible.select(","function db068CrucibleView("])assert.ok(!monolith.includes(shadow),`ordinary Prestige Moon shadow remains: ${shadow}`);
 assert.ok(monolith.includes("isDone:achievement=>dbProgression.achievementDone(achievement)"),"Achievements UI must consume Progression completion policy");
 
 const career=fs.readFileSync(path.join(root,"runtime/js/progression/career-history.js"),"utf8");

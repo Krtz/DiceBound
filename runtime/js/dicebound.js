@@ -331,9 +331,6 @@
   if(!DB_CORE_META)throw new Error("DiceboundRuntime must provide career-state composition before dicebound.js");
   const DB_PRESTIGE=window.DiceboundPrestige;
   if(!DB_PRESTIGE)throw new Error("DiceboundPrestige must load before dicebound.js");
-  const DB_ECHO_CRUCIBLE=window.DiceboundEchoCrucible;
-  if(!DB_ECHO_CRUCIBLE?.createController)throw new Error("DiceboundEchoCrucible must load before dicebound.js");
-  const dbEchoCrucible=DB_ECHO_CRUCIBLE.createController({effects:dbItemGenerationOwner.effects});
   const DB_CLASS_UNLOCK_RULES=window.DiceboundClassUnlockRules;
   if(!DB_CLASS_UNLOCK_RULES)throw new Error("DiceboundClassUnlockRules must load before dicebound.js");
   const {legacyXpForLevel,defaultPrestige,defaultPetState,defaultPets,defaultSettings,defaultMeta,normalizePurchased,normalizeSavedItem}=DB_CORE_META;
@@ -346,9 +343,8 @@
   let meta=loadMeta();
   syncMutedFromSettings();
   function normalizePrestigeState(){meta.prestige=DB_PRESTIGE.normalize(meta.prestige);return meta.prestige;}
-  function normalizeEchoCrucibleState(){meta.echoCrucible=dbEchoCrucible.normalize(meta.echoCrucible);return meta.echoCrucible;}
-  normalizePrestigeState();normalizeEchoCrucibleState();
-  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();normalizeEchoCrucibleState();syncMutedFromSettings();return DB_CORE_META.save(meta);}
+  normalizePrestigeState();
+  function saveMeta(){dbDebugLogSink?.log('all','save','saveMeta()',dbDebugLogSink.state());repairEquipmentPresentationData?.();normalizePrestigeState();dbProgression?.crucibleNormalize?.();syncMutedFromSettings();return DB_CORE_META.save(meta);}
 
   const DiceboundStateEvents=dbRuntime.createEventBus();
 
@@ -671,7 +667,7 @@
     getTilesMovedThisRun:()=>tilesMovedThisRun,getRolls:()=>rolls,isNightmare:()=>!!nightmareMode,random:()=>random(),updateMetaUI:()=>updateMetaUI(),
     getRunMode:()=>dbCareerRunMode(),getCareerRunSnapshot:()=>dbCareerRunSnapshot(),
     hidePrestigeHeirloomOverlay:()=>$('prestigeHeirloomOverlay')?.classList.add('hidden'),
-    getEquipmentSlotCount:()=>EQUIPMENT_SLOTS.length,syncHeirloomState:()=>dbItems.syncHeirloomState(),
+    getEquipmentSlotCount:()=>EQUIPMENT_SLOTS.length,syncHeirloomState:options=>dbItems.syncHeirloomState(options),getLegendaryEffects:()=>dbItemGenerationOwner.effects,
     getAchievementRegistry:()=>ACHIEVEMENT_REGISTRY,getPowerupGateRegistry:()=>POWERUP_GATE_REGISTRY,getClasses:()=>CLASSES,getUpgrades:()=>upgrades,getElements:()=>ELEMENTS,
     mythicalSetCount:()=>mythicalSetCount(),getGameStarted:()=>!!gameStarted,
     getClassUnlockContext:()=>dbClassUnlockContext(),classUnlockIsUnlocked:(id,ctx)=>DB_CLASS_UNLOCK_RULES.isUnlocked(id,ctx),classUnlockMayCommit:(id,ctx)=>DB_CLASS_UNLOCK_RULES.mayCommitUnlock(id,ctx),
@@ -679,6 +675,7 @@
     classUnlockFeedback:id=>window.DiceboundClassUnlockFeedback?.onClassUnlocked?.(id),renderClassChoices:()=>window.DiceboundClassChooser.render(),addLog:html=>addLog(html),
     sfxHoly:()=>sfx.holy(),openStartScreen:()=>openStartScreen()
   });
+  dbProgression.crucibleNormalize();
   dbHeirloomOperations=dbHeirloomOperationsOwner.createController({
     getMeta:()=>meta,normalizeItem:item=>normalizeSavedItem(item),isEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),
     storageUnlocked:()=>dbProgression.heirloomStorageUnlocked(),storageCapacity:()=>dbProgression.heirloomStorageCapacity(),activeCapacity:()=>dbProgression.heirloomLoadoutCapacity(),
@@ -1216,7 +1213,7 @@ function returnToRoad(...args){
 
   function openStartScreen(){gameStarted=false;rollLocked=true;if(!dbProgression.isClassUnlocked(selectedClassId))selectedClassId="ranger";["combatOverlay","levelOverlay","eventOverlay","wheelOverlay","powerupOverlay","merchantOverlay","blessingOverlay","mysticOverlay","lootOverlay","endOverlay","talentOverlay","prestigeMoonOverlay","buffOverlay","prestigeHeirloomOverlay","petCollectionOverlay","diceChoiceOverlay","debugOverlay","bloodwellOverlay","gamblerOverlay","achievementOverlay","careerOverlay"].forEach(id=>$(id)?.classList.add("hidden"));$("startOverlay").classList.remove("hidden");window.DiceboundClassChooser.render();updateMetaUI();}
   async function db068ConfirmEchoForRun(){
-    const warning=dbEchoCrucible.warning(meta.echoCrucible,{classId:selectedClassId,randomClass:!!window.DiceboundClassChooser?.isRandomMode?.()});
+    const warning=dbProgression.crucibleWarning({classId:selectedClassId,randomClass:!!window.DiceboundClassChooser?.isRandomMode?.()});
     if(!warning)return true;
     return diceboundConfirm(`${warning}\n\nStart the run anyway?`,{title:'Echo Crucible compatibility',confirmLabel:'Start anyway'});
   }
@@ -2203,45 +2200,26 @@ function returnToRoad(...args){
   // saves, effective stats, reset semantics and RNG in their existing owners.
   const db064PrestigeMoon=window.DiceboundPrestigeMoon;
   if(!db064PrestigeMoon)throw new Error('DiceBound requires the Prestige Moon UI module before dicebound.js');
-  function db068CrucibleView(){
-    const built=DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible'),view=dbEchoCrucible.inspect(meta.echoCrucible,{classId:selectedClassId});
-    const activeIds=new Set((meta.heirlooms||[]).map(item=>String(item?.id||'')));
-    const stored=(meta.heirloomStorage||[]).filter(item=>dbEchoCrucible.isEligibleItem(item)).map(item=>{
-      const effect=dbEchoCrucible.effect(item.legendaryEffectId);
-      return {id:String(item.id),name:item.name||'Generated Legendary',slot:item.slot,rarity:item.rarity,equipmentId:item.equipmentId||null,effectId:effect?.id||item.legendaryEffectId,effectName:effect?.name||item.legendaryEffectName||item.legendaryEffectId,effectDesc:effect?.desc||item.legendaryEffectDesc||'',effectIcon:effect?.icon||'✨',active:activeIds.has(String(item.id)),known:view.learnedEffectIds.includes(String(item.legendaryEffectId))};
-    });
-    return {...view,built,stored};
-  }
   async function db068SacrificeCrucibleItem(itemId){
-    if(gameStarted){showToast('Use the Echo Crucible between runs.');return false;}
-    if(!DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible')){showToast('Build the Echo Crucible first.');return false;}
-    const item=(meta.heirloomStorage||[]).find(entry=>String(entry?.id||'')===String(itemId||''));
-    if(!item){showToast('That Legendary is no longer in the Vault.');return false;}
-    if((meta.heirlooms||[]).some(active=>String(active?.id||'')===String(item.id))){showToast('Remove that item from the active Heirloom loadout first.');return false;}
-    const effect=dbEchoCrucible.effect(item.legendaryEffectId),known=dbEchoCrucible.inspect(meta.echoCrucible).learnedEffectIds.includes(String(item.legendaryEffectId));
-    const reward=known?'This duplicate will become 1 Moon Metal.':'Its Legendary Effect will be learned permanently.';
+    const preview=dbProgression.crucibleSacrificePreview(itemId);
+    if(!preview.ok){showToast(preview.reason);return false;}
+    const {item,effect,reward}=preview;
     if(!(await diceboundConfirm(`Sacrifice ${item.name||'this Legendary'}?\n\n${effect?.name||item.legendaryEffectName||'Legendary Effect'} — ${effect?.desc||item.legendaryEffectDesc||''}\n\n${reward}\n\nThe physical item will be destroyed.`,{title:'Sacrifice Legendary?',confirmLabel:'Sacrifice',danger:true})))return false;
-    const result=dbEchoCrucible.sacrifice({state:meta.echoCrucible,storage:meta.heirloomStorage||[],activeHeirlooms:meta.heirlooms||[],itemId});
+    const result=dbProgression.crucibleSacrifice(itemId);
     if(!result.ok){showToast(result.reason);return false;}
-    meta.echoCrucible={...result.state};meta.heirloomStorage=[...result.storage];
-    dbItems.syncHeirloomState({persist:false});saveMeta();dbEquipmentUi.renderCampStorage();updateMetaUI();
-    showToast(result.outcome==='learned'?`Echo learned: ${result.effect.name}`:`Duplicate ${result.effect.name} converted to 1 Moon Metal.`,3200,true);
-    return result;
+    dbEquipmentUi.renderCampStorage();updateMetaUI();
+    showToast(result.outcome==='learned'?`Echo learned: ${result.effect.name}`:`Duplicate ${result.effect.name} converted to 1 Moon Metal.`,3200,true);return result;
   }
   function db068SelectCrucibleEcho(effectId){
-    if(gameStarted){showToast('Switch Echoes between runs.');return false;}
-    if(!DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible'))return false;
-    const result=dbEchoCrucible.select(meta.echoCrucible,effectId||null);
+    const result=dbProgression.crucibleSelect(effectId||null);
     if(!result.ok){showToast(result.reason);return false;}
-    meta.echoCrucible={...result.state};saveMeta();
-    showToast(result.effect?`Active Echo: ${result.effect.name}`:'Echo cleared.');
-    return result;
+    updateMetaUI();showToast(result.effect?`Active Echo: ${result.effect.name}`:'Echo cleared.');return result;
   }
   db064PrestigeMoon.configure({
     find:$,
     getState:()=>{
       const total=dbProgression.allocatedTalentPoints()+(meta.points||0),offer=db0633PrestigeOfferPoints(total);
-      return {prestige:dbProgression.prestigeInspect(),crucible:db068CrucibleView(),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:DB_PRESTIGE.hasPurchase(meta.prestige,'echo-crucible')?'The Echo Crucible is online. Moon Forge crafting comes next.':'The Echo Crucible costs 20 PP and unlocks Legendary Effect extraction.'};
+      return {prestige:dbProgression.prestigeInspect(),crucible:dbProgression.crucibleView({classId:selectedClassId}),canPrestige:offer>0,prestigeOffer:offer,prestigeDescription:'Every 9 total Talent Points becomes one unspent Prestige Point. Every lifetime PP adds +5% Legacy XP per run; each unspent PP also grants one held stat point.',status:dbProgression.crucibleBuilt()?'The Echo Crucible is online. Moon Forge crafting comes next.':'The Echo Crucible costs 20 PP and unlocks Legendary Effect extraction.'};
     },
     prestige:()=>prestigeTree(),
     purchase:id=>{
@@ -4722,7 +4700,7 @@ dbReturnToRoadTraceReady=true;
 
   /* SEMANTIC OWNER — Player / per-run initialization (#311). */
   dbRun.configurePlayerInitialization({
-    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,getRunEchoEffectId:()=>dbEchoCrucible.runEffectId(meta.echoCrucible),
+    getPlayer:()=>player,getMeta:()=>meta,getClasses:()=>CLASSES,getClassPassives:()=>CLASS_PASSIVES,getElementKeys:()=>ELEMENT_KEYS,getRunEchoEffectId:()=>dbProgression.crucibleRunEffectId(),
     setRunTalentSnapshot:value=>{runTalentSnapshot=value;},applyTalentBonuses:()=>applyTalentBonuses(),getHeirloomSlots:()=>dbProgression.heirloomLoadoutCapacity(),
     equipItem:(item,silent=false)=>dbItems.equip(item,silent),gameplayTalentRank:id=>dbProgression.gameplayTalentRank(id),generateEquipment:(rarity,slot)=>dbItems.generateEquipment(rarity,slot),
     pick:values=>pick(values),rand:(min,max)=>rand(min,max),recordRunBuff:(...args)=>recordRunBuff(...args),elementSummary:item=>elementSummary(item),

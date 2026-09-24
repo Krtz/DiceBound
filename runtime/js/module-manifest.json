@@ -918,6 +918,7 @@
       "requires": [
         "progression-talents",
         "progression-prestige",
+        "progression-echo-crucible",
         "progression-career-history"
       ],
       "provides": [

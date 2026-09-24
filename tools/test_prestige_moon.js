@@ -32,9 +32,12 @@ const progression=fs.readFileSync(path.join(root,'runtime/js/progression/lifecyc
 const talent=fs.readFileSync(path.join(root,'runtime/js/ui/talent-tree.js'),'utf8');
 const camp=fs.readFileSync(path.join(root,'runtime/js/ui/camp.js'),'utf8');
 assert.match(monolith,/const DB_PRESTIGE=window\.DiceboundPrestige/,'monolith must consume the authoritative Prestige domain owner');
-assert.match(monolith,/const DB_ECHO_CRUCIBLE=window\.DiceboundEchoCrucible/,'composition must consume the focused Echo Crucible owner');
-assert.match(monolith,/dbEchoCrucible\.sacrifice\(/,'Moon sacrifice must delegate to the focused Crucible transaction');
-assert.match(monolith,/dbEchoCrucible\.select\(/,'Moon selection must delegate to the focused Crucible domain');
+assert.match(progression,/const ECHO_CRUCIBLE=window\.DiceboundEchoCrucible/,'Progression must consume the focused Echo Crucible owner');
+assert.match(progression,/function crucibleSacrifice\(itemId\)/,'Progression must own the Crucible sacrifice transaction');
+assert.match(progression,/call\('syncHeirloomState',\{persist:false\}\);call\('saveMeta'\)/,'Crucible sacrifice must synchronize item ownership and persist once inside Progression');
+assert.match(monolith,/const result=dbProgression\.crucibleSacrifice\(itemId\);/,'Moon sacrifice must route through Progression');
+assert.match(monolith,/const result=dbProgression\.crucibleSelect\(effectId\|\|null\);/,'Moon selection must route through Progression');
+assert.doesNotMatch(monolith,/dbEchoCrucible\.(?:sacrifice|select|inspect)\(/,'Crucible semantic transactions must not return to the monolith');
 assert.match(progression,/PRESTIGE\.purchase\(state\.prestige,id,\(\)=>call\('random'\)\)/,'Progression facade must be the ordinary purchase RNG boundary');
 assert.match(monolith,/const result=dbProgression\.prestigePurchase\(id\);/,'Prestige Moon purchase must route through DiceboundProgression');
 assert.match(progression,/PRESTIGE\.refundAll\(state\.prestige\)/,'Progression facade must coordinate the focused Prestige refund domain');
