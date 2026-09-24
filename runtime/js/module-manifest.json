@@ -1234,7 +1234,7 @@
       "status": "extracted",
       "requires": [
         "assets",
-        "items-rarities",
+        "item-rarities",
         "classes-registry",
         "classes-invoker",
         "progression-achievements",
