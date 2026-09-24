@@ -28,6 +28,39 @@
     });
   }
   function nativeSaveSupported(){return !!runtime.nativeSaveSupported?.();}
+  function debugBundleSupported(){return !!runtime.debugBundleSupported?.();}
+  function ageLabel(ms){
+    const value=Number(ms);if(!Number.isFinite(value)||value<0)return 'unknown age';
+    const seconds=Math.floor(value/1000);if(seconds<60)return seconds+'s ago';
+    const minutes=Math.floor(seconds/60);if(minutes<60)return minutes+'m ago';
+    const hours=Math.floor(minutes/60);if(hours<48)return hours+'h ago';
+    return Math.floor(hours/24)+'d ago';
+  }
+  function saveHealthText(){
+    const report=runtime.getDebugReport?.()||{},health=report.saveHealth||{},primary=health.primary||{},backups=Array.isArray(health.backups)?health.backups:[],validBackups=backups.filter(entry=>entry?.valid),newest=health.newestValidBackup||validBackups[0]||null;
+    const saveText=!primary.present?'No primary save yet':primary.valid?('Primary save '+ageLabel(primary.ageMs)):'Primary save is invalid';
+    const backupText=validBackups.length?validBackups.length+' valid backup'+(validBackups.length===1?'':'s')+' · newest '+ageLabel(newest?.ageMs):'No valid backups';
+    const version=report.identity?.version||health.current?.gameVersion||'unknown',build=report.identity?.buildKey||'browser',schema=health.current?.schemaVersion??'unknown';
+    return saveText+' · '+backupText+' · Schema '+schema+' · Build '+version+' / '+build;
+  }
+  async function exportDebugBundle(){
+    const button=find('optionsExportDebugBtn'),checkbox=find('optionsIncludeSave'),status=find('optionsDebugStatus'),includeSave=!!checkbox?.checked;
+    if(!debugBundleSupported()){if(status)status.textContent='Debug Bundle export is available in the native Windows build.';return false;}
+    if(button)button.disabled=true;if(status)status.textContent=includeSave?'Creating bundle with explicitly opted-in save files…':'Creating privacy-safe bundle without save files…';
+    try{
+      const result=await runtime.exportDebugBundle?.({includeSave});
+      if(result?.ok){
+        if(status)status.textContent='Created '+String(result.filename||'debug bundle')+' and revealed it in Explorer'+(result.includedSave?' · save files included by opt-in.':' · save files excluded.');
+        if(checkbox)checkbox.checked=false;
+        return true;
+      }
+      if(status)status.textContent='Debug Bundle export did not complete.';
+      return false;
+    }catch(error){
+      if(status)status.textContent='Debug Bundle export failed: '+String(error?.message||error);
+      return false;
+    }finally{if(button)button.disabled=!debugBundleSupported();}
+  }
 
   function installStyles(){
     const documentRef=doc();
@@ -53,6 +86,7 @@
       #optionsOverlay .options-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#optionsOverlay .options-inline strong{font-size:11px}
       #optionsOverlay .options-volume{width:100%}#optionsOverlay .options-range{width:100%;accent-color:#d8b36a}
       #optionsOverlay .options-select{width:100%;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(9,14,24,.88);color:var(--ink);font:inherit}
+      #optionsOverlay .options-debug-consent{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.14);font-size:10px;line-height:1.4;color:#f2f5fb}#optionsOverlay .options-debug-consent input{margin-top:1px;accent-color:#d8b36a}
       @media(max-width:700px){#optionsOverlay.options-overlay{padding:0;align-items:stretch}#optionsOverlay .options-shell{width:100%;max-height:100vh;min-height:100vh;border-radius:0;border-width:0}#optionsOverlay .options-chrome{padding:14px 16px}#optionsOverlay .options-chrome h2{font-size:22px}#optionsOverlay .options-content{padding:14px 16px 28px}}
     `;
     documentRef.head?.appendChild(style);
@@ -69,8 +103,9 @@
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Options');
     if(overlay.dataset.optionsSurface!=='1'){
       overlay.dataset.optionsSurface='1';
-      overlay.innerHTML=`<section class="options-shell"><header class="options-chrome"><div><span class="options-kicker">DiceBound runtime</span><h2>Options</h2></div><button type="button" class="small-btn options-done" id="optionsCloseBtn" data-options-done data-app-dismiss>Done</button></header><div class="options-content"><p class="options-subtitle">Runtime helpers, audio controls and permanent-progress utilities.</p><div class="options-grid"><section class="options-card"><b>Native save tools</b><span>Open the real save-folder location when you are running the Windows wrapper.</span><button type="button" class="small-btn" id="optionsOpenSaveBtn">Open Save Folder</button></section><section class="options-card"><b>Audio</b><span>Toggle sound effects, choose the active sound pack, and set the global SFX volume.</span><button type="button" class="small-btn" id="optionsSoundBtn">Sound: On</button><div class="options-volume"><div class="options-inline"><strong>Volume</strong><span id="optionsVolumeValue">70%</span></div><input class="options-range" id="optionsVolumeSlider" type="range" min="0" max="100" step="1" value="70"></div><div><strong style="font-size:11px">Sound Pack</strong><select class="options-select" id="optionsSoundPackSelect"><option value="synth">Built-in synth</option><option value="custom">Custom asset pack (auto fallback)</option></select></div></section><section class="options-card"><b>Character layout</b><span>Modern uses the tabbed WoW-style paper doll. Classic restores the separate Adventurer stats and Equipment cards.</span><button type="button" class="small-btn" id="optionsCharacterLayoutBtn" aria-pressed="false">Character Layout: Modern</button></section><section class="options-card"><b>Combat numbers</b><span>Show quick damage, healing and Energy Shield values over the unit that actually receives them. Battle log and HP bars remain unchanged.</span><button type="button" class="small-btn" id="optionsFloatingNumbersBtn" aria-pressed="true">Floating Combat Numbers: On</button></section><section class="options-card" id="optionsFastEventsCard" hidden><b>Fast Wheel &amp; Slots</b><span>After Board 6 has been cleared, skip the Wheel and Slots spin animations without changing their outcomes.</span><button type="button" class="small-btn" id="optionsFastEventsBtn" aria-pressed="false">Fast Wheel &amp; Slots: Off</button></section><section class="options-card"><b>Permanent progress</b><span>Reset legacy progress, unlocks, heirlooms, pets and achievements. This uses the existing confirmation flow.</span><button type="button" class="small-btn danger" id="optionsResetBtn">Reset all progress</button></section></div><div class="options-note" id="optionsRuntimeNote"></div></div></section>`;
+      overlay.innerHTML=`<section class="options-shell"><header class="options-chrome"><div><span class="options-kicker">DiceBound runtime</span><h2>Options</h2></div><button type="button" class="small-btn options-done" id="optionsCloseBtn" data-options-done data-app-dismiss>Done</button></header><div class="options-content"><p class="options-subtitle">Runtime helpers, audio controls and permanent-progress utilities.</p><div class="options-grid"><section class="options-card"><b>Native save tools</b><span>Open the real save-folder location when you are running the Windows wrapper.</span><button type="button" class="small-btn" id="optionsOpenSaveBtn">Open Save Folder</button></section><section class="options-card"><b>Debug bundle &amp; save health</b><span id="optionsSaveHealth">Checking save health…</span><label class="options-debug-consent"><input type="checkbox" id="optionsIncludeSave"> Include save/progression files in this export</label><span>The checkbox is off by default and resets after a successful export. Without it, save contents are never placed in the ZIP.</span><button type="button" class="small-btn" id="optionsExportDebugBtn">Export Debug Bundle (.zip)</button><span id="optionsDebugStatus" aria-live="polite"></span></section><section class="options-card"><b>Audio</b><span>Toggle sound effects, choose the active sound pack, and set the global SFX volume.</span><button type="button" class="small-btn" id="optionsSoundBtn">Sound: On</button><div class="options-volume"><div class="options-inline"><strong>Volume</strong><span id="optionsVolumeValue">70%</span></div><input class="options-range" id="optionsVolumeSlider" type="range" min="0" max="100" step="1" value="70"></div><div><strong style="font-size:11px">Sound Pack</strong><select class="options-select" id="optionsSoundPackSelect"><option value="synth">Built-in synth</option><option value="custom">Custom asset pack (auto fallback)</option></select></div></section><section class="options-card"><b>Character layout</b><span>Modern uses the tabbed WoW-style paper doll. Classic restores the separate Adventurer stats and Equipment cards.</span><button type="button" class="small-btn" id="optionsCharacterLayoutBtn" aria-pressed="false">Character Layout: Modern</button></section><section class="options-card"><b>Combat numbers</b><span>Show quick damage, healing and Energy Shield values over the unit that actually receives them. Battle log and HP bars remain unchanged.</span><button type="button" class="small-btn" id="optionsFloatingNumbersBtn" aria-pressed="true">Floating Combat Numbers: On</button></section><section class="options-card" id="optionsFastEventsCard" hidden><b>Fast Wheel &amp; Slots</b><span>After Board 6 has been cleared, skip the Wheel and Slots spin animations without changing their outcomes.</span><button type="button" class="small-btn" id="optionsFastEventsBtn" aria-pressed="false">Fast Wheel &amp; Slots: Off</button></section><section class="options-card"><b>Permanent progress</b><span>Reset legacy progress, unlocks, heirlooms, pets and achievements. This uses the existing confirmation flow.</span><button type="button" class="small-btn danger" id="optionsResetBtn">Reset all progress</button></section></div><div class="options-note" id="optionsRuntimeNote"></div></div></section>`;
       find('optionsOpenSaveBtn')?.addEventListener('click',()=>{const result=runtime.openSaveFolder?.();if(result&&typeof result.then==='function')result.finally(()=>sync());else sync();});
+      find('optionsExportDebugBtn')?.addEventListener('click',()=>{void exportDebugBundle();});
       find('optionsSoundBtn')?.addEventListener('click',()=>{runtime.toggleMuted?.();sync();});
       find('optionsVolumeSlider')?.addEventListener('input',event=>{runtime.setVolume?.(clamp(event.target?.value,0,100)/100);sync();});
       find('optionsVolumeSlider')?.addEventListener('change',()=>runtime.playPreview?.());
@@ -102,7 +137,7 @@
   function sync(){
     const overlay=ensureSurface();
     const state=settings(),supported=nativeSaveSupported();
-    const soundButton=find('optionsSoundBtn'),saveButton=find('optionsOpenSaveBtn'),note=find('optionsRuntimeNote');
+    const soundButton=find('optionsSoundBtn'),saveButton=find('optionsOpenSaveBtn'),debugButton=find('optionsExportDebugBtn'),debugConsent=find('optionsIncludeSave'),saveHealth=find('optionsSaveHealth'),debugStatus=find('optionsDebugStatus'),note=find('optionsRuntimeNote');
     const slider=find('optionsVolumeSlider'),volumeValue=find('optionsVolumeValue'),packSelect=find('optionsSoundPackSelect'),layoutButton=find('optionsCharacterLayoutBtn'),floatingButton=find('optionsFloatingNumbersBtn'),fastCard=find('optionsFastEventsCard'),fastButton=find('optionsFastEventsBtn');
     if(soundButton)soundButton.textContent=state.muted?'Sound: Off':'Sound: On';
     if(slider)slider.value=String(Math.round(state.masterVolume*100));
@@ -113,16 +148,21 @@
     if(fastCard)fastCard.hidden=!state.fastWheelSlotsUnlocked;
     if(fastButton){fastButton.disabled=!state.fastWheelSlotsUnlocked;fastButton.setAttribute('aria-pressed',String(state.fastWheelSlots));fastButton.textContent=`Fast Wheel & Slots: ${state.fastWheelSlots?'On':'Off'}`;}
     if(saveButton){saveButton.disabled=!supported;saveButton.textContent=supported?'Open Save Folder':'Open Save Folder (native only)';}
+    const debugSupported=debugBundleSupported();
+    if(debugButton){debugButton.disabled=!debugSupported;debugButton.textContent=debugSupported?'Export Debug Bundle (.zip)':'Export Debug Bundle (native only)';}
+    if(debugConsent)debugConsent.disabled=!debugSupported;
+    if(saveHealth)saveHealth.textContent=saveHealthText();
+    if(debugStatus&&!debugSupported)debugStatus.textContent='ZIP export is available in the native Windows wrapper.';
     if(note){
       const runtimeText=supported?'Native wrapper detected. Saves live in %LOCALAPPDATA%\\Dicebound\\saves and this screen can open that folder directly.':'Browser build detected. Save-folder opening is available only in the native Windows wrapper; audio and reset controls still work here.';
       note.textContent=`${runtimeText} Custom SFX use the existing supported custom-sound folder and fall back to the built-in synth when an asset is missing.`;
     }
-    return Object.freeze({owner:OWNER,muted:state.muted,volume:state.masterVolume,soundPack:state.soundPack,characterLayout:state.characterLayout,floatingCombatNumbers:state.floatingCombatNumbers,fastWheelSlots:state.fastWheelSlots,fastWheelSlotsUnlocked:state.fastWheelSlotsUnlocked,nativeSaveSupported:supported});
+    return Object.freeze({owner:OWNER,muted:state.muted,volume:state.masterVolume,soundPack:state.soundPack,characterLayout:state.characterLayout,floatingCombatNumbers:state.floatingCombatNumbers,fastWheelSlots:state.fastWheelSlots,fastWheelSlotsUnlocked:state.fastWheelSlotsUnlocked,nativeSaveSupported:supported,debugBundleSupported:debugSupported,saveHealth:saveHealth?.textContent||''});
   }
   function open(){ensureTopAction();const overlay=ensureSurface();sync();if(overlay){overlay.classList.remove('hidden');overlay.setAttribute('aria-hidden','false');}return overlay;}
   function close(){const overlay=find('optionsOverlay');if(overlay){overlay.classList.add('hidden');overlay.setAttribute('aria-hidden','true');}return overlay||null;}
   function configure(nextRuntime={}){runtime={...runtime,...nextRuntime};ensureTopAction();return api;}
-  function inspect(){const overlay=find('optionsOverlay');return Object.freeze({owner:overlay?.dataset.optionsOwner||null,open:!!overlay&&!overlay.classList.contains('hidden'),hasDone:!!overlay?.querySelector?.('[data-options-done]'),nativeSaveSupported:nativeSaveSupported()});}
+  function inspect(){const overlay=find('optionsOverlay');return Object.freeze({owner:overlay?.dataset.optionsOwner||null,open:!!overlay&&!overlay.classList.contains('hidden'),hasDone:!!overlay?.querySelector?.('[data-options-done]'),nativeSaveSupported:nativeSaveSupported(),debugBundleSupported:debugBundleSupported(),includeSaveChecked:!!find('optionsIncludeSave')?.checked,saveHealth:find('optionsSaveHealth')?.textContent||''});}
   const api=Object.freeze({configure,ensure:ensureSurface,ensureTopAction,open,close,sync,inspect,owner:OWNER});
   window.DiceboundOptionsUi=api;
 })(window);

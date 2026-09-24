@@ -90,6 +90,7 @@
   function setWindowState(state={}){if(native?.setWindowState)return native.setWindowState({...state});if(Object.prototype.hasOwnProperty.call(state,"fullscreen"))return setFullscreen(!!state.fullscreen);return false;}
   function openSaveFolder(){if(native?.openSaveFolder)return native.openSaveFolder();return false;}
   function openAppDataFolder(){if(native?.openAppDataFolder)return native.openAppDataFolder();return false;}
+  function exportDebugBundle(payload){if(native?.exportDebugBundle)return native.exportDebugBundle(payload||{});return false;}
   function repairRuntime(){if(native?.repairRuntime)return native.repairRuntime();return false;}
   function appInfo(){return Object.freeze({appVersion:wrapper?.appVersion||identity.version,contractVersion:wrapper?.contractVersion||1,kind:metadata?.kind||"browser",wrapperVersion:metadata?.wrapperVersion||null,platform:metadata?.platform||null,architecture:metadata?.architecture||null,channel:metadata?.channel||identity.channel,isWrapped:!!wrapper?.isWrapped});}
 
@@ -114,7 +115,7 @@
       nativeTextSaveSupported:!!native?.saveTextFile,
       quitSupported:!!native?.quit,
       nativeWindowStateSupported:!!native?.getWindowState,
-      nativeSaveFolderSupported:!!native?.openSaveFolder,nativeAppDataFolderSupported:!!native?.openAppDataFolder,runtimeRepairSupported:!!native?.repairRuntime,
+      nativeSaveFolderSupported:!!native?.openSaveFolder,nativeAppDataFolderSupported:!!native?.openAppDataFolder,debugBundleSupported:!!native?.exportDebugBundle,runtimeRepairSupported:!!native?.repairRuntime,
       wrapperWarnings:[...(wrapper?.warnings||[])]
     });
   }
@@ -124,11 +125,11 @@
     contractVersion:wrapper?.contractVersion||1,
     kind: metadata?.kind || "browser",
     isWrapped: !!wrapper?.isWrapped,
-    capabilities: Object.freeze({clipboard:true,textDownload:true,textFilePicker:true,fullscreen:true,reload:true,quit:!!native?.quit,dialogs:true,externalLinks:true,logging:true,windowState:true,openSaveFolder:!!native?.openSaveFolder,openAppDataFolder:!!native?.openAppDataFolder,repairRuntime:!!native?.repairRuntime}),
+    capabilities: Object.freeze({clipboard:true,textDownload:true,textFilePicker:true,fullscreen:true,reload:true,quit:!!native?.quit,dialogs:true,externalLinks:true,logging:true,windowState:true,openSaveFolder:!!native?.openSaveFolder,openAppDataFolder:!!native?.openAppDataFolder,debugBundle:!!native?.exportDebugBundle,repairRuntime:!!native?.repairRuntime}),
     copyText, downloadText, downloadJson, pickTextFile,
     setFullscreen, toggleFullscreen, reload, quit, openExternal,
     alert: alertUser, confirm: confirmUser, prompt: promptUser,
-    log,getWindowState,setWindowState,openSaveFolder,openAppDataFolder,repairRuntime,appInfo,
+    log,getWindowState,setWindowState,openSaveFolder,openAppDataFolder,exportDebugBundle,repairRuntime,appInfo,
     nowIso: () => new Date().toISOString(),
     nowMs: () => Date.now(),
     runtimeInfo,

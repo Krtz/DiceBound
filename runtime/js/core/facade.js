@@ -9,6 +9,7 @@
   const coreState = window.DiceboundCoreState;
   const runtimeServices = window.DiceboundRuntimeServices;
   const memoryDiagnostics = window.DiceboundMemoryDiagnostics;
+  const debugBundle = window.DiceboundDebugBundle;
 
   const requireOwner = (value, label) => {
     if (!value) throw new Error(`DiceboundRuntime requires ${label} before loading.`);
@@ -22,6 +23,7 @@
   requireOwner(coreState, "DiceboundCoreState");
   requireOwner(runtimeServices, "DiceboundRuntimeServices");
   requireOwner(memoryDiagnostics, "DiceboundMemoryDiagnostics");
+  requireOwner(debugBundle, "DiceboundDebugBundle");
 
   function createMetaService(options = {}) {
     if (!options || typeof options !== "object") throw new TypeError("DiceboundRuntime meta-service options must be an object");
@@ -46,6 +48,7 @@
       runCheckpoint: runCheckpoint.diagnostics(),
       wrapper: platform.wrapperDiagnostics(),
       memory: memoryDiagnostics.diagnostics(),
+      debugBundle: debugBundle.diagnostics(),
     });
   }
 
@@ -57,6 +60,7 @@
     save,
     runCheckpoint,
     memoryDiagnostics,
+    debugBundle,
     createMetaService,
     createEventBus,
     createPowerupServices,

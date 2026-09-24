@@ -55,8 +55,11 @@ else:
     STAGED_LOADER.write_bytes(b'')
     loader_mode='compatibility-fallback'
 env=os.environ.copy();env.update({'GOOS':'windows','GOARCH':'amd64','GO111MODULE':'off'})
+source_sha=env.get('RELEASE_SOURCE_SHA','').strip()
+ldflags='-H=windowsgui -s -w -buildid='
+if source_sha: ldflags+=f' -X main.releaseSourceSHA={source_sha}'
 try:
-    subprocess.run(['go','build','-buildvcs=false','-trimpath','-o',str(raw),'-ldflags=-H=windowsgui -s -w -buildid=','main.go'],cwd=NATIVE,env=env,check=True)
+    subprocess.run(['go','build','-buildvcs=false','-trimpath','-o',str(raw),f'-ldflags={ldflags}','main.go'],cwd=NATIVE,env=env,check=True)
     product=f"{CFG.get('channel','Beta')} {CFG['version']}"
     subprocess.run([sys.executable,str(LAUNCHER/'embed_icon.py'),str(raw),str(ICON),str(out),'--file-version',version4(CFG['version']),'--product-version',product,'--original-filename',out.name],cwd=ROOT,check=True)
     verify_metadata(out)

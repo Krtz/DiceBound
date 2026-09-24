@@ -21,7 +21,10 @@
     log: "sync-or-async",
     getWindowState: "sync",
     setWindowState: "sync-or-async",
-    openSaveFolder: "sync-or-async"
+    openSaveFolder: "sync-or-async",
+    openAppDataFolder: "sync-or-async",
+    repairRuntime: "sync-or-async",
+    exportDebugBundle: "sync-or-async"
   });
   const storageMethods = Object.freeze({
     getString: "sync",

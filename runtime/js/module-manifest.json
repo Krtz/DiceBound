@@ -15,6 +15,7 @@
     "core-state",
     "runtime-services",
     "memory-diagnostics",
+    "runtime-debug-bundle",
     "runtime-facade",
     "combat-element-content",
     "combat-effective-stats",
@@ -248,6 +249,22 @@
       ]
     },
     {
+      "id": "runtime-debug-bundle",
+      "path": "js/core/debug-bundle.js",
+      "domain": "runtime/privacy-safe-debug-bundle-report-and-export-composition",
+      "status": "extracted",
+      "requires": [
+        "version",
+        "platform",
+        "storage",
+        "save-system",
+        "memory-diagnostics"
+      ],
+      "provides": [
+        "DiceboundDebugBundle"
+      ]
+    },
+    {
       "id": "runtime-facade",
       "path": "js/core/facade.js",
       "domain": "runtime/public-core-persistence-composition-facade",
@@ -260,7 +277,8 @@
         "run-checkpoint",
         "core-state",
         "runtime-services",
-        "memory-diagnostics"
+        "memory-diagnostics",
+        "runtime-debug-bundle"
       ],
       "provides": [
         "DiceboundRuntime"

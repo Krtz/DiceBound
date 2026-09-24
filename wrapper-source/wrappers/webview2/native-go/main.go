@@ -40,7 +40,7 @@ var payload []byte
 var packagedWebView2Loader []byte
 
 const (
-    appTitle       = "Dicebound: Beta v0.6.7.31"
+    appTitle       = "Dicebound: Beta v0.6.7.32"
     className      = "DiceboundNativeWebView2Window"
     mutexName      = `Local\Dicebound_Beta_Native_Single_Instance`
     runtimeGUID    = `{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}`
@@ -161,7 +161,15 @@ var (
     repairAttempted bool
     runtimeCacheDir string
     dataRoot string
+    runtimeGameDir string
+    runtimeSaveDir string
+    runtimeUserDataDir string
+    runtimeBuildKey string
+    webViewBootstrapMode string
 )
+
+// tools/build_launcher.py injects the exact release-source commit when CI has it.
+var releaseSourceSHA = "unavailable"
 
 func utf16(s string) *uint16 { p, _ := syscall.UTF16PtrFromString(s); return p }
 
@@ -239,6 +247,57 @@ func allStorageKeys(saveDir string) []string {
 }
 func writeAtomic(path string,data []byte) error { if err:=os.MkdirAll(filepath.Dir(path),0755);err!=nil{return err};tmp:=path+".tmp";if err:=os.WriteFile(tmp,data,0644);err!=nil{return err};return os.Rename(tmp,path) }
 func openFolder(path string) error { if err:=os.MkdirAll(path,0755);err!=nil{return err};return exec.Command("explorer.exe",path).Start() }
+func revealFile(path string) error { return exec.Command("explorer.exe","/select,"+path).Start() }
+
+type debugBundleRequest struct {
+    IncludeSave bool `json:"includeSave"`
+    Report json.RawMessage `json:"report"`
+}
+type debugBundleResult struct {
+    OK bool `json:"ok"`
+    Filename string `json:"filename"`
+    Path string `json:"path"`
+    IncludedSave bool `json:"includedSave"`
+}
+func zipBytes(zw *zip.Writer,name string,data []byte) error {
+    h:=&zip.FileHeader{Name:filepath.ToSlash(name),Method:zip.Deflate};h.SetModTime(time.Unix(0,0).UTC())
+    w,err:=zw.CreateHeader(h);if err!=nil{return err};_,err=w.Write(data);return err
+}
+func zipFileIfPresent(zw *zip.Writer,name,path string) error {
+    b,err:=os.ReadFile(path);if os.IsNotExist(err){return nil};if err!=nil{return err};return zipBytes(zw,name,b)
+}
+func createDebugBundle(gameDir,saveDir string,req debugBundleRequest)(debugBundleResult,error){
+    if len(req.Report)==0||!json.Valid(req.Report){return debugBundleResult{},fmt.Errorf("debug report is missing or invalid JSON")}
+    outDir:=filepath.Join(dataRoot,"debug-bundles");if err:=os.MkdirAll(outDir,0755);err!=nil{return debugBundleResult{},err}
+    filename:="DiceBound-debug-"+time.Now().UTC().Format("20060102-150405")+".zip";path:=filepath.Join(outDir,filename)
+    file,err:=os.Create(path);if err!=nil{return debugBundleResult{},err}
+    zw:=zip.NewWriter(file);ok:=false
+    defer func(){if !ok{_ = os.Remove(path)}}()
+    context:=map[string]any{
+        "generatedAt":time.Now().UTC().Format(time.RFC3339Nano),
+        "version":"0.6.7.32","buildKey":runtimeBuildKey,"releaseSourceSHA":releaseSourceSHA,
+        "wrapperMode":"native-webview2","webView2BootstrapMode":webViewBootstrapMode,
+        "paths":map[string]string{"dataRoot":dataRoot,"saveDir":runtimeSaveDir,"runtimeCacheDir":runtimeCacheDir,"gameDir":runtimeGameDir,"webView2UserDataDir":runtimeUserDataDir,"logPath":logPath},
+    }
+    contextBytes,_:=json.MarshalIndent(context,"","  ")
+    privacy:=[]byte("DiceBound debug bundle\n\nSave/progression files included: "+strconv.FormatBool(req.IncludeSave)+"\nSave files are excluded unless the player explicitly opts in from Options.\n")
+    if err:=zipBytes(zw,"diagnostics/runtime-report.json",req.Report);err!=nil{return debugBundleResult{},err}
+    if err:=zipBytes(zw,"diagnostics/native-context.json",append(contextBytes,'\n'));err!=nil{return debugBundleResult{},err}
+    if err:=zipBytes(zw,"PRIVACY.txt",privacy);err!=nil{return debugBundleResult{},err}
+    if err:=zipFileIfPresent(zw,"build/build-info.json",filepath.Join(gameDir,"build-info.json"));err!=nil{return debugBundleResult{},err}
+    if err:=zipFileIfPresent(zw,"build/build-manifest.json",filepath.Join(gameDir,"build-manifest.json"));err!=nil{return debugBundleResult{},err}
+    if err:=zipFileIfPresent(zw,"logs/native-wrapper.log",logPath);err!=nil{return debugBundleResult{},err}
+    if req.IncludeSave {
+        for _,key:=range allStorageKeys(saveDir){
+            src:=safeKeyFile(saveDir,key)
+            if err:=zipFileIfPresent(zw,"save/"+filepath.Base(src),src);err!=nil{return debugBundleResult{},err}
+        }
+    }
+    if err:=zw.Close();err!=nil{_ = file.Close();return debugBundleResult{},err}
+    if err:=file.Close();err!=nil{return debugBundleResult{},err};ok=true
+    _ = revealFile(path)
+    return debugBundleResult{OK:true,Filename:filename,Path:path,IncludedSave:req.IncludeSave},nil
+}
 
 func requestRuntimeRepair(reason string){
     logf("Runtime repair requested: %s (alreadyAttempted=%v)",reason,repairAttempted)
@@ -252,7 +311,7 @@ func requestRuntimeRepair(reason string){
 }
 func watchFrontendReady(){
     select{
-    case <-frontendReady: logf("Frontend ready handshake received for Beta 0.6.7.31.")
+    case <-frontendReady: logf("Frontend ready handshake received for Beta 0.6.7.32.")
     case <-time.After(12*time.Second): requestRuntimeRepair("frontend did not initialize within 12 seconds")
     }
 }
@@ -266,6 +325,14 @@ func startServer(gameDir,saveDir string)(string,error){
     mux.HandleFunc("/__dicebound/storage/keys",func(w http.ResponseWriter,r *http.Request){w.Header().Set("Content-Type","application/json");_ = json.NewEncoder(w).Encode(allStorageKeys(saveDir))})
     mux.HandleFunc("/__dicebound/platform/open-save-folder",func(w http.ResponseWriter,r *http.Request){if err:=openFolder(saveDir);err!=nil{http.Error(w,err.Error(),500);return};_,_=io.WriteString(w,"ok")})
     mux.HandleFunc("/__dicebound/platform/open-app-data-folder",func(w http.ResponseWriter,r *http.Request){if err:=openFolder(dataRoot);err!=nil{http.Error(w,err.Error(),500);return};_,_=io.WriteString(w,"ok")})
+    mux.HandleFunc("/__dicebound/platform/export-debug-bundle",func(w http.ResponseWriter,r *http.Request){
+        if r.Method!="POST"{http.Error(w,"POST required",405);return}
+        b,err:=io.ReadAll(io.LimitReader(r.Body,2<<20));if err!=nil{http.Error(w,"unable to read debug request",400);return}
+        var req debugBundleRequest;if err:=json.Unmarshal(b,&req);err!=nil{http.Error(w,"invalid debug request",400);return}
+        result,err:=createDebugBundle(gameDir,saveDir,req);if err!=nil{logf("Debug bundle export failed: %v",err);http.Error(w,err.Error(),500);return}
+        logf("Debug bundle exported: %s includeSave=%v",result.Path,result.IncludedSave)
+        w.Header().Set("Content-Type","application/json");_ = json.NewEncoder(w).Encode(result)
+    })
     mux.HandleFunc("/__dicebound/platform/ready",func(w http.ResponseWriter,r *http.Request){b,_:=io.ReadAll(io.LimitReader(r.Body,32<<10));logf("Frontend ready payload: %s",strings.TrimSpace(string(b)));select{case frontendReady<-true:default:};_,_=io.WriteString(w,"ok")})
     mux.HandleFunc("/__dicebound/platform/repair-runtime",func(w http.ResponseWriter,r *http.Request){_,_=io.WriteString(w,"ok");go requestRuntimeRepair("manual repair requested from Options")})
     mux.HandleFunc("/__dicebound/platform/quit",func(w http.ResponseWriter,r *http.Request){_,_=io.WriteString(w,"ok");if hwnd!=0{procPostMessageW.Call(hwnd,wmClose,0,0)}})
@@ -401,21 +468,23 @@ func bootstrapWithCompatibilityFallback(userDataDir string) error {
 
 func initWebView2(dataDir,userDataDir string) error {
     if loader,ok,err:=stagedOfficialLoaderPath(dataDir);err!=nil{return err}else if ok{
-        if err:=bootstrapWithPublicLoader(loader,userDataDir);err==nil{return nil}else{logf("Official WebView2Loader failed, using compatibility fallback: %v",err)}
+        if err:=bootstrapWithPublicLoader(loader,userDataDir);err==nil{webViewBootstrapMode="official-loader";return nil}else{logf("Official WebView2Loader failed, using compatibility fallback: %v",err)}
     }else{
         logf("Official WebView2Loader was not staged in this build; using isolated compatibility fallback")
     }
-    return bootstrapWithCompatibilityFallback(userDataDir)
+    if err:=bootstrapWithCompatibilityFallback(userDataDir);err!=nil{return err}
+    webViewBootstrapMode="compatibility-fallback"
+    return nil
 }
 
 func main(){
     runtime.LockOSThread();defer runtime.UnlockOSThread()
-    dataDir:=appDataDir();dataRoot=dataDir;for _,a:=range os.Args[1:]{if a=="--repair-attempted"{repairAttempted=true}};logPath=filepath.Join(dataDir,"logs","native-wrapper.log");windowFile=filepath.Join(dataDir,"wrapper","window.json");saveDir:=filepath.Join(dataDir,"saves");runtimeCacheDir=filepath.Join(dataDir,"runtime-cache");buildKey:=payloadHash()[:16];gameDir:=filepath.Join(runtimeCacheDir,"payloads",buildKey);userDataDir:=filepath.Join(runtimeCacheDir,"webview2",buildKey);_ = os.MkdirAll(saveDir,0755);_ = os.MkdirAll(runtimeCacheDir,0755)
-    logf("Starting Dicebound Beta 0.6.7.31 native WebView2 wrapper. payload=%s repairAttempted=%v",buildKey,repairAttempted);logf("data=%s saves=%s runtime-cache=%s game=%s webview2=%s",dataDir,saveDir,runtimeCacheDir,gameDir,userDataDir)
+    dataDir:=appDataDir();dataRoot=dataDir;for _,a:=range os.Args[1:]{if a=="--repair-attempted"{repairAttempted=true}};logPath=filepath.Join(dataDir,"logs","native-wrapper.log");windowFile=filepath.Join(dataDir,"wrapper","window.json");saveDir:=filepath.Join(dataDir,"saves");runtimeSaveDir=saveDir;runtimeCacheDir=filepath.Join(dataDir,"runtime-cache");buildKey:=payloadHash()[:16];runtimeBuildKey=buildKey;gameDir:=filepath.Join(runtimeCacheDir,"payloads",buildKey);runtimeGameDir=gameDir;userDataDir:=filepath.Join(runtimeCacheDir,"webview2",buildKey);runtimeUserDataDir=userDataDir;_ = os.MkdirAll(saveDir,0755);_ = os.MkdirAll(runtimeCacheDir,0755)
+    logf("Starting Dicebound Beta 0.6.7.32 native WebView2 wrapper. payload=%s repairAttempted=%v",buildKey,repairAttempted);logf("data=%s saves=%s runtime-cache=%s game=%s webview2=%s",dataDir,saveDir,runtimeCacheDir,gameDir,userDataDir)
     if len(os.Args)>1&&(os.Args[1]=="--open-save-folder"||os.Args[1]=="--open-app-data"||os.Args[1]=="--open-data-folder"){target:=saveDir;if os.Args[1]!="--open-save-folder"{target=dataDir};if err:=openFolder(target);err!=nil{fatal(err)};return}
     mutex,already,err:=createSingleInstance();if err!=nil{fatal(err)};defer procCloseHandle.Call(mutex);if already{focusExisting();return}
     if err:=preparePayload(gameDir);err!=nil{fatal(fmt.Errorf("could not prepare exact dist/browser payload: %w",err))}
-    base,err:=startServer(gameDir,saveDir);if err!=nil{fatal(fmt.Errorf("could not start local Dicebound host: %w",err))};serverBase=base;initURL=base+"/index.html?diceboundNative=1&v=0.6.7.31&build="+buildKey;logf("Serving exact browser payload at %s",base)
+    base,err:=startServer(gameDir,saveDir);if err!=nil{fatal(fmt.Errorf("could not start local Dicebound host: %w",err))};serverBase=base;initURL=base+"/index.html?diceboundNative=1&v=0.6.7.32&build="+buildKey;logf("Serving exact browser payload at %s",base)
     if hr,_,_:=procCoInitializeEx.Call(0,coinitApartmentThreaded);hresultFailed(hr)&&uint32(hr)!=0x80010106{fatal(fmt.Errorf("CoInitializeEx failed: 0x%08X",uint32(hr)))}else{defer procCoUninitialize.Call()}
     state,ok:=loadWindowState(windowFile);var e error;hwnd,e=createNativeWindow(state,ok);if e!=nil{fatal(e)};if ok{logf("Restoring native window %dx%d at %d,%d maximized=%v",state.Width,state.Height,state.X,state.Y,state.Maximized)}
     if err:=initWebView2(runtimeCacheDir,userDataDir);err!=nil{fatal(err)}
