@@ -53,5 +53,5 @@ Imported paths and source packs are recorded in import-2026-09-24.json.
 3 additional Common reuse recommendations + 8 new artworks = 20 with an art plan/source, leaving 16 needing art:
 Resolute Guard; Arcane Meditation; Flowing Guard; Pain Is Fuel; Iron Resonance; Verdant Arrowheads; Void Channel; Storm Kata; Volcanic Temper; Storm Croak; Night's Hunger; Lightning Step; Automated Workforce; Open All Hours; Benediction; Deeper Circle.
 
-This is artwork availability/planning coverage, not shipped runtime coverage. New PNGs and reuse mappings still need integration and real-size UI checks. Built-in ImageGen used; original prompts remain in the local art-inbox source packs.
+Beta 0.6.8.0 integrates the 15 imported Powerup PNGs plus the approved Echoing Strike, Long Stride and Venom Edge reuse mappings through stable Powerup IDs. Common coverage is still incomplete: the 16 identities listed above still need dedicated or approved shared artwork. Built-in ImageGen used; original prompts remain in the local art-inbox source packs.
 
