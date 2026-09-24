@@ -36,22 +36,6 @@ tags: holy, light
 eligibility: rare+
 intrinsic: +10 Mana, +10 HP, +1% Light proc chance
 ---
-## Distiller's Amulet
-family: distiller
-material: copper, glass
-weight: light
-tags: alchemy, potion
-eligibility: rare+
-intrinsic: +20% Potion Healing, +8 Mana, +1 Luck
----
-## Dragon Tooth
-family: tooth-charm
-material: tooth
-weight: light
-tags: dragon, martial
-eligibility: common+
-intrinsic: +2 Attack, +1% Crit
----
 ## Executive Amulet
 family: executive
 material: gold

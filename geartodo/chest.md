@@ -36,14 +36,6 @@ tags: source-inspired, martial, fire
 eligibility: common+
 intrinsic: +2 Defense, +1% Fire proc chance
 ---
-## Band T-Shirt
-family: t-shirt
-material: cloth
-weight: light
-tags: weird, music, cool
-eligibility: rare+
-intrinsic: +4% Dodge, +1 Thorns, +2% Echo, +1% Metal proc chance
----
 ## Bane Platebody
 family: platebody
 material: bane-metal
@@ -83,14 +75,6 @@ weight: very-heavy
 tags: blue, frost, plate
 eligibility: epic+
 intrinsic: +5 Defense, +8 HP, +1% Ice proc chance, -2% Dodge
----
-## Boneweave
-family: boneweave
-material: bone
-weight: medium
-tags: source-inspired, martial, void
-eligibility: common+
-intrinsic: +2 Defense, +2% Lifesteal, +1% Void proc chance
 ---
 ## Breast Plate
 family: breastplate

@@ -12,14 +12,6 @@ tags: weird, source-inspired, prototype-reference, martial
 eligibility: common+
 intrinsic: +4 Attack, +3% Crit
 ---
-## Abyssal Wand
-family: wand
-material: 
-weight: light
-tags: caster, wand, source-inspired, prototype-reference
-eligibility: rare+
-intrinsic: +13 Mana, +2% Echo, +1% Void proc chance
----
 ## Abyssal Whip
 family: whip
 material: 
@@ -83,14 +75,6 @@ weight: light
 tags: ranged, thrown, material-tier, source-inspired
 eligibility: uncommon+
 intrinsic: +4 Attack, +3% Crit, +2% Echo, +1 Defense
----
-## Adamant Halberd
-family: halberd
-material: adamant
-weight: heavy
-tags: martial, material-tier, halberd
-eligibility: uncommon+
-intrinsic: +6 Attack, +1% Crit, -1% Dodge, +1 Defense
 ---
 ## Adamant Hasta
 family: hasta
