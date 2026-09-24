@@ -20,6 +20,7 @@
   // campFigure. Existing chooser/reveal cards retain their campsite/headshot
   // semantic, so the Camp scene cannot silently substitute a portrait.
   const classes=Object.fromEntries(CLASSES.map(id=>[id,Object.freeze({campsite:`${paths.classCampsite}/${id}.png`,headshot:`${paths.classCampsite}/${id}.png`,campFigure:`${paths.classBattle}/${id}.png`,battle:`${paths.classBattle}/${id}.png`,marker:`${paths.classMarkers}/${id}.png`,alt:id})]));
+  classes.rouge=Object.freeze({...classes.rouge,campFigure:classes.rouge.campsite,alt:"Rouge"});
   classes.invoker=Object.freeze({...classes.invoker,orbSystem:`${ROOT}/characters/classes/invoker/orb-system-emblem.png`,projectile:`${ROOT}/characters/classes/invoker/tri-element-projectile.png`,grimoire:`${ROOT}/characters/classes/invoker/triad-grimoire-emblem.png`,alt:"Invoker"});
   // The currently approved Pet finals are shared between portrait and battle
   // contexts. Keep both semantic paths explicit so combat never falls back to
@@ -44,7 +45,7 @@
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
     treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
   });
-  const manifest=Object.freeze({version:24,
+  const manifest=Object.freeze({version:25,
     enemies:Object.freeze({
       // Battle base art evolves by Board, while board-marker identity and
       // Nightmare/Hell presentation deliberately stay separate concerns.
@@ -52,7 +53,7 @@
       goblin:tieredNormalEnemy("goblin","Goblin"),skeleton:tieredNormalEnemy("skeleton","Skeleton"),
       wolf:tieredNormalEnemy("wolf","Wolf",normalEnemyBattleArt("wolf","portrait.png")),bandit:tieredNormalEnemy("bandit","Bandit",normalEnemyBattleArt("bandit","portrait.png")),
       orc:tieredNormalEnemy("orc","Orc"),cultist:tieredNormalEnemy("cultist","Cultist"),wraith:tieredNormalEnemy("wraith","Wraith"),
-      troll:normalEnemy("troll","Troll",normalEnemyBattleArt("troll","portrait.png")),demon:tieredNormalEnemy("demon","Demon"),lich:tieredNormalEnemy("lich","Lich")
+      troll:tieredNormalEnemy("troll","Troll",normalEnemyBattleArt("troll","portrait.png")),demon:tieredNormalEnemy("demon","Demon"),lich:tieredNormalEnemy("lich","Lich")
     }),
     minibosses:Object.freeze(guardians(MINI,paths.minibossBattle,paths.minibossMarkers)),bosses:Object.freeze(bossGuardians),secretBosses:Object.freeze(guardians(SECRET,paths.secretBossBattle,paths.secretBossMarkers)),
     classes:Object.freeze(classes),randomClass:Object.freeze({campsite:`${ROOT}/characters/random-class/campsite/random-class.png`,alt:"Random class"}),pets:Object.freeze(pets),powerups,

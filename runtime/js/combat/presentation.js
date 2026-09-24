@@ -350,6 +350,12 @@
     const [bg1,bg2]=palettes[Math.min(6,Math.max(1,Math.floor(Number(board)||1)))],gid=`enemy_${portraitHash(enemy?.name||id)}`,label=escapePortraitLabel(enemy?.name||id);
     return `<svg class="enemy-art-frame" viewBox="0 0 72 72" role="img" aria-label="${label}"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg1}"/><stop offset="1" stop-color="${bg2}"/></linearGradient></defs><rect x="2" y="2" width="68" height="68" rx="17" fill="#060a10"/><rect x="4" y="4" width="64" height="64" rx="15" fill="url(#${gid})"/><g transform="translate(0 2)">${shape}</g></svg>`;
   }
+  function ordinaryEnemyArtScale(enemy,board){
+    if(enemy?.guardian||enemy?.boss||enemy?.miniBoss||enemy?.finalBoss||enemy?.merchantBoss||enemy?.devilBoss)return 1;
+    const boardScale=1+(Math.min(6,Math.max(1,Math.floor(Number(board)||1)))-1)*.10;
+    const familyScale=(enemy?.id==="wolf"||enemy?.id==="slime")?.80:1;
+    return Number((boardScale*familyScale).toFixed(2));
+  }
   function enemyPortraitHTML(enemy){
     const rt=requireRuntime(),state=rt.getState(),id=String(enemy?.id||""),board=Math.min(6,Math.max(1,Math.floor(Number(state.boardLevel)||1))),mode=state.hellMode?"hell":state.nightmareMode?"nightmare":"normal",label=escapePortraitLabel(enemy?.name||id||"Enemy");
     if(id){
@@ -370,7 +376,11 @@
     const strip = find("enemyParty"), stage = find("enemyIcon"); if (!strip || !stage) return;
     const enemies = state.currentEnemies || [], index = state.currentEnemyIndex || 0;
     strip.innerHTML = ""; stage.className = "fighter-icon enemy-stage-icons";
-    stage.innerHTML = enemies.map((e, i) => `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" data-enemy-index="${i}" data-enemy-id="${escapePortraitLabel(String(e.id||''))}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0, null, (e.confusionActions || 0) > 0)}</span></span>`).join("");
+    const battleBoard=Math.min(6,Math.max(1,Math.floor(Number(state.boardLevel)||1)));
+    stage.innerHTML = enemies.map((e, i) => {
+      const scale=ordinaryEnemyArtScale(e,battleBoard),style=`--db-enemy-art-size:${Math.round(62*scale)}px;--db-enemy-art-mobile-size:${Math.round(50*scale)}px;--db-enemy-stage-width:${Math.round(72*scale)}px;--db-enemy-stage-mobile-width:${Math.round(44*scale)}px;--db-enemy-stage-height:${Math.round(92*scale)}px`;
+      return `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" style="${style}" data-enemy-index="${i}" data-enemy-id="${escapePortraitLabel(String(e.id||''))}" data-enemy-art-scale="${scale}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0, null, (e.confusionActions || 0) > 0)}</span></span>`;
+    }).join("");
     enemies.forEach((e, i) => { const b = doc.createElement("button"); b.className = `enemy-chip${i === index && e.hp > 0 ? " active" : ""}${e.hp <= 0 ? " dead" : ""}`; b.disabled = e.hp <= 0; b.title = `${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.defense || 0} DEF`; b.innerHTML = `<strong class="target-number">${i + 1}</strong>`; b.addEventListener("click", () => rt.selectEnemy(i)); strip.appendChild(b); });
     stage.classList.toggle("db0636-tiered-enemy-stage", !!stage.querySelector?.(".db0636-tiered-enemy-art"));
   }
