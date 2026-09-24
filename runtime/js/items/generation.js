@@ -69,7 +69,14 @@
       if(!ORDINARY_RARITIES.includes(rarity))throw new RangeError(`Unsupported generated gear rarity: ${rarity}`);
       return rawGeneratedGear(rarity,forcedSlot);
     }
-    function hasEffect(id){return Object.values(player().equipment||{}).some(item=>item?.legendaryEffectId===id);}
+    function effectCompatible(id,classId=getClassIdentityId()){
+      const effect=EFFECT_BY_ID[String(id||"")];
+      return !!effect&&(!Array.isArray(effect.classes)||!effect.classes.length||effect.classes.includes(String(classId||"")));
+    }
+    function hasEffect(id){
+      if(Object.values(player().equipment||{}).some(item=>item?.legendaryEffectId===id))return true;
+      return player().crucibleEchoEffectId===id&&effectCompatible(id);
+    }
     function effectDescription(item){
       const effect=EFFECT_BY_ID[item?.legendaryEffectId],fallback=item?.legendaryEffectDesc||'';
       if(!effect)return fallback;
@@ -77,8 +84,8 @@
       const gold=Math.max(0,Math.floor(Number(player().gold)||0)),bonus=Math.floor(gold/500);
       return `${effect.desc} At your current ${gold} gold, it grants +${bonus} damage per basic and Echo strike while equipped.`;
     }
-    return Object.freeze({generateEquipment,generateLegendary,hasEffect,effectDescription,eligibleEffects,chooseEffect,rawGeneratedGear,owner:OWNER});
+    return Object.freeze({generateEquipment,generateLegendary,hasEffect,effectCompatible,effectDescription,eligibleEffects,chooseEffect,rawGeneratedGear,owner:OWNER});
   }
 
-  window.DiceboundItemGeneration=Object.freeze({apiVersion:1,owner:OWNER,effects:EFFECTS,effectById:EFFECT_BY_ID,createController});
+  window.DiceboundItemGeneration=Object.freeze({apiVersion:2,owner:OWNER,effects:EFFECTS,effectById:EFFECT_BY_ID,createController});
 })();

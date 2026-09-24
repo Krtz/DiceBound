@@ -21,7 +21,7 @@
     }
 
     function initialize(classId){
-      const player=getPlayer(),meta=getMeta(),CLASSES=getClasses(),CLASS_PASSIVES=getClassPassives?.()||{},ELEMENT_KEYS=[...(getElementKeys?.()||[])];
+      const player=getPlayer(),meta=getMeta(),CLASSES=getClasses(),CLASS_PASSIVES=getClassPassives?.()||{},ELEMENT_KEYS=[...(getElementKeys?.()||[])],crucibleEchoEffectId=typeof deps.getRunEchoEffectId==="function"?deps.getRunEchoEffectId():null;
       if(!player||!meta)throw new Error("Player initialization state is unavailable.");
       if(!ELEMENT_KEYS.length)throw new Error("Player initialization requires element ids.");
 
@@ -35,7 +35,7 @@
 
       // Canonical Beta reset -------------------------------------------------
       const cls=CLASSES[classId]||CLASSES.ranger;
-      Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0});
+      Object.assign(player,{classId:cls.id,position:0,level:1,xp:0,xpNext:20,hp:cls.base.maxHp,maxHp:cls.base.maxHp,attack:cls.base.attack,defense:cls.base.defense,gold:0,potions:1,crit:cls.base.crit,luck:cls.base.luck||0,postFightHeal:0,goldBonus:0,flatReduction:0,lifeSteal:cls.base.lifeSteal||0,doubleStrike:cls.base.doubleStrike||0,thorns:0,dodge:cls.base.dodge,potionPower:0,extraStepChance:0,xpBonus:0,bossDamage:cls.base.bossDamage||0,revives:0,berserk:0,execute:0,shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,guardPower:cls.base.guardPower,classBurst:cls.base.classBurst,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},freeMerchantRun:false,echoDamageScale:.70,criticalEchoBonus:0,packDamageBonus:0,loadedSix:false,goldAttackScale:0,boardCheatDeaths:0,bloodOverheal:false,d20BonusChance:0,d20HighRollChance:0,poisonOnHitChance:0,poisonStackPower:.12,naturePoisonStacks:1,elementalEnemyDamage:0,crucibleEchoEffectId:crucibleEchoEffectId||null});
       deps.applyTalentBonuses();
       (meta.heirlooms||[]).slice(0,deps.getHeirloomSlots()).forEach(item=>deps.equipItem(item,true));
       deps.setRunGlobals({boardLevel:1,rolls:0,tilesMovedThisRun:0,pendingLevelUps:0,currentEnemy:null,currentEnemies:[],currentEncounterLead:null,currentEnemyTile:null,currentMerchantItems:[],runFinalized:false,lastLegacyAward:0,lastGoldLegacyAward:0,merchantBossBattle:false});
@@ -117,5 +117,5 @@
     return Object.freeze({initialize,owner:OWNER});
   }
 
-  window.DiceboundPlayerInitialization=Object.freeze({apiVersion:1,configure,owner:OWNER});
+  window.DiceboundPlayerInitialization=Object.freeze({apiVersion:2,configure,owner:OWNER});
 })();
