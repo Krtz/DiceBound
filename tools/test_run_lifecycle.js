@@ -29,7 +29,7 @@ for(const required of [
   "async function startNewGame(options={}){",
   "if(!(await db068ConfirmEchoForRun()))return false;",
   "return dbRun.startFreshRun(options);",
-  "dbRun.startFreshRun({beforeFreshRun:()=>{"
+  "await startNewGame({beforeFreshRun:()=>{"
 ])assert.ok(monolith.includes(required),`dicebound.js is missing run-lifecycle facade composition: ${required}`);
 assert.ok(monolith.includes("dbProgression.crucibleWarning({classId:selectedClassId"),"fresh-run Echo compatibility warning must route through Progression");
 for(const retired of [
