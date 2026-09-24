@@ -111,6 +111,7 @@
       eligibleUpgrades:filter=>dbPowerups.eligible(filter),
       applyRandomHighRarity:(...args)=>dbPowerups.applyRandomHighRarity(...args),
       applyUpgrade:(...args)=>dbPowerups.apply(...args),
+      describePowerup:up=>dbPowerups.describe(up),
       rarityLabel:rarity=>rarityInfo[rarity]?.label||rarity,
       forceLevels:n=>forceLevels(n),
       recordRunBuff:(...args)=>recordRunBuff(...args),
@@ -4372,7 +4373,7 @@ dbReturnToRoadTraceReady=true;
     setCombatBusy:value=>{combatBusy=!!value;},
     selectEnemy:index=>setCurrentEnemy(index),
     isClassActive:id=>classIdentityActive(id),
-    hasLegendaryEffect:id=>db060HasEffect(id),
+    hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id],
     random:()=>random(),
     rand:(min,max)=>rand(min,max),
     pick:list=>pick(list),
@@ -4438,7 +4439,7 @@ dbReturnToRoadTraceReady=true;
     potionTooltip:()=>v18PotionTooltip(),
     describeUltimate:id=>describeCurrentUltimate(id),
     berserkerRageBonus:()=>DB_EFFECTIVE_STATS.berserkerRageBonus(player),
-    hasLegendaryEffect:id=>db060HasEffect(id),
+    hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id],
     activeTrainerPetId:()=>dbCombat.activeTrainerPetId(),
     selectEnemy:index=>setCurrentEnemy(index),
     dragoonActive:()=>dbFriendDragoonActive(),
@@ -4584,7 +4585,8 @@ dbReturnToRoadTraceReady=true;
     resolveManaBuilderGain:(id,options)=>dbCombatManaActionResolution.resolvedBuilderGain(id,options),
     rollTieredProc:chance=>rollTieredProc(chance),
     triggerStrikeElements:(target,chaos)=>triggerStrikeElements(target,chaos),
-    playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy)
+    playElementAnimation:(key,target,fromEnemy)=>playElementAnimation(key,target,fromEnemy),
+    hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id]
   });
 
   dbInfoGuide=window.DiceboundInfoGuide;

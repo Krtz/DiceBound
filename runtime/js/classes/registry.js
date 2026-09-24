@@ -9,8 +9,8 @@
       "attackIcon": "🏹",
       "fxIcon": "➶➶➶",
       "unlock": "Always unlocked",
-      "desc": "The starting hero: a precise hunter with high crit, natural evasion and a devastating four-arrow ultimate.",
-      "stats": "37 HP · 6 ATK · 15% CRIT · 8% DODGE",
+      "desc": "The starting hero: a precise hunter with high Crit Chance, natural evasion and a devastating four-arrow ultimate.",
+      "stats": "37 HP · 6 ATK · 15% CRIT CHANCE · 8% DODGE",
       "ultimate": {
         "name": "Arrow Storm",
         "icon": "🌧️",
@@ -28,7 +28,7 @@
         "classBurst": 0,
         "lifeSteal": 0
       },
-      "scaleNotes": "Attack is the core stat; Crit is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive.",
+      "scaleNotes": "Attack is the core stat; Crit Chance is unusually valuable because Ranger starts high and Arrow Storm scales directly from Attack. Echo adds more independent arrows between ultimates, while Dodge keeps the glassier hunter alive.",
       "tags": [
         "ranged",
         "precision",
@@ -158,8 +158,8 @@
       "attackIcon": "🐔",
       "fxIcon": "🐔",
       "unlock": "Defeat the Board 2 dragon",
-      "desc": "A chaotic trickster powered by Luck, crits and weapons that should not legally count as weapons.",
-      "stats": "34 HP · 6 ATK · 12% CRIT · 8 LUCK",
+      "desc": "A chaotic trickster powered by Luck, Crit Chance and weapons that should not legally count as weapons.",
+      "stats": "34 HP · 6 ATK · 12% CRIT CHANCE · 8 LUCK",
       "ultimate": {
         "name": "Final Punchline",
         "icon": "🎪",
@@ -177,7 +177,7 @@
         "classBurst": 0.18,
         "lifeSteal": 0
       },
-      "scaleNotes": "Luck, Crit and Echo are the main chaos multipliers. Clown has high variance rather than one clean stat curve; more Luck also improves the road rewards that feed the build.",
+      "scaleNotes": "Luck, Crit Chance and Echo are the main chaos multipliers. Clown has high variance rather than one clean stat curve; more Luck also improves the road rewards that feed the build.",
       "tags": [
         "weird",
         "chaotic",
@@ -196,7 +196,7 @@
       "fxIcon": "🩸",
       "unlock": "Reach 10 Prestige points",
       "desc": "Rouge—the colour, not the thief—is a crimson battle artist whose occult brushwork builds Mana for Scarlet Hex.",
-      "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT",
+      "stats": "36 HP · 7 ATK · 25/100 MANA · 12% CRIT CHANCE",
       "ultimate": {
         "name": "Crimson Deluge",
         "icon": "🌹",
@@ -214,7 +214,7 @@
         "classBurst": 0.18,
         "lifeSteal": 0.05
       },
-      "scaleNotes": "Rouge—the colour—likes Attack, Crit, Echo, Poison and Lifesteal. Scarlet Hex converts half of Echo chance into spell damage, applies Poison at Echo × Poison chance, and real Rouge drains doubled Lifesteal from its full primary-plus-splash damage package.",
+      "scaleNotes": "Rouge—the colour—likes Attack, Crit Chance, Echo, Poison and Lifesteal. Scarlet Hex converts half of Echo chance into spell damage, applies Poison at Echo × Poison chance, and real Rouge drains doubled Lifesteal from its full primary-plus-splash damage package.",
       "tags": [
         "weird",
         "artful",
@@ -234,7 +234,7 @@
       "fxIcon": "💢🪓",
       "unlock": "Take 1,000 total damage",
       "desc": "A battle-scarred engine of rage. Missing HP becomes Rage: every 1% missing HP increases damage by 1%, and Ragequake pulverizes every enemy.",
-      "stats": "51 HP · 8 ATK · 5% CRIT · RAGE",
+      "stats": "51 HP · 8 ATK · 5% CRIT CHANCE · RAGE",
       "ultimate": {
         "name": "Ragequake",
         "icon": "🌋",
@@ -460,7 +460,7 @@
       "fxIcon": "✦🗡️",
       "unlock": "Reach more than 100% Critical chance during a run",
       "desc": "A precision assassin built around overflow critical tiers, smoke and rapid single-target execution.",
-      "stats": "33 HP · 8 ATK · 28% CRIT · 12% DODGE",
+      "stats": "33 HP · 8 ATK · 28% CRIT CHANCE · 12% DODGE",
       "ultimate": {
         "name": "Thousand Shadows",
         "icon": "🌘",
@@ -556,7 +556,7 @@
         "classBurst": 0.22,
         "lifeSteal": 0.08
       },
-      "scaleNotes": "Gold is a combat stat. Foreclosure Hex adds 5% of current gold with no cap, then multiplies that damage by current Crit and Echo instead of rolling Crit. It also keeps normal Poison and elemental proc chances, so wealth builds still benefit from combat stats.",
+      "scaleNotes": "Gold is a combat stat. Foreclosure Hex adds 5% of current gold with no cap, then multiplies that damage by current Crit Chance and Echo instead of rolling Crit. It also keeps normal Poison and elemental proc chances, so wealth builds still benefit from combat stats.",
       "tags": [
         "wealth",
         "occult",
@@ -687,7 +687,7 @@
       "fxIcon": "🗡️💨",
       "unlock": "Hold 5,000 gold at one time and defeat the Board 3 miniboss",
       "desc": "A fast opportunist built around Dodge, gold and one Steal attempt per battle. Stat Heist can upgrade successful Steals to borrow 10% of a target's ATK and DEF for that battle.",
-      "stats": "34 HP · 8 ATK · 22% CRIT · 14% DODGE",
+      "stats": "34 HP · 8 ATK · 22% CRIT CHANCE · 14% DODGE",
       "scaleNotes": "Raw Attack and Crit scale its burst fastest. Gold is also tactical fuel: some Rogue powers and its ultimate turn a rich purse into momentum.",
       "ultimate": {
         "name": "Grand Larceny",
@@ -878,7 +878,7 @@
       "fxIcon": "♾️🐍",
       "unlock": "Secret: reach 400% Echo Strike during a run",
       "desc": "A recursive serpent that refuses normal Attack scaling. Attack is fixed at 10; every point of Attack gained or lost becomes 10% Echo Strike instead. Its best powers turn absurd Echo into poison and elemental recursion.",
-      "stats": "48 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT",
+      "stats": "48 HP · 10 STATIC ATK · 120% ECHO · 8% CRIT CHANCE",
       "scaleNotes": "Attack cannot move from 10. Attack bonuses convert into Echo Strike at 10% per point; Echo, Poison and elemental effects are the real scaling engines.",
       "ultimate": {
         "name": "Infinite Return",
@@ -914,7 +914,7 @@
       "fxIcon": "🪂💥",
       "unlock": "Defeat the Board 4 miniboss once",
       "desc": "A lance fighter who uses Jump to become Airborne through one enemy response, then spends the following action on a powerful landing strike.",
-      "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT · JUMP",
+      "stats": "56 HP · 11 ATK · 3 DEF · 10% CRIT CHANCE · JUMP",
       "scaleNotes": "Attack drives both ordinary strikes and the landing hit. Landing rolls normal Crit, Poison and elemental effects, while Aerial Discipline shortens Jump's six-turn cooldown.",
       "ultimate": {
         "name": "Dragon Dive",

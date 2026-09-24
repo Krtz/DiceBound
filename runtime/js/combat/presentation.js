@@ -23,7 +23,7 @@
     const required = [
       "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
-      "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect",
+      "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect","legendaryEffect",
       "activeTrainerPetId","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat presentation runtime missing ${name}().`);
@@ -127,7 +127,7 @@
     const attack = {
       text: "⚔️ Attack",
       disabled: combatBusy,
-      tip: `Attack the selected enemy. Echo ${Math.round((player.doubleStrike || 0) * 100)}%, Crit ${Math.round((player.crit || 0) * 100)}%; every strike rolls crit, Poison and elements separately.`
+      tip: `Attack the selected enemy. Echo ${Math.round((player.doubleStrike || 0) * 100)}%, Crit Chance ${Math.round((player.crit || 0) * 100)}%; every strike rolls crit, Poison and elements separately.`
     };
     const guard = {
       text: (player.guardCooldown || 0) > 0 ? "🛡️ Guard (1 turn)" : "🛡️ Guard",
@@ -142,7 +142,7 @@
     const ultimate = {
       text: `${cls.ultimate?.icon || "⭐"} ${cls.ultimate?.name || "Ultimate"}`,
       disabled: combatBusy || (player.ultimateCharge || 0) < 100,
-      tip: cls.ultimate?.desc || ""
+      tip: rt.describeUltimate(player.classId)
     };
     const special = {
       hidden: true,
@@ -272,8 +272,10 @@
       resource = classResource("rage", "Rage", rage, 100, `Every 1% missing HP grants +1% damage. Current Rage bonus: +${rage}% damage.`);
     }
     if (rt.hasLegendaryEffect("unstable_ultimate")) {
-      ultimate.disabled = combatBusy || !enemy || (player.ultimateCharge || 0) < 70;
-      ultimate.tip = `Unstable Ultimate: usable at 70 charge for 75% normal damage. Current charge: ${Math.round(player.ultimateCharge || 0)}.`;
+      const effect=rt.legendaryEffect("unstable_ultimate"),threshold=Number(effect?.chargeThreshold),multiplier=Number(effect?.damageMultiplier);
+      if(!Number.isFinite(threshold)||!Number.isFinite(multiplier))throw new Error("Combat presentation requires authoritative Unstable Ultimate values.");
+      ultimate.disabled = combatBusy || !enemy || (player.ultimateCharge || 0) < threshold;
+      ultimate.tip = `${effect.name}: usable at ${threshold} charge for ${Math.round(multiplier*100)}% normal damage. Current charge: ${Math.round(player.ultimateCharge || 0)}.`;
     }
 
     if (rt.dragoonActive()) {

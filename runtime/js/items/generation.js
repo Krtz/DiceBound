@@ -27,7 +27,7 @@
     Object.freeze({id:'recursive_poison',name:'Recursive Poison',icon:'☠️♻️',desc:'After Poison ticks, every surviving poisoned enemy has a 35% chance to gain another Poison stack.'}),
     Object.freeze({id:'perfect_guard',name:'Perfect Guard',icon:'🛡️🔁',desc:'Guard counter damage can Echo using your Echo Strike chance.'}),
     Object.freeze({id:'hoarders_arsenal',name:"Hoarder's Arsenal",icon:'💰⚔️',desc:'Every 500 gold adds +1 damage to every basic and Echo strike, regardless of class.'}),
-    Object.freeze({id:'unstable_ultimate',name:'Unstable Ultimate',icon:'💥70',desc:'Ultimates can be used at 70 charge, but deal 75% normal damage.'}),
+    Object.freeze({id:'unstable_ultimate',name:'Unstable Ultimate',icon:'💥',chargeThreshold:70,damageMultiplier:.75,get desc(){return `Ultimates can be used at ${this.chargeThreshold} charge, but deal ${Math.round(this.damageMultiplier*100)}% normal damage.`;}}),
     Object.freeze({id:'pet_mirror',name:'Pet Mirror',icon:'🐾🪞',desc:'After your companion attacks, it has a 25% chance to repeat your most recent elemental proc at 65% power.'}),
     Object.freeze({id:'reverse_engineering',name:'Reverse Engineering',icon:'⚙️↔️',desc:'All Attack and Defense granted by equipped gear swap places while this item is equipped.'})
   ]);

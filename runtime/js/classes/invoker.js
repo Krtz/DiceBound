@@ -25,7 +25,7 @@
 
   function requireRuntime() { if (!runtime) throw new Error("DiceboundInvoker must be configured before use."); return runtime; }
   function configure(next) {
-    const required = ["getPlayer", "getMeta", "isClassActive", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy", "damageEnemy", "damageAll", "healPlayer", "addEnemyBurn", "updateCombatUI", "setCombatText", "addCombatHistory", "identityFlash", "delay", "winCombat", "resolveEnemyResponse", "selectEnemy", "animateUltimate", "animateClassAttack", "clamp", "getEncounterLead", "getSetDamageBonus", "getEncounterTurn", "setEncounterTurn", "recordManaSpenderCast", "saveMeta", "checkDynamicClassUnlocks", "document", "playerAttack", "manaGain", "resolveManaBuilderGain", "rollTieredProc", "triggerStrikeElements", "playElementAnimation"];
+    const required = ["getPlayer", "getMeta", "isClassActive", "getCurrentEnemy", "getCurrentEnemies", "livingEnemies", "getCombatBusy", "setCombatBusy", "damageEnemy", "damageAll", "healPlayer", "addEnemyBurn", "updateCombatUI", "setCombatText", "addCombatHistory", "identityFlash", "delay", "winCombat", "resolveEnemyResponse", "selectEnemy", "animateUltimate", "animateClassAttack", "clamp", "getEncounterLead", "getSetDamageBonus", "getEncounterTurn", "setEncounterTurn", "recordManaSpenderCast", "saveMeta", "checkDynamicClassUnlocks", "document", "playerAttack", "manaGain", "resolveManaBuilderGain", "rollTieredProc", "triggerStrikeElements", "playElementAnimation", "hasLegendaryEffect", "legendaryEffect"];
     for (const key of required) if (typeof next?.[key] !== "function") throw new Error(`Invoker runtime missing ${key}().`);
     runtime = next; wexBuilderInFlight = false; return api;
   }
@@ -44,6 +44,12 @@
   }
   function recipeFor(orbs = state(false)?.orbs || []) { return [...orbs].map(x => x[0]).sort().join(""); }
   function recipeInfo() { return RECIPE[recipeFor()] || null; }
+  function unstableUltimateRule() {
+    const rt=requireRuntime();if(!rt.hasLegendaryEffect("unstable_ultimate"))return null;
+    const effect=rt.legendaryEffect("unstable_ultimate"),chargeThreshold=Number(effect?.chargeThreshold),damageMultiplier=Number(effect?.damageMultiplier);
+    if(!Number.isFinite(chargeThreshold)||!Number.isFinite(damageMultiplier))throw new Error("Invoker requires authoritative Unstable Ultimate values.");
+    return {chargeThreshold,damageMultiplier};
+  }
   function addOrb(orb) {
     if (!active()) return false;
     const s = state(), before = s.orbs.length;
@@ -143,21 +149,22 @@
   async function invokeUltimate() {
     const rt = requireRuntime(), p = player(), s = state(), key = recipeFor(), spell = RECIPE[key];
     if (!active()) return false;
-    if (rt.getCombatBusy() || !rt.getCurrentEnemy() || p.ultimateCharge < 100) return false;
+    const unstable=unstableUltimateRule(),requiredCharge=unstable?.chargeThreshold??100;
+    if (rt.getCombatBusy() || !rt.getCurrentEnemy() || p.ultimateCharge < requiredCharge) return false;
     if (!spell) { rt.setCombatText("Invoke requires a complete three-orb formula."); render(); return false; }
     if (s.ghostDodge) { p.dodge = Math.max(0, p.dodge - s.ghostDodge); s.ghostDodge = 0; }
     rt.setCombatBusy(true); p.guardCooldown = 0; p.ultimateCharge = 0; p.combatActionCount = (p.combatActionCount || 0) + 1; await rt.animateUltimate();
     const perfected = p.invokerPerfected && !s.perfectedUsed, doubled = p.invokerDoubleInvocation && !s.doubleInvoke;
-    const potency = (perfected ? 1.25 : 1) * (doubled ? 1.55 : 1); if (perfected) s.perfectedUsed = true; if (doubled) s.doubleInvoke = true;
-    const target = rt.getCurrentEnemy(), all = () => rt.livingEnemies(), aoe = mult => rt.damageAll(scale(p.attack * mult * potency).amount, 1);
+    const potency = (perfected ? 1.25 : 1) * (doubled ? 1.55 : 1), damagePotency = potency * (unstable?.damageMultiplier ?? 1); if (perfected) s.perfectedUsed = true; if (doubled) s.doubleInvoke = true;
+    const target = rt.getCurrentEnemy(), all = () => rt.livingEnemies(), aoe = mult => rt.damageAll(scale(p.attack * mult * damagePotency).amount, 1);
     let text = "", skipResponse = false;
-    if (key === "bbb") { const dealt = rt.damageEnemy(target, scale(p.attack * 1.10 * potency).amount); target._invokerColdSnap = { triggers: 3 }; text = `❄️ Cold Snap hits ${target.name} for ${dealt} and arms 3 reactions.`; }
+    if (key === "bbb") { const dealt = rt.damageEnemy(target, scale(p.attack * 1.10 * damagePotency).amount); target._invokerColdSnap = { triggers: 3 }; text = `❄️ Cold Snap hits ${target.name} for ${dealt} and arms 3 reactions.`; }
     if (key === "bbg") { p.combatShield = (p.combatShield || 0) + 2; const dodge = .35 * potency; p.dodge += dodge; s.ghostDodge = dodge; text = "👻 Ghost Walk raises 2 Barriers and grants temporary Dodge."; }
     if (key === "bbr") { const dealt = aoe(.90); s.iceWall = Math.max(s.iceWall || 0, 2); text = `🧊 Ice Wall deals ${dealt} total damage and chills the next 2 responses.`; }
     if (key === "ggg") { const dealt = aoe(1.35); all().forEach(enemy => enemy.enemyBarrier = Math.max(0, (enemy.enemyBarrier || 0) - 1)); if (rt.getEncounterLead()?.guardian) rt.setEncounterTurn(Math.max(0, rt.getEncounterTurn() - 1)); text = `⚡ EMP deals ${dealt}, strips Barriers and disrupts the Guardian clock.`; }
     if (key === "bgg") { const dealt = aoe(1.50); skipResponse = true; text = `🌪️ Tornado deals ${dealt} and lifts the pack through this response.`; }
     if (key === "ggr") { s.alacrity = Math.max(s.alacrity || 0, 3); text = "⚡ Alacrity empowers your next 3 player actions."; }
-    if (key === "rrr") { const hit = scale(p.attack * 4.25 * potency, { ignoreDefense: true }), dealt = rt.damageEnemy(target, hit.amount, true); let cataclysm = 0; if (p.invokerCataclysm) rt.livingEnemies().filter(enemy => enemy !== target).forEach(enemy => { cataclysm += rt.damageEnemy(enemy, Math.max(1, Math.round(hit.amount * .50)), true); }); if (target.guardian && target.hp <= 0) markAchievement("invoker-solar-citation"); text = `☀️ Sun Strike deals ${dealt} Defense-piercing damage${cataclysm ? ` and Cataclysm hits the pack for ${cataclysm}` : ""}.`; }
+    if (key === "rrr") { const hit = scale(p.attack * 4.25 * damagePotency, { ignoreDefense: true }), dealt = rt.damageEnemy(target, hit.amount, true); let cataclysm = 0; if (p.invokerCataclysm) rt.livingEnemies().filter(enemy => enemy !== target).forEach(enemy => { cataclysm += rt.damageEnemy(enemy, Math.max(1, Math.round(hit.amount * .50)), true); }); if (target.guardian && target.hp <= 0) markAchievement("invoker-solar-citation"); text = `☀️ Sun Strike deals ${dealt} Defense-piercing damage${cataclysm ? ` and Cataclysm hits the pack for ${cataclysm}` : ""}.`; }
     if (key === "brr") { s.spirit = 4; s.spiritShred = {}; text = "🔥 Forge Spirit joins your companion for 4 player actions."; }
     if (key === "grr") { const dealt = aoe(1.80); all().forEach(enemy => { if (enemy.hp > 0) rt.addEnemyBurn(enemy, 3); }); text = `☄️ Chaos Meteor deals ${dealt} and applies 3 Burn stacks.`; }
     if (key === "bgr") { const dealt = aoe(1.65); s.deafening = 1; markAchievement("invoker-threefold-thesis"); text = `💥 Deafening Blast deals ${dealt} and disarms the next response.`; }
@@ -173,6 +180,7 @@
       if (key === "bgr") s.deafening = Math.max(s.deafening || 0, 2);
       text += " Double Invocation repeats the formula at 55% potency.";
     }
+    if(unstable&&["bbb","bbr","ggg","bgg","rrr","grr","bgr"].includes(key))text+=` Unstable Ultimate resolves damage at ${Math.round(unstable.damageMultiplier*100)}% power.`;
     const meta = rt.getMeta(); meta.invokerRecipes = meta.invokerRecipes || {}; meta.invokerRecipes[key] = true; markAchievement("invoker-first-principles"); if (Object.keys(meta.invokerRecipes).length >= 10) markAchievement("invoker-tenfold-memory");
     if (s.previousRecipe && s.previousRecipe !== key && p.invokerMnemonic) p.ultimateCharge = rt.clamp(p.ultimateCharge + 20, 0, 100); s.previousRecipe = key; rt.saveMeta();
     rt.setCombatText(text); rt.addCombatHistory(`✨ Invoke: ${spell.name}.`); rt.identityFlash(`INVOKE · ${spell.name}`); afterPlayerAction("invoke"); rt.updateCombatUI(); render(); await rt.delay(780);
