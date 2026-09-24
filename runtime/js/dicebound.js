@@ -556,7 +556,7 @@
     shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,
     guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
     guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,
-    elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{}
+    elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{}
   };
 
   const dbEquipmentIdentityOwner=window.DiceboundEquipment;
@@ -574,15 +574,17 @@
 
       function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
           function bonusLabel(key,value){
-    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage"};
-    if(key==="luck")return `+${Math.round(value*100)} Luck`;
+    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage",thorns:"Thorns"};
+    const amount=Number(value)||0,sign=amount<0?"−":"+",magnitude=Math.abs(amount);
+    if(key==="luck")return `${sign}${Math.round(magnitude*100)} Luck`;
+    if(String(key).startsWith("elementProc:")){const id=String(key).slice("elementProc:".length),element=ELEMENTS[id];return `${sign}${Math.round(magnitude*100)}% ${element?.name||id} proc`;}
     const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
-    return `+${pct?Math.round(value*100)+"%":value} ${names[key]||key}`;
+    return `${sign}${pct?Math.round(magnitude*100)+"%":magnitude} ${names[key]||key}`;
   }
   function formatBonuses(item){
     const stats=Object.entries(item?.bonuses||{}).map(([k,v])=>bonusLabel(k,v));
-    const identity=dbEquipmentIdentityOwner.identityForItem?.(item),intrinsic=dbEquipmentIdentityOwner.intrinsicBonusesForItem?.(item)||{};
-    const intrinsicText=Object.entries(intrinsic).map(([k,v])=>bonusLabel(k,v));
+    const identity=dbEquipmentIdentityOwner.identityForItem?.(item),intrinsic=dbEquipmentIdentityOwner.intrinsicBonusesForItem?.(item)||{},elementProcs=dbEquipmentIdentityOwner.elementProcBonusesForItem?.(item)||{};
+    const intrinsicText=[...Object.entries(intrinsic).map(([k,v])=>bonusLabel(k,v)),...Object.entries(elementProcs).map(([k,v])=>bonusLabel(`elementProc:${k}`,v))];
     if(identity&&intrinsicText.length)stats.push(`INTRINSIC (${identity.displayName}): ${intrinsicText.join(" · ")}`);
     if(item?.element&&ELEMENTS[item.element])stats.push(elementSummary(item));
     if(item?.uniqueEffect)stats.push(`Unique: ${item.uniqueEffect}`);
@@ -595,6 +597,11 @@
     if(!item)return;
     const oldMax=player.maxHp,total=dbEquipmentIdentityOwner.allBonusesForItem?.(item)||item.bonuses||{};
     Object.entries(total).forEach(([key,value])=>{if(typeof player[key]==="number")player[key]+=value*sign;});
+    player.equipmentElementProcs=player.equipmentElementProcs||{};
+    for(const [element,value] of Object.entries(dbEquipmentIdentityOwner.elementProcBonusesForItem?.(item)||{})){
+      player.equipmentElementProcs[element]=Math.max(0,(player.equipmentElementProcs[element]||0)+value*sign);
+      if(player.equipmentElementProcs[element]<=.000001)delete player.equipmentElementProcs[element];
+    }
     player.crit=Math.max(0,player.crit);player.dodge=Math.max(0,player.dodge);player.lifeSteal=clamp(player.lifeSteal,0,.75);player.luck=clamp(player.luck,0,1.50);player.doubleStrike=Math.max(0,player.doubleStrike);
     if(player.maxHp<1)player.maxHp=1;
     if(sign>0&&player.maxHp>oldMax)player.hp+=player.maxHp-oldMax;
@@ -863,6 +870,7 @@ function returnToRoad(...args){
     function triggerStrikeElements(target,chaos=null){
     const results=[];const weapon=dbCombat.triggerWeaponElement(target);if(weapon)results.push(weapon);
     Object.entries(player.classElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"class affinity"});if(r)results.push(r);}});
+    Object.entries(player.equipmentElementProcs||{}).forEach(([key,chance])=>{const times=rollTieredProc(chance);for(let i=0;i<times;i++){const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"equipment intrinsic"});if(r)results.push(r);}});
     const omniTimes=rollTieredProc(player.omniElementChance||0);for(let n=0;n<omniTimes;n++)ELEMENT_KEYS.forEach(key=>{const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"Prismatic Accident"});if(r)results.push(r);});
     if(chaos?.forceElement){const r=dbCombat.element(chaos.forceElement,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"d20"});if(r)results.push(r);}
     if(chaos?.allElements)DIBO_ELEMENTS.forEach(key=>{const r=dbCombat.element(key,target?.hp>0?target:(livingEnemies()[0]||target),{forced:true,source:"natural twenty"});if(r)results.push(r);});
@@ -910,8 +918,9 @@ function returnToRoad(...args){
 
   function choiceHTML(up){
     inferUpgradeTags(up);
-    const signature=up?.id==='perfected_signature';
-    return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon">${up.icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc${signature?' signature-current':''}">${dbPowerups.describe(up)}</span><span class="choice-tags">${tagChips(up.tags,'power')}</span>`;
+    const signature=up?.id==='perfected_signature',art=window.DiceboundAssets?.resolvePowerupArtFor?.(up);
+    const icon=art?.image?`<img class="db-art-icon db-art-choice" src="${art.image}" alt="${String(art.alt||up.name||'Powerup').replace(/"/g,'&quot;')}">`:up.icon;
+    return `<span class="rarity-badge">${rarityInfo[up.rarity].label}</span><span class="choice-icon" data-powerup-id="${up.id}">${icon}</span><span class="choice-name">${up.name}</span><span class="choice-desc${signature?' signature-current':''}">${dbPowerups.describe(up)}</span><span class="choice-tags">${tagChips(up.tags,'power')}</span>`;
   }
 
   function attachPowerupReroll(grid,reroll){

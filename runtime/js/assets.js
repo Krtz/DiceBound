@@ -6,7 +6,7 @@
     uiClassMarkers:`${ROOT}/characters/classes/markers`,petPortraits:`${ROOT}/characters/pets/portraits`,petBattle:`${ROOT}/characters/pets/battle`,normalEnemyBattle:`${ROOT}/enemies/normal/battle`,normalEnemyMarkers:`${ROOT}/enemies/normal/board-markers`,
     minibossBattle:`${ROOT}/enemies/minibosses/battle`,minibossMarkers:`${ROOT}/enemies/minibosses/board-markers`,bossBattle:`${ROOT}/enemies/bosses/battle`,bossMarkers:`${ROOT}/enemies/bosses/board-markers`,secretBossBattle:`${ROOT}/enemies/secret-bosses/battle`,secretBossMarkers:`${ROOT}/enemies/secret-bosses/board-markers`,
     equipmentHat:`${ROOT}/equipment/hat`,powerupPoor:`${ROOT}/powerups/poor`,powerupCommon:`${ROOT}/powerups/common`,powerupUncommon:`${ROOT}/powerups/uncommon`,
-    powerupRare:`${ROOT}/powerups/rare`,powerupEpic:`${ROOT}/powerups/epic`,powerupLegendary:`${ROOT}/powerups/legendary`,powerupShared:`${ROOT}/powerups/shared`,
+    powerupRare:`${ROOT}/powerups/rare`,powerupEpic:`${ROOT}/powerups/epic`,powerupLegendary:`${ROOT}/powerups/legendary`,powerupShared:`${ROOT}/powerups/shared`,powerupClassSpecific:`${ROOT}/powerups/class-specific`,
     campBackground:`${ROOT}/camp/background`,campInteractions:`${ROOT}/camp/interactions`,campDecorations:`${ROOT}/camp/decorations`,nightmareToggle:`${ROOT}/camp/mode-toggles/nightmare`,hellToggle:`${ROOT}/camp/mode-toggles/hell`,
     boardBackgrounds:`${ROOT}/board/backgrounds`,boardEventTiles:`${ROOT}/board/tiles/events`,combatBackgrounds:`${ROOT}/combat/backgrounds`,combatEffects:`${ROOT}/combat/effects`,uiCurrencies:`${ROOT}/ui/currencies`,installerIcons:`${ROOT}/installer/icons`,
     audio:`${ROOT}/audio`,audioCustom:`${ROOT}/audio/custom`
@@ -43,7 +43,25 @@
     fortuneBroker:{image:`${paths.powerupUncommon}/fortune-broker.png`,alt:"Fortune Broker"},glassNeedle:{image:`${paths.powerupRare}/glass-needle.png`,alt:"Glass Needle"},
     walkingFortress:{image:`${paths.powerupRare}/walking-fortress.png`,alt:"Walking Fortress"},executioner:{image:`${paths.powerupEpic}/executioner.png`,alt:"Executioner"},
     phoenixFeather:{image:`${paths.powerupEpic}/phoenix-feather.png`,alt:"Phoenix Feather"},worldheart:{image:`${paths.powerupLegendary}/worldheart.png`,alt:"Worldheart"},
-    treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"}
+    treasureSense:{image:`${paths.powerupShared}/treasure-sense.png`,alt:"Treasure Sense"},scholarsSigil:{image:`${paths.powerupShared}/scholars-sigil.png`,alt:"Scholar's Sigil"},
+    toughness:{image:`${paths.powerupPoor}/toughness.png`,alt:"Toughness"},ironSkin:{image:`${paths.powerupPoor}/iron-skin.png`,alt:"Iron Skin"},
+    roadsideMending:{image:`${paths.powerupPoor}/roadside-mending.png`,alt:"Roadside Mending"},crackedScope:{image:`${paths.powerupPoor}/cracked-scope.png`,alt:"Cracked Scope"},weakTonic:{image:`${paths.powerupPoor}/weak-tonic.png`,alt:"Weak Tonic"},
+    foldedRoadMap:{image:`${paths.powerupShared}/folded-road-map.png`,alt:"Folded Road Map"},cheapVenom:{image:`${paths.powerupShared}/cheap-venom.png`,alt:"Cheap Venom"},keenEye:{image:`${paths.powerupShared}/keen-eye.png`,alt:"Keen Eye"},
+    loadedFate:{image:`${paths.powerupCommon}/loaded-fate.png`,alt:"Loaded Fate"},merchantsFriend:{image:`${paths.powerupCommon}/merchants-friend.png`,alt:"Merchant's Friend"},
+    pocketConfetti:{image:`${paths.powerupClassSpecific}/pocket-confetti.png`,alt:"Pocket Confetti"},crimsonPrimer:{image:`${paths.powerupClassSpecific}/crimson-primer.png`,alt:"Crimson Primer"},
+    scarletCombustion:{image:`${paths.powerupClassSpecific}/scarlet-combustion.png`,alt:"Scarlet Combustion"},glacialShell:{image:`${paths.powerupClassSpecific}/glacial-shell.png`,alt:"Glacial Shell"},orbTheory:{image:`${paths.powerupClassSpecific}/orb-theory.png`,alt:"Orb Theory"}
+  });
+  const POWERUP_ID_KEYS=Object.freeze({
+    heal:"secondWind",potion:"fieldAlchemy",attack:"sharperBlade",attack_common_v24:"sharperBlade",
+    brew:"strongBrew",alchemist_quick_brew:"strongBrew",defense_common_v24:"temperedGuard",ward:"temperedGuard",hp_common_v24:"stoutHeart",
+    thorns:"spikedArmor",thorns_common_v26:"barbedArmor",poor_faint_echo_v514:"faintEcho",poor_monster_notes_v514:"monsterNotes",poor_lucky_pebble_v514:"luckyPebble",
+    purse:"heavyPurse",uncommon_field_surgeon_v514:"fieldSurgeon",execute:"executioner",fighter_fortress:"walkingFortress",legendary_worldheart:"worldheart",
+    phoenix:"phoenixFeather",uncommon_fortune_broker_v514:"fortuneBroker",gold:"treasureSense",treasure_sense_common_v25:"treasureSense",treasure_sense_uncommon_v25:"treasureSense",
+    scholar:"scholarsSigil",scholar_common_v26:"scholarsSigil",scholar_uncommon_v26:"scholarsSigil",ranger_quickdraw:"quickdraw",rare_glass_needle:"glassNeedle",
+    hp:"toughness",defense:"ironSkin",mending:"roadsideMending",poor_cracked_scope_v514:"crackedScope",poor_weak_tonic_v514:"weakTonic",
+    poor_folded_map_v514:"foldedRoadMap",poor_cheap_venom_v514:"cheapVenom",crit:"keenEye",luck:"loadedFate",merchant:"merchantsFriend",
+    clown_confetti:"pocketConfetti",rouge_primer:"crimsonPrimer",rouge_fire_affinity:"scarletCombustion",turtle_ice_affinity:"glacialShell",invoker_orb_theory:"orbTheory",
+    echo:"faintEcho",stride:"foldedRoadMap",venom_edge:"cheapVenom"
   });
   const manifest=Object.freeze({version:25,
     enemies:Object.freeze({
@@ -96,7 +114,9 @@
   const resolveMarkerByName=name=>{const normal=resolveEnemyMarker(name);if(normal)return normal;const m=GUARDIAN_MARKER_MATCHERS.find(x=>x.test.test(String(name)));if(!m)return null;const e=resolveGuardianArt(m.key);return e?Object.freeze({key:m.key,src:e.boardMarker,alt:e.alt||String(name)}):null};
   const resolveClassArt=id=>manifest.classes[String(id)]||null; const resolveRandomClassArt=()=>manifest.randomClass; const resolvePetArt=id=>manifest.pets[String(id)]||manifest.pets.neutral;
   const resolveCampObject=key=>manifest.camp.objects[key]||null; const resolveCampBackground=key=>manifest.camp.backgrounds[key]||manifest.camp.backgrounds.campsite;
-  const resolveUiIcon=key=>manifest.ui.icons[key]||manifest.powerups[key]||null; const resolvePowerupArt=key=>manifest.powerups[key]||manifest.ui.icons[key]||null;
+  const resolveUiIcon=key=>manifest.ui.icons[key]||manifest.powerups[key]||null;
+  const resolvePowerupArt=key=>manifest.powerups[key]||manifest.ui.icons[key]||null;
+  const resolvePowerupArtFor=powerup=>resolvePowerupArt(POWERUP_ID_KEYS[String(powerup?.id||"")]||String(powerup?.artKey||""));
   const resolveBoardBackground=level=>manifest.board.backgrounds[String(Number(level)||1)]||manifest.board.backgrounds["1"];
   const resolveCombatBackground=(level,mode="normal")=>{const normalized=String(mode||"normal").toLowerCase(),backgrounds=manifest.combat.backgrounds[normalized];return backgrounds?.[String(Number(level)||1)]||backgrounds?.["1"]||null};
   const resolveCombatEffect=key=>manifest.combat.effects[key]||null;
@@ -106,30 +126,10 @@
     return identity?.art?Object.freeze({key:identity.id,image:identity.art.image,alt:identity.art.alt||identity.displayName,visual:identity.visual||null}):null;
   };
   const resolveSoundEffect=(name,pack="custom")=>{const e=manifest.audio.sfx[name];return !e||pack!=="custom"?null:Object.freeze({key:name,pack,candidates:buildSoundCandidates(e.customBase),alt:e.alt||String(name)})};
-  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyPortraitById,resolveEnemyBattleArtById,resolveEnemyMarkerById,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolveRandomClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolveBoardBackground,resolveCombatBackground,resolveCombatEffect,resolveEquipmentArt,resolveSoundEffect});
+  window.DiceboundAssets=Object.freeze({root:ROOT,paths,manifest,files:Object.freeze(files),powerupIdKeys:POWERUP_ID_KEYS,soundExtensions:SOUND_EXTENSIONS,resolveEnemyPortrait,resolveEnemyBattleArt,resolveEnemyMarker,resolveEnemyPortraitById,resolveEnemyBattleArtById,resolveEnemyMarkerById,resolveEnemyModeAura,resolveMarkerByName,resolveGuardianArt,resolveClassArt,resolveRandomClassArt,resolvePetArt,resolveCampObject,resolveCampBackground,resolveUiIcon,resolvePowerupArt,resolvePowerupArtFor,resolveBoardBackground,resolveCombatBackground,resolveCombatEffect,resolveEquipmentArt,resolveSoundEffect});
 
-  // Art bridge for the recovered monolith's closure-owned powerup objects.
-  // It decorates rendered powerup choices from the authoritative registry,
-  // avoiding a second art-path table inside the 0.6 gameplay bundle.
-  const POWERUP_NAME_KEYS=Object.freeze({
-    "Second Wind":"secondWind","Field Alchemy":"fieldAlchemy","Sharper Blade":"sharperBlade","Sharpened Steel":"sharperBlade",
-    "Strong Brew":"strongBrew","Quick Brew":"strongBrew","Tempered Guard":"temperedGuard","Runic Ward":"temperedGuard","Stout Heart":"stoutHeart",
-    "Spiked Armor":"spikedArmor","Barbed Armor":"barbedArmor","Faint Echo":"faintEcho","Monster Notes":"monsterNotes","Lucky Pebble":"luckyPebble",
-    "Heavy Purse":"heavyPurse","Field Surgeon":"fieldSurgeon","Executioner":"executioner","Walking Fortress":"walkingFortress","Worldheart":"worldheart",
-    "Phoenix Feather":"phoenixFeather","Fortune Broker":"fortuneBroker","Treasure Sense+":"treasureSense","Treasure Sense++":"treasureSense",
-    "Scholar's Sigil":"scholarsSigil","Scholar's Sigil+":"scholarsSigil","Scholar's Sigil++":"scholarsSigil","Quickdraw":"quickdraw","Glass Needle":"glassNeedle"
-  });
-  function decoratePowerupChoices(root=document){
-    root.querySelectorAll?.('.choice-name').forEach(nameEl=>{
-      const name=nameEl.textContent?.trim(),key=POWERUP_NAME_KEYS[name],entry=key&&resolvePowerupArt(key);
-      if(!entry?.image)return;
-      const host=nameEl.parentElement?.querySelector?.('.choice-icon');
-      if(!host||host.dataset.assetArchitecture==='1')return;
-      const img=document.createElement('img');img.className='db-art-icon db-art-choice';img.src=entry.image;img.alt=entry.alt||name;img.draggable=false;
-      host.replaceChildren(img);host.dataset.assetArchitecture='1';
-    });
-  }
-
+  // Powerup cards resolve art directly from stable registry IDs. Road-marker
+  // decoration remains DOM-observed until the Board renderer is fully semantic.
   function markerImage(entry,alt,klass='db-art-icon db-art-portrait db-road-marker'){
     const img=document.createElement('img');img.className=klass;img.src=entry.src;img.alt=alt||entry.alt||entry.key;img.draggable=false;img.dataset.roadMarker=entry.key;return img;
   }
@@ -172,18 +172,17 @@
     root?.querySelectorAll?.('.tile,.enemy-chip').forEach(n=>nodes.push(n));
     nodes.forEach(n=>n.matches('.enemy-chip')?decorateCombatTarget(n):decorateBoardTile(n));
   }
-  function installRuntimeArtObserver(){
-    if(!document.body||document.body.dataset.diceboundRuntimeArtObserver==='1')return false;
-    document.body.dataset.diceboundRuntimeArtObserver='1';
+  function installRoadMarkerObserver(){
+    if(!document.body||document.body.dataset.diceboundRoadMarkerObserver==='1')return false;
+    document.body.dataset.diceboundRoadMarkerObserver='1';
     if(!document.getElementById('dicebound-road-marker-style')){const style=document.createElement('style');style.id='dicebound-road-marker-style';style.textContent='.db-road-marker{display:block;object-fit:contain;max-width:100%;max-height:100%;margin:auto}.tile-icon>.db-road-marker,.db-enemy-pack-art .db-road-marker{width:42px;height:42px}#combatOverlay .enemy-chip img.db-road-target-image{display:block!important;width:28px;height:28px;object-fit:contain;margin:0 auto 3px}';document.head?.appendChild(style);}
-    const observer=new MutationObserver(records=>records.forEach(r=>{const tile=r.target?.closest?.('.tile');if(tile)decorateBoardTile(tile);const chip=r.target?.closest?.('.enemy-chip');if(chip)decorateCombatTarget(chip);r.addedNodes.forEach(n=>{if(n.nodeType===1){decoratePowerupChoices(n);decorateRoadMarkers(n);}});}));
+    const observer=new MutationObserver(records=>records.forEach(r=>{const tile=r.target?.closest?.('.tile');if(tile)decorateBoardTile(tile);const chip=r.target?.closest?.('.enemy-chip');if(chip)decorateCombatTarget(chip);r.addedNodes.forEach(n=>{if(n.nodeType===1)decorateRoadMarkers(n);});}));
     observer.observe(document.body,{subtree:true,childList:true});
-    setTimeout(()=>{decoratePowerupChoices(document);decorateRoadMarkers(document);},0);
+    setTimeout(()=>decorateRoadMarkers(document),0);
     return true;
   }
   if(typeof MutationObserver==='function'){
-    if(!installRuntimeArtObserver())document.addEventListener('DOMContentLoaded',installRuntimeArtObserver,{once:true});
+    if(!installRoadMarkerObserver())document.addEventListener('DOMContentLoaded',installRoadMarkerObserver,{once:true});
   }
-  window.DiceboundPowerupArt=Object.freeze({version:1,nameKeys:POWERUP_NAME_KEYS,refresh:()=>decoratePowerupChoices(document)});
   window.DiceboundRoadMarkerArt=Object.freeze({version:2,refresh:()=>decorateRoadMarkers(document),resolveMarkerByName});
 })();

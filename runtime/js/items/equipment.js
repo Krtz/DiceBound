@@ -31,6 +31,7 @@
       "rarity": "mythical",
       "exclusiveSpecial": true,
       "intrinsicBonuses": {"doubleStrike": 0.05},
+      "art": {"image":"assets/equipment/offhand/axels-coffee-mug.png","alt":"Axel\'s Coffee Mug"},
       "visual": {"rig":"humanoid-v1","anchor":"offhand","layer":40}
     },
     "kratz-headphones": {
@@ -41,6 +42,7 @@
       "rarity": "mythical",
       "exclusiveSpecial": true,
       "intrinsicBonuses": {"dodge": 0.02},
+      "art": {"image":"assets/equipment/hat/kratz-headphones.png","alt":"Kratz Headphones"},
       "visual": {"rig":"humanoid-v1","anchor":"head","layer":60}
     },
     "kellys-jean-jacket": {
@@ -223,7 +225,7 @@
       if(fixed&&fixed.slot===item.slot){item.equipmentId=fixed.id;return fixed;}
     }
     const existing=identityForItem(item);
-    if(existing&&(!requireIntrinsic||Object.keys(existing.intrinsicBonuses||{}).length>0))return existing;
+    if(existing&&(!requireIntrinsic||hasIntrinsicIdentity(existing)))return existing;
     const requested=rarity||item.rarity,usable=eligibleEquipmentIdentities({slot:item.slot,rarity:requested,requireIntrinsic}).length?requested:"legendary";
     const identity=selectEquipmentIdentity({slot:item.slot,rarity:usable,classId,seed:seed||item.seedCode||item.seed||item.id||`${item.name||"equipment"}|${item.slot}`,requireIntrinsic});
     if(identity)item.equipmentId=identity.id;
