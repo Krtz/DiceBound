@@ -40,6 +40,18 @@
     }
   };
 
+  const RARITY_PRESENTATION=Object.freeze({
+    poor:Object.freeze({color:"#c4c8cf",colorName:"light grey",guideNote:"lowest ordinary tier"}),
+    common:Object.freeze({color:"#ffffff",colorName:"white",guideNote:"reliable ordinary rewards"}),
+    uncommon:Object.freeze({color:"#a9dbff",colorName:"light blue",guideNote:"stronger ordinary rewards"}),
+    rare:Object.freeze({color:"#438bd8",colorName:"blue",guideNote:"high ordinary tier"}),
+    epic:Object.freeze({color:"#f5e9a8",colorName:"pale yellow",guideNote:"top ordinary generated gear and powerful powers"}),
+    legendary:Object.freeze({color:"#ffd45f",colorName:"gold",guideNote:"very rare powers and handcrafted equipment"}),
+    artifact:Object.freeze({color:"#ff9c38",colorName:"orange",guideNote:"Impossible Road chase set"}),
+    mythical:Object.freeze({color:"#bd83ff",colorName:"purple",guideNote:"extreme handcrafted chase tier"}),
+    omega:Object.freeze({color:"#ffffff",colorName:"white/purple",guideNote:"highest secret equipment tier"})
+  });
+
   const RARITY_VALUE_DATA={
     "common": 2,
     "uncommon": 3,
@@ -65,7 +77,9 @@
   });
 
   function clamp01(value){return Math.max(0,Math.min(1,Number(value)||0));}
-  function createInfoRegistry(){return JSON.parse(JSON.stringify(RARITY_INFO_DATA));}
+  function infoFor(id){const key=String(id||"").toLowerCase(),base=RARITY_INFO_DATA[key],presentation=RARITY_PRESENTATION[key];return base?{...base,...(presentation||{})}:null;}
+  function colorFor(id){return infoFor(id)?.color||"#ffffff";}
+  function createInfoRegistry(){return Object.fromEntries(RARITY_IDS.map(id=>[id,infoFor(id)]));}
   function createValueRegistry(){return JSON.parse(JSON.stringify(RARITY_VALUE_DATA));}
   function isPowerupRarityAtLeast(rarity,floor="rare"){
     const rarityIndex=POWERUP_PROGRESSION.indexOf(String(rarity||"").toLowerCase());
@@ -143,12 +157,15 @@
   }
 
   window.DiceboundRarities=Object.freeze({
-    apiVersion:2,
+    apiVersion:3,
     ids:RARITY_IDS,
     powerupProgression:POWERUP_PROGRESSION,
     ordinaryLootProgression:ORDINARY_LOOT_PROGRESSION,
     luckPolicy:LUCK_RARITY_POLICY,
     rarityLadder:RARITY_LADDER,
+    presentation:RARITY_PRESENTATION,
+    infoFor,
+    colorFor,
     createInfoRegistry,
     createValueRegistry,
     isPowerupRarityAtLeast,
