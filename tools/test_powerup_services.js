@@ -69,6 +69,10 @@ assert.deepEqual(
   [["invoker_orb_theory", "common"], ["invoker_quas_mastery", "uncommon"], ["invoker_wex_mastery", "uncommon"], ["invoker_exort_mastery", "uncommon"], ["invoker_mnemonic_recursion", "rare"], ["invoker_perfect_formula", "rare"], ["invoker_double_invocation", "epic"], ["invoker_cataclysm", "legendary"]],
 );
 assert.equal(registry.find((powerup) => powerup.id === "invoker_cataclysm").achievementGate, "achievement:invoker-tenfold-memory");
+const quickBrew = registry.find((powerup) => powerup.id === "alchemist_quick_brew");
+assert.ok(quickBrew && quickBrew.name === "Quick Brew");
+assert.equal(quickBrew.unique, true, "Quick Brew must use the canonical once-per-run unique eligibility contract");
+assert.match(quickBrew.desc, /^Unique:/, "Quick Brew must explain its once-per-run uniqueness to the player");
 const statHeist = registry.find((powerup) => powerup.id === "rogue_grand_larceny");
 assert.ok(statHeist && statHeist.name === "Stat Heist");
 assert.equal(statHeist.rarity, "rare");
@@ -156,7 +160,7 @@ function snapshotEntry(entry) {
 }
 const snapshot = JSON.stringify(secondRegistry.map(snapshotEntry));
 const digest = crypto.createHash("sha256").update(snapshot).digest("hex");
-const expectedDigest = "4ca18892fe2e05f63eb7bffd061737b951cf4fc7ed562231c6cc40e576b44f37";
+const expectedDigest = "c7e90f3c688e198cd3c67a2ac35947be194928143ad4801ed90e9e02dee2222f";
 assert.equal(digest, expectedDigest, "canonical powerup registry snapshot drifted");
 
 for (const invalid of [{}, { apiVersion: 1 }]) {

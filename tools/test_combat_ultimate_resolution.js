@@ -28,7 +28,7 @@ function makeHarness(options = {}) {
     classId: options.classId || 'ranger', attack: 100, defense: 20, maxHp: 200, hp: 200, gold: 0, level: 10,
     ultimateCharge: 100, classUltimateBonus: 0, ultimateDamageBonus: 0, damageBonus: 0, bossDamage: 0,
     lifeSteal: 0, doubleStrike: 0, crit: 0, combatShield: 0, combatActionCount: 0, guardCooldown: 1,
-    potions: 0, mythicActionCount: 0, ninjaSmoke: 0, ninjaSmokeNeed: 3, turtleGuardChain: 0,
+    potions: 0, mana: 0, maxMana: 100, mythicActionCount: 0, ninjaSmoke: 0, ninjaSmokeNeed: 3, turtleGuardChain: 0,
     trainerRoster: [], trainerUltimateBonus: 0, summonerSpirits: [],
   }, options.player || {});
   // Pre-materialization compatibility: the first draft intentionally gets fixed
@@ -57,6 +57,11 @@ function makeHarness(options = {}) {
     trace.push(['heal', amount]);
     const before = player.hp, gain = Math.max(0, Math.min(player.maxHp - before, Math.round(Number(amount) || 0))); player.hp += gain; return gain;
   }
+  function manaGain(amount) {
+    const before = Number(player.mana) || 0, maxMana = Math.max(0, Number(player.maxMana) || 0);
+    player.mana = Math.max(0, Math.min(maxMana, before + (Number(amount) || 0)));
+    const gained = player.mana - before; trace.push(['manaGain', amount, gained]); return gained;
+  }
 
   const rt = {
     getPlayer: () => player, getMeta: () => meta, getCurrentEnemy: () => enemies[currentIndex] || null,
@@ -74,7 +79,7 @@ function makeHarness(options = {}) {
     getSetDamageBonus: () => options.setDamageBonus || 0,
     ultimateBaseDamage: (classId, actor, bonus) => { trace.push(['ultimateBaseDamage', classId, bonus]); return Math.round(actor.attack * 2.8) + bonus; },
     scaleUltimateDamage: (damage, actor, opts) => { trace.push(['scaleUltimateDamage', damage, opts.chaosMultiplier, opts.setDamageBonus]); return Math.round(damage * (opts.chaosMultiplier || 1) * (1 + actor.classUltimateBonus) * (1 + actor.ultimateDamageBonus) * (1 + actor.damageBonus + (opts.setDamageBonus || 0))); },
-    damageEnemy, damageAll, healPlayer,
+    damageEnemy, damageAll, healPlayer, manaGain,
     triggerStrikeElements: (target, incomingChaos) => { trace.push(['elements', target?.name, incomingChaos?.roll || null]); return options.elementResult || { totalDamage: 0, message: '' }; },
     petDamage: () => options.petDamage || 10,
     trainerPetDamage: id => (options.trainerDamage?.[id] || 10),
@@ -137,6 +142,24 @@ async function run() {
     await owner._test.genericUltimate();
     const chaosAt = h.trace.findIndex(x => x[0] === 'chaos'), randAt = h.trace.findIndex(x => x[0] === 'rand'), aoeAt = h.trace.findIndex(x => x[0] === 'damageAll');
     assert(chaosAt >= 0 && chaosAt < randAt && randAt < aoeAt, 'D20 Ultimate RNG/order drifted');
+  }
+
+  // Sorcerer Starfall restores exactly 33% of maximum Mana once per use through the Mana owner.
+  {
+    const h = makeHarness({ classId: 'sorcerer', randValues: [4], player: { mana: 10, maxMana: 120 } });
+    await owner._test.genericUltimate();
+    const gains = h.trace.filter(x => x[0] === 'manaGain');
+    assert.strictEqual(gains.length, 1, 'Starfall must request Mana exactly once');
+    assert.ok(Math.abs(gains[0][1] - 39.6) < 1e-9, 'Starfall must request exactly 33% max Mana');
+    assert.ok(Math.abs(h.player.mana - 49.6) < 1e-9, 'Starfall Mana restoration drifted');
+  }
+  {
+    const h = makeHarness({ classId: 'sorcerer', randValues: [4], player: { mana: 115, maxMana: 120 } });
+    await owner._test.genericUltimate();
+    const gains = h.trace.filter(x => x[0] === 'manaGain');
+    assert.strictEqual(gains.length, 1, 'capped Starfall must still resolve Mana exactly once');
+    assert.ok(Math.abs(gains[0][2] - 5) < 1e-9, 'Starfall Mana gain must clamp at max Mana');
+    assert.strictEqual(h.player.mana, 120, 'Starfall must never overcap Mana');
   }
 
   // Vampire Crimson Eclipse scales both damage and drain with effective Lifesteal, while Echo boosts damage.
