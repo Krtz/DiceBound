@@ -149,7 +149,8 @@ async function main(){
         name:"Twin Fletching",
         desc:"Gain +18% Echo Strike chance.",
         rarity:"uncommon",
-        source:"Oracle Relic"
+        source:"Oracle Relic",
+        powerupId:"ranger_echo"
       }];
     }
     assert.deepEqual(actual.cases,expected);
