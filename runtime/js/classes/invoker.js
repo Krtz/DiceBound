@@ -9,16 +9,16 @@
     exort: Object.freeze({ orb: ORB.RED, name: "Exort Strike", damage: 1.20, echoMultiplier: .70, mana: 0 })
   });
   const RECIPE = Object.freeze({
-    bbb: { name: "Cold Snap", tip: "110% single-target damage; the next 3 player strikes add 30% Attack and the last freezes." },
-    bbg: { name: "Ghost Walk", tip: "2 Barriers and +35% Dodge until your next action." },
-    bbr: { name: "Ice Wall", tip: "90% AoE; enemies deal 20% less damage for 2 responses." },
-    ggg: { name: "EMP", tip: "135% AoE; remove 1 Barrier and delay a Guardian special." },
-    bgg: { name: "Tornado", tip: "150% AoE and skip this enemy response." },
-    ggr: { name: "Alacrity", tip: "For 3 actions: +30% damage, Echo and Mana generation." },
-    rrr: { name: "Sun Strike", tip: "425% single-target damage that ignores Defense." },
-    brr: { name: "Forge Spirit", tip: "A 4-action Spirit attacks after your actions and shreds Defense." },
-    grr: { name: "Chaos Meteor", tip: "180% fire AoE and 3 authoritative Burn stacks." },
-    bgr: { name: "Deafening Blast", tip: "165% AoE; next response deals 35% less damage and delays a special." }
+    bbb: Object.freeze({ name:"Cold Snap", damage:1.10, triggers:3, reactionDamage:.30, get tip(){return `${Math.round(this.damage*100)}% single-target damage; the next ${this.triggers} player strikes add ${Math.round(this.reactionDamage*100)}% Attack and the last freezes.`;} }),
+    bbg: Object.freeze({ name:"Ghost Walk", barriers:2, dodge:.35, get tip(){return `${this.barriers} Barriers and +${Math.round(this.dodge*100)}% Dodge until your next action.`;} }),
+    bbr: Object.freeze({ name:"Ice Wall", damage:.90, responses:2, responseDamageMultiplier:.80, get tip(){return `${Math.round(this.damage*100)}% AoE; enemies deal ${Math.round((1-this.responseDamageMultiplier)*100)}% less damage for ${this.responses} responses.`;} }),
+    ggg: Object.freeze({ name:"EMP", damage:1.35, barrierStrip:1, guardianDelay:1, get tip(){return `${Math.round(this.damage*100)}% AoE; remove ${this.barrierStrip} Barrier and delay a Guardian special.`;} }),
+    bgg: Object.freeze({ name:"Tornado", damage:1.50, get tip(){return `${Math.round(this.damage*100)}% AoE and skip this enemy response.`;} }),
+    ggr: Object.freeze({ name:"Alacrity", actions:3, damageBonus:.30, echoBonus:.30, manaBonus:.25, get tip(){return `For ${this.actions} actions: +${Math.round(this.damageBonus*100)}% damage, +${Math.round(this.echoBonus*100)}% Echo and +${Math.round(this.manaBonus*100)}% Mana generation.`;} }),
+    rrr: Object.freeze({ name:"Sun Strike", damage:4.25, get tip(){return `${Math.round(this.damage*100)}% single-target damage that ignores Defense.`;} }),
+    brr: Object.freeze({ name:"Forge Spirit", actions:4, spiritDamage:.45, shredCap:4, shredPerHit:1, get tip(){return `A ${this.actions}-action Spirit attacks after your actions and shreds Defense.`;} }),
+    grr: Object.freeze({ name:"Chaos Meteor", damage:1.80, burnStacks:3, get tip(){return `${Math.round(this.damage*100)}% fire AoE and ${this.burnStacks} authoritative Burn stacks.`;} }),
+    bgr: Object.freeze({ name:"Deafening Blast", damage:1.65, responses:1, responseDamageMultiplier:.65, guardianDelay:1, get tip(){return `${Math.round(this.damage*100)}% AoE; next response deals ${Math.round((1-this.responseDamageMultiplier)*100)}% less damage and delays a special.`;} })
   });
   let runtime = null;
   let wexBuilderInFlight = false;
@@ -76,30 +76,30 @@
     if (s.spirit > 0) spiritStrike();
     render();
   }
-  function actionBonuses() { const s = state(false); return Object.freeze({ damage: orbBonuses().damage + (s?.alacrity > 0 ? .30 : 0), echo: orbBonuses().echo + (s?.alacrity > 0 ? .30 : 0), mana: orbBonuses().manaGeneration + (s?.alacrity > 0 ? .25 : 0), guard: orbBonuses().guardPower }); }
+  function actionBonuses() { const s = state(false),a=RECIPE.ggr; return Object.freeze({ damage: orbBonuses().damage + (s?.alacrity > 0 ? a.damageBonus : 0), echo: orbBonuses().echo + (s?.alacrity > 0 ? a.echoBonus : 0), mana: orbBonuses().manaGeneration + (s?.alacrity > 0 ? a.manaBonus : 0), guard: orbBonuses().guardPower }); }
   function outgoingMultiplier() { return 1 + actionBonuses().damage; }
   function generatorManaMultiplier() { return 1 + actionBonuses().mana; }
   function spiritStrike() {
     const rt = requireRuntime(), s = state(), p = player(), target = rt.livingEnemies()[0];
     s.spirit--; if (!target) return;
-    const dealt = rt.damageEnemy(target, Math.max(1, Math.round(p.attack * .45 * outgoingMultiplier())));
+    const spec=RECIPE.brr,dealt = rt.damageEnemy(target, Math.max(1, Math.round(p.attack * spec.spiritDamage * outgoingMultiplier())));
     const key = target.name || "target", used = s.spiritShred[key] || 0;
-    if (used < 4) { target.defense = (target.defense || 0) - 1; s.spiritShred[key] = used + 1; }
-    rt.addCombatHistory(`🔥 Forge Spirit strikes ${target.name} for ${dealt}${used < 4 ? " and lowers Defense." : "."}`);
+    if (used < spec.shredCap) { target.defense = (target.defense || 0) - spec.shredPerHit; s.spiritShred[key] = used + 1; }
+    rt.addCombatHistory(`🔥 Forge Spirit strikes ${target.name} for ${dealt}${used < spec.shredCap ? " and lowers Defense." : "."}`);
   }
   function afterPlayerHit(target, { echo = false } = {}) {
     if (!active() || !target?.hp) return;
     const snap = target._invokerColdSnap;
     if (!snap?.triggers) return;
-    snap.triggers--; const rt = requireRuntime(), dealt = rt.damageEnemy(target, Math.max(1, Math.round(player().attack * .30 * outgoingMultiplier())));
+    snap.triggers--; const rt = requireRuntime(), dealt = rt.damageEnemy(target, Math.max(1, Math.round(player().attack * RECIPE.bbb.reactionDamage * outgoingMultiplier())));
     rt.addCombatHistory(`❄️ Cold Snap triggers for ${dealt} (${snap.triggers} remain).`);
     if (!snap.triggers) { if (!target.guardian || (target.freezeCooldown || 0) <= 0) { target.skipTurns = (target.skipTurns || 0) + 1; if (target.guardian) target.freezeCooldown = 1; } delete target._invokerColdSnap; }
   }
   function responseModifier() {
     if (!active()) return null;
     const s = state(), bonuses = orbBonuses(), out = { damageMultiplier: 1, suppressSpecial: false, defenseBonus: bonuses.defense, guardPowerBonus: bonuses.guardPower };
-    if (s.iceWall > 0) { s.iceWall--; out.damageMultiplier *= .80; }
-    if (s.deafening > 0) { s.deafening--; out.damageMultiplier *= .65; out.suppressSpecial = true; requireRuntime().setEncounterTurn(Math.max(0, requireRuntime().getEncounterTurn() - 1)); }
+    if (s.iceWall > 0) { s.iceWall--; out.damageMultiplier *= RECIPE.bbr.responseDamageMultiplier; }
+    if (s.deafening > 0) { s.deafening--; out.damageMultiplier *= RECIPE.bgr.responseDamageMultiplier; out.suppressSpecial = true; requireRuntime().setEncounterTurn(Math.max(0, requireRuntime().getEncounterTurn() - RECIPE.bgr.guardianDelay)); }
     return out;
   }
   function scale(raw, { ignoreDefense = false } = {}) { const p = player(), rt = requireRuntime(); let amount = Math.max(1, Math.round(raw * outgoingMultiplier() * (1 + (p.damageBonus || 0) + rt.getSetDamageBonus()))); if (rt.getEncounterLead()?.boss) amount = Math.round(amount * (1 + (p.bossDamage || 0))); return { amount, ignoreDefense }; }
@@ -158,16 +158,16 @@
     const potency = (perfected ? 1.25 : 1) * (doubled ? 1.55 : 1), damagePotency = potency * (unstable?.damageMultiplier ?? 1); if (perfected) s.perfectedUsed = true; if (doubled) s.doubleInvoke = true;
     const target = rt.getCurrentEnemy(), all = () => rt.livingEnemies(), aoe = mult => rt.damageAll(scale(p.attack * mult * damagePotency).amount, 1);
     let text = "", skipResponse = false;
-    if (key === "bbb") { const dealt = rt.damageEnemy(target, scale(p.attack * 1.10 * damagePotency).amount); target._invokerColdSnap = { triggers: 3 }; text = `❄️ Cold Snap hits ${target.name} for ${dealt} and arms 3 reactions.`; }
-    if (key === "bbg") { p.combatShield = (p.combatShield || 0) + 2; const dodge = .35 * potency; p.dodge += dodge; s.ghostDodge = dodge; text = "👻 Ghost Walk raises 2 Barriers and grants temporary Dodge."; }
-    if (key === "bbr") { const dealt = aoe(.90); s.iceWall = Math.max(s.iceWall || 0, 2); text = `🧊 Ice Wall deals ${dealt} total damage and chills the next 2 responses.`; }
-    if (key === "ggg") { const dealt = aoe(1.35); all().forEach(enemy => enemy.enemyBarrier = Math.max(0, (enemy.enemyBarrier || 0) - 1)); if (rt.getEncounterLead()?.guardian) rt.setEncounterTurn(Math.max(0, rt.getEncounterTurn() - 1)); text = `⚡ EMP deals ${dealt}, strips Barriers and disrupts the Guardian clock.`; }
-    if (key === "bgg") { const dealt = aoe(1.50); skipResponse = true; text = `🌪️ Tornado deals ${dealt} and lifts the pack through this response.`; }
-    if (key === "ggr") { s.alacrity = Math.max(s.alacrity || 0, 3); text = "⚡ Alacrity empowers your next 3 player actions."; }
-    if (key === "rrr") { const hit = scale(p.attack * 4.25 * damagePotency, { ignoreDefense: true }), dealt = rt.damageEnemy(target, hit.amount, true); let cataclysm = 0; if (p.invokerCataclysm) rt.livingEnemies().filter(enemy => enemy !== target).forEach(enemy => { cataclysm += rt.damageEnemy(enemy, Math.max(1, Math.round(hit.amount * .50)), true); }); if (target.guardian && target.hp <= 0) markAchievement("invoker-solar-citation"); text = `☀️ Sun Strike deals ${dealt} Defense-piercing damage${cataclysm ? ` and Cataclysm hits the pack for ${cataclysm}` : ""}.`; }
-    if (key === "brr") { s.spirit = 4; s.spiritShred = {}; text = "🔥 Forge Spirit joins your companion for 4 player actions."; }
-    if (key === "grr") { const dealt = aoe(1.80); all().forEach(enemy => { if (enemy.hp > 0) rt.addEnemyBurn(enemy, 3); }); text = `☄️ Chaos Meteor deals ${dealt} and applies 3 Burn stacks.`; }
-    if (key === "bgr") { const dealt = aoe(1.65); s.deafening = 1; markAchievement("invoker-threefold-thesis"); text = `💥 Deafening Blast deals ${dealt} and disarms the next response.`; }
+    if (key === "bbb") { const dealt = rt.damageEnemy(target, scale(p.attack * spell.damage * damagePotency).amount); target._invokerColdSnap = { triggers: spell.triggers }; text = `❄️ Cold Snap hits ${target.name} for ${dealt} and arms ${spell.triggers} reactions.`; }
+    if (key === "bbg") { p.combatShield = (p.combatShield || 0) + spell.barriers; const dodge = spell.dodge * potency; p.dodge += dodge; s.ghostDodge = dodge; text = `👻 Ghost Walk raises ${spell.barriers} Barriers and grants temporary Dodge.`; }
+    if (key === "bbr") { const dealt = aoe(spell.damage); s.iceWall = Math.max(s.iceWall || 0, spell.responses); text = `🧊 Ice Wall deals ${dealt} total damage and chills the next ${spell.responses} responses.`; }
+    if (key === "ggg") { const dealt = aoe(spell.damage); all().forEach(enemy => enemy.enemyBarrier = Math.max(0, (enemy.enemyBarrier || 0) - spell.barrierStrip)); if (rt.getEncounterLead()?.guardian) rt.setEncounterTurn(Math.max(0, rt.getEncounterTurn() - spell.guardianDelay)); text = `⚡ EMP deals ${dealt}, strips Barriers and disrupts the Guardian clock.`; }
+    if (key === "bgg") { const dealt = aoe(spell.damage); skipResponse = true; text = `🌪️ Tornado deals ${dealt} and lifts the pack through this response.`; }
+    if (key === "ggr") { s.alacrity = Math.max(s.alacrity || 0, spell.actions); text = `⚡ Alacrity empowers your next ${spell.actions} player actions.`; }
+    if (key === "rrr") { const hit = scale(p.attack * spell.damage * damagePotency, { ignoreDefense: true }), dealt = rt.damageEnemy(target, hit.amount, true); let cataclysm = 0; if (p.invokerCataclysm) rt.livingEnemies().filter(enemy => enemy !== target).forEach(enemy => { cataclysm += rt.damageEnemy(enemy, Math.max(1, Math.round(hit.amount * .50)), true); }); if (target.guardian && target.hp <= 0) markAchievement("invoker-solar-citation"); text = `☀️ Sun Strike deals ${dealt} Defense-piercing damage${cataclysm ? ` and Cataclysm hits the pack for ${cataclysm}` : ""}.`; }
+    if (key === "brr") { s.spirit = spell.actions; s.spiritShred = {}; text = `🔥 Forge Spirit joins your companion for ${spell.actions} player actions.`; }
+    if (key === "grr") { const dealt = aoe(spell.damage); all().forEach(enemy => { if (enemy.hp > 0) rt.addEnemyBurn(enemy, spell.burnStacks); }); text = `☄️ Chaos Meteor deals ${dealt} and applies ${spell.burnStacks} Burn stacks.`; }
+    if (key === "bgr") { const dealt = aoe(spell.damage); s.deafening = spell.responses; markAchievement("invoker-threefold-thesis"); text = `💥 Deafening Blast deals ${dealt} and disarms the next response.`; }
     // Damage spells already received their second 55%-potency pass through
     // `potency`. Non-damage formulae use explicit authored equivalents rather
     // than incorrectly scaling a duration or chance as though it were damage.
@@ -198,7 +198,7 @@
     const rt = runtime; if (!rt) return; const doc = rt.document(), wrap = doc.getElementById("ultimateFill")?.closest(".ultimate-wrap"), p = rt.getPlayer(); let node = doc.getElementById("invokerOrbDisplay");
     if (!active() || !wrap) { node?.remove(); return; }
     if (!node) { node = doc.createElement("div"); node.id = "invokerOrbDisplay"; node.className = "invoker-orbs"; wrap.after(node); }
-    const s = state(), info = recipeInfo(), colors = s.orbs.map(orb => `<span class="invoker-orb ${orb}" title="${orb === ORB.BLUE ? "+1 DEF, +4% Guard" : orb === ORB.GREEN ? "+5% Echo, +10% Mana gain" : "+7% player damage"}">${orb[0].toUpperCase()}</span>`).join("");
+    const s = state(), info = recipeInfo(), colors = s.orbs.map(orb => `<span class="invoker-orb ${orb}" title="${orb === ORB.BLUE ? "Strengthens Defense and Guard" : orb === ORB.GREEN ? "Boosts Echo and Mana generation" : "Boosts player damage"}">${orb[0].toUpperCase()}</span>`).join("");
     node.innerHTML = `<div class="invoker-orb-row">${colors}${Array.from({ length: Math.max(0, 3 - s.orbs.length) }, () => '<span class="invoker-orb empty">·</span>').join("")}</div><small>${info ? `${s.orbs.map(x => x[0].toUpperCase()).join(" + ")} → ${info.name}` : "Build a three-orb formula to Invoke."}</small>`;
     const name = doc.getElementById("ultimateName"), button = doc.getElementById("ultimateBtn"); if (name) name.textContent = info ? `INVOKE: ${info.name}` : "INVOKE · 3 ORBS REQUIRED"; if (button) button.dataset.tip = info?.tip || "Invoke requires exactly three active orbs.";
     if (!doc.getElementById("invoker-orb-style")) { const style = doc.createElement("style"); style.id = "invoker-orb-style"; style.textContent = ".invoker-orbs{margin:7px 0 4px;text-align:center}.invoker-orb-row{display:flex;justify-content:center;gap:6px}.invoker-orb{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:900;border:1px solid rgba(255,255,255,.65);box-shadow:0 0 12px currentColor}.invoker-orb.blue{background:#397eea}.invoker-orb.green{background:#32ad6e}.invoker-orb.red{background:#d24d45}.invoker-orb.empty{color:#8891a6;background:rgba(0,0,0,.2);box-shadow:none}.invoker-orbs small{font-size:9px;color:#d9dff3}"; doc.head.append(style); }
