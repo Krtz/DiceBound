@@ -172,7 +172,7 @@ assert(out.enemyHpText.includes('12 ATK · 4 DEF · 15% DODGE'));
 active = new Set(['ninja']); state.player.classId = 'ninja'; state.player.ninjaSmoke = 2; state.player.ninjaSmokeNeed = 3;
 out = model();
 assert.strictEqual(out.resource.name, 'Smoke');
-assert(out.resource.note.includes('double crit grants 2'));
+assert(out.resource.note.includes('stronger critical tiers granting more'));
 
 active = new Set(['bloodmage']); state.player.classId = 'bloodmage'; state.player.hp = 51;
 out = model();
