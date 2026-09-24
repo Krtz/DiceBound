@@ -83,10 +83,20 @@
     audio:Object.freeze({sfx:Object.freeze(Object.fromEntries(["roll","step","hit","crit","coin","heal","lose","level","win","holy"].map(x=>[x,{customBase:x,alt:x}])) )})
   });
   const files=[]; const add=x=>{if(x&&!files.includes(x))files.push(x)}; const walk=x=>{if(!x)return;if(typeof x==="string"&&x.startsWith("assets/")&&/\.(png|ico)$/i.test(x))add(x);else if(Array.isArray(x))x.forEach(walk);else if(typeof x==="object")Object.values(x).forEach(walk)}; walk(manifest);
-  // Equipment identities own their gameplay metadata and art references in
-  // items/equipment.js. This is only the runtime preload inventory, kept here
-  // so the asset validator can prove every approved binary is packaged.
-  ["assets/equipment/weapon/bronze-longsword.png","assets/equipment/weapon/shortbow.png","assets/equipment/weapon/rubber-chicken.png","assets/equipment/weapon/crimson-brush.png","assets/equipment/weapon/tongue-lash.png","assets/equipment/weapon/10th-birthday-balloons.png","assets/equipment/weapon/ashen-staff.png","assets/equipment/weapon/birthday-cake.png","assets/equipment/amulet/decennial-jubilee-balloons.png","assets/equipment/weapon/ashcore-pyrestaff.png","assets/equipment/offhand/candlecrown-gateau.png","assets/equipment/hat/bronze-full-helm.png","assets/equipment/chest/bronze-platebody.png","assets/equipment/legs/bronze-platelegs.png","assets/equipment/boots/bronze-armoured-boots.png","assets/equipment/offhand/bronze-round-shield.png","assets/equipment/weapon/oak-shortbow.png","assets/equipment/weapon/bronze-battleaxe.png","assets/equipment/offhand/iron-round-shield.png","assets/equipment/offhand/spellbook.png","assets/equipment/hat/hunter-hood.png","assets/equipment/chest/leather-harness.png","assets/equipment/legs/ranger-trousers.png","assets/equipment/boots/trail-boots.png","assets/equipment/ring/mood-ring.png","assets/equipment/amulet/hawkeye-charm.png"].forEach(add);
+  // assets.js is deliberately loadable on its own for release auditing, so it
+  // cannot inspect DiceboundEquipment yet. Keep the required preload mirror
+  // compact and grouped by slot instead of repeating full paths.
+  const EQUIPMENT_PRELOAD=Object.freeze({
+    weapon:Object.freeze(["bronze-longsword","shortbow","rubber-chicken","crimson-brush","tongue-lash","10th-birthday-balloons","ashen-staff","birthday-cake","ashcore-pyrestaff","oak-shortbow","bronze-battleaxe","abyssal-wand","adamant-halberd","adamant-crossbow","adamant-claws"]),
+    offhand:Object.freeze(["candlecrown-gateau","bronze-round-shield","iron-round-shield","spellbook","arcane-tome","bag-of-confetti","acid-bubble","barbed-quiver","axels-coffee-mug"]),
+    hat:Object.freeze(["bronze-full-helm","hunter-hood","basinet","bucket","crimson-veil","crown","kratz-headphones"]),
+    chest:Object.freeze(["bronze-platebody","leather-harness","band-t-shirt","boneweave","cardigan","blood-iron-cuirass"]),
+    legs:Object.freeze(["bronze-platelegs","ranger-trousers","bogstrider-wraps","executive-legs","chain-leggings","distillers-legs"]),
+    boots:Object.freeze(["bronze-armoured-boots","trail-boots","astral-slippers","bloodmarch-boots","cloudstep-sandals","demonhide-boots"]),
+    ring:Object.freeze(["mood-ring","gel-loop","lion-signet","falcon-band","jade-band"]),
+    amulet:Object.freeze(["decennial-jubilee-balloons","hawkeye-charm","distillers-amulet","dragon-tooth","astral-prism","golden-fly"])
+  });
+  Object.entries(EQUIPMENT_PRELOAD).forEach(([slot,names])=>names.forEach(name=>add(`${ROOT}/equipment/${slot}/${name}.png`)));
   // Retired source art remains inventoried but is never returned by a resolver.
   add(`${ROOT}/powerups/_legacy/heavy-purse-beta-0.6.png`); add(`${paths.installerIcons}/dicebound-launcher.ico`); add(`${paths.installerIcons}/dicebound-launcher.png`);
   const SOUND_EXTENSIONS=Object.freeze(["ogg","mp3","wav","webm"]); const buildSoundCandidates=base=>SOUND_EXTENSIONS.map(ext=>`${paths.audioCustom}/${base}.${ext}`);

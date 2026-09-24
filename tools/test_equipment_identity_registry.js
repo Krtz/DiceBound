@@ -13,8 +13,8 @@ for(const relative of [["items","rarities.js"],["items","equipment.js"]]){
 const equipment=context.window.DiceboundEquipment;
 const registry=equipment.createRegistry(),identities=registry.identities;
 
-assert.equal(equipment.apiVersion,3);
-assert.equal(identities.length,26,"the approved authored packs and birthday identities must share one registry without generic fallbacks");
+assert.equal(equipment.apiVersion,4);
+assert.equal(identities.length,58,"all approved authored bases and birthday identities must share one registry without generic fallbacks");
 const expectedArt={
   "bronze-longsword":"assets/equipment/weapon/bronze-longsword.png",
   shortbow:"assets/equipment/weapon/shortbow.png",
@@ -39,6 +39,38 @@ const expectedArt={
   "trail-boots":"assets/equipment/boots/trail-boots.png",
   "mood-ring":"assets/equipment/ring/mood-ring.png",
   "hawkeye-charm":"assets/equipment/amulet/hawkeye-charm.png",
+  "abyssal-wand":"assets/equipment/weapon/abyssal-wand.png",
+  "adamant-halberd":"assets/equipment/weapon/adamant-halberd.png",
+  "adamant-crossbow":"assets/equipment/weapon/adamant-crossbow.png",
+  "adamant-claws":"assets/equipment/weapon/adamant-claws.png",
+  "arcane-tome":"assets/equipment/offhand/arcane-tome.png",
+  "bag-of-confetti":"assets/equipment/offhand/bag-of-confetti.png",
+  "acid-bubble":"assets/equipment/offhand/acid-bubble.png",
+  "barbed-quiver":"assets/equipment/offhand/barbed-quiver.png",
+  basinet:"assets/equipment/hat/basinet.png",
+  bucket:"assets/equipment/hat/bucket.png",
+  "crimson-veil":"assets/equipment/hat/crimson-veil.png",
+  crown:"assets/equipment/hat/crown.png",
+  "band-t-shirt":"assets/equipment/chest/band-t-shirt.png",
+  boneweave:"assets/equipment/chest/boneweave.png",
+  cardigan:"assets/equipment/chest/cardigan.png",
+  "blood-iron-cuirass":"assets/equipment/chest/blood-iron-cuirass.png",
+  "bogstrider-wraps":"assets/equipment/legs/bogstrider-wraps.png",
+  "executive-legs":"assets/equipment/legs/executive-legs.png",
+  "chain-leggings":"assets/equipment/legs/chain-leggings.png",
+  "distillers-legs":"assets/equipment/legs/distillers-legs.png",
+  "astral-slippers":"assets/equipment/boots/astral-slippers.png",
+  "bloodmarch-boots":"assets/equipment/boots/bloodmarch-boots.png",
+  "cloudstep-sandals":"assets/equipment/boots/cloudstep-sandals.png",
+  "demonhide-boots":"assets/equipment/boots/demonhide-boots.png",
+  "gel-loop":"assets/equipment/ring/gel-loop.png",
+  "lion-signet":"assets/equipment/ring/lion-signet.png",
+  "falcon-band":"assets/equipment/ring/falcon-band.png",
+  "jade-band":"assets/equipment/ring/jade-band.png",
+  "distillers-amulet":"assets/equipment/amulet/distillers-amulet.png",
+  "dragon-tooth":"assets/equipment/amulet/dragon-tooth.png",
+  "astral-prism":"assets/equipment/amulet/astral-prism.png",
+  "golden-fly":"assets/equipment/amulet/golden-fly.png",
   "decennial-jubilee-balloons":"assets/equipment/amulet/decennial-jubilee-balloons.png",
   "ashcore-pyrestaff":"assets/equipment/weapon/ashcore-pyrestaff.png",
   "candlecrown-gateau":"assets/equipment/offhand/candlecrown-gateau.png",
@@ -52,11 +84,17 @@ for(const [id,asset] of Object.entries(expectedArt)){
   assert.ok(identity.rarityEligibility.includes("epic"),`${id} should be eligible at Epic or above where its identity allows`);
 }
 for(const id of ["10th-birthday-balloons","ashen-staff","birthday-cake"])assert.ok(equipment.equipmentIdentity(id).rarityEligibility.includes("common"),`${id} must retain its original lower-rarity identity range`);
-for(const id of ["decennial-jubilee-balloons","ashcore-pyrestaff","candlecrown-gateau"]){const identity=equipment.equipmentIdentity(id);assert.deepEqual(JSON.parse(JSON.stringify(identity.rarityEligibility)),["epic","legendary"],`${id} must remain an Epic+ visual identity`);assert.equal(Object.hasOwn(identity,"intrinsicBonuses"),false,`${id} must use only the normal generated rarity budget, without a bonus package`);}
+for(const id of ["decennial-jubilee-balloons","ashcore-pyrestaff","candlecrown-gateau"])assert.deepEqual(JSON.parse(JSON.stringify(equipment.equipmentIdentity(id).rarityEligibility)),["epic","legendary"],`${id} must remain Epic+`);
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"amulet",equipmentId:"decennial-jubilee-balloons"}))),{luck:.02,goldBonus:.05});
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"ashcore-pyrestaff"}))),{maxMana:10,doubleStrike:.02});
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"offhand",equipmentId:"candlecrown-gateau"}))),{maxHp:5,potionPower:.15});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"shortbow"}))),{attack:1,crit:.01});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"weapon",equipmentId:"oak-shortbow"}))),{attack:2,crit:.01},"Oak Shortbow must remain a distinct approved identity");
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.intrinsicBonusesForItem({slot:"offhand",equipmentId:"spellbook"}))),{maxMana:5});
 assert.deepEqual(JSON.parse(JSON.stringify(equipment.allBonusesForItem({slot:"weapon",equipmentId:"shortbow",bonuses:{attack:3}}))),{attack:4,crit:.01});
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.elementProcBonusesForItem({slot:"weapon",equipmentId:"crimson-brush"}))),{fire:.01},"Crimson Brush must be Fire-specific");
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.elementProcBonusesForItem({slot:"boots",equipmentId:"demonhide-boots"}))),{fire:.01,void:.01},"Demonhide must retain both authored proc affinities");
+assert.deepEqual(JSON.parse(JSON.stringify(equipment.elementProcBonusesForItem({slot:"weapon",equipmentId:"abyssal-wand"}))),{void:.01});
 
 const fixedMythicals={
   "axels-coffee-mug":{slot:"offhand",intrinsic:{doubleStrike:.05}},
@@ -69,6 +107,8 @@ for(const [id,expected] of Object.entries(fixedMythicals)){
   assert.equal(identity.exclusiveSpecial,true,`${id} must be exclusive to its named Mythical`);
   assert.equal(identity.slot,expected.slot);
   assert.deepEqual(JSON.parse(JSON.stringify(identity.intrinsicBonuses)),expected.intrinsic);
+  if(id==="axels-coffee-mug")assert.equal(identity.art.image,"assets/equipment/offhand/axels-coffee-mug.png");
+  if(id==="kratz-headphones")assert.equal(identity.art.image,"assets/equipment/hat/kratz-headphones.png");
   for(const rarity of ["poor","common","uncommon","rare","epic","legendary","mythical"]){
     assert.equal(equipment.eligibleEquipmentIdentities({slot:expected.slot,rarity}).some(candidate=>candidate.id===id),false,`${id} leaked into the generic base roll pool`);
   }
