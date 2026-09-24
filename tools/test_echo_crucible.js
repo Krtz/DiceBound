@@ -7,9 +7,9 @@ const path=require("node:path");
 const vm=require("node:vm");
 
 const root=path.resolve(__dirname,"..");
-const context={window:{},console};context.window.window=context.window;
+const context=vm.createContext({window:{},console});context.window.window=context.window;
 for(const rel of ["runtime/js/progression/echo-crucible.js","runtime/js/core/state.js"]){
-  vm.runInContext(fs.readFileSync(path.join(root,rel),"utf8"),vm.createContext(context),{filename:rel});
+  vm.runInContext(fs.readFileSync(path.join(root,rel),"utf8"),context,{filename:rel});
 }
 const owner=context.window.DiceboundEchoCrucible;
 assert.ok(owner?.createController,"Echo Crucible domain owner missing");
@@ -63,9 +63,9 @@ assert.equal(normalized.heirloomStorage.length,1,"Vault must survive Meta normal
 
 const manifest=JSON.parse(fs.readFileSync(path.join(root,"runtime/js/module-manifest.json"),"utf8"));
 const index=fs.readFileSync(path.join(root,"runtime/index.html"),"utf8");
-const module=manifest.modules.find(entry=>entry.id==="progression-echo-crucible");
-assert.ok(module,"Echo Crucible missing from runtime module manifest");
-assert.equal(module.path,"js/progression/echo-crucible.js");
+const moduleEntry=manifest.modules.find(entry=>entry.id==="progression-echo-crucible");
+assert.ok(moduleEntry,"Echo Crucible missing from runtime module manifest");
+assert.equal(moduleEntry.path,"js/progression/echo-crucible.js");
 assert.ok(index.includes('<script src="js/progression/echo-crucible.js"></script>'));
 assert.ok(manifest.loadOrder.indexOf("progression-prestige")<manifest.loadOrder.indexOf("progression-echo-crucible"));
 assert.ok(manifest.loadOrder.indexOf("progression-echo-crucible")<manifest.loadOrder.indexOf("progression-achievements"));
