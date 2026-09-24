@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 28768, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 28865, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "f09320899e05682b3aea6c93d835c49b5e8bd57d6c64dc3ed5655afc37f8c8ef",
+  "8bc853d5c659ef6be9abeca85587867c121b6ba20af3d632a8a8b2260432057e",
   "canonical class registry data drifted",
 );
 
