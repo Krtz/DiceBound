@@ -10,6 +10,7 @@ assert.deepEqual([...registry.invoker.tags], ["ranged", "occult", "mana", "eleme
 assert.equal(registry.invoker.base.maxHp, 32); assert.equal(registry.invoker.base.attack, 6);
 let player = { classId: "invoker", attack: 10, maxHp: 32, hp: 32, mana: 25, maxMana: 100, defense: 0, dodge: .02, combatShield: 0, damageBonus: 0, bossDamage: 0, crit: 0, doubleStrike: 0, poisonOnHitChance: 0, lifeSteal: 0, _invoker: null };
 const enemies = [{ name: "test", hp: 999, maxHp: 999, defense: 0 }]; let turn = 4, spent = 0, attackCalls = [], histories = [], attackGate = null;
+let unstableActive=false,unstableRule={name:"Unstable Ultimate",chargeThreshold:70,damageMultiplier:.75};
 classes.configureInvoker({
   getPlayer: () => player, getMeta: () => ({}), isClassActive: id => id === "invoker", getCurrentEnemy: () => enemies[0], getCurrentEnemies: () => enemies, livingEnemies: () => enemies.filter(x => x.hp > 0), getCombatBusy: () => false, setCombatBusy: () => {},
   damageEnemy: (enemy, amount) => { enemy.hp -= Math.round(amount); return Math.round(amount); }, damageAll: amount => enemies.reduce((n, enemy) => n + Math.round(amount), 0), healPlayer: amount => amount, addEnemyBurn: () => 0,
@@ -19,7 +20,9 @@ classes.configureInvoker({
   resolveManaBuilderGain: (id,{multiplier=1}={}) => ((id==="invoker"?25:0)+Math.max(0,Number(player.manaBuilderBonus)||0))*Math.max(0,Number(multiplier)||0),
   rollTieredProc: () => 0,
   triggerStrikeElements: () => ({ totalDamage: 0, message: "" }),
-  playElementAnimation: () => {}
+  playElementAnimation: () => {},
+  hasLegendaryEffect: id => id==="unstable_ultimate"&&unstableActive,
+  legendaryEffect: id => id==="unstable_ultimate"?unstableRule:null
 });
 for (const [input, expected] of [["bbb", "bbb"], ["bgb", "bbg"], ["rbb", "bbr"], ["ggg", "ggg"], ["gbg", "bgg"], ["rgg", "ggr"], ["rrr", "rrr"], ["rbr", "brr"], ["rgr", "grr"], ["brg", "bgr"]]) { player._invoker = { orbs: input.split("").map(x => ({ b: "blue", g: "green", r: "red" }[x])) }; assert.equal(classes.invokerRecipeFor(), expected, input); assert.ok(classes.invokerRecipeInfo()); }
 player._invoker = null; classes._invokerTest.addOrb("blue"); classes._invokerTest.addOrb("green"); classes._invokerTest.addOrb("red"); classes._invokerTest.addOrb("red"); assert.deepEqual([...player._invoker.orbs], ["green", "red", "red"]);
@@ -68,6 +71,25 @@ player._invoker = { orbs: [] }; classes.invokerAfterPlayerAction("attack"); asse
   assert.equal(player._invoker.alacrity, 1);
   classes.invokerAfterPlayerAction("invoke");
   assert.equal(player._invoker.alacrity, 0);
+
+  // #337: Unstable Ultimate source values govern Invoke threshold and damaging formula potency.
+  unstableActive=true;unstableRule={name:"Unstable Ultimate",chargeThreshold:63,damageMultiplier:.42};
+  player.invokerDoubleInvocation=false;player.invokerPerfected=false;player.damageBonus=0;player.bossDamage=0;player.attack=10;
+  player._invoker={orbs:["red","red","red"],alacrity:0,ghostDodge:0,spirit:0,spiritShred:{},firstTrinity:false,previousRecipe:"",doubleInvoke:false};
+  enemies[0].hp=999;player.ultimateCharge=62;
+  assert.equal(await classes.invokerUltimate(),false,"Invoke must use the Legendary owner's charge threshold");
+  assert.equal(enemies[0].hp,999);assert.equal(player.ultimateCharge,62);
+  player.ultimateCharge=63;await classes.invokerUltimate();
+  assert.equal(999-enemies[0].hp,22,"Sun Strike damage must use the Legendary owner's 42% multiplier exactly once");
+  assert.equal(player.ultimateCharge,0);
+
+  // Utility-only Invoke formulae use the threshold but keep their authored utility values.
+  player.combatShield=0;player.dodge=.02;player.ultimateCharge=63;
+  player._invoker={orbs:["blue","blue","green"],alacrity:0,ghostDodge:0,spirit:0,spiritShred:{},firstTrinity:false,previousRecipe:"",doubleInvoke:false};
+  await classes.invokerUltimate();
+  assert.equal(player.combatShield,2,"Unstable Ultimate must not scale Ghost Walk barriers");
+  assert.ok(Math.abs(player._invoker.ghostDodge-.35)<1e-12,"Unstable Ultimate must not scale Ghost Walk Dodge");
+  unstableActive=false;
 
   // Double Invocation applies a named authored equivalent to Ghost Walk:
   // one additional Barrier, while the temporary Dodge remains its fixed value.
