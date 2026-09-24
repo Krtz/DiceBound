@@ -24,6 +24,7 @@
     "js/core/state.js": "f2aa1c3f8154df9c25d00e111079204cb20fa11e280b003473e81467d2cd3e9a",
     "js/core/runtime-services.js": "2e32ec28d19f7fceb1bbacfa9e54a8a311e6ec9afa699f583dcf0d67ec602869",
     "js/core/memory-diagnostics.js": "f0ad565930a06953e0a10b836f04896206f49e6ae9c5cf3aa474ac17adc95a33",
+    "js/core/debug-bundle.js": "044429af7d2e8e5ee9878ffe8ff433eb06111c610b5a2b9d4bd0ad05353dd7e7",
     "js/core/facade.js": "1f20415a040e7e3d72d5f0c2786b4067bc85144f77041ccf0773688bdd9f11a6",
     "js/combat/element-content.js": "a07cf8220da47fd3e0c6342ba3848e6d9ab6c9e667bf7591b62be6d1670a05ab",
     "js/combat/effective-stats.js": "e6363049c48a70a2e479ac0fed764a8905e1a76d6deed1c15de4c486828c8dbf",
@@ -109,8 +110,7 @@
     "js/ui/career.js": "9b80dbf4a4e45ee7101bf29ec00ce2ba2fe30e95f8fd623e45594bdb69934ed4",
     "js/ui/merchant.js": "7e222b98d0bc0426d31a3e7379055ba1f37c1dc390b6aa09958af29c46661150",
     "js/events/merchant-facade.js": "b9a00ff4ec9e565fcc6e523a8d06bf3720e39528d9250f4389ec813546e18d7d",
-    "js/dicebound.js": "1fc8598599b3c93c8a18fb1da6b33bcaeea6ef39da2ac07469f9f0d1427770e9",
-    "js/core/debug-bundle.js": "044429af7d2e8e5ee9878ffe8ff433eb06111c610b5a2b9d4bd0ad05353dd7e7"
+    "js/dicebound.js": "1fc8598599b3c93c8a18fb1da6b33bcaeea6ef39da2ac07469f9f0d1427770e9"
   },
   "reproducible": true,
   "validation": "python tools/validate_asset_architecture.py",
