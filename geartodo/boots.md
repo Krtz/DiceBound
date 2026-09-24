@@ -12,14 +12,6 @@ tags: martial, plate, material-tier
 eligibility: uncommon+
 intrinsic: +3 Defense, +3 HP
 ---
-## Astral Slippers
-family: slippers
-material: cloth
-weight: light
-tags: astral, caster
-eligibility: rare+
-intrinsic: +8 Mana, +2% Dodge, +1% Light proc chance
----
 ## Bane Armoured Boots
 family: armoured-boots
 material: bane-metal
@@ -51,14 +43,6 @@ weight: light
 tags: vampiric, blood
 eligibility: rare+
 intrinsic: +2% Lifesteal, +2% Dodge, +5 HP
----
-## Bloodmarch Boots
-family: boots
-material: leather, iron
-weight: medium
-tags: rage, blood
-eligibility: uncommon+
-intrinsic: +2 Attack, +5 HP, +1% Lifesteal
 ---
 ## Chain Boots
 family: chain-boots

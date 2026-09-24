@@ -36,14 +36,6 @@ tags: vampiric, blood
 eligibility: rare+
 intrinsic: +2% Lifesteal, +8 HP, +2% Dodge
 ---
-## Bogstrider Wraps
-family: wraps
-material: cloth, hide
-weight: light
-tags: frog, bog, agile
-eligibility: uncommon+
-intrinsic: +3% Dodge, +1% Echo, +1% Nature proc chance
----
 ## Chain Leggings
 family: chain-leggings
 material: chain
@@ -99,14 +91,6 @@ weight: very-heavy
 tags: martial, plate, material-tier
 eligibility: legendary+
 intrinsic: +9 Defense, +12 HP, +1 Luck
----
-## Executive Legs
-family: executive
-material: cloth
-weight: medium
-tags: corporate, wealth, cool
-eligibility: rare+
-intrinsic: +3 Defense, +5% Gold Gain
 ---
 ## Flowing Sash
 family: sash
