@@ -125,6 +125,7 @@ function collectPresentation() {
     berserkerRageBonus: () => 0.42,
     hasLegendaryEffect: id => legendary.has(id),
     legendaryEffect: id => id === "unstable_ultimate" ? { id, name: "Unstable Ultimate", chargeThreshold: 63, damageMultiplier: 0.42 } : null,
+    invokerAttackSpec: key => ({quas:{damage:.85,echoMultiplier:.70},wex:{damage:.85,echoMultiplier:1.20},exort:{damage:1.20,echoMultiplier:.70}}[key]||null),
     activeTrainerPetId: () => "ice",
     selectEnemy() {},
     dragoonActive: () => active.has("dragoon"),
