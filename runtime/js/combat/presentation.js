@@ -294,7 +294,13 @@
       const rage = Math.round(rt.berserkerRageBonus() * 100);
       resource = classResource("rage", "Rage", rage, 100, `Every 1% missing HP grants +1% damage. Current Rage bonus: +${rage}% damage.`);
     }
-    if (rt.hasLegendaryEffect("unstable_ultimate")) {
+    if (rt.isClassActive("necromancer")) {
+      const count=Math.max(0,Number(rt.necromancerGraveCount?.())||0),threshold=Math.max(2,Number(rt.necromancerGraveThreshold?.())||5);
+      ultimate.text=`${cls.ultimate?.icon || "💀⚔️"} ${cls.ultimate?.name || "Army of the Dead"} (${count}/${threshold})`;
+      ultimate.disabled=combatBusy||!enemy||!rt.necromancerGraveReady?.();
+      ultimate.tip=`${cls.ultimate?.desc || "Your summons surge forward."} Grave Count: ${count}/${threshold}. Living summons strike at 250%; empty ally slots contribute 150% spectral Skeleton strikes.`;
+    }
+    if (rt.hasLegendaryEffect("unstable_ultimate") && !rt.isClassActive("necromancer")) {
       const effect=rt.legendaryEffect("unstable_ultimate"),threshold=Number(effect?.chargeThreshold),multiplier=Number(effect?.damageMultiplier);
       if(!Number.isFinite(threshold)||!Number.isFinite(multiplier))throw new Error("Combat presentation requires authoritative Unstable Ultimate values.");
       ultimate.disabled = combatBusy || !enemy || (player.ultimateCharge || 0) < threshold;
