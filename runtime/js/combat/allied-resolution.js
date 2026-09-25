@@ -152,6 +152,18 @@
     return entity ? Object.freeze({ ...entity.statuses }) : null;
   }
 
+  function healLivingByFraction(fraction, options = {}) {
+    const state=roster(), ids=state.allies.filter(entity=>entity.hp>0&&entity.healable!==false).map(entity=>entity.instanceId);
+    let total=0;
+    const scale=Math.max(0,Number(fraction)||0);
+    for(const id of ids){
+      const fresh=entityById(roster(),id);
+      if(!fresh)continue;
+      total+=heal(id,Math.ceil(fresh.maxHp*scale),options);
+    }
+    return total;
+  }
+
   function living() {
     return owner().living(roster());
   }
@@ -254,6 +266,7 @@
     heal,
     applyStatus,
     statusSnapshot,
+    healLivingByFraction,
     living,
     basicAttack,
     automaticPhase,
