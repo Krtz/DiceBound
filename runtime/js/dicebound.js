@@ -4293,6 +4293,7 @@ dbReturnToRoadTraceReady=true;
     getPets:()=>PETS,
     getMeta:()=>meta,
     petTurn:(...args)=>dbCombat.petTurn(...args),
+    necromancerSummon:()=>dbClasses.necromancerSummonSkeleton(),
     addCombatHistory:text=>addCombatHistory(text),
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},
     saveMeta:()=>saveMeta(),
