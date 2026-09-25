@@ -69,9 +69,10 @@
       #combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-width,72px)!important;min-height:var(--db-enemy-stage-height,92px)!important}
       #combatOverlay .stage-enemy .stage-sprite{display:grid!important;place-items:end center;width:var(--db-enemy-art-size,62px)!important;height:var(--db-enemy-art-size,62px)!important;line-height:0!important;overflow:visible!important}
       #combatOverlay .stage-enemy .stage-sprite>.enemy-art-frame,#combatOverlay .stage-enemy .stage-sprite>.db0636-tiered-enemy-art{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
+      #combatOverlay .stage-enemy .enemy-art-fallback{width:100%;height:100%;display:grid;place-items:center;font-size:var(--db-enemy-art-size,62px);line-height:1}
       #combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{position:absolute!important;left:clamp(2px,8%,34px);bottom:2px;margin:0!important;z-index:9;transform-origin:center bottom}
       #combatOverlay .vs{align-self:center}
-      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-mobile-width,44px)!important;min-height:var(--db-enemy-stage-mobile-height,68px)!important}#combatOverlay .stage-enemy .stage-sprite{width:var(--db-enemy-art-mobile-size,50px)!important;height:var(--db-enemy-art-mobile-size,50px)!important}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
+      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-mobile-width,44px)!important;min-height:var(--db-enemy-stage-mobile-height,68px)!important}#combatOverlay .stage-enemy .stage-sprite{width:var(--db-enemy-art-mobile-size,50px)!important;height:var(--db-enemy-art-mobile-size,50px)!important}#combatOverlay .stage-enemy .enemy-art-fallback{font-size:var(--db-enemy-art-mobile-size,50px)}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
     `;
     doc.head?.appendChild(style);return style;
   }

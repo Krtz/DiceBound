@@ -332,6 +332,8 @@ assert(!extractedCss.includes(':has(.db0636-tiered-enemy-art[data-enemy-battle-a
 assert(!extractedCss.includes('transform:scale(1.15);transform-origin:center bottom'),'family art calibration must not be duplicated in CSS');
 assert(stageStyle.textContent.includes('width:var(--db-enemy-art-size,62px)!important'),'Combat Presentation must own actual rendered enemy dimensions via semantic variables');
 assert(stageStyle.textContent.includes('min-height:var(--db-enemy-stage-mobile-height,68px)!important'),'mobile enemy dimensions must use the same semantic policy');
+assert(stageStyle.textContent.includes('font-size:var(--db-enemy-art-size,62px)'),'fallback enemy icons must use the same semantic desktop art size');
+assert(stageStyle.textContent.includes('font-size:var(--db-enemy-art-mobile-size,50px)'),'fallback enemy icons must use the same semantic mobile art size');
 
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
 console.log('Combat presentation owner PASS: live Mana generator facts, semantic enemy scaling, Secret Boss sizing, attacks, Echo pacing, backgrounds, statuses and zero-RNG view models are deterministic');
