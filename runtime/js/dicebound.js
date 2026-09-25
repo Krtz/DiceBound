@@ -557,7 +557,7 @@
     flatReduction:0,lifeSteal:0,doubleStrike:0,thorns:0,dodge:.08,potionPower:0,
     extraStepChance:0,xpBonus:0,bossDamage:0,revives:0,berserk:0,execute:0,
     shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,
-    guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
+    guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDamageScale:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
     guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,
     elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},crucibleEchoEffectId:null
   };
@@ -577,11 +577,11 @@
 
       function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
           function bonusLabel(key,value){
-    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage",thorns:"Thorns"};
+    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",petDamageScale:"Pet Damage",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage",thorns:"Thorns"};
     const amount=Number(value)||0,sign=amount<0?"−":"+",magnitude=Math.abs(amount);
     if(key==="luck")return `${sign}${Math.round(magnitude*100)} Luck`;
     if(String(key).startsWith("elementProc:")){const id=String(key).slice("elementProc:".length),element=ELEMENTS[id];return `${sign}${Math.round(magnitude*100)}% ${element?.name||id} proc`;}
-    const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
+    const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","petDamageScale","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
     return `${sign}${pct?Math.round(magnitude*100)+"%":magnitude} ${names[key]||key}`;
   }
   function formatBonuses(item){
