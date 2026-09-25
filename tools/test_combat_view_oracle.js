@@ -108,6 +108,8 @@ function collectPresentation() {
     getElements: () => elements,
     getPets: () => pets,
     getOccultSpells: () => occult,
+    getManaBuilderGain: (id,{multiplier=1}={}) => ((Number(occult[id]?.gain)||0)+(Number(state.player.manaBuilderBonus)||0)+(id==="summoner"?(Number(state.player.summonerManaBonus)||0):0))*multiplier,
+    invokerManaMultiplier: () => 1,
     getGagInfo: () => ({}),
     enemyBattleArtById: () => null,
     enemyPortraitById: () => null,
@@ -353,6 +355,10 @@ if (updateFixture) {
 } else {
   assert(fs.existsSync(fixturePath), "Combat View fixture is missing; materialize it from released 0.6.6.31 before facade work");
   const expected = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-  assert.deepStrictEqual(actual, expected, "Combat View output/DOM/VFX characterization drifted from released 0.6.6.31");
-  console.log("Combat View oracle PASS: released 0.6.6.31 presentation/VFX outputs and zero-gameplay-RNG contract are exact");
+  expected.presentation.cases.summoner.attack.text="✨ Spirit Bolt (+20 Mana)";
+  expected.presentation.cases.summoner.attack.tip="Spirit Bolt is your Mana-building attack. It uses the class-authored strike profile. Generates 20 Mana with your current bonuses.";
+  expected.presentation.cases.invoker.attack.text="🟢 Wex Strike (+25 Mana)";
+  expected.presentation.cases.invoker.attack.tip="85% normal strike damage, uses 120% of your current Echo chance, and forms a Green orb. Crit Chance, Poison, elements and Lifesteal remain normal. Generates 25 Mana with your current bonuses.";
+  assert.deepStrictEqual(actual, expected, "Combat View output/DOM/VFX characterization drifted outside the explicit 0.6.8.1 Mana-presentation delta from released 0.6.6.31");
+  console.log("Combat View oracle PASS: released 0.6.6.31 presentation/VFX outputs plus explicit 0.6.8.1 Mana labels remain exact");
 }

@@ -1993,7 +1993,6 @@ function returnToRoad(...args){
   upgrades.forEach(inferUpgradeTags);saveMeta();window.DiceboundTalentTree.render();window.DiceboundPetChooser.render();window.DiceboundClassChooser.render();renderInfo();updateHUD();
 
 (function(){
-  const V="Alpha v2.0";
 
   // Camp DOM/presentation ownership moved to runtime/js/ui/camp.js.  These
 
@@ -2069,7 +2068,6 @@ function returnToRoad(...args){
 })();
 
 (function(){
-  const V='Alpha v2.2';
 
   // target prevents those inherited renderers from dereferencing null.
   if(!$('startBtn')){const compat=document.createElement('button');compat.id='startBtn';compat.className='camp-hidden';compat.type='button';compat.setAttribute('aria-hidden','true');$('startOverlay')?.querySelector('.start-modal')?.appendChild(compat);}
@@ -2260,9 +2258,6 @@ function returnToRoad(...args){
 })();
 
 (function(){
-  const V='Alpha v2.3';
-  const brandH=document.querySelector('.brand h1');if(brandH)brandH.textContent=`Dicebound: ${V}`;
-  const brandP=document.querySelector('.brand p');if(brandP)brandP.textContent=`${V} · Cleaner talents, repaired Prestige, richer bosses and a more readable camp.`;
 
   v19SetStartBarrier=function(){return mythicalSetCount()>=5?1:0;};
 
@@ -2516,9 +2511,6 @@ dbReturnToRoadTraceReady=true;
 
   v25Log('events','hotfix','Alpha v2.5.1 hotfix loaded',{fixes:['poor-seed-parser','null-loot-guard','combatBusy-cleanup','victory-error-containment']});
 
-  document.title='Dicebound: Alpha v2.6';
-  const v26Brand=document.querySelector('.brand h1');if(v26Brand)v26Brand.textContent='Dicebound: Alpha v2.6';
-  const v26Sub=document.querySelector('.brand p');if(v26Sub)v26Sub.textContent='The road grows stranger: sturdier talents, clearer poison, sharper secrets and cleaner debug tools.';
 
   const v26Upgrade=id=>upgrades.find(u=>u.id===id);
   function v26EnsureUpgrade(def){return v26Upgrade(def.id);}
@@ -2570,9 +2562,6 @@ dbReturnToRoadTraceReady=true;
 
   setTimeout(()=>{v26EnsurePoisonStat();v25EnsureDebugControls();updateHUD();window.DiceboundTalentTree.render();},0);
 
-  document.title='Dicebound: Alpha v2.7';
-  const v27Brand=document.querySelector('.brand h1');if(v27Brand)v27Brand.textContent='Dicebound: Alpha v2.7';
-  const v27Sub=document.querySelector('.brand p');if(v27Sub)v27Sub.textContent='The road fights back: smarter rewards, tougher difficulties, cleaner shields and faster impossible snakes.';
 
   const v27Upgrade=id=>upgrades.find(u=>u.id===id);
 
@@ -2646,9 +2635,6 @@ dbReturnToRoadTraceReady=true;
     prestigeUsesChooser:()=>false
   });
 
-  document.title='Dicebound: Beta v0.4';
-  const v28Brand=document.querySelector('.brand h1');if(v28Brand)v28Brand.textContent='Dicebound: Beta v0.4';
-  const v28Sub=document.querySelector('.brand p');if(v28Sub)v28Sub.textContent='Split development source · stable Edge bundle · campsite gathered around the bonfire.';
 
   /* HEAVY PURSE / VAMPIRIC EDGE ------------------------------------------- */
   const purse28=upgrades.find(u=>u.id==='purse');
@@ -2821,9 +2807,6 @@ dbReturnToRoadTraceReady=true;
     ui(){return {systemGuide:[...document.querySelectorAll('#startOverlay .rule')].some(el=>/Systems guide/i.test(el.textContent||'')),petChooser:!!window.DiceboundPetChooser,classGrid:!!document.getElementById('classGrid')};}
   })});
 
-  document.title='Dicebound: Beta v0.4.9';
-  const db04Brand=document.querySelector('.brand h1');if(db04Brand)db04Brand.textContent='Dicebound: Beta v0.4.9';
-  const db04Sub=document.querySelector('.brand p');if(db04Sub)db04Sub.textContent='Beta v0.4.9 · integrated icon art, custom-sound prep and a real volume slider.';
 
   /* Ranger identity: each qualifying hit establishes exactly one Mark.
      Echoes are separate strikes, never multi-Mark packets. */
@@ -2864,7 +2847,7 @@ dbReturnToRoadTraceReady=true;
 
   /* Responsive HUD flow. The board and cards get different arrangements for
      stacked, rail, expanded, and short-landscape windows. */
-  let beta04HudFrame=0,beta04HudLast='';
+  let beta04HudFrame=0;
   function beta04HudMode(){
     const w=window.innerWidth||document.documentElement.clientWidth||0,h=window.innerHeight||document.documentElement.clientHeight||0;
     if(w<=900)return 'stacked';
@@ -2873,7 +2856,7 @@ dbReturnToRoadTraceReady=true;
     return 'rail';
   }
   function beta04SyncHud(){
-    beta04HudFrame=0;const mode=beta04HudMode();beta04HudLast=mode;document.body?.setAttribute('data-hud-flow',mode);
+    beta04HudFrame=0;const mode=beta04HudMode();document.body?.setAttribute('data-hud-flow',mode);
     window.DiceboundResponsive?.schedule?.();beta042SyncSidebarLayout();return mode;
   }
   function beta04ScheduleHud(){if(beta04HudFrame)cancelAnimationFrame(beta04HudFrame);beta04HudFrame=requestAnimationFrame(beta04SyncHud);}
@@ -2902,11 +2885,11 @@ dbReturnToRoadTraceReady=true;
   }
   let beta042SidebarFrame=0,beta042SidebarObserver=null;
   function beta042SidebarSnapshot(){
-    const sidebar=document.querySelector('.sidebar'),character=$('characterCard'),pet=document.querySelector('.sidebar>.pet-card'),log=document.querySelector('.sidebar>.log-card');
+    const sidebar=document.querySelector('.sidebar'),character=$('characterCard'),pet=document.querySelector('.sidebar>.pet-card');
     const gap=sidebar&&typeof getComputedStyle==='function'?Number.parseFloat(getComputedStyle(sidebar).gap)||10:10;
-    const width=sidebar?.getBoundingClientRect?.().width||0,characterHeight=character?.getBoundingClientRect?.().height||0,petHeight=pet?.getBoundingClientRect?.().height||0,logHeight=log?.getBoundingClientRect?.().height||0,columnWidth=(width-gap)/2;
+    const width=sidebar?.getBoundingClientRect?.().width||0,characterHeight=character?.getBoundingClientRect?.().height||0,petHeight=pet?.getBoundingClientRect?.().height||0,columnWidth=(width-gap)/2;
     const columns=width>=560&&columnWidth>=255,mode=!columns?'stacked':characterHeight>=petHeight+80?'masonry':'paired';
-    return Object.freeze({mode,width,columnWidth,characterHeight,petHeight,logHeight,gap});
+    return Object.freeze({mode,width,columnWidth,characterHeight,petHeight,gap});
   }
   function beta042EnsureSidebarObserver(){
     if(beta042SidebarObserver||typeof ResizeObserver==='undefined')return;
@@ -2915,11 +2898,11 @@ dbReturnToRoadTraceReady=true;
   }
   function beta042SyncSidebarLayout(){
     beta042SidebarFrame=0;
-    const hasSet=typeof mythicalSetCount==='function'&&mythicalSetCount()>0,snapshot=beta042SidebarSnapshot();
-    document.body?.setAttribute('data-sidebar-companion',hasSet?'below':'adjacent');
+    const snapshot=beta042SidebarSnapshot();
+    document.body?.removeAttribute('data-sidebar-companion');
     document.body?.setAttribute('data-sidebar-flow',snapshot.mode);
     beta042EnsureSidebarObserver();
-    return Object.freeze({...snapshot,hasSet});
+    return snapshot;
   }
   function beta042ScheduleSidebarLayout(){if(beta042SidebarFrame)cancelAnimationFrame(beta042SidebarFrame);beta042SidebarFrame=requestAnimationFrame(beta042SyncSidebarLayout);}
   const dbInputRouter=window.DiceboundInputRouter;
@@ -3010,9 +2993,6 @@ dbReturnToRoadTraceReady=true;
   })});
 
   // ----- Version-visible cosmetics ----------------------------------------
-  document.title='Dicebound: Beta v0.4.5';
-  const db045Brand=document.querySelector('.brand h1');if(db045Brand)db045Brand.textContent='Dicebound: Beta v0.4.5';
-  const db045Sub=document.querySelector('.brand p');if(db045Sub)db045Sub.textContent='Beta v0.4.5 · board balance pass, camp layout cleanup and harness-driven class ordering.';
 
   function beta045UiIconArt(key,label='',klass='db-art-inline'){
     const entry=window.DiceboundAssets?.resolveUiIcon?.(key)||null;
@@ -3118,9 +3098,6 @@ dbReturnToRoadTraceReady=true;
 
   // ----- Simple diagnostics for the harness/tooling layer -----------------
 
-  document.title='Dicebound: Beta v0.4.6';
-  const db046Brand=document.querySelector('.brand h1');if(db046Brand)db046Brand.textContent='Dicebound: Beta v0.4.6';
-  const db046Sub=document.querySelector('.brand p');if(db046Sub)db046Sub.textContent='Beta v0.4.6 · missing art restored, camp centered, haste anti-lock tightened, and a full board balance pass.';
 
   function db046UiArt(key,label='',klass='db-art-inline'){
     const entry=window.DiceboundAssets?.resolveUiIcon?.(key)||null;
@@ -3166,9 +3143,6 @@ dbReturnToRoadTraceReady=true;
     alchemist:()=>({potionsUsed:meta.stats?.potionsUsed||0,unlocked:!!meta.unlocks?.alchemist,threshold:15})
   });
 
-  document.title='Dicebound: Beta v0.4.7';
-  const db047Brand=document.querySelector('.brand h1');if(db047Brand)db047Brand.textContent='Dicebound: Beta v0.4.7';
-  const db047Sub=document.querySelector('.brand p');if(db047Sub)db047Sub.textContent='Beta v0.4.7 · requested icon fixes, centered camp, tougher Board 5, haste anti-lock and Alchemist at 15 potions.';
 
   function db047UiArt(key,label='',klass='db-art-inline'){
     const entry=window.DiceboundAssets?.resolveUiIcon?.(key)||null;
@@ -3197,17 +3171,11 @@ dbReturnToRoadTraceReady=true;
 
   // --- haste anti-lock: never queue more than one skipped response ---------
 
-  document.title='Dicebound: Beta v0.4.9';
-  const db048Brand=document.querySelector('.brand h1');if(db048Brand)db048Brand.textContent='Dicebound: Beta v0.4.9';
-  const db048Sub=document.querySelector('.brand p');if(db048Sub)db048Sub.textContent='Beta v0.4.9 · compact travel controls, better board space, smaller enemy art and cleaner pack icons.';
 
   // Travel height changed; make the responsive controller immediately
   // recalculate the board instead of waiting for the next manual resize.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
 
-  document.title='Dicebound: Beta v0.4.9';
-  const db049Brand=document.querySelector('.brand h1');if(db049Brand)db049Brand.textContent='Dicebound: Beta v0.4.9';
-  const db049Sub=document.querySelector('.brand p');if(db049Sub)db049Sub.textContent='Beta v0.4.9 · troll/bandit battle art, all-pack counters, slimmer travel box and restored Glass Needle art.';
 
   function db049UiArt(key,label='',klass='db-art-inline'){
     const entry=window.DiceboundAssets?.resolveUiIcon?.(key)||null;
@@ -3232,9 +3200,6 @@ dbReturnToRoadTraceReady=true;
   // Travel width changed; immediately offer the reclaimed space to the square board.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
 
-  document.title='Dicebound: Beta v0.5.12';
-  const db050Brand=document.querySelector('.brand h1');if(db050Brand)db050Brand.textContent='Dicebound: Beta v0.5.10';
-  const db050Sub=document.querySelector('.brand p');if(db050Sub)db050Sub.textContent='Beta v0.5.12 · campsite placement and expanded achievement-gated Epic/Legendary progression.';
 
   // Layout geometry changed: immediately let the board claim the reclaimed pixels.
   setTimeout(()=>window.DiceboundResponsive?.schedule?.(),0);
@@ -3284,9 +3249,6 @@ dbReturnToRoadTraceReady=true;
     'legendary_echo_crown','legendary_blood_contract','legendary_loaded_road','legendary_packbreaker','legendary_second_sun','perfected_signature'
   ]);
 
-  document.title='Dicebound: Beta v0.5.12';
-  const db314Brand=document.querySelector('.brand h1');if(db314Brand)db314Brand.textContent='Dicebound: Beta v0.5.12';
-  const db0410BrandSub=document.querySelector('.brand p');if(db0410BrandSub)db0410BrandSub.textContent='Beta v0.5.12 · campsite placement and expanded achievement-gated Epic/Legendary progression.';
   window.DiceboundInfrastructure=Object.freeze({
     version:APP_IDENTITY.version,
     channel:APP_IDENTITY.channel,
@@ -4464,6 +4426,8 @@ dbReturnToRoadTraceReady=true;
     getElements:()=>ELEMENTS,
     getPets:()=>PETS,
     getOccultSpells:()=>dbCombatManaActionResolution.spells(),
+    getManaBuilderGain:(id,options)=>dbCombatManaActionResolution.resolvedBuilderGain(id,options),
+    invokerManaMultiplier:()=>dbClasses.invokerGeneratorManaMultiplier(),
     getGagInfo:()=>GAG_INFO,
     isClassActive:id=>classIdentityActive(id),
     hasClassMechanic:id=>classHasMechanic(id),

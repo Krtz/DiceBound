@@ -21,7 +21,7 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat presentation runtime is required.");
     const required = [
-      "getState","find","getClasses","getElements","getPets","getOccultSpells","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
+      "getState","find","getClasses","getElements","getPets","getOccultSpells","getManaBuilderGain","invokerManaMultiplier","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect","legendaryEffect",
       "activeTrainerPetId","invokerAttackSpec","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
@@ -66,9 +66,13 @@
       #combatOverlay .combat-head>.fighter>.fighter-name{order:0}
       #combatOverlay .combat-head>.fighter>.enemy-weakness{order:1}
       #combatOverlay .combat-head>.fighter>.fighter-icon{order:2;margin-top:auto!important;margin-bottom:0;transform-origin:center bottom}
+      #combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-width,72px)!important;min-height:var(--db-enemy-stage-height,92px)!important}
+      #combatOverlay .stage-enemy .stage-sprite{display:grid!important;place-items:end center;width:var(--db-enemy-art-size,62px)!important;height:var(--db-enemy-art-size,62px)!important;line-height:0!important;overflow:visible!important}
+      #combatOverlay .stage-enemy .stage-sprite>.enemy-art-frame,#combatOverlay .stage-enemy .stage-sprite>.db0636-tiered-enemy-art{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
+      #combatOverlay .stage-enemy .enemy-art-fallback{width:100%;height:100%;display:grid;place-items:center;font-size:var(--db-enemy-art-size,62px);line-height:1}
       #combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{position:absolute!important;left:clamp(2px,8%,34px);bottom:2px;margin:0!important;z-index:9;transform-origin:center bottom}
       #combatOverlay .vs{align-self:center}
-      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
+      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-mobile-width,44px)!important;min-height:var(--db-enemy-stage-mobile-height,68px)!important}#combatOverlay .stage-enemy .stage-sprite{width:var(--db-enemy-art-mobile-size,50px)!important;height:var(--db-enemy-art-mobile-size,50px)!important}#combatOverlay .stage-enemy .enemy-art-fallback{font-size:var(--db-enemy-art-mobile-size,50px)}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
     `;
     doc.head?.appendChild(style);return style;
   }
@@ -111,6 +115,18 @@
 
   function textResource(type, name, text, note) {
     return { type, name, value: 0, max: 0, note: note || "", text: String(text || ""), textMode: true };
+  }
+  function formatManaAmount(value){
+    const amount=Math.max(0,Number(value)||0),rounded=Math.round(amount*100)/100;
+    return Number.isInteger(rounded)?String(rounded):String(rounded);
+  }
+  function manaBuilderPresentation(id,{multiplier=1}={}){
+    const rt=requireRuntime(),player=rt.getState().player||{},resolved=Math.max(0,Number(rt.getManaBuilderGain(id,{multiplier}))||0);
+    const room=Math.max(0,(Number(player.maxMana)||0)-(Number(player.mana)||0)),actual=Math.min(resolved,room);
+    return Object.freeze({id,resolved,room,actual,capped:actual<resolved,label:formatManaAmount(resolved),actualLabel:formatManaAmount(actual)});
+  }
+  function manaBuilderTip(fact,lead){
+    return `${lead} Generates ${fact.label} Mana with your current bonuses.${fact.capped?` Current Mana capacity limits this click to ${fact.actualLabel}.`:''}`;
   }
 
   function buildViewModel() {
@@ -167,10 +183,10 @@
 
     const identityId = rt.classIdentityId();
     if (rt.isClassActive("invoker")) {
-      const cfg = rt.getOccultSpells()[identityId];
-      attack.text = "🟢 Wex Strike";
+      const cfg = rt.getOccultSpells()[identityId],gain=manaBuilderPresentation(identityId,{multiplier:rt.invokerManaMultiplier()});
+      attack.text = `🟢 Wex Strike (+${gain.label} Mana)`;
       attack.className = "combat-btn primary action-tooltip invoker-wex";
-      attack.tip = `${invokerStrikeTip("wex","Green")} Generates up to ${cfg?.gain || 0} base Mana.`;
+      attack.tip = manaBuilderTip(gain,invokerStrikeTip("wex","Green"));
       special.hidden = false; hasSpecial = true;
       special.text = `🔴 Elemental Lance (${cfg?.cost || 50})`;
       special.tip = `${cfg?.desc || "Spend Mana for a heavy Red attack."} It can Crit, roll normal elements, apply Poison at Echo × Poison chance, and Lifesteal from direct plus elemental damage.`;
@@ -180,8 +196,9 @@
     } else if (rt.hasClassMechanic("mana")) {
       const cfg = rt.getOccultSpells()[identityId];
       if (cfg) {
-        attack.text = `${cfg.builderIcon} ${cfg.builder}`;
-        attack.tip = `${cfg.builder} is your Mana-building attack. It uses the class-authored strike profile, still rolls Crit Chance/Echo/elements, and grants up to ${cfg.gain} Mana.`;
+        const gain=manaBuilderPresentation(identityId);
+        attack.text = `${cfg.builderIcon} ${cfg.builder} (+${gain.label} Mana)`;
+        attack.tip = manaBuilderTip(gain,`${cfg.builder} is your Mana-building attack. It uses the class-authored strike profile and still rolls Crit Chance/Echo/elements.`);
         special.hidden = false; hasSpecial = true;
         special.text = `${cfg.spellIcon} ${cfg.spell} (${cfg.cost})`;
         special.tip = identityId === "sorcerer"
@@ -238,8 +255,9 @@
     }
 
     if (rt.isClassActive("summoner")) {
-      const cfg = rt.getOccultSpells().summoner, spirits = player.summonerSpirits || [], gain = cfg.gain + (player.summonerManaBonus || 0);
-      attack.tip = `Spirit Bolt is your Mana-building attack. It uses the class-authored strike profile and grants up to ${gain} Mana.`;
+      const cfg = rt.getOccultSpells().summoner, spirits = player.summonerSpirits || [], gain=manaBuilderPresentation("summoner");
+      attack.text = `${cfg.builderIcon} ${cfg.builder} (+${gain.label} Mana)`;
+      attack.tip = manaBuilderTip(gain,"Spirit Bolt is your Mana-building attack. It uses the class-authored strike profile.");
       special.hidden = false; hasSpecial = true;
       special.text = `🐾 Conjure (${cfg.cost}) · ${spirits.length}/${player.summonerCap || 3}`;
       special.tip = `Spend ${cfg.cost} Mana to conjure a spirit. Conjure immediately makes your active companion and every spirit attack with a small temporary damage boost.`;
@@ -350,11 +368,24 @@
     const [bg1,bg2]=palettes[Math.min(6,Math.max(1,Math.floor(Number(board)||1)))],gid=`enemy_${portraitHash(enemy?.name||id)}`,label=escapePortraitLabel(enemy?.name||id);
     return `<svg class="enemy-art-frame" viewBox="0 0 72 72" role="img" aria-label="${label}"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${bg1}"/><stop offset="1" stop-color="${bg2}"/></linearGradient></defs><rect x="2" y="2" width="68" height="68" rx="17" fill="#060a10"/><rect x="4" y="4" width="64" height="64" rx="15" fill="url(#${gid})"/><g transform="translate(0 2)">${shape}</g></svg>`;
   }
-  function ordinaryEnemyArtScale(enemy,board){
-    if(enemy?.guardian||enemy?.boss||enemy?.miniBoss||enemy?.finalBoss||enemy?.merchantBoss||enemy?.devilBoss)return 1;
-    const boardScale=1+(Math.min(6,Math.max(1,Math.floor(Number(board)||1)))-1)*.10;
-    const familyScale=(enemy?.id==="wolf"||enemy?.id==="slime")?.80:1;
-    return Number((boardScale*familyScale).toFixed(2));
+  const SECRET_BOSS_IDS=new Set(["road-merchant","bloodmage-boss","pale-devil"]);
+  const ENEMY_FAMILY_ART_SCALE=Object.freeze({wolf:.65,slime:.65,skeleton:1.15,cultist:1.15,orc:1.15,bandit:1.15});
+  function enemyArtScale(enemy,board){
+    const id=String(enemy?.id||"");
+    if(SECRET_BOSS_IDS.has(id))return 2.5;
+    if(enemy?.guardian||enemy?.boss||enemy?.miniBoss||enemy?.finalBoss||enemy?.merchantBoss||enemy?.devilBoss||enemy?.bloodmageBoss)return 1;
+    const level=Math.min(6,Math.max(1,Math.floor(Number(board)||1))),boardScale=1+(level-1)*.15,familyScale=ENEMY_FAMILY_ART_SCALE[id]||1;
+    return Number((boardScale*familyScale).toFixed(4));
+  }
+  function enemyArtMetrics(enemy,board,packSize=1){
+    const id=String(enemy?.id||""),secret=SECRET_BOSS_IDS.has(id);
+    if(secret)return Object.freeze({kind:"secret",scale:2.5,art:215,mobileArt:165,stageWidth:232,stageHeight:242,mobileStageWidth:180,mobileStageHeight:190});
+    if(enemy?.finalBoss)return Object.freeze({kind:"final",scale:1,art:335,mobileArt:235,stageWidth:350,stageHeight:360,mobileStageWidth:248,mobileStageHeight:258});
+    if(enemy?.miniBoss)return Object.freeze({kind:"miniboss",scale:1,art:150,mobileArt:114,stageWidth:162,stageHeight:170,mobileStageWidth:126,mobileStageHeight:134});
+    if(enemy?.guardian||enemy?.boss||enemy?.merchantBoss||enemy?.devilBoss||enemy?.bloodmageBoss)return Object.freeze({kind:"guardian",scale:1,art:86,mobileArt:66,stageWidth:100,stageHeight:110,mobileStageWidth:78,mobileStageHeight:88});
+    const scale=enemyArtScale(enemy,board),count=Math.max(1,Math.floor(Number(packSize)||1)),base=count>=3?150:count===2?190:230,mobileBase=count>=3?95:count===2?120:145;
+    const art=Math.round(base*scale),mobileArt=Math.round(mobileBase*scale);
+    return Object.freeze({kind:"ordinary",scale,art,mobileArt,stageWidth:Math.round((base+14)*scale),stageHeight:Math.round((base+30)*scale),mobileStageWidth:Math.round((mobileBase+12)*scale),mobileStageHeight:Math.round((mobileBase+26)*scale)});
   }
   function enemyPortraitHTML(enemy){
     const rt=requireRuntime(),state=rt.getState(),id=String(enemy?.id||""),board=Math.min(6,Math.max(1,Math.floor(Number(state.boardLevel)||1))),mode=state.hellMode?"hell":state.nightmareMode?"nightmare":"normal",label=escapePortraitLabel(enemy?.name||id||"Enemy");
@@ -374,12 +405,13 @@
   function renderEnemyParty() {
     const rt = requireRuntime(), state = rt.getState(), find = rt.find, doc = rt.document, elements = rt.getElements();
     const strip = find("enemyParty"), stage = find("enemyIcon"); if (!strip || !stage) return;
+    ensureCombatStageStyle();
     const enemies = state.currentEnemies || [], index = state.currentEnemyIndex || 0;
     strip.innerHTML = ""; stage.className = "fighter-icon enemy-stage-icons";
     const battleBoard=Math.min(6,Math.max(1,Math.floor(Number(state.boardLevel)||1)));
     stage.innerHTML = enemies.map((e, i) => {
-      const scale=ordinaryEnemyArtScale(e,battleBoard),style=`--db-enemy-art-size:${Math.round(62*scale)}px;--db-enemy-art-mobile-size:${Math.round(50*scale)}px;--db-enemy-stage-width:${Math.round(72*scale)}px;--db-enemy-stage-mobile-width:${Math.round(44*scale)}px;--db-enemy-stage-height:${Math.round(92*scale)}px`;
-      return `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}" style="${style}" data-enemy-index="${i}" data-enemy-id="${escapePortraitLabel(String(e.id||''))}" data-enemy-art-scale="${scale}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0, null, (e.confusionActions || 0) > 0)}</span></span>`;
+      const metrics=enemyArtMetrics(e,battleBoard,enemies.length),style=`--db-enemy-art-size:${metrics.art}px;--db-enemy-art-mobile-size:${metrics.mobileArt}px;--db-enemy-stage-width:${metrics.stageWidth}px;--db-enemy-stage-height:${metrics.stageHeight}px;--db-enemy-stage-mobile-width:${metrics.mobileStageWidth}px;--db-enemy-stage-mobile-height:${metrics.mobileStageHeight}px`;
+      return `<span class="stage-enemy${i === index && e.hp > 0 ? " selected" : ""}${e.hp <= 0 ? " defeated" : ""}${e.guardian ? " guardian" : ""}${e.miniBoss ? " miniboss" : ""}${e.finalBoss ? " final-boss" : ""}${metrics.kind==="secret" ? " secret-boss" : ""}" style="${style}" data-enemy-index="${i}" data-enemy-id="${escapePortraitLabel(String(e.id||''))}" data-enemy-art-kind="${metrics.kind}" data-enemy-art-scale="${metrics.scale}" title="${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.attack || 0} ATK · ${e.defense || 0} DEF${e.affinity ? ` · ${elements[e.affinity]?.name || e.affinity} affinity` : ""}"><span class="stage-sprite">${enemyPortraitHTML(e)}</span><span class="stage-affinity">${e.affinity ? elements[e.affinity]?.icon || "" : ""}</span>${e.rangerMarks ? `<span class="stage-mark">🏹 ×${e.rangerMarks}</span>` : ""}<span class="stage-mini-status">${statusDotsHTML(e.enemyBarrier || 0, e.poisonStacks || 0, null, (e.confusionActions || 0) > 0)}</span></span>`;
     }).join("");
     enemies.forEach((e, i) => { const b = doc.createElement("button"); b.className = `enemy-chip${i === index && e.hp > 0 ? " active" : ""}${e.hp <= 0 ? " dead" : ""}`; b.disabled = e.hp <= 0; b.title = `${e.name} · ${Math.max(0, e.hp)}/${e.maxHp} HP · ${e.defense || 0} DEF`; b.innerHTML = `<strong class="target-number">${i + 1}</strong>`; b.addEventListener("click", () => rt.selectEnemy(i)); strip.appendChild(b); });
     stage.classList.toggle("db0636-tiered-enemy-stage", !!stage.querySelector?.(".db0636-tiered-enemy-art"));
@@ -612,7 +644,7 @@
     ensureDragoonJumpButton,
     ensureInvokerAttackButtons,
     clearDragoonPresentation,
-    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation })
+    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation, manaBuilderPresentation, enemyArtScale, enemyArtMetrics })
   });
   window.DiceboundCombatPresentation = api;
 })();

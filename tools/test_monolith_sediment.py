@@ -80,6 +80,16 @@ for marker in [
     if marker not in class_presentation:
         raise SystemExit(f'focused class portrait owner missing: {marker}')
 
+# Release identity is owned by DiceboundVersion/APP_IDENTITY. Historical
+# literal title/brand writers must not return and shadow the final owner.
+if re.search(r"document\.title\s*=\s*['\"]Dicebound:",mono):
+    raise SystemExit('historical literal document.title writer returned to the monolith')
+for retired_brand_writer in ['brandH','brandP','v26Brand','v26Sub','v27Brand','v27Sub','v28Brand','v28Sub','db04Brand','db04Sub','db045Brand','db045Sub','db046Brand','db046Sub','db047Brand','db047Sub','db048Brand','db048Sub','db049Brand','db049Sub','db050Brand','db050Sub','db314Brand','db0410BrandSub']:
+    if re.search(rf'\bconst\s+{re.escape(retired_brand_writer)}\b',mono):
+        raise SystemExit(f'historical brand identity writer returned: {retired_brand_writer}')
+if 'document.title=APP_IDENTITY.displayTitle;' not in mono:
+    raise SystemExit('canonical APP_IDENTITY title owner missing')
+
 # The live Legendary chooser is the final shared route. Its two older DOM
 # implementations and Edge-specific fallback token were superseded before any
 # player interaction can happen during startup.
