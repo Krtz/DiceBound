@@ -1,6 +1,6 @@
 {
   "name": "Dicebound",
-  "version": "0.6.8.1",
+  "version": "0.6.9.0",
   "channel": "Beta",
   "saveSchemaVersion": 2,
   "browserOutput": "dist/browser",
@@ -40,6 +40,9 @@
     "js/combat/enemy-policy.js",
     "js/combat/enemy-scaling-resolution.js",
     "js/combat/targeting.js",
+    "js/combat/allied-entities.js",
+    "js/combat/action-registry.js",
+    "js/combat/allied-resolution.js",
     "js/combat/presentation.js",
     "js/combat/encounter-lifecycle.js",
     "js/combat/turn-resolution.js",
