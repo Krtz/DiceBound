@@ -13,7 +13,7 @@
       "getCurrentEnemy","getCurrentEnemies","livingEnemies","selectEnemy",
       "spawnAlly","livingAllies","damageEnemy","damageAlly","damageHero",
       "allyBasicAttack","resolveEnemyResponse","handleHeroDeath","setCombatText",
-      "addCombatHistory","updateCombatUI","delay"
+      "addCombatHistory","updateCombatUI","playEffect","delay"
     ];
     for(const name of required)if(typeof next[name]!=="function")throw new Error("Necromancer runtime missing "+name+"().");
     runtime=next;
@@ -91,7 +91,8 @@
     r.addCombatHistory("☠️ Summon Skeleton raises "+out.entity.name+" for "+SKELETON_MANA_COST+" Mana. Grave Count "+count+"/"+threshold+"."+replaced);
     r.setCombatText("☠️ A Skeleton Warrior claws its way onto your side."+replaced+" Grave Count: "+count+"/"+threshold+".");
     r.updateCombatUI();
-    await r.delay(260);
+    await r.playEffect("summonCircle",{durationMs:340});
+    await r.delay(120);
 
     if(!r.livingEnemies().length)return Object.freeze({ok:true,entity:out.entity,replaced:out.replaced,graveCount:count});
     await r.resolveEnemyResponse(false);
@@ -115,6 +116,7 @@
       heroDamage=Math.max(0,Number(hit?.total)||0);
     }
 
+    r.playEffect("boneShrapnel",{durationMs:320});
     const note="🦴 Bone Shrapnel! "+entity.name+" explodes for "+enemyDamage+" enemy damage and "+(allyDamage+heroDamage)+" allied-side damage.";
     r.addCombatHistory(note);
     r.setCombatText(note);
@@ -127,6 +129,7 @@
     const r=rt(),p=player();
     if(!active()||r.getCombatBusy()||!r.getCurrentEnemy()||!graveReady())return Object.freeze({ok:false,reason:"unavailable"});
     r.setCombatBusy(true);
+    await r.playEffect("graveBurst",{durationMs:420});
     const allies=[...r.livingAllies()].filter(ally=>ally.ownerClassId==="necromancer");
     let total=0,attacks=0;
     for(const ally of allies){
