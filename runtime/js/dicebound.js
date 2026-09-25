@@ -4532,6 +4532,35 @@ dbReturnToRoadTraceReady=true;
     setCombatText:(...args)=>setCombatText(...args),
     addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),
+    delay:ms=>delay(ms),
+    onDeath:entity=>{if(entity?.ownerClassId==='necromancer')dbClasses.necromancerBoneShrapnel(entity);}
+  });
+
+  dbClasses.configureNecromancer({
+    getPlayer:()=>player,
+    isActive:id=>classIdentityActive(id),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    getEncounterTurn:()=>currentEncounterTurn,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),
+    selectEnemy:index=>setCurrentEnemy(index),
+    spawnAlly:(spec,options)=>dbCombatAllyResolution.spawn(spec,options),
+    livingAllies:()=>dbCombatAllyResolution.living(),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    damageAlly:(instanceId,amount,options)=>dbCombatAllyResolution.damage(instanceId,amount,options),
+    damageHero:(amount,options={})=>{
+      const reduction=defenseDamageReduction(Math.max(0,Number(player.defense)||0));
+      const raw=Math.max(1,Math.round(Math.max(0,Number(amount)||0)*(1-reduction)-Math.max(0,Number(player.flatReduction)||0)));
+      return applyCombatPlayerDamage(raw,options);
+    },
+    allyBasicAttack:(entity,options)=>dbCombatAllyResolution.basicAttack(entity,options),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    handleHeroDeath:()=>handlePlayerDeath(),
+    setCombatText:(...args)=>setCombatText(...args),
+    addCombatHistory:text=>addCombatHistory(text),
+    updateCombatUI:()=>updateCombatUI(),
     delay:ms=>delay(ms)
   });
 
