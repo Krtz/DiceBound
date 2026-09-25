@@ -656,7 +656,7 @@
     toggleRunStorage:item=>dbItems.toggleRunHeirloomStorage(item),toggleLegacyHeirloom:item=>dbItems.toggleLegacyHeirloom(item),
     isHeirloomEligible:item=>window.DiceboundEquipment.isHeirloomEligible(item),confirm:diceboundConfirm,
     getCharacterLayout:()=>meta.settings?.characterLayout==='classic'?'classic':'modern',
-    afterStorageChange:()=>updateMetaUI(),afterCharacterPresentationChange:()=>setTimeout(()=>beta042ScheduleSidebarLayout(),0),lootCopy:dbEquipmentUiLootCopy
+    afterStorageChange:()=>updateMetaUI(),afterCharacterPresentationChange:()=>beta042ScheduleSidebarLayout(),lootCopy:dbEquipmentUiLootCopy
   });
 
   const req=(id,rank=1)=>({id,rank});
@@ -2864,7 +2864,7 @@ dbReturnToRoadTraceReady=true;
 
   /* Responsive HUD flow. The board and cards get different arrangements for
      stacked, rail, expanded, and short-landscape windows. */
-  let beta04HudFrame=0,beta04HudLast='';
+  let beta04HudFrame=0;
   function beta04HudMode(){
     const w=window.innerWidth||document.documentElement.clientWidth||0,h=window.innerHeight||document.documentElement.clientHeight||0;
     if(w<=900)return 'stacked';
@@ -2873,7 +2873,7 @@ dbReturnToRoadTraceReady=true;
     return 'rail';
   }
   function beta04SyncHud(){
-    beta04HudFrame=0;const mode=beta04HudMode();beta04HudLast=mode;document.body?.setAttribute('data-hud-flow',mode);
+    beta04HudFrame=0;const mode=beta04HudMode();document.body?.setAttribute('data-hud-flow',mode);
     window.DiceboundResponsive?.schedule?.();beta042SyncSidebarLayout();return mode;
   }
   function beta04ScheduleHud(){if(beta04HudFrame)cancelAnimationFrame(beta04HudFrame);beta04HudFrame=requestAnimationFrame(beta04SyncHud);}
@@ -2902,11 +2902,11 @@ dbReturnToRoadTraceReady=true;
   }
   let beta042SidebarFrame=0,beta042SidebarObserver=null;
   function beta042SidebarSnapshot(){
-    const sidebar=document.querySelector('.sidebar'),character=$('characterCard'),pet=document.querySelector('.sidebar>.pet-card'),log=document.querySelector('.sidebar>.log-card');
+    const sidebar=document.querySelector('.sidebar'),character=$('characterCard'),pet=document.querySelector('.sidebar>.pet-card');
     const gap=sidebar&&typeof getComputedStyle==='function'?Number.parseFloat(getComputedStyle(sidebar).gap)||10:10;
-    const width=sidebar?.getBoundingClientRect?.().width||0,characterHeight=character?.getBoundingClientRect?.().height||0,petHeight=pet?.getBoundingClientRect?.().height||0,logHeight=log?.getBoundingClientRect?.().height||0,columnWidth=(width-gap)/2;
+    const width=sidebar?.getBoundingClientRect?.().width||0,characterHeight=character?.getBoundingClientRect?.().height||0,petHeight=pet?.getBoundingClientRect?.().height||0,columnWidth=(width-gap)/2;
     const columns=width>=560&&columnWidth>=255,mode=!columns?'stacked':characterHeight>=petHeight+80?'masonry':'paired';
-    return Object.freeze({mode,width,columnWidth,characterHeight,petHeight,logHeight,gap});
+    return Object.freeze({mode,width,columnWidth,characterHeight,petHeight,gap});
   }
   function beta042EnsureSidebarObserver(){
     if(beta042SidebarObserver||typeof ResizeObserver==='undefined')return;
@@ -4464,6 +4464,8 @@ dbReturnToRoadTraceReady=true;
     getElements:()=>ELEMENTS,
     getPets:()=>PETS,
     getOccultSpells:()=>dbCombatManaActionResolution.spells(),
+    getManaBuilderGain:(id,options)=>dbCombatManaActionResolution.resolvedBuilderGain(id,options),
+    invokerManaMultiplier:()=>dbClasses.invokerGeneratorManaMultiplier(),
     getGagInfo:()=>GAG_INFO,
     isClassActive:id=>classIdentityActive(id),
     hasClassMechanic:id=>classHasMechanic(id),

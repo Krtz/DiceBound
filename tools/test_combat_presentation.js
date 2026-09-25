@@ -50,6 +50,7 @@ let active = new Set(['ranger']);
 let mechanics = new Set();
 let legendary = new Set();
 let legendaryRules = { unstable_ultimate: { name:'Unstable Ultimate', chargeThreshold:70, damageMultiplier:.75 } };
+let invokerManaMultiplier=1;
 const invokerAttackSpecs = {
   quas:{damage:.85,echoMultiplier:.70},
   wex:{damage:.85,echoMultiplier:1.20},
@@ -119,6 +120,11 @@ function runtime() {
     getElements: () => elements,
     getPets: () => pets,
     getOccultSpells: () => occult,
+    getManaBuilderGain: (id,{multiplier=1}={}) => {
+      const cfg=occult[id]||{},generic=Number(state.player.manaBuilderBonus)||0,classBonus=id==='summoner'?(Number(state.player.summonerManaBonus)||0):0;
+      return (Number(cfg.gain)||0)+generic+classBonus ? ((Number(cfg.gain)||0)+generic+classBonus)*multiplier : 0;
+    },
+    invokerManaMultiplier: () => invokerManaMultiplier,
     getGagInfo: () => ({}),
     enemyBattleArtById: () => null,
     enemyPortraitById: () => null,
@@ -182,23 +188,27 @@ assert(out.guard.tip.includes('counts as Guard for the incoming enemy response')
 assert.strictEqual(out.special.text, '🩸 Exsanguinate');
 assert.strictEqual(out.resource.name, 'Blood fuel (HP)');
 
-active = new Set(['summoner']); mechanics = new Set(['mana']); state.player.classId = 'summoner'; state.player.mana = 40; state.player.maxMana = 120; state.player.summonerSpirits = ['fire']; state.player.summonerCap = 3; state.player.summonerManaBonus = 2;
+active = new Set(['summoner']); mechanics = new Set(['mana']); state.player.classId = 'summoner'; state.player.mana = 40; state.player.maxMana = 120; state.player.summonerSpirits = ['fire']; state.player.summonerCap = 3; state.player.summonerManaBonus = 2; state.player.manaBuilderBonus=5;
 out = model();
+assert.strictEqual(out.attack.text, '✨ Spirit Bolt (+25 Mana)');
+assert(out.attack.tip.includes('Generates 25 Mana with your current bonuses'));
 assert.strictEqual(out.special.text, '🐾 Conjure (35) · 1/3');
 assert(out.special.tip.includes('immediately makes your active companion'));
 assert.strictEqual(out.resource.name, 'Mana / Spirit Circle');
 assert(out.resource.note.includes('🔥 Ember'));
 assert(out.guard.tip.includes('channels up to'));
 
-active = new Set(['invoker']); mechanics = new Set(['mana']); state.player.classId = 'invoker'; state.player.mana = 75; state.player.maxMana = 100; state.player.doubleStrike = .80;
+active = new Set(['invoker']); mechanics = new Set(['mana']); state.player.classId = 'invoker'; state.player.mana = 75; state.player.maxMana = 100; state.player.doubleStrike = .80; state.player.manaBuilderBonus=0; invokerManaMultiplier=1.4;
 out = model();
-assert.strictEqual(out.attack.text, '🟢 Wex Strike');
+assert.strictEqual(out.attack.text, '🟢 Wex Strike (+35 Mana)');
 assert.strictEqual(out.attack.className.includes('invoker-wex'), true);
 assert.strictEqual(out.invokerAttacks.active, true);
 assert.strictEqual(out.invokerAttacks.quas.text, '🔵 Quas Strike');
 assert.strictEqual(out.invokerAttacks.exort.text, '🔴 Exort Strike');
 assert.strictEqual(out.special.text, '🔴 Elemental Lance (50)');
 assert(out.attack.tip.includes('120% of your current Echo chance'));
+assert(out.attack.tip.includes('Generates 35 Mana with your current bonuses'));
+assert(out.attack.tip.includes('capacity limits this click to 25'));
 assert(out.invokerAttacks.quas.tip.includes('70% of your current Echo chance'));
 assert(out.invokerAttacks.exort.tip.includes('70% of your current Echo chance'));
 assert(out.special.tip.includes('can Crit'));
@@ -306,10 +316,23 @@ await cancelled;
 const css=fs.readFileSync(path.join(root,'runtime','css','dicebound.css'),'utf8');
 assert(css.includes('dbEnemyAttackLunge'),'generic enemy attack CSS animation must remain installed');
 const extractedCss=fs.readFileSync(path.join(root,'runtime','css','extracted-monolith.css'),'utf8');
-assert(source.includes('data-enemy-id=')&&source.includes("escapePortraitLabel(String(e.id||''))"),'battle presentation must publish semantic enemy ids for art-only tuning');
-for(const id of ['skeleton','cultist','orc','bandit'])assert(extractedCss.includes(`data-enemy-id="${id}"`),`${id} battle-art scale selector is missing`);
-assert(extractedCss.includes('transform:scale(1.15);transform-origin:center bottom'),'Skeleton/Cultist/Orc/Bandit art must be exactly 15% larger from the ground anchor');
+assert(source.includes('data-enemy-id=')&&source.includes("escapePortraitLabel(String(e.id||''))"),'battle presentation must publish semantic enemy ids');
+assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},1),1);
+assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},2),1.15);
+assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},6),1.75,'ordinary enemies must grow 15% per Board');
+assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},1),.65);
+assert.strictEqual(owner._test.enemyArtScale({id:'slime'},1),.65,'Wolf and Slime must be 35% smaller than peer ordinary art on Board 1');
+assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},6),1.138,'Wolf must still inherit Board growth after its family shrink');
+for(const id of ['skeleton','cultist','orc','bandit'])assert.strictEqual(owner._test.enemyArtScale({id},1),1.15,`${id} must preserve its authored +15% family calibration inside the semantic scale owner`);
+for(const id of ['road-merchant','bloodmage-boss','pale-devil']){
+  assert.strictEqual(owner._test.enemyArtScale({id,guardian:true},3),2.5,`${id} must use the 2.5× Secret Boss scale`);
+  assert.strictEqual(owner._test.enemyArtMetrics({id,guardian:true},3,1).art,215,`${id} desktop art must be 2.5× the former 86px guardian size`);
+}
+assert(!extractedCss.includes(':has(.db0636-tiered-enemy-art[data-enemy-battle-art="slime"])'),'legacy CSS family sizing must not shadow the semantic scale owner');
+assert(!extractedCss.includes('transform:scale(1.15);transform-origin:center bottom'),'family art calibration must not be duplicated in CSS');
+assert(stageStyle.textContent.includes('width:var(--db-enemy-art-size,62px)!important'),'Combat Presentation must own actual rendered enemy dimensions via semantic variables');
+assert(stageStyle.textContent.includes('min-height:var(--db-enemy-stage-mobile-height,68px)!important'),'mobile enemy dimensions must use the same semantic policy');
 
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
-console.log('Combat presentation owner PASS: final class controls, semantic player/enemy attack animation, +15% selected enemy art scale, Echo pacing, battle backgrounds, statuses and zero-RNG view models are deterministic');
+console.log('Combat presentation owner PASS: live Mana generator facts, semantic enemy scaling, Secret Boss sizing, attacks, Echo pacing, backgrounds, statuses and zero-RNG view models are deterministic');
 })().catch(error=>{console.error(error);process.exitCode=1;});

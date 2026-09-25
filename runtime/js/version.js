@@ -6,7 +6,7 @@
   const VERSION="0.6.8.1";
   const CHANNEL="Beta";
   const NAME="Dicebound";
-  const RELEASE_SUMMARY="Character/Companion HUD overlap hotfix."
+  const RELEASE_SUMMARY="HUD, Mana and battle presentation hotfixes."
 
   window.DiceboundVersion=Object.freeze({
     apiVersion:1,
