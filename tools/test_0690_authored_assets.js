@@ -49,7 +49,7 @@ for(const file of [...requiredNecromancer,...futureNecromancer]){
   assert(assetsSource.includes(file),"Necromancer art is not semantically registered: "+file);
 }
 assert(assetsSource.includes("version:26"),"Asset manifest must be version 26 for the 0.6.9.0 art expansion.");
-assert(equipmentSource.includes("petDamageScale:.12"),"Champion 12% Pet Damage intrinsic missing.");
-assert(equipmentSource.includes("petDamageScale:.15"),"Champion 15% Pet Damage intrinsic missing.");
+assert(/petDamageScale:(?:0?\.12|\.12)/.test(equipmentSource),"Champion 12% Pet Damage intrinsic missing.");
+assert(/petDamageScale:(?:0?\.15|\.15)/.test(equipmentSource),"Champion 15% Pet Damage intrinsic missing.");
 
 console.log("0.6.9.0 authored asset integration: PASS");
