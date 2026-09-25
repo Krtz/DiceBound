@@ -451,7 +451,12 @@
       note += `${hit.total + extra.total} Coffee damage to ${targetLabel} as Caffeinated Haste grants ${enemy.name} an immediate extra hit.`;
     } else if (key === "gun") {
       const pierce = Math.ceil(Math.max(0, Number(targetEntity.defense)||0) * .75);
-      hit = friendlyDamage(friendly,enemy.attack * 1.20 + pierce,{defensePierce:.75}); note += `${hit.total} piercing damage to ${targetLabel}, bypassing 75% of Defense.`;
+      // Preserve the released hero formula exactly; allied entities use their
+      // own Defense resolver with an explicit 75% pierce fraction.
+      hit = friendly.kind==="summon"
+        ? friendlyDamage(friendly,enemy.attack * 1.20,{defensePierce:.75})
+        : friendlyDamage(friendly,enemy.attack * 1.20 + pierce);
+      note += `${hit.total} piercing damage to ${targetLabel}, bypassing 75% of Defense.`;
     } else if (key === "radiation") {
       hit = friendlyDamage(friendly,enemy.attack * .40);
       const before=Math.max(0,Number(targetEntity.defense)||0),loss=before>0?Math.min(before,Math.max(1,Math.ceil(before*.10))):0;
