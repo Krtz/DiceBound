@@ -77,7 +77,9 @@
       return Object.freeze({ total: 0, hp: 0, blocked: true, defeated: false });
     }
 
-    const reduction = options.ignoreDefense ? 0 : rt().defenseDamageReduction(Math.max(0, entity.defense || 0));
+    const pierce=Math.max(0,Math.min(1,Number(options.defensePierce)||0));
+    const effectiveDefense=Math.max(0,Number(entity.defense)||0)*(1-pierce);
+    const reduction = options.ignoreDefense ? 0 : rt().defenseDamageReduction(effectiveDefense);
     const mitigated = Math.max(options.minimum === 0 ? 0 : 1, Math.round(attempted * (1 - reduction) - Math.max(0, entity.flatReduction || 0)));
     const hp = Math.min(entity.hp, Math.max(0, mitigated));
     entity.hp = Math.max(0, entity.hp - hp);
