@@ -24,7 +24,7 @@
       "getState","find","getClasses","getElements","getPets","getOccultSpells","getManaBuilderGain","invokerManaMultiplier","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","allyArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect","legendaryEffect",
-      "activeTrainerPetId","invokerAttackSpec","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
+      "activeTrainerPetId","invokerAttackSpec","necromancerArt","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat presentation runtime missing ${name}().`);
     if (!nextRuntime.document || typeof nextRuntime.document.createElement !== "function") throw new Error("Combat presentation runtime missing document.");
@@ -80,6 +80,11 @@
       #combatOverlay .stage-ally-hp>i{display:block;height:100%;background:linear-gradient(90deg,#58d28f,#8be1ae);transition:width .16s ease}
       #combatOverlay .stage-ally-status{min-height:13px;font-size:9px;line-height:1.1;text-align:center;white-space:nowrap}
       #combatOverlay .stage-ally.db-friendly-hit .stage-ally-sprite{animation:db-ally-hit .18s ease}
+      #combatOverlay .combat-btn.db-authored-action{position:relative;padding-left:42px}
+      #combatOverlay .combat-btn.db-authored-action::before{content:"";position:absolute;left:7px;top:50%;width:28px;height:28px;transform:translateY(-50%);background-image:var(--db-action-art);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));pointer-events:none}
+      #combatOverlay .db-necromancer-effect-img{width:clamp(72px,10vw,132px);height:clamp(72px,10vw,132px);object-fit:contain;filter:drop-shadow(0 0 12px rgba(132,72,190,.72));animation:db-necro-effect .38s ease both}
+      @keyframes db-necro-effect{0%{opacity:0;transform:scale(.55) rotate(-8deg)}55%{opacity:1;transform:scale(1.08) rotate(2deg)}100%{opacity:0;transform:scale(.95)}}
+
       @keyframes db-ally-hit{0%,100%{transform:translateX(0)}35%{transform:translateX(-5px) rotate(-2deg)}70%{transform:translateX(3px)}}
 
       #combatOverlay .vs{align-self:center}
@@ -208,10 +213,10 @@
       const cfg = rt.getOccultSpells()[identityId];
       if (cfg) {
         const gain=manaBuilderPresentation(identityId);
-        attack.text = `${cfg.builderIcon} ${cfg.builder} (+${gain.label} Mana)`;
+        attack.text = identityId === "necromancer" ? `${cfg.builder} (+${gain.label} Mana)` : `${cfg.builderIcon} ${cfg.builder} (+${gain.label} Mana)`;
         attack.tip = manaBuilderTip(gain,`${cfg.builder} is your Mana-building attack. It uses the class-authored strike profile and still rolls Crit Chance/Echo/elements.`);
         special.hidden = false; hasSpecial = true;
-        special.text = `${cfg.spellIcon} ${cfg.spell} (${cfg.cost})`;
+        special.text = identityId === "necromancer" ? `${cfg.spell} (${cfg.cost})` : `${cfg.spellIcon} ${cfg.spell} (${cfg.cost})`;
         special.tip = identityId === "sorcerer"
           ? `${cfg.desc} Current Lifesteal: ${Math.round(Math.max(0, player.lifeSteal || 0) * 100)}%.`
           : cfg.desc;
@@ -307,7 +312,7 @@
     }
     if (rt.isClassActive("necromancer")) {
       const count=Math.max(0,Number(rt.necromancerGraveCount?.())||0),threshold=Math.max(2,Number(rt.necromancerGraveThreshold?.())||5);
-      ultimate.text=`${cls.ultimate?.icon || "💀⚔️"} ${cls.ultimate?.name || "Army of the Dead"} (${count}/${threshold})`;
+      ultimate.text=`${cls.ultimate?.name || "Army of the Dead"} (${count}/${threshold})`;
       ultimate.disabled=combatBusy||!enemy||!rt.necromancerGraveReady?.();
       ultimate.tip=`${cls.ultimate?.desc || "Your summons surge forward."} Grave Count: ${count}/${threshold}. Living summons strike at 250%; empty ally slots contribute 150% spectral Skeleton strikes.`;
     }
@@ -630,6 +635,42 @@
     icon.classList.remove("db-dragoon-airborne"); icon.classList.add("db-dragoon-landing"); clearTimeout(dragoonLandingTimer); dragoonLandingTimer = setTimeout(() => icon.classList.remove("db-dragoon-landing"), 240);
   }
 
+  function setAuthoredActionArt(button,entry){
+    if(!button)return;
+    if(entry?.image){
+      button.classList.add("db-authored-action");
+      button.style.setProperty("--db-action-art",'url("'+entry.image+'")');
+      button.dataset.actionArt=entry.image;
+    }else{
+      button.classList.remove("db-authored-action");
+      button.style.removeProperty("--db-action-art");
+      delete button.dataset.actionArt;
+    }
+  }
+
+  function syncNecromancerActionArt(active){
+    const rt=requireRuntime();
+    const entries=active?{
+      attack:rt.necromancerArt("actions","graveCoil"),
+      special:rt.necromancerArt("actions","summonSkeleton"),
+      ultimate:rt.necromancerArt("actions","armyOfTheDead")
+    }:{};
+    setAuthoredActionArt(rt.find("attackBtn"),entries.attack);
+    setAuthoredActionArt(rt.find("specialAttackBtn"),entries.special);
+    setAuthoredActionArt(rt.find("ultimateBtn"),entries.ultimate);
+  }
+
+  async function playNecromancerEffect(key,{durationMs=380}={}){
+    const rt=requireRuntime(),entry=rt.necromancerArt("effects",key),fx=rt.find("attackFx");
+    if(!entry?.image||!fx)return false;
+    const prior=fx.innerHTML,priorClass=fx.className;
+    fx.className="attack-fx db-necromancer-effect";
+    fx.innerHTML='<img class="db-necromancer-effect-img" src="'+entry.image+'" alt="'+escapePortraitLabel(entry.alt||key)+'" draggable="false">';
+    try{await rt.delay(Math.max(120,Number(durationMs)||380));}
+    finally{fx.innerHTML=prior;fx.className=priorClass;}
+    return true;
+  }
+
   function ensureInvokerAttackButtons() {
     const rt = requireRuntime(), doc = rt.document, find = rt.find, actions = doc.querySelector("#combatOverlay .combat-actions");
     if (!actions) return { quas: null, exort: null };
@@ -684,6 +725,7 @@
     const invokerButtons = ensureInvokerAttackButtons();
     [["quas", invokerButtons.quas], ["exort", invokerButtons.exort]].forEach(([key, button]) => { if (!button) return; const spec = model.invokerAttacks[key]; button.hidden = !model.invokerAttacks.active; button.disabled = !model.invokerAttacks.active || !!spec.disabled; button.textContent = spec.text; button.dataset.tip = spec.tip; });
     const actions = rt.document.querySelector("#combatOverlay .combat-actions"); actions?.classList.toggle("has-special", !!model.hasSpecial); actions?.classList.toggle("invoker-actions", !!model.invokerAttacks.active);
+    syncNecromancerActionArt(rt.isClassActive("necromancer"));
     const cls = model.cls; rt.applyClassPortrait(find("combatPlayerIcon"), cls.id, true);
     renderResource(model.resource); renderSummonerSpirits(); renderAlliedParty(); renderEnemyParty(); syncEnergyShieldBars(); renderBossSpecialIndicator(); syncDragoonPresentation();
     const jump = ensureDragoonJumpButton();
@@ -711,6 +753,7 @@
     dragoonLandPresentation,
     ensureDragoonJumpButton,
     ensureInvokerAttackButtons,
+    playNecromancerEffect,
     clearDragoonPresentation,
     _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation, manaBuilderPresentation, enemyArtScale, enemyArtMetrics })
   });
