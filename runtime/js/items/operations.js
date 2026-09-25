@@ -7,7 +7,7 @@
 
   const OWNER='items/operations';
   const BASE_WEIGHTS=Object.freeze({attack:7,defense:8,maxHp:.55,crit:45,dodge:38,lifeSteal:45,luck:18,goldBonus:20,potionPower:15,bossDamage:34,doubleStrike:42,classBurst:30,extraStepChance:18,damageBonus:50,flatReduction:11});
-  const INTRINSIC_WEIGHTS=Object.freeze({...BASE_WEIGHTS,maxMana:.7,elementProcBonus:45});
+  const INTRINSIC_WEIGHTS=Object.freeze({...BASE_WEIGHTS,maxMana:.7,petDamageScale:34,elementProcBonus:45});
   const POWER_FLOORS=Object.freeze({common:13,uncommon:23,rare:37,epic:58,legendary:90,mythical:135,omega:175});
   const SELL_MULTIPLIERS=Object.freeze({poor:.68,common:.82,uncommon:.98,rare:1.16,epic:1.40,legendary:2.15,artifact:2.6,mythical:3.1,omega:4.2});
 
