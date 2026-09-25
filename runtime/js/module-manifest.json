@@ -46,6 +46,7 @@
     "classes-actions",
     "classes-hooks",
     "classes-invoker",
+    "classes-necromancer",
     "combat-mana-action-resolution",
     "combat-facade",
     "progression-class-unlock-rules",
@@ -594,6 +595,19 @@
         "combat-element-resolution"
       ],
       "provides": []
+    },
+    {
+      "id": "classes-necromancer",
+      "path": "js/classes/necromancer.js",
+      "domain": "classes/necromancer-summons-bone-shrapnel-and-army-of-the-dead",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "combat-allied-resolution"
+      ],
+      "provides": [
+        "DiceboundNecromancer"
+      ]
     },
     {
       "id": "combat-mana-action-resolution",
