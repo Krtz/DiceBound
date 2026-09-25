@@ -123,7 +123,7 @@
         dodged += 1;
         const attackPresentation=presentEnemyAttack(enemy,pattern,hitIndex,"dodged",false,attackTarget);
         if(targetIsHero)successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name} is dodged.`);
-        else messages.push(`${friendlyTargetName(attackTarget)} dodges ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name}.`);
+        else { rt.dodge(`ally:${attackTarget.id}`); messages.push(`${friendlyTargetName(attackTarget)} dodges ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name}.`); }
         await attackPresentation;
         continue;
       }
