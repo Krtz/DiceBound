@@ -59,13 +59,14 @@
       {const p=player.classId;if(p==="fighter")player.firstHitBlocks+=1;if(p==="sorcerer")player.elementProcBonus+=.08;if(p==="clown")player.luck+=.10;if(p==="turtle"){player.firstHitBlocks+=1;player.defense+=1;}if(p==="frog")player.doubleStrike+=.10;if(p==="d20")player.luck+=.08;if(p==="slime"){player.maxHp+=10;player.hp+=10;}if(p==="vampire")player.lifeSteal+=.10;if(p==="ninja"){player.dodge+=.05;player.crit+=.05;}if(p==="rouge"){player.luck+=.10;player.crit+=.05;}if(p==="ceo")player.goldBonus+=2;if(p==="cleric")player.classElementProcs.light=(player.classElementProcs.light||0)+.08;if(p==="rogue"){player.goldBonus+=.25;player.dodge+=.05;}}
 
       // v1.3 identity/resource state
-      Object.assign(player,{mana:0,maxMana:0,monkCombo:0,ninjaSmoke:0,fighterCounterReady:false,turtleCrushReady:false,rogueStealUsed:false,clericFaith:0,beastStance:"aggressive",clownGimmick:null,clownPieReady:false,_occultChanneling:false,_ninjaExecution:false});
+      Object.assign(player,{maxActiveAllies:2,graveCount:0,graveCountThreshold:5,mana:0,maxMana:0,monkCombo:0,ninjaSmoke:0,fighterCounterReady:false,turtleCrushReady:false,rogueStealUsed:false,clericFaith:0,beastStance:"aggressive",clownGimmick:null,clownPieReady:false,_occultChanneling:false,_ninjaExecution:false});
       if(deps.classHasMechanic("mana")){player.maxMana=100;player.mana=25;}
       if(deps.classIdentityActive("slime")){player.maxHp=Math.max(CLASSES.slime.base.maxHp,player.maxHp-10);player.hp=Math.min(player.maxHp,Math.max(1,player.hp-10));}
 
       // v1.5 Summoner / Trainer state
       player.summonerSpirits=[];player.summonerCap=3;player.summonerSpiritScale=1;player.summonerSpiritDouble=0;player.summonerManaBonus=0;player.summonerAutoSpirit=false;player.trainerRoster=[];player.trainerActiveIndex=0;player.trainerAssistBonus=0;player.trainerAssistScale=.65;player.trainerUltimateBonus=0;
       if(deps.classIdentityActive("summoner")){player.maxMana=120;player.mana=35;}
+      if(deps.classIdentityActive("necromancer")){player.maxMana=110;player.mana=30;player.maxActiveAllies=2;player.graveCount=0;player.graveCountThreshold=5;}
       if(deps.classIdentityActive("pokemontrainer")){player.trainerRoster=deps.shuffledPetIds().slice(0,6);player.trainerActiveIndex=deps.rand(0,Math.max(0,player.trainerRoster.length-1));}
 
       // v1.6 class counters / Pet bonus
