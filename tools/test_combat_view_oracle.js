@@ -108,6 +108,8 @@ function collectPresentation() {
     getElements: () => elements,
     getPets: () => pets,
     getOccultSpells: () => occult,
+    getManaBuilderGain: (id,{multiplier=1}={}) => ((Number(occult[id]?.gain)||0)+(Number(state.player.manaBuilderBonus)||0)+(id==="summoner"?(Number(state.player.summonerManaBonus)||0):0))*multiplier,
+    invokerManaMultiplier: () => 1,
     getGagInfo: () => ({}),
     enemyBattleArtById: () => null,
     enemyPortraitById: () => null,
