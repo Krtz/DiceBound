@@ -322,7 +322,7 @@ assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},2),1.15);
 assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},6),1.75,'ordinary enemies must grow 15% per Board');
 assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},1),.65);
 assert.strictEqual(owner._test.enemyArtScale({id:'slime'},1),.65,'Wolf and Slime must be 35% smaller than peer ordinary art on Board 1');
-assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},6),1.138,'Wolf must still inherit Board growth after its family shrink');
+assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},6),1.1375,'Wolf must preserve the exact 65% family factor on top of 75% Board growth');
 for(const id of ['skeleton','cultist','orc','bandit'])assert.strictEqual(owner._test.enemyArtScale({id},1),1.15,`${id} must preserve its authored +15% family calibration inside the semantic scale owner`);
 for(const id of ['road-merchant','bloodmage-boss','pale-devil']){
   assert.strictEqual(owner._test.enemyArtScale({id,guardian:true},3),2.5,`${id} must use the 2.5× Secret Boss scale`);

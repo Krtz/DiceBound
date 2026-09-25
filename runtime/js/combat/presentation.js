@@ -375,7 +375,7 @@
     if(SECRET_BOSS_IDS.has(id))return 2.5;
     if(enemy?.guardian||enemy?.boss||enemy?.miniBoss||enemy?.finalBoss||enemy?.merchantBoss||enemy?.devilBoss||enemy?.bloodmageBoss)return 1;
     const level=Math.min(6,Math.max(1,Math.floor(Number(board)||1))),boardScale=1+(level-1)*.15,familyScale=ENEMY_FAMILY_ART_SCALE[id]||1;
-    return Number((boardScale*familyScale).toFixed(3));
+    return Number((boardScale*familyScale).toFixed(4));
   }
   function enemyArtMetrics(enemy,board,packSize=1){
     const id=String(enemy?.id||""),secret=SECRET_BOSS_IDS.has(id);
