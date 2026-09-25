@@ -1205,7 +1205,7 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null,invokerOwner=null,invokerRuntime=null;
+  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null,invokerOwner=null,invokerRuntime=null,necromancerOwner=null,necromancerRuntime=null;
   function installRuntime(owner){
     if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
     runtimeOwner=owner;
@@ -1269,6 +1269,22 @@
     if(typeof fn!=="function")throw new Error(`DiceboundClasses Invoker test capability ${name}() is not configured.`);
     return fn;
   }
+  function installNecromancer(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses Necromancer owner is invalid.");
+    necromancerOwner=owner;
+    return api;
+  }
+  function configureNecromancer(next={}){
+    if(!necromancerOwner)throw new Error("DiceboundClasses Necromancer owner has not been installed.");
+    necromancerRuntime=necromancerOwner.configure(next);
+    return api;
+  }
+  function requireNecromancer(name){
+    const fn=necromancerRuntime?.[name];
+    if(typeof fn!=="function")throw new Error("DiceboundClasses Necromancer capability "+name+"() is not configured.");
+    return fn;
+  }
+  function callNecromancer(name,...args){return requireNecromancer(name)(...args);}
   function requireRuntime(name){
     const fn=runtime?.[name];
     if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
@@ -1289,6 +1305,7 @@
     configureActionMechanics,
     configureRuntimeHooks,
     configureInvoker,
+    configureNecromancer,
     configureActions:next=>call("configureActions",next),
     performAction:kind=>call("performAction",kind),
     bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
@@ -1330,6 +1347,13 @@
     invokerBeginCombat:()=>invokerRuntime?.beginCombat?.(),
     invokerResetCombat:(...args)=>invokerRuntime?.resetCombat?.(...args),
     invokerRender:()=>invokerRuntime?.render?.(),
+    necromancerSummonSkeleton:()=>callNecromancer("summonSkeleton"),
+    necromancerBoneShrapnel:entity=>callNecromancer("boneShrapnel",entity),
+    necromancerArmyOfTheDead:(...args)=>callNecromancer("armyOfTheDead",...args),
+    necromancerGraveCount:()=>necromancerRuntime?.graveCount?.()||0,
+    necromancerGraveThreshold:()=>necromancerRuntime?.graveThreshold?.()||5,
+    necromancerGraveReady:()=>!!necromancerRuntime?.graveReady?.(),
+    necromancerActionDescriptors:()=>necromancerRuntime?.actionDescriptors?.()||[],
     identityId:()=>call("identityId"),
     active:id=>call("active",id),
     mechanicsFor:id=>call("mechanicsFor",id),
@@ -1353,6 +1377,7 @@
     _installActions:installActions,
     _installHooks:installHooks,
     _installInvoker:installInvoker,
+    _installNecromancer:installNecromancer,
   });
   window.DiceboundClasses=api;
 })();
