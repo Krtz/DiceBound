@@ -308,6 +308,9 @@
   let pendingLevelUps = 0;
   let currentEnemy = null;
   let currentEnemies = [];
+  const dbCombatAllies=window.DiceboundCombatAllies;
+  if(!dbCombatAllies)throw new Error("DiceBound requires the Combat allied-entity owner before dicebound.js");
+  let currentAlliedRoster=dbCombatAllies.createRoster({capacity:dbCombatAllies.systemMaxActiveAllies});
   let currentEnemyIndex = 0;
   let currentEncounterLead = null;
   let currentEncounterTurn = 0;
@@ -452,7 +455,7 @@
   dbRun.configure({transition:{
     getRoad:()=>({player,boardLevel}),
     setBoardLevel:value=>{boardLevel=value;},
-    resetEncounter:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
+    resetEncounter:()=>{currentEnemy=null;currentEnemies=[];currentAlliedRoster=dbCombatAllies.createRoster({capacity:Math.min(dbCombatAllies.systemMaxActiveAllies,Math.max(0,Number(player?.maxActiveAllies??dbCombatAllies.systemMaxActiveAllies)||0))});currentEncounterLead=null;currentEnemyTile=null;},
     setRollLocked:value=>{rollLocked=!!value;},
     applyTheme:()=>applyRunTheme(),
     rebuildBoard:()=>{dbRun.generateBoard();buildBoard();},
@@ -4473,7 +4476,7 @@ dbReturnToRoadTraceReady=true;
     scaleEnemy:(...args)=>scaleEnemy(...args),
     setMerchantBossBattle:value=>{merchantBossBattle=!!value;},
     setCombatKind:value=>{v16CombatKind=value;},
-    setEncounterState:state=>{currentEnemies=state.enemies;currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;currentEnemyTile=state.tile;currentEncounterTurn=state.turn;combatBusy=state.busy;},
+    setEncounterState:state=>{currentEnemies=state.enemies;currentAlliedRoster=dbCombatAllies.createRoster({capacity:Math.min(dbCombatAllies.systemMaxActiveAllies,Math.max(0,Number(player?.maxActiveAllies??dbCombatAllies.systemMaxActiveAllies)||0))});currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;currentEnemyTile=state.tile;currentEncounterTurn=state.turn;combatBusy=state.busy;},
     getEncounterState:()=>({enemies:currentEnemies,lead:currentEncounterLead,index:currentEnemyIndex,current:currentEnemy,tile:currentEnemyTile,turn:currentEncounterTurn,busy:combatBusy}),
     setEncounterSelection:state=>{currentEnemies=state.enemies;currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;},
     mythicalSetCount:()=>mythicalSetCount(),
@@ -4505,6 +4508,27 @@ dbReturnToRoadTraceReady=true;
     clearRogueStolenStats:()=>dbClasses.clearRogueStolenStats()
   });
 
+  const dbCombatAllyResolutionOwner=window.DiceboundCombatAllyResolution;
+  if(!dbCombatAllyResolutionOwner)throw new Error('DiceBound requires allied combat resolution before dicebound.js');
+  const dbCombatAllyResolution=dbCombatAllyResolutionOwner.configure({
+    getRoster:()=>currentAlliedRoster,
+    setRoster:value=>{currentAlliedRoster=value;},
+    getPlayer:()=>player,
+    getEncounterTurn:()=>currentEncounterTurn,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),
+    selectEnemy:index=>setCurrentEnemy(index),
+    random:()=>random(),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    defenseDamageReduction:value=>defenseDamageReduction(value),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    setCombatText:(...args)=>setCombatText(...args),
+    addCombatHistory:text=>addCombatHistory(text),
+    updateCombatUI:()=>updateCombatUI(),
+    delay:ms=>delay(ms)
+  });
+
   const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;
   if(!dbCombatTurnOwner)throw new Error('DiceBound requires the combat turn-resolution owner before dicebound.js');
   dbCombatTurns=dbCombatTurnOwner.configure({
@@ -4522,6 +4546,7 @@ dbReturnToRoadTraceReady=true;
     rand:(min,max)=>rand(min,max),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms),
+    allyTurn:()=>dbCombatAllyResolution.automaticPhase(),
     petTurn:()=>dbCombat.petTurn(),
     applyPoisonTick:()=>applyPoisonTick(),
     winCombat:()=>dbCombat.win(),
@@ -4561,13 +4586,13 @@ dbReturnToRoadTraceReady=true;
     getPlayer:()=>player,
     getCurrentEnemy:()=>currentEnemy,
     livingEnemies:()=>livingEnemies(),
-    playerSideTargets:()=>[{kind:'player',id:'player',name:'you',entity:player}],
+    playerSideTargets:()=>dbCombatAllyResolution.playerSideTargets().map(target=>target.kind==='hero'?{...target,kind:'player',id:'player',name:'you'}:target),
     random:()=>random(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
     defenseDamageReduction:value=>defenseDamageReduction(value),
     applyPlayerDamage:raw=>applyCombatPlayerDamage(raw),
-    damageFriendlyTarget:(target,raw)=>target?.entity===player?applyCombatPlayerDamage(raw):{total:0},
+    damageFriendlyTarget:(target,raw)=>target?.entity===player?applyCombatPlayerDamage(raw):target?.kind==='summon'?dbCombatAllyResolution.damage(target.id,raw,{source:'confusion'}):{total:0},
     setCombatText:text=>setCombatText(text),
     addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),
