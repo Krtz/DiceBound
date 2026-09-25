@@ -162,22 +162,11 @@
     .stage-mini-status .status-count{height:12px!important;min-width:18px!important;padding:0 3px!important;font-size:7px!important;margin:0 1px!important;line-height:12px!important}
     .status-count.poison-count{color:#baf3a5;background:rgba(56,118,48,.32)}.status-count.barrier-count{color:#a8dfff;background:rgba(44,97,151,.32)}
 
-/* beta042Style */
+/* beta042Style
+   HUD card placement was retired when Stats/Gear became one Character card.
+   Canonical responsive placement lives in dicebound.css. */
 body[data-run-mode="nightmare"] .world-atmosphere-layer{opacity:.21!important}
     body[data-run-mode="hell"] .world-atmosphere-layer{opacity:.24!important}
-    body[data-hud-flow="expanded"] .sidebar>.card:first-child{grid-column:1;grid-row:1}
-    body[data-hud-flow="expanded"] .sidebar>.equipment-card{grid-column:2;grid-row:1}
-    body[data-hud-flow="expanded"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2}
-    body[data-hud-flow="expanded"][data-sidebar-companion="below"] .sidebar>.pet-card{grid-column:1;grid-row:2}
-    body[data-hud-flow="expanded"] .sidebar>.log-card{grid-column:1/-1;grid-row:3}
-    body[data-hud-flow="landscape-2"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2!important}
-    body[data-hud-flow="landscape-2"][data-sidebar-companion="below"] .sidebar>.pet-card{grid-column:1;grid-row:2!important}
-    body[data-hud-flow="landscape-2"] .sidebar>.log-card{grid-column:1/-1!important;grid-row:3!important}
-    body[data-hud-flow="landscape-3"] .sidebar>.card:first-child{grid-column:1;grid-row:1}
-    body[data-hud-flow="landscape-3"] .sidebar>.equipment-card{grid-column:2;grid-row:1}
-    body[data-hud-flow="landscape-3"][data-sidebar-companion="adjacent"] .sidebar>.pet-card{grid-column:2;grid-row:2!important}
-    body[data-hud-flow="landscape-3"][data-sidebar-companion="below"] .sidebar>.pet-card{grid-column:1;grid-row:2!important}
-    body[data-hud-flow="landscape-3"] .sidebar>.log-card{grid-column:1/-1!important;grid-row:3!important}
 
 /* beta043ArtStyle */
 .db-art-icon{display:inline-block;vertical-align:middle;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.32))}

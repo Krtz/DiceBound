@@ -971,7 +971,6 @@ body[data-window-height="very-short"] .log{height:82px}
     overflow-y:auto;
   }
   .sidebar>.card:first-child{grid-column:1;grid-row:1}
-  .sidebar>.equipment-card{grid-column:2;grid-row:1}
   .sidebar>.pet-card{grid-column:3;grid-row:1}
   .sidebar>.log-card{grid-column:1/-1;grid-row:2}
   .sidebar>.card{padding:8px!important;border-radius:13px!important}
@@ -996,7 +995,6 @@ body[data-window-height="very-short"] .log{height:82px}
   .app{grid-template-columns:minmax(360px,1fr) minmax(455px,46vw)!important}
   .sidebar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .sidebar>.card:first-child{grid-column:1;grid-row:1/3}
-  .sidebar>.equipment-card{grid-column:2;grid-row:1}
   .sidebar>.pet-card{grid-column:2;grid-row:2}
   .sidebar>.log-card{grid-column:1/-1;grid-row:3}
 }
@@ -1052,12 +1050,13 @@ body[data-hud-flow="expanded"] .sidebar{display:grid!important;grid-template-col
 body[data-hud-flow="expanded"] .sidebar>.log-card{grid-column:1/-1}
 body[data-hud-flow="landscape-3"] .app{grid-template-columns:minmax(350px,1fr) minmax(560px,48vw)!important}
 body[data-hud-flow="landscape-3"] .sidebar{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;align-content:start;align-items:start;gap:7px!important}
-body[data-hud-flow="landscape-3"] .sidebar>.log-card{grid-column:1/-1!important}
+body[data-hud-flow="landscape-3"] .sidebar>.character-card{grid-column:1/3;grid-row:auto!important}
+body[data-hud-flow="landscape-3"] .sidebar>.pet-card{grid-column:3;grid-row:auto!important}
+body[data-hud-flow="landscape-3"] .sidebar>.log-card{grid-column:1/-1!important;grid-row:auto!important}
 body[data-hud-flow="landscape-2"] .app{grid-template-columns:minmax(350px,1fr) minmax(450px,47vw)!important}
 body[data-hud-flow="landscape-2"] .sidebar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-content:start;align-items:start;gap:7px!important}
-body[data-hud-flow="landscape-2"] .sidebar>.card:first-child{grid-column:1;grid-row:auto!important}
-body[data-hud-flow="landscape-2"] .sidebar>.equipment-card{grid-column:2;grid-row:auto!important}
-body[data-hud-flow="landscape-2"] .sidebar>.pet-card{grid-column:1/-1;grid-row:auto!important}
+body[data-hud-flow="landscape-2"] .sidebar>.character-card,
+body[data-hud-flow="landscape-2"] .sidebar>.pet-card,
 body[data-hud-flow="landscape-2"] .sidebar>.log-card{grid-column:1/-1!important;grid-row:auto!important}
 body[data-hud-flow="stacked"] .sidebar{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr))!important;align-items:start;gap:10px!important}
 body[data-hud-flow="stacked"] .sidebar>.log-card{grid-column:1/-1}

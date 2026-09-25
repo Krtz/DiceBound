@@ -2915,11 +2915,11 @@ dbReturnToRoadTraceReady=true;
   }
   function beta042SyncSidebarLayout(){
     beta042SidebarFrame=0;
-    const hasSet=typeof mythicalSetCount==='function'&&mythicalSetCount()>0,snapshot=beta042SidebarSnapshot();
-    document.body?.setAttribute('data-sidebar-companion',hasSet?'below':'adjacent');
+    const snapshot=beta042SidebarSnapshot();
+    document.body?.removeAttribute('data-sidebar-companion');
     document.body?.setAttribute('data-sidebar-flow',snapshot.mode);
     beta042EnsureSidebarObserver();
-    return Object.freeze({...snapshot,hasSet});
+    return snapshot;
   }
   function beta042ScheduleSidebarLayout(){if(beta042SidebarFrame)cancelAnimationFrame(beta042SidebarFrame);beta042SidebarFrame=requestAnimationFrame(beta042SyncSidebarLayout);}
   const dbInputRouter=window.DiceboundInputRouter;
