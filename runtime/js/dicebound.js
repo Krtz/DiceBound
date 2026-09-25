@@ -4053,6 +4053,7 @@ dbReturnToRoadTraceReady=true;
     damageFriendlyTarget:(target,raw,options)=>target?.kind==='summon'?dbCombatAllyResolution.damage(target.id,raw,options):applyCombatPlayerDamage(raw),
     applyFriendlyStatus:(target,kind,payload)=>target?.kind==='summon'?dbCombatAllyResolution.applyStatus(target.id,kind,payload):null,
     healPlayer:(...args)=>dbCombat.heal(...args),
+    healAlliedSummons:(fraction,options)=>dbCombatAllyResolution.healLivingByFraction(fraction,options),
     trackElementProgress:(key,amount)=>dbPets.trackElementProgress(key,amount),
     playElementAnimation:(key,target,enemySource)=>playElementAnimation(key,target,enemySource),
     addLog:text=>addLog(text),
