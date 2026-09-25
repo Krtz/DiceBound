@@ -23,6 +23,8 @@
       goldEarned:0,goldSpent:0,highestGold:0,enemiesDefeated:0,bossesDefeated:0,
       minibossesDefeated:0,powerupsTaken:0,potionsUsed:0,highestRunLevel:1,
       largestHit:0,criticalStrikes:0,echoStrikes:0,elementalProcs:0,
+      summonsCreated:0,summonDeaths:0,summonKills:0,summonReplacements:0,
+      summonDamageDealt:0,summonDamageTaken:0,summonHealingReceived:0,highestSimultaneousSummons:0,
       boardClears:{},classMaxLevel:{},classRuns:{},enemyDefeats:{}
     };
   }
@@ -159,6 +161,17 @@
     return list.length;
   }
 
+  function recordSummonCreated(meta,{livingCount=0}={}){
+    const s=stats(meta);s.summonsCreated++;s.highestSimultaneousSummons=Math.max(s.highestSimultaneousSummons,integer(livingCount));return s.summonsCreated;
+  }
+  function recordSummonDeath(meta,count=1){const s=stats(meta);s.summonDeaths+=Math.max(0,integer(count));return s.summonDeaths;}
+  function recordSummonKill(meta,count=1){const s=stats(meta);s.summonKills+=Math.max(0,integer(count));return s.summonKills;}
+  function recordSummonReplacement(meta,count=1){const s=stats(meta);s.summonReplacements+=Math.max(0,integer(count));return s.summonReplacements;}
+  function recordSummonDamageDealt(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).summonDamageDealt+=value;return value;}
+  function recordSummonDamageTaken(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).summonDamageTaken+=value;return value;}
+  function recordSummonHealing(meta,amount){const value=Math.max(0,number(amount));if(value)stats(meta).summonHealingReceived+=value;return value;}
+  function recordHighestSimultaneousSummons(meta,count){const s=stats(meta);s.highestSimultaneousSummons=Math.max(s.highestSimultaneousSummons,integer(count));return s.highestSimultaneousSummons;}
+
   function recordVitals(meta,{previousHp,currentHp,previousGold,currentGold,classId,level}={}){
     const s=stats(meta);
     const hpBefore=number(previousHp),hpAfter=number(currentHp),goldBefore=number(previousGold),goldAfter=number(currentGold);
@@ -211,6 +224,8 @@
   window.DiceboundCareerHistory=Object.freeze({
     apiVersion:1,owner:OWNER,HISTORY_LIMIT,defaultStats,normalizeStats,normalizeHistoryEntry,ensure,migrateLegacy,stats,history,
     beginRun,boardClearKey,recordBoardClear,hasBoardClear,recordDamage,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,
-    recordPotion,recordPowerup,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,finalizeRun,inspect
+    recordPotion,recordPowerup,recordElementProc,recordStrike,recordEnemyDefeats,
+    recordSummonCreated,recordSummonDeath,recordSummonKill,recordSummonReplacement,recordSummonDamageDealt,recordSummonDamageTaken,recordSummonHealing,recordHighestSimultaneousSummons,
+    recordVitals,finalizeRun,inspect
   });
 })();
