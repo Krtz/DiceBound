@@ -100,6 +100,50 @@
     return restored;
   }
 
+  function applyStatus(instanceId, kind, payload = {}) {
+    const state = roster(), entity = entityById(state, instanceId);
+    if (!entity || entity.hp <= 0) return null;
+    const key = String(kind || "");
+    const statuses = entity.statuses || (entity.statuses = {});
+
+    if (key === "burn") {
+      const add = Math.max(1, Math.round(Number(payload.stacks) || 1));
+      statuses.burnStacks = Math.min(10, Math.max(0, Number(statuses.burnStacks) || 0) + add);
+    } else if (key === "poison") {
+      const add = Math.max(1, Math.round(Number(payload.stacks) || 1));
+      statuses.poisonStacks = Math.max(0, Number(statuses.poisonStacks) || 0) + add;
+      statuses.poisonPower = Math.max(Number(statuses.poisonPower) || 0, Number(payload.power) || .12);
+    } else if (key === "skip") {
+      statuses.skipActions = Math.max(0, Math.round(Number(statuses.skipActions) || 0)) + Math.max(1, Math.round(Number(payload.actions) || 1));
+    } else if (key === "confusion") {
+      statuses.confusionActions = Math.max(1, Math.round(Number(payload.actions) || 1));
+    } else if (key === "attack-reduction") {
+      const before = Math.max(0, Number(entity.attack) || 0);
+      const requested = Math.max(0, Number(payload.amount) || 0);
+      const loss = Math.min(Math.max(0, before - 1), requested);
+      entity.attack = Math.max(1, before - loss);
+      statuses.attackLost = (Number(statuses.attackLost) || 0) + loss;
+      statuses.lastStatLoss = loss;
+    } else if (key === "defense-reduction") {
+      const before = Math.max(0, Number(entity.defense) || 0);
+      const loss = Math.min(before, Math.max(0, Number(payload.amount) || 0));
+      entity.defense = Math.max(0, before - loss);
+      statuses.defenseLost = (Number(statuses.defenseLost) || 0) + loss;
+      statuses.lastStatLoss = loss;
+    } else {
+      statuses[key] = payload.value ?? true;
+    }
+
+    commit(state);
+    callback("onStatusApplied", entity, key, payload);
+    return Object.freeze({ instanceId: entity.instanceId, kind: key, statuses: { ...entity.statuses } });
+  }
+
+  function statusSnapshot(instanceId) {
+    const state = roster(), entity = entityById(state, instanceId);
+    return entity ? Object.freeze({ ...entity.statuses }) : null;
+  }
+
   function living() {
     return owner().living(roster());
   }
@@ -200,6 +244,8 @@
     spawn,
     damage,
     heal,
+    applyStatus,
+    statusSnapshot,
     living,
     basicAttack,
     automaticPhase,
