@@ -4429,7 +4429,7 @@ dbReturnToRoadTraceReady=true;
   dbCombatView.configurePresentation({
     document,
     guardianSpecialInterval:GUARDIAN_SPECIAL_INTERVAL,
-    getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode}),
+    getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode,allies:(currentAlliedRoster?.allies||[]).filter(entity=>entity?.hp>0)}),
     find:$,
     getClasses:()=>CLASSES,
     getElements:()=>ELEMENTS,
@@ -4446,6 +4446,7 @@ dbReturnToRoadTraceReady=true;
     enemyPortraitById:id=>window.DiceboundAssets.resolveEnemyPortraitById(id),
     enemyModeAura:mode=>window.DiceboundAssets.resolveEnemyModeAura(mode),
     guardianBattleArt:id=>DB317_GUARDIANS.resolveById(id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(id)?.battle||null,
+    allyArt:id=>window.DiceboundAssets.resolveAllyArt(id),
     potionHealValue:()=>dbConsumablesResolution.potionHealValue(),
     potionTooltip:()=>v18PotionTooltip(),
     describeUltimate:id=>describeCurrentUltimate(id),
