@@ -4423,6 +4423,7 @@ dbReturnToRoadTraceReady=true;
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
     invokeUltimate:()=>dbClasses.invokerUltimate(),
+    necromancerUltimate:()=>dbClasses.necromancerArmyOfTheDead(),
   });
 
   dbCombatView.configurePresentation({
@@ -4452,6 +4453,9 @@ dbReturnToRoadTraceReady=true;
     hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id],
     activeTrainerPetId:()=>dbCombat.activeTrainerPetId(),
     invokerAttackSpec:key=>dbClasses.invokerAttackSpec(key),
+    necromancerGraveCount:()=>dbClasses.necromancerGraveCount(),
+    necromancerGraveThreshold:()=>dbClasses.necromancerGraveThreshold(),
+    necromancerGraveReady:()=>dbClasses.necromancerGraveReady(),
     selectEnemy:index=>setCurrentEnemy(index),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
