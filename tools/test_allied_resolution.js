@@ -67,8 +67,7 @@ assert(spawns === 2 && resolution.living().length === 2, "spawn callbacks and ro
   assert(deaths === 1, "dead summon must not double-fire death callback");
 
   const survivor = resolution.living()[0];
-  survivor.hp = Math.max(1, survivor.hp - 3);
-  roster = allies.normalizeRoster(roster);
+  resolution.damage(survivor.instanceId, 3, { source: "test-chip", ignoreDefense: true });
   const before = resolution.living()[0].hp;
   const healed = resolution.heal(survivor.instanceId, 2, { source: "test" });
   assert(healed === 2 && resolution.living()[0].hp === before + 2, "summon healing should use own HP");
