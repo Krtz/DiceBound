@@ -35,6 +35,7 @@
     "combat-targeting",
     "combat-allied-entities",
     "combat-action-registry",
+    "combat-allied-resolution",
     "combat-presentation",
     "combat-encounter-lifecycle",
     "combat-turn-resolution",
@@ -471,6 +472,19 @@
       "requires": [],
       "provides": [
         "DiceboundCombatActions"
+      ]
+    },
+    {
+      "id": "combat-allied-resolution",
+      "path": "js/combat/allied-resolution.js",
+      "domain": "combat/allied-turn-damage-healing-and-death-resolution",
+      "status": "extracted",
+      "requires": [
+        "combat-targeting",
+        "combat-allied-entities"
+      ],
+      "provides": [
+        "DiceboundCombatAllyResolution"
       ]
     },
     {
