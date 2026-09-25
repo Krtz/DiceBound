@@ -34,6 +34,7 @@
     "combat-enemy-scaling-resolution",
     "combat-targeting",
     "combat-allied-entities",
+    "combat-action-registry",
     "combat-presentation",
     "combat-encounter-lifecycle",
     "combat-turn-resolution",
@@ -460,6 +461,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatAllies"
+      ]
+    },
+    {
+      "id": "combat-action-registry",
+      "path": "js/combat/action-registry.js",
+      "domain": "combat/composable-action-provider-and-dispatch-contract",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatActions"
       ]
     },
     {
@@ -1384,4 +1395,4 @@
     "modes",
     "ui"
   ]
-}\n
+}
