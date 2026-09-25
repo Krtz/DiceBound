@@ -1250,6 +1250,7 @@ function returnToRoad(...args){
       classIds,classSecret,persistedUnlocks:meta.unlocks||{},bloodmageUnlocked:!!meta.bloodmageUnlocked,
       prestigeCount:Number(meta.prestige?.count)||0,damageTaken:Number(meta.damageTaken)||0,merchantKills:Number(meta.merchantKills)||0,
       stats:{healingDone:Number(stats.healingDone)||0,highestGold:Number(stats.highestGold)||0,potionsUsed:Number(stats.potionsUsed)||0},
+      enemyDefeats:{...(stats.enemyDefeats||{})},
       storedHighestGold:Number(stats.highestGold)||0,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(currentPlayer.gold)||0):0),facts,
       petIds,petLevels,petUnlocked,gameStarted:!!gameStarted,
       player:{gold:Number(currentPlayer.gold)||0,defense:Number(currentPlayer.defense)||0,doubleStrike:Number(currentPlayer.doubleStrike)||0,lifeSteal:Number(currentPlayer.lifeSteal)||0,crit:Number(currentPlayer.crit)||0,bossDamage:Number(currentPlayer.bossDamage)||0},
