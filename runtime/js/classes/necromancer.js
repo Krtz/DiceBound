@@ -185,4 +185,7 @@
     minimumGraveThreshold:MIN_GRAVE_THRESHOLD
   });
   window.DiceboundNecromancer=api;
+  const facade=window.DiceboundClasses;
+  if(!facade?._installNecromancer)throw new Error("classes/necromancer.js requires DiceboundClasses facade before loading.");
+  facade._installNecromancer(api);
 })();
