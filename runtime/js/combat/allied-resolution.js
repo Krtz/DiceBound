@@ -136,7 +136,13 @@
 
     commit(state);
     callback("onStatusApplied", entity, key, payload);
-    return Object.freeze({ instanceId: entity.instanceId, kind: key, statuses: { ...entity.statuses } });
+    return Object.freeze({
+      instanceId: entity.instanceId,
+      kind: key,
+      statLoss: Number(entity.statuses?.lastStatLoss) || 0,
+      entity: Object.freeze({ ...entity, resources: { ...entity.resources }, statuses: { ...entity.statuses }, effects: [...entity.effects], tags: [...entity.tags] }),
+      statuses: Object.freeze({ ...entity.statuses })
+    });
   }
 
   function statusSnapshot(instanceId) {
