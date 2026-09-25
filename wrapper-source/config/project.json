@@ -53,6 +53,7 @@
     "js/classes/actions.js",
     "js/classes/hooks.js",
     "js/classes/invoker.js",
+    "js/classes/necromancer.js",
     "js/combat/mana-action-resolution.js",
     "js/combat/facade.js",
     "js/progression/class-unlock-rules.js",
