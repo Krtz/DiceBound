@@ -145,7 +145,10 @@
     }
     if (key === "light") {
       totalDamage = elementHit(target, key, p.attack * .70 * mult);
-      heal = rt.healPlayer(Math.ceil(p.maxHp * (weak ? .15 : .09) * (1 + p.elementDamageBonus)));
+      const healFraction=(weak ? .15 : .09) * (1 + p.elementDamageBonus);
+      const heroHeal=rt.healPlayer(Math.ceil(p.maxHp * healFraction));
+      const summonHeal=typeof rt.healAlliedSummons==="function"?rt.healAlliedSummons(healFraction,{source:"light-element"}):0;
+      heal=heroHeal+summonHeal;
       extra += heal ? ` Holy restores ${heal} HP across your allied side.` : "";
     }
     if (key === "void") totalDamage = elementHit(target, key, Math.max(1, Math.min(target.maxHp * (weak ? .14 : .09) * mult, p.attack * 4.5 * mult)), true);
