@@ -1,0 +1,118 @@
+{
+  "commonPrompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. ",
+  "promptFormat": "commonPrompt + 'Subject: ' + name + ': ' + subject",
+  "items": [
+    {
+      "slot": "weapon",
+      "name": "Adamant Scimitar",
+      "file": "weapon/adamant-scimitar.png",
+      "subject": "Light curved green-grey adamant scimitar, practical single-edged blade, leather grip, restrained riveted guard, agile uncommon martial weapon.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-9781acca-779e-4098-90de-8bd7c74b3dac.png"
+    },
+    {
+      "slot": "weapon",
+      "name": "Air Battlestaff",
+      "file": "weapon/air-battlestaff.png",
+      "subject": "Wooden battlestaff with a pale blue-white elemental core suspended in an open carved head, compact wind spirals and subtle electric sparks, entire long staff visible diagonally.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-08181d49-0d0f-45db-8c03-086fffc7944d.png"
+    },
+    {
+      "slot": "offhand",
+      "name": "Bottomless Purse",
+      "file": "offhand/bottomless-purse.png",
+      "subject": "Soft worn leather merchant coin purse with a wide open mouth revealing a subtly impossible deep golden inner spiral and a few gold coins at rim, drawstring and brass clasp.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-4e4ada09-efb2-41c8-82e9-d2faf36a7b82.png"
+    },
+    {
+      "slot": "offhand",
+      "name": "Blood Goblet",
+      "file": "offhand/blood-goblet.png",
+      "subject": "Dark silver metal goblet with a restrained gothic stem, crimson liquid and small red jewel, elegant vampire vessel, no gore.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-4402ea33-a9db-4079-97c2-3bd65c236f1a.png"
+    },
+    {
+      "slot": "hat",
+      "name": "Crown of Twenty Faces",
+      "file": "hat/crown-of-twenty-faces.png",
+      "subject": "An original wearable crown of twenty angular facets, probability-themed crystalline metal with triangular dice-like geometry, subtly iridescent facets and regal points, no floating dice or text.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-ce4ab81b-72df-4475-8bce-295f55a07655.png"
+    },
+    {
+      "slot": "chest",
+      "name": "Constellation Mantle",
+      "file": "chest/constellation-mantle.png",
+      "subject": "Chest-slot astral cloth mantle constructed as a wearable sleeveless torso vest with broad draped shoulder collar, deep midnight blue woven cloth, delicate silver constellation embroidery and tiny star glimmers. No standalone cape; clear torso openings.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-3c6c77c7-91c4-4d70-8a66-d77010794849.png"
+    },
+    {
+      "slot": "hat",
+      "name": "Feathered Cap",
+      "file": "hat/feathered-cap.png",
+      "subject": "Simple poor-tier soft green cloth ranger cap with one natural brown feather, stitched seams, worn modest fabric, no jewels.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-8f4d7f5c-0fc8-4843-9185-9b3be1926f13.png"
+    },
+    {
+      "slot": "legs",
+      "name": "Moonweave Trousers",
+      "file": "legs/moonweave-trousers.png",
+      "subject": "Pair of flowing indigo moonweave cloth trousers, pale silver crescent embroidery at cuffs, subtle arcane sheen, soft lightweight folds, waistband and both legs clearly visible.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-f1e72538-8344-4d3f-994a-0254a740e572.png"
+    },
+    {
+      "slot": "chest",
+      "name": "Croaking Vest",
+      "file": "chest/croaking-vest.png",
+      "subject": "Quirky light green cloth and frog-hide vest, simple front buttons, rounded frog-throat-shaped collar and pond-green mottled hide trim, subtle frog motif, no animal or wearer.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-e0440627-b1eb-4cd5-8091-a2b1984d42c2.png"
+    },
+    {
+      "slot": "boots",
+      "name": "Impossible Stilts",
+      "file": "boots/impossible-stilts.png",
+      "subject": "Matched pair of comically improbable wooden and metal clown stilts with foot platforms, leather straps and eccentric curved telescoping supports, complete tall objects visible, charming absurd engineering.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-e0082026-5607-4667-b882-b112b54d49e6.png"
+    },
+    {
+      "slot": "legs",
+      "name": "Gel Trousers",
+      "file": "legs/gel-trousers.png",
+      "subject": "Pair of translucent green gel trousers with elastic jelly waistband and two distinct trouser legs, suspended small bubbles, playful simple slime equipment, no body or skeleton inside.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-29e1df56-460b-4bc6-b11e-7dd4ce35592c.png"
+    },
+    {
+      "slot": "ring",
+      "name": "Ring of Random Integers",
+      "file": "ring/ring-of-random-integers.png",
+      "subject": "Probability-themed wearable silver-blue ring with a rotating miniature numbered brass drum set into its top like a tiny mechanical random-number device, digits 3 7 2 on three visible faces, clear circular finger band.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-81878cdf-7441-4ad2-acc7-45501a820bd2.png"
+    },
+    {
+      "slot": "boots",
+      "name": "Lion Sabatons",
+      "file": "boots/lion-sabatons.png",
+      "subject": "Pair of heavy steel knight sabatons with sculpted lion-head ankle guards, segmented steel toes and restrained brass mane details, practical articulated footwear.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-00000518-f25e-4aba-a0fc-43d56201ce61.png"
+    },
+    {
+      "slot": "amulet",
+      "name": "Honking Medallion",
+      "file": "amulet/honking-medallion.png",
+      "subject": "Brass honking medallion on a simple short cord, miniature curved squeeze-bulb clown horn incorporated into circular pendant, brass bell and red rubber bulb, wearable comedy musical charm.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-5b98919e-fb03-47a0-b651-113b422b6d1c.png"
+    },
+    {
+      "slot": "ring",
+      "name": "Ring-Pop of Power",
+      "file": "ring/ring-pop-of-power.png",
+      "subject": "Edible ring-pop of power: oversized faceted ruby-red translucent candy jewel on a cheerful yellow candy finger ring, sugar crystals, glossy sweet material, whimsical clown equipment.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-6d299f7e-2052-42bc-b9fd-dc5445aa9d72.png"
+    },
+    {
+      "slot": "amulet",
+      "name": "Lotus Pendant",
+      "file": "amulet/lotus-pendant.png",
+      "subject": "Small finely carved green jade lotus flower pendant nested in warm polished wooden petals, simple brown cord loop, calm natural spiritual craftsmanship.",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-e4d1f0cd-ce3a-43a7-92b1-746bae384845.png"
+    }
+  ]
+}

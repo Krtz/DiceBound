@@ -1,0 +1,1 @@
+16 equipment base icons from geartodo generated with built-in ImageGen. Grouped by the eight existing equipment slots. All PNGs decode and have transparent corners. PROMPTS.json preserves exact prompt template, subjects and source paths. Art inbox only; catalogue acceptance and runtime integration remain pending.
