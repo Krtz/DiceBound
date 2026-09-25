@@ -1,0 +1,119 @@
+{
+  "mode": "built-in ImageGen",
+  "registryCommit": "d84cd202726e926ffb795ca238e23fba04232e70",
+  "promptFormat": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: {name}. {subject} Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No labels, letters, UI frame, scenery, watermark or extra panels.",
+  "items": [
+    {
+      "name": "Stormstep",
+      "subject": "Generic dodge and luck upgrade. A light brown travelling boot stepping over a tiny stormcloud, silver wind curls and a small golden lucky star charm on the laces. Agile lucky footwork, not a lightning attack.",
+      "file": "stormstep.png",
+      "intendedAsset": "runtime/assets/powerups/uncommon/stormstep.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-576a1204-dcdc-407b-be39-71825251ecf7.png"
+    },
+    {
+      "name": "Pack Hunter",
+      "subject": "Generic increased damage against multiple remaining enemies. A steel hunting spearhead striking between two dark stylized monster-mask silhouettes, compact amber split impact arc; clearly fighting a group, not summoning pets.",
+      "file": "pack-hunter.png",
+      "intendedAsset": "runtime/assets/powerups/uncommon/pack-hunter.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-685d853d-926f-4b20-ba60-48ad21ef9c86.png"
+    },
+    {
+      "name": "Ultimate Vessel",
+      "subject": "Generic ultimate charge and damage. A squat crystal vessel holding a brilliant violet star-shaped energy core, polished bronze ribs, contained pulsing purple power, no potion liquid.",
+      "file": "ultimate-vessel.png",
+      "intendedAsset": "runtime/assets/powerups/uncommon/ultimate-vessel.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-a95228ce-2a8a-434f-88f3-560f1284d480.png"
+    },
+    {
+      "name": "Red Flask",
+      "subject": "Generic lifesteal and two potions. Two ruby-red potion flasks, one large and one smaller, dark silver fang-shaped collars and a small restorative crimson swirl. No gore.",
+      "file": "red-flask.png",
+      "intendedAsset": "runtime/assets/powerups/uncommon/red-flask.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-2148c30f-cab2-4f7d-84b4-f5a321b12d4c.png"
+    },
+    {
+      "name": "Battering Line",
+      "subject": "Fighter defense-scaled attacks and guard ultimate charge. Three overlapping battered steel shields in a forward wedge, central shield thrust ahead with a bright amber shield-bash impact; no people.",
+      "file": "battering-line.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/battering-line.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-7bdd4205-6e82-4462-bda9-e6b45ac77286.png"
+    },
+    {
+      "name": "Thorn Volley",
+      "subject": "Ranger critical hits and nature activation. A drawn wooden bow releasing a tight fan of three thorn-tipped arrows with emerald leaf trails, dynamic precision, no hands.",
+      "file": "thorn-volley.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/thorn-volley.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-d117fc05-70b5-44da-8088-0c26d3563b00.png"
+    },
+    {
+      "name": "Banana-Peel Law",
+      "subject": "Clown luck and dodge. A yellow banana peel curled around a miniature wooden judge's gavel, a few bright lucky sparkles; absurd slapstick jurisprudence. No writing.",
+      "file": "banana-peel-law.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/banana-peel-law.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-d8cd71c5-9c47-44a5-99c4-97913b7968fc.png"
+    },
+    {
+      "name": "Carmine Veins",
+      "subject": "Rouge PAINTER lifesteal and critical chance. A small artist palette with dark carmine paint branching into vein-like channels, a crimson rose painted alive from the pigment and a fine pointed brush. Red paint, not blood anatomy; no knives or cards.",
+      "file": "carmine-veins.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/carmine-veins.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-1b57f9c6-177e-451d-8d82-9b53fe64c802.png"
+    },
+    {
+      "name": "Shell Memory",
+      "subject": "Turtle defense and post-victory healing. Rounded weathered green turtle shell with growth-ring patterns and softly glowing jade seams repairing old scars, tiny pale restorative motes, no ice.",
+      "file": "shell-memory.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/shell-memory.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-26e28d4f-92c0-448d-8ddb-c6cfa5d91758.png"
+    },
+    {
+      "name": "Bent Probability",
+      "subject": "Twenty-Sider random extra echo, barrier, healing or element. A clearly twenty-sided violet die visibly bending a golden probability loop, four small pictorial motes around it: echo rings, shield, green heart, flame. No lettering or numbers.",
+      "file": "bent-probability.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/bent-probability.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-d6d9337c-5739-47a3-99d2-80763e07f36c.png"
+    },
+    {
+      "name": "Red Mist",
+      "subject": "Vampire lifesteal and dodge. A crimson-black bat silhouette dissolving into a curling red mist ribbon, two small ivory fangs within the mist, graceful elusive motion; no gore.",
+      "file": "red-mist.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/red-mist.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-7e1a9e0f-2795-42b3-afed-8a553a0c3c92.png"
+    },
+    {
+      "name": "Smoke Mathematics",
+      "subject": "Ninja critical chance and dodge. One crisp steel shuriken emerging from tightly curled grey-blue smoke, fine geometric trajectory lines and a tiny bright pinpoint glint, disciplined precision. No equations or text.",
+      "file": "smoke-mathematics.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/smoke-mathematics.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-1e7580aa-435f-43a1-afab-55810bc2100d.png"
+    },
+    {
+      "name": "Hostile Synergy",
+      "subject": "CEO boss damage and gold. Two tailored suit-cuff hands in a firm business handshake above a compact pile of gold coins, tiny broken dark crown below the clasp suggesting a defeated boss. Satirical corporate fantasy.",
+      "file": "hostile-synergy.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/hostile-synergy.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-5580c42a-df42-47b5-be93-96b827cd7106.png"
+    },
+    {
+      "name": "Bulk Discount Violence",
+      "subject": "Merchant gold and luck. A stout wooden wholesale crate bursting with small gold coin sacks, a brass balance scale perched on its rim and one lucky clover charm; no weapons or shop text.",
+      "file": "bulk-discount-violence.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/bulk-discount-violence.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-9478985a-4643-431e-9a00-4c5de6ba8b3f.png"
+    },
+    {
+      "name": "Vanguard Doctrine",
+      "subject": "Martial class family attack, defense and boss damage. A sturdy steel heater shield crossed behind by a single longsword, bold red cloth pennant and small broken enemy crown at base; compact military emblem without frame.",
+      "file": "vanguard-doctrine.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/vanguard-doctrine.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-cfe2c4c9-4d5a-46e9-bb80-4231ea2426b3.png"
+    },
+    {
+      "name": "Skirmisher's Tempo",
+      "subject": "Agile class family critical chance, echo strike and dodge. A light leather bracer and swift steel throwing blade with one pale spectral blade echo and a curved turquoise evasion trail, compact flowing composition; no specific class costume.",
+      "file": "skirmishers-tempo.png",
+      "intendedAsset": "runtime/assets/powerups/class-specific/skirmishers-tempo.png",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-24b1d0ec-ad1a-4343-9f74-32f3212d4e93.png"
+    }
+  ]
+}

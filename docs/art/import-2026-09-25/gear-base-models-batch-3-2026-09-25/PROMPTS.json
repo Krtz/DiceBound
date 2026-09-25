@@ -1,0 +1,74 @@
+[
+  {
+    "slot": "weapon",
+    "slug": "abyssal-whip",
+    "name": "Abyssal Whip",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Abyssal Whip: A coiled abyssal whip of flexible dark segmented organic-metal, tapered barbed tip, leather grip, subtle violet energy between segments. Light sinister high-tier melee weapon; complete coil and handle visible.",
+    "file": "weapon/abyssal-whip.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-46eccd3e-c16a-4b45-927b-a00c8c73f70b.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "offhand",
+    "slug": "ancestral-shell",
+    "name": "Ancestral Shell",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Ancestral Shell: Heavy ancient protective turtle shell used as an offhand shield, earthy green-brown keratin scutes, weathered bone rim, ancestral spiral carvings and visible leather grip straps. No animal or body.",
+    "file": "offhand/ancestral-shell.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-b665ec31-5485-49f4-9521-17bbe88c7639.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "chest",
+    "slug": "ancient-armour",
+    "name": "Ancient Armour",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Ancient Armour: Legendary ancient-metal torso armour, weathered bronze-gold breastplate with oxidized teal recesses, layered broad shoulder guards, relic sun engravings and a few short defensive spikes. Torso equipment only, no helmet, legs or wearer.",
+    "file": "chest/ancient-armour.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-0901bcc4-86b0-4045-a326-01b9382b9e80.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "hat",
+    "slug": "bloodbound-hat",
+    "name": "Bloodbound Hat",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Bloodbound Hat: Light vampiric hat made of black leather and burgundy cloth, elegant pointed folded brim and gathered cloth crown, restrained silver clasp with a blood-red stone, practical wearable gothic silhouette.",
+    "file": "hat/bloodbound-hat.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-6b92db1f-25c4-4968-bc69-fd381b4eba1e.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "legs",
+    "slug": "bane-platelegs",
+    "name": "Bane Platelegs",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Bane Platelegs: Pair of very-heavy dark bane-metal armoured plate trousers, overlapping thigh plates and angular knee guards, sinister restrained blue-violet inlays and thorns, leather belt attachment. No boots, torso or person.",
+    "file": "legs/bane-platelegs.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-38e5ecc9-108a-4658-aeb1-ced084ec4b69.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "ring",
+    "slug": "distillers-ring",
+    "name": "Distiller's Ring",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Distiller's Ring: Wearable copper alchemist ring with small sealed glass capsule set on top containing emerald potion, tiny copper coil holding the vial, visible circular finger band, fine handmade metal and translucent glass.",
+    "file": "ring/distillers-ring.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-3290cf4e-4254-4de0-9f6d-1eb7ace38331.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "boots",
+    "slug": "adamant-armoured-boots",
+    "name": "Adamant Armoured Boots",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Adamant Armoured Boots: Matched pair of heavy green-grey adamant armoured boots, segmented metal sabatons and ankle guards over brown leather, practical rivets, restrained uncommon gear, three-quarter view showing both boots.",
+    "file": "boots/adamant-armoured-boots.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-6e9eac5f-67b7-40da-9d96-736c1b15e22d.png",
+    "status": "Generated for review; not integrated"
+  },
+  {
+    "slot": "amulet",
+    "slug": "executive-amulet",
+    "name": "Executive Amulet",
+    "prompt": "Use case: stylized-concept. Create one standalone DiceBound fantasy RPG inventory equipment artwork. Square high resolution PNG with genuinely transparent alpha background. Hand-painted detailed fantasy game asset, rich tactile materials, crisp readable silhouette, warm upper-left key light and gentle cool right rim, consistent with a painted medieval RPG inventory. Entire object fully visible centered with 8% clear padding on every side. Three-quarter view unless clothing requires frontal view. No person, hands, floor, scene, text, labels, watermark, icon frame or cast shadow plane. This is a base model, not a rarity badge. Subject: Executive Amulet: Gold corporate fantasy amulet, polished angular pendant resembling an elegant rising bar-chart crest, short loop of thick gold chain, luxurious but clean businesslike geometric craftsmanship, no letters or currency symbols.",
+    "file": "amulet/executive-amulet.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-4331d29f-9d97-49cd-9bd1-f18141d73802.png",
+    "status": "Generated for review; not integrated"
+  }
+]
