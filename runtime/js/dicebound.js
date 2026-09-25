@@ -4454,6 +4454,7 @@ dbReturnToRoadTraceReady=true;
     hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id],
     activeTrainerPetId:()=>dbCombat.activeTrainerPetId(),
     invokerAttackSpec:key=>dbClasses.invokerAttackSpec(key),
+    necromancerArt:(group,key)=>window.DiceboundAssets.resolveNecromancerArt(group,key),
     necromancerGraveCount:()=>dbClasses.necromancerGraveCount(),
     necromancerGraveThreshold:()=>dbClasses.necromancerGraveThreshold(),
     necromancerGraveReady:()=>dbClasses.necromancerGraveReady(),
@@ -4580,6 +4581,7 @@ dbReturnToRoadTraceReady=true;
     setCombatText:(...args)=>setCombatText(...args),
     addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),
+    playEffect:(key,options)=>dbCombatView.playNecromancerEffect(key,options),
     delay:ms=>delay(ms)
   });
 
