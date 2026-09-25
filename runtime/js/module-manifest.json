@@ -33,6 +33,7 @@
     "combat-enemy-policy",
     "combat-enemy-scaling-resolution",
     "combat-targeting",
+    "combat-allied-entities",
     "combat-presentation",
     "combat-encounter-lifecycle",
     "combat-turn-resolution",
@@ -449,6 +450,16 @@
       "requires": [],
       "provides": [
         "DiceboundCombatTargeting"
+      ]
+    },
+    {
+      "id": "combat-allied-entities",
+      "path": "js/combat/allied-entities.js",
+      "domain": "combat/allied-entity-lifecycle-capacity-persistence-contract",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatAllies"
       ]
     },
     {
@@ -1373,4 +1384,4 @@
     "modes",
     "ui"
   ]
-}
+}\n
