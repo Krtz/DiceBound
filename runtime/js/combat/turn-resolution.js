@@ -65,61 +65,113 @@
     return { id: "basic-attack", name: "Attack", hits: [1] };
   }
 
-  function enemyAttackFact(enemy, pattern, hitIndex = 1, outcome = "attempt", special = false) {
+  function enemyAttackFact(enemy, pattern, hitIndex = 1, outcome = "attempt", special = false, target = null) {
     const rt=requireRuntime(),enemies=rt.getCurrentEnemies()||[],index=enemies.indexOf(enemy),hitCount=Math.max(1,pattern?.hits?.length||1);
+    const resolvedTarget=target||{kind:"hero",id:"hero",name:"you",entity:rt.getPlayer()};
     return Object.freeze({
       attackerId:enemy?.id||null,
       enemyIndex:index>=0?index:0,
       attackId:String(pattern?.id||"basic-attack"),
       attackName:String(pattern?.name||"Attack"),
-      target:"player",
+      target:resolvedTarget.kind==="summon"?"summon":"player",
+      targetId:resolvedTarget.id||null,
+      targetName:resolvedTarget.name||null,
       hitIndex:Math.max(1,Number(hitIndex)||1),
       hitCount,
       outcome:String(outcome||"attempt"),
       special:!!special
     });
   }
-  function presentEnemyAttack(enemy, pattern, hitIndex, outcome, special=false) {
-    return requireRuntime().presentEnemyAttack(enemyAttackFact(enemy,pattern,hitIndex,outcome,special));
+  function presentEnemyAttack(enemy, pattern, hitIndex, outcome, special=false, target=null) {
+    return requireRuntime().presentEnemyAttack(enemyAttackFact(enemy,pattern,hitIndex,outcome,special,target));
+  }
+
+  function heroTarget() {
+    const player=requireRuntime().getPlayer();
+    return Object.freeze({kind:"hero",id:"hero",name:"you",entity:player,threatWeight:1});
+  }
+  function chooseNormalFriendlyTarget(enemy) {
+    const rt=requireRuntime();
+    if(enemy?.guardian||typeof rt.choosePlayerSideTarget!=="function")return heroTarget();
+    return rt.choosePlayerSideTarget(enemy)||heroTarget();
+  }
+  function friendlyTargetAlive(target) {
+    return !!target?.entity&&Number(target.entity.hp)>0;
+  }
+  function friendlyTargetName(target) {
+    return target?.kind==="summon"?(target.name||target.entity?.name||"summon"):"you";
   }
 
   async function resolveNormalHits(enemy, guarded, extraGuardPower, messages, roundState = { hit: false }, responseModifier = {}) {
-    const rt = requireRuntime(), player = rt.getPlayer(), pattern = enemyAttackPattern(enemy), dr = rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0));
+    const rt = requireRuntime(), player = rt.getPlayer(), pattern = enemyAttackPattern(enemy);
+    const attackTarget=chooseNormalFriendlyTarget(enemy),targetIsHero=attackTarget.kind!=="summon";
+    const heroDr=targetIsHero?rt.defenseDamageReduction((player.defense || 0) + (responseModifier.defenseBonus || 0)):0;
     let totalHpDamage = 0, totalDamage = 0, landedAny = false, blocked = 0, dodged = 0;
+
     for (let i = 0; i < pattern.hits.length; i += 1) {
       const hitIndex=i+1;
+      if (!friendlyTargetAlive(attackTarget)) break;
+
       if (rt.hasHeadphones() && roundState.hit) {
-        await presentEnemyAttack(enemy,pattern,hitIndex,"cancelled");
+        await presentEnemyAttack(enemy,pattern,hitIndex,"cancelled",false,attackTarget);
         messages.push(`🎧 Kratz Headphones drown out ${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}` : ""}.`);
         continue;
       }
-      if (rt.random() < rt.effectiveDodgeChance()) {
+
+      const dodgeChance=targetIsHero?rt.effectiveDodgeChance():Math.max(0,Number(attackTarget.entity?.dodge)||0);
+      if (rt.random() < dodgeChance) {
         dodged += 1;
-        const attackPresentation=presentEnemyAttack(enemy,pattern,hitIndex,"dodged");
-        successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name} is dodged.`);
+        const attackPresentation=presentEnemyAttack(enemy,pattern,hitIndex,"dodged",false,attackTarget);
+        if(targetIsHero)successfulDodge(messages, `${enemy.name} ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name} is dodged.`);
+        else messages.push(`${friendlyTargetName(attackTarget)} dodges ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name}.`);
         await attackPresentation;
         continue;
       }
-      if (player.combatShield > 0) {
+
+      if (targetIsHero && player.combatShield > 0) {
         player.combatShield -= 1; blocked += 1;
-        await presentEnemyAttack(enemy,pattern,hitIndex,"blocked");
+        await presentEnemyAttack(enemy,pattern,hitIndex,"blocked",false,attackTarget);
         messages.push(`Barrier blocks ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name}.`);
         continue;
       }
+
       const base = Math.max(1, (enemy.attack + rt.rand(-1, 1)) * pattern.hits[i]);
-      let raw = Math.max(1, Math.round(base * (1 - dr) - player.flatReduction));
-      if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9))));
-      raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
-      const hit = applyPlayerDamage(raw);
+      let raw;
+      if(targetIsHero){
+        raw = Math.max(1, Math.round(base * (1 - heroDr) - player.flatReduction));
+        if (guarded) raw = Math.max(0, Math.floor(raw * (1 - rt.clamp(player.guardPower + extraGuardPower + (responseModifier.guardPowerBonus || 0), 0, .9))));
+        raw = Math.max(0, Math.round(raw * (responseModifier.damageMultiplier || 1)));
+      }else{
+        // Summon Defense/barriers belong to the allied resolver. Guard and
+        // hero-only defense modifiers deliberately do not apply here.
+        raw = Math.max(0, Math.round(base * (responseModifier.damageMultiplier || 1)));
+      }
+
+      const hit=targetIsHero
+        ? applyPlayerDamage(raw)
+        : (typeof rt.damageFriendlyTarget==="function"
+            ? rt.damageFriendlyTarget(attackTarget,raw,{source:"enemy-attack",enemy,pattern,hitIndex})
+            : Object.freeze({shield:0,hp:0,total:0,blocked:false,defeated:false}));
+
+      if(hit.blocked){
+        blocked += 1;
+        await presentEnemyAttack(enemy,pattern,hitIndex,"blocked",false,attackTarget);
+        messages.push(`${friendlyTargetName(attackTarget)}'s Barrier blocks ${enemy.name}'s ${pattern.hits.length > 1 ? `${pattern.name} hit ${hitIndex}` : pattern.name}.`);
+        continue;
+      }
+
       if (hit.total > 0) roundState.hit = true;
-      totalDamage += hit.total; totalHpDamage += hit.hp; landedAny = landedAny || hit.total > 0;
-      await presentEnemyAttack(enemy,pattern,hitIndex,guarded?"guarded":"hit");
-      messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}/${pattern.hits.length}` : ""} ${guarded ? "hits your guard" : "hits"} for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
-      if (player.thorns > 0 && hit.total > 0) {
+      totalDamage += hit.total; totalHpDamage += hit.hp||hit.total; landedAny = landedAny || hit.total > 0;
+      await presentEnemyAttack(enemy,pattern,hitIndex,targetIsHero&&guarded?"guarded":"hit",false,attackTarget);
+      const targetText=targetIsHero?(guarded?"your guard":"you"):friendlyTargetName(attackTarget);
+      messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}/${pattern.hits.length}` : ""} hits ${targetText} for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
+
+      if (targetIsHero && player.thorns > 0 && hit.total > 0) {
         const returned = rt.damageEnemy(enemy, player.thorns, true); messages.push(`Spikes return ${returned}.`);
       }
-      if (player.hp <= 0) break;
+      if (!friendlyTargetAlive(attackTarget)) break;
     }
+
     if (pattern.drain && totalDamage > 0 && enemy.hp > 0) {
       const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.floor(totalDamage * pattern.drain)));
       enemy.hp += heal; if (heal) messages.push(`🩸 ${pattern.name} restores ${heal} HP to ${enemy.name}.`);
@@ -128,9 +180,14 @@
       const exact = totalDamage * enemy.lifeSteal + (enemy._lifeStealCarry || 0), whole = Math.floor(exact), heal = Math.min(enemy.maxHp - enemy.hp, whole);
       enemy._lifeStealCarry = exact - whole; if (heal > 0) { enemy.hp += heal; messages.push(`🩸 ${enemy.name} steals ${heal} HP back.`); }
     } else if (enemy.hp >= enemy.maxHp) enemy._lifeStealCarry = 0;
-    if (landedAny) { const proc = rt.enemyElementProc(enemy); if (proc) messages.push(proc); }
-    const result = { landedAny, totalHpDamage, totalDamage, blocked, dodged };
-    if (enemy?.devilBoss && result.totalDamage > 0 && pattern.burn) {
+
+    if (landedAny && (targetIsHero || friendlyTargetAlive(attackTarget))) {
+      const proc = rt.enemyElementProc(enemy,attackTarget);
+      if (proc) messages.push(proc);
+    }
+
+    const result = { landedAny, totalHpDamage, totalDamage, blocked, dodged, targetKind:attackTarget.kind, targetId:attackTarget.id||null };
+    if (enemy?.devilBoss && targetIsHero && result.totalDamage > 0 && pattern.burn) {
       player.devilBurnStacks = (player.devilBurnStacks || 0) + pattern.burn;
       messages.push(`🔥 ${pattern.name} adds ${pattern.burn} Hellfire stack${pattern.burn === 1 ? "" : "s"} (${player.devilBurnStacks} total).`);
     }
