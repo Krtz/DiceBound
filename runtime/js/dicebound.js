@@ -4538,7 +4538,20 @@ dbReturnToRoadTraceReady=true;
     addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),
     delay:ms=>delay(ms),
-    onDeath:entity=>{if(entity?.ownerClassId==='necromancer')dbClasses.necromancerBoneShrapnel(entity);}
+    onSpawn:(entity,replaced)=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonCreated({livingCount:dbCombatAllyResolution.living().length});
+      dbProgression.recordHighestSimultaneousSummons(dbCombatAllyResolution.living().length);
+      if(replaced)dbProgression.recordSummonReplacement(1);
+    },
+    onReplace:()=>{},
+    onDeath:entity=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonDeath(1);
+      if(entity?.ownerClassId==='necromancer')dbClasses.necromancerBoneShrapnel(entity);
+    },
+    onDamageTaken:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageTaken(amount);},
+    onHealingReceived:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonHealing(amount);},
+    onDamageDealt:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageDealt(amount);},
+    onKill:entity=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonKill(1);}
   });
 
   dbClasses.configureNecromancer({
