@@ -1287,7 +1287,23 @@ function returnToRoad(...args){
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
   let dbCombatConfusionResolution=null;
+  let dbCombatActionRegistry=null;
   let dbCombatTurns=null;
+
+  function dbCombatActionContext(){
+    return {player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode};
+  }
+  function dbCombatActionView(){
+    return dbCombatActionRegistry?.view?.(dbCombatActionContext())||[];
+  }
+  function dbExecuteCombatAction(id){
+    if(!dbCombatActionRegistry?.execute)return Promise.resolve({ok:false,reason:"registry-unavailable"});
+    return dbCombatActionRegistry.execute(id,dbCombatActionContext());
+  }
+  function dbActionForFixedSlot(slot){
+    return dbCombatActionView().find(action=>action?.metadata?.fixedSlot===slot)||null;
+  }
+
     async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}
   function applyCombatPlayerDamage(raw){return dbCombat.applyPlayerDamage(raw);}
 
@@ -1636,11 +1652,18 @@ function returnToRoad(...args){
 
   // Replace the four original action buttons once, removing old stacked listeners.
   function replaceCombatButton(id,handler){const old=$(id);if(!old)return null;const neo=old.cloneNode(true);old.replaceWith(neo);neo.addEventListener("click",handler);return neo;}
-  replaceCombatButton("attackBtn",()=>dbClasses.performAction("attack"));
+  function performFixedCombatSlot(slot,legacyAction){
+    if(classIdentityActive("necromancer")){
+      const action=dbActionForFixedSlot(slot);
+      if(action)return dbExecuteCombatAction(action.id);
+    }
+    return dbClasses.performAction(legacyAction);
+  }
+  replaceCombatButton("attackBtn",()=>performFixedCombatSlot("attack","attack"));
   replaceCombatButton("guardBtn",()=>dbClasses.performAction("guard"));
   replaceCombatButton("potionBtn",()=>dbClasses.performAction("potion"));
-  replaceCombatButton("ultimateBtn",()=>dbClasses.performAction("ultimate"));
-  specialAttackBtn.addEventListener("click",()=>dbClasses.performAction("special"));
+  replaceCombatButton("ultimateBtn",()=>performFixedCombatSlot("ultimate","ultimate"));
+  specialAttackBtn.addEventListener("click",()=>performFixedCombatSlot("special","special"));
 
   // ---- combat UI labels/resources -------------------------------------------
 
@@ -4463,6 +4486,8 @@ dbReturnToRoadTraceReady=true;
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
     onDragoonJump:()=>dbFriendDragoonJump(),
     performClassAction:kind=>dbClasses.performAction(kind),
+    getCombatActionView:()=>dbCombatActionView(),
+    executeCombatAction:id=>dbExecuteCombatAction(id),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms)
   });
@@ -4581,6 +4606,9 @@ dbReturnToRoadTraceReady=true;
       return applyCombatPlayerDamage(raw,options);
     },
     allyBasicAttack:(entity,options)=>dbCombatAllyResolution.basicAttack(entity,options),
+    graveCoil:()=>dbCombat.channel(),
+    summonAction:()=>dbCombat.spell(),
+    ultimateAction:()=>dbCombat.ultimate(),
     resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
     handleHeroDeath:()=>handlePlayerDeath(),
     setCombatText:(...args)=>setCombatText(...args),
@@ -4588,6 +4616,15 @@ dbReturnToRoadTraceReady=true;
     updateCombatUI:()=>updateCombatUI(),
     playEffect:(key,options)=>dbCombatView.playNecromancerEffect(key,options),
     delay:ms=>delay(ms)
+  });
+
+  const dbCombatActionRegistryOwner=window.DiceboundCombatActions;
+  if(!dbCombatActionRegistryOwner?.createRegistry)throw new Error('DiceBound requires the Combat action registry before dicebound.js');
+  dbCombatActionRegistry=dbCombatActionRegistryOwner.createRegistry();
+  dbCombatActionRegistry.register({
+    id:'class-necromancer',
+    priority:20,
+    getActions:()=>dbClasses.necromancerActionDescriptors()
   });
 
   const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;
