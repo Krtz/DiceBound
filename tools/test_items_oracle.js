@@ -97,35 +97,38 @@ async function main(){
     equipValue.first.element="coffee";
     equipValue.equipped.element="coffee";
 
-    // Beta 0.6.8.0 expands the authored ordinary base pool. Identity selection
-    // remains deterministic from the existing seed and consumes no additional
-    // gameplay RNG, but some frozen seeds now resolve to newly authored bases.
-    // Keep the 0.6.6.26 fixture immutable and enumerate only those deliberate
-    // identity/name deltas so rarity, affixes, item power, Legendary effects,
-    // RNG calls/final state and every unrelated field remain frozen.
+    // Beta 0.6.8.0 and 0.6.9.0 expand the authored ordinary base pool.
+    // Identity selection remains deterministic from the existing seed and
+    // consumes no additional gameplay RNG, but approved pool expansion may
+    // make a frozen seed resolve to a different authored base. Keep the
+    // 0.6.6.26 fixture immutable and enumerate only those deliberate identity
+    // / name deltas so rarity, affixes, item power, Legendary effects, RNG
+    // calls/final state and every unrelated field remain frozen.
     const authoredBaseDeltas={
-      "uncommon-random-sorcerer":{equipmentId:"ranger-trousers",name:"Vigorous Ranger Trousers"},
-      "rare-random-ranger":{equipmentId:"golden-fly",name:"Deathless Golden Fly of Blood"},
-      "epic-weapon-fighter":{equipmentId:"abyssal-wand",name:"Godslayer Abyssal Wand of Blood"},
-      "weapon-element-a":{equipmentId:"tongue-lash",name:"Reverberating Tongue Lash of Perfect Aim"},
-      "weapon-element-b":{equipmentId:"abyssal-wand",name:"Brutal Abyssal Wand of the Unerring Star"},
-      "legendary-random":{equipmentId:"cloudstep-sandals",name:"Ghoststep Cloudstep Sandals of Royal Luck"},
-      "repeat-a":{equipmentId:"falcon-band",name:"Reverberating Falcon Band of the Godslayer"},
-      "repeat-b":{equipmentId:"falcon-band",name:"Loaded Falcon Band of Perfect Aim"},
-      "legendary-undiscovered":{equipmentId:"jade-band",name:"Recursive Jade Band of Recursion"},
-      "legendary-all-seen":{equipmentId:"band-t-shirt",name:"Immortal Band T-Shirt of the Fortress"}
+      "uncommon-random-sorcerer":{equipmentId:"bogstrider-wraps",name:"Vigorous Bogstrider Wraps"},
+      "rare-random-ranger":{equipmentId:"lotus-pendant",name:"Deathless Lotus Pendant of Blood"},
+      "epic-weapon-fighter":{equipmentId:"adamant-claws",name:"Godslayer Adamant Claws of Blood"},
+      "weapon-element-a":{equipmentId:"10th-birthday-balloons",name:"Reverberating 10th Birthday Balloons of Perfect Aim"},
+      "weapon-element-b":{equipmentId:"ashcore-pyrestaff",name:"Brutal Ashcore Pyrestaff of the Unerring Star"},
+      "legendary-random":{equipmentId:"impossible-stilts",name:"Ghoststep Impossible Stilts of Royal Luck"},
+      "repeat-a":{equipmentId:"ring-pop-of-power",name:"Reverberating Ring-Pop of Power of the Godslayer"},
+      "repeat-b":{equipmentId:"distillers-ring",name:"Loaded Distiller's Ring of Perfect Aim"},
+      "legendary-undiscovered":{equipmentId:"consecrated-ring",name:"Recursive Consecrated Ring of Recursion"},
+      "legendary-all-seen":{equipmentId:"cardigan",name:"Immortal Cardigan of the Fortress"}
     };
     for(const [name,delta] of Object.entries(authoredBaseDeltas)){
       const entry=expected.find(c=>c.name===name);
       assert.ok(entry?.item,`missing frozen Items case for 0.6.8.0 authored-base delta: ${name}`);
       Object.assign(entry.item,delta);
     }
-    Object.assign(equipValue.second,{equipmentId:"tongue-lash",name:"Godslayer Tongue Lash of Recursion"});
-    equipValue.occupiedComparison='<span class="better">Overall quality: stronger</span><br><span class="better">+3% Echo Strike</span> · <span class="better">+8 Attack</span> · <span class="worse">−6% Boss Damage</span> · <span class="better">+3% Crit</span> · <span class="better">+8 Max HP</span>';
+    Object.assign(equipValue.first,{equipmentId:"rubber-chicken",name:"Recursive Rubber Chicken of Dragonbane"});
+    Object.assign(equipValue.equipped,{equipmentId:"rubber-chicken",name:"Recursive Rubber Chicken of Dragonbane"});
+    Object.assign(equipValue.second,{equipmentId:"10th-birthday-balloons",name:"Godslayer 10th Birthday Balloons of Recursion"});
+    equipValue.occupiedComparison='<span class="better">Overall quality: stronger</span><br><span class="better">+3% Echo Strike</span> · <span class="better">+7 Attack</span> · <span class="worse">−6% Boss Damage</span> · <span class="better">+4% Crit</span> · <span class="better">+8 Max HP</span> · <span class="better">+3% Dodge</span> · <span class="better">+100 Luck</span>';
     const treasureGenerated=expected.find(c=>c.name==="treasure-generated");
     assert.ok(treasureGenerated?.loot,"missing frozen Treasure Items case");
-    treasureGenerated.loot.name="Sovereign Bloodmarch Boots of Royal Luck";
-    treasureGenerated.loot.bonuses="+20 Luck+10% Gold+8% Dodge+9 Max HP+2% Boss Damage+2 Attack+1% Lifesteal";
+    treasureGenerated.loot.name="Sovereign Adamant Armoured Boots of Royal Luck";
+    treasureGenerated.loot.bonuses="+20 Luck+10% Gold+8% Dodge+7 Max HP+2% Boss Damage+3 Defense";
 
     // Beta 0.6.7.30 makes already-authored equipment Intrinsics participate in
     // the live equipment stat/presentation path. Preserve the frozen 0.6.6.26
@@ -143,7 +146,7 @@ async function main(){
       return copy;
     });
     assert.deepEqual(normalizeIntentionalIntrinsicPresentation(actual.cases.filter(c=>c.kind!=="reject")),expected);
-    console.log(`Items oracle PASS: ${actual.cases.length} released-output/state/RNG cases preserve ${fixture.baselineVersion} mechanics/RNG with explicit 0.6.7.30 Intrinsic and 0.6.8.0 authored-base deltas.`);
+    console.log(`Items oracle PASS: ${actual.cases.length} released-output/state/RNG cases preserve ${fixture.baselineVersion} mechanics/RNG with explicit 0.6.7.30 Intrinsic and 0.6.8.0/0.6.9.0 authored-base deltas.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }
