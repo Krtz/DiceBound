@@ -29,7 +29,7 @@ const player={
 let busy=false,turn=7,enemyResponseCalls=0,heroDeathCalls=0;
 let enemies=[{id:"a",name:"A",hp:100,maxHp:100},{id:"b",name:"B",hp:100,maxHp:100}];
 let allies=[];
-let history=[],combatText="",effects=[],spawned=[],allyAttacks=[],heroDamage=0,allyDamage=0,enemyDamage=0;
+let history=[],combatText="",effects=[],spawned=[],allyAttacks=[],allyEffectHits=[],heroDamage=0,allyDamage=0,enemyDamage=0;
 
 function livingEnemies(){return enemies.filter(enemy=>enemy.hp>0);}
 function spawnAlly(spec){
@@ -68,7 +68,11 @@ necro.configure({
   selectEnemy:()=>{},
   spawnAlly,
   livingAllies:()=>allies.filter(entity=>entity.hp>0),
-  damageEnemy,
+  allyEffectDamage:(entity,enemy,amount,options={})=>{
+    const before=enemy.hp,dealt=damageEnemy(enemy,amount);
+    allyEffectHits.push({sourceId:entity.instanceId,targetId:enemy.id,total:dealt,killed:before>0&&enemy.hp<=0,options:{...options}});
+    return {total:dealt,killed:before>0&&enemy.hp<=0};
+  },
   damageAlly,
   damageHero,
   allyBasicAttack:async(entity,options={})=>{
@@ -126,6 +130,8 @@ assert.equal(spec.onDeathId,"necromancer:bone-shrapnel");
   const shrapnel=necro.boneShrapnel(dead);
   assert.equal(shrapnel.triggered,true);
   assert.equal(enemyDamage,8,"20% of 20 Attack must deal 4 to each of two enemies");
+  assert.equal(allyEffectHits.length,2,"Bone Shrapnel enemy damage must use semantic allied-effect attribution");
+  assert(allyEffectHits.every(hit=>hit.sourceId===dead.instanceId&&hit.options.source==="bone-shrapnel"),"Bone Shrapnel must attribute every enemy hit to the dead Skeleton source");
   assert.equal(allyDamage,2,"10% of 20 Attack must deal 2 to each other living ally");
   assert.equal(heroDamage,2,"10% of 20 Attack must hit the hero");
   assert(effects.includes("boneShrapnel"),"Bone Shrapnel must play authored VFX");
