@@ -57,6 +57,15 @@ assert(spawns === 2 && resolution.living().length === 2, "spawn callbacks and ro
   assert(current === enemies[1], "summon kill should reconcile selected enemy");
   assert(kills === 1 && damageDealt === 4, "summon kill/damage attribution should be exact");
 
+  // A summon death effect is still damage by that summon even though its own HP is already zero.
+  const killsBeforeEffect=kills,damageBeforeEffect=damageDealt;
+  enemies[1].hp=3;current=enemies[1];
+  const deathEffectSource={...first.entity,hp:0};
+  const deathEffect=resolution.effectDamage(deathEffectSource,enemies[1],5,{source:"death-effect",deathEffect:true});
+  assert(deathEffect.total===3&&deathEffect.killed,"allied death effect must resolve enemy damage and kill");
+  assert(kills===killsBeforeEffect+1&&damageDealt===damageBeforeEffect+3,"allied death effect must retain summon damage/kill attribution");
+
+  enemies[1].hp=20;current=enemies[1];
   turn = 4;
   await resolution.automaticPhase();
   assert(enemies[1].hp < 20, "delayed summon should join later phase");
