@@ -67,6 +67,14 @@ registry.register({
 });
 assert(!registry.view({}).some(action => action.id === "secret"), "hidden actions must not render");
 
+const compositionSource=fs.readFileSync(path.join(root,"runtime/js/dicebound.js"),"utf8");
+const fixedStart=compositionSource.indexOf("function performFixedCombatSlot(");
+const fixedEnd=compositionSource.indexOf("replaceCombatButton(\"attackBtn\"",fixedStart);
+const fixedAdapter=compositionSource.slice(fixedStart,fixedEnd);
+assert(fixedStart>=0&&fixedEnd>fixedStart,"fixed combat-slot composition adapter must remain explicit");
+assert(fixedAdapter.includes("dbActionForFixedSlot(slot)"),"fixed combat slots must consult the composable action registry");
+assert(!/necromancer/i.test(fixedAdapter),"fixed combat-slot routing must stay class-agnostic rather than reopening a Necromancer branch");
+
 (async () => {
   const result = await registry.execute("grave-coil", { mana: 80 });
   assert(result.ok && result.result === "coil", "registry should execute authoritative resolver");
