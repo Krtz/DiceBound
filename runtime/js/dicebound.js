@@ -4864,6 +4864,8 @@ dbReturnToRoadTraceReady=true;
     startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>dbCombat.attack(...args),guard:(...args)=>dbCombat.guard(...args),channel:(...args)=>dbCombat.channel(...args),spell:(...args)=>dbCombat.spell(...args),ultimate:(...args)=>dbCombat.ultimate(...args),petTurn:(...args)=>dbCombat.petTurn(...args),enemyResponse:(...args)=>resolveEnemyResponse(...args),
     element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{})),
     spawnAlly:(spec,options={})=>dbCombatAllyResolution.spawn(dbCombatOracleClone(spec||{}),options),allies:()=>dbCombatOracleClone(dbCombatAllyResolution.living()),
+    damageAlly:(instanceId,amount,options={})=>dbCombatAllyResolution.damage(instanceId,amount,options),healAlly:(instanceId,amount,options={})=>dbCombatAllyResolution.heal(instanceId,amount,options),
+    floatingEntries:()=>dbCombatOracleClone(dbCombatView.floatingEntries?.()||[]),
     registerActionProvider:provider=>dbCombatActionRegistry.register(provider),actionView:()=>dbCombatOracleClone(dbCombatActionView()),refresh:()=>updateCombatUI()
   });
 
