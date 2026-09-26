@@ -4598,7 +4598,7 @@ dbReturnToRoadTraceReady=true;
     selectEnemy:index=>setCurrentEnemy(index),
     spawnAlly:(spec,options)=>dbCombatAllyResolution.spawn(spec,options),
     livingAllies:()=>dbCombatAllyResolution.living(),
-    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    allyEffectDamage:(entity,enemy,amount,options)=>dbCombatAllyResolution.effectDamage(entity,enemy,amount,options),
     damageAlly:(instanceId,amount,options)=>dbCombatAllyResolution.damage(instanceId,amount,options),
     damageHero:(amount,options={})=>{
       const reduction=defenseDamageReduction(Math.max(0,Number(player.defense)||0));
