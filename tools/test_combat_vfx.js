@@ -175,7 +175,7 @@ assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEn
 assert.match(monolith, /playDonutRain:payload=>dbCombatView\.playDonutRain\(payload\)/, "Element owner composition must inject the authored Donut presentation callback");
 assert.match(elementOwner, /if \(key === "donut" && result\) rt\.playDonutRain\(\{ origin: "player", enemy: target \}\);/, "Player-origin Donut presentation is not routed with its real target");
 assert.doesNotMatch(monolith, /db064DonutEnemyElementProcBase|db064DonutTriggerElementBase/, "Retired Donut mechanic/VFX wrappers must not survive in the monolith");
-assert.match(elementOwner, /if \(isDonut && result\) rt\.playDonutRain\(\{ origin: "enemy", enemy \}\);/, "Enemy-origin Donut proc must play the authored rain after a real completed proc");
+assert.match(elementOwner, /if \(isDonut && result\) rt\.playDonutRain\(\{ origin: "enemy", enemy, targetKind:friendly\.kind, targetId:friendly\.id \}\);/, "Enemy-origin Donut proc must play authored rain against the resolved semantic hero/summon target");
 assert.doesNotMatch(monolith, /function dbPlayNatureVfx/, "Nature DOM presentation remained duplicated in the monolith");
 assert.doesNotMatch(monolith, /function db064PlayDonutRain/, "Donut DOM presentation remained duplicated in the monolith");
 assert.doesNotMatch(fs.readFileSync(path.join(root, "runtime", "js", "combat", "vfx.js"), "utf8"), /backgroundPosition: donutFramePosition/, "Donut must use its whole authored frames rather than CSS spritesheet cropping");
