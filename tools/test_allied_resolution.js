@@ -12,12 +12,12 @@ for (const file of ["runtime/js/combat/allied-entities.js","runtime/js/combat/ta
 const allies = context.window.DiceboundCombatAllies;
 const resolution = context.window.DiceboundCombatAllyResolution;
 let roster = allies.createRoster({ capacity: 2 });
-const player = { name: "Hero", hp: 30, maxHp: 30 };
+const player = { name: "Hero", hp: 30, maxHp: 30, defense: 0, flatReduction: 0 };
 const enemies = [
   { id: "a", name: "A", hp: 4, maxHp: 4, defense: 0 },
   { id: "b", name: "B", hp: 20, maxHp: 20, defense: 0 }
 ];
-let current = enemies[0], turn = 3, spawns = 0, deaths = 0, kills = 0, damageDealt = 0;
+let current = enemies[0], turn = 3, spawns = 0, deaths = 0, kills = 0, damageDealt = 0, randomValue = 0.9;
 
 function assert(condition, message) { if (!condition) throw new Error(message); }
 function livingEnemies() { return enemies.filter(enemy => enemy.hp > 0); }
@@ -31,10 +31,11 @@ resolution.configure({
   getCurrentEnemies: () => enemies,
   livingEnemies,
   selectEnemy: index => { current = enemies[index] || null; },
-  random: () => 0.9,
+  random: () => randomValue,
   rollTieredProc: chance => chance >= 1 ? Math.floor(chance) : 0,
   defenseDamageReduction: defense => Math.min(.8, defense * .03),
   damageEnemy: (enemy, raw) => { const dealt = Math.min(enemy.hp, Math.max(0, Math.round(raw))); enemy.hp -= dealt; return dealt; },
+  damageHero: raw => { const dealt = Math.min(player.hp, Math.max(0, Math.round(raw))); player.hp -= dealt; return { total: dealt, hp: dealt }; },
   setCombatText: () => {},
   addCombatHistory: () => {},
   updateCombatUI: () => {},
@@ -71,6 +72,47 @@ assert(spawns === 2 && resolution.living().length === 2, "spawn callbacks and ro
   const before = resolution.living()[0].hp;
   const healed = resolution.heal(survivor.instanceId, 2, { source: "test" });
   assert(healed === 2 && resolution.living()[0].hp === before + 2, "summon healing should use own HP");
+
+  // Harmful summon statuses resolve on the summon action phase.
+  roster = allies.createRoster({ capacity: 2 });
+  enemies[0].hp = 50; enemies[0].maxHp = 50; enemies[1].hp = 0; current = enemies[0]; turn = 10;
+  const statusSummon = resolution.spawn({
+    archetypeId:"status-test",name:"Status Skeleton",maxHp:20,hp:20,attack:4,defense:0,actsOnSummonTurn:true
+  },{turn}).entity;
+  resolution.applyStatus(statusSummon.instanceId,"burn",{stacks:2});
+  resolution.applyStatus(statusSummon.instanceId,"poison",{stacks:2,power:.12});
+  const hpBeforeDots=resolution.living()[0].hp;
+  await resolution.automaticPhase();
+  assert(resolution.living()[0].hp < hpBeforeDots,"Burn/Poison must damage summons before their action");
+
+  const enemyBeforeSkip=enemies[0].hp;
+  resolution.applyStatus(statusSummon.instanceId,"skip",{actions:1});
+  await resolution.automaticPhase();
+  assert(enemies[0].hp === enemyBeforeSkip,"Frozen/Stunned summon must lose its action");
+  assert((resolution.statusSnapshot(statusSummon.instanceId).skipActions||0)===0,"control skip must consume exactly one action");
+
+  // Confusion is same-side and can hit the hero.
+  resolution.applyStatus(statusSummon.instanceId,"confusion",{actions:1});
+  const heroBefore=player.hp; randomValue=0;
+  const heroConfusion=await resolution.resolveEntityTurnStatus(resolution.living().find(x=>x.instanceId===statusSummon.instanceId));
+  assert(heroConfusion.reason==="confusion"&&heroConfusion.confusion.targetKind==="hero","confused summon must be able to target the hero");
+  assert(player.hp < heroBefore,"confused summon hero-target must deal damage");
+  assert((resolution.statusSnapshot(statusSummon.instanceId).confusionActions||0)===0,"summon Confusion must consume exactly one action");
+
+  // With one summon, the other valid same-side target is itself.
+  resolution.applyStatus(statusSummon.instanceId,"confusion",{actions:1});
+  const selfBefore=resolution.living()[0].hp; randomValue=.999;
+  const selfConfusion=await resolution.resolveEntityTurnStatus(resolution.living()[0]);
+  assert(selfConfusion.confusion.targetKind==="summon"&&selfConfusion.confusion.target===statusSummon.instanceId,"confused summon must be able to hit itself");
+  assert(resolution.living()[0].hp < selfBefore,"self-targeted Confusion must damage the summon");
+
+  // With two summons, a confused later summon can strike the other summon.
+  const other=resolution.spawn({archetypeId:"other",name:"Other Skeleton",maxHp:20,hp:20,attack:3,actsOnSummonTurn:true},{turn}).entity;
+  resolution.applyStatus(other.instanceId,"confusion",{actions:1});
+  const firstBefore=resolution.living().find(x=>x.instanceId===statusSummon.instanceId).hp; randomValue=.5;
+  const otherConfusion=await resolution.resolveEntityTurnStatus(resolution.living().find(x=>x.instanceId===other.instanceId));
+  assert(otherConfusion.confusion.target===statusSummon.instanceId,"confused summon must be able to target another summon");
+  assert(resolution.living().find(x=>x.instanceId===statusSummon.instanceId).hp < firstBefore,"other-summon Confusion target must take damage");
 
   console.log("Allied combat resolution: PASS");
 })().catch(error => {
