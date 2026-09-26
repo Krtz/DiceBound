@@ -4580,8 +4580,16 @@ dbReturnToRoadTraceReady=true;
       if(entity?.countsAsSummon!==false)dbProgression.recordSummonDeath(1);
       if(entity?.ownerClassId==='necromancer')dbClasses.necromancerBoneShrapnel(entity);
     },
-    onDamageTaken:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageTaken(amount);},
-    onHealingReceived:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonHealing(amount);},
+    onDamageTaken:(entity,amount,context={})=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageTaken(amount);
+      const target={unit:'ally',allyId:entity?.instanceId};
+      if(context?.blocked)dbCombatView.floatCombatText?.({kind:'blocked',target,label:'Barrier'});
+      else if(Number(amount)>0)dbCombatView.floatCombatText?.({kind:'damage',amount,target});
+    },
+    onHealingReceived:(entity,amount)=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonHealing(amount);
+      if(Number(amount)>0)dbCombatView.floatCombatText?.({kind:'heal',amount,target:{unit:'ally',allyId:entity?.instanceId}});
+    },
     onDamageDealt:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageDealt(amount);},
     onKill:entity=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonKill(1);}
   });
