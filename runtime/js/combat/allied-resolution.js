@@ -168,6 +168,19 @@
     return owner().living(roster());
   }
 
+  function effectDamage(entity, target, raw, options = {}) {
+    if (!entity || !target || Number(target.hp) <= 0) {
+      return Object.freeze({ total: 0, killed: false });
+    }
+    const before = Math.max(0, Number(target.hp) || 0);
+    const dealt = Math.max(0, Number(rt().damageEnemy(target, raw, !!options.ignoreDefense)) || 0);
+    callback("onDamageDealt", entity, dealt, { ...options, target, effect: true });
+    const killed = before > 0 && Number(target.hp) <= 0;
+    if (killed) callback("onKill", entity, target, { ...options, effect: true });
+    reconcileEnemyTarget(target);
+    return Object.freeze({ total: dealt, killed });
+  }
+
   function selectedEnemy() {
     const selected = rt().getCurrentEnemy();
     if (selected?.hp > 0) return selected;
@@ -383,6 +396,7 @@
     statusSnapshot,
     healLivingByFraction,
     living,
+    effectDamage,
     basicAttack,
     resolveEntityTurnStatus,
     automaticPhase,
