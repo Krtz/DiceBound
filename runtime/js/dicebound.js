@@ -1224,7 +1224,7 @@ function returnToRoad(...args){
     if(!(await db068ConfirmEchoForRun()))return false;
     return dbRun.startFreshRun(options);
   }
-  function showEnd(victory){dbRunClearCheckpoint();rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){dbRunClearCheckpoint();dbCombatAllyResolution?.clearEncounter?.({preserveRunPersistent:false});rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
     dbPowerups.configure({
     getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
@@ -4216,7 +4216,7 @@ dbReturnToRoadTraceReady=true;
     presentVictory:payload=>BattleVictoryUI.present(BattleVictoryState.create(payload)),
     hideCombatOverlay:()=>$('combatOverlay')?.classList.add('hidden'),
     resetVictoryPresentation:()=>BattleVictoryUI.reset(),
-    clearEncounterState:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
+    clearEncounterState:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;dbCombatAllyResolution.clearEncounter({preserveRunPersistent:true});},
     grantXp:xp=>grantXp(xp),
     getPendingLevelUps:()=>pendingLevelUps,
     openLevelUp:done=>dbPowerups.openLevelUp(done),
