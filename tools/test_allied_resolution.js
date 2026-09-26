@@ -123,6 +123,17 @@ assert(spawns === 2 && resolution.living().length === 2, "spawn callbacks and ro
   assert(otherConfusion.confusion.target===statusSummon.instanceId,"confused summon must be able to target another summon");
   assert(resolution.living().find(x=>x.instanceId===statusSummon.instanceId).hp < firstBefore,"other-summon Confusion target must take damage");
 
+  // Combat boundaries discard encounter summons while retaining only explicit
+  // future run-persistent allies; run end then clears the entire allied side.
+  roster=allies.createRoster({capacity:2});
+  resolution.spawn({archetypeId:"encounter-only",name:"Encounter Skeleton",maxHp:10,hp:10,persistence:"encounter"},{turn});
+  resolution.spawn({archetypeId:"run-ally",name:"Run Ally",maxHp:12,hp:9,persistence:"run",resources:{mana:4}},{turn});
+  resolution.clearEncounter({preserveRunPersistent:true});
+  assert(resolution.living().length===1&&resolution.living()[0].archetypeId==="run-ally","victory boundary must discard encounter summons and preserve explicit run allies");
+  assert(resolution.living()[0].hp===9&&resolution.living()[0].resources.mana===4,"preserved run ally must keep HP/resources at the combat boundary");
+  resolution.clearEncounter({preserveRunPersistent:false});
+  assert(resolution.living().length===0,"run end must clear every allied combat entity");
+
   console.log("Allied combat resolution: PASS");
 })().catch(error => {
   console.error(error);
