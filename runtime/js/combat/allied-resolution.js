@@ -7,7 +7,7 @@
   function configure(next = {}) {
     const required = [
       "getRoster","setRoster","getPlayer","getEncounterTurn","getCurrentEnemy","getCurrentEnemies","livingEnemies","selectEnemy",
-      "random","rollTieredProc","defenseDamageReduction","damageEnemy","setCombatText","addCombatHistory","updateCombatUI","delay"
+      "random","rollTieredProc","defenseDamageReduction","damageEnemy","damageHero","setCombatText","addCombatHistory","updateCombatUI","delay"
     ];
     for (const name of required) if (typeof next[name] !== "function") throw new Error(`Allied combat resolution missing ${name}().`);
     runtime = next;
@@ -228,6 +228,105 @@
     return basicAttack(entity);
   }
 
+  function friendlyTargetName(target) {
+    if (!target) return "an ally";
+    return target.kind === "hero" ? "the hero" : (target.name || target.entity?.name || "an ally");
+  }
+
+  function chooseFriendlyTarget(candidates = []) {
+    const list = candidates.filter(target => target?.entity && Number(target.entity.hp) > 0);
+    if (!list.length) return null;
+    if (list.length === 1) return list[0];
+    const roll = Math.max(0, Math.min(.999999999, Number(rt().random()) || 0));
+    return list[Math.floor(roll * list.length)] || list[list.length - 1];
+  }
+
+  function consumeControlStatus(instanceId, key) {
+    const state = roster(), entity = entityById(state, instanceId);
+    if (!entity || entity.hp <= 0) return null;
+    const statuses = entity.statuses || (entity.statuses = {});
+    const count = Math.max(0, Math.round(Number(statuses[key]) || 0));
+    if (!count) return null;
+    statuses[key] = Math.max(0, count - 1);
+    commit(state);
+    return entity;
+  }
+
+  function tickDamageStatuses(instanceId) {
+    let current = findFresh(instanceId);
+    if (!current || current.hp <= 0) return Object.freeze({ notes: [], defeated: false, total: 0 });
+    const notes = [];
+    let total = 0;
+    const burn = Math.min(10, Math.max(0, Number(current.statuses?.burnStacks) || 0));
+    if (burn > 0) {
+      const raw = Math.max(1, Math.ceil(current.maxHp * .01 * burn));
+      const hit = damage(instanceId, raw, { source: "burn", ignoreDefense: true, ignoreBarrier: true });
+      total += Math.max(0, Number(hit.total) || 0);
+      notes.push(`🔥 Burn ${burn}/10 scorches ${current.name} for ${hit.total} (${burn}% max HP).`);
+      current = findFresh(instanceId);
+      if (!current || current.hp <= 0) return Object.freeze({ notes, defeated: true, total });
+    }
+    const poison = Math.max(0, Number(current.statuses?.poisonStacks) || 0);
+    if (poison > 0) {
+      const power = Math.max(0, Number(current.statuses?.poisonPower) || .12);
+      const raw = Math.max(1, Math.round(Math.max(1, current.maxHp * .025) * power * poison));
+      const hit = damage(instanceId, raw, { source: "poison", ignoreDefense: true, ignoreBarrier: true });
+      total += Math.max(0, Number(hit.total) || 0);
+      notes.push(`☠️ Poison ${poison} deals ${hit.total} damage to ${current.name}.`);
+      current = findFresh(instanceId);
+      if (!current || current.hp <= 0) return Object.freeze({ notes, defeated: true, total });
+    }
+    for (const note of notes) rt().addCombatHistory(note);
+    if (notes.length) rt().updateCombatUI();
+    return Object.freeze({ notes, defeated: false, total });
+  }
+
+  function findFresh(instanceId) {
+    return entityById(roster(), instanceId);
+  }
+
+  async function resolveConfusedAction(entity) {
+    const consumed = consumeControlStatus(entity.instanceId, "confusionActions");
+    if (!consumed) return null;
+    const source = findFresh(entity.instanceId);
+    if (!source || source.hp <= 0) return Object.freeze({ kind: "confusion", skipped: true, defeated: true });
+    const target = chooseFriendlyTarget(playerSideTargets());
+    if (!target) return Object.freeze({ kind: "confusion", skipped: true, target: null, damage: 0 });
+    const raw = Math.max(1, Math.round(Number(source.attack) || 1));
+    const hit = target.kind === "hero"
+      ? rt().damageHero(raw, { source: "summon-confusion", sourceEntityId: source.instanceId })
+      : damage(target.id, raw, { source: "summon-confusion", sourceEntityId: source.instanceId });
+    const dealt = Math.max(0, Number(hit?.total ?? hit) || 0);
+    const message = `🧮 Confusion! ${source.name}'s attack misfires into ${friendlyTargetName(target)} for ${dealt}.`;
+    rt().addCombatHistory(message);
+    rt().setCombatText(message);
+    rt().updateCombatUI();
+    return Object.freeze({ kind: "confusion", skipped: true, target: target.id, targetKind: target.kind, damage: dealt });
+  }
+
+  async function resolveEntityTurnStatus(entity) {
+    const dots = tickDamageStatuses(entity.instanceId);
+    let current = findFresh(entity.instanceId);
+    if (!current || current.hp <= 0 || dots.defeated) return Object.freeze({ skip: true, reason: "defeated", dots });
+
+    if ((current.statuses?.skipActions || 0) > 0) {
+      consumeControlStatus(current.instanceId, "skipActions");
+      current = findFresh(current.instanceId);
+      const message = `⏸️ ${current.name} is Frozen/Stunned and loses this action.`;
+      rt().addCombatHistory(message);
+      rt().setCombatText(message);
+      rt().updateCombatUI();
+      return Object.freeze({ skip: true, reason: "control", dots });
+    }
+
+    if ((current.statuses?.confusionActions || 0) > 0) {
+      const confusion = await resolveConfusedAction(current);
+      return Object.freeze({ skip: true, reason: "confusion", dots, confusion });
+    }
+
+    return Object.freeze({ skip: false, reason: null, dots });
+  }
+
   async function automaticPhase() {
     const turn = rt().getEncounterTurn();
     const phaseIds = living()
@@ -238,8 +337,16 @@
     for (const instanceId of phaseIds) {
       const state = roster(), entity = entityById(state, instanceId);
       if (!entity || entity.hp <= 0 || !rt().livingEnemies().length) continue;
-      const result = await resolveAutomaticAction(entity);
-      results.push(Object.freeze({ instanceId, result }));
+      const status = await resolveEntityTurnStatus(entity);
+      if (status.skip) {
+        results.push(Object.freeze({ instanceId, result: null, status }));
+        if (rt().livingEnemies().length) await rt().delay(120);
+        continue;
+      }
+      const fresh = findFresh(instanceId);
+      if (!fresh || fresh.hp <= 0 || !rt().livingEnemies().length) continue;
+      const result = await resolveAutomaticAction(fresh);
+      results.push(Object.freeze({ instanceId, result, status }));
       if (rt().livingEnemies().length) await rt().delay(120);
     }
     return Object.freeze(results);
@@ -269,6 +376,7 @@
     healLivingByFraction,
     living,
     basicAttack,
+    resolveEntityTurnStatus,
     automaticPhase,
     playerSideTargets,
     clearEncounter
