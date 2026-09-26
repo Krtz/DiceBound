@@ -1,0 +1,1 @@
+16 Uncommon powerup icons generated using built-in ImageGen on 2026-09-25. Subjects checked against powerup registry at d84cd20. See PROMPTS.json for reproducible prompts and intended asset paths. All PNGs decoded and all four corners checked for alpha transparency. Pending runtime/UI integration; no gameplay changes.

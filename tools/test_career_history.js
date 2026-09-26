@@ -17,6 +17,10 @@ const old={stats:{runsStarted:7,runsFinished:6,boardClears:{"ranger:normal:b3":2
 career.ensure(old);
 assert.equal(old.stats.runsStarted,7);
 assert.equal(old.stats.largestHit,0);
+assert.equal(old.stats.summonsCreated,0);
+assert.equal(old.stats.summonDeaths,0);
+assert.equal(old.stats.summonKills,0);
+assert.equal(old.stats.highestSimultaneousSummons,0);
 assert.deepEqual([...career.history(old)],[],"historical saves must not fabricate old run records");
 assert.equal(old.career.nextRunId,1);
 
@@ -55,6 +59,24 @@ assert.equal(meta.stats.powerupsTaken,1);
 assert.equal(meta.stats.elementalProcs,2);
 assert.equal(meta.stats.criticalStrikes,1);
 assert.equal(meta.stats.echoStrikes,1);
+
+career.recordSummonCreated(meta,{livingCount:1});
+career.recordSummonCreated(meta,{livingCount:2});
+career.recordSummonDeath(meta,1);
+career.recordSummonKill(meta,3);
+career.recordSummonReplacement(meta,2);
+career.recordSummonDamageDealt(meta,123);
+career.recordSummonDamageTaken(meta,45);
+career.recordSummonHealing(meta,17);
+career.recordHighestSimultaneousSummons(meta,2);
+assert.equal(meta.stats.summonsCreated,2);
+assert.equal(meta.stats.summonDeaths,1);
+assert.equal(meta.stats.summonKills,3);
+assert.equal(meta.stats.summonReplacements,2);
+assert.equal(meta.stats.summonDamageDealt,123);
+assert.equal(meta.stats.summonDamageTaken,45);
+assert.equal(meta.stats.summonHealingReceived,17);
+assert.equal(meta.stats.highestSimultaneousSummons,2);
 
 career.recordEnemyDefeats(meta,[
   {id:"demon",name:"Demon of Fire"},

@@ -101,6 +101,14 @@
   function recordElementProc(count=1){return CAREER.recordElementProc(meta(),count);}
   function recordStrike(result){return CAREER.recordStrike(meta(),result);}
   function recordEnemyDefeats(enemies,context={}){return CAREER.recordEnemyDefeats(meta(),enemies,context);}
+  function recordSummonCreated(facts={}){const value=CAREER.recordSummonCreated(meta(),facts);call('saveMeta');return value;}
+  function recordSummonDeath(count=1){const value=CAREER.recordSummonDeath(meta(),count);call('saveMeta');return value;}
+  function recordSummonKill(count=1){const value=CAREER.recordSummonKill(meta(),count);return value;}
+  function recordSummonReplacement(count=1){const value=CAREER.recordSummonReplacement(meta(),count);call('saveMeta');return value;}
+  function recordSummonDamageDealt(amount){return CAREER.recordSummonDamageDealt(meta(),amount);}
+  function recordSummonDamageTaken(amount){return CAREER.recordSummonDamageTaken(meta(),amount);}
+  function recordSummonHealing(amount){return CAREER.recordSummonHealing(meta(),amount);}
+  function recordHighestSimultaneousSummons(count){return CAREER.recordHighestSimultaneousSummons(meta(),count);}
   function recordVitals(facts={}){return CAREER.recordVitals(meta(),facts);}
 
   function legacyXpForLevel(level){return call('legacyXpForLevel',level);}
@@ -212,11 +220,13 @@
     if(kind==='devilBossKills')return (state.devilBossKills||0)>=Number(parts[1]||0);
     if(kind==='devilHornsFound')return !!state.devilHornsFound;
     if(kind==='potionsUsed')return (stats.potionsUsed||0)>=Number(parts[1]||0);
+    if(kind==='summonsCreated')return (stats.summonsCreated||0)>=Number(parts[1]||0);
     return !!state.achievements?.[a.id];
   }
 
   function achievementConditionText(input){
     const a=achievementEntry(input);if(!a)return null;
+    if(a.description)return String(a.description);
     const p=String(a.condition||'').split(':'),kind=p[0],classRegistry=classes(),elements=call('getElements');
     if(kind==='runsStarted')return 'Begin any run.';
     if(kind==='boardClear')return `Clear Board ${p[2]} as ${classRegistry[p[1]]?.name||p[1]}.`;
@@ -237,6 +247,7 @@
     if(kind==='devilBossKills')return `Defeat the Pale Devil ${p[1]} time${Number(p[1])===1?'':'s'}.`;
     if(kind==='devilHornsFound')return "Find the Devil's Horns Omega hat.";
     if(kind==='potionsUsed')return `Consume ${p[1]} potions across all runs.`;
+    if(kind==='summonsCreated')return `Create ${Number(p[1]).toLocaleString()} real summoned allies across your career.`;
     if(kind==='invoker'){
       const copy={
         'first-invoke':'Invoke your first three-orb spell as Invoker.',
@@ -355,7 +366,8 @@
     owner:OWNER,apiVersion:2,configure,inspect,
     talentRank,gameplayTalentRank,setRunTalentSnapshot,runTalentSnapshot,withRunTalentSnapshot,talentAvailable,allocatedTalentPoints,repairTalentPrerequisites,purchaseTalent,
     heirloomLoadoutCapacity,heirloomStorageUnlocked,heirloomStorageCapacity,heirloomStorageMilestones,
-    careerStats,runHistory,careerInspect,recordRunStarted,recordBoardClear,hasBoardClear,recordDamageDealt,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,recordPotionUse,recordPowerupTaken,recordElementProc,recordStrike,recordEnemyDefeats,recordVitals,
+    careerStats,runHistory,careerInspect,recordRunStarted,recordBoardClear,hasBoardClear,recordDamageDealt,recordHealing,recordDamageTaken,recordGoldEarned,recordGoldSpent,recordPotionUse,recordPowerupTaken,recordElementProc,recordStrike,recordEnemyDefeats,
+    recordSummonCreated,recordSummonDeath,recordSummonKill,recordSummonReplacement,recordSummonDamageDealt,recordSummonDamageTaken,recordSummonHealing,recordHighestSimultaneousSummons,recordVitals,
     legacyXpForLevel,grantLegacyXp,finalizeRun,prestigeOffer,completePrestige,prestigeInspect,prestigePurchase,prestigeRefundAll,prestigeFormatStats,
     crucibleNormalize,crucibleBuilt,crucibleInspect,crucibleEffect,crucibleWarning,crucibleRunEffectId,crucibleView,crucibleSacrificePreview,crucibleSacrifice,crucibleSelect,
     hasAnyBoardClear:anyBoardClear,achievementDone,achievementConditionText,achievementRewardText,achievementGateConditionText,achievementGateUnlocked,heroMasteryEntries,achievementCount,

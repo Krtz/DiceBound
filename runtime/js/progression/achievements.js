@@ -207,6 +207,14 @@
       "condition": "potionsUsed:50"
     },
     {
+      "id": "nice",
+      "category": "secrets",
+      "name": "Nice.",
+      "description": "You know what you did.",
+      "condition": "summonsCreated:69",
+      "secret": true
+    },
+    {
       "id": "invoker-first-principles",
       "category": "builds",
       "name": "First Principles",

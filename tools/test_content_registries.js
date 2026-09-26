@@ -55,16 +55,16 @@ for (const id of ["axels-coffee-mug", "kratz-headphones", "kellys-jean-jacket"])
 }
 assert.equal(equipment.special["devils-horns"].rarity, "omega");
 assert.equal(equipment.special["impossible-weapon"].setName, "Impossible Road");
-assert.equal(equipment.identities.length, 58, "all approved authored equipment bases must remain part of the one equipment registry");
+assert.equal(equipment.identities.length, 98, "all approved authored equipment bases, including the 40 integrated 0.6.9.0 identities, must remain part of the one equipment registry");
 assert.equal(equipment.identities.find(identity => identity.id === "bronze-longsword").intrinsicBonuses.attack, 1);
 assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 
 const achievements = achievementsApi.createRegistry();
-assert.equal(achievements.length, 37);
+assert.equal(achievements.length, 38);
 assert.equal(new Set(achievements.map((entry) => entry.id)).size, achievements.length);
 assert.deepEqual(
   achievements.reduce((counts, entry) => ({ ...counts, [entry.category]: (counts[entry.category] || 0) + 1 }), {}),
-  { roads: 8, builds: 12, collection: 12, secrets: 5 },
+  { roads: 8, builds: 12, collection: 12, secrets: 6 },
 );
 for (const achievement of achievements) {
   assert.equal(typeof achievement.id, "string");
@@ -72,7 +72,7 @@ for (const achievement of achievements) {
   assert.equal(typeof achievement.condition, "string");
 }
 assert.ok(achievements.every(entry => entry.hierarchy && typeof entry.hierarchy.group === "string"), "achievement hierarchy metadata is missing");
-snapshot(achievements, 6386, "89e69e35b2e9fd9e9938997fc7a699fd86099a25813365ddb69df0a5da71c863", "achievement registry");
+snapshot(achievements, 6583, "9b3e9ab19dd605ba0595836741aa36fb0b6ba7a8b0f8972a4a32148c849880e2", "achievement registry");
 
 boards["6"].balance.threePackChance = -1;
 equipment.special["devils-horns"].rarity = "poor";

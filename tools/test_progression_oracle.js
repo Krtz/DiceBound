@@ -144,14 +144,15 @@ async function main(){
       }
       return copy;
     };
-    const careerOnlyStatFields=new Set(["abandonedRuns","classRuns","criticalStrikes","echoStrikes","elementalProcs","enemyDefeats","largestHit"]);
+    const careerOnlyStatFields=new Set(["abandonedRuns","classRuns","criticalStrikes","echoStrikes","elementalProcs","enemyDefeats","largestHit","summonsCreated","summonDeaths","summonKills","summonReplacements","summonDamageDealt","summonDamageTaken","summonHealingReceived","highestSimultaneousSummons"]);
     const stripPostBaselineCareerSchema=value=>{
       if(Array.isArray(value))return value.map(stripPostBaselineCareerSchema);
       if(!value||typeof value!=="object")return value;
       const copy={};
       for(const [key,child] of Object.entries(value)){
-        // #8/#157 add an orthogonal Career schema after the frozen 0.6.6.28
-        // baseline. Their exact behavior is owned by test_career_history.js;
+        // #8/#157 and 0.6.9.0 allied Career facts add orthogonal schema after
+        // the frozen 0.6.6.28 baseline. Their exact behavior is owned by
+        // focused Career/allied-combat tests;
         // do not rewrite this historical fixture to pretend these fields
         // existed in 0.6.6.28.
         if(key==="career")continue;
@@ -165,6 +166,12 @@ async function main(){
           const stats=stripPostBaselineCareerSchema(child);
           for(const field of careerOnlyStatFields)delete stats[field];
           copy[key]=stats;
+          continue;
+        }
+        if(key==="unlocks"&&child&&typeof child==="object"){
+          const unlocks=stripPostBaselineCareerSchema(child);
+          delete unlocks.necromancer;
+          copy[key]=unlocks;
           continue;
         }
         copy[key]=stripPostBaselineCareerSchema(child);
@@ -184,7 +191,7 @@ async function main(){
       return entry;
     });
     assert.deepEqual(canonicalize(actual.cases),canonicalize(expected));
-    console.log(`Progression oracle PASS: ${actual.cases.length} released behavior cases preserve all unrelated output/state/RNG facts from ${fixture.baselineVersion}; #330 Moon and post-baseline Career schema are covered by focused tests.`);
+    console.log(`Progression oracle PASS: ${actual.cases.length} released behavior cases preserve all unrelated output/state/RNG facts from ${fixture.baselineVersion}; #330 Moon plus post-baseline Career/Necromancer schema are covered by focused tests.`);
   } finally {
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(r=>server.close(r));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }

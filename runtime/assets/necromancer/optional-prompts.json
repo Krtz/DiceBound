@@ -1,0 +1,86 @@
+[
+  {
+    "slug": "summon-skeleton-mage",
+    "subject": "Full-body allied Skeleton Mage facing RIGHT. Clean ivory bones, violet eyes, plum hooded robe, silver crescent clasp, tall staff with violet crystal held toward right and small closed spellbook at belt. Slim caster silhouette, feet visible.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-32b9e16f-0468-46b0-b12d-772a3140b733.png"
+  },
+  {
+    "slug": "summon-skeleton-guardian",
+    "subject": "Full-body allied Skeleton Guardian facing RIGHT. Clean ivory skull, violet eyes, broad maintained silver plate armor over plum tabard, huge angular tower shield with crescent emblem forward on right, short mace. Sturdy planted defensive stance, both feet visible.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-82ae9961-932c-4cf9-a371-c433ba9570d4.png"
+  },
+  {
+    "slug": "summon-skeleton-rogue",
+    "subject": "Full-body allied Skeleton Rogue facing RIGHT. Clean ivory bones, violet eyes, short plum hood and scarf, silver crescent clasp, light fitted leather gear, two small silver daggers aimed right, agile crouching stance. Clearly a skeleton thief, not painter. Feet visible.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-1a493487-c63c-4c98-9731-ae96a9961670.png"
+  },
+  {
+    "slug": "summon-skeleton-archer",
+    "subject": "Full-body allied Skeleton Archer facing RIGHT. Clean ivory bones, violet eyes, plum scarf, silver crescent clasp, light leather harness, curved wooden bow drawn aiming arrow RIGHT, quiver at back. Full feet and bow visible.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-b54f72ed-4ecf-4dda-932b-14420bec308d.png"
+  },
+  {
+    "slug": "summon-skeleton-priest",
+    "subject": "Full-body allied Skeleton Priest facing RIGHT. Clean ivory bones, gentle violet eyes, ivory vestments with plum panels and silver crescent clasp, ceremonial open hands holding a small violet soul censer and restorative ivory flame. No combat staff or bow, dignified support silhouette, feet visible.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-29b36515-ec92-4874-bc8c-91259975cd5f.png"
+  },
+  {
+    "slug": "effect-necromancy-cast",
+    "subject": "Reusable transparent VFX: compact spiral of violet death-magic wisps around an ivory-white glowing core with tiny bone-like motes, no person or object. Open airy silhouette.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-9dc7f8de-e563-4757-a367-9127c3349848.png"
+  },
+  {
+    "slug": "effect-summon-circle",
+    "subject": "Reusable transparent VFX: a single flat elliptical violet summoning ring viewed in ground-plane perspective, two concentric rings, six simple ivory bone-shaped markers, translucent upward wisps. Center and surrounding area transparent. No ground, text, letters or runic writing.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-ae43b293-a37e-49e5-9f0f-0e47dd72dbd6.png"
+  },
+  {
+    "slug": "effect-grave-burst",
+    "subject": "Reusable transparent VFX: upward fan of violet death energy with a few suspended dark stone fragments and ivory bone chips, transparent gaps, compact burst. No ground or grave prop.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-1eb5620c-b655-49c0-a450-66d9242543e2.png"
+  },
+  {
+    "slug": "effect-soul-burst",
+    "subject": "Reusable transparent VFX: luminous lavender soul flame breaking into three curving wisps and small ivory-white sparkles, soft alpha falloff, airy readable silhouette. No skull or character.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-8cf3b0cc-f11e-4b59-8105-98773f39126c.png"
+  },
+  {
+    "slug": "effect-undead-death-burst",
+    "subject": "Reusable transparent VFX: spectral violet skull dissolving outward into five curved soul wisps and ivory glowing particles, compact radial death burst, transparent gaps.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-a64b9255-9044-4721-928e-fedb9702febd.png"
+  },
+  {
+    "slug": "player-necromancer-cast",
+    "subject": "Full-body living pale adult male necromancer with swept-back silver hair, angular face, deep plum robes, ivory rib-shaped shoulder armor, silver trim, violet soul-lantern bone staff. Facing RIGHT in emphatic casting pose, one arm fully extended toward right with violet soul spell, both boots visible.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-33866efc-84b2-4064-9bb6-aa80a289f235.png"
+  },
+  {
+    "slug": "portrait-necromancer",
+    "subject": "Waist-up portrait of living pale adult male necromancer, swept-back silver hair, angular face, wry confident expression, deep plum robes, ivory rib-shaped shoulder armor, silver trim. Three-quarter facing RIGHT, violet soul lantern staff beside shoulder. Transparent outside bust.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-156c21b7-a3de-4b55-a3a7-d52f185094bf.png"
+  },
+  {
+    "slug": "portrait-necromancer-closeup",
+    "subject": "Head and shoulders closeup of living pale adult male necromancer, swept-back silver hair, angular face, wry confident expression, violet eyes, deep plum raised collar and ivory rib-shaped shoulder armor, silver trim. Three-quarter facing RIGHT. Transparent outside portrait.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-62036d4a-d05a-4a03-9573-83f8418b9a10.png"
+  },
+  {
+    "slug": "class-necromancer-icon",
+    "subject": "Compact class identity head-and-shoulder icon of living pale adult male necromancer, swept-back silver hair, angular face, wry expression, deep plum high collar, ivory bone pauldrons, tiny violet soul flame beside face. Facing slightly RIGHT. Bold simple silhouette, no frame.",
+    "category": "optional",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-bff0adad-ca21-4e83-93a5-9757cf05c715.png"
+  }
+]

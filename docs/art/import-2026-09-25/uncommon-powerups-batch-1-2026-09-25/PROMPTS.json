@@ -1,0 +1,74 @@
+[
+  {
+    "folder": "uncommon",
+    "slug": "mist-step",
+    "name": "Mist Step",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Mist Step. Generic upgrade granting dodge. A worn leather travelling boot dissolving into curling silver-blue mist, a faint displaced boot afterimage, evasive motion, no lightning. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "mist-step.png",
+    "intendedAsset": "runtime/assets/powerups/uncommon/mist-step.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-85da9d98-2334-4699-8439-a4d438f2c69b.png"
+  },
+  {
+    "folder": "uncommon",
+    "slug": "battle-barrier",
+    "name": "Battle Barrier",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Battle Barrier. Generic upgrade blocking the first incoming hit. A floating translucent sapphire shield of faceted magic intercepting one steel arrow, single bright impact spark, compact silhouette. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "battle-barrier.png",
+    "intendedAsset": "runtime/assets/powerups/uncommon/battle-barrier.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-e03c3d3e-7ce4-40d9-a4c8-3cadf77ce16f.png"
+  },
+  {
+    "folder": "class-specific",
+    "slug": "twin-fletching",
+    "name": "Twin Fletching",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Twin Fletching. Ranger echo strike. Two parallel flying wooden arrows with richly textured green and cream feather fletching, one solid and one luminous spectral echo, precise twin diagonal trajectory. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "twin-fletching.png",
+    "intendedAsset": "runtime/assets/powerups/class-specific/twin-fletching.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-31c8eda2-a679-4ee9-94a2-6572824d8949.png"
+  },
+  {
+    "folder": "class-specific",
+    "slug": "shield-riposte",
+    "name": "Shield Riposte",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Shield Riposte. Fighter defense counterattacks. Battle-worn steel shield with an armored gauntlet thrusting a short sword around its edge, sharp amber counterstrike arc, compact readable equipment composition. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "shield-riposte.png",
+    "intendedAsset": "runtime/assets/powerups/class-specific/shield-riposte.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-79f8b8e1-7b85-4c03-854c-a66b17eb60be.png"
+  },
+  {
+    "folder": "shared",
+    "slug": "open-palm-rhythm",
+    "name": "Open Palm Rhythm",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Open Palm Rhythm. Monk echo strike and dodge, also afterimage kata family. One linen-wrapped martial artist open palm in a striking pose with two offset translucent turquoise palm afterimages, rhythmic curved motion trail. Clearly one real hand and magical echoes. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "open-palm-rhythm.png",
+    "intendedAsset": "runtime/assets/powerups/shared/open-palm-rhythm.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-5008cc55-1b37-460f-90e5-f63dbdd0d6b6.png"
+  },
+  {
+    "folder": "shared",
+    "slug": "arcane-resonance",
+    "name": "Arcane Resonance",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Arcane Resonance. Sorcerer arcane surge and mana fracture family. A violet crystal sphere splitting into a few hovering shards around a brilliant arcane core, concentric cyan-violet pulses, concentrated magical power, no hands. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "arcane-resonance.png",
+    "intendedAsset": "runtime/assets/powerups/shared/arcane-resonance.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-b724f500-7b23-42e6-9675-d0bd4c4759fe.png"
+  },
+  {
+    "folder": "class-specific",
+    "slug": "velvet-cut",
+    "name": "Velvet Cut",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Velvet Cut. Rouge the red-themed PAINTER gains attack and critical chance. A long wooden artist paintbrush with crimson-loaded bristles making one razor-sharp red paint crescent, silky thick wet pigment, tiny precise bright glint on the stroke. Painter tools, NOT rogue, no dagger, no cards. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "velvet-cut.png",
+    "intendedAsset": "runtime/assets/powerups/class-specific/velvet-cut.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-32f07cc8-6455-4612-afc6-f0520b746e16.png"
+  },
+  {
+    "folder": "class-specific",
+    "slug": "rubber-chicken-doctrine",
+    "name": "Rubber Chicken Doctrine",
+    "prompt": "Use case: stylized-concept. Create one finished DiceBound fantasy RPG upgrade icon: Rubber Chicken Doctrine. Clown gains echo strike and attack. Ridiculous yellow rubber squeaky chicken with red comb, long rubber neck bending from a slap, one translucent golden chicken afterimage and a few tiny confetti scraps. Funny but richly painted fantasy inventory art. Rich hand-painted game item illustration, sculptural volumes, crisp edges, tactile materials, readable at 64px. Square composition, centered isolated subject, generous transparent margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, numbers, UI frame, scenery, watermark or extra panels.",
+    "file": "rubber-chicken-doctrine.png",
+    "intendedAsset": "runtime/assets/powerups/class-specific/rubber-chicken-doctrine.png",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-a7bd12fb-7ca2-45ec-b659-a06707a5f446.png"
+  }
+]

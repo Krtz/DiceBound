@@ -1,0 +1,56 @@
+[
+  {
+    "slug": "player-necromancer",
+    "subject": "Full-body player hero, living pale adult male necromancer with swept-back silver hair, angular face, confident wry expression, deep plum layered robes, ivory rib-shaped shoulder armor, silver trim, violet soul lantern on bone staff. Facing RIGHT three-quarter battle pose, staff held behind on left, right hand casting toward right, both boots visible.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-bec7697b-b233-445f-bf0c-66b631c401b8.png"
+  },
+  {
+    "slug": "class-necromancer",
+    "subject": "Full-body class-selection hero, living pale adult male necromancer with swept-back silver hair, angular face, confident wry expression, deep plum layered robes, ivory rib-shaped shoulder armor, silver trim, violet soul lantern on bone staff. Calm three-quarter RIGHT-facing standing pose, both boots visible.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-0e770b20-0e6d-4732-9660-f8e3aa806422.png"
+  },
+  {
+    "slug": "summon-skeleton-warrior",
+    "subject": "Full-body allied Skeleton Warrior facing RIGHT, clean ivory bones, bright VIOLET eye lights, plum tabard with silver crescent clasp, maintained silver short sword pointing RIGHT, small angular silver shield, disciplined protective stance. Distinct from rusty cyan-eyed enemy skeletons. Feet visible.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-712c3f3f-3556-45ea-9205-1e7d06c8f200.png"
+  },
+  {
+    "slug": "icon-grave-coil",
+    "subject": "Action icon: a compact violet spiral of death magic around an ivory bone wand tip, a bright mana-blue inner spark; coil launches toward RIGHT. No character.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-3c7afe1d-4cda-4571-94ff-9309248563cb.png"
+  },
+  {
+    "slug": "icon-summon-skeleton",
+    "subject": "Action icon: a clean ivory skull with VIOLET eyes and one rising skeletal hand emerging from a small violet magical summoning ring, silver crescent clasp as allied identity.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-a91a1c4a-e210-453a-a6ff-3ba9864d8c46.png"
+  },
+  {
+    "slug": "icon-army-of-the-dead",
+    "subject": "Ultimate icon: three clearly separated ivory skeletal busts with violet eyes and plum collars, central warrior larger, spectral violet ranks behind; compact bold triangular silhouette.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-4c382494-3566-4db5-a785-e018a6a6cad4.png"
+  },
+  {
+    "slug": "effect-bone-shrapnel",
+    "subject": "Reusable VFX sprite: radial burst of six distinct ivory bone shards, fine bone splinters and sparse violet magical sparks, open transparent center. No intact skull, no body, no ground or smoke rectangle.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-5800b2b1-5776-48cf-9914-ad7161d42ac2.png"
+  },
+  {
+    "slug": "summon-spectral-skeleton",
+    "subject": "Full-body allied spectral Skeleton facing RIGHT in a forward sword-strike pose, translucent lavender bones, vivid violet eyes, ghostly plum tabard and silver crescent clasp, ethereal sword extending RIGHT, trailing wisps remain within frame. Full feet visible.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-4519184c-495f-47e2-87f9-db403a54ee44.png"
+  },
+  {
+    "slug": "icon-grave-count",
+    "subject": "Small resource icon: one chunky ivory grave marker with sculpted skull relief and tiny violet soul flame, readable compact silhouette, no lettering, numbers or counter UI.",
+    "category": "required",
+    "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-fc04c58f-f2d7-4647-b600-3db72b4ea0d3.png"
+  }
+]

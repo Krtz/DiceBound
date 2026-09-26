@@ -14,7 +14,7 @@ const equipment=context.window.DiceboundEquipment;
 const registry=equipment.createRegistry(),identities=registry.identities;
 
 assert.equal(equipment.apiVersion,4);
-assert.equal(identities.length,58,"all approved authored bases and birthday identities must share one registry without generic fallbacks");
+assert.equal(identities.length,98,"all approved authored bases, birthday identities and the 40 integrated 0.6.9.0 identities must share one registry without generic fallbacks");
 const expectedArt={
   "bronze-longsword":"assets/equipment/weapon/bronze-longsword.png",
   shortbow:"assets/equipment/weapon/shortbow.png",

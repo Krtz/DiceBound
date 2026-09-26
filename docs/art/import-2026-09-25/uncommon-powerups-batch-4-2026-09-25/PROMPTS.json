@@ -1,0 +1,126 @@
+{
+  "mode": "built-in ImageGen",
+  "promptFormat": "Use case: stylized-concept. Create one finished Uncommon powerup icon: {name}. {subject} Rich hand-painted DiceBound fantasy RPG item illustration, sculptural volumes, crisp edges, tactile materials, strong readable silhouette at 64px. Square composition, centered isolated subject fully inside frame with generous margin, genuinely transparent alpha background. Warm highlights and cool shadows. No text, letters, UI border, scenery, watermark, or extra panels.",
+  "items": [
+    {
+      "name": "Occult Convergence",
+      "subject": "A violet crystal orb held in a dark silver crescent, elemental lights converge into a single ruby droplet of restorative energy. Element activation and lifesteal; mystical, no gore.",
+      "slug": "occult-convergence",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-909d24db-1fa2-4462-80a5-46afc680c4ab.png"
+    },
+    {
+      "name": "Road Toxicology",
+      "subject": "A rugged travelling apothecary kit: one green poison vial with leather strap beside a tiny mortar of toxic leaves, vivid emerald vapour.",
+      "slug": "road-toxicology",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-ddaf0787-7851-4213-bc71-d0e9682e16b9.png"
+    },
+    {
+      "name": "Thorn Venom",
+      "subject": "Three sharp botanical thorn darts, one central thorn with a gleaming critical point and a green venom droplet, two faint echo thorns behind it.",
+      "slug": "thorn-venom",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-2493f461-6255-4299-92a1-dcaf2e6a9734.png"
+    },
+    {
+      "name": "Loaded Chamber",
+      "subject": "An ornate revolver cylinder viewed at three-quarter angle, brass cartridges, a small emerald four-leaf clover charm, a fan of golden volley streaks. Weapon part only, no hand.",
+      "slug": "loaded-chamber",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-b2dbd8b3-0323-405e-af78-907b10f321f9.png"
+    },
+    {
+      "name": "Radiant Doctrine",
+      "subject": "An open ivory and gold sacred book with blank luminous pages, a sculpted golden sun rising between them, strong white-gold rays. Cleric light activation and elemental power.",
+      "slug": "radiant-doctrine",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-ac00a626-3e93-45e1-a5f1-89aa8787adb6.png"
+    },
+    {
+      "name": "Oathbound Smite",
+      "subject": "A steel paladin shield converting its golden radiant edge into the head of a striking warhammer, a pale spectral echo behind the hammer. Defense becomes attack.",
+      "slug": "oathbound-smite",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-2b8c6f58-564b-48dc-813f-f0852089f99a.png"
+    },
+    {
+      "name": "Pack Discipline",
+      "subject": "A sturdy leather beastmaster collar with a silver paw emblem and two coordinated claw-slash arcs, warm natural leather and teal accents. Real animal pack symbolism.",
+      "slug": "pack-discipline",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-bff1a34a-f2de-4dcc-85de-a1d0dbb9a9d3.png"
+    },
+    {
+      "name": "Profitable Backstab",
+      "subject": "A sleek rogue dagger laid diagonally across a split coin purse spilling gold coins, a pinpoint critical glint at the blade tip. This is the Rogue thief class, not Rouge the painter.",
+      "slug": "profitable-backstab",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-be83d5e5-7d4f-4922-8c08-806fd4686daf.png"
+    },
+    {
+      "name": "Twin Pact",
+      "subject": "Two matching luminous spirit wolves, compact bust silhouettes in cyan and violet, joined by a small silver pact ring; translucent magical animal spirits, no physical collars.",
+      "slug": "twin-pact",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-bb3eacbb-8e4d-4f8a-afd9-390988cb0a2b.png"
+    },
+    {
+      "name": "Double Battle",
+      "subject": "Two distinct small companion creatures fighting together: a fiery orange lizard and a blue aquatic turtle, energetic coordinated forward poses, tiny crossed action streaks. Original fantasy pet designs.",
+      "slug": "double-battle",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-03bfc3e6-4026-48e9-9bdb-ced7fa96886a.png"
+    },
+    {
+      "name": "Volatile Formula",
+      "subject": "A round alchemist flask of amber liquid erupting in a compact controlled burst of fire, frost shards and violet sparks, brass stopper flying just above; one clear flask silhouette.",
+      "slug": "volatile-formula",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-c75326bf-73ee-4cf2-bc9a-4b429ff991e7.png"
+    },
+    {
+      "name": "Reactive Carapace",
+      "subject": "A glossy green-blue shell shield with translucent slime edging, a central incoming impact transformed into small rainbow elemental sparks along its rim. Guard triggers elemental retaliation.",
+      "slug": "reactive-carapace",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-8cd12b4a-aea2-45b6-b288-a8be6280882c.png"
+    },
+    {
+      "name": "Deep Reservoir",
+      "subject": "A deep sapphire crystal reservoir vessel with layered blue mana light visible inside, a diamond-shaped core and a silver rim; sense of deep magical capacity, no potion liquid.",
+      "slug": "deep-reservoir",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-fb54c063-a6a9-4f82-a18e-b48d33c51621.png"
+    },
+    {
+      "name": "Quick Channel",
+      "subject": "A bright blue mana crystal fed by three fast curling streams of blue energy, a small silver channeling ring focusing the streams into the crystal. Mana generation, no lightning weapon.",
+      "slug": "quick-channel",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-bea03e3c-b91c-4379-a9a5-b00c2adb5a47.png"
+    },
+    {
+      "name": "Quas Mastery",
+      "subject": "One luminous BLUE orb in a small ornate silver cradle, soft icy-blue restorative wisps curling around a tiny heart-shaped light inside. Invoker blue orb heals. Dominant blue, no green or red orb.",
+      "slug": "quas-mastery",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-f3675d80-3bf5-4975-a0c6-b80a7e6ea02c.png"
+    },
+    {
+      "name": "Wex Mastery",
+      "subject": "One luminous GREEN orb in an ornate silver cradle, two smaller translucent green afterimages trailing behind it to represent echo strikes. Dominant green, no blue or red orb.",
+      "slug": "wex-mastery",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-ded18644-8b40-4883-9466-f51af90642ca.png"
+    },
+    {
+      "name": "Exort Mastery",
+      "subject": "One luminous RED orb in an ornate silver cradle, concentrated crimson energy and sharp radiant outward attack rays. Invoker outgoing damage. Dominant red, no green or blue orb.",
+      "slug": "exort-mastery",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-361538d2-0927-4bc8-9536-e9d6728118ca.png"
+    },
+    {
+      "name": "Irradiated Molt",
+      "subject": "An emerald serpent coiled in an ouroboros ring emerging from its translucent shed skin, bright lime radiation glow and a spectral echo coil. Magical mutation and elemental energy, no gore.",
+      "slug": "irradiated-molt",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-c4ac83fc-b8b2-47d3-9c56-95dbaed5e5fe.png"
+    },
+    {
+      "name": "Boss Hunter's Badge",
+      "subject": "A battered gold and silver medal with a sculpted dragon-head emblem, dark red ribbon and a sharply gleaming small spearpoint motif. Trophy badge for boss damage and precision.",
+      "slug": "boss-hunters-badge",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-2ab9e35c-c92a-4d59-8f88-30fbafa4db84.png"
+    },
+    {
+      "name": "Leeching Fang",
+      "subject": "One large curved ivory fang in a dark silver mount, a ruby droplet at its tip drawing a thin red restorative energy curl inward. Lifesteal and attack, isolated talisman, no gore.",
+      "slug": "leeching-fang",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-2b682e84-d8d5-4b40-b917-6406a1ba09a7.png"
+    }
+  ]
+}

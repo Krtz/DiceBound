@@ -52,13 +52,14 @@
   function initIdentitySupport(id){
     const player=runtime().getPlayer(),mechanics=new Set(mechanicsFor(id));
     if(mechanics.has('mana')){
-      const desiredMax=id==='summoner'?120:100,desiredStart=id==='summoner'?35:25;
+      const desiredMax=id==='summoner'?120:id==='necromancer'?110:100,desiredStart=id==='summoner'?35:id==='necromancer'?30:25;
       if((player.maxMana||0)<desiredMax)player.maxMana=desiredMax;
       if((player.mana||0)<=0)player.mana=desiredStart;
       else player.mana=Math.min(player.maxMana,Math.max(player.mana,desiredStart));
     }
     if(mechanics.has('spirits')){player.summonerSpirits=player.summonerSpirits||[];player.summonerCap=player.summonerCap||3;player.summonerSpiritScale=player.summonerSpiritScale||1;player.summonerSpiritDouble=player.summonerSpiritDouble||0;player.summonerManaBonus=player.summonerManaBonus||0;}
     if(mechanics.has('roster')&&!(player.trainerRoster||[]).length){const pool=rosterPool();player.trainerRoster=pool.slice(0,6);player.trainerActiveIndex=Math.min(player.trainerActiveIndex||0,Math.max(0,player.trainerRoster.length-1));player.trainerAssistScale=player.trainerAssistScale||.65;}
+    if(mechanics.has('allies')){player.maxActiveAllies=Math.max(0,Number(player.maxActiveAllies??2)||0);player.graveCount=Math.max(0,Number(player.graveCount)||0);player.graveCountThreshold=Math.max(2,Number(player.graveCountThreshold)||5);}
     if(mechanics.has('faith'))player.clericFaith=player.clericFaith||0;
     if(mechanics.has('smoke')){player.ninjaSmoke=player.ninjaSmoke||0;player.ninjaSmokeNeed=player.ninjaSmokeNeed||3;}
     if(mechanics.has('alchemy')){player.alchemistBrewCounter=player.alchemistBrewCounter||0;player.alchemistBrewNeed=player.alchemistBrewNeed||3;player.alchemistFlaskBonus=player.alchemistFlaskBonus||0;}

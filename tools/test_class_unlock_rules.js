@@ -13,9 +13,9 @@ const R=context.window.DiceboundClassUnlockRules;
 assert.ok(R,"class unlock rules owner did not publish");
 assert.equal(R.apiVersion,2);
 assert.ok(Object.isFrozen(R));
-assert.deepEqual(Array.from(R.targetIds),["pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon"]);
+assert.deepEqual(Array.from(R.targetIds),["pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon","necromancer"]);
 
-const CLASS_IDS=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","pokemontrainer","alchemist","ouroboros","dragoon","invoker","slimerouge"];
+const CLASS_IDS=["ranger","sorcerer","fighter","monk","clown","rouge","berserker","turtle","frog","d20","slime","vampire","ninja","ceo","merchant","cleric","paladin","beastmaster","rogue","bloodmage","summoner","necromancer","pokemontrainer","alchemist","ouroboros","dragoon","invoker","slimerouge"];
 const PET_IDS=["neutral","fire","ice","electric"];
 
 function baseContext(overrides={}){
@@ -27,6 +27,7 @@ function baseContext(overrides={}){
     damageTaken:0,
     merchantKills:0,
     stats:{healingDone:0,highestGold:0,potionsUsed:0},
+    enemyDefeats:{},
     storedHighestGold:0,
     highestGold:0,
     facts:{},
@@ -60,6 +61,8 @@ assert.equal(R.isUnlocked("paladin",baseContext({hasBoardClear:(id,board)=>board
 assert.equal(R.isUnlocked("summoner",baseContext({petLevels:{neutral:10,fire:10,ice:10,electric:1}})),true);
 assert.equal(R.isUnlocked("alchemist",baseContext({stats:{healingDone:0,highestGold:0,potionsUsed:14}})),false);
 assert.equal(R.isUnlocked("alchemist",baseContext({stats:{healingDone:0,highestGold:0,potionsUsed:15}})),true);
+assert.equal(R.isUnlocked("necromancer",baseContext({enemyDefeats:{lich:99}})),false);
+assert.equal(R.isUnlocked("necromancer",baseContext({enemyDefeats:{lich:100}})),true);
 
 // Dynamic-only classes remain persisted-only for ordinary isClassUnlocked calls.
 for(const id of ["turtle","frog","ninja","ceo","ouroboros"]){
@@ -99,6 +102,8 @@ assert.equal(R.isUnlocked("slime",slimeNine),true);
 assert.equal(R.mayCommitUnlock("fighter",baseContext()),true);
 assert.equal(R.mayCommitUnlock("merchant",baseContext()),false);
 assert.equal(R.mayCommitUnlock("merchant",baseContext({facts:{roadMerchantSecretBossDefeated:true}})),true);
+assert.equal(R.mayCommitUnlock("necromancer",baseContext({enemyDefeats:{lich:99}})),false);
+assert.equal(R.mayCommitUnlock("necromancer",baseContext({enemyDefeats:{lich:100}})),true);
 
 // Observed Gold/Lifesteal only advances during a live run and never regresses.
 let observed=R.recordObservedProgress(baseContext({gameStarted:false,storedHighestGold:50,facts:{maxLifesteal:.5},player:{gold:5000,lifeSteal:2}}));
@@ -116,7 +121,7 @@ function dynamicContext(){return baseContext({
   persistedUnlocks:dynamicState.persistedUnlocks,
   facts:dynamicState.facts,
   prestigeCount:10,damageTaken:1000,merchantKills:5,
-  stats:{healingDone:1000,highestGold:5000,potionsUsed:100},storedHighestGold:5000,highestGold:5000,
+  stats:{healingDone:1000,highestGold:5000,potionsUsed:100},enemyDefeats:{lich:100},storedHighestGold:5000,highestGold:5000,
   petLevels:Object.fromEntries(PET_IDS.map(id=>[id,30])),petUnlocked:Object.fromEntries(PET_IDS.map(id=>[id,true])),
   gameStarted:true,
   player:{gold:5000,defense:41,doubleStrike:4,lifeSteal:2,crit:1.01,bossDamage:3},
@@ -133,9 +138,9 @@ const result=R.resolveDynamic({
 assert.deepEqual(Array.from(result.attempted),[
   "d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue",
   "summoner","alchemist","ouroboros","ceo","alchemist","alchemist","alchemist","alchemist",
-  "pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon"
+  "pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon","necromancer"
 ]);
-for(const id of ["d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue","slime","summoner","pokemontrainer","alchemist","ouroboros","invoker","dragoon"]){
+for(const id of ["d20","turtle","frog","vampire","ninja","ceo","rouge","berserker","merchant","cleric","paladin","beastmaster","rogue","slime","summoner","necromancer","pokemontrainer","alchemist","ouroboros","invoker","dragoon"]){
   assert.equal(dynamicState.persistedUnlocks[id],true,`${id} did not commit in full dynamic scan`);
 }
 

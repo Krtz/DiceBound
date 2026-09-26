@@ -158,6 +158,12 @@ if(process.argv.includes('--capture')){
 }else{
   assert(fs.existsSync(ownerPath),'player initialization owner missing');assert(fs.existsSync(fixturePath),'frozen 0.6.6.20 player initialization fixture missing');
   const fixture=JSON.parse(fs.readFileSync(fixturePath,'utf8'));assert.strictEqual(fixture.caseCount,cases.length,'case-count drift');assert.deepStrictEqual(fixture.captureNames,CAPTURES,'capture-name drift');const owner=loadOwner();
-  for(const spec of cases){const expected=fixture.cases.find(x=>x.id===spec.id)?.result;assert(expected,`fixture missing ${spec.id}`);assert.deepStrictEqual(runOwner(spec,owner),expected,`player initialization drift: ${spec.id}`);}
-  console.log(`Player initialization PASS: ${cases.length} frozen 0.6.6.20 cases, exact state/events/RNG stream`);
+  for(const spec of cases){
+    const expected=clone(fixture.cases.find(x=>x.id===spec.id)?.result);assert(expected,`fixture missing ${spec.id}`);
+    // 0.6.9.0 adds reset-safe allied/Necromancer state and the generic
+    // Champion pet-damage scale without changing historical events or RNG.
+    Object.assign(expected.player,{maxActiveAllies:2,graveCount:0,graveCountThreshold:5,petDamageScale:0});
+    assert.deepStrictEqual(runOwner(spec,owner),expected,`player initialization drift: ${spec.id}`);
+  }
+  console.log(`Player initialization PASS: ${cases.length} frozen 0.6.6.20 cases + explicit 0.6.9.0 allied/pet state additions, exact events/RNG stream`);
 }

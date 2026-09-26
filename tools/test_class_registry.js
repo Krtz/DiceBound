@@ -22,7 +22,7 @@ const expectedIds = [
   "ranger", "sorcerer", "fighter", "monk", "clown", "rouge", "berserker",
   "turtle", "frog", "d20", "slime", "vampire", "ninja", "ceo", "merchant",
   "cleric", "paladin", "beastmaster", "rogue", "bloodmage", "summoner",
-  "pokemontrainer", "alchemist", "ouroboros", "dragoon", "invoker", "slimerouge",
+  "necromancer", "pokemontrainer", "alchemist", "ouroboros", "dragoon", "invoker", "slimerouge",
 ];
 assert.deepEqual(Array.from(classes.ids), expectedIds);
 
@@ -37,10 +37,10 @@ for (const [id, definition] of Object.entries(registry)) {
 }
 
 const serialized = JSON.stringify(registry);
-assert.equal(Buffer.byteLength(serialized), 28865, "canonical class registry byte snapshot drifted");
+assert.equal(Buffer.byteLength(serialized), 30051, "canonical class registry byte snapshot drifted");
 assert.equal(
   crypto.createHash("sha256").update(serialized).digest("hex"),
-  "8bc853d5c659ef6be9abeca85587867c121b6ba20af3d632a8a8b2260432057e",
+  "b8c0a14b02b74d97ed3cd93b84d06fbd81b19ee3a554b233d8a726b172465d52",
   "canonical class registry data drifted",
 );
 
@@ -54,6 +54,12 @@ assert.equal(registry.ouroboros.base.doubleStrike, 1.2);
 assert.equal(registry.dragoon.ultimate.name, "Dragon Dive");
 assert.equal(registry.invoker.base.maxHp, 32);
 assert.deepEqual(Array.from(registry.invoker.tags), ["ranged", "occult", "mana", "elemental", "combo"]);
+assert.equal(registry.necromancer.name, "Necromancer");
+assert.equal(registry.necromancer.base.maxHp, 34);
+assert.equal(registry.necromancer.base.attack, 6);
+assert.equal(registry.necromancer.base.defense, 1);
+assert.equal(registry.necromancer.ultimate.name, "Army of the Dead");
+assert.deepEqual(Array.from(registry.necromancer.tags), ["occult", "mana", "pack", "ranged"]);
 assert.equal(registry.slimerouge.ultimate.name, "Stolen Finale");
 
 function snapshot(value, bytes, sha256, label) {
@@ -66,7 +72,7 @@ const passives = classes.createPassiveRegistry();
 const unlocks = classes.createUnlockRegistry();
 const mechanics = classes.createMechanicsRegistry();
 const ultimateSupport = classes.createUltimateSupportRegistry();
-assert.equal(Object.keys(passives).length, 25);
+assert.equal(Object.keys(passives).length, 26);
 assert.deepEqual(expectedIds.filter((id) => !passives[id]), ["ouroboros", "slimerouge"]);
 assert.deepEqual(Object.keys(passives).slice(0, 1), ["invoker"]);
 assert.deepEqual(Object.keys(unlocks).sort(), [...expectedIds].sort());
@@ -91,13 +97,17 @@ assert.equal(unlocks.dragoon.board,4);
 assert.equal(unlocks.dragoon.guardian,"miniboss");
 assert.equal(unlocks.pokemontrainer.requirements[1].board,5);
 assert.equal(Object.hasOwn(unlocks.pokemontrainer.requirements[1],"difficulty"),false);
+assert.equal(unlocks.necromancer.type,"enemyDefeats");
+assert.equal(unlocks.necromancer.enemyId,"lich");
+assert.equal(unlocks.necromancer.minimum,100);
+assert.deepEqual(Array.from(mechanics.necromancer),["mana","allies","summons","grave-count","bone-shrapnel"]);
 assert.deepEqual(Array.from(mechanics.ranger), ["marks", "crit", "evasion", "ranged"]);
 assert.deepEqual(Array.from(ultimateSupport.ranger), ["marks"]);
 assert.deepEqual(Array.from(classes.tagVocabulary).slice(0, 4), ["ranged", "precision", "evasive", "occult"]);
-snapshot(passives, 4315, "a723c189055e0f31a6154be1716e2c671d420e77fb765a2955d339d3bd15f4ee", "class passive registry");
+snapshot(passives, 4505, "e2b9fb4e3092cd9ab9bc04bd7165e201f8bae2843d13c989dd777a6e9d63e597", "class passive registry");
 snapshot(Array.from(classes.tagVocabulary), 324, "69c32f490683a7bb3e2f3858af62440b3784c1eeeffa853ba1929076b588f945", "class tag vocabulary");
-snapshot(unlocks, 2038, "1dc560d02a97edd6292042a1e036d818c700ae035acdcb8dacb66a14dfd92658", "class unlock registry");
-snapshot(mechanics, 1386, "46eac9f42a39e5441a3b1131f15aada424f69abb988be1e66f8230eb478eef35", "class mechanics registry");
+snapshot(unlocks, 2107, "020eda7f39dce3fb71c2fd21b354beb134019e0d0cc6c6910aa49a4951b85d56", "class unlock registry");
+snapshot(mechanics, 1458, "6ccf29ce30fef0df9994595776e1f79389a35fb26f72e6214fa1a95797931e56", "class mechanics registry");
 snapshot(ultimateSupport, 307, "3d6a941f90c1609e96473d6de9f454e2e8fe99b9915620728ef7243946d425e2", "ultimate support registry");
 
 const second = classes.createRegistry();

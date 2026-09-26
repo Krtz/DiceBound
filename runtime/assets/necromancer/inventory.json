@@ -1,0 +1,347 @@
+[
+  {
+    "file": "player-necromancer.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 56907,
+    "sampledPartialAlpha": 41650,
+    "sha256": "6BE35F62A6D935DE674FD4459D589B92874B005DC4784238B1AA3F7F235C228B"
+  },
+  {
+    "file": "class-necromancer.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 59767,
+    "sampledPartialAlpha": 38752,
+    "sha256": "A3D0451218CCC25C8DDF81A7356D3F6CFF52B23D7AE799FA1FAB526842638CBE"
+  },
+  {
+    "file": "summon-skeleton-warrior.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 72877,
+    "sampledPartialAlpha": 25660,
+    "sha256": "D4F4903B365628EB235B52E2D5A7FE42D67932CDADFCD573BEC5CA953CA1F2E6"
+  },
+  {
+    "file": "icon-grave-coil.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 70010,
+    "sampledPartialAlpha": 28523,
+    "sha256": "864DBD8D44C7355A0CD1E9169A23A091A6FB3B230B0BCE591973675B9CB78CAD"
+  },
+  {
+    "file": "icon-summon-skeleton.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 54346,
+    "sampledPartialAlpha": 44195,
+    "sha256": "1A46878C3B3D3025A74213F3267DD152562AB72B8C6428C53649B77E29367621"
+  },
+  {
+    "file": "icon-army-of-the-dead.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 49345,
+    "sampledPartialAlpha": 49186,
+    "sha256": "9CCC11D371FB66862CE54031087082978FA44418CFD9553634B3A96DECC060B6"
+  },
+  {
+    "file": "effect-bone-shrapnel.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 62713,
+    "sampledPartialAlpha": 35850,
+    "sha256": "A6C5627FAE76FBB8F38FA66B9A9B8E21C9D0AA84F4829F0BBC5145C50B8C79C6"
+  },
+  {
+    "file": "summon-spectral-skeleton.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 66734,
+    "sampledPartialAlpha": 31808,
+    "sha256": "8AF44DFF002F5BC7D79939FE46A914C3E185B2426731CE464C7A23F8A38C22B8"
+  },
+  {
+    "file": "icon-grave-count.png",
+    "category": "required",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 56768,
+    "sampledPartialAlpha": 41785,
+    "sha256": "FC7F8C28FDC018BD69248450551F211660CB94EEC0C25E9BCD06B429FF4F9C8D"
+  },
+  {
+    "file": "summon-skeleton-mage.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 62856,
+    "sampledPartialAlpha": 35621,
+    "sha256": "3C376AB3E084AB5FA4CD5020A6C7EB9650091DB52E67531640DC20E1921D2299"
+  },
+  {
+    "file": "summon-skeleton-guardian.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 52887,
+    "sampledPartialAlpha": 45641,
+    "sha256": "DA8AA4E144D90B5CE1F96D4283F268B87CE6D05F03A1B36A6B44F26CBB7A7096"
+  },
+  {
+    "file": "summon-skeleton-rogue.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 72171,
+    "sampledPartialAlpha": 26353,
+    "sha256": "90A72E458684E8C5AC90145125EE0CC707F8DB304DBD71AE275AEC69E2167259"
+  },
+  {
+    "file": "summon-skeleton-archer.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 72424,
+    "sampledPartialAlpha": 26099,
+    "sha256": "FB2DF8C3923192BBD53FC044D4E6968C2C81A818950CCB8D024E6B891172C595"
+  },
+  {
+    "file": "summon-skeleton-priest.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 58630,
+    "sampledPartialAlpha": 39889,
+    "sha256": "0041A7A7A1717511DA888F73B4E579903A1E26BF84278784DF8154FE997C4AAC"
+  },
+  {
+    "file": "effect-necromancy-cast.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 55735,
+    "sampledPartialAlpha": 42836,
+    "sha256": "54ACF374E2632B889BFBDA5580A80C787473EADCF25D284F86AFD547E66D34A1"
+  },
+  {
+    "file": "effect-summon-circle.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 66238,
+    "sampledPartialAlpha": 32357,
+    "sha256": "D689C3DD726CB6D3001679CE5DE33B6843D143479ED6017F1C1A5C21619CF5ED"
+  },
+  {
+    "file": "effect-grave-burst.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 56587,
+    "sampledPartialAlpha": 41984,
+    "sha256": "112CA3EBA533B92932EC5EAC2E5D273A948B21A7C5A2C06DDC7A926C27F59BB0"
+  },
+  {
+    "file": "effect-soul-burst.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 60588,
+    "sampledPartialAlpha": 37974,
+    "sha256": "F950520D93B851CBE8E2BB02CEF4F96D91FC8465647E48785E11A682CA93840B"
+  },
+  {
+    "file": "effect-undead-death-burst.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 57342,
+    "sampledPartialAlpha": 41237,
+    "sha256": "47B32471670D5826E87276EF1867AE33184D087C6A37491221A92A22ECAD586D"
+  },
+  {
+    "file": "player-necromancer-cast.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 51518,
+    "sampledPartialAlpha": 46961,
+    "sha256": "EA51AD0FD55EFF88DE1211E17B3980BD4DBC4DEA2D54AD54D79EF4A0395E3C04"
+  },
+  {
+    "file": "portrait-necromancer.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 31416,
+    "sampledPartialAlpha": 67136,
+    "sha256": "FBC2B46A66B21DA836E58F19F3AA8D8C71622CA50D2DB8DC1E8E29202BCA8895"
+  },
+  {
+    "file": "portrait-necromancer-closeup.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sampledTransparent": 36955,
+    "sampledPartialAlpha": 61606,
+    "sha256": "B1724F98B06659B677BD50AFCD882CD9AA88A3565A16D3F2B3D038731EC3EE48"
+  },
+  {
+    "file": "class-necromancer-icon.png",
+    "category": "optional",
+    "width": 1254,
+    "height": 1254,
+    "cornerAlpha": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "sampledTransparent": 38891,
+    "sampledPartialAlpha": 59648,
+    "sha256": "45755C103A2259E176A5D2B27E94718410BBAA94589A7B74ED35EBEF5871452B"
+  }
+]

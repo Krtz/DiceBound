@@ -10,7 +10,8 @@
     rouge:{builder:"Crimson Stroke",builderIcon:"🖌️",spell:"Scarlet Hex",spellIcon:"🌹",cost:35,gain:27,desc:"Crimson Stroke paints Mana into existence. Scarlet Hex spends 35 Mana for a high-crit occult strike, converts half of Echo Strike chance into bonus spell damage, splashes the pack, applies Echo-weighted Poison, and real Rouge drains doubled Lifesteal from the full Hex."},
     merchant:{builder:"Ledger Tap",builderIcon:"📜",spell:"Foreclosure Hex",spellIcon:"⚖️",cost:40,gain:30,desc:"Ledger Tap builds Mana through deeply questionable accounting. Foreclosure Hex spends 40 Mana, adds 5% of current gold with no cap, then scales deterministically with current Crit and Echo while retaining normal Poison and elemental proc chances."},
     invoker:{builder:"Wex Strike",builderIcon:"🟢",spell:"Elemental Lance",spellIcon:"🔴",cost:50,gain:25,desc:"Quas, Wex and Exort Strikes create Blue, Green and Red orbs. Wex also generates Mana. Elemental Lance spends 50 Mana for a stronger Red attack and converts half of current Echo chance into bonus spell damage."},
-    summoner:{builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."}
+    summoner:{builder:"Spirit Bolt",builderIcon:"📖",spell:"Conjure Familiar",spellIcon:"🐾",cost:40,gain:26,desc:"Spirit Bolt builds Mana. Spend 40 Mana to conjure a random unlocked companion spirit for this battle, up to three active spirits. Summoned spirits join pet attacks."},
+    necromancer:{builder:"Grave Coil",builderIcon:"🟣",spell:"Summon Skeleton",spellIcon:"☠️",cost:40,gain:27,desc:"Grave Coil attacks while building Mana. Spend 40 Mana to raise a real targetable Skeleton Warrior; at the ally cap the oldest summon is replaced."}
   };
 
 
@@ -240,6 +241,10 @@
   async function summonerDispatchSpellLayer(...args) {
     const rt = requireRuntime();
     if (rt.isClassActive("summoner")) return summonerConjure(...args);
+    if (rt.isClassActive("necromancer")) {
+      if(typeof rt.necromancerSummon!=="function")throw new Error("Mana action runtime missing necromancerSummon().");
+      return rt.necromancerSummon(...args);
+    }
     return baseSpellAttack(...args);
   }
 

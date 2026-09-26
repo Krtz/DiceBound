@@ -41,15 +41,22 @@ function assertCoverage(actual){
   const art=actual.cases.find(entry=>entry.name==="camp-art-refresh").result;assert.ok(art.after.classArt);assert.ok(art.after.petArt);
 }
 
-async function startupDiagnostics(page){
-  const exceptions=[],consoleMessages=[];
+async function waitForStartupSurface(page,timeout=45000){
+  const exceptions=[],consoleMessages=[],evaluationErrors=[];
   const offException=page.on("Runtime.exceptionThrown",params=>{const details=params.exceptionDetails||{},exception=details.exception||{};exceptions.push(exception.description||details.text||"unknown runtime exception");});
   const offConsole=page.on("Runtime.consoleAPICalled",params=>{if(!["error","warning"].includes(params.type))return;consoleMessages.push((params.args||[]).map(arg=>arg.value??arg.description??"").join(" "));});
+  let state=null;
   try{
-    await page.send("Page.enable");await page.send("Runtime.enable");await page.send("Page.reload",{ignoreCache:true});
-    await sleep(3500);
-    const state=await page.evaluate(`(()=>({readyState:document.readyState,globals:{Camp:!!window.DiceboundCamp,CampShellOracle:!!window.DiceboundCampShellOracleTest,RunResume:!!window.DiceboundRunResumeTest,Classes:!!window.DiceboundClasses,Rng:!!window.DiceboundRng,Progression:!!window.DiceboundProgression,Run:!!window.DiceboundRun,Combat:!!window.DiceboundCombat,ElementContent:!!window.DiceboundElementContent},diceboundGlobals:Object.keys(window).filter(key=>key.startsWith('Dicebound')).sort()}))()`);
-    return {state,exceptions,consoleMessages};
+    await page.send("Page.enable");await page.send("Runtime.enable");
+    const end=Date.now()+timeout;
+    while(Date.now()<end){
+      try{
+        state=await page.evaluate(`(()=>({readyState:document.readyState,globals:{Camp:!!window.DiceboundCamp,CampShellOracle:!!window.DiceboundCampShellOracleTest,RunResume:!!window.DiceboundRunResumeTest,Classes:!!window.DiceboundClasses,Rng:!!window.DiceboundRng,Progression:!!window.DiceboundProgression,Run:!!window.DiceboundRun,Combat:!!window.DiceboundCombat,ElementContent:!!window.DiceboundElementContent},diceboundGlobals:Object.keys(window).filter(key=>key.startsWith('Dicebound')).sort()}))()`);
+        if(state.readyState==="complete"&&state.globals.Camp&&state.globals.CampShellOracle&&state.globals.RunResume&&state.globals.Classes&&state.globals.Rng)return {ready:true,state,exceptions,consoleMessages,evaluationErrors};
+      }catch(error){evaluationErrors.push(String(error?.message||error));}
+      await sleep(100);
+    }
+    return {ready:false,state,exceptions,consoleMessages,evaluationErrors};
   }finally{offException();offConsole();}
 }
 
@@ -62,8 +69,9 @@ async function main(){
     // temporary headless profile must tolerate local Chromium child-process
     // sandbox denials without changing the shipped WebView2 wrapper.
     child=childProcess.spawn(EDGE,["--headless=new","--disable-gpu","--disable-gpu-sandbox","--no-sandbox","--no-first-run","--no-default-browser-check","--remote-allow-origins=*",`--user-data-dir=${profile}`,`--remote-debugging-port=${DEBUG_PORT}`,url],{stdio:"ignore",windowsHide:true});
-    page=await connect(url);await page.send("Runtime.enable");
-    const end=Date.now()+20000;let ready=false;while(Date.now()<end){ready=await page.evaluate("document.readyState==='complete'&&!!window.DiceboundCamp&&!!window.DiceboundCampShellOracleTest&&!!window.DiceboundRunResumeTest&&!!window.DiceboundClasses&&!!window.DiceboundRng");if(ready)break;await sleep(100);}if(!ready){const diagnostic=await startupDiagnostics(page);assert.fail(`Camp/App-Shell oracle runtime surface did not become ready\n${JSON.stringify(diagnostic,null,2)}`);}
+    page=await connect(url);
+    const startup=await waitForStartupSurface(page);
+    if(!startup.ready)assert.fail(`Camp/App-Shell oracle runtime surface did not become ready on the original page\n${JSON.stringify(startup,null,2)}`);
     const actual=await page.evaluate(`(async()=>{const api=window.DiceboundCampShellOracleTest,out=[];const add=(name,result)=>out.push({name,result:result==null?result:JSON.parse(JSON.stringify(result))});add('startup-camp',api.startup());add('camp-recovery',api.recovery());add('camp-entry-checkpoint-reset',api.checkpointReset());add('camp-entry-reset',api.campReset());add('meta-refresh',api.metaRefresh());add('hud-board5-premini',api.hudBoard5Pre());add('hud-board5-final',api.hudBoard5Final());add('hud-board6-premini',api.hudBoard6Pre());add('hud-board6-final',api.hudBoard6Final());add('hud-hell-floor',api.hudHell());add('hud-stat-sync',api.hudStats());add('hud-checkpoint-schedule',await api.hudCheckpoint());add('camp-art-refresh',api.artRefresh());api.cleanup();return {baselineVersion:'0.6.6.35',runtimeVersion:window.DiceboundVersion?.version||null,cases:out};})()`);
     assertCoverage(actual);
     if(CAPTURE){fs.mkdirSync(path.dirname(FIXTURE_PATH),{recursive:true});fs.writeFileSync(FIXTURE_PATH,JSON.stringify(actual,null,2)+"\n","utf8");console.log(`Camp/App-Shell fixture captured: ${FIXTURE_PATH}`);return;}

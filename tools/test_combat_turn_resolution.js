@@ -43,6 +43,7 @@ function makeHarness(options={}){
     rand:(min,max)=>{const value=options.randValue??0;calls.push(["rand",min,max,value]);return value;},
     clamp:(value,min,max)=>Math.max(min,Math.min(max,value)),
     delay:async ms=>{calls.push(["delay",ms]);},
+    allyTurn:async()=>{calls.push(["ally"]);},
     petTurn:async()=>{calls.push(["pet"]);},
     applyPoisonTick:()=>{calls.push(["poison-tick"]);return 0;},
     winCombat:()=>{calls.push(["win"]);return "win";},
@@ -228,6 +229,7 @@ function makeHarness(options={}){
     const result=await turns.resolveEnemyResponse(false);
     assert.equal(result,"death");
     assert.equal(h.player.hp,0);
+    assert.equal(h.calls.filter(call=>call[0]==="ally").length,0,"permanent hero death must stop the allied phase immediately; surviving summons never continue the fight");
     assert.equal(h.calls.filter(call=>call[0]==="pet").length,0,"lethal player status tick must resolve before pet/enemy response work");
   }
   {

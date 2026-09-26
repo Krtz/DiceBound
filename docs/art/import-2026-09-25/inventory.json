@@ -1,0 +1,974 @@
+[
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Resolute Guard",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\resolute-guard.png",
+    "destination": "runtime/assets/powerups/class-specific/resolute-guard.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "80D88FCBB75FA99A5EB275CF12A5C68815CF9EBDCFF00A84A308E2DB1ED790FB"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Flowing Guard",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\flowing-guard.png",
+    "destination": "runtime/assets/powerups/class-specific/flowing-guard.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "21921D14A1889EC3C7957689F1E12C7B6466A258A6A515FCC8C7BBA9A6AB8C78"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Arcane Meditation",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\arcane-meditation.png",
+    "destination": "runtime/assets/powerups/class-specific/arcane-meditation.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "AC500BC4EF9BFF00DBA3B28BD68E6E9293F570A35BA8C7DEA8FB69CDCE4FD219"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Pain Is Fuel",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\pain-is-fuel.png",
+    "destination": "runtime/assets/powerups/class-specific/pain-is-fuel.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3D6263744BCF21B20DB2C0620129E06B3AB35C35A8037A27A9F979B1324E3294"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Iron Resonance",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\iron-resonance.png",
+    "destination": "runtime/assets/powerups/class-specific/iron-resonance.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "CE70BC9722112F41E191A7A92A7985D8FC059CFA115907192FFE8D621C9D12C9"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Verdant Arrowheads",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\verdant-arrowheads.png",
+    "destination": "runtime/assets/powerups/class-specific/verdant-arrowheads.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3DE4E2B0828D92B75F9A19709FFEFA7EBAAAF1E29F207C70BE4ADA25E281DF21"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Void Channel",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\void-channel.png",
+    "destination": "runtime/assets/powerups/class-specific/void-channel.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7BB03C72CBE4DB16ABE57C74C90B7B450994792F356F5160F29EB78FB3AE1CD3"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Storm Kata",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\storm-kata.png",
+    "destination": "runtime/assets/powerups/class-specific/storm-kata.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "8549C77FFB32CBB0FACDB5D487B8DFE4CC1C09E7D63E5BCCD78C5D1005F0FEDC"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Volcanic Temper",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\volcanic-temper.png",
+    "destination": "runtime/assets/powerups/class-specific/volcanic-temper.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F6A92A128A803AC8B3AFA91AEA2417567A663F81388FBD228322E2EF2CC98516"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Storm Croak",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\storm-croak.png",
+    "destination": "runtime/assets/powerups/class-specific/storm-croak.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "CC095A9DA687294C59E6A114905151DECF3F88CA1010B797728881C2130F8EB7"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Night's Hunger",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\nights-hunger.png",
+    "destination": "runtime/assets/powerups/class-specific/nights-hunger.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "1E85716ED0F0D68F75257FF97A4134A9E11EAF7909742DA711E4A01A555F3410"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Lightning Step",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\lightning-step.png",
+    "destination": "runtime/assets/powerups/class-specific/lightning-step.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F7C01E67D7E18640DC1CFF45939251249502D1A713CD38CFF81007F8E06AC50F"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Automated Workforce",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\automated-workforce.png",
+    "destination": "runtime/assets/powerups/class-specific/automated-workforce.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7D4377153F02F0841A5A0B3EB904C9553B96628C03FECEF6846C42931352D01F"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Open All Hours",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\open-all-hours.png",
+    "destination": "runtime/assets/powerups/class-specific/open-all-hours.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "EAA256F3333B53126C7B591DA772F2225B1178FF4D75B9092592EF80DFCC60F6"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Benediction",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\benediction.png",
+    "destination": "runtime/assets/powerups/class-specific/benediction.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6911C2E3E073AE4E948A2DFD863C9E1597990DE70F663FF46FC0B6C6E15697F7"
+  },
+  {
+    "batch": "common-powerups-batch-2-2026-09-25",
+    "name": "Deeper Circle",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\common-powerups-batch-2-2026-09-25\\deeper-circle.png",
+    "destination": "runtime/assets/powerups/class-specific/deeper-circle.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "A3E293C4DD44F10AC1BE0974E26D3E110BF274E8BE894941A0C5004BEAFF1864"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Abyssal Whip",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\weapon\\abyssal-whip.png",
+    "destination": "runtime/assets/equipment/weapon/abyssal-whip.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "99516B958F0F0DEF44D0FB3007FB29CAED28A98E3368317EB963C7DF93FBAA43"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Ancestral Shell",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\offhand\\ancestral-shell.png",
+    "destination": "runtime/assets/equipment/offhand/ancestral-shell.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "5AB1FEB164C2B0E84046CFC3448241824655C33869732EF8F914CFDE83EDBCF6"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Ancient Armour",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\chest\\ancient-armour.png",
+    "destination": "runtime/assets/equipment/chest/ancient-armour.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "DBE12F2A4C3728C0EC4C65BE21A5B0CFCD8FDA6E8F113C53538CEE6202C09D0C"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Bloodbound Hat",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\hat\\bloodbound-hat.png",
+    "destination": "runtime/assets/equipment/hat/bloodbound-hat.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F81F4C8D5BEE60DFD968C39AB0114237E849384BFB34147D3EA6CC725F0B7F69"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Bane Platelegs",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\legs\\bane-platelegs.png",
+    "destination": "runtime/assets/equipment/legs/bane-platelegs.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2DA70A3F97CF82C2F92E6C7F4CD3B1F6953D130FD892722730CBC0A3CB6F4466"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Distiller's Ring",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\ring\\distillers-ring.png",
+    "destination": "runtime/assets/equipment/ring/distillers-ring.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "128E737B3DB11F97C0A784D6FD762A825E6C25D1257D92FF5028985C5E53A803"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Adamant Armoured Boots",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\boots\\adamant-armoured-boots.png",
+    "destination": "runtime/assets/equipment/boots/adamant-armoured-boots.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "B49D36D88A57514BC2EC77D52A0F4A99A98F434005F0F01EF4CDBD91696E930B"
+  },
+  {
+    "batch": "gear-base-models-batch-3-2026-09-25",
+    "name": "Executive Amulet",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-3-2026-09-25\\amulet\\executive-amulet.png",
+    "destination": "runtime/assets/equipment/amulet/executive-amulet.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "5EBD58D83F4DFB825CDD4E39C5E51D23E8901049BA70DCC0B14B1908CFAC7B8A"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Adamant Scimitar",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\weapon\\adamant-scimitar.png",
+    "destination": "runtime/assets/equipment/weapon/adamant-scimitar.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4F9763732E8E9254893F93F20B6F19DA144255F84102A8331CAC0C57D36CA2F2"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Air Battlestaff",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\weapon\\air-battlestaff.png",
+    "destination": "runtime/assets/equipment/weapon/air-battlestaff.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3E10A0FF2B00CFD9B43208D913F38E7977A25CA59BE9CA4519794B0797EA6080"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Bottomless Purse",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\offhand\\bottomless-purse.png",
+    "destination": "runtime/assets/equipment/offhand/bottomless-purse.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "AF9A44F980475E29A9A5A96DED57B7BF1562EEBF8ACA39092D45FC3DC536FD2E"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Blood Goblet",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\offhand\\blood-goblet.png",
+    "destination": "runtime/assets/equipment/offhand/blood-goblet.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "B11A6C4F8C7478B72AEB8B7B70AF35489B7C620FC2C5BBCBA7632A5D13376898"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Crown of Twenty Faces",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\hat\\crown-of-twenty-faces.png",
+    "destination": "runtime/assets/equipment/hat/crown-of-twenty-faces.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "63E748BDDAC1AEE025A7A631E3E566E1A9E46DFC2FE893AD14B738CEC0C95E79"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Constellation Mantle",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\chest\\constellation-mantle.png",
+    "destination": "runtime/assets/equipment/chest/constellation-mantle.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "60FE8ABC78A8045536E9DF424DDE3EFA444E85CF450471F92EC7D8CAC24B260F"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Feathered Cap",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\hat\\feathered-cap.png",
+    "destination": "runtime/assets/equipment/hat/feathered-cap.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "DAB07B875369228B15AB0BAA08A46D13DE36F1A86ED31A644E32429607475C6A"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Moonweave Trousers",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\legs\\moonweave-trousers.png",
+    "destination": "runtime/assets/equipment/legs/moonweave-trousers.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "379DE1E14E80FE8CC7E0699C2B4757447EDCAAD61EB16CDF1957BAF792D1C71F"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Croaking Vest",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\chest\\croaking-vest.png",
+    "destination": "runtime/assets/equipment/chest/croaking-vest.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "8E72E65875A3DEFECB9F658EE93571F0497F7AB9E29B812C0B3A921C9CF8B6CF"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Impossible Stilts",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\boots\\impossible-stilts.png",
+    "destination": "runtime/assets/equipment/boots/impossible-stilts.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "106148C456E5DCBA86343F0DF82ED5A893C3901B39EF7DD95D9E1093E17392ED"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Gel Trousers",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\legs\\gel-trousers.png",
+    "destination": "runtime/assets/equipment/legs/gel-trousers.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "B2ABC02D6676465B22F30F9EC9035E95078ED8EE8A231E6BBF6E03C079424B02"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Ring of Random Integers",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\ring\\ring-of-random-integers.png",
+    "destination": "runtime/assets/equipment/ring/ring-of-random-integers.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "ADD177EB093D1723F5167A6550EFDD11A3059E7834479BA8F0BC745DBCE404EA"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Lion Sabatons",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\boots\\lion-sabatons.png",
+    "destination": "runtime/assets/equipment/boots/lion-sabatons.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "450362B8DDF0B11F59D4BB968DC4C4B20008393D0978C1546D05159B49FC8C0C"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Honking Medallion",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\amulet\\honking-medallion.png",
+    "destination": "runtime/assets/equipment/amulet/honking-medallion.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "CACC7CA2CFB343122213C2876CB6752DCDEE69A3C43695E30726F3BE0C21BEF5"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Ring-Pop of Power",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\ring\\ring-pop-of-power.png",
+    "destination": "runtime/assets/equipment/ring/ring-pop-of-power.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "945347CC585ED783250A1877F9F15AE26644CC9284DCDBDC529282F6811976B2"
+  },
+  {
+    "batch": "gear-base-models-batch-4-2026-09-25",
+    "name": "Lotus Pendant",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-4-2026-09-25\\amulet\\lotus-pendant.png",
+    "destination": "runtime/assets/equipment/amulet/lotus-pendant.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6F39EA79E4B9275CDC35CCC859C10845594EECE7DF39761982C2A452CC332C77"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Adamant 2H Sword",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\weapon\\adamant-2h-sword.png",
+    "destination": "runtime/assets/equipment/weapon/adamant-2h-sword.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "D831CB57154AC62696B94A07DA880B59171600E6A56A22DDCC92EC32EF11C3CE"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Adamant Battleaxe",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\weapon\\adamant-battleaxe.png",
+    "destination": "runtime/assets/equipment/weapon/adamant-battleaxe.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "98DCD36DF458C9460F0C810FA27A62E5058AF497DFF284CCB4FC02ACB801F2CF"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Abyssal Orb",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\offhand\\abyssal-orb.png",
+    "destination": "runtime/assets/equipment/offhand/abyssal-orb.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "560BAC37A672D7E99EBFFA05575B9AA455EF957F1CEBDF5613D816E5E3C7E2D3"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Aegis Shield",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\offhand\\aegis-shield.png",
+    "destination": "runtime/assets/equipment/offhand/aegis-shield.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "934501A41AE5D9E462CCAD08D41D99B6C58F2720DADBDC4709C3E224FA1469EF"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Adamant Full Helm",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\hat\\adamant-full-helm.png",
+    "destination": "runtime/assets/equipment/hat/adamant-full-helm.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F73FEE0A4E9ECDAB71751E4FE5613FBEF83D5F7BCD6B4C58838FECE387BB60D6"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Champion Hat",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\hat\\champion-hat.png",
+    "destination": "runtime/assets/equipment/hat/champion-hat.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "29FB4CA7C551993E66BC852A630BFA625034D9A0BC31EF80C88B38FDA81BFDBC"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Archon Plate",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\chest\\archon-plate.png",
+    "destination": "runtime/assets/equipment/chest/archon-plate.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "EAB5B32287F3AB0816A9C6D31E6DC6545988A3DAB1F543DCA1765CB00845233D"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Balrog Skin",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\chest\\balrog-skin.png",
+    "destination": "runtime/assets/equipment/chest/balrog-skin.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "18B5830C8068EA96FF4340BBD163B33758B71DF95364CA3A124E3990765F2068"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Bloodbound Legs",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\legs\\bloodbound-legs.png",
+    "destination": "runtime/assets/equipment/legs/bloodbound-legs.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "881AFA57915C987C72DF2168898939B2DF7B1F70B05AB2544478EFDBA1594C6E"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Consecrated Legs",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\legs\\consecrated-legs.png",
+    "destination": "runtime/assets/equipment/legs/consecrated-legs.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "81F8DE0644F4492055FB57CBD019CBD08FC8BAF5458281D71C851D0D8883C1D3"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Bane Armoured Boots",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\boots\\bane-armoured-boots.png",
+    "destination": "runtime/assets/equipment/boots/bane-armoured-boots.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "D462C811A8283D023337A349EC8623C7AE1D788E131DDE266892F69032A7670E"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Champion Boots",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\boots\\champion-boots.png",
+    "destination": "runtime/assets/equipment/boots/champion-boots.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7F9A790483E3052A755B99008FD85D3CD198EA6A70C1D44A80BDD9AEDD7914F4"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Blood Oath Band",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\ring\\blood-oath-band.png",
+    "destination": "runtime/assets/equipment/ring/blood-oath-band.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "B3D5D8F3B02F70ABE1F75688C09DE9B8C9DD71F852A66A4610D8E7A0FD222EAC"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Consecrated Ring",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\ring\\consecrated-ring.png",
+    "destination": "runtime/assets/equipment/ring/consecrated-ring.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "30C22684C2B9D4D3C9F2C80275E7BB0E537F9DD7860D89F23A3F4490C7F19460"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Bloodbound Amulet",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\amulet\\bloodbound-amulet.png",
+    "destination": "runtime/assets/equipment/amulet/bloodbound-amulet.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "D78C3598A7F15C144F24296B6768357076493DDA682EC037C4D03473DE64FDF3"
+  },
+  {
+    "batch": "gear-base-models-batch-5-2026-09-25",
+    "name": "Champion Amulet",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\gear-base-models-batch-5-2026-09-25\\amulet\\champion-amulet.png",
+    "destination": "runtime/assets/equipment/amulet/champion-amulet.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4CBF746350E1D56A51B676B58F0498606BDC83FCCFFB97803A47652DE307ABAB"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Mist Step",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\mist-step.png",
+    "destination": "runtime/assets/powerups/uncommon/mist-step.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "0C949339099324D762E7DAE996C220BCEDADAC18EB841C64862274C869A2BD4D"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Battle Barrier",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\battle-barrier.png",
+    "destination": "runtime/assets/powerups/uncommon/battle-barrier.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "FC7776DCB17B74B77DB0EA017BAE42624B432D54171D22ABCDA16C19472056B0"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Twin Fletching",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\twin-fletching.png",
+    "destination": "runtime/assets/powerups/class-specific/twin-fletching.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "EC9CAC16AA79A4489B087D3FC15EFB74761357FDC99169108CEF940961E16C1B"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Shield Riposte",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\shield-riposte.png",
+    "destination": "runtime/assets/powerups/class-specific/shield-riposte.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F99E85311561FEE8A5D86263DFF136905DA1C6288C0C66117C2E3BFDB74789A8"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Open Palm Rhythm",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\open-palm-rhythm.png",
+    "destination": "runtime/assets/powerups/shared/open-palm-rhythm.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "5BB2D40DC346F7DDF87AD642C7057C4285FB93D8356123FE66BCD880212C9A9C"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Arcane Resonance",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\arcane-resonance.png",
+    "destination": "runtime/assets/powerups/shared/arcane-resonance.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7522282EAD45D34562B592DC388D3D4C067FAD06D88221392EE7B57548364286"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Velvet Cut",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\velvet-cut.png",
+    "destination": "runtime/assets/powerups/class-specific/velvet-cut.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7815F2BEE777BB49A8AB217105877EC248FAFB56E9BD54BFD0967A0CD6A00262"
+  },
+  {
+    "batch": "uncommon-powerups-batch-1-2026-09-25",
+    "name": "Rubber Chicken Doctrine",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-1-2026-09-25\\rubber-chicken-doctrine.png",
+    "destination": "runtime/assets/powerups/class-specific/rubber-chicken-doctrine.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "A6C2A3D58FFE01F0CF54015DFEC4D58A99EB996B2E48098DF18C035E52A12DE3"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Obviously Loaded Dice",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\obviously-loaded-dice.png",
+    "destination": "runtime/assets/powerups/class-specific/obviously-loaded-dice.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "60A8B221F60F7ABD9BC1EB9448A9B56BF924F1E734B28665678C5D3F8D344217"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Violent Patience",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\violent-patience.png",
+    "destination": "runtime/assets/powerups/class-specific/violent-patience.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2297DEFBA433A0AD31D47338A47D80F36F7755AEDD7B9D30B36E87D41755BD1D"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Prismatic Accident",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\prismatic-accident.png",
+    "destination": "runtime/assets/powerups/class-specific/prismatic-accident.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "124CF937465872EAA5D0F5EF3F1CC2E70BC6A85A30FB1D5C3750D117C5F3257B"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Armored Assault",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\armored-assault.png",
+    "destination": "runtime/assets/powerups/class-specific/armored-assault.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "126AC6F5405B3AF94AC0906A8629F370FA8831906D3CAD4966340A09FE57C46B"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Chromatic Twenty",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\chromatic-twenty.png",
+    "destination": "runtime/assets/powerups/class-specific/chromatic-twenty.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "630AF3612E7BAA3FD7CD4216255CBD3C138E1D5D7F2167967A125A04DAA90C5A"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Dragon Mark",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\dragon-mark.png",
+    "destination": "runtime/assets/powerups/uncommon/dragon-mark.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "252070801E55A04088522F6C81E45D7504CE20197002B39FC61F699EDF8AA8DE"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Evasive Bulwark",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\evasive-bulwark.png",
+    "destination": "runtime/assets/powerups/class-specific/evasive-bulwark.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "377777401F89C654C95DCD0191EAD3C27707A35D7D5F6B7078A7BCC058E74956"
+  },
+  {
+    "batch": "uncommon-powerups-batch-2-2026-09-25",
+    "name": "Prism Lens",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-2-2026-09-25\\prism-lens.png",
+    "destination": "runtime/assets/powerups/shared/prism-lens.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "E873BB30D4A547E68815A9BB0143A0D3213663D0364C53EA546802D4DDDFF433"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Stormstep",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\stormstep.png",
+    "destination": "runtime/assets/powerups/uncommon/stormstep.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "CCA8AE583A9454E0ADF428E64621220E99F260100BB61C9DB99A5DF6B9688600"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Pack Hunter",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\pack-hunter.png",
+    "destination": "runtime/assets/powerups/uncommon/pack-hunter.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6023E83478E2EDFCEF825D99D29B009AE51247D42270BCE47972908CC0764017"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Ultimate Vessel",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\ultimate-vessel.png",
+    "destination": "runtime/assets/powerups/uncommon/ultimate-vessel.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2BBB7CF372FB4B3D7752D85A74385E2FB7D07E712BB9D9B5352A1F4B38003FB5"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Red Flask",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\red-flask.png",
+    "destination": "runtime/assets/powerups/uncommon/red-flask.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F47E6A39A8FFA1DF6134C805CF54B7D3AF7777E734DA0D2BDDC2B12EFC534704"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Battering Line",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\battering-line.png",
+    "destination": "runtime/assets/powerups/class-specific/battering-line.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "7DC6A00DEE07C65A75E47B2AB020B8B1118F08C22EB187CE6B10CAC9EF0A2BD9"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Thorn Volley",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\thorn-volley.png",
+    "destination": "runtime/assets/powerups/class-specific/thorn-volley.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "E68D23B42EB706065D87ECC812B76FD25B9E19634E7D72C97A3FEB1623FBDFAA"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Banana-Peel Law",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\banana-peel-law.png",
+    "destination": "runtime/assets/powerups/class-specific/banana-peel-law.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "ABEC9780D8E55EBEAC238C96734BCA5B0A44155504D53D7D416658734C141B55"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Carmine Veins",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\carmine-veins.png",
+    "destination": "runtime/assets/powerups/class-specific/carmine-veins.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "E712D2735060B4DB562551B93E7FB75AC6C545424A49E33FD0D7167BD4F2F66E"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Shell Memory",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\shell-memory.png",
+    "destination": "runtime/assets/powerups/class-specific/shell-memory.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6ECB0C8B76122CBD18DACB7A529AFB0FAF03513B0B46AF70C4769716E0245891"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Bent Probability",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\bent-probability.png",
+    "destination": "runtime/assets/powerups/class-specific/bent-probability.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "1213EC281AA3F25285E91E2F7FAD673BB78AA455BCE54563958E1E21516FFEA4"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Red Mist",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\red-mist.png",
+    "destination": "runtime/assets/powerups/class-specific/red-mist.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "066EFD443F1F6D80D298CD57E334D261FE7317EC1A6A1FF9F935F8A1CD8A51E8"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Smoke Mathematics",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\smoke-mathematics.png",
+    "destination": "runtime/assets/powerups/class-specific/smoke-mathematics.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "6D22CC09D8C51C755615979221023C77DB1E783FC954A85EF473AB78A3BF44E1"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Hostile Synergy",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\hostile-synergy.png",
+    "destination": "runtime/assets/powerups/class-specific/hostile-synergy.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3601F2B50DB55DF1E3734780C536207167DBDA0B0CFFC766832AE5CF1BC1C2F7"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Bulk Discount Violence",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\bulk-discount-violence.png",
+    "destination": "runtime/assets/powerups/class-specific/bulk-discount-violence.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "2123574CA2E8891309D9B83A5B433D771AD42569F3724ACFD4B7C4358AFAEF44"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Vanguard Doctrine",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\vanguard-doctrine.png",
+    "destination": "runtime/assets/powerups/class-specific/vanguard-doctrine.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "27928257686605F72002D76E7371D1FE9F611D7584ED6482AD0605AFA2290D66"
+  },
+  {
+    "batch": "uncommon-powerups-batch-3-2026-09-25",
+    "name": "Skirmisher's Tempo",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-3-2026-09-25\\skirmishers-tempo.png",
+    "destination": "runtime/assets/powerups/class-specific/skirmishers-tempo.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "A01E907918B3555646D6F696737631A0D2FC5F87657DE94EB7CB91C042B592B8"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Occult Convergence",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\occult-convergence.png",
+    "destination": "runtime/assets/powerups/class-specific/occult-convergence.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "72BFCA49FD16176FF8ABF58C8A25AA312655768BF17705DB3F51C64D9AC62F37"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Road Toxicology",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\road-toxicology.png",
+    "destination": "runtime/assets/powerups/uncommon/road-toxicology.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "07389353CC586BAE3A499A6EB5C79A879BDA870C106EA37846015F6BA1241770"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Thorn Venom",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\thorn-venom.png",
+    "destination": "runtime/assets/powerups/class-specific/thorn-venom.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "569AEF71EF680A5E176CB65B57FE5F87F48DF7C7D79AAE20B14AEC431FDCA640"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Loaded Chamber",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\loaded-chamber.png",
+    "destination": "runtime/assets/powerups/uncommon/loaded-chamber.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9B727E062A1E8C6BD3CCC62B80455B127470FC43FC78C9F76EBCAD15CA04D379"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Radiant Doctrine",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\radiant-doctrine.png",
+    "destination": "runtime/assets/powerups/class-specific/radiant-doctrine.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "623203615A1EEF38949ABA66DD53BE4A48664E48F487E9CA6C056CA83C3BA315"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Oathbound Smite",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\oathbound-smite.png",
+    "destination": "runtime/assets/powerups/class-specific/oathbound-smite.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "0FE6A0C917B5653A180BFD41A1B33AD3A72D148912F9C2B49149DE7C30C3D0E9"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Pack Discipline",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\pack-discipline.png",
+    "destination": "runtime/assets/powerups/class-specific/pack-discipline.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "BAEBCAEE9AD044CB95A1D9BED37BF2248A173050D7D5192DE8229E6F08C28967"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Profitable Backstab",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\profitable-backstab.png",
+    "destination": "runtime/assets/powerups/class-specific/profitable-backstab.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "1635F5C12BF6EC822061D128183C1AD4687D0C6AE12035EF3ACF8060272B7A72"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Twin Pact",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\twin-pact.png",
+    "destination": "runtime/assets/powerups/class-specific/twin-pact.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4D73160F9AC67BCB19A43368A1CED2367F11FA56F849FCC8763CFCC5C669EC60"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Double Battle",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\double-battle.png",
+    "destination": "runtime/assets/powerups/class-specific/double-battle.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F764E786EADEE98B971C56820F81269844CDD0EC3DDDB55CCA3163DAB07C8776"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Volatile Formula",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\volatile-formula.png",
+    "destination": "runtime/assets/powerups/class-specific/volatile-formula.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "3D58A01A0CAF35B3BD4070A968E9D0EDBA8405080540D668CF55821C2D079281"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Reactive Carapace",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\reactive-carapace.png",
+    "destination": "runtime/assets/powerups/class-specific/reactive-carapace.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "8FD6A849A41511B55099CDF772DEA6D0EAA4EDD960FD787A7D017573B6A954BA"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Deep Reservoir",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\deep-reservoir.png",
+    "destination": "runtime/assets/powerups/class-specific/deep-reservoir.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "0643A065189A4B6B7E925280CAE996E6016A6FEF1CF5AA8BC1400DE71E5198C0"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Quick Channel",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\quick-channel.png",
+    "destination": "runtime/assets/powerups/class-specific/quick-channel.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "73B8EBED07525FDD89EDEDBEFE0E6752491A885A9203AFD9CAEB5231AF7A0938"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Quas Mastery",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\quas-mastery.png",
+    "destination": "runtime/assets/powerups/class-specific/quas-mastery.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "38C89A720AC76FE16EDD5D14823C3ED411802BD2CE02DD3900F5D2B0693F8A3B"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Wex Mastery",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\wex-mastery.png",
+    "destination": "runtime/assets/powerups/class-specific/wex-mastery.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "D8E87E6E4644FB47FE911BED344118C46A2284C8D5CE89851C5EBEDC1562B251"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Exort Mastery",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\exort-mastery.png",
+    "destination": "runtime/assets/powerups/class-specific/exort-mastery.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "9E18112219A9D8D1B9734D74D75F03D53055977345EE64F94132DF2B5237A115"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Irradiated Molt",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\irradiated-molt.png",
+    "destination": "runtime/assets/powerups/class-specific/irradiated-molt.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "5BEFB3B8DF7D876401F4BA3401C9F9B918FB8CCD907AE2200F12970468296CA4"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Boss Hunter's Badge",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\boss-hunters-badge.png",
+    "destination": "runtime/assets/powerups/uncommon/boss-hunters-badge.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "F0502F041ED8B10E3E4B8F1BD75D3FE22B9D989DDF97DC1992ECB5066850C978"
+  },
+  {
+    "batch": "uncommon-powerups-batch-4-2026-09-25",
+    "name": "Leeching Fang",
+    "source": "T:\\TEMP\\DiceBound\\art-inbox\\uncommon-powerups-batch-4-2026-09-25\\leeching-fang.png",
+    "destination": "runtime/assets/powerups/uncommon/leeching-fang.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "682C1E6647D52AC48628BEB77E1C4080B52930105C696A799A3D2F7F9D76775C"
+  }
+]

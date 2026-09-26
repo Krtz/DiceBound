@@ -5,9 +5,9 @@ import argparse, hashlib, json, re, subprocess, sys
 from pathlib import Path
 from runtime_manifest_hash import RUNTIME_EXTENSIONS, sha256_runtime_file
 
-EXPECTED={'classes': 27, 'pets': 14, 'pet_battle_assets': 14, 'normal_enemies': 11, 'normal_enemy_battle_assets': 69, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 18, 'powerup_assets': 37, 'powerup_id_mappings': 47, 'registry_files': 402, 'combat_effect_assets': 33, 'equipment_assets': 61}
+EXPECTED={'classes': 28, 'pets': 14, 'pet_battle_assets': 14, 'normal_enemies': 11, 'normal_enemy_battle_assets': 69, 'normal_enemy_board_markers': 11, 'minibosses': 6, 'bosses': 6, 'secret_bosses': 3, 'board_backgrounds': 6, 'combat_backgrounds': 18, 'powerup_assets': 105, 'powerup_id_mappings': 47, 'registry_files': 533, 'combat_effect_assets': 33, 'equipment_assets': 101}
 RETIRED_PREFIXES=("assets/enemies/portraits/","assets/camp/backgrounds/","assets/camp/objects/","assets/pets/portraits/","assets/ui/backgrounds/","assets/ui/class-art/","assets/ui/class-markers/","assets/ui/icon/","assets/ui/icons/","assets/sounds/")
-SEMANTIC_ROOTS=("assets/characters/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
+SEMANTIC_ROOTS=("assets/characters/","assets/necromancer/","assets/enemies/normal/","assets/enemies/minibosses/","assets/enemies/bosses/","assets/enemies/secret-bosses/","assets/equipment/","assets/powerups/","assets/camp/background/","assets/camp/interactions/","assets/camp/decorations/","assets/camp/mode-toggles/","assets/board/","assets/combat/","assets/ui/chrome/","assets/ui/controls/","assets/ui/currencies/","assets/ui/misc/","assets/installer/","assets/audio/")
 POINTER_SOURCE_EXTENSIONS={".html",".css",".js"}
 POINTER_RX=re.compile(r"assets/[A-Za-z0-9_./-]+(?:\.(?:png|ico|jpg|jpeg|webp|ogg|mp3|wav|webm)|/)")
 
@@ -66,7 +66,24 @@ def main():
     for rel in reg["files"]:
         p=runtime/rel
         if not p.is_file() or p.stat().st_size==0: fail(f"registry/preload target missing or empty: {rel}")
-    for ctx in ("campsite","battle","markers"): count(runtime/f"assets/characters/classes/{ctx}",EXPECTED["classes"])
+    # Class art is manifest-owned. Most legacy classes still live in the shared
+    # characters/classes folders, while authored classes such as Necromancer may
+    # own a dedicated semantic asset family. Validate every canonical class path
+    # and ensure the shared folders contain exactly the manifest references that
+    # claim those homes rather than forcing duplicate compatibility PNGs.
+    for field,ctx in (("campsite","campsite"),("battle","battle"),("marker","markers")):
+        shared_prefix=f"assets/characters/classes/{ctx}/"
+        referenced=set()
+        for class_id,entry in m["classes"].items():
+            rel=entry.get(field)
+            if not rel: fail(f"class {class_id} is missing canonical {field} art")
+            target=runtime/rel
+            if not target.is_file() or target.stat().st_size==0: fail(f"class {class_id} {field} art is missing or empty: {rel}")
+            if rel.startswith(shared_prefix): referenced.add(rel)
+        actual={p.relative_to(runtime).as_posix() for p in (runtime/f"assets/characters/classes/{ctx}").glob("*.png")}
+        if actual!=referenced:
+            missing=sorted(referenced-actual); orphaned=sorted(actual-referenced)
+            fail(f"class {field} shared-folder ownership drifted; missing={missing}, orphaned={orphaned}")
     count(runtime/"assets/characters/pets/portraits",EXPECTED["pets"])
     count(runtime/"assets/characters/pets/battle",EXPECTED["pet_battle_assets"])
     for role,expected in (("minibosses",6),("bosses",6),("secret-bosses",3)):
