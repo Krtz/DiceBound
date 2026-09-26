@@ -28,6 +28,7 @@
           "rogue",
           "bloodmage",
           "summoner",
+          "necromancer",
           "pokemontrainer",
           "alchemist",
           "ouroboros",
@@ -777,6 +778,40 @@
               "desc": "Calls a temporary full spirit circle and sends every summoned familiar crashing through the enemy pack."
             }
           },
+          "necromancer": {
+            "id": "necromancer",
+            "name": "Necromancer",
+            "secret": false,
+            "unlock": "Defeat 100 Liches across your career",
+            "stats": "34 HP · 6 ATK · 1 DEF · 30/110 MANA · 2 SUMMONS",
+            "tags": [
+              "occult",
+              "mana",
+              "pack",
+              "ranged"
+            ],
+            "base": {
+              "maxHp": 34,
+              "attack": 6,
+              "defense": 1,
+              "crit": 0.08,
+              "dodge": 0.04,
+              "luck": 0.05,
+              "doubleStrike": 0.05,
+              "guardPower": 0.5,
+              "classBurst": 0,
+              "lifeSteal": 0
+            },
+            "passive": {
+              "name": "Bone Shrapnel",
+              "desc": "Skeleton Warriors explode on true death, spraying enemies and the allied side with bone shards. Replacing a summon is not a death."
+            },
+            "ultimate": {
+              "name": "Army of the Dead",
+              "icon": "💀⚔️",
+              "desc": "After enough qualifying summons, every living summon attacks with overwhelming force and empty summon slots contribute spectral Skeleton strikes."
+            }
+          },
           "pokemontrainer": {
             "id": "pokemontrainer",
             "name": "Pokémon Trainer",
@@ -1060,6 +1095,10 @@
             "name": "Spirit Circle",
             "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoner converts 10% of Attack into pet damage before upgrades."
           },
+          "necromancer": {
+            "name": "Bone Shrapnel",
+            "desc": "Skeleton Warriors explode on true death for 20% of current Necromancer Attack to enemies and 10% to the hero and other living allied summons."
+          },
           "pokemontrainer": {
             "name": "Six-Creature Draft",
             "desc": "At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."
@@ -1204,6 +1243,11 @@
             "type": "petsAtLevel",
             "count": 3,
             "level": 10
+          },
+          "necromancer": {
+            "type": "enemyDefeats",
+            "enemyId": "lich",
+            "minimum": 100
           },
           "pokemontrainer": {
             "type": "compound",
@@ -1379,6 +1423,13 @@
             "pack",
             "spirits",
             "conjure"
+          ],
+          "necromancer": [
+            "mana",
+            "allies",
+            "summons",
+            "grave-count",
+            "bone-shrapnel"
           ],
           "pokemontrainer": [
             "pet",
