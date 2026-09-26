@@ -132,6 +132,8 @@ function runtime() {
     guardianBattleArt: () => null,
     allyArt: () => null,
     necromancerArt: () => null,
+    getCombatActionView: () => [],
+    executeCombatAction: async () => ({ok:true}),
     resolveCombatBackground: (board, mode) => mode === 'hell' ? null : ({ image: `assets/combat/backgrounds/board-${board}-${mode}.png`, focus: '50% 50%' }),
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
