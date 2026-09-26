@@ -8,6 +8,27 @@
 
 # The Ways
 
+## Echo continuity
+
+**CORE CANON**
+
+The character selecting and unlocking these Ways is an **Echo**.
+
+A Way is not merely a job placed on top of the character. It is a stable pattern of possibility that an Echo can resonate with strongly enough for reality to recognize.
+
+This same rule continues into DiceFree.
+
+- In **DiceBound**, a run begins with the Echo aligning to one currently available Way. The alignment may change between routes because the Road is repeatedly reconstructing the traveler.
+- A DiceBound **unlock** occurs when the Echo demonstrates the pattern strongly enough that the Way becomes permanently remembered as one of their possible forms.
+- In **DiceFree**, the Echo begins from a comparatively uncommitted state and advances through class lineages by proving increasingly specific Ways through levels, quests, trials, discoveries, bosses and secret conditions.
+- A DiceFree advancement is therefore not a different magic system from a DiceBound class unlock. It is a deeper, more persistent manifestation of the same recognition principle.
+
+The shared narrative rule is:
+
+> **An Echo becomes what reality has enough evidence to recognize.**
+
+This should guide both games' unlock/advancement writing. Requirements should feel like evidence for the identity being gained, not arbitrary bureaucracy.
+
 The Road does not understand people the way people understand themselves.
 
 It remembers patterns.
