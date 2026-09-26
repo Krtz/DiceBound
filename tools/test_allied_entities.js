@@ -59,14 +59,18 @@ const persistent = allies.spawn(allies.createRoster({ capacity: 2 }), {
   maxHp: 30,
   hp: 17,
   resources: { mana: 6 },
-  statuses: { burn: 3 }
+  attack: 7,
+  defense: 4,
+  statuses: { burn: 3, attackLost: 2, defenseLost: 1 }
 }, { turn: 1 }).roster;
 const saved = allies.serializeRunPersistent(persistent);
 assert(saved.length === 1 && saved[0].hp === 17, "run-persistent HP must serialize");
 assert(saved[0].resources.mana === 6, "run-persistent resources must serialize");
 assert(Object.keys(saved[0].statuses).length === 0, "encounter statuses must be discarded on persistence");
+assert(saved[0].attack === 9 && saved[0].defense === 5, "encounter-only stat reductions must be restored before persistence");
 const restored = allies.rehydrateRunPersistent(saved, { capacity: 2 });
 assert(restored.allies[0].hp === 17 && restored.allies[0].resources.mana === 6, "run-persistent HP/resources must rehydrate");
+assert(restored.allies[0].attack === 9 && restored.allies[0].defense === 5, "rehydrated run ally must not carry encounter-only stat debuffs");
 
 assert(allies.reviveTargetMatches("hero", "hero"), "hero revive should target hero");
 assert(!allies.reviveTargetMatches("hero", "summon"), "hero revive must not target summons");
