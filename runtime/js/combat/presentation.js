@@ -24,7 +24,7 @@
       "getState","find","getClasses","getElements","getPets","getOccultSpells","getManaBuilderGain","invokerManaMultiplier","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","allyArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect","legendaryEffect",
-      "activeTrainerPetId","invokerAttackSpec","necromancerArt","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
+      "activeTrainerPetId","invokerAttackSpec","necromancerArt","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","getCombatActionView","executeCombatAction","clamp","delay"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat presentation runtime missing ${name}().`);
     if (!nextRuntime.document || typeof nextRuntime.document.createElement !== "function") throw new Error("Combat presentation runtime missing document.");
@@ -690,6 +690,52 @@
     return { quas, exort };
   }
 
+  function dynamicActionButtonId(actionId){
+    return "dynamicCombatAction-"+String(actionId||"").replace(/[^a-z0-9_-]+/gi,"-");
+  }
+
+  function dynamicActionText(action){
+    const cost=action?.cost;
+    const suffix=cost&&Number(cost.amount)>0?` (${Number(cost.amount)} ${String(cost.resource||"").replace(/-/g," ")})`:"";
+    return `${action?.icon?String(action.icon)+" ":""}${action?.label||action?.id||"Action"}${suffix}`;
+  }
+
+  function syncDynamicCombatActions(){
+    const rt=requireRuntime(),actions=rt.document.querySelector("#combatOverlay .combat-actions");
+    if(!actions)return [];
+    const view=rt.getCombatActionView()||[];
+    const extras=view.filter(action=>action&&!action.metadata?.fixedSlot);
+    const keep=new Set(extras.map(action=>String(action.id)));
+    const existing=[...(actions.querySelectorAll?.('[data-dynamic-combat-action="1"]')||[])];
+
+    for(const button of existing){
+      if(!keep.has(String(button.dataset?.combatActionId||"")))button.remove?.();
+    }
+
+    const rendered=[];
+    for(const action of extras){
+      const id=String(action.id),domId=dynamicActionButtonId(id);
+      let button=typeof rt.document.getElementById==="function"?rt.document.getElementById(domId):null;
+      if(!button){
+        button=rt.document.createElement("button");
+        button.id=domId;
+        button.type="button";
+        button.className="combat-btn special action-tooltip db-dynamic-action";
+        button.dataset.dynamicCombatAction="1";
+        button.dataset.combatActionId=id;
+        button.addEventListener("click",()=>rt.executeCombatAction(button.dataset.combatActionId));
+      }
+      button.dataset.combatActionId=id;
+      button.disabled=!action.enabled;
+      button.textContent=dynamicActionText(action);
+      button.dataset.tip=action.description||"";
+      const before=rt.find("guardBtn")||null;
+      actions.insertBefore(button,before);
+      rendered.push(button);
+    }
+    return rendered;
+  }
+
   function ensureDragoonJumpButton() {
     const rt = requireRuntime(), doc = rt.document, find = rt.find, actions = doc.querySelector("#combatOverlay .combat-actions"); if (!actions) return null;
     let button = find("dragoonJumpBtn");
@@ -725,6 +771,7 @@
     const invokerButtons = ensureInvokerAttackButtons();
     [["quas", invokerButtons.quas], ["exort", invokerButtons.exort]].forEach(([key, button]) => { if (!button) return; const spec = model.invokerAttacks[key]; button.hidden = !model.invokerAttacks.active; button.disabled = !model.invokerAttacks.active || !!spec.disabled; button.textContent = spec.text; button.dataset.tip = spec.tip; });
     const actions = rt.document.querySelector("#combatOverlay .combat-actions"); actions?.classList.toggle("has-special", !!model.hasSpecial); actions?.classList.toggle("invoker-actions", !!model.invokerAttacks.active);
+    syncDynamicCombatActions();
     syncNecromancerActionArt(rt.isClassActive("necromancer"));
     const cls = model.cls; rt.applyClassPortrait(find("combatPlayerIcon"), cls.id, true);
     renderResource(model.resource); renderSummonerSpirits(); renderAlliedParty(); renderEnemyParty(); syncEnergyShieldBars(); renderBossSpecialIndicator(); syncDragoonPresentation();
@@ -753,9 +800,10 @@
     dragoonLandPresentation,
     ensureDragoonJumpButton,
     ensureInvokerAttackButtons,
+    syncDynamicCombatActions,
     playNecromancerEffect,
     clearDragoonPresentation,
-    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation, manaBuilderPresentation, enemyArtScale, enemyArtMetrics })
+    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation, manaBuilderPresentation, enemyArtScale, enemyArtMetrics, syncDynamicCombatActions, dynamicActionText })
   });
   window.DiceboundCombatPresentation = api;
 })();
