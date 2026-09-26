@@ -12,7 +12,7 @@
       "getPlayer","isActive","getCombatBusy","setCombatBusy","getEncounterTurn",
       "getCurrentEnemy","getCurrentEnemies","livingEnemies","selectEnemy",
       "spawnAlly","livingAllies","damageEnemy","damageAlly","damageHero",
-      "allyBasicAttack","graveCoil","resolveEnemyResponse","handleHeroDeath","setCombatText",
+      "allyBasicAttack","graveCoil","summonAction","ultimateAction","resolveEnemyResponse","handleHeroDeath","setCombatText",
       "addCombatHistory","updateCombatUI","playEffect","delay"
     ];
     for(const name of required)if(typeof next[name]!=="function")throw new Error("Necromancer runtime missing "+name+"().");
@@ -181,7 +181,7 @@
         enabled:()=>!rt().getCombatBusy()&&!!rt().getCurrentEnemy()&&(Number(player().mana)||0)>=SKELETON_MANA_COST,
         cost:()=>({resource:"mana",amount:SKELETON_MANA_COST}),
         metadata:Object.freeze({fixedSlot:"special",source:"class"}),
-        execute:()=>summonSkeleton()
+        execute:()=>rt().summonAction()
       }),
       Object.freeze({
         id:"army-of-the-dead",
@@ -194,7 +194,7 @@
         enabled:()=>!rt().getCombatBusy()&&!!rt().getCurrentEnemy()&&graveReady(),
         cost:()=>({resource:"grave-count",amount:graveThreshold()}),
         metadata:Object.freeze({fixedSlot:"ultimate",source:"class",readiness:"grave-count"}),
-        execute:()=>armyOfTheDead()
+        execute:()=>rt().ultimateAction()
       })
     ];
   }
