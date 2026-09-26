@@ -47,7 +47,6 @@ async function main(){
     if(overview.display==='none'||overview.visibility==='hidden'||overview.width<=0||overview.height<=0)throw new Error(`Career Overview rendered DOM but is not visibly presented: ${JSON.stringify(overview)}`);
     for(const expected of ['42','Prestige','3','Completed runs','8','321 tiles','12,345','4,321','999'])if(!overview.text.includes(expected))throw new Error(`Career Overview lost persisted value ${expected}: ${JSON.stringify(overview)}`);
     for(const expected of ['Allied combat','Summons created','69','Summon deaths','17','Summon kills','23','Replacements','Summon damage dealt','6,969','Summon damage taken','1,337','Summon healing received','420','Peak living summons','2'])if(!overview.text.includes(expected))throw new Error(`Career Allied Combat lost persisted value ${expected}: ${JSON.stringify(overview)}`);
-    if(document===undefined){} // source-only no-op; browser assertions above own the visible contract.
     if(!overview.clearSection.includes('Ranger')||!overview.clearSection.includes('Normal: 4'))throw new Error(`Career class clear ledger did not render seeded authoritative fact: ${JSON.stringify(overview)}`);
 
     await pointerClick(page,'#careerOverlay [data-career-tab="enemies"]');
