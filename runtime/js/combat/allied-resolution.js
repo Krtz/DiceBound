@@ -264,7 +264,11 @@
       total += Math.max(0, Number(hit.total) || 0);
       notes.push(`🔥 Burn ${burn}/10 scorches ${current.name} for ${hit.total} (${burn}% max HP).`);
       current = findFresh(instanceId);
-      if (!current || current.hp <= 0) return Object.freeze({ notes, defeated: true, total });
+      if (!current || current.hp <= 0) {
+        for (const note of notes) rt().addCombatHistory(note);
+        rt().updateCombatUI();
+        return Object.freeze({ notes, defeated: true, total });
+      }
     }
     const poison = Math.max(0, Number(current.statuses?.poisonStacks) || 0);
     if (poison > 0) {
@@ -274,7 +278,11 @@
       total += Math.max(0, Number(hit.total) || 0);
       notes.push(`☠️ Poison ${poison} deals ${hit.total} damage to ${current.name}.`);
       current = findFresh(instanceId);
-      if (!current || current.hp <= 0) return Object.freeze({ notes, defeated: true, total });
+      if (!current || current.hp <= 0) {
+        for (const note of notes) rt().addCombatHistory(note);
+        rt().updateCombatUI();
+        return Object.freeze({ notes, defeated: true, total });
+      }
     }
     for (const note of notes) rt().addCombatHistory(note);
     if (notes.length) rt().updateCombatUI();
