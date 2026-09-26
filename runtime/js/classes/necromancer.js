@@ -12,7 +12,7 @@
       "getPlayer","isActive","getCombatBusy","setCombatBusy","getEncounterTurn",
       "getCurrentEnemy","getCurrentEnemies","livingEnemies","selectEnemy",
       "spawnAlly","livingAllies","damageEnemy","damageAlly","damageHero",
-      "allyBasicAttack","resolveEnemyResponse","handleHeroDeath","setCombatText",
+      "allyBasicAttack","graveCoil","resolveEnemyResponse","handleHeroDeath","setCombatText",
       "addCombatHistory","updateCombatUI","playEffect","delay"
     ];
     for(const name of required)if(typeof next[name]!=="function")throw new Error("Necromancer runtime missing "+name+"().");
@@ -158,16 +158,43 @@
     if(!active())return [];
     return [
       Object.freeze({
+        id:"grave-coil",
+        label:"Grave Coil",
+        icon:"🟣",
+        description:"Attack with grave magic and generate your live resolved Mana-builder amount.",
+        category:"class",
+        order:20,
+        targetPolicy:"selectedEnemy",
+        enabled:()=>!rt().getCombatBusy()&&!!rt().getCurrentEnemy(),
+        cost:()=>null,
+        metadata:Object.freeze({fixedSlot:"attack",source:"class"}),
+        execute:()=>rt().graveCoil()
+      }),
+      Object.freeze({
         id:"summon-skeleton",
         label:"Summon Skeleton",
         icon:"☠️",
         description:"Spend 40 Mana to raise a targetable Skeleton Warrior. At the ally cap, the oldest summon is replaced.",
         category:"class",
-        order:32,
+        order:30,
         targetPolicy:"none",
         enabled:()=>!rt().getCombatBusy()&&!!rt().getCurrentEnemy()&&(Number(player().mana)||0)>=SKELETON_MANA_COST,
         cost:()=>({resource:"mana",amount:SKELETON_MANA_COST}),
+        metadata:Object.freeze({fixedSlot:"special",source:"class"}),
         execute:()=>summonSkeleton()
+      }),
+      Object.freeze({
+        id:"army-of-the-dead",
+        label:"Army of the Dead",
+        icon:"💀⚔️",
+        description:"When Grave Count is ready, living summons strike at 250% and empty ally slots contribute spectral strikes.",
+        category:"ultimate",
+        order:80,
+        targetPolicy:"selectedEnemy",
+        enabled:()=>!rt().getCombatBusy()&&!!rt().getCurrentEnemy()&&graveReady(),
+        cost:()=>({resource:"grave-count",amount:graveThreshold()}),
+        metadata:Object.freeze({fixedSlot:"ultimate",source:"class",readiness:"grave-count"}),
+        execute:()=>armyOfTheDead()
       })
     ];
   }
