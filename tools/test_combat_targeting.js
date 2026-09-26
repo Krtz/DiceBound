@@ -42,10 +42,10 @@ const allies=[
   {instanceId:"ward",name:"Ward",hp:5,maxHp:5,targetable:true,threatWeight:0}
 ];
 const playerSide=targeting.playerSideCandidates(hero,allies);
-assert.deepEqual(playerSide.map(x=>[x.kind,x.id]),[["hero","hero"],["summon","skel-1"]],"only living targetable positive-threat allies join the target pool");
+assert.deepEqual(Array.from(playerSide,x=>[x.kind,x.id]),[["hero","hero"],["summon","skel-1"]],"only living targetable positive-threat allies join the target pool");
 assert.equal(targeting.resolvePlayerSideSingleTarget({hero,allies,random:()=>0,heroShare:.5}).kind,"hero","lower half of weighted roll targets hero");
 assert.equal(targeting.resolvePlayerSideSingleTarget({hero,allies,random:()=>.75,heroShare:.5}).id,"skel-1","upper half targets a summon");
-assert.deepEqual(targeting.resolvePlayerSideTargets({hero,allies,policy:"heroOnly"}).map(x=>x.kind),["hero"]);
-assert.deepEqual(targeting.resolvePlayerSideTargets({hero,allies,policy:"summonOnly"}).map(x=>x.kind),["summon"]);
+assert.deepEqual(Array.from(targeting.resolvePlayerSideTargets({hero,allies,policy:"heroOnly"}),x=>x.kind),["hero"]);
+assert.deepEqual(Array.from(targeting.resolvePlayerSideTargets({hero,allies,policy:"summonOnly"}),x=>x.kind),["summon"]);
 
 console.log("Combat targeting preserves enemy selection and v2 hero/summon targeting policy");
