@@ -173,11 +173,17 @@
     const state = normalizeRoster(roster);
     return state.allies
       .filter(entity => entity.persistence === "run" && entity.hp > 0)
-      .map(entity => ({
-        ...clone(entity),
-        statuses: {},
-        deathResolved: false
-      }));
+      .map(entity => {
+        const persisted=clone(entity),statuses=persisted.statuses||{};
+        // Encounter-only stat reductions mutate the live resolved entity for
+        // battle convenience. Undo those mutations before carrying a run ally
+        // forward so "statuses are discarded" is actually true semantically.
+        persisted.attack=Math.max(0,number(persisted.attack)+(Math.max(0,number(statuses.attackLost))));
+        persisted.defense=Math.max(0,number(persisted.defense)+(Math.max(0,number(statuses.defenseLost))));
+        persisted.statuses={};
+        persisted.deathResolved=false;
+        return persisted;
+      });
   }
 
   function rehydrateRunPersistent(entries = [], { capacity = SYSTEM_MAX_ACTIVE_ALLIES } = {}) {
