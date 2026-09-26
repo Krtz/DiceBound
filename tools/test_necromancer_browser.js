@@ -61,6 +61,10 @@ async function main(){
     let view=await inspect(page);validateGeometry(view,"desktop 1680x1000");
     if(view.errors.length)throw new Error(`Desktop Necromancer presentation raised runtime errors: ${JSON.stringify(view.errors)}`);
 
+    const floating=await page.evaluate(`(()=>{const api=window.DiceboundCombatOracleTest;api.damageAlly('edge-skel-1',4,{ignoreDefense:true,source:'edge-float'});api.healAlly('edge-skel-2',3,{source:'edge-float'});return api.floatingEntries();})()`);
+    const floatingFacts=floating.map(entry=>[entry.kind,entry.target,entry.amount]);
+    if(!floatingFacts.some(entry=>entry[0]==='damage'&&entry[1]==='ally:edge-skel-1'&&entry[2]>0)||!floatingFacts.some(entry=>entry[0]==='heal'&&entry[1]==='ally:edge-skel-2'&&entry[2]===3))throw new Error(`Allied floating combat numbers lost exact summon anchors: ${JSON.stringify(floating)}`);
+
     await pointerClick(page,'[data-dynamic-combat-action="1"][data-combat-action-id="summon-mage-skeleton"]');
     await sleep(100);
     view=await inspect(page);
