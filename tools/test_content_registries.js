@@ -55,7 +55,7 @@ for (const id of ["axels-coffee-mug", "kratz-headphones", "kellys-jean-jacket"])
 }
 assert.equal(equipment.special["devils-horns"].rarity, "omega");
 assert.equal(equipment.special["impossible-weapon"].setName, "Impossible Road");
-assert.equal(equipment.identities.length, 58, "all approved authored equipment bases must remain part of the one equipment registry");
+assert.equal(equipment.identities.length, 98, "all approved authored equipment bases, including the 40 integrated 0.6.9.0 identities, must remain part of the one equipment registry");
 assert.equal(equipment.identities.find(identity => identity.id === "bronze-longsword").intrinsicBonuses.attack, 1);
 assert.equal(equipment.identities.find(identity => identity.id === "shortbow").art.image, "assets/equipment/weapon/shortbow.png");
 
