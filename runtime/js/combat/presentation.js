@@ -21,10 +21,10 @@
   function configure(nextRuntime) {
     if (!nextRuntime || typeof nextRuntime !== "object") throw new Error("Combat presentation runtime is required.");
     const required = [
-      "getState","find","getClasses","getElements","getPets","getOccultSpells","getManaBuilderGain","invokerManaMultiplier","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","resolveCombatBackground",
+      "getState","find","getClasses","getElements","getPets","getOccultSpells","getManaBuilderGain","invokerManaMultiplier","getGagInfo","enemyBattleArtById","enemyPortraitById","enemyModeAura","guardianBattleArt","allyArt","resolveCombatBackground",
       "isClassActive","hasClassMechanic","classIdentityId","applyClassPortrait",
       "potionHealValue","potionTooltip","describeUltimate","berserkerRageBonus","hasLegendaryEffect","legendaryEffect",
-      "activeTrainerPetId","invokerAttackSpec","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","clamp","delay"
+      "activeTrainerPetId","invokerAttackSpec","necromancerArt","selectEnemy","dragoonActive","dragoonJumpCooldown","onDragoonJump","performClassAction","getCombatActionView","executeCombatAction","clamp","delay"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat presentation runtime missing ${name}().`);
     if (!nextRuntime.document || typeof nextRuntime.document.createElement !== "function") throw new Error("Combat presentation runtime missing document.");
@@ -71,8 +71,24 @@
       #combatOverlay .stage-enemy .stage-sprite>.enemy-art-frame,#combatOverlay .stage-enemy .stage-sprite>.db0636-tiered-enemy-art{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
       #combatOverlay .stage-enemy .enemy-art-fallback{width:100%;height:100%;display:grid;place-items:center;font-size:var(--db-enemy-art-size,62px);line-height:1}
       #combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{position:absolute!important;left:clamp(2px,8%,34px);bottom:2px;margin:0!important;z-index:9;transform-origin:center bottom}
+      #combatOverlay .allied-party{position:absolute;right:clamp(-8px,1.5vw,18px);bottom:0;z-index:8;display:flex;align-items:flex-end;justify-content:flex-end;gap:clamp(4px,.8vw,10px);pointer-events:none}
+      #combatOverlay .stage-ally{position:relative;display:grid;grid-template-rows:auto auto auto auto;justify-items:center;align-items:end;width:clamp(76px,8.5vw,108px);min-height:clamp(122px,17vh,172px);filter:drop-shadow(0 8px 9px rgba(0,0,0,.36));transform-origin:center bottom}
+      #combatOverlay .stage-ally-sprite{display:grid;place-items:end center;width:clamp(70px,8vw,102px);height:clamp(86px,13vh,138px);line-height:0}
+      #combatOverlay .stage-ally-sprite img{width:100%;height:100%;object-fit:contain;object-position:center bottom;max-width:none;max-height:none}
+      #combatOverlay .stage-ally-name{max-width:108px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:800;line-height:1.1;color:#e8edf8;text-shadow:0 1px 3px #000}
+      #combatOverlay .stage-ally-hp{width:min(92px,90%);height:7px;margin-top:3px;border:1px solid rgba(255,255,255,.24);border-radius:5px;overflow:hidden;background:rgba(0,0,0,.55)}
+      #combatOverlay .stage-ally-hp>i{display:block;height:100%;background:linear-gradient(90deg,#58d28f,#8be1ae);transition:width .16s ease}
+      #combatOverlay .stage-ally-status{min-height:13px;font-size:9px;line-height:1.1;text-align:center;white-space:nowrap}
+      #combatOverlay .stage-ally.db-friendly-hit .stage-ally-sprite{animation:db-ally-hit .18s ease}
+      #combatOverlay .combat-btn.db-authored-action{position:relative;padding-left:42px}
+      #combatOverlay .combat-btn.db-authored-action::before{content:"";position:absolute;left:7px;top:50%;width:28px;height:28px;transform:translateY(-50%);background-image:var(--db-action-art);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));pointer-events:none}
+      #combatOverlay .db-necromancer-effect-img{width:clamp(72px,10vw,132px);height:clamp(72px,10vw,132px);object-fit:contain;filter:drop-shadow(0 0 12px rgba(132,72,190,.72));animation:db-necro-effect .38s ease both}
+      @keyframes db-necro-effect{0%{opacity:0;transform:scale(.55) rotate(-8deg)}55%{opacity:1;transform:scale(1.08) rotate(2deg)}100%{opacity:0;transform:scale(.95)}}
+
+      @keyframes db-ally-hit{0%,100%{transform:translateX(0)}35%{transform:translateX(-5px) rotate(-2deg)}70%{transform:translateX(3px)}}
+
       #combatOverlay .vs{align-self:center}
-      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-mobile-width,44px)!important;min-height:var(--db-enemy-stage-mobile-height,68px)!important}#combatOverlay .stage-enemy .stage-sprite{width:var(--db-enemy-art-mobile-size,50px)!important;height:var(--db-enemy-art-mobile-size,50px)!important}#combatOverlay .stage-enemy .enemy-art-fallback{font-size:var(--db-enemy-art-mobile-size,50px)}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}}
+      @media(max-width:700px){#combatOverlay .combat-hud{gap:14px}#combatOverlay .combat-head{min-height:clamp(210px,30vh,280px)}#combatOverlay .combat-head>.fighter>.fighter-icon{margin-top:auto!important}#combatOverlay .stage-enemy{min-width:var(--db-enemy-stage-mobile-width,44px)!important;min-height:var(--db-enemy-stage-mobile-height,68px)!important}#combatOverlay .stage-enemy .stage-sprite{width:var(--db-enemy-art-mobile-size,50px)!important;height:var(--db-enemy-art-mobile-size,50px)!important}#combatOverlay .stage-enemy .enemy-art-fallback{font-size:var(--db-enemy-art-mobile-size,50px)}#combatOverlay .combat-head>.fighter:first-of-type>.combat-pet{left:0;bottom:0}#combatOverlay .allied-party{right:-8px;gap:2px}#combatOverlay .stage-ally{width:62px;min-height:100px}#combatOverlay .stage-ally-sprite{width:58px;height:82px}#combatOverlay .stage-ally-name{max-width:62px;font-size:8px}#combatOverlay .stage-ally-hp{height:6px}}
     `;
     doc.head?.appendChild(style);return style;
   }
@@ -197,10 +213,10 @@
       const cfg = rt.getOccultSpells()[identityId];
       if (cfg) {
         const gain=manaBuilderPresentation(identityId);
-        attack.text = `${cfg.builderIcon} ${cfg.builder} (+${gain.label} Mana)`;
+        attack.text = identityId === "necromancer" ? `${cfg.builder} (+${gain.label} Mana)` : `${cfg.builderIcon} ${cfg.builder} (+${gain.label} Mana)`;
         attack.tip = manaBuilderTip(gain,`${cfg.builder} is your Mana-building attack. It uses the class-authored strike profile and still rolls Crit Chance/Echo/elements.`);
         special.hidden = false; hasSpecial = true;
-        special.text = `${cfg.spellIcon} ${cfg.spell} (${cfg.cost})`;
+        special.text = identityId === "necromancer" ? `${cfg.spell} (${cfg.cost})` : `${cfg.spellIcon} ${cfg.spell} (${cfg.cost})`;
         special.tip = identityId === "sorcerer"
           ? `${cfg.desc} Current Lifesteal: ${Math.round(Math.max(0, player.lifeSteal || 0) * 100)}%.`
           : cfg.desc;
@@ -294,7 +310,13 @@
       const rage = Math.round(rt.berserkerRageBonus() * 100);
       resource = classResource("rage", "Rage", rage, 100, `Every 1% missing HP grants +1% damage. Current Rage bonus: +${rage}% damage.`);
     }
-    if (rt.hasLegendaryEffect("unstable_ultimate")) {
+    if (rt.isClassActive("necromancer")) {
+      const count=Math.max(0,Number(rt.necromancerGraveCount?.())||0),threshold=Math.max(2,Number(rt.necromancerGraveThreshold?.())||5);
+      ultimate.text=`${cls.ultimate?.name || "Army of the Dead"} (${count}/${threshold})`;
+      ultimate.disabled=combatBusy||!enemy||!rt.necromancerGraveReady?.();
+      ultimate.tip=`${cls.ultimate?.desc || "Your summons surge forward."} Grave Count: ${count}/${threshold}. Living summons strike at 250%; empty ally slots contribute 150% spectral Skeleton strikes.`;
+    }
+    if (rt.hasLegendaryEffect("unstable_ultimate") && !rt.isClassActive("necromancer")) {
       const effect=rt.legendaryEffect("unstable_ultimate"),threshold=Number(effect?.chargeThreshold),multiplier=Number(effect?.damageMultiplier);
       if(!Number.isFinite(threshold)||!Number.isFinite(multiplier))throw new Error("Combat presentation requires authoritative Unstable Ultimate values.");
       ultimate.disabled = combatBusy || !enemy || (player.ultimateCharge || 0) < threshold;
@@ -402,6 +424,47 @@
     return `<span class="enemy-art-fallback" role="img" aria-label="${label}">${enemy?.icon||"👹"}</span>`;
   }
 
+  function allyStatusHTML(entity){
+    const status=entity?.statuses||{};
+    let html="";
+    const burn=Math.max(0,Number(status.burnStacks)||0),poison=Math.max(0,Number(status.poisonStacks)||0);
+    if(entity?.barriers>0)html+="🛡️×"+Math.round(entity.barriers);
+    if(burn>0)html+=(html?" ":"")+"🔥×"+Math.round(burn);
+    if(poison>0)html+=(html?" ":"")+"☠️×"+Math.round(poison);
+    if((status.confusionActions||0)>0)html+=(html?" ":"")+"🧮";
+    if((status.skipActions||0)>0)html+=(html?" ":"")+"⏸️";
+    return html;
+  }
+
+  function renderAlliedParty(){
+    const rt=requireRuntime(),state=rt.getState(),playerIcon=rt.find("combatPlayerIcon");
+    const parent=playerIcon?.parentElement;
+    if(!parent)return null;
+    let stage=rt.find("alliedParty");
+    if(!stage){
+      stage=rt.document.createElement("div");
+      stage.id="alliedParty";
+      stage.className="allied-party";
+      stage.setAttribute("aria-label","Allied summons");
+      parent.appendChild(stage);
+    }
+    const allies=(state.allies||[]).filter(entity=>entity&&Number(entity.hp)>0);
+    stage.innerHTML=allies.map(entity=>{
+      const art=rt.allyArt(entity.artId||entity.archetypeId),src=art?.battle||art?.image||null;
+      const hp=Math.max(0,Number(entity.hp)||0),maxHp=Math.max(1,Number(entity.maxHp)||1),pct=rt.clamp(hp/maxHp*100,0,100);
+      const id=escapePortraitLabel(String(entity.instanceId||"")),name=escapePortraitLabel(entity.name||entity.archetypeId||"Ally"),status=allyStatusHTML(entity);
+      const sprite=src?'<img src="'+src+'" alt="'+escapePortraitLabel(art?.alt||name)+'" draggable="false">':'<span class="enemy-art-fallback" role="img" aria-label="'+name+'">💀</span>';
+      return '<span class="stage-ally" data-ally-instance="'+id+'" data-ally-archetype="'+escapePortraitLabel(String(entity.archetypeId||""))+'" title="'+name+' · '+Math.round(hp)+' / '+Math.round(maxHp)+' HP">'
+        +'<span class="stage-ally-sprite">'+sprite+'</span>'
+        +'<span class="stage-ally-name">'+name+'</span>'
+        +'<span class="stage-ally-hp" aria-label="'+name+' HP"><i style="width:'+pct+'%"></i></span>'
+        +'<span class="stage-ally-status">'+status+'</span>'
+        +'</span>';
+    }).join("");
+    stage.hidden=!allies.length;
+    return stage;
+  }
+
   function renderEnemyParty() {
     const rt = requireRuntime(), state = rt.getState(), find = rt.find, doc = rt.document, elements = rt.getElements();
     const strip = find("enemyParty"), stage = find("enemyIcon"); if (!strip || !stage) return;
@@ -486,7 +549,7 @@
     return unit?.querySelector?.(".stage-sprite")||unit||stage;
   }
   async function enemyAttack(fact={}){
-    const rt=requireRuntime(),sprite=enemyAttackElement(fact);
+    const rt=requireRuntime(),sprite=enemyAttackElement(fact),friendly=fact.target==="summon"&&fact.targetId?combatUnitElement("ally:"+fact.targetId):combatUnitElement("player");
     if(!sprite?.classList)return false;
     const spec=resolveEnemyAttackPresentation(fact),token=Symbol("enemy-attack");
     enemyAttackTokens.set(sprite,token);
@@ -495,8 +558,10 @@
       sprite.dataset.dbAttackId=String(fact.attackId||"basic-attack");
       sprite.dataset.dbAttackOutcome=String(fact.outcome||"attempt");
     }
+    friendly?.closest?.(".stage-ally")?.classList?.add("db-friendly-hit");
     try{await rt.delay(spec.durationMs);}
     finally{
+      friendly?.closest?.(".stage-ally")?.classList?.remove("db-friendly-hit");
       if(enemyAttackTokens.get(sprite)===token){
         sprite.classList.remove(spec.className);enemyAttackTokens.delete(sprite);
         if(sprite.dataset){delete sprite.dataset.dbAttackId;delete sprite.dataset.dbAttackOutcome;}
@@ -517,8 +582,15 @@
   function combatUnitElement(unit = "player") {
     const rt = requireRuntime();
     if (unit && typeof unit === "object" && unit.classList) return unit;
+    if (unit && typeof unit === "object" && unit.kind==="summon" && unit.id) unit="ally:"+unit.id;
     if (unit === "player") return rt.find("combatPlayerIcon");
     if (unit === "enemy" || unit === "target") return rt.find("enemyIcon");
+    if(typeof unit==="string"&&unit.startsWith("ally:")){
+      const id=unit.slice(5).replace(/["\\]/g,"");
+      return rt.find("alliedParty")?.querySelector?.('.stage-ally[data-ally-instance="'+id+'"] .stage-ally-sprite')
+        ||rt.find("alliedParty")?.querySelector?.('.stage-ally[data-ally-instance="'+id+'"]')
+        ||null;
+    }
     return typeof unit === "string" ? rt.find(unit) : null;
   }
 
@@ -563,6 +635,42 @@
     icon.classList.remove("db-dragoon-airborne"); icon.classList.add("db-dragoon-landing"); clearTimeout(dragoonLandingTimer); dragoonLandingTimer = setTimeout(() => icon.classList.remove("db-dragoon-landing"), 240);
   }
 
+  function setAuthoredActionArt(button,entry){
+    if(!button)return;
+    if(entry?.image){
+      button.classList.add("db-authored-action");
+      button.style.setProperty("--db-action-art",'url("'+entry.image+'")');
+      button.dataset.actionArt=entry.image;
+    }else{
+      button.classList.remove("db-authored-action");
+      button.style.removeProperty("--db-action-art");
+      delete button.dataset.actionArt;
+    }
+  }
+
+  function syncNecromancerActionArt(active){
+    const rt=requireRuntime();
+    const entries=active?{
+      attack:rt.necromancerArt("actions","graveCoil"),
+      special:rt.necromancerArt("actions","summonSkeleton"),
+      ultimate:rt.necromancerArt("actions","armyOfTheDead")
+    }:{};
+    setAuthoredActionArt(rt.find("attackBtn"),entries.attack);
+    setAuthoredActionArt(rt.find("specialAttackBtn"),entries.special);
+    setAuthoredActionArt(rt.find("ultimateBtn"),entries.ultimate);
+  }
+
+  async function playNecromancerEffect(key,{durationMs=380}={}){
+    const rt=requireRuntime(),entry=rt.necromancerArt("effects",key),fx=rt.find("attackFx");
+    if(!entry?.image||!fx)return false;
+    const prior=fx.innerHTML,priorClass=fx.className;
+    fx.className="attack-fx db-necromancer-effect";
+    fx.innerHTML='<img class="db-necromancer-effect-img" src="'+entry.image+'" alt="'+escapePortraitLabel(entry.alt||key)+'" draggable="false">';
+    try{await rt.delay(Math.max(120,Number(durationMs)||380));}
+    finally{fx.innerHTML=prior;fx.className=priorClass;}
+    return true;
+  }
+
   function ensureInvokerAttackButtons() {
     const rt = requireRuntime(), doc = rt.document, find = rt.find, actions = doc.querySelector("#combatOverlay .combat-actions");
     if (!actions) return { quas: null, exort: null };
@@ -580,6 +688,52 @@
       actions.insertBefore(exort, find("specialAttackBtn") || find("guardBtn") || null);
     }
     return { quas, exort };
+  }
+
+  function dynamicActionButtonId(actionId){
+    return "dynamicCombatAction-"+String(actionId||"").replace(/[^a-z0-9_-]+/gi,"-");
+  }
+
+  function dynamicActionText(action){
+    const cost=action?.cost;
+    const suffix=cost&&Number(cost.amount)>0?` (${Number(cost.amount)} ${String(cost.resource||"").replace(/-/g," ")})`:"";
+    return `${action?.icon?String(action.icon)+" ":""}${action?.label||action?.id||"Action"}${suffix}`;
+  }
+
+  function syncDynamicCombatActions(){
+    const rt=requireRuntime(),actions=rt.document.querySelector("#combatOverlay .combat-actions");
+    if(!actions)return [];
+    const view=rt.getCombatActionView()||[];
+    const extras=view.filter(action=>action&&!action.metadata?.fixedSlot);
+    const keep=new Set(extras.map(action=>String(action.id)));
+    const existing=[...(actions.querySelectorAll?.('[data-dynamic-combat-action="1"]')||[])];
+
+    for(const button of existing){
+      if(!keep.has(String(button.dataset?.combatActionId||"")))button.remove?.();
+    }
+
+    const rendered=[];
+    for(const action of extras){
+      const id=String(action.id),domId=dynamicActionButtonId(id);
+      let button=typeof rt.document.getElementById==="function"?rt.document.getElementById(domId):null;
+      if(!button){
+        button=rt.document.createElement("button");
+        button.id=domId;
+        button.type="button";
+        button.className="combat-btn special action-tooltip db-dynamic-action";
+        button.dataset.dynamicCombatAction="1";
+        button.dataset.combatActionId=id;
+        button.addEventListener("click",()=>rt.executeCombatAction(button.dataset.combatActionId));
+      }
+      button.dataset.combatActionId=id;
+      button.disabled=!action.enabled;
+      button.textContent=dynamicActionText(action);
+      button.dataset.tip=action.description||"";
+      const before=rt.find("guardBtn")||null;
+      actions.insertBefore(button,before);
+      rendered.push(button);
+    }
+    return rendered;
   }
 
   function ensureDragoonJumpButton() {
@@ -617,8 +771,10 @@
     const invokerButtons = ensureInvokerAttackButtons();
     [["quas", invokerButtons.quas], ["exort", invokerButtons.exort]].forEach(([key, button]) => { if (!button) return; const spec = model.invokerAttacks[key]; button.hidden = !model.invokerAttacks.active; button.disabled = !model.invokerAttacks.active || !!spec.disabled; button.textContent = spec.text; button.dataset.tip = spec.tip; });
     const actions = rt.document.querySelector("#combatOverlay .combat-actions"); actions?.classList.toggle("has-special", !!model.hasSpecial); actions?.classList.toggle("invoker-actions", !!model.invokerAttacks.active);
+    syncDynamicCombatActions();
+    syncNecromancerActionArt(rt.isClassActive("necromancer"));
     const cls = model.cls; rt.applyClassPortrait(find("combatPlayerIcon"), cls.id, true);
-    renderResource(model.resource); renderSummonerSpirits(); renderEnemyParty(); syncEnergyShieldBars(); renderBossSpecialIndicator(); syncDragoonPresentation();
+    renderResource(model.resource); renderSummonerSpirits(); renderAlliedParty(); renderEnemyParty(); syncEnergyShieldBars(); renderBossSpecialIndicator(); syncDragoonPresentation();
     const jump = ensureDragoonJumpButton();
     if (jump) { const landing = rt.dragoonActive() && !!player.dragoonLandingReady; jump.hidden = !rt.dragoonActive(); jump.disabled = !rt.dragoonActive() || state.combatBusy || landing || (player.dragoonAirborneResponses || 0) > 0 || (player.dragoonJumpCooldown || 0) > 0; jump.textContent = (player.dragoonAirborneResponses || 0) > 0 ? "🐉 Airborne" : (player.dragoonJumpCooldown || 0) > 0 ? `🐉 Jump (${player.dragoonJumpCooldown})` : "🐉 Jump"; }
     return model;
@@ -631,6 +787,7 @@
     ensureCombatStageStyle,
     update,
     renderEnemyParty,
+    renderAlliedParty,
     renderBossSpecialIndicator,
     statusDotsHTML,
     syncEnergyShieldBars,
@@ -643,8 +800,10 @@
     dragoonLandPresentation,
     ensureDragoonJumpButton,
     ensureInvokerAttackButtons,
+    syncDynamicCombatActions,
+    playNecromancerEffect,
     clearDragoonPresentation,
-    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation, manaBuilderPresentation, enemyArtScale, enemyArtMetrics })
+    _test: Object.freeze({ buildViewModel, playerAttackTiming, resolveEnemyAttackPresentation, manaBuilderPresentation, enemyArtScale, enemyArtMetrics, syncDynamicCombatActions, dynamicActionText })
   });
   window.DiceboundCombatPresentation = api;
 })();

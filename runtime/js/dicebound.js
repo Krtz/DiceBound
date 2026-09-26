@@ -308,6 +308,9 @@
   let pendingLevelUps = 0;
   let currentEnemy = null;
   let currentEnemies = [];
+  const dbCombatAllies=window.DiceboundCombatAllies;
+  if(!dbCombatAllies)throw new Error("DiceBound requires the Combat allied-entity owner before dicebound.js");
+  let currentAlliedRoster=dbCombatAllies.createRoster({capacity:dbCombatAllies.systemMaxActiveAllies});
   let currentEnemyIndex = 0;
   let currentEncounterLead = null;
   let currentEncounterTurn = 0;
@@ -452,7 +455,7 @@
   dbRun.configure({transition:{
     getRoad:()=>({player,boardLevel}),
     setBoardLevel:value=>{boardLevel=value;},
-    resetEncounter:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
+    resetEncounter:()=>{currentEnemy=null;currentEnemies=[];currentAlliedRoster=dbCombatAllies.createRoster({capacity:Math.min(dbCombatAllies.systemMaxActiveAllies,Math.max(0,Number(player?.maxActiveAllies??dbCombatAllies.systemMaxActiveAllies)||0))});currentEncounterLead=null;currentEnemyTile=null;},
     setRollLocked:value=>{rollLocked=!!value;},
     applyTheme:()=>applyRunTheme(),
     rebuildBoard:()=>{dbRun.generateBoard();buildBoard();},
@@ -554,7 +557,7 @@
     flatReduction:0,lifeSteal:0,doubleStrike:0,thorns:0,dodge:.08,potionPower:0,
     extraStepChance:0,xpBonus:0,bossDamage:0,revives:0,berserk:0,execute:0,
     shopDiscount:0,blessingBonus:0,firstHitBlocks:0,damageBonus:0,combatShield:0,
-    guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
+    guardPower:.52,classBurst:0,ultimateCharge:0,ultimateAttackGain:17,ultimateGuardGain:29,ultimateDamageBonus:0,petDamageBonus:0,petDamageScale:0,petDoubleChance:0,legacyXpBonus:0,fastTravelBonus:0,cookieBondBonus:0,
     guardHeal:0,guardCounter:0,guardShield:0,guardDelay:0,guardCooldown:0,hasteTurns:0,firstAttackBonus:0,critUltimateGain:0,classUltimateBonus:0,combatAttackCount:0,combatActionCount:0,mythicActionCount:0,diceChoiceChance:0,
     elementProcBonus:0,elementDamageBonus:0,weaknessElementBonus:0,elementEchoChance:0,elementUltimateGain:0,classElementProcs:{},equipmentElementProcs:{},omniElementChance:0,defenseAttackScale:0,defenseDodgeScale:0,equipment:{},runBuffs:[],upgradeCounts:{},crucibleEchoEffectId:null
   };
@@ -574,11 +577,11 @@
 
       function elementSummary(item){if(!item?.element||!ELEMENTS[item.element])return "";const e=ELEMENTS[item.element],chance=Math.round((.14+rarityValues[item.rarity]*.025)*100);return `${e.icon} ${e.name} element · ${chance}% proc chance · ${e.spell}`;}
           function bonusLabel(key,value){
-    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage",thorns:"Thorns"};
+    const names={attack:"Attack",defense:"Defense",maxHp:"Max HP",maxMana:"Mana",crit:"Crit",dodge:"Dodge",lifeSteal:"Lifesteal",luck:"Luck",goldBonus:"Gold",potionPower:"Potion healing",petDamageScale:"Pet Damage",bossDamage:"Boss Damage",flatReduction:"Damage reduction",doubleStrike:"Echo Strike",classBurst:"Signature Burst",extraStepChance:"Extra-step chance",damageBonus:"All damage",thorns:"Thorns"};
     const amount=Number(value)||0,sign=amount<0?"−":"+",magnitude=Math.abs(amount);
     if(key==="luck")return `${sign}${Math.round(magnitude*100)} Luck`;
     if(String(key).startsWith("elementProc:")){const id=String(key).slice("elementProc:".length),element=ELEMENTS[id];return `${sign}${Math.round(magnitude*100)}% ${element?.name||id} proc`;}
-    const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
+    const pct=["crit","dodge","lifeSteal","goldBonus","potionPower","petDamageScale","bossDamage","doubleStrike","classBurst","extraStepChance","damageBonus"].includes(key);
     return `${sign}${pct?Math.round(magnitude*100)+"%":magnitude} ${names[key]||key}`;
   }
   function formatBonuses(item){
@@ -1221,7 +1224,7 @@ function returnToRoad(...args){
     if(!(await db068ConfirmEchoForRun()))return false;
     return dbRun.startFreshRun(options);
   }
-  function showEnd(victory){dbRunClearCheckpoint();rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
+  function showEnd(victory){dbRunClearCheckpoint();dbCombatAllyResolution?.clearEncounter?.({preserveRunPersistent:false});rollLocked=true;gameStarted=false;const earned=dbProgression.finalizeRun({outcome:victory?'victory':'death',boardReached:boardLevel});updateHUD();$("endArt").textContent=victory?"🏆":"☠️";$("endTitle").textContent=victory?"Victory!":"Your journey ends";$("endTitle").className=victory?"victory-title":"danger-title";$("endText").textContent=victory?`You defeated all four final guardians and conquered the 364-tile ${nightmareMode?"Nightmare ":""}journey.`:`The road claimed the adventurer, but every crossed tile strengthened the Legacy.`;$("endLevel").textContent=player.level;$("endGold").textContent=player.gold;$("endTurns").textContent=rolls;$("endLegacyXp").textContent=earned;$("endGoldLegacyXp").textContent=lastGoldLegacyAward;dbEquipmentUi.renderEndGear();$("endOverlay").classList.remove("hidden");}
 
     dbPowerups.configure({
     getPlayer:()=>player,getMeta:()=>meta,getRarityInfo:()=>rarityInfo,achievementGateUnlocked:gate=>dbProgression.achievementGateUnlocked(gate),
@@ -1247,6 +1250,7 @@ function returnToRoad(...args){
       classIds,classSecret,persistedUnlocks:meta.unlocks||{},bloodmageUnlocked:!!meta.bloodmageUnlocked,
       prestigeCount:Number(meta.prestige?.count)||0,damageTaken:Number(meta.damageTaken)||0,merchantKills:Number(meta.merchantKills)||0,
       stats:{healingDone:Number(stats.healingDone)||0,highestGold:Number(stats.highestGold)||0,potionsUsed:Number(stats.potionsUsed)||0},
+      enemyDefeats:{...(stats.enemyDefeats||{})},
       storedHighestGold:Number(stats.highestGold)||0,highestGold:Math.max(Number(stats.highestGold)||0,gameStarted?(Number(currentPlayer.gold)||0):0),facts,
       petIds,petLevels,petUnlocked,gameStarted:!!gameStarted,
       player:{gold:Number(currentPlayer.gold)||0,defense:Number(currentPlayer.defense)||0,doubleStrike:Number(currentPlayer.doubleStrike)||0,lifeSteal:Number(currentPlayer.lifeSteal)||0,crit:Number(currentPlayer.crit)||0,bossDamage:Number(currentPlayer.bossDamage)||0},
@@ -1283,7 +1287,23 @@ function returnToRoad(...args){
   let dbCombatEncounterLifecycle=null;
   let dbCombatD20ChaosResolution=null;
   let dbCombatConfusionResolution=null;
+  let dbCombatActionRegistry=null;
   let dbCombatTurns=null;
+
+  function dbCombatActionContext(){
+    return {player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode};
+  }
+  function dbCombatActionView(){
+    return dbCombatActionRegistry?.view?.(dbCombatActionContext())||[];
+  }
+  function dbExecuteCombatAction(id){
+    if(!dbCombatActionRegistry?.execute)return Promise.resolve({ok:false,reason:"registry-unavailable"});
+    return dbCombatActionRegistry.execute(id,dbCombatActionContext());
+  }
+  function dbActionForFixedSlot(slot){
+    return dbCombatActionView().find(action=>action?.metadata?.fixedSlot===slot)||null;
+  }
+
     async function resolveEnemyResponse(...args){return dbCombat.enemyResponse(...args);}
   function applyCombatPlayerDamage(raw){return dbCombat.applyPlayerDamage(raw);}
 
@@ -1632,11 +1652,15 @@ function returnToRoad(...args){
 
   // Replace the four original action buttons once, removing old stacked listeners.
   function replaceCombatButton(id,handler){const old=$(id);if(!old)return null;const neo=old.cloneNode(true);old.replaceWith(neo);neo.addEventListener("click",handler);return neo;}
-  replaceCombatButton("attackBtn",()=>dbClasses.performAction("attack"));
+  function performFixedCombatSlot(slot,legacyAction){
+    const action=dbActionForFixedSlot(slot);
+    return action?dbExecuteCombatAction(action.id):dbClasses.performAction(legacyAction);
+  }
+  replaceCombatButton("attackBtn",()=>performFixedCombatSlot("attack","attack"));
   replaceCombatButton("guardBtn",()=>dbClasses.performAction("guard"));
   replaceCombatButton("potionBtn",()=>dbClasses.performAction("potion"));
-  replaceCombatButton("ultimateBtn",()=>dbClasses.performAction("ultimate"));
-  specialAttackBtn.addEventListener("click",()=>dbClasses.performAction("special"));
+  replaceCombatButton("ultimateBtn",()=>performFixedCombatSlot("ultimate","ultimate"));
+  specialAttackBtn.addEventListener("click",()=>performFixedCombatSlot("special","special"));
 
   // ---- combat UI labels/resources -------------------------------------------
 
@@ -4047,7 +4071,10 @@ dbReturnToRoadTraceReady=true;
     clamp:(value,min,max)=>clamp(value,min,max),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
     applyPlayerDamage:raw=>applyCombatPlayerDamage(raw),
+    damageFriendlyTarget:(target,raw,options)=>target?.kind==='summon'?dbCombatAllyResolution.damage(target.id,raw,options):applyCombatPlayerDamage(raw),
+    applyFriendlyStatus:(target,kind,payload)=>target?.kind==='summon'?dbCombatAllyResolution.applyStatus(target.id,kind,payload):null,
     healPlayer:(...args)=>dbCombat.heal(...args),
+    healAlliedSummons:(fraction,options)=>dbCombatAllyResolution.healLivingByFraction(fraction,options),
     trackElementProgress:(key,amount)=>dbPets.trackElementProgress(key,amount),
     playElementAnimation:(key,target,enemySource)=>playElementAnimation(key,target,enemySource),
     addLog:text=>addLog(text),
@@ -4186,7 +4213,7 @@ dbReturnToRoadTraceReady=true;
     presentVictory:payload=>BattleVictoryUI.present(BattleVictoryState.create(payload)),
     hideCombatOverlay:()=>$('combatOverlay')?.classList.add('hidden'),
     resetVictoryPresentation:()=>BattleVictoryUI.reset(),
-    clearEncounterState:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;},
+    clearEncounterState:()=>{currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;dbCombatAllyResolution.clearEncounter({preserveRunPersistent:true});},
     grantXp:xp=>grantXp(xp),
     getPendingLevelUps:()=>pendingLevelUps,
     openLevelUp:done=>dbPowerups.openLevelUp(done),
@@ -4286,6 +4313,7 @@ dbReturnToRoadTraceReady=true;
     getPets:()=>PETS,
     getMeta:()=>meta,
     petTurn:(...args)=>dbCombat.petTurn(...args),
+    necromancerSummon:()=>dbClasses.necromancerSummonSkeleton(),
     addCombatHistory:text=>addCombatHistory(text),
     recordManaSpenderCast:()=>{meta.classUnlockFacts=DB_CLASS_UNLOCK_RULES.recordManaSpenderCast(dbClassUnlockFacts(),true);},
     saveMeta:()=>saveMeta(),
@@ -4415,12 +4443,13 @@ dbReturnToRoadTraceReady=true;
     dragoonLanding:()=>dbFriendDragoonLanding(),
     tickDragoonCooldown:()=>dbFriendTickDragoonCooldown(),
     invokeUltimate:()=>dbClasses.invokerUltimate(),
+    necromancerUltimate:()=>dbClasses.necromancerArmyOfTheDead(),
   });
 
   dbCombatView.configurePresentation({
     document,
     guardianSpecialInterval:GUARDIAN_SPECIAL_INTERVAL,
-    getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode}),
+    getState:()=>({player,currentEnemy,currentEnemies,currentEnemyIndex,currentEncounterLead,currentEncounterTurn,combatBusy,boardLevel,nightmareMode,hellMode,allies:(currentAlliedRoster?.allies||[]).filter(entity=>entity?.hp>0)}),
     find:$,
     getClasses:()=>CLASSES,
     getElements:()=>ELEMENTS,
@@ -4437,6 +4466,7 @@ dbReturnToRoadTraceReady=true;
     enemyPortraitById:id=>window.DiceboundAssets.resolveEnemyPortraitById(id),
     enemyModeAura:mode=>window.DiceboundAssets.resolveEnemyModeAura(mode),
     guardianBattleArt:id=>DB317_GUARDIANS.resolveById(id)?.art?.battle||window.DiceboundAssets.resolveGuardianArt(id)?.battle||null,
+    allyArt:id=>window.DiceboundAssets.resolveAllyArt(id),
     potionHealValue:()=>dbConsumablesResolution.potionHealValue(),
     potionTooltip:()=>v18PotionTooltip(),
     describeUltimate:id=>describeCurrentUltimate(id),
@@ -4444,11 +4474,17 @@ dbReturnToRoadTraceReady=true;
     hasLegendaryEffect:id=>db060HasEffect(id),legendaryEffect:id=>DB060_EFFECT_BY_ID[id],
     activeTrainerPetId:()=>dbCombat.activeTrainerPetId(),
     invokerAttackSpec:key=>dbClasses.invokerAttackSpec(key),
+    necromancerArt:(group,key)=>window.DiceboundAssets.resolveNecromancerArt(group,key),
+    necromancerGraveCount:()=>dbClasses.necromancerGraveCount(),
+    necromancerGraveThreshold:()=>dbClasses.necromancerGraveThreshold(),
+    necromancerGraveReady:()=>dbClasses.necromancerGraveReady(),
     selectEnemy:index=>setCurrentEnemy(index),
     dragoonActive:()=>dbFriendDragoonActive(),
     dragoonJumpCooldown:()=>dbFriendDragoonCooldown(),
     onDragoonJump:()=>dbFriendDragoonJump(),
     performClassAction:kind=>dbClasses.performAction(kind),
+    getCombatActionView:()=>dbCombatActionView(),
+    executeCombatAction:id=>dbExecuteCombatAction(id),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms)
   });
@@ -4473,7 +4509,7 @@ dbReturnToRoadTraceReady=true;
     scaleEnemy:(...args)=>scaleEnemy(...args),
     setMerchantBossBattle:value=>{merchantBossBattle=!!value;},
     setCombatKind:value=>{v16CombatKind=value;},
-    setEncounterState:state=>{currentEnemies=state.enemies;currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;currentEnemyTile=state.tile;currentEncounterTurn=state.turn;combatBusy=state.busy;},
+    setEncounterState:state=>{currentEnemies=state.enemies;currentAlliedRoster=dbCombatAllies.createRoster({capacity:Math.min(dbCombatAllies.systemMaxActiveAllies,Math.max(0,Number(player?.maxActiveAllies??dbCombatAllies.systemMaxActiveAllies)||0))});currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;currentEnemyTile=state.tile;currentEncounterTurn=state.turn;combatBusy=state.busy;},
     getEncounterState:()=>({enemies:currentEnemies,lead:currentEncounterLead,index:currentEnemyIndex,current:currentEnemy,tile:currentEnemyTile,turn:currentEncounterTurn,busy:combatBusy}),
     setEncounterSelection:state=>{currentEnemies=state.enemies;currentEncounterLead=state.lead;currentEnemyIndex=state.index;currentEnemy=state.current;},
     mythicalSetCount:()=>mythicalSetCount(),
@@ -4505,6 +4541,97 @@ dbReturnToRoadTraceReady=true;
     clearRogueStolenStats:()=>dbClasses.clearRogueStolenStats()
   });
 
+  const dbCombatAllyResolutionOwner=window.DiceboundCombatAllyResolution;
+  if(!dbCombatAllyResolutionOwner)throw new Error('DiceBound requires allied combat resolution before dicebound.js');
+  const dbCombatAllyResolution=dbCombatAllyResolutionOwner.configure({
+    getRoster:()=>currentAlliedRoster,
+    setRoster:value=>{currentAlliedRoster=value;},
+    getPlayer:()=>player,
+    getEncounterTurn:()=>currentEncounterTurn,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),
+    selectEnemy:index=>setCurrentEnemy(index),
+    choosePlayerSideTarget:()=>window.DiceboundCombatTargeting.resolvePlayerSideSingleTarget({hero:player,allies:dbCombatAllyResolution.living(),random:()=>random(),policy:'weighted',heroShare:.5}),
+    damageFriendlyTarget:(target,raw,options)=>target?.kind==='summon'?dbCombatAllyResolution.damage(target.id,raw,options):applyCombatPlayerDamage(raw),
+    random:()=>random(),
+    rollTieredProc:chance=>rollTieredProc(chance),
+    defenseDamageReduction:value=>defenseDamageReduction(value),
+    damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    damageHero:(amount,options={})=>{
+      const reduction=defenseDamageReduction(Math.max(0,Number(player.defense)||0));
+      const raw=Math.max(1,Math.round(Math.max(0,Number(amount)||0)*(1-reduction)-Math.max(0,Number(player.flatReduction)||0)));
+      return applyCombatPlayerDamage(raw,options);
+    },
+    setCombatText:(...args)=>setCombatText(...args),
+    addCombatHistory:text=>addCombatHistory(text),
+    updateCombatUI:()=>updateCombatUI(),
+    delay:ms=>delay(ms),
+    onSpawn:(entity,replaced)=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonCreated({livingCount:dbCombatAllyResolution.living().length});
+      dbProgression.recordHighestSimultaneousSummons(dbCombatAllyResolution.living().length);
+      if(replaced)dbProgression.recordSummonReplacement(1);
+    },
+    onReplace:()=>{},
+    onDeath:entity=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonDeath(1);
+      if(entity?.ownerClassId==='necromancer')dbClasses.necromancerBoneShrapnel(entity);
+    },
+    onDamageTaken:(entity,amount,context={})=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageTaken(amount);
+      const target={unit:'ally',allyId:entity?.instanceId};
+      if(context?.blocked)dbCombatView.floatCombatText?.({kind:'blocked',target,label:'Barrier'});
+      else if(Number(amount)>0)dbCombatView.floatCombatText?.({kind:'damage',amount,target});
+    },
+    onHealingReceived:(entity,amount)=>{
+      if(entity?.countsAsSummon!==false)dbProgression.recordSummonHealing(amount);
+      if(Number(amount)>0)dbCombatView.floatCombatText?.({kind:'heal',amount,target:{unit:'ally',allyId:entity?.instanceId}});
+    },
+    onDamageDealt:(entity,amount)=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonDamageDealt(amount);},
+    onKill:entity=>{if(entity?.countsAsSummon!==false)dbProgression.recordSummonKill(1);}
+  });
+
+  dbClasses.configureNecromancer({
+    getPlayer:()=>player,
+    isActive:id=>classIdentityActive(id),
+    getCombatBusy:()=>combatBusy,
+    setCombatBusy:value=>{combatBusy=!!value;},
+    getEncounterTurn:()=>currentEncounterTurn,
+    getCurrentEnemy:()=>currentEnemy,
+    getCurrentEnemies:()=>currentEnemies,
+    livingEnemies:()=>livingEnemies(),
+    selectEnemy:index=>setCurrentEnemy(index),
+    spawnAlly:(spec,options)=>dbCombatAllyResolution.spawn(spec,options),
+    livingAllies:()=>dbCombatAllyResolution.living(),
+    allyEffectDamage:(entity,enemy,amount,options)=>dbCombatAllyResolution.effectDamage(entity,enemy,amount,options),
+    damageAlly:(instanceId,amount,options)=>dbCombatAllyResolution.damage(instanceId,amount,options),
+    damageHero:(amount,options={})=>{
+      const reduction=defenseDamageReduction(Math.max(0,Number(player.defense)||0));
+      const raw=Math.max(1,Math.round(Math.max(0,Number(amount)||0)*(1-reduction)-Math.max(0,Number(player.flatReduction)||0)));
+      return applyCombatPlayerDamage(raw,options);
+    },
+    allyBasicAttack:(entity,options)=>dbCombatAllyResolution.basicAttack(entity,options),
+    graveCoil:()=>dbCombat.channel(),
+    summonAction:()=>dbCombat.spell(),
+    ultimateAction:()=>dbCombat.ultimate(),
+    resolveEnemyResponse:(...args)=>resolveEnemyResponse(...args),
+    handleHeroDeath:()=>handlePlayerDeath(),
+    setCombatText:(...args)=>setCombatText(...args),
+    addCombatHistory:text=>addCombatHistory(text),
+    updateCombatUI:()=>updateCombatUI(),
+    playEffect:(key,options)=>dbCombatView.playNecromancerEffect(key,options),
+    delay:ms=>delay(ms)
+  });
+
+  const dbCombatActionRegistryOwner=window.DiceboundCombatActions;
+  if(!dbCombatActionRegistryOwner?.createRegistry)throw new Error('DiceBound requires the Combat action registry before dicebound.js');
+  dbCombatActionRegistry=dbCombatActionRegistryOwner.createRegistry();
+  dbCombatActionRegistry.register({
+    id:'class-necromancer',
+    priority:20,
+    getActions:()=>dbClasses.necromancerActionDescriptors()
+  });
+
   const dbCombatTurnOwner=window.DiceboundCombatTurnResolution;
   if(!dbCombatTurnOwner)throw new Error('DiceBound requires the combat turn-resolution owner before dicebound.js');
   dbCombatTurns=dbCombatTurnOwner.configure({
@@ -4522,6 +4649,7 @@ dbReturnToRoadTraceReady=true;
     rand:(min,max)=>rand(min,max),
     clamp:(value,min,max)=>clamp(value,min,max),
     delay:ms=>delay(ms),
+    allyTurn:()=>dbCombatAllyResolution.automaticPhase(),
     petTurn:()=>dbCombat.petTurn(),
     applyPoisonTick:()=>applyPoisonTick(),
     winCombat:()=>dbCombat.win(),
@@ -4533,7 +4661,7 @@ dbReturnToRoadTraceReady=true;
     triggerElementEffect:(...args)=>dbCombat.element(...args),
     defenseDamageReduction:value=>defenseDamageReduction(value),
     effectiveDodgeChance:()=>effectiveDodgeChance(),
-    enemyElementProc:enemy=>dbCombat.enemyElementProc(enemy),
+    enemyElementProc:(enemy,target)=>dbCombat.enemyElementProc(enemy,target),
     damageEnemy:(...args)=>damageEnemy(...args),
     healPlayer:(...args)=>dbCombat.heal(...args),
     mythicalSetCount:()=>mythicalSetCount(),
@@ -4561,13 +4689,13 @@ dbReturnToRoadTraceReady=true;
     getPlayer:()=>player,
     getCurrentEnemy:()=>currentEnemy,
     livingEnemies:()=>livingEnemies(),
-    playerSideTargets:()=>[{kind:'player',id:'player',name:'you',entity:player}],
+    playerSideTargets:()=>dbCombatAllyResolution.playerSideTargets().map(target=>target.kind==='hero'?{...target,kind:'player',id:'player',name:'you'}:target),
     random:()=>random(),
     getCombatBusy:()=>combatBusy,
     setCombatBusy:value=>{combatBusy=!!value;},
     defenseDamageReduction:value=>defenseDamageReduction(value),
     applyPlayerDamage:raw=>applyCombatPlayerDamage(raw),
-    damageFriendlyTarget:(target,raw)=>target?.entity===player?applyCombatPlayerDamage(raw):{total:0},
+    damageFriendlyTarget:(target,raw)=>target?.entity===player?applyCombatPlayerDamage(raw):target?.kind==='summon'?dbCombatAllyResolution.damage(target.id,raw,{source:'confusion'}):{total:0},
     setCombatText:text=>setCombatText(text),
     addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),
@@ -4704,7 +4832,7 @@ dbReturnToRoadTraceReady=true;
   }
   function dbCombatOracleCleanup(){
     dbCombatOracleDismissTransient();
-    currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;currentEncounterTurn=0;combatBusy=false;
+    currentEnemy=null;currentEnemies=[];currentAlliedRoster=dbCombatAllies.createRoster({capacity:Math.min(dbCombatAllies.systemMaxActiveAllies,Math.max(0,Number(player?.maxActiveAllies??dbCombatAllies.systemMaxActiveAllies)||0))});currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;currentEncounterTurn=0;combatBusy=false;
     $('combatOverlay')?.classList.add('hidden');
     if($('combatHistory'))$('combatHistory').innerHTML='';if($('combatText'))$('combatText').textContent='';
     return true;
@@ -4731,7 +4859,11 @@ dbReturnToRoadTraceReady=true;
     snapshot:dbCombatOracleSnapshot,cleanup:dbCombatOracleCleanup,dismissTransient:dbCombatOracleDismissTransient,setup:dbCombatOracleSetup,prepareEncounter:dbCombatOraclePrepareEncounter,
     onEvent:(name,listener)=>DiceboundStateEvents.on(name,listener),
     startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>dbCombat.attack(...args),guard:(...args)=>dbCombat.guard(...args),channel:(...args)=>dbCombat.channel(...args),spell:(...args)=>dbCombat.spell(...args),ultimate:(...args)=>dbCombat.ultimate(...args),petTurn:(...args)=>dbCombat.petTurn(...args),enemyResponse:(...args)=>resolveEnemyResponse(...args),
-    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
+    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{})),
+    spawnAlly:(spec,options={})=>dbCombatAllyResolution.spawn(dbCombatOracleClone(spec||{}),options),allies:()=>dbCombatOracleClone(dbCombatAllyResolution.living()),
+    damageAlly:(instanceId,amount,options={})=>dbCombatAllyResolution.damage(instanceId,amount,options),healAlly:(instanceId,amount,options={})=>dbCombatAllyResolution.heal(instanceId,amount,options),
+    floatingEntries:()=>dbCombatOracleClone(dbCombatView.floatingEntries?.()||[]),
+    registerActionProvider:provider=>dbCombatActionRegistry.register(provider),actionView:()=>dbCombatOracleClone(dbCombatActionView()),refresh:()=>updateCombatUI()
   });
 
   // It exposes the final released 0.6.6.28 behavior without changing ordinary

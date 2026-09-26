@@ -16,7 +16,7 @@
   // gate. Keep this list public for compatibility and for direct unlock calls:
   // unlike older classes, callers may not force-persist them before the rule
   // has actually become true.
-  const TARGET_IDS=Object.freeze(["pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon"]);
+  const TARGET_IDS=Object.freeze(["pokemontrainer","rogue","merchant","slime","vampire","invoker","dragoon","necromancer"]);
   const TARGET_ID_SET=new Set(TARGET_IDS);
   const LEGACY_PUBLIC_SLIME_EXEMPT=new Set(["slime","d20","ceo","merchant"]);
 
@@ -79,6 +79,7 @@
       case "vampire":return f.maxLifesteal>1&&f.board3BossDefeated;
       case "invoker":return f.manaSpenderCasts>=100;
       case "dragoon":return f.board4MinibossDefeated;
+      case "necromancer":return integer(ctx.enemyDefeats?.lich)>=100;
       default:return null;
     }
   }

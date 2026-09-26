@@ -112,7 +112,8 @@ assert.notEqual(raritiesApi.rollOrdinaryGearRarity({roll:0,luck:1.10}),"poor","z
 const classes = context.window.DiceboundClasses.createRegistry();
 const derivedTags = Object.fromEntries(Object.entries(classes).map(([id, value]) => [id, value.tags]));
 assert.deepEqual(Array.from(derivedTags.invoker), ["ranged", "occult", "mana", "elemental", "combo"]);
-snapshot(derivedTags, 1229, "ff813f56e685a877e9b4e4e6cd04055f117deca1750bb1f5136863447b22a274", "derived class tags");
+assert.deepEqual(Array.from(derivedTags.necromancer), ["occult", "mana", "pack", "ranged"], "Necromancer tags must remain semantically derived from the canonical class registry");
+snapshot(derivedTags, 1277, "308e1bf8c4e868843be71cdfb7423bfc5e6f9a515c10089b5a885bcbb597dcc9", "derived class tags");
 
 const monolithPath = path.join(__dirname, "..", "runtime", "js", "dicebound.js");
 const monolith = fs.readFileSync(monolithPath, "utf8");

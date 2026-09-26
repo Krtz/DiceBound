@@ -297,10 +297,24 @@
       `);
     }
 
+    function alliedTargetId(target = {}) {
+      return String(target?.allyId ?? target?.instanceId ?? target?.id ?? '').trim();
+    }
+
     function floatingTargetHost(target = {}) {
       const document = documentRoot();
       if (!document) return null;
       if (target?.unit === 'player') return document.getElementById?.('combatPlayerIcon') || null;
+      if (target?.unit === 'ally') {
+        const id = alliedTargetId(target);
+        if (!id) return null;
+        const party = document.getElementById?.('alliedParty') || null;
+        const candidates = party?.querySelectorAll?.('.stage-ally')
+          || document.querySelectorAll?.('#alliedParty .stage-ally')
+          || [];
+        const unit = [...candidates].find(node => String(node?.dataset?.allyInstance || '') === id) || null;
+        return unit?.querySelector?.('.stage-ally-sprite') || unit;
+      }
       if (target?.unit !== 'enemy') return null;
       const explicitIndex = Number(target.enemyIndex);
       if (Number.isInteger(explicitIndex) && explicitIndex >= 0) {
@@ -312,6 +326,10 @@
 
     function floatingTargetKey(target = {}, host = null) {
       if (target?.unit === 'player') return 'player';
+      if (target?.unit === 'ally') {
+        const id = alliedTargetId(target);
+        return id ? `ally:${id}` : null;
+      }
       let index = Number(host?.dataset?.enemyIndex);
       if (!Number.isInteger(index)) index = Number(target?.enemyIndex);
       if (!Number.isInteger(index) && target?.enemy) index = (getEnemies?.() || []).indexOf(target.enemy);

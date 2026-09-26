@@ -44,6 +44,9 @@
     if(r.isClassActive("beastmaster")&&p.beastStance==="aggressive")damage=Math.round(damage*1.5);
     const id=m.activePet||"neutral";
     if(id!=="neutral")damage+=petBondDamageExtra(id);
+    // Equipment % Pet Damage is applied to the fully resolved Companion strike,
+    // after legacy flat/class/bond modifiers, so authored gear composes cleanly.
+    damage=Math.max(1,Math.round(damage*Math.max(0,1+(Number(p.petDamageScale)||0))));
     return damage;
   }
 
@@ -51,7 +54,8 @@
   // then the same elemental-Pet bond extra that replaced v1.6's flat +2.
   function trainerPetDamage(id){
     const r=rt(),p=player(),m=meta(),level=Math.max(1,m.pets?.[id]?.level||1);
-    return Math.max(1,1+Math.ceil(level*.82)+p.petDamageBonus+classAttackPetBonus()+(id&&id!=="neutral"?petBondDamageExtra(id):0));
+    const resolved=1+Math.ceil(level*.82)+p.petDamageBonus+classAttackPetBonus()+(id&&id!=="neutral"?petBondDamageExtra(id):0);
+    return Math.max(1,Math.round(resolved*Math.max(0,1+(Number(p.petDamageScale)||0))));
   }
 
   function petElementFor(id){const r=rt(),def=pets()[id]||pets().neutral;return def.id==="neutral"?r.pick(r.getDiboElements()):def.element;}

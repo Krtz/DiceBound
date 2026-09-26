@@ -33,6 +33,9 @@
     "combat-enemy-policy",
     "combat-enemy-scaling-resolution",
     "combat-targeting",
+    "combat-allied-entities",
+    "combat-action-registry",
+    "combat-allied-resolution",
     "combat-presentation",
     "combat-encounter-lifecycle",
     "combat-turn-resolution",
@@ -43,6 +46,7 @@
     "classes-actions",
     "classes-hooks",
     "classes-invoker",
+    "classes-necromancer",
     "combat-mana-action-resolution",
     "combat-facade",
     "progression-class-unlock-rules",
@@ -452,6 +456,39 @@
       ]
     },
     {
+      "id": "combat-allied-entities",
+      "path": "js/combat/allied-entities.js",
+      "domain": "combat/allied-entity-lifecycle-capacity-persistence-contract",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatAllies"
+      ]
+    },
+    {
+      "id": "combat-action-registry",
+      "path": "js/combat/action-registry.js",
+      "domain": "combat/composable-action-provider-and-dispatch-contract",
+      "status": "extracted",
+      "requires": [],
+      "provides": [
+        "DiceboundCombatActions"
+      ]
+    },
+    {
+      "id": "combat-allied-resolution",
+      "path": "js/combat/allied-resolution.js",
+      "domain": "combat/allied-turn-damage-healing-and-death-resolution",
+      "status": "extracted",
+      "requires": [
+        "combat-targeting",
+        "combat-allied-entities"
+      ],
+      "provides": [
+        "DiceboundCombatAllyResolution"
+      ]
+    },
+    {
       "id": "combat-presentation",
       "path": "js/combat/presentation.js",
       "domain": "combat/presentation-and-battlefield-rendering",
@@ -558,6 +595,19 @@
         "combat-element-resolution"
       ],
       "provides": []
+    },
+    {
+      "id": "classes-necromancer",
+      "path": "js/classes/necromancer.js",
+      "domain": "classes/necromancer-summons-bone-shrapnel-and-army-of-the-dead",
+      "status": "extracted",
+      "requires": [
+        "classes-registry",
+        "combat-allied-resolution"
+      ],
+      "provides": [
+        "DiceboundNecromancer"
+      ]
     },
     {
       "id": "combat-mana-action-resolution",

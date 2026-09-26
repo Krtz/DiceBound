@@ -1,0 +1,118 @@
+{
+  "mode": "built-in ImageGen",
+  "promptFormat": "Use case: stylized-concept. Create one finished equipment icon: {name}. {subject} Rich hand-painted DiceBound fantasy RPG equipment base art, sculptural volumes, crisp edges, tactile materials, readable silhouette at small inventory size. Square composition, entire item centered with generous transparent margin. Genuinely transparent alpha background. Warm highlights and cool shadows. No text, labels, UI border, scenery, ground plane, watermark or extra panels.",
+  "items": [
+    {
+      "slot": "weapon",
+      "name": "Adamant 2H Sword",
+      "subject": "A massive two-handed sword forged from dark green adamant metal, broad double-edged blade, reinforced crossguard, long leather grip, utilitarian heavy martial construction.",
+      "slug": "adamant-2h-sword",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-b9d08361-f7da-48a2-9e4a-a3974fb679f8.png"
+    },
+    {
+      "slot": "weapon",
+      "name": "Adamant Battleaxe",
+      "subject": "A heavy single battleaxe forged from dark green adamant metal, broad crescent cutting head with reinforced spine, sturdy leather-wrapped haft, durable martial construction.",
+      "slug": "adamant-battleaxe",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-3119ab71-3765-4902-b764-5ea55c288d38.png"
+    },
+    {
+      "slot": "offhand",
+      "name": "Abyssal Orb",
+      "subject": "A dark violet abyssal orb hovering just above a small blackened silver focus mount, a deep void vortex visible inside and delicate violet wisps. Compact caster offhand.",
+      "slug": "abyssal-orb",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-dbff6824-3e99-4a0b-acb8-ec6de70f3d2e.png"
+    },
+    {
+      "slot": "offhand",
+      "name": "Aegis Shield",
+      "subject": "A mighty steel aegis shield, broad curved face, layered reinforced rim and central guardian sun emblem, restrained gold accents, heavy protective construction.",
+      "slug": "aegis-shield",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-af7b5057-242f-4119-8396-5dc3ccc5b102.png"
+    },
+    {
+      "slot": "hat",
+      "name": "Adamant Full Helm",
+      "subject": "A fully enclosed heavy dark green adamant plate helmet with narrow visor, articulated cheek plates and sturdy brow ridge. Empty helmet, no head or body.",
+      "slug": "adamant-full-helm",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-308cc668-d4f5-4ac3-ad78-5fcf5403ecee.png"
+    },
+    {
+      "slot": "hat",
+      "name": "Champion Hat",
+      "subject": "A richly tailored cloth trainer champion cap, royal blue with gold piping, small crystal badge bearing a paw motif. Prestigious adventurous pet trainer identity, no lettering.",
+      "slug": "champion-hat",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-8580bfc9-fbf2-48ae-8511-44dbb7c71cd0.png"
+    },
+    {
+      "slot": "chest",
+      "name": "Archon Plate",
+      "subject": "A refined medium-weight archon breastplate, luminous polished steel, elegant layered plates, discreet gold guardian ornament and compact shoulder protection. Empty wearable torso armor, no wearer.",
+      "slug": "archon-plate",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-e0e04438-f894-4f65-ad19-6f7e1d0f4772.png"
+    },
+    {
+      "slot": "chest",
+      "name": "Balrog Skin",
+      "subject": "A heavy fire-themed torso armor made from black volcanic demon hide, ember-red seams, rugged overlapping hide panels and scorched bronze fastenings. Empty wearable armor, no body, no character.",
+      "slug": "balrog-skin",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-e8f5ee3b-be43-45f4-bdb5-433bc02679cf.png"
+    },
+    {
+      "slot": "legs",
+      "name": "Bloodbound Legs",
+      "subject": "A pair of fitted vampiric trousers, supple black leather and deep burgundy cloth, subtle silver bat-wing buckles and crimson seam accents. Empty garment, no body or boots.",
+      "slug": "bloodbound-legs",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-8d190ff7-2410-4560-8525-6ebe4b0ad288.png"
+    },
+    {
+      "slot": "legs",
+      "name": "Consecrated Legs",
+      "subject": "A pair of consecrated leg garments combining ivory cloth and protective silver knee plates, restrained golden holy sun embroidery, warm gentle light. Empty garment, no wearer or boots.",
+      "slug": "consecrated-legs",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-4bc77b7d-8c89-4012-98ae-56b44dd05936.png"
+    },
+    {
+      "slot": "boots",
+      "name": "Bane Armoured Boots",
+      "subject": "A pair of heavy bane-metal armored boots, dark blue-black plates, intimidating angular ridges and short retaliatory spikes, thick soles. Entire matching pair, no legs.",
+      "slug": "bane-armoured-boots",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-fd609061-d5ea-409b-9b70-183f2aca0dfd.png"
+    },
+    {
+      "slot": "boots",
+      "name": "Champion Boots",
+      "subject": "A pair of agile royal blue leather trainer boots with gold piping, small paw-shaped crystal buckles and flexible soles, adventurous champion quality. Entire matching pair, no legs.",
+      "slug": "champion-boots",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-6262fb09-e548-41a4-9911-a8fd3e395489.png"
+    },
+    {
+      "slot": "ring",
+      "name": "Blood Oath Band",
+      "subject": "A thick rugged iron finger ring, hammered battle-worn texture, a narrow crimson glowing oath groove and small blood-red inset stone. Restrained fierce design, no blood or hand.",
+      "slug": "blood-oath-band",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-0e92dda3-c547-40d0-ac4a-336ab13075be.png"
+    },
+    {
+      "slot": "ring",
+      "name": "Consecrated Ring",
+      "subject": "A graceful silver and gold finger ring, interwoven bands supporting a tiny radiant sun-shaped setting, gentle white-gold holy light. No hand.",
+      "slug": "consecrated-ring",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-73b1b59b-d0a5-4d0f-b139-4b0093a22b0d.png"
+    },
+    {
+      "slot": "amulet",
+      "name": "Bloodbound Amulet",
+      "subject": "A dark red bloodstone pendant held in ornate silver bat-wing prongs, delicate silver necklace chain, subtle crimson lifesteal glow. No wearer, no gore.",
+      "slug": "bloodbound-amulet",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-1af1d33d-a3ed-405f-886b-07703e7ee93e.png"
+    },
+    {
+      "slot": "amulet",
+      "name": "Champion Amulet",
+      "subject": "A golden champion pendant with a brilliant blue crystal and sculpted paw motif, robust gold necklace chain, prestigious pet trainer trophy jewelry. No wearer or lettering.",
+      "slug": "champion-amulet",
+      "source": "C:\\Users\\Axel\\.codex\\generated_images\\01a0c7c4-b215-7fc2-b30c-cf30d9b26390\\exec-63f1441b-9810-435e-9f3f-3b3a854c1969.png"
+    }
+  ]
+}

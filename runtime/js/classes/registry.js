@@ -793,6 +793,39 @@
         "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. The companion circle converts 10% of player Attack into pet damage, and Summoned spirits attack after the normal companion."
       }
     },
+    "necromancer": {
+      "id": "necromancer",
+      "name": "Necromancer",
+      "icon": "☠️",
+      "attackIcon": "🦴",
+      "fxIcon": "🟣☠️",
+      "unlock": "Defeat 100 Liches across your career",
+      "desc": "A Mana necromancer who raises real targetable Skeleton allies. Grave Coil builds Mana; Summon Skeleton spends it to build an expendable front line whose deaths erupt in Bone Shrapnel.",
+      "stats": "34 HP · 6 ATK · 1 DEF · 30/110 MANA · 2 SUMMONS",
+      "scaleNotes": "Attack, Defense and max HP feed Skeleton inheritance when each summon is created. Summons then own their own combat stats and effects rather than mirroring the Necromancer live.",
+      "ultimate": {
+        "name": "Army of the Dead",
+        "icon": "💀⚔️",
+        "desc": "After enough qualifying summons, every living summon attacks with overwhelming force and empty summon slots contribute spectral Skeleton strikes."
+      },
+      "base": {
+        "maxHp": 34,
+        "attack": 6,
+        "defense": 1,
+        "crit": 0.08,
+        "dodge": 0.04,
+        "luck": 0.05,
+        "doubleStrike": 0.05,
+        "guardPower": 0.5,
+        "classBurst": 0,
+        "lifeSteal": 0
+      },
+      "tags": ["occult","mana","pack","ranged"],
+      "passive": {
+        "name": "Bone Shrapnel",
+        "desc": "Skeleton Warriors explode on true death, spraying enemies and the allied side with bone shards. Replacing a summon is not a death."
+      }
+    },
     "pokemontrainer": {
       "id": "pokemontrainer",
       "secret": true,
@@ -1077,6 +1110,10 @@
       "name": "Spirit Circle",
       "desc": "Uses Mana to conjure up to three temporary companion spirits each battle. Summoner converts 10% of Attack into pet damage before upgrades."
     },
+    "necromancer": {
+      "name": "Bone Shrapnel",
+      "desc": "Skeleton Warriors explode on true death for 20% of current Necromancer Attack to enemies and 10% to the hero and other living allied summons."
+    },
     "pokemontrainer": {
       "name": "Six-Creature Draft",
       "desc": "At run start, six companions are randomly drafted into a roster. The active roster creature attacks much harder and may call an assist."
@@ -1116,6 +1153,7 @@
     rogue:{type:"compound",requirements:[{type:"lifetimeStat",stat:"highestGold",minimum:5000},{type:"guardianDefeat",board:3,guardian:"miniboss"}]},
     bloodmage:{type:"secretBossKills",boss:"bloodmage-boss",minimum:1},
     summoner:{type:"petsAtLevel",count:3,level:10},
+    necromancer:{type:"enemyDefeats",enemyId:"lich",minimum:100},
     pokemontrainer:{type:"compound",requirements:[{type:"allPetsAtLevel",level:10},{type:"boardClear",classId:"beastmaster",board:5}]},
     alchemist:{type:"lifetimeStat",stat:"potionsUsed",minimum:15},
     ouroboros:{type:"runStat",stat:"doubleStrike",minimum:4},
@@ -1146,6 +1184,7 @@
     rogue:["steal","wealth","evasion"],
     bloodmage:["blood-fuel","lifesteal","occult-spell"],
     summoner:["mana","pet","pack","spirits","conjure"],
+    necromancer:["mana","allies","summons","grave-count","bone-shrapnel"],
     pokemontrainer:["pet","pack","roster","trainer-assist"],
     alchemist:["alchemy","flasks","potions","sustain"],
     ouroboros:["echo","poison","elemental","ouroboros-conversion"],
@@ -1166,7 +1205,7 @@
   function createMechanicsRegistry(){return clone(CLASS_MECHANICS_DATA);}
   function createUltimateSupportRegistry(){return clone(ULTIMATE_SUPPORT_DATA);}
 
-  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null,invokerOwner=null,invokerRuntime=null;
+  let runtimeOwner=null,runtime=null,actionsOwner=null,actionsRuntime=null,hooksOwner=null,hooksRuntime=null,invokerOwner=null,invokerRuntime=null,necromancerOwner=null,necromancerRuntime=null;
   function installRuntime(owner){
     if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses runtime owner is invalid.");
     runtimeOwner=owner;
@@ -1230,6 +1269,22 @@
     if(typeof fn!=="function")throw new Error(`DiceboundClasses Invoker test capability ${name}() is not configured.`);
     return fn;
   }
+  function installNecromancer(owner){
+    if(!owner||typeof owner.configure!=="function")throw new Error("DiceboundClasses Necromancer owner is invalid.");
+    necromancerOwner=owner;
+    return api;
+  }
+  function configureNecromancer(next={}){
+    if(!necromancerOwner)throw new Error("DiceboundClasses Necromancer owner has not been installed.");
+    necromancerRuntime=necromancerOwner.configure(next);
+    return api;
+  }
+  function requireNecromancer(name){
+    const fn=necromancerRuntime?.[name];
+    if(typeof fn!=="function")throw new Error("DiceboundClasses Necromancer capability "+name+"() is not configured.");
+    return fn;
+  }
+  function callNecromancer(name,...args){return requireNecromancer(name)(...args);}
   function requireRuntime(name){
     const fn=runtime?.[name];
     if(typeof fn!=="function")throw new Error(`DiceboundClasses runtime capability ${name}() is not configured.`);
@@ -1250,6 +1305,7 @@
     configureActionMechanics,
     configureRuntimeHooks,
     configureInvoker,
+    configureNecromancer,
     configureActions:next=>call("configureActions",next),
     performAction:kind=>call("performAction",kind),
     bloodmageBloodletting:()=>callAction("bloodmageBloodletting"),
@@ -1291,6 +1347,13 @@
     invokerBeginCombat:()=>invokerRuntime?.beginCombat?.(),
     invokerResetCombat:(...args)=>invokerRuntime?.resetCombat?.(...args),
     invokerRender:()=>invokerRuntime?.render?.(),
+    necromancerSummonSkeleton:()=>callNecromancer("summonSkeleton"),
+    necromancerBoneShrapnel:entity=>callNecromancer("boneShrapnel",entity),
+    necromancerArmyOfTheDead:(...args)=>callNecromancer("armyOfTheDead",...args),
+    necromancerGraveCount:()=>necromancerRuntime?.graveCount?.()||0,
+    necromancerGraveThreshold:()=>necromancerRuntime?.graveThreshold?.()||5,
+    necromancerGraveReady:()=>!!necromancerRuntime?.graveReady?.(),
+    necromancerActionDescriptors:()=>necromancerRuntime?.actionDescriptors?.()||[],
     identityId:()=>call("identityId"),
     active:id=>call("active",id),
     mechanicsFor:id=>call("mechanicsFor",id),
@@ -1314,6 +1377,7 @@
     _installActions:installActions,
     _installHooks:installHooks,
     _installInvoker:installInvoker,
+    _installNecromancer:installNecromancer,
   });
   window.DiceboundClasses=api;
 })();

@@ -64,7 +64,7 @@ let state = {
   },
   currentEnemy: { name: 'Wolf', hp: 70, maxHp: 100, attack: 12, defense: 4, weakness: 'fire', affinity: 'ice', dodge: .15, rangerMarks: 4 },
   currentEnemies: [], currentEnemyIndex: 0, currentEncounterLead: null, currentEncounterTurn: 0, combatBusy: false,
-  boardLevel: 1, nightmareMode: false, hellMode: false
+  boardLevel: 1, nightmareMode: false, hellMode: false, allies: []
 };
 state.currentEnemies = [state.currentEnemy];
 
@@ -130,6 +130,10 @@ function runtime() {
     enemyPortraitById: () => null,
     enemyModeAura: mode => ({ id: mode, className: `mode-${mode}` }),
     guardianBattleArt: () => null,
+    allyArt: () => null,
+    necromancerArt: () => null,
+    getCombatActionView: () => [],
+    executeCombatAction: async () => ({ok:true}),
     resolveCombatBackground: (board, mode) => mode === 'hell' ? null : ({ image: `assets/combat/backgrounds/board-${board}-${mode}.png`, focus: '50% 50%' }),
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
@@ -334,6 +338,56 @@ assert(stageStyle.textContent.includes('width:var(--db-enemy-art-size,62px)!impo
 assert(stageStyle.textContent.includes('min-height:var(--db-enemy-stage-mobile-height,68px)!important'),'mobile enemy dimensions must use the same semantic policy');
 assert(stageStyle.textContent.includes('font-size:var(--db-enemy-art-size,62px)'),'fallback enemy icons must use the same semantic desktop art size');
 assert(stageStyle.textContent.includes('font-size:var(--db-enemy-art-mobile-size,50px)'),'fallback enemy icons must use the same semantic mobile art size');
+
+// #465: additional provider actions materialize exactly once and disappear with their provider.
+const dynamicNodes=new Map(),dynamicChildren=[];
+const dynamicActions={
+  classList:fakeClassList(),
+  querySelectorAll(selector){return selector==='[data-dynamic-combat-action="1"]'?dynamicChildren.filter(node=>node.dataset?.dynamicCombatAction==="1"):[];},
+  insertBefore(node){
+    const prior=dynamicChildren.indexOf(node);if(prior>=0)dynamicChildren.splice(prior,1);
+    dynamicChildren.push(node);if(node.id)dynamicNodes.set(node.id,node);node.parentElement=this;return node;
+  }
+};
+const dynamicDocument={
+  ...fakeDocument,
+  createElement(tag){
+    const node={
+      tagName:String(tag||"").toUpperCase(),id:"",type:"",className:"",dataset:{},disabled:false,textContent:"",style:fakeStyle(),classList:fakeClassList(),parentElement:null,
+      _listeners:{},
+      addEventListener(name,fn){this._listeners[name]=fn;},
+      remove(){const i=dynamicChildren.indexOf(this);if(i>=0)dynamicChildren.splice(i,1);if(this.id)dynamicNodes.delete(this.id);}
+    };
+    return node;
+  },
+  getElementById(id){return dynamicNodes.get(id)||fakeDocument.getElementById(id);},
+  querySelector(selector){return selector==="#combatOverlay .combat-actions"?dynamicActions:null;}
+};
+let dynamicView=[
+  {id:"grave-coil",label:"Grave Coil",icon:"🟣",description:"Builder",enabled:true,cost:null,metadata:{fixedSlot:"attack"}},
+  {id:"summon-skeleton",label:"Summon Skeleton",icon:"☠️",description:"Base summon",enabled:true,cost:{resource:"mana",amount:40},metadata:{fixedSlot:"special"}},
+  {id:"army-of-the-dead",label:"Army of the Dead",icon:"💀⚔️",description:"Ultimate",enabled:false,cost:{resource:"grave-count",amount:5},metadata:{fixedSlot:"ultimate"}},
+  {id:"summon-mage-skeleton",label:"Summon Mage Skeleton",icon:"🪄",description:"Powerup-provided summon",enabled:true,cost:{resource:"mana",amount:55},metadata:{}}
+];
+const executed=[];
+owner.configure({...runtime(),document:dynamicDocument,find:()=>null,getCombatActionView:()=>dynamicView,executeCombatAction:async id=>{executed.push(id);return {ok:true,actionId:id};}});
+let dynamicButtons=owner._test.syncDynamicCombatActions();
+assert.strictEqual(dynamicButtons.length,1,'fixed-slot actions must not duplicate as dynamic buttons');
+assert.strictEqual(dynamicChildren.length,1,'one provider-only action must create one button');
+assert.strictEqual(dynamicChildren[0].dataset.combatActionId,'summon-mage-skeleton');
+assert(dynamicChildren[0].textContent.includes('55 mana'),'dynamic action must present its live semantic cost');
+owner._test.syncDynamicCombatActions();
+assert.strictEqual(dynamicChildren.length,1,'repeated presentation refresh must not duplicate dynamic action buttons');
+await dynamicChildren[0]._listeners.click();
+assert.deepStrictEqual(executed,['summon-mage-skeleton'],'dynamic action click must dispatch by stable action ID');
+dynamicView=[
+  ...dynamicView.filter(action=>action.id!=='summon-mage-skeleton'),
+  {id:"bone-shield",label:"Bone Shield",icon:"🦴",description:"Talent-provided action",enabled:false,cost:null,metadata:{}}
+];
+dynamicButtons=owner._test.syncDynamicCombatActions();
+assert.strictEqual(dynamicChildren.length,1,'stale provider action must be removed when source disappears');
+assert.strictEqual(dynamicChildren[0].dataset.combatActionId,'bone-shield');
+assert.strictEqual(dynamicChildren[0].disabled,true,'dynamic button must follow live enabled state');
 
 assert.strictEqual(rngCalls, 0, 'combat presentation test consumed RNG');
 console.log('Combat presentation owner PASS: live Mana generator facts, semantic enemy scaling, Secret Boss sizing, attacks, Echo pacing, backgrounds, statuses and zero-RNG view models are deterministic');

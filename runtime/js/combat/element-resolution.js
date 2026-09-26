@@ -145,7 +145,10 @@
     }
     if (key === "light") {
       totalDamage = elementHit(target, key, p.attack * .70 * mult);
-      heal = rt.healPlayer(Math.ceil(p.maxHp * (weak ? .15 : .09) * (1 + p.elementDamageBonus)));
+      const healFraction=(weak ? .15 : .09) * (1 + p.elementDamageBonus);
+      const heroHeal=rt.healPlayer(Math.ceil(p.maxHp * healFraction));
+      const summonHeal=typeof rt.healAlliedSummons==="function"?rt.healAlliedSummons(healFraction,{source:"light-element"}):0;
+      heal=heroHeal+summonHeal;
       extra += heal ? ` Holy restores ${heal} HP across your allied side.` : "";
     }
     if (key === "void") totalDamage = elementHit(target, key, Math.max(1, Math.min(target.maxHp * (weak ? .14 : .09) * mult, p.attack * 4.5 * mult)), true);
@@ -357,75 +360,143 @@
     return requireRuntime().applyPlayerDamage(Math.max(1, Math.round(raw || 0)));
   }
 
-  function resolveEnemyCore(enemy) {
-    const rt = requireRuntime(), p = player(), table = elements();
+  function normalizeFriendlyTarget(target = null) {
+    const p=player();
+    if(target?.kind==="summon"&&target.id)return target;
+    return {kind:"hero",id:"hero",name:"you",entity:p};
+  }
+
+  function friendlyName(target) {
+    const resolved=normalizeFriendlyTarget(target);
+    return resolved.kind==="summon"?(resolved.name||resolved.entity?.name||"summon"):"you";
+  }
+
+  function friendlyDamage(target,raw,options={}) {
+    const rt=requireRuntime(),resolved=normalizeFriendlyTarget(target);
+    if(resolved.kind!=="summon")return applyPlayerElementDamage(raw);
+    if(typeof rt.damageFriendlyTarget!=="function")return Object.freeze({total:0,hp:0,blocked:false,defeated:false});
+    return rt.damageFriendlyTarget(resolved,Math.max(1,Math.round(raw||0)),{source:"enemy-element",...options});
+  }
+
+  function friendlyStatus(target,kind,payload={}) {
+    const rt=requireRuntime(),resolved=normalizeFriendlyTarget(target),p=player();
+    if(resolved.kind==="summon"){
+      return typeof rt.applyFriendlyStatus==="function"?rt.applyFriendlyStatus(resolved,kind,payload):null;
+    }
+    if(kind==="burn")return {value:addPlayerBurn(payload.stacks||1)};
+    if(kind==="poison")return {value:addPlayerPoison(payload.stacks||1,payload.power||.12)};
+    if(kind==="skip")return {value:queuePlayerControl(payload.label||"Control effect")};
+    if(kind==="confusion"){rt.applyPlayerConfusion();return {value:1};}
+    if(kind==="attack-reduction"){
+      const before=p.attack,cut=Math.min(Math.max(0,before-1),Math.max(0,Number(payload.amount)||0));
+      p.attack=Math.max(1,before-cut);const actual=Math.max(0,before-p.attack);p.db0511TechAttackLost=(p.db0511TechAttackLost||0)+actual;
+      return {statLoss:actual};
+    }
+    if(kind==="defense-reduction"){
+      const before=Math.max(0,Number(p.defense)||0),loss=Math.min(before,Math.max(0,Number(payload.amount)||0));
+      if(loss){p.defense-=loss;p.radiationDefenseLost=(p.radiationDefenseLost||0)+loss;}
+      return {statLoss:loss};
+    }
+    return null;
+  }
+
+  function resolveEnemyCore(enemy, target = null) {
+    const rt = requireRuntime(), p = player(), table = elements(), friendly=normalizeFriendlyTarget(target);
     if (!enemy?.affinity || !table[enemy.affinity] || rt.random() > enemy.elementProcChance) return "";
-    const key = enemy.affinity, e = table[key];
+    const key = enemy.affinity, e = table[key], targetEntity=friendly.entity||p, targetLabel=friendlyName(friendly);
     rt.playElementAnimation(key, enemy, true);
     let note = `${e.icon} ${enemy.name} activates ${e.spell}: `, hit = null;
+
     if (key === "fire") {
-      hit = applyPlayerElementDamage(enemy.attack * .70); note += `${hit.total} Fire damage.`;
-      if (rt.random() < .25) { const stacks = addPlayerBurn(1); note += ` Burn ${stacks}/10 applied.`; }
+      hit = friendlyDamage(friendly,enemy.attack * .70); note += `${hit.total} Fire damage to ${targetLabel}.`;
+      if (!hit.defeated && rt.random() < .25) {
+        const applied=friendlyStatus(friendly,"burn",{stacks:1});
+        const stacks=friendly.kind==="summon"?applied?.statuses?.burnStacks:applied?.value;
+        note += ` Burn ${stacks||1}/10 applied.`;
+      }
     } else if (key === "ice") {
-      hit = applyPlayerElementDamage(enemy.attack * .70); note += `${hit.total} Ice damage.`;
-      if (rt.random() < .25 && queuePlayerControl("❄️ Frozen by Ice Nova")) note += " You are Frozen for your next action.";
+      hit = friendlyDamage(friendly,enemy.attack * .70); note += `${hit.total} Ice damage to ${targetLabel}.`;
+      if (!hit.defeated && rt.random() < .25) {
+        const applied=friendlyStatus(friendly,"skip",{actions:1,label:"❄️ Frozen by Ice Nova"});
+        if(applied?.value!==false)note += ` ${friendly.kind==="summon"?targetLabel:"You"} ${friendly.kind==="summon"?"is":"are"} Frozen for the next action.`;
+      }
     } else if (key === "electric") {
-      hit = applyPlayerElementDamage(enemy.attack * .70); note += `${hit.total} Electric damage.`;
-      if (rt.random() < .25 && queuePlayerControl("⚡ Stunned by Static Shock")) note += " Static Shock stuns your next action.";
+      hit = friendlyDamage(friendly,enemy.attack * .70); note += `${hit.total} Electric damage to ${targetLabel}.`;
+      if (!hit.defeated && rt.random() < .25) {
+        const applied=friendlyStatus(friendly,"skip",{actions:1,label:"⚡ Stunned by Static Shock"});
+        if(applied?.value!==false)note += ` Static Shock stuns ${targetLabel}'s next action.`;
+      }
     } else if (key === "light") {
-      hit = applyPlayerElementDamage(enemy.attack * .70); let healed = 0;
+      hit = friendlyDamage(friendly,enemy.attack * .70); let healed = 0;
       for (const ally of living()) { const amount = Math.min(ally.maxHp - ally.hp, Math.max(1, Math.ceil(ally.maxHp * .09))); ally.hp += amount; healed += amount; }
-      note += `${hit.total} Light damage and Holy restores ${healed} HP across the enemy side.`;
+      note += `${hit.total} Light damage to ${targetLabel} and Holy restores ${healed} HP across the enemy side.`;
     } else if (key === "void") {
-      const raw = Math.max(1, Math.min(p.maxHp * .09, enemy.attack * 4.5)); hit = applyPlayerElementDamage(raw); note += `${hit.total} Void damage based on your max HP.`;
+      const raw = Math.max(1, Math.min(Math.max(1,Number(targetEntity.maxHp)||1) * .09, enemy.attack * 4.5));
+      hit = friendlyDamage(friendly,raw,{ignoreDefense:true}); note += `${hit.total} Void damage to ${targetLabel} based on max HP.`;
     } else if (key === "nature") {
-      hit = applyPlayerElementDamage(enemy.attack * .30); const stacks = addPlayerPoison(1, .12); note += `${hit.total} Nature damage and Poison Vines add a Poison stack (${stacks}).`;
+      hit = friendlyDamage(friendly,enemy.attack * .30); const applied=friendlyStatus(friendly,"poison",{stacks:1,power:.12});
+      const stacks=friendly.kind==="summon"?applied?.statuses?.poisonStacks:applied?.value;
+      note += `${hit.total} Nature damage to ${targetLabel} and Poison Vines add a Poison stack (${stacks||1}).`;
     } else if (key === "donut") {
-      hit = applyPlayerElementDamage(enemy.attack * .30); const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.ceil(enemy.maxHp * .18))); enemy.hp += heal; note += `${hit.total} Donut damage and restores ${heal} HP to ${enemy.name}.`;
+      hit = friendlyDamage(friendly,enemy.attack * .30); const heal = Math.min(enemy.maxHp - enemy.hp, Math.max(1, Math.ceil(enemy.maxHp * .18))); enemy.hp += heal;
+      note += `${hit.total} Donut damage to ${targetLabel} and restores ${heal} HP to ${enemy.name}.`;
     } else if (key === "tech") {
-      hit = applyPlayerElementDamage(enemy.attack * .30); const before = p.attack, cut = Math.max(1, Math.ceil(Math.max(1, before) * .10)); p.attack = Math.max(1, before - cut); const actual = Math.max(0, before - p.attack); p.db0511TechAttackLost = (p.db0511TechAttackLost || 0) + actual; note += `${hit.total} Tech damage and Brain Hack lowers your Attack by ${actual} for this battle.`;
+      hit = friendlyDamage(friendly,enemy.attack * .30);
+      const before=Math.max(0,Number(targetEntity.attack)||0),cut=Math.max(1,Math.ceil(Math.max(1,before)*.10));
+      const applied=friendlyStatus(friendly,"attack-reduction",{amount:cut});
+      note += `${hit.total} Tech damage to ${targetLabel} and Brain Hack lowers Attack by ${applied?.statLoss||0} for this battle.`;
     } else if (key === "metal") {
-      hit = applyPlayerElementDamage(enemy.attack * .70);
-      if (rt.getEncounterLead()?.guardian) { rt.setEncounterTurn(rt.getEncounterTurn() + 1); note += `${hit.total} Metal damage and advances the Guardian special clock.`; }
-      else { const gain = Math.max(1, Math.round(enemy.attack * .05)); enemy.attack += gain; note += `${hit.total} Metal damage and powers ${enemy.name} up by ${gain} Attack for this battle.`; }
+      hit = friendlyDamage(friendly,enemy.attack * .70);
+      if (rt.getEncounterLead()?.guardian) { rt.setEncounterTurn(rt.getEncounterTurn() + 1); note += `${hit.total} Metal damage to ${targetLabel} and advances the Guardian special clock.`; }
+      else { const gain = Math.max(1, Math.round(enemy.attack * .05)); enemy.attack += gain; note += `${hit.total} Metal damage to ${targetLabel} and powers ${enemy.name} up by ${gain} Attack for this battle.`; }
     } else if (key === "coffee") {
-      hit = applyPlayerElementDamage(enemy.attack * .34); const extra = applyPlayerElementDamage(enemy.attack * .34); note += `${hit.total + extra.total} Coffee damage as Caffeinated Haste grants ${enemy.name} an immediate extra hit.`;
+      hit = friendlyDamage(friendly,enemy.attack * .34); const extra = hit.defeated?{total:0}:friendlyDamage(friendly,enemy.attack * .34);
+      note += `${hit.total + extra.total} Coffee damage to ${targetLabel} as Caffeinated Haste grants ${enemy.name} an immediate extra hit.`;
     } else if (key === "gun") {
-      const pierce = Math.ceil(Math.max(0, p.defense) * .75); hit = applyPlayerElementDamage(enemy.attack * 1.20 + pierce); note += `${hit.total} piercing damage, bypassing 75% of your Defense.`;
+      const pierce = Math.ceil(Math.max(0, Number(targetEntity.defense)||0) * .75);
+      // Preserve the released hero formula exactly; allied entities use their
+      // own Defense resolver with an explicit 75% pierce fraction.
+      hit = friendly.kind==="summon"
+        ? friendlyDamage(friendly,enemy.attack * 1.20,{defensePierce:.75})
+        : friendlyDamage(friendly,enemy.attack * 1.20 + pierce);
+      note += `${hit.total} piercing damage to ${targetLabel}, bypassing 75% of Defense.`;
     } else if (key === "radiation") {
-      hit = applyPlayerElementDamage(enemy.attack * .40); const before = Math.max(0, Number(p.defense) || 0), loss = before > 0 ? Math.min(before, Math.max(1, Math.ceil(before * .10))) : 0; if (loss) { p.defense -= loss; p.radiationDefenseLost = (p.radiationDefenseLost || 0) + loss; } note += `${hit.total} Radiation damage${loss ? ` and your Defense falls by ${loss} (10%) for this battle` : ""}.`;
+      hit = friendlyDamage(friendly,enemy.attack * .40);
+      const before=Math.max(0,Number(targetEntity.defense)||0),loss=before>0?Math.min(before,Math.max(1,Math.ceil(before*.10))):0;
+      const applied=loss?friendlyStatus(friendly,"defense-reduction",{amount:loss}):null;
+      note += `${hit.total} Radiation damage to ${targetLabel}${loss?` and Defense falls by ${applied?.statLoss||loss} (10%) for this battle`:""}.`;
     } else if (key === "math") {
-      hit = applyPlayerElementDamage(enemy.attack * .30); note += `${hit.total} Math damage.`;
-      if (p.hp > 0 && rt.random() < .25) { rt.applyPlayerConfusion(); note += " You are Confused; your next offensive action will misfire."; }
+      hit = friendlyDamage(friendly,enemy.attack * .30); note += `${hit.total} Math damage to ${targetLabel}.`;
+      if (!hit.defeated && rt.random() < .25) { friendlyStatus(friendly,"confusion",{actions:1}); note += ` ${friendly.kind==="summon"?targetLabel:"You"} ${friendly.kind==="summon"?"is":"are"} Confused; the next offensive action will misfire.`; }
     }
     rt.addCombatHistory(note);
     rt.updateCombatUI();
     return note;
   }
 
-  function resolveEnemyNatureAndInnate(enemy) {
-    const rt = requireRuntime();
+  function resolveEnemyNatureAndInnate(enemy,target=null) {
+    const rt = requireRuntime(),friendly=normalizeFriendlyTarget(target);
     const innate = enemy?.innateElement;
     const originalAffinity = enemy?.affinity;
     if (innate) enemy.affinity = innate;
     try {
       const effectiveKey = enemy?.affinity;
-      const result = rt.withNatureLegacyPresentation(effectiveKey, () => resolveEnemyCore(enemy));
-      if (effectiveKey === "nature" && result && player().hp > 0) rt.playNatureOnPlayer();
-      if (effectiveKey === "math" && result) rt.playMathFormula({ origin: "enemy", enemy });
+      const result = rt.withNatureLegacyPresentation(effectiveKey, () => resolveEnemyCore(enemy,friendly));
+      if (effectiveKey === "nature" && result && friendly.kind!=="summon" && player().hp > 0) rt.playNatureOnPlayer();
+      if (effectiveKey === "math" && result) rt.playMathFormula({ origin: "enemy", enemy, targetKind:friendly.kind, targetId:friendly.id });
       return result;
     } finally {
       if (innate) enemy.affinity = originalAffinity;
     }
   }
 
-  function enemyElementProc(enemy) {
-    const rt = requireRuntime();
+  function enemyElementProc(enemy,target=null) {
+    const rt = requireRuntime(),friendly=normalizeFriendlyTarget(target);
     const outerKey = enemy?.affinity;
     const isDonut = outerKey === "donut";
-    const result = resolveEnemyNatureAndInnate(enemy);
-    if (isDonut && result) rt.playDonutRain({ origin: "enemy", enemy });
-    if (result && (outerKey === "fire" || outerKey === "gun")) rt.playProjectileProc(outerKey, { origin: "enemy", enemy });
+    const result = resolveEnemyNatureAndInnate(enemy,friendly);
+    if (isDonut && result) rt.playDonutRain({ origin: "enemy", enemy, targetKind:friendly.kind, targetId:friendly.id });
+    if (result && (outerKey === "fire" || outerKey === "gun")) rt.playProjectileProc(outerKey, { origin: "enemy", enemy, targetKind:friendly.kind, targetId:friendly.id });
     return result;
   }
 
