@@ -4827,7 +4827,7 @@ dbReturnToRoadTraceReady=true;
   }
   function dbCombatOracleCleanup(){
     dbCombatOracleDismissTransient();
-    currentEnemy=null;currentEnemies=[];currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;currentEncounterTurn=0;combatBusy=false;
+    currentEnemy=null;currentEnemies=[];currentAlliedRoster=dbCombatAllies.createRoster({capacity:Math.min(dbCombatAllies.systemMaxActiveAllies,Math.max(0,Number(player?.maxActiveAllies??dbCombatAllies.systemMaxActiveAllies)||0))});currentEncounterLead=null;currentEnemyTile=null;currentEnemyIndex=0;currentEncounterTurn=0;combatBusy=false;
     $('combatOverlay')?.classList.add('hidden');
     if($('combatHistory'))$('combatHistory').innerHTML='';if($('combatText'))$('combatText').textContent='';
     return true;
@@ -4854,7 +4854,9 @@ dbReturnToRoadTraceReady=true;
     snapshot:dbCombatOracleSnapshot,cleanup:dbCombatOracleCleanup,dismissTransient:dbCombatOracleDismissTransient,setup:dbCombatOracleSetup,prepareEncounter:dbCombatOraclePrepareEncounter,
     onEvent:(name,listener)=>DiceboundStateEvents.on(name,listener),
     startEncounter:kind=>startCombat(kind||'normal'),attack:(...args)=>dbCombat.attack(...args),guard:(...args)=>dbCombat.guard(...args),channel:(...args)=>dbCombat.channel(...args),spell:(...args)=>dbCombat.spell(...args),ultimate:(...args)=>dbCombat.ultimate(...args),petTurn:(...args)=>dbCombat.petTurn(...args),enemyResponse:(...args)=>resolveEnemyResponse(...args),
-    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{}))
+    element:(key,options={})=>dbCombat.element(key,currentEnemy,options),heal:(amount,options)=>dbCombat.heal(amount,options),chaos:action=>dbCombat.chaos(action),win:(...args)=>dbCombat.win(...args),select:index=>setCurrentEnemy(index),patchPlayer:patch=>Object.assign(player,dbCombatOracleClone(patch||{})),patchEnemy:(index,patch)=>Object.assign(currentEnemies[index],dbCombatOracleClone(patch||{})),
+    spawnAlly:(spec,options={})=>dbCombatAllyResolution.spawn(dbCombatOracleClone(spec||{}),options),allies:()=>dbCombatOracleClone(dbCombatAllyResolution.living()),
+    registerActionProvider:provider=>dbCombatActionRegistry.register(provider),actionView:()=>dbCombatOracleClone(dbCombatActionView()),refresh:()=>updateCombatUI()
   });
 
   // It exposes the final released 0.6.6.28 behavior without changing ordinary
