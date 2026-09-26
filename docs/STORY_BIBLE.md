@@ -185,11 +185,23 @@ The universe does not consider these categories meaningfully different.
 
 **CORE CANON**
 
+The traveler is an **Echo**.
+
+This is true from the beginning of DiceBound even if the player does not yet know the word.
+
+An Echo is a person whose identity is not completely anchored to one disposable version of reality. A route may collapse, a body may die, history may be rewritten and the Road may insist that an event never happened, yet some coherent pattern of the person survives the correction.
+
+That surviving continuity is the Echo.
+
+The traveler is therefore not turned into an Echo by escaping the Dice. DiceFree does not create the Echo; it reveals the wider world in which **Echo** is a meaningful name for what the traveler has always been.
+
 The player is not initially defined by a fixed biography.
 
 They are defined by one impossible fact:
 
 > The Road cannot completely erase them.
+
+**Dicebound** describes the Echo's particular condition inside the Dice: bound to the impossible die and to the Road's six-outcome machinery.
 
 At the beginning of the story, the traveler wakes at the Camp with a die they do not remember obtaining.
 
@@ -320,11 +332,21 @@ And it works.
 
 # 9. The classes
 
-**WORKING THEORY**
+**CORE DIRECTION / SHARED DICEBOUND–DICEFREE ONTOLOGY**
 
 Classes are not ordinary professions.
 
-They are **Ways**: stable patterns of possibility the traveler can embody.
+They are **Ways**: stable patterns of possibility an Echo can embody.
+
+The Road remembers people through archetypes. An Echo can resonate strongly enough with one of those stable patterns that reality begins interpreting the Echo through it.
+
+Inside DiceBound, selecting a class for a run is a comparatively temporary alignment: one remembered pattern dominates how the Road expresses the Echo for that route.
+
+Unlocking a class means something deeper. The Echo has demonstrated a pattern strongly enough that reality can no longer dismiss it as an accident. The Way becomes a permanent remembered possibility.
+
+DiceFree uses the **same phenomenon**, not a separate explanation for classes. Outside the Dice, class advancement is a more persistent and deliberate deepening of the Echo into a Way and then into increasingly specialized descendant Ways. DiceBound's strange unlock conditions and DiceFree's quests, trials, discoveries and secret advancement requirements are two contexts for the same metaphysical rule:
+
+> **An Echo becomes what reality has enough evidence to recognize.**
 
 The Road remembers people through archetypes.
 
@@ -1122,7 +1144,15 @@ And fails.
 
 For the first time.
 
-That failure may be why later modes exist.
+That failure is the first explicit sign that the traveler is not merely a recurring mortal but an Echo the Road cannot reduce to one correct answer.
+
+For the canonical story handoff, defeating The Last Equation eventually exposes a breach beyond the Road. The player should glimpse something DiceBound has never offered before: **space that is not another Road**.
+
+Crossing that boundary does not create the Echo.
+
+It only carries the already-existing Echo outside the Dice.
+
+The exact mechanics of the breach, what The Last Equation truly was, and what the exterior world understands about the interior remain deliberate mysteries owned jointly with DiceFree's transition design.
 
 ---
 
@@ -1291,3 +1321,24 @@ That is serious enough to support mystery.
 And broad enough to contain a frog wearing absurd equipment while a CEO kills an eldritch road monster for profit.
 
 Which is important.
+
+
+---
+
+# 44. Cross-game Echo continuity
+
+**CORE CANON**
+
+DiceBound and DiceFree use one continuous protagonist ontology.
+
+- The protagonist is already an **Echo** during DiceBound.
+- **Dicebound** is the interior condition of an Echo bound to the Road/die system, not a different species or precursor state.
+- Death/reset/Prestige/Legacy are early manifestations of Echo continuity under the Road's reality-selection rules.
+- The Camp is unusually capable of anchoring Echo memory and objects across collapsed routes.
+- Classes in both games are **Ways**: stable patterns of possibility an Echo can embody.
+- DiceBound class unlocks happen when repeated behavior gives reality enough evidence to remember a Way as possible for that Echo.
+- DiceFree class advancement is the same principle expressed in a persistent outside-world RPG: the Echo commits more deeply to a Way, completes trials/discoveries that prove the next pattern, and advances into descendant Ways.
+- Secret class requirements in both games should therefore reveal something about the Echo, the world, or the nature of the Way rather than functioning as arbitrary checklists.
+- Escaping the Dice does **not** transform the protagonist into an Echo. The outside world may simply possess language, scholarship or institutions that recognize what the protagonist already was.
+
+This continuity is intentionally stronger than the exact cosmology. We can keep debating what the Dice, the Road and The Last Equation ultimately are while still treating **Echo + Ways** as stable cross-game canon.
