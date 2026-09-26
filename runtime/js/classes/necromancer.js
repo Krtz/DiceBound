@@ -11,7 +11,7 @@
     const required=[
       "getPlayer","isActive","getCombatBusy","setCombatBusy","getEncounterTurn",
       "getCurrentEnemy","getCurrentEnemies","livingEnemies","selectEnemy",
-      "spawnAlly","livingAllies","damageEnemy","damageAlly","damageHero",
+      "spawnAlly","livingAllies","allyEffectDamage","damageAlly","damageHero",
       "allyBasicAttack","graveCoil","summonAction","ultimateAction","resolveEnemyResponse","handleHeroDeath","setCombatText",
       "addCombatHistory","updateCombatUI","playEffect","delay"
     ];
@@ -106,7 +106,10 @@
     const friendlyRaw=Math.max(1,Math.round(Math.max(0,Number(p.attack)||0)*.10));
     let enemyDamage=0,allyDamage=0,heroDamage=0;
 
-    for(const enemy of [...r.livingEnemies()])enemyDamage+=Math.max(0,Number(r.damageEnemy(enemy,enemyRaw,false))||0);
+    for(const enemy of [...r.livingEnemies()]){
+      const hit=r.allyEffectDamage(entity,enemy,enemyRaw,{source:"bone-shrapnel",deathEffect:true});
+      enemyDamage+=Math.max(0,Number(hit?.total)||0);
+    }
     for(const ally of [...r.livingAllies()].filter(ally=>ally.instanceId!==entity.instanceId)){
       const hit=r.damageAlly(ally.instanceId,friendlyRaw,{source:"bone-shrapnel",sourceEntityId:entity.instanceId});
       allyDamage+=Math.max(0,Number(hit?.total)||0);
