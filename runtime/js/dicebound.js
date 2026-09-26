@@ -1653,11 +1653,8 @@ function returnToRoad(...args){
   // Replace the four original action buttons once, removing old stacked listeners.
   function replaceCombatButton(id,handler){const old=$(id);if(!old)return null;const neo=old.cloneNode(true);old.replaceWith(neo);neo.addEventListener("click",handler);return neo;}
   function performFixedCombatSlot(slot,legacyAction){
-    if(classIdentityActive("necromancer")){
-      const action=dbActionForFixedSlot(slot);
-      if(action)return dbExecuteCombatAction(action.id);
-    }
-    return dbClasses.performAction(legacyAction);
+    const action=dbActionForFixedSlot(slot);
+    return action?dbExecuteCombatAction(action.id):dbClasses.performAction(legacyAction);
   }
   replaceCombatButton("attackBtn",()=>performFixedCombatSlot("attack","attack"));
   replaceCombatButton("guardBtn",()=>dbClasses.performAction("guard"));
