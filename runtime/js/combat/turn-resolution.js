@@ -386,7 +386,11 @@
 
   async function baseEnemyResponse(guarded = false, extraGuardPower = 0) {
     const rt = requireRuntime(), player = rt.getPlayer();
-    if (typeof rt.allyTurn === "function") { await rt.allyTurn(); if (!livingEnemies().length) return rt.winCombat(); }
+    if (typeof rt.allyTurn === "function") {
+      await rt.allyTurn();
+      if (player.hp <= 0) return rt.handlePlayerDeath();
+      if (!livingEnemies().length) return rt.winCombat();
+    }
     await rt.petTurn(); if (!livingEnemies().length) return rt.winCombat();
     rt.applyPoisonTick(); await rt.delay(260); if (!livingEnemies().length) return rt.winCombat();
     if (player.hasteTurns > 0) { player.hasteTurns -= 1; rt.setCombatBusy(false); rt.setCombatText("☕ Haste! You act again before the enemy pack can respond."); rt.updateCombatUI(); return; }
