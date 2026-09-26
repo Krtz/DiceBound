@@ -4536,6 +4536,11 @@ dbReturnToRoadTraceReady=true;
     rollTieredProc:chance=>rollTieredProc(chance),
     defenseDamageReduction:value=>defenseDamageReduction(value),
     damageEnemy:(enemy,amount,ignoreDefense=false)=>damageEnemy(enemy,amount,ignoreDefense),
+    damageHero:(amount,options={})=>{
+      const reduction=defenseDamageReduction(Math.max(0,Number(player.defense)||0));
+      const raw=Math.max(1,Math.round(Math.max(0,Number(amount)||0)*(1-reduction)-Math.max(0,Number(player.flatReduction)||0)));
+      return applyCombatPlayerDamage(raw,options);
+    },
     setCombatText:(...args)=>setCombatText(...args),
     addCombatHistory:text=>addCombatHistory(text),
     updateCombatUI:()=>updateCombatUI(),
