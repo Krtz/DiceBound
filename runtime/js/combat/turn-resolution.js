@@ -163,8 +163,9 @@
       if (hit.total > 0) roundState.hit = true;
       totalDamage += hit.total; totalHpDamage += hit.hp||hit.total; landedAny = landedAny || hit.total > 0;
       await presentEnemyAttack(enemy,pattern,hitIndex,targetIsHero&&guarded?"guarded":"hit",false,attackTarget);
-      const targetText=targetIsHero?(guarded?"your guard":"you"):friendlyTargetName(attackTarget);
-      messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}/${pattern.hits.length}` : ""} hits ${targetText} for ${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
+      const targetText=targetIsHero?(guarded?"your guard":null):friendlyTargetName(attackTarget);
+      const targetPhrase=targetText?` hits ${targetText} for `:" hits for ";
+      messages.push(`${enemy.name}'s ${pattern.name}${pattern.hits.length > 1 ? ` hit ${hitIndex}/${pattern.hits.length}` : ""}${targetPhrase}${hit.total}${hit.shield ? ` (${hit.shield} absorbed by Energy Shield)` : ""}.`);
 
       if (targetIsHero && player.thorns > 0 && hit.total > 0) {
         const returned = rt.damageEnemy(enemy, player.thorns, true); messages.push(`Spikes return ${returned}.`);
