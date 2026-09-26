@@ -91,7 +91,7 @@ function collectPresentation() {
     },
     currentEnemy: { name: "Wolf", hp: 70, maxHp: 100, attack: 12, defense: 4, weakness: "fire", affinity: "ice", dodge: 0.15, rangerMarks: 4 },
     currentEnemies: [], currentEnemyIndex: 0, currentEncounterLead: null,
-    currentEncounterTurn: 0, combatBusy: false,
+    currentEncounterTurn: 0, combatBusy: false, allies: [],
   };
   state.currentEnemies = [state.currentEnemy];
 
@@ -115,6 +115,8 @@ function collectPresentation() {
     enemyPortraitById: () => null,
     enemyModeAura: mode => ({ id: mode || "normal", className: "" }),
     guardianBattleArt: () => null,
+    allyArt: () => null,
+    necromancerArt: () => null,
     resolveCombatBackground: () => null,
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
@@ -134,6 +136,8 @@ function collectPresentation() {
     dragoonJumpCooldown: () => 4,
     onDragoonJump() {},
     performClassAction() {},
+    getCombatActionView: () => [],
+    executeCombatAction: async () => ({ok:true}),
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
     delay: async () => {},
     random: () => { rngCalls += 1; return 0.5; },
