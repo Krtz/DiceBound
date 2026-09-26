@@ -1,6 +1,8 @@
 # DiceBound — Prologue Draft 0.1
 
-> Exploratory prose for issue #94. Not locked player-facing copy.
+> Exploratory prose for the DiceBound opening. Not locked player-facing copy.
+>
+> Canon note: the traveler is already an **Echo** here, but the prologue should not name or explain that fact. The impossible memories, route continuity, Camp recognition and repeated `AGAIN` imagery are the player's first evidence.
 
 ---
 
