@@ -169,9 +169,65 @@ assert.equal(mathNode.style.top,"170px");
 projectileVfx.clearTransient();
 assert.equal(mathNode.connected,false,"combat-boundary cleanup must remove a live Math formula even after cancelling its timers");
 
+
+function createFloatingDocument() {
+  const ids=new Map(),nodes=[];
+  function node(id="",rect={left:0,top:0,width:0,height:0}) {
+    const current={
+      id,className:"",dataset:{},style:{},children:[],parentNode:null,isConnected:true,textContent:"",
+      append(child){child.parentNode=current;current.children.push(child);if(child.id)ids.set(child.id,child);},
+      appendChild(child){current.append(child);},
+      remove(){current.isConnected=false;if(current.parentNode)current.parentNode.children=current.parentNode.children.filter(item=>item!==current);},
+      setAttribute(){},
+      getBoundingClientRect:()=>({...rect,right:rect.left+rect.width,bottom:rect.top+rect.height}),
+      querySelector(selector){return selector===".stage-ally-sprite"?current.children.find(child=>child.className==="stage-ally-sprite")||null:null;},
+      querySelectorAll(selector){return selector===".stage-ally"?current.children.filter(child=>child.className==="stage-ally"):[];},
+      classList:{add(){},remove(){}}
+    };
+    nodes.push(current);if(id)ids.set(id,current);return current;
+  }
+  const head=node("head"),body=node("body"),player=node("combatPlayerIcon",{left:20,top:40,width:80,height:90});
+  const party=node("alliedParty");
+  const ally1=node("",{left:90,top:120,width:92,height:138});ally1.className="stage-ally";ally1.dataset.allyInstance="skel-1";
+  const sprite1=node("",{left:100,top:130,width:72,height:110});sprite1.className="stage-ally-sprite";ally1.append(sprite1);
+  const ally2=node("",{left:190,top:120,width:92,height:138});ally2.className="stage-ally";ally2.dataset.allyInstance="skel-2";
+  const sprite2=node("",{left:200,top:130,width:72,height:110});sprite2.className="stage-ally-sprite";ally2.append(sprite2);
+  party.append(ally1);party.append(ally2);
+  const document={
+    head,body,
+    createElement:()=>node(),
+    getElementById:id=>ids.get(id)||null,
+    querySelectorAll:selector=>{
+      if(selector===".db-combat-float-vfx")return body.children.filter(item=>item.isConnected&&item.className.includes("db-combat-float-vfx"));
+      if(selector==="#alliedParty .stage-ally")return [ally1,ally2];
+      return [];
+    },
+    querySelector:()=>null
+  };
+  return {document,ally1,ally2,sprite1,sprite2};
+}
+const floatingDom=createFloatingDocument(),floatingTimers=[];
+const floatingContext=vm.createContext({
+  window:{matchMedia:()=>({matches:false})},document:floatingDom.document,
+  setTimeout:callback=>{floatingTimers.push(callback);return floatingTimers.length;},
+  clearTimeout:()=>{},Image:undefined
+});
+vm.runInContext(fs.readFileSync(path.join(root,"runtime","js","assets.js"),"utf8"),floatingContext,{filename:"assets.js"});
+vm.runInContext(fs.readFileSync(path.join(root,"runtime","js","combat","vfx.js"),"utf8"),floatingContext,{filename:"vfx.js"});
+const floatingVfx=floatingContext.window.DiceboundCombatVfx.create({getFloatingCombatNumbersEnabled:()=>true});
+assert.equal(floatingVfx.floatCombatText({kind:"damage",amount:7,target:{unit:"ally",allyId:"skel-1"}}),true,"allied damage must resolve an exact semantic summon host");
+assert.equal(floatingVfx.floatCombatText({kind:"heal",amount:4,target:{unit:"ally",allyId:"skel-2"}}),true,"allied healing must resolve an exact semantic summon host");
+assert.deepEqual(JSON.parse(JSON.stringify(floatingVfx.floatingEntries())).map(entry=>[entry.kind,entry.target,entry.amount]),[
+  ["damage","ally:skel-1",7],["heal","ally:skel-2",4]
+],"different allied instances must retain distinct floating-number target keys");
+assert.equal(floatingDom.document.body.children[0].style.left,"136px","first summon number must anchor to the first summon sprite center");
+assert.equal(floatingDom.document.body.children[1].style.left,"236px","second summon number must anchor to the second summon sprite center");
+assert.equal(floatingVfx.floatCombatText({kind:"damage",amount:3,target:{unit:"ally",allyId:"missing"}}),false,"unknown allied instance must never fall back to hero/enemy presentation");
+
 const monolith = fs.readFileSync(path.join(root, "runtime", "js", "dicebound.js"), "utf8");
 const elementOwner = fs.readFileSync(path.join(root, "runtime", "js", "combat", "element-resolution.js"), "utf8");
 assert.match(monolith, /dbCombatView\.configureVfx\(\{getEnemies:\(\)=>currentEnemies,getPlayer:\(\)=>player,getFloatingCombatNumbersEnabled:\(\)=>meta\.settings\?\.floatingCombatNumbers!==false\}\);/, "Combat VFX must be configured through Combat View with the persistent floating-number preference");
+assert.match(monolith, /target=\{unit:'ally',allyId:entity\?\.instanceId\}/, "Allied damage/healing callbacks must target the exact semantic ally instance for floating combat numbers");
 assert.match(monolith, /playDonutRain:payload=>dbCombatView\.playDonutRain\(payload\)/, "Element owner composition must inject the authored Donut presentation callback");
 assert.match(elementOwner, /if \(key === "donut" && result\) rt\.playDonutRain\(\{ origin: "player", enemy: target \}\);/, "Player-origin Donut presentation is not routed with its real target");
 assert.doesNotMatch(monolith, /db064DonutEnemyElementProcBase|db064DonutTriggerElementBase/, "Retired Donut mechanic/VFX wrappers must not survive in the monolith");
