@@ -64,7 +64,7 @@ let state = {
   },
   currentEnemy: { name: 'Wolf', hp: 70, maxHp: 100, attack: 12, defense: 4, weakness: 'fire', affinity: 'ice', dodge: .15, rangerMarks: 4 },
   currentEnemies: [], currentEnemyIndex: 0, currentEncounterLead: null, currentEncounterTurn: 0, combatBusy: false,
-  boardLevel: 1, nightmareMode: false, hellMode: false
+  boardLevel: 1, nightmareMode: false, hellMode: false, allies: []
 };
 state.currentEnemies = [state.currentEnemy];
 
@@ -130,6 +130,8 @@ function runtime() {
     enemyPortraitById: () => null,
     enemyModeAura: mode => ({ id: mode, className: `mode-${mode}` }),
     guardianBattleArt: () => null,
+    allyArt: () => null,
+    necromancerArt: () => null,
     resolveCombatBackground: (board, mode) => mode === 'hell' ? null : ({ image: `assets/combat/backgrounds/board-${board}-${mode}.png`, focus: '50% 50%' }),
     isClassActive: id => active.has(id),
     hasClassMechanic: id => mechanics.has(id),
