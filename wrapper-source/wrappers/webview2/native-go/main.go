@@ -40,7 +40,7 @@ var payload []byte
 var packagedWebView2Loader []byte
 
 const (
-    appTitle       = "Dicebound: Beta v0.6.9.0"
+    appTitle       = "Dicebound: Beta v0.6.9.1"
     className      = "DiceboundNativeWebView2Window"
     mutexName      = `Local\Dicebound_Beta_Native_Single_Instance`
     runtimeGUID    = `{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}`
@@ -275,7 +275,7 @@ func createDebugBundle(gameDir,saveDir string,req debugBundleRequest)(debugBundl
     defer func(){if !ok{_ = os.Remove(path)}}()
     context:=map[string]any{
         "generatedAt":time.Now().UTC().Format(time.RFC3339Nano),
-        "version":"0.6.9.0","buildKey":runtimeBuildKey,"releaseSourceSHA":releaseSourceSHA,
+        "version":"0.6.9.1","buildKey":runtimeBuildKey,"releaseSourceSHA":releaseSourceSHA,
         "wrapperMode":"native-webview2","webView2BootstrapMode":webViewBootstrapMode,
         "paths":map[string]string{"dataRoot":dataRoot,"saveDir":runtimeSaveDir,"runtimeCacheDir":runtimeCacheDir,"gameDir":runtimeGameDir,"webView2UserDataDir":runtimeUserDataDir,"logPath":logPath},
     }
