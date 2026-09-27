@@ -324,6 +324,13 @@ assert(source.includes('data-enemy-id=')&&source.includes("escapePortraitLabel(S
 assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},1),1);
 assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},2),1.15);
 assert.strictEqual(owner._test.enemyArtScale({id:'goblin'},6),1.75,'ordinary enemies must grow 15% per Board');
+const b1Solo=owner._test.enemyArtMetrics({id:'goblin'},1,1),b2Triple=owner._test.enemyArtMetrics({id:'goblin'},2,3),b6Triple=owner._test.enemyArtMetrics({id:'goblin'},6,3);
+assert(b2Triple.art>b1Solo.art,'Board 2 three-enemy packs must still look larger than a Board 1 solo peer');
+assert(b6Triple.art>b2Triple.art,'ordinary rendered art must visibly continue growing through later Boards');
+const mini1=owner._test.enemyArtMetrics({id:'ogre-roadwarden',guardian:true,miniBoss:true},1,1),mini6=owner._test.enemyArtMetrics({id:'abyssal-custodian',guardian:true,miniBoss:true},6,1),final6=owner._test.enemyArtMetrics({id:'last-equation',guardian:true,finalBoss:true},6,1);
+assert(mini1.art>=250,'minibosses must no longer use the tiny 150px presentation');
+assert(mini6.art>mini1.art,'miniboss presentation must grow with Board progression');
+assert(final6.art>mini6.art,'final guardians must remain visually larger than same-Board minibosses');
 assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},1),.65);
 assert.strictEqual(owner._test.enemyArtScale({id:'slime'},1),.65,'Wolf and Slime must be 35% smaller than peer ordinary art on Board 1');
 assert.strictEqual(owner._test.enemyArtScale({id:'wolf'},6),1.1375,'Wolf must preserve the exact 65% family factor on top of 75% Board growth');
