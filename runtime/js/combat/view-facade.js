@@ -73,6 +73,7 @@
     syncDragoonPresentation: (...args) => optionalPresentation("syncDragoonPresentation", args),
     dragoonLandPresentation: (...args) => optionalPresentation("dragoonLandPresentation", args),
     ensureDragoonJumpButton: (...args) => optionalPresentation("ensureDragoonJumpButton", args),
+    playNecromancerEffect: (...args) => requirePresentation().playNecromancerEffect(...args),
     clearDragoonPresentation: (...args) => optionalPresentation("clearDragoonPresentation", args),
 
     prepareNature: (...args) => requireVfx().prepareNature(...args),
