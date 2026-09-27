@@ -81,7 +81,7 @@ async function main(){
     if(!summonState.ultimateText.includes('1/5'))throw new Error(`Grave Count did not advance on the real Summon Skeleton action: ${summonState.ultimateText}`);
     if(!summonState.enemyHp.some((hp,index)=>hp<beforeSummon.enemyHp[index]))throw new Error(`Summoned/allied response did not advance combat after spawn: ${JSON.stringify({before:beforeSummon.enemyHp,after:summonState.enemyHp})}`);
 
-    const floating=await page.evaluate(`(()=>{const api=window.DiceboundCombatOracleTest;const ids=api.allies().map(x=>x.instanceId);api.damageAlly(ids[0],4,{ignoreDefense:true,source:'edge-float'});api.healAlly(ids[1],3,{source:'edge-float'});return api.floatingEntries();})()`);
+    const floating=await page.evaluate(`(()=>{const api=window.DiceboundCombatOracleTest;const ids=api.allies().map(x=>x.instanceId);api.damageAlly(ids[0],4,{ignoreDefense:true,source:'edge-float'});api.healAlly(ids[0],3,{source:'edge-float'});return api.floatingEntries();})()`);
     const floatingFacts=floating.map(entry=>[entry.kind,entry.target,entry.amount]);
     if(!floatingFacts.some(entry=>entry[0]==='damage'&&String(entry[1]).startsWith('ally:')&&entry[2]>0)||!floatingFacts.some(entry=>entry[0]==='heal'&&String(entry[1]).startsWith('ally:')&&entry[2]===3))throw new Error(`Allied floating combat numbers lost exact summon anchors: ${JSON.stringify(floating)}`);
 
