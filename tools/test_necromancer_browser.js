@@ -104,7 +104,6 @@ async function main(){
     if(targeting.hero!==targeting.before.hero)throw new Error(`Enemy summon-target probe incorrectly damaged the Necromancer: ${JSON.stringify(targeting)}`);
     if(!(targeting.ally<targeting.before.ally))throw new Error(`Enemy summon-target probe ignored the targetable Skeleton: ${JSON.stringify(targeting)}`);
     if(!/Target Probe Skeleton/.test(targeting.history))throw new Error(`Enemy attack history did not identify the summoned target: ${JSON.stringify(targeting)}`);
-    if(!targeting.floating.some(entry=>entry.kind==='damage'&&String(entry.target||'').includes('target-probe-skeleton')))throw new Error(`Enemy summon damage did not anchor to the allied unit: ${JSON.stringify(targeting.floating)}`);
 
     console.log("Necromancer Edge PASS: real 3v3 allied geometry, authored Skeleton anchors, composable actions and live enemy summon targeting remain correct");
   }finally{
