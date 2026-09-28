@@ -25,6 +25,7 @@ function makeHarness(options={}){
     devilBurnStacks:0,dragoonAirborneResponses:0,dragoonLandingReady:false
   },options.player||{});
   const enemies=options.enemies||[{name:"Dummy",hp:100,maxHp:100,attack:10,defense:0,skipTurns:0,freezeCooldown:0,poisonStacks:0,burnStacks:0,lifeSteal:0}];
+  const allies=options.allies||[];
   let selected=options.selected??0;
   const living=()=>enemies.filter(enemy=>enemy.hp>0);
   const randomValues=[...(options.randomValues||[])];
@@ -39,6 +40,18 @@ function makeHarness(options={}){
     setCombatBusy:value=>{busy=value;calls.push(["busy",value]);},
     livingEnemies:living,
     selectEnemy:index=>{selected=index;calls.push(["select",index]);},
+    choosePlayerSideTarget:enemy=>{
+      if(typeof options.choosePlayerSideTarget==="function")return options.choosePlayerSideTarget({enemy,player,allies,calls});
+      return {kind:"hero",id:"hero",name:"you",entity:player,threatWeight:1};
+    },
+    damageFriendlyTarget:(target,raw,context={})=>{
+      if(target?.kind!=="summon")return {total:0,hp:0,blocked:false,defeated:false};
+      const ally=target.entity||allies.find(entity=>entity.instanceId===target.id);
+      if(!ally||ally.hp<=0)return {total:0,hp:0,blocked:false,defeated:false};
+      const dealt=Math.min(ally.hp,Math.max(0,Math.round(Number(raw)||0)));
+      ally.hp-=dealt;calls.push(["damage-friendly",ally.instanceId,dealt,context.source||null]);
+      return {total:dealt,hp:dealt,blocked:false,defeated:ally.hp<=0};
+    },
     random:()=>{const value=randomValues.length?randomValues.shift():(options.randomDefault??.99);calls.push(["random",value]);return value;},
     rand:(min,max)=>{const value=options.randValue??0;calls.push(["rand",min,max,value]);return value;},
     clamp:(value,min,max)=>Math.max(min,Math.min(max,value)),
@@ -118,6 +131,16 @@ function makeHarness(options={}){
     assert.equal(attacks.length,1);assert.equal(attacks[0].attackId,"basic-attack");assert.equal(attacks[0].enemyIndex,0);assert.equal(attacks[0].outcome,"hit");
     assert.deepEqual(h.calls.filter(call=>call[0]==="delay").map(call=>call[1]),[980]);
     assert.deepEqual(h.calls.filter(call=>call[0]==="float").map(call=>call[1]),[{kind:"damage",amount:10,target:{unit:"player"}}],"landed player damage must report the already-resolved HP loss");
+  }
+  {
+    const skeleton={instanceId:"test-skeleton",name:"Skeleton Warrior",hp:20,maxHp:20,attack:6,defense:0,dodge:0,targetable:true,threatWeight:1};
+    const h=makeHarness({allies:[skeleton],choosePlayerSideTarget:({allies})=>({kind:"summon",id:allies[0].instanceId,name:allies[0].name,entity:allies[0],threatWeight:1})});
+    await turns.enemyTurn(false,0);
+    assert.equal(h.player.hp,100,"enemy targeting a summon must not also damage the hero");
+    assert.equal(skeleton.hp,10,"ordinary enemy attack must be able to damage a targetable summon");
+    assert.deepEqual(h.calls.filter(call=>call[0]==="damage-friendly"),[["damage-friendly","test-skeleton",10,"enemy-attack"]]);
+    const attack=h.calls.find(call=>call[0]==="attack-presentation")?.[1];
+    assert.equal(attack?.target,"summon");assert.equal(attack?.targetId,"test-skeleton");assert.equal(attack?.targetName,"Skeleton Warrior");
   }
   {
     const h=makeHarness({player:{energyShield:6}});
