@@ -16,7 +16,8 @@
       "setCombatText","updateCombatUI","addCombatHistory","renderEnemyParty","triggerElementEffect","defenseDamageReduction",
       "effectiveDodgeChance","enemyElementProc","damageEnemy","healPlayer","mythicalSetCount","guardianSpecialMultiplier",
       "hasMythicPiece","hasDevilsHorns","hasHeadphones","hasLegendaryEffect","checkDynamicClassUnlocks","saveMeta","playHitSfx",
-      "recordDamageTaken","wolfEchoChance","presentEnemyAttack","dodge","dragoonActive","consumeEnemyConfusionTarget"
+      "recordDamageTaken","wolfEchoChance","presentEnemyAttack","dodge","dragoonActive","consumeEnemyConfusionTarget",
+      "choosePlayerSideTarget","damageFriendlyTarget"
     ];
     for (const name of required) if (typeof nextRuntime[name] !== "function") throw new Error(`Combat turn-resolution runtime missing ${name}().`);
     if (!Number.isFinite(Number(nextRuntime.guardianSpecialInterval)) || Number(nextRuntime.guardianSpecialInterval) < 1) throw new Error("Combat turn-resolution runtime requires guardianSpecialInterval.");
