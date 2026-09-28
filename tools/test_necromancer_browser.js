@@ -96,7 +96,17 @@ async function main(){
     view=await inspect(page);validateGeometry(view,"short-wide 1100x650");
     if(view.errors.length)throw new Error(`Short-wide Necromancer presentation raised runtime errors: ${JSON.stringify(view.errors)}`);
 
-    console.log("Necromancer Edge PASS: real 3v3 allied geometry, authored Skeleton anchors and composable combat actions remain readable on desktop + short-wide");
+    // Live-composition targeting regression for 0.6.9.2. The first seeded RNG
+    // draw is > .5, so the shipped 50/50 hero-vs-summon bucket must select the
+    // targetable Skeleton. This deliberately calls the public Combat facade,
+    // proving the turn owner received its targeting/damage routes from dicebound.js.
+    const targeting=await page.evaluate(`(async()=>{const api=window.DiceboundCombatOracleTest;api.cleanup();api.setup({classId:'necromancer',player:{hp:100,maxHp:100,defense:0,maxActiveAllies:2},enemies:[{id:'summon-target-probe',name:'Summon Target Probe',hp:999,maxHp:999,attack:12,defense:0,dodge:0,guardian:false}]});api.spawnAlly({instanceId:'target-probe-skeleton',archetypeId:'skeleton-warrior',ownerClassId:'necromancer',name:'Target Probe Skeleton',controlMode:'automatic',persistence:'encounter',actsOnSummonTurn:true,targetable:true,healable:true,threatWeight:1,countsAsSummon:true,maxHp:40,hp:40,attack:6,defense:0,crit:0,dodge:0,artId:'skeleton-warrior'});window.DiceboundRng.seed('summon-target');const before={hero:api.snapshot().player.hp,ally:api.allies()[0].hp};await window.DiceboundCombat.enemyTurn(false,0);const snap=api.snapshot(),ally=api.allies()[0];const out={before,hero:snap.player.hp,ally:ally?.hp??0,history:snap.history,floating:api.floatingEntries(),rng:window.DiceboundRng.snapshot()};window.DiceboundRng.clear();return out;})()`);
+    if(targeting.hero!==targeting.before.hero)throw new Error(`Enemy summon-target probe incorrectly damaged the Necromancer: ${JSON.stringify(targeting)}`);
+    if(!(targeting.ally<targeting.before.ally))throw new Error(`Enemy summon-target probe ignored the targetable Skeleton: ${JSON.stringify(targeting)}`);
+    if(!/Target Probe Skeleton/.test(targeting.history))throw new Error(`Enemy attack history did not identify the summoned target: ${JSON.stringify(targeting)}`);
+    if(!targeting.floating.some(entry=>entry.kind==='damage'&&String(entry.target||'').includes('target-probe-skeleton')))throw new Error(`Enemy summon damage did not anchor to the allied unit: ${JSON.stringify(targeting.floating)}`);
+
+    console.log("Necromancer Edge PASS: real 3v3 allied geometry, authored Skeleton anchors, composable actions and live enemy summon targeting remain correct");
   }finally{
     try{await page?.send("Browser.close");}catch(_){}try{page?.socket.close();}catch(_){}if(child?.exitCode===null)child.kill();await new Promise(resolve=>server.close(resolve));try{fs.rmSync(profile,{recursive:true,force:true});}catch(_){}
   }
