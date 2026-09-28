@@ -30,6 +30,7 @@ const presentationApi = Object.freeze({
   syncDragoonPresentation: (...args) => { calls.push(["presentation.syncDragoonPresentation", ...args]); return "dragoon-sync"; },
   dragoonLandPresentation: (...args) => { calls.push(["presentation.dragoonLandPresentation", ...args]); return "dragoon-land"; },
   ensureDragoonJumpButton: (...args) => { calls.push(["presentation.ensureDragoonJumpButton", ...args]); return "jump"; },
+  playNecromancerEffect: (...args) => { calls.push(["presentation.playNecromancerEffect", ...args]); return "necro-effect"; },
   clearDragoonPresentation: (...args) => { calls.push(["presentation.clearDragoonPresentation", ...args]); return "dragoon-clear"; },
 });
 const vfxApi = Object.freeze({
@@ -119,6 +120,8 @@ assert.deepEqual(calls.at(-1), ["presentation.dodge", "player"]);
 assert.equal(view.syncDragoonPresentation(), "dragoon-sync");
 assert.equal(view.dragoonLandPresentation(), "dragoon-land");
 assert.equal(view.ensureDragoonJumpButton(), "jump");
+assert.equal(view.playNecromancerEffect("summonCircle",{durationMs:340}), "necro-effect");
+assert.deepEqual(calls.at(-1),["presentation.playNecromancerEffect","summonCircle",{durationMs:340}]);
 const clearStart = calls.length;
 assert.equal(view.clearTransient("transition"), 7);
 assert.deepEqual(calls.slice(clearStart).map(call => call[0]), ["vfx.clearTransient", "presentation.clearEnemyAttackPresentation", "presentation.clearDodgePresentation", "presentation.clearDragoonPresentation"], "transition cleanup must clear VFX, attack, Dodge and Dragoon presentation state");
@@ -141,6 +144,7 @@ assert.doesNotMatch(monolith, /dbFriendSuccessfulDodgePresentation/, "generic Do
 assert.match(monolith, /dodge:unit=>dbCombatView\.dodge\(unit\)/, "Turn composition must route generic Dodge through Combat View");
 assert.match(monolith, /function animateClassAttack\(mode="normal",options=\{\}\)\{return dbCombatView\.playerAttack\(mode,options\);\}/, "player attack motion must be owned by Combat View rather than the monolith");
 assert.match(monolith, /presentEnemyAttack:fact=>dbCombatView\.enemyAttack\(fact\)/, "enemy attack semantics must route through Combat View");
+assert.match(monolith, /playEffect:\(key,options\)=>dbCombatView\.playNecromancerEffect\(key,options\)/, "Necromancer authored effects must route through Combat View");
 assert.doesNotMatch(monolith, /__DB_FAST_ECHO_CAP__/, "global Echo delay cap must stay retired");
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "runtime", "js", "module-manifest.json"), "utf8"));

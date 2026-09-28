@@ -18,9 +18,9 @@ assert.equal(transition.owner,"board/transition");
 assert.doesNotMatch(source,/\bMath\.random\b/,"board transition must not add its own RNG draws");
 assert.doesNotMatch(source,/function (generateBoard|buildBoard|winCombat|completeSixthRoadV19)\b/,"board transition must not absorb generation, combat, or final-run implementation");
 
-function scenario({boardLevel=1,hp=40,maxHp=100,potions=2,rebuild=null}={}){
+function scenario({boardLevel=1,hp=40,maxHp=100,potions=2,luck=.42,lifeSteal=.37,rebuild=null}={}){
   const calls=[];
-  const player={position:49,hp,maxHp,potions};
+  const player={position:49,hp,maxHp,potions,luck,lifeSteal};
   let level=boardLevel;
   const definitions={
     2:{id:2,name:"Astral Road",entryHeal:.35,entryPotions:1},
@@ -53,6 +53,8 @@ assert.equal(ordinary.level(),2,"Board 1 completion must advance exactly to Boar
 assert.equal(ordinary.player.position,0,"next Board must reset the player to the first tile");
 assert.equal(ordinary.player.hp,75,"Board 2 entry recovery must preserve its published 35% heal");
 assert.equal(ordinary.player.potions,3,"Board 2 entry recovery must preserve its published potion grant");
+assert.equal(ordinary.player.luck,.42,"Board advancement must not reduce Luck, including in Nightmare runs");
+assert.equal(ordinary.player.lifeSteal,.37,"Board advancement must not reduce Lifesteal, including in Nightmare runs");
 assert.deepEqual(ordinary.calls.map(call=>call[0]),["setBoardLevel","resetEncounter","rollLocked","theme","rebuild","definition","log","toast","holy","hud","schedule","pawn","rollLocked","hud"],"ordinary Board transition order and delayed unlock must remain exact");
 assert.equal(ordinary.calls.find(call=>call[0]==="schedule")[1],350,"movement unlock delay must remain 350ms");
 

@@ -91,12 +91,21 @@
     r.addCombatHistory("☠️ Summon Skeleton raises "+out.entity.name+" for "+SKELETON_MANA_COST+" Mana. Grave Count "+count+"/"+threshold+"."+replaced);
     r.setCombatText("☠️ A Skeleton Warrior claws its way onto your side."+replaced+" Grave Count: "+count+"/"+threshold+".");
     r.updateCombatUI();
-    await r.playEffect("summonCircle",{durationMs:340});
-    await r.delay(120);
-
-    if(!r.livingEnemies().length)return Object.freeze({ok:true,entity:out.entity,replaced:out.replaced,graveCount:count});
-    await r.resolveEnemyResponse(false);
-    return Object.freeze({ok:true,entity:out.entity,replaced:out.replaced,graveCount:count});
+    try{
+      await r.playEffect("summonCircle",{durationMs:340});
+      await r.delay(120);
+      if(!r.livingEnemies().length)return Object.freeze({ok:true,entity:out.entity,replaced:out.replaced,graveCount:count});
+      await r.resolveEnemyResponse(false);
+      return Object.freeze({ok:true,entity:out.entity,replaced:out.replaced,graveCount:count});
+    }finally{
+      // A failed presentation/ally/enemy response must never strand the run in
+      // combatBusy. Normal response resolution already releases it; this only
+      // repairs exceptional exits and keeps the original error observable.
+      if(r.getCombatBusy()){
+        r.setCombatBusy(false);
+        r.updateCombatUI();
+      }
+    }
   }
 
   function boneShrapnel(entity){

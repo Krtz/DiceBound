@@ -400,12 +400,18 @@
     return Number((boardScale*familyScale).toFixed(4));
   }
   function enemyArtMetrics(enemy,board,packSize=1){
-    const id=String(enemy?.id||""),secret=SECRET_BOSS_IDS.has(id);
+    const id=String(enemy?.id||""),secret=SECRET_BOSS_IDS.has(id),level=Math.min(6,Math.max(1,Math.floor(Number(board)||1)));
     if(secret)return Object.freeze({kind:"secret",scale:2.5,art:215,mobileArt:165,stageWidth:232,stageHeight:242,mobileStageWidth:180,mobileStageHeight:190});
-    if(enemy?.finalBoss)return Object.freeze({kind:"final",scale:1,art:335,mobileArt:235,stageWidth:350,stageHeight:360,mobileStageWidth:248,mobileStageHeight:258});
-    if(enemy?.miniBoss)return Object.freeze({kind:"miniboss",scale:1,art:150,mobileArt:114,stageWidth:162,stageHeight:170,mobileStageWidth:126,mobileStageHeight:134});
-    if(enemy?.guardian||enemy?.boss||enemy?.merchantBoss||enemy?.devilBoss||enemy?.bloodmageBoss)return Object.freeze({kind:"guardian",scale:1,art:86,mobileArt:66,stageWidth:100,stageHeight:110,mobileStageWidth:78,mobileStageHeight:88});
-    const scale=enemyArtScale(enemy,board),count=Math.max(1,Math.floor(Number(packSize)||1)),base=count>=3?150:count===2?190:230,mobileBase=count>=3?95:count===2?120:145;
+    if(enemy?.finalBoss){
+      const scale=1+(level-1)*.08,art=Math.round(380*scale),mobileArt=Math.round(240*scale);
+      return Object.freeze({kind:"final",scale:Number(scale.toFixed(4)),art,mobileArt,stageWidth:art+15,stageHeight:art+25,mobileStageWidth:mobileArt+13,mobileStageHeight:mobileArt+23});
+    }
+    if(enemy?.miniBoss){
+      const scale=1+(level-1)*.12,art=Math.round(300*scale),mobileArt=Math.round(190*scale);
+      return Object.freeze({kind:"miniboss",scale:Number(scale.toFixed(4)),art,mobileArt,stageWidth:art+14,stageHeight:art+20,mobileStageWidth:mobileArt+12,mobileStageHeight:mobileArt+18});
+    }
+    if(enemy?.guardian||enemy?.boss||enemy?.merchantBoss||enemy?.devilBoss||enemy?.bloodmageBoss)return Object.freeze({kind:"guardian",scale:1,art:150,mobileArt:108,stageWidth:164,stageHeight:172,mobileStageWidth:120,mobileStageHeight:128});
+    const scale=enemyArtScale(enemy,level),count=Math.max(1,Math.floor(Number(packSize)||1)),packFactor=count>=3?.88:count===2?.94:1,base=230*packFactor,mobileBase=145*packFactor;
     const art=Math.round(base*scale),mobileArt=Math.round(mobileBase*scale);
     return Object.freeze({kind:"ordinary",scale,art,mobileArt,stageWidth:Math.round((base+14)*scale),stageHeight:Math.round((base+30)*scale),mobileStageWidth:Math.round((mobileBase+12)*scale),mobileStageHeight:Math.round((mobileBase+26)*scale)});
   }
